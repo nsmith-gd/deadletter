@@ -34,21 +34,31 @@ model and animation can be rebuilt and tuned from source.
 
 ## Rig
 
-- `root`: ground motion. Keyed forward in the walking shot so planted feet don't slide.
-- `body`, `head`: bob, sway and lagged head motion.
-- `antenna_1..3`: skinned chain with follow-through.
-- `ik_foot.L/R`, `ik_hand.L/R`: IK targets for the legs and claw arms. The pole
-  targets (`pole_knee`, `pole_elbow`) are auto-calibrated at build time.
-- `finger_a/b.L/R`: claw open and close. Each claw also opens during its swing.
+- `root`: ground motion. In the walking shot it follows the body, so planted feet never slide.
+- `body`, `head`: waddle, bob, lean and look-around.
+- `antenna_1..3`: skinned chain with follow-through and a springy perk.
+- `ik_foot.L/R`: IK targets for the legs (parented to `root`).
+- `ik_hand.L/R`: IK targets for the claw arms. These are parented to `body` because
+  D-17 carries his arms and never walks on them.
+- The pole targets (`pole_knee`, `pole_elbow`) are auto-calibrated at build time.
+- `finger_a/b.L/R`: claw open and close for fidgets. The left claw rests open, the right rests closed.
 
 Rigid parts are parented to bones (no skin weights), except the antenna. This makes
 the rig suitable for FBX export to Unity, or for rendering 2D sprites.
 
-## Walk cycle
+## Walk: timid, curious, a little whimsical
 
-- 36 frames (1.5 s at 24 fps), a four-beat gait: left leg, left claw, right leg, right claw.
-- Planted limbs travel 0.11 m over 70% of the cycle.
-- `SPEED` is derived from those values, so the root and the feet always agree.
+- **Gait:** a biped walk on the two inner legs.
+  - Each step is 20 frames: 14 frames in the air, then a short hesitant pause with both feet down.
+  - The body only moves forward while a foot is in the air, which gives the step–pause rhythm.
+- **Steps:** small, careful steps. He lifts each foot quickly and sets it down slowly, toes
+  dangling during the swing, feet slightly pigeon-toed.
+- **Body:** a waddle over the planted foot, a dip on each landing, and a forward lean, as if peering ahead.
+- **Head:** it looks around and tilts while he walks. The claws are carried in front, with a
+  slight counter-swing and a fidgeting left claw.
+- **Walk shot ending:** four steps and a closing half step. Then he turns his head and body
+  toward the camera and settles into a curious head tilt. The antenna springs up, the arms
+  draw in shyly and the left claw fidgets.
 
 ## Rebuild
 
@@ -62,4 +72,4 @@ python assemble.py video out/hero renders/d17_walk --loops 1
 python assemble.py sheet out/sprites renders/d17_walk_sprites.png
 ```
 
-Add `--shot closeup --still N --samples 16` for a quick single-frame check.
+Add `--shot closeup --still 1 20 --samples 16` to render a few frames for a quick check.

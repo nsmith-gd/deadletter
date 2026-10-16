@@ -21,10 +21,15 @@ import bpy  # must be imported before bmesh/mathutils
 import bmesh
 from mathutils import Matrix, Vector, noise
 
-CYCLE = 36           # frames per walk cycle (1.5 s at 24 fps)
-STANCE = 0.70        # fraction of the cycle a limb is planted
-STRIDE = 0.11        # metres a planted limb travels relative to the body
-SPEED = STRIDE / (STANCE * CYCLE)  # body speed in metres per frame (no foot slide)
+STEP = 20            # frames per step; a walk cycle is two steps (40 frames, 1.67 s)
+CYCLE = 2 * STEP
+SWING = 14           # frames a foot is in the air; the rest is a hesitant double support
+STRIDE = 0.16        # metres a foot advances per step it takes (small, careful steps)
+LIFT = 0.03          # swing height in metres
+FEET_START = {'L': -STRIDE / 2, 'R': 0.0}
+HERO_STEPS = 5       # four steps plus a closing half step, then a curious look
+STOP_AT = (HERO_STEPS - 1) * STEP + SWING
+HERO_FRAMES = STOP_AT + 46
 
 # Material slot indices shared by every part.
 (DARK, CREAM, GLOW, EYE, CABLE, GLASS, GLOW_DIM, CREAM_LIMB, BARE, ROD) = range(10)
@@ -464,7 +469,7 @@ def build_armature(coll):
              lp['knee'] + Vector((0, -0.4, 0)) + y_, 'body')
         bone(f'arm_upper.{side}', ap['shoulder'], ap['elbow'], 'body')
         bone(f'arm_lower.{side}', ap['elbow'], ap['wrist'], f'arm_upper.{side}', connect=True)
-        bone(f'ik_hand.{side}', ap['wrist'], ap['wrist'] + y_, 'root')
+        bone(f'ik_hand.{side}', ap['wrist'], ap['wrist'] + y_, 'body')  # arms are carried
         bone(f'pole_elbow.{side}', ap['elbow'] + Vector((0, 0.4, 0)),
              ap['elbow'] + Vector((0, 0.4, 0)) + y_, 'body')
         w = ap['wrist']
@@ -854,76 +859,158 @@ def build_limbs(arm, mats, coll):
 # Animation
 # --------------------------------------------------------------------------
 
-def limb_offset(t, phase, lift):
-    """Planted limbs slide back at body speed; swinging limbs arc forward."""
-    u = (t - phase) % 1.0
-    if u < STANCE:
-        s = u / STANCE
-        return -STRIDE / 2 + STRIDE * s, 0.0, 0.0
-    s = (u - STANCE) / (1 - STANCE)
-    e = 0.5 - 0.5 * math.cos(math.pi * s)
-    return STRIDE / 2 - STRIDE * e, lift * math.sin(math.pi * s) ** 0.8, s
+def smoothstep(x):
+    x = min(1.0, max(0.0, x))
+    return x * x * (3 - 2 * x)
 
 
-def animate(arm, frame_start, frame_end, travel):
-    """Key every frame. `travel` moves the root forward (-Y) so planted feet stay put."""
+def window(f, a, b):
+    """0 before frame a, 1 after frame b, eased in between."""
+    return smoothstep((f - a) / (b - a))
+
+
+def settle(f, f0, amp, rate=0.18, freq=0.55):
+    """Damped spring: rises to `amp` at f0 with a small overshoot and wobble."""
+    if f < f0:
+        return 0.0
+    d = f - f0
+    return amp * (1 - math.exp(-rate * d) * math.cos(freq * d))
+
+
+def foot_events(n_steps, close_last):
+    """Step schedule: alternate feet, each step carries a foot one stride ahead.
+    With `close_last` the final step only brings the foot beside the other one."""
+    pos = dict(FEET_START)
+    events = {'L': [], 'R': []}
+    for i in range(n_steps):
+        foot, other = ('L', 'R') if i % 2 == 0 else ('R', 'L')
+        start = i * STEP
+        to = pos[other] if close_last and i == n_steps - 1 else pos[foot] + STRIDE
+        events[foot].append((start, start + SWING, pos[foot], to))
+        pos[foot] = to
+    return events
+
+
+def foot_at(events, foot, f):
+    """Forward progress, lift height and swing progress (None when planted) at frame f."""
+    p = FEET_START[foot]
+    for a, b, p0, p1 in events[foot]:
+        if f < a:
+            break
+        if f >= b:
+            p = p1
+            continue
+        s = (f - a) / (b - a)
+        # Quick lift, slow careful set-down.
+        return p0 + (p1 - p0) * smoothstep(s), LIFT * math.sin(math.pi * s ** 0.65), s
+    return p, 0.0, None
+
+
+def _key(pbone, *paths, frame):
+    for path in paths:
+        pbone.keyframe_insert(path, frame=frame)
+
+
+def animate(arm, frames, hero):
+    """Timid biped walk on the inner legs; the claw arms are carried, never walked on.
+
+    Loop mode repeats one two-step cycle in place. Hero mode walks forward, stops
+    with a closing half step, then turns to the camera with a curious head tilt.
+    Returns the body's forward progress per frame so a camera can follow it.
+    """
     pb = arm.pose.bones
-    phases = {'ik_foot.L': 0.0, 'ik_hand.L': 0.25, 'ik_foot.R': 0.5, 'ik_hand.R': 0.75}
+    events = foot_events(HERO_STEPS if hero else 2, close_last=hero)
     tau = 2 * math.pi
+    rad = math.radians
     axes = {}
     for side, _ in SIDES:
         for f in ('finger_a', 'finger_b'):
             b = arm.data.bones[f'{f}.{side}']
             axes[f'{f}.{side}'] = (b.matrix_local.to_3x3().inverted() @ Vector((0, 1, 0))).normalized()
-    for frame in range(frame_start, frame_end + 1):
-        n = frame - frame_start
-        t = (n % CYCLE) / CYCLE
+    for name in pb.keys():
+        if not name.startswith('finger'):
+            pb[name].rotation_mode = 'XYZ'
 
-        pb['root'].location = (0, -SPEED * n if travel else 0.0, 0)
-        pb['root'].keyframe_insert('location', frame=frame)
+    progress = []
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        fl = f if hero else f % CYCLE
+        u = (fl % CYCLE) / CYCLE                      # phase within the two-step cycle
+        walk = 1.0 - window(f, STOP_AT - 12, STOP_AT + 4) if hero else 1.0
+        look = window(f, STOP_AT - 2, STOP_AT + 12) if hero else 0.0
+        idle = f - STOP_AT if hero else 0
 
-        for name, ph in phases.items():
-            is_hand = name.startswith('ik_hand')
-            dy, dz, swing = limb_offset(t, ph, 0.055 if is_hand else 0.042)
-            p = pb[name]
-            p.location = (0, dy, dz)
-            p.rotation_mode = 'XYZ'
-            tilt = math.sin(math.pi * swing) if dz > 0 else 0.0
-            p.rotation_euler = (math.radians(-14 if not is_hand else 12) * tilt, 0, 0)
-            p.keyframe_insert('location', frame=frame)
-            p.keyframe_insert('rotation_euler', frame=frame)
-            if is_hand:
-                side = name[-1]
-                opening = math.radians(CLAW_REST_OPEN[side] + 16 * tilt)
-                for f, sign in (('finger_a', 1), ('finger_b', -1)):
-                    fp = pb[f'{f}.{side}']
-                    fp.rotation_axis_angle = (sign * opening, *axes[f'{f}.{side}'])
-                    fp.keyframe_insert('rotation_axis_angle', frame=frame)
+        feet = {side: foot_at(events, side, fl) for side, _ in SIDES}
+        body_p = (feet['L'][0] + feet['R'][0]) / 2    # body moves only while a foot is in the air
+        progress.append(body_p)
 
+        pb['root'].location = (0, -body_p if hero else 0.0, 0)
+        _key(pb['root'], 'location', frame=frame)
+
+        for side, s in SIDES:
+            p, lift, sw = feet[side]
+            ik = pb[f'ik_foot.{side}']
+            ik.location = (0, -(p - body_p), lift)
+            dangle = rad(14) * math.sin(math.pi * sw) if sw is not None else 0.0
+            ik.rotation_euler = (dangle, 0, rad(-s * 7))      # toes dangle, feet slightly pigeon-toed
+            _key(ik, 'location', 'rotation_euler', frame=frame)
+
+        # Body: waddle over the planted foot, dip on each landing, lean forward to peer.
+        sway = math.sin(tau * u)
+        breathe = 0.0015 * math.sin(tau * f / 50)
         body = pb['body']
-        body.location = (0.007 * math.sin(tau * t + math.pi / 2), 0,
-                         -0.004 + 0.005 * math.cos(2 * tau * t))
-        body.rotation_mode = 'XYZ'
-        body.rotation_euler = (math.radians(1.2 * math.sin(2 * tau * t + 0.5)),
-                               math.radians(2.2 * math.sin(tau * t)),
-                               math.radians(1.6 * math.sin(tau * t + 0.3)))
-        body.keyframe_insert('location', frame=frame)
-        body.keyframe_insert('rotation_euler', frame=frame)
+        body.location = (-0.011 * sway * walk, 0,
+                         (0.006 * math.sin(2 * tau * u - 0.3 * math.pi) - 0.006) * walk
+                         + breathe * (1 - walk))
+        body.rotation_euler = (rad(3.5 * walk + 1.5 * math.sin(2 * tau * u - 1.0) * walk - 2.0 * look),
+                               rad(-3.5 * sway * walk),
+                               rad(2.0 * math.sin(tau * u + 0.4) * walk - 8.0 * look))
+        _key(body, 'location', 'rotation_euler', frame=frame)
 
+        # Head: looks around while walking; in the hero shot it turns to the camera and tilts.
         head = pb['head']
-        head.rotation_mode = 'XYZ'
-        head.rotation_euler = (math.radians(2.5 * math.sin(2 * tau * t - 0.9)),
-                               math.radians(-1.8 * math.sin(tau * t - 0.6)),
-                               math.radians(2.5 * math.sin(tau * t - 0.3)))
-        head.keyframe_insert('rotation_euler', frame=frame)
+        walk_pitch = 4.0 + 2.0 * math.sin(2 * tau * u - 1.3)
+        walk_yaw = 10.0 * math.sin(tau * u - 0.5)
+        walk_roll = 7.0 * math.sin(tau * u - 1.2)
+        tilt = settle(f, STOP_AT + 10, 14.0) if hero else 0.0
+        head.rotation_euler = (rad(walk_pitch * walk - 3.0 * look),
+                               rad(walk_roll * walk + tilt),
+                               rad(walk_yaw * walk - 26.0 * look))
+        _key(head, 'rotation_euler', frame=frame)
 
+        # Antenna: follow-through, plus a springy perk when the head tilts.
+        perk_t = f - (STOP_AT + 10)
+        perk = 12.0 * math.exp(-perk_t / 7) * math.sin(perk_t * 0.9) if hero and perk_t > 0 else 0.0
         for i, amp in enumerate((3.0, 4.0, 5.0)):
-            ab = pb[f'antenna_{i + 1}']
-            ab.rotation_mode = 'XYZ'
             lag = 1.2 + 0.5 * i
-            ab.rotation_euler = (math.radians(amp * math.sin(2 * tau * t - lag)), 0,
-                                 math.radians(amp * 1.2 * math.sin(tau * t - lag)))
-            ab.keyframe_insert('rotation_euler', frame=frame)
+            pb[f'antenna_{i + 1}'].rotation_euler = (
+                rad(amp * math.sin(2 * tau * u - lag) * walk + perk * (0.5 + 0.25 * i)), 0,
+                rad(amp * 1.2 * math.sin(tau * u - lag) * walk))
+            _key(pb[f'antenna_{i + 1}'], 'rotation_euler', frame=frame)
+
+        # Claw arms carried in front, a little raised, with a timid counter-swing.
+        shy = look * smoothstep(idle / 20) if hero else 0.0
+        for side, s in SIDES:
+            hand = pb[f'ik_hand.{side}']
+            hand.location = (-s * (0.04 + 0.012 * shy),
+                             -0.09 + 0.012 * s * math.cos(tau * u) * walk,
+                             0.112 + 0.007 * math.sin(2 * tau * u - 1.6) * walk + 0.018 * shy)
+            hand.rotation_euler = (rad(-24 - 10 * shy), rad(s * 6), rad(s * 10))
+            _key(hand, 'location', 'rotation_euler', frame=frame)
+
+            fidget = 0.0
+            if side == 'L':
+                fidget = 6.0 * math.sin(2 * tau * u) * walk
+                if hero and idle > 14:
+                    fidget += 14.0 * (0.5 - 0.5 * math.cos(tau * (idle - 14) / 18))
+            else:
+                fidget = 2.5 * math.sin(2 * tau * u + 1.0) * walk
+            opening = rad(CLAW_REST_OPEN[side] + fidget)
+            for fname, sign in (('finger_a', 1), ('finger_b', -1)):
+                fp = pb[f'{fname}.{side}']
+                fp.rotation_axis_angle = (sign * opening, *axes[f'{fname}.{side}'])
+                _key(fp, 'rotation_axis_angle', frame=frame)
+    return progress
 
 
 # --------------------------------------------------------------------------
@@ -1039,7 +1126,7 @@ def main():
     ap.add_argument('--out', required=True)
     ap.add_argument('--samples', type=int, default=48)
     ap.add_argument('--res', type=int, nargs=2, default=None)
-    ap.add_argument('--still', type=int, default=None)
+    ap.add_argument('--still', type=int, nargs='+', default=None, help='render only these frames')
     ap.add_argument('--blend', default=None, help='also save the finished scene as a .blend')
     args = ap.parse_args()
     placements, res = SHOTS[args.shot]
@@ -1049,11 +1136,10 @@ def main():
     scene = bpy.context.scene
     rigs = [build_robot(*p) for p in placements]
 
-    travel = args.shot == 'hero'
-    frames = CYCLE * 2 if travel else CYCLE
+    hero = args.shot == 'hero'
+    frames = HERO_FRAMES if hero else CYCLE
     scene.frame_start, scene.frame_end = 1, frames
-    for arm in rigs:
-        animate(arm, 1, frames, travel)
+    progress = [animate(arm, frames, hero) for arm in rigs][0]
 
     setup_world_and_floor(transparent=args.shot == 'sprites')
     setup_render(args)
@@ -1071,12 +1157,10 @@ def main():
         scene.collection.objects.link(rig)
         cam = camera('Cam', (-1.25, -1.75, 0.42), (0, -0.05, 0.40), lens=42)
         cam.parent = rig
-        for f in (1, frames):
-            rig.location = (0, -SPEED * (f - 1), 0)
-            rig.keyframe_insert('location', frame=f)
-        for fc in _fcurves(rig):
-            for kp in fc.keyframe_points:
-                kp.interpolation = 'LINEAR'
+        for i in range(frames):  # follow the body's progress, smoothed so the camera glides
+            near = progress[max(0, i - 10):i + 11]
+            rig.location = (0, -sum(near) / len(near), 0)
+            rig.keyframe_insert('location', frame=i + 1)
     else:
         camera('Cam', (0, -4, 0.55), (0, 0, 0.55), ortho=1.25)
 
@@ -1084,23 +1168,14 @@ def main():
         bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(args.blend))
 
     os.makedirs(args.out, exist_ok=True)
-    if args.still is not None:
-        scene.frame_set(args.still)
-        scene.render.filepath = os.path.join(os.path.abspath(args.out), f'still_{args.still:04d}.png')
-        bpy.ops.render.render(write_still=True)
+    if args.still:
+        for n in args.still:
+            scene.frame_set(n)
+            scene.render.filepath = os.path.join(os.path.abspath(args.out), f'still_{n:04d}.png')
+            bpy.ops.render.render(write_still=True)
     else:
         scene.render.filepath = os.path.join(os.path.abspath(args.out), 'frame_')
         bpy.ops.render.render(animation=True)
-
-
-def _fcurves(ob):
-    action = ob.animation_data.action
-    try:
-        return list(action.fcurves)
-    except AttributeError:
-        slot = ob.animation_data.action_slot
-        return [fc for layer in action.layers for strip in layer.strips
-                for fc in strip.channelbag(slot).fcurves]
 
 
 if __name__ == '__main__':
