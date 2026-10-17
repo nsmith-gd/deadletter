@@ -60,6 +60,28 @@ the rig suitable for FBX export to Unity, or for rendering 2D sprites.
   toward the camera and settles into a curious head tilt. The antenna springs up, the arms
   draw in shyly and the left claw fidgets.
 
+## Run: a hurried scurry
+
+- **Cycle:** 16 frames, two quick steps at 0.6 m/s. A foot is planted for 6 of the 16
+  frames, so both feet leave the ground briefly each step.
+- **Body:** crouched and leaning forward about 9°, compressing at mid-stance and rising
+  through the flight.
+- **Legs:** the knees come up, and the toes trail after push-off.
+- **Arms:** the claws are gripped shut, tucked to the chest, and pump opposite the legs.
+- **Head and antenna:** the head stays level and fixed ahead, and the antenna streams back.
+- **Motion blur:** on for the run shots.
+
+## Idle: looking around
+
+- A 7 s loop with breathing and a slow weight shift.
+- He looks around in quick darts and holds:
+  1. a glance left with a curious tilt
+  2. a look up
+  3. a glance right
+  4. a look down at the fidgeting left claw, with a toe tap
+  5. back to centre
+- The body follows the head a beat late, and the antenna whips after it.
+
 ## Rebuild
 
 ```sh
@@ -67,6 +89,10 @@ pip install bpy==5.2.2 pillow imageio-ffmpeg      # Python 3.13
 python build_d17.py --shot turnaround --out out/turnaround
 python build_d17.py --shot hero       --out out/hero --blend d17_walk.blend
 python build_d17.py --shot sprites    --out out/sprites
+python build_d17.py --shot idle       --out out/idle --blend d17_idle.blend
+python build_d17.py --shot run        --out out/run --blend d17_run.blend
+python build_d17.py --shot run_turnaround --out out/run_turnaround
+python build_d17.py --shot run_sprites --out out/run_sprites
 python assemble.py video out/turnaround renders/d17_turnaround
 python assemble.py video out/hero renders/d17_walk --loops 1
 python assemble.py sheet out/sprites renders/d17_walk_sprites.png
