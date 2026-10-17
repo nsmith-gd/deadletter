@@ -955,33 +955,34 @@ def animate(arm, frames, hero):
             ik.rotation_euler = (dangle, 0, rad(-s * 7))      # toes dangle, feet slightly pigeon-toed
             _key(ik, 'location', 'rotation_euler', frame=frame)
 
-        # Body: waddle over the planted foot, dip on each landing, lean forward to peer.
+        # Body: gentle waddle over the planted foot, a small dip on each landing, a forward lean.
         sway = math.sin(tau * u)
         breathe = 0.0015 * math.sin(tau * f / 50)
         body = pb['body']
         body.location = (-0.011 * sway * walk, 0,
-                         (0.006 * math.sin(2 * tau * u - 0.3 * math.pi) - 0.006) * walk
+                         (0.0035 * math.sin(2 * tau * u - 0.3 * math.pi) - 0.0035) * walk
                          + breathe * (1 - walk))
-        body.rotation_euler = (rad(3.5 * walk + 1.5 * math.sin(2 * tau * u - 1.0) * walk - 2.0 * look),
-                               rad(-3.5 * sway * walk),
-                               rad(2.0 * math.sin(tau * u + 0.4) * walk - 8.0 * look))
+        body_rot = (3.5 * walk + 0.6 * math.sin(2 * tau * u - 1.0) * walk - 2.0 * look,
+                    -2.5 * sway * walk,
+                    1.5 * math.sin(tau * u + 0.4) * walk - 8.0 * look)
+        body.rotation_euler = [rad(v) for v in body_rot]
         _key(body, 'location', 'rotation_euler', frame=frame)
 
-        # Head: looks around while walking; in the hero shot it turns to the camera and tilts.
+        # Head: stabilised like a bird's. It holds a level gaze against the waddle and only
+        # glances slowly around; in the hero shot it turns to the camera and tilts.
         head = pb['head']
-        walk_pitch = 4.0 + 2.0 * math.sin(2 * tau * u - 1.3)
-        walk_yaw = 10.0 * math.sin(tau * u - 0.5)
-        walk_roll = 7.0 * math.sin(tau * u - 1.2)
+        glance = math.sin(tau * f / 100) if hero else math.sin(tau * u)
         tilt = settle(f, STOP_AT + 10, 14.0) if hero else 0.0
-        head.rotation_euler = (rad(walk_pitch * walk - 3.0 * look),
-                               rad(walk_roll * walk + tilt),
-                               rad(walk_yaw * walk - 26.0 * look))
+        world = (2.5 * walk - 5.0 * look,
+                 1.5 * math.sin(tau * u - 1.2) * walk + tilt,
+                 (12.0 if hero else 7.0) * glance * walk - 34.0 * look)
+        head.rotation_euler = [rad(w - b) for w, b in zip(world, body_rot)]
         _key(head, 'rotation_euler', frame=frame)
 
-        # Antenna: follow-through, plus a springy perk when the head tilts.
+        # Antenna: light follow-through, plus a springy perk when the head tilts.
         perk_t = f - (STOP_AT + 10)
         perk = 12.0 * math.exp(-perk_t / 7) * math.sin(perk_t * 0.9) if hero and perk_t > 0 else 0.0
-        for i, amp in enumerate((3.0, 4.0, 5.0)):
+        for i, amp in enumerate((2.0, 2.5, 3.0)):
             lag = 1.2 + 0.5 * i
             pb[f'antenna_{i + 1}'].rotation_euler = (
                 rad(amp * math.sin(2 * tau * u - lag) * walk + perk * (0.5 + 0.25 * i)), 0,
@@ -1011,6 +1012,109 @@ def animate(arm, frames, hero):
                 fp.rotation_axis_angle = (sign * opening, *axes[f'{fname}.{side}'])
                 _key(fp, 'rotation_axis_angle', frame=frame)
     return progress
+
+
+IDLE_FRAMES = 168    # 7 s loop
+
+# Idle look-around beats: (start frame, frames to get there, head (pitch, roll, yaw) in degrees).
+# Positive yaw looks to D-17's left; negative pitch looks up.
+IDLE_LOOKS = [
+    (0, 1, (3, 0, 0)),
+    (16, 8, (2, 4, 30)),       # quick glance to his left...
+    (38, 10, (0, 9, 30)),      # ...and a curious tilt at whatever is there
+    (60, 9, (-13, -4, -8)),    # something above
+    (98, 8, (2, -3, -32)),     # glance to his right
+    (122, 9, (17, 6, 10)),     # down at his own claw
+    (142, 14, (3, 0, 0)),      # back to centre, settle
+]
+
+
+def ease_back(x, overshoot=1.3):
+    """Ease out with a small overshoot: quick, alert head darts that settle."""
+    x = min(1.0, max(0.0, x))
+    return 1 + (overshoot + 1) * (x - 1) ** 3 + overshoot * (x - 1) ** 2
+
+
+def idle_head(f):
+    pose = IDLE_LOOKS[0][2]
+    for start, dur, target in IDLE_LOOKS[1:]:
+        if f < start:
+            break
+        k = ease_back((f - start) / dur)
+        pose = tuple(a + (b - a) * k for a, b in zip(pose, target))
+    return pose
+
+
+def animate_idle(arm, frames):
+    """Standing idle that loops: breathing, weight shifts, and a curious look-around in quick
+    darts and holds. The body follows the head a little late; the antenna whips after it."""
+    pb = arm.pose.bones
+    tau = 2 * math.pi
+    rad = math.radians
+    axes = {}
+    for side, _ in SIDES:
+        for f in ('finger_a', 'finger_b'):
+            b = arm.data.bones[f'{f}.{side}']
+            axes[f'{f}.{side}'] = (b.matrix_local.to_3x3().inverted() @ Vector((0, 1, 0))).normalized()
+    for name in pb.keys():
+        if not name.startswith('finger'):
+            pb[name].rotation_mode = 'XYZ'
+
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        head_w = idle_head(f)
+        lagged = idle_head(max(0, f - 5))
+        prev = idle_head(max(0, f - 3))
+
+        _key(pb['root'], 'location', frame=frame)
+        for side, s in SIDES:
+            ik = pb[f'ik_foot.{side}']
+            tap = 0.0
+            if side == 'R' and 128 <= f < 140:   # a little nervous toe tap
+                tap = 0.012 * math.sin(math.pi * (f - 128) / 12)
+            ik.location = (0, 0, tap)                # feet side by side
+            ik.rotation_euler = (rad(20) * tap / 0.012, 0, rad(-s * 7))
+            _key(ik, 'location', 'rotation_euler', frame=frame)
+
+        body = pb['body']
+        body_rot = (2.0 + 0.25 * lagged[0], 0.15 * lagged[1] + 1.2 * math.sin(tau * f / frames),
+                    0.25 * lagged[2])
+        body.location = (0.006 * math.sin(tau * f / frames), 0,
+                         -0.006 + 0.0018 * math.sin(tau * 3 * f / frames))
+        body.rotation_euler = [rad(v) for v in body_rot]
+        _key(body, 'location', 'rotation_euler', frame=frame)
+
+        head = pb['head']
+        head.rotation_euler = [rad(w - b) for w, b in zip(head_w, body_rot)]
+        _key(head, 'rotation_euler', frame=frame)
+
+        whip = [h - p for h, p in zip(head_w, prev)]   # head angular change drives the antenna
+        for i in range(3):
+            k = 0.9 + 0.5 * i
+            pb[f'antenna_{i + 1}'].rotation_euler = (
+                rad(-whip[0] * k + 1.0 * math.sin(tau * 3 * f / frames - i)), 0,
+                rad(whip[2] * k * 0.6))
+            _key(pb[f'antenna_{i + 1}'], 'rotation_euler', frame=frame)
+
+        # Claws held in front; the left one fidgets while he looks down at it.
+        look_down = smoothstep((f - 122) / 8) * (1 - smoothstep((f - 142) / 10))
+        for side, s in SIDES:
+            hand = pb[f'ik_hand.{side}']
+            lift = 0.02 * look_down if side == 'L' else 0.0
+            hand.location = (-s * 0.04, -0.09 - 0.015 * (look_down if side == 'L' else 0),
+                             0.112 + lift + 0.0015 * math.sin(tau * 3 * f / frames - 0.8))
+            hand.rotation_euler = (rad(-24 - 12 * (look_down if side == 'L' else 0)),
+                                   rad(s * 6), rad(s * 10))
+            _key(hand, 'location', 'rotation_euler', frame=frame)
+            if side == 'L':
+                fidget = 16.0 * look_down * (0.5 - 0.5 * math.cos(tau * (f - 122) / 10))
+            else:
+                fidget = 4.0 * smoothstep((f - 40) / 4) * (1 - smoothstep((f - 52) / 6))
+            opening = rad(CLAW_REST_OPEN[side] + fidget)
+            for fname, sign in (('finger_a', 1), ('finger_b', -1)):
+                fp = pb[f'{fname}.{side}']
+                fp.rotation_axis_angle = (sign * opening, *axes[f'{fname}.{side}'])
+                _key(fp, 'rotation_axis_angle', frame=frame)
 
 
 # --------------------------------------------------------------------------
@@ -1115,6 +1219,7 @@ SHOTS = {
     # name: (robot placements, default resolution)
     'turnaround': ([('D17Front', (-0.33, 0, 0), 0), ('D17Side', (0.36, 0.05, 0), 90)], [960, 640]),
     'hero': ([('D17', (0, 0, 0), 0)], [960, 640]),
+    'idle': ([('D17', (0, 0, 0), 0)], [960, 640]),
     'sprites': ([('D17', (0, 0, 0), 90)], [256, 256]),
     'closeup': ([('D17Front', (-0.33, 0, 0), 0), ('D17Side', (0.36, 0.05, 0), 90)], [1440, 960]),
 }
@@ -1137,9 +1242,13 @@ def main():
     rigs = [build_robot(*p) for p in placements]
 
     hero = args.shot == 'hero'
-    frames = HERO_FRAMES if hero else CYCLE
+    frames = {'hero': HERO_FRAMES, 'idle': IDLE_FRAMES}.get(args.shot, CYCLE)
     scene.frame_start, scene.frame_end = 1, frames
-    progress = [animate(arm, frames, hero) for arm in rigs][0]
+    if args.shot == 'idle':
+        for arm in rigs:
+            animate_idle(arm, frames)
+    else:
+        progress = [animate(arm, frames, hero) for arm in rigs][0]
 
     setup_world_and_floor(transparent=args.shot == 'sprites')
     setup_render(args)
@@ -1150,6 +1259,8 @@ def main():
 
     if args.shot == 'turnaround':
         camera('Cam', (0.0, -2.35, 0.26), (0.0, 0, 0.42), lens=45)
+    elif args.shot == 'idle':
+        camera('Cam', (-1.05, -1.55, 0.42), (0, 0, 0.43), lens=45)
     elif args.shot == 'closeup':
         camera('Cam', (0.0, -1.75, 0.45), (0.0, 0, 0.45), lens=38)
     elif args.shot == 'hero':
