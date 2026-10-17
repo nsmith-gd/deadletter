@@ -32,7 +32,10 @@ STOP_AT = (HERO_STEPS - 1) * STEP + SWING
 HERO_FRAMES = STOP_AT + 46
 
 # Material slot indices shared by every part.
-(DARK, CREAM, GLOW, EYE, CABLE, GLASS, GLOW_DIM, CREAM_LIMB, BARE, ROD) = range(10)
+(DARK, CREAM, GLOW, EYE, CABLE, GLASS, GLOW_DIM, CREAM_LIMB, BARE, ROD,
+ WINDOW, PAPER, PARCEL_LAMP, LAMP_A, LAMP_B, LAMP_C, EYE_GLINT) = range(17)
+
+TEXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'textures')
 
 
 # --------------------------------------------------------------------------
@@ -204,6 +207,16 @@ def build_materials():
                       chip=(0.2, 0.18, 0.15), rough=0.5, chip_rough=0.4, metallic=0.7,
                       grime_scale=20, chip_scale=60, chip_amount=0.75, edge_wear=False,
                       streaks=0.7, dust_amount=0.2),
+        simple_material('Window', (0.8, 0.82, 0.8), 0.12, transmission=0.95),
+        worn_material('ParcelPaper', base=(0.36, 0.27, 0.17), dirt=(0.2, 0.15, 0.09),
+                      chip=(0.45, 0.38, 0.28), rough=0.85, chip_rough=0.8, metallic=0.0,
+                      grime_scale=30, chip_scale=80, chip_amount=0.8, edge_wear=False,
+                      streaks=0.3, dust_amount=0.3),
+        emission_material('ParcelLamp', (1.0, 0.55, 0.2), 6.0),
+        emission_material('LampA', (0.85, 0.30, 0.08), 0.9),
+        emission_material('LampB', (0.85, 0.30, 0.08), 0.9),
+        emission_material('LampC', (0.85, 0.30, 0.08), 0.9),
+        emission_material('EyeGlint', (1.0, 0.84, 0.62), 2.5),
     ]
 
 
@@ -590,6 +603,7 @@ def build_head(arm, mats, coll):
                 dents=((0.004, 8),), seed=4)
     for x in (-0.11, 0.104):
         add_cyl(bm, (x, -0.152, 0.588), (x, -0.11, 0.588), 0.03, mat=EYE, seg=24)
+        add_sphere(bm, (x + 0.008, -0.1535, 0.595), 0.0032, mat=EYE_GLINT, seg=10)
         add_torus(bm, (x, -0.15, 0.588), (0, 1, 0), 0.029, 0.003, mat=DARK, seg=24, rseg=6)
     # Ear port housings: dark oval cups set into the ports.
     for s in (-1, 1):
@@ -710,9 +724,9 @@ def build_body(arm, mats, coll):
     add_cyl(bm, (-0.11, -0.01, 0.535), (0.11, -0.01, 0.535), 0.016)
     for s in (-1, 1):
         add_box(bm, (s * 0.1, -0.01, 0.52), (0.022, 0.05, 0.05))
-    # Warm indicator slits on the pod front.
-    for x in (-0.085, -0.05, 0.03):
-        add_box(bm, (x, -0.168, 0.452), (0.022, 0.01, 0.007), mat=GLOW_DIM)
+    # Three indicator lamps on the pod front (they answer the depot relay in DL-01).
+    for x, lamp in ((-0.085, LAMP_A), (-0.05, LAMP_B), (-0.015, LAMP_C)):
+        add_box(bm, (x, -0.168, 0.452), (0.022, 0.01, 0.007), mat=lamp)
     # Rivets along the lip.
     for i in range(11):
         x = -0.19 + i * 0.037
@@ -794,6 +808,9 @@ def build_limbs(arm, mats, coll):
                     rot=Vector((0, 0, 1)).rotation_difference(top - bot).to_matrix().to_4x4())
         add_cyl(bm, knee.lerp(ankle, 0.3), ankle, 0.0055, mat=ROD)
         add_cyl(bm, knee.lerp(ankle, 0.72), knee.lerp(ankle, 0.8), 0.0085)
+        if side == 'L':  # the old knee: a strap repair around the actuator (pays off in DL-34/37)
+            for k in (0.06, 0.2, 0.33):
+                add_cyl(bm, knee.lerp(ankle, k - 0.015), knee.lerp(ankle, k + 0.015), 0.0195, mat=BARE)
         parent_to_bone(mesh_object(f'Shin.{side}', bm, mats, coll), arm, f'shin.{side}')
 
         # Bird-like foot: knotted ankle, cream toes splayed sideways and forward, rear spur.
@@ -853,6 +870,127 @@ def build_limbs(arm, mats, coll):
             add_cyl(bm, mid + Vector((0, -0.01, 0)), mid + Vector((0, 0.01, 0)), 0.005, seg=10)
             parent_to_bone(mesh_object(f'Finger.{f}.{side}', bm, mats, coll, sharp=30), arm,
                            f'{f}.{side}')
+
+
+# --------------------------------------------------------------------------
+# Chest compartment: the parcel behind a scuffed window, lit by the parcel lamp.
+# --------------------------------------------------------------------------
+
+def make_label_texture(path):
+    """Parcel label: child silhouette, destination glyph and room number, a small crooked-tree
+    stamp, postal marks. Drawn bold so it reads at handheld size."""
+    from PIL import Image, ImageDraw, ImageFilter
+    import random
+    rnd = random.Random(17)
+    w, h = 1024, 512
+    img = Image.new('RGB', (w, h), (214, 198, 160))
+    d = ImageDraw.Draw(img)
+    for _ in range(60):   # age stains
+        x, y, r = rnd.randint(0, w), rnd.randint(0, h), rnd.randint(20, 120)
+        c = rnd.randint(150, 195)
+        d.ellipse((x - r, y - r, x + r, y + r), fill=(c + 10, c - 5, c - 40))
+    img = img.filter(ImageFilter.GaussianBlur(18))
+    d = ImageDraw.Draw(img)
+    ink = (38, 32, 28)
+    d.rectangle((14, 14, w - 14, h - 14), outline=ink, width=10)
+    d.line((400, 30, 400, h - 30), fill=ink, width=8)
+    # Child silhouette: head, bob of hair, coat, legs and boots.
+    cx = 200
+    d.ellipse((cx - 62, 70, cx + 62, 194), fill=ink)
+    d.polygon([(cx - 70, 205), (cx + 70, 205), (cx + 112, 380), (cx - 112, 380)], fill=ink)
+    d.rectangle((cx - 52, 380, cx - 18, 450), fill=ink)
+    d.rectangle((cx + 18, 380, cx + 52, 450), fill=ink)
+    d.rectangle((cx - 66, 440, cx - 12, 466), fill=ink)
+    d.rectangle((cx + 12, 440, cx + 66, 466), fill=ink)
+    # Destination: a doorway glyph and a room number in blocky strokes.
+    d.rectangle((450, 70, 560, 220), outline=ink, width=14)
+    d.rectangle((488, 140, 522, 220), fill=ink)
+
+    def digit(x, y, n, s=58, t=16):
+        segs = {'1': 'bc', '4': 'fgbc'}
+        a, b_, c, dd, e, f, g = ((x, y, x + s, y + t), (x + s - t, y, x + s, y + s),
+                                (x + s - t, y + s, x + s, y + 2 * s), (x, y + 2 * s - t, x + s, y + 2 * s),
+                                (x, y + s, x + t, y + 2 * s), (x, y, x + t, y + s),
+                                (x, y + s - t // 2, x + s, y + s + t // 2))
+        boxes = dict(a=a, b=b_, c=c, d=dd, e=e, f=f, g=g)
+        for k in segs[n]:
+            d.rectangle(boxes[k], fill=ink)
+    for i, n in enumerate('114'):
+        digit(600 + i * 92, 92, n)
+    # Postal bars and a postmark.
+    for i in range(14):
+        x = 450 + i * 34
+        d.rectangle((x, 300, x + (10 if i % 3 else 20), 360), fill=ink)
+    d.ellipse((800, 300, 990, 490), outline=(120, 40, 34), width=8)
+    for k in range(4):
+        d.line((790, 330 + k * 34, 1000, 318 + k * 34), fill=(120, 40, 34), width=6)
+    # Crooked-tree stamp with a knot in one branch.
+    tree = (128, 46, 38)
+    d.ellipse((440, 380, 560, 500), outline=tree, width=6)
+    d.line((500, 488, 496, 440, 508, 410), fill=tree, width=10)
+    d.line((498, 445, 470, 418, 462, 398), fill=tree, width=7)
+    d.line((506, 425, 532, 404, 548, 410), fill=tree, width=7)
+    d.ellipse((470, 410, 484, 424), fill=tree)
+    img = img.filter(ImageFilter.GaussianBlur(1.2))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    img.save(path)
+
+
+def label_material():
+    path = os.path.join(TEXTURES, 'parcel_label.png')
+    if not os.path.exists(path):
+        make_label_texture(path)
+    mat, nt, bsdf = _new_material('ParcelLabel')
+    tex = nt.nodes.new('ShaderNodeTexImage')
+    tex.image = bpy.data.images.load(path, check_existing=True)
+    nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+    bsdf.inputs['Roughness'].default_value = 0.8
+    return mat
+
+
+def build_compartment(arm, mats, coll):
+    bm = bmesh.new()
+    cx, z0, z1 = -0.005, 0.315, 0.435
+    add_box(bm, (cx, -0.181, z1 - 0.006), (0.24, 0.052, 0.012))            # housing
+    add_box(bm, (cx, -0.181, z0 + 0.006), (0.24, 0.052, 0.012))
+    for sx in (-1, 1):
+        add_box(bm, (cx + sx * 0.114, -0.181, (z0 + z1) / 2), (0.012, 0.052, 0.12))
+    add_box(bm, (cx, -0.2055, z1 - 0.009), (0.24, 0.005, 0.018))             # bezel
+    add_box(bm, (cx, -0.2055, z0 + 0.009), (0.24, 0.005, 0.018))
+    for sx in (-1, 1):
+        add_box(bm, (cx + sx * 0.11, -0.2055, (z0 + z1) / 2), (0.02, 0.005, 0.12))
+    add_box(bm, (cx, -0.2035, (z0 + z1) / 2), (0.2, 0.002, 0.086), mat=WINDOW)
+    for sx in (-0.07, 0.06):                                                 # hinge pins
+        add_cyl(bm, (cx + sx - 0.02, -0.207, z0 + 0.002), (cx + sx + 0.02, -0.207, z0 + 0.002), 0.0045)
+    add_box(bm, (cx + 0.124, -0.198, 0.39), (0.01, 0.016, 0.026), mat=BARE)  # latch button
+    add_box(bm, (cx, -0.179, 0.372), (0.19, 0.036, 0.082), mat=PAPER)        # the parcel
+    add_box(bm, (cx + 0.05, -0.1965, 0.372), (0.008, 0.002, 0.083), mat=CABLE)   # twine
+    add_box(bm, (cx, -0.1965, 0.392), (0.19, 0.002, 0.007), mat=CABLE)
+    add_box(bm, (cx, -0.197, z1 - 0.013), (0.18, 0.005, 0.004), mat=PARCEL_LAMP)
+    parent_to_bone(mesh_object('Compartment', bm, mats, coll, sharp=30), arm, 'body')
+
+    lb = bmesh.new()
+    lb.loops.layers.uv.new('UVMap')
+    bmesh.ops.create_grid(lb, x_segments=1, y_segments=1, size=0.5, calc_uvs=True)
+    bmesh.ops.transform(lb, verts=lb.verts, matrix=Matrix.Translation((cx - 0.028, -0.1983, 0.368))
+                        @ Matrix.Rotation(math.radians(90), 4, 'X')
+                        @ Matrix.Diagonal((0.124, 0.062, 1, 1)))
+    me = bpy.data.meshes.new('ParcelLabel')
+    lb.to_mesh(me)
+    lb.free()
+    me.materials.append(label_material())
+    label = bpy.data.objects.new('ParcelLabel', me)
+    coll.objects.link(label)
+    parent_to_bone(label, arm, 'body')
+
+    lamp = bpy.data.lights.new('ParcelLampLight', 'POINT')
+    lamp.energy = 0.25
+    lamp.color = (1.0, 0.6, 0.28)
+    lamp.shadow_soft_size = 0.01
+    lamp_ob = bpy.data.objects.new('ParcelLampLight', lamp)
+    lamp_ob.location = (cx, -0.192, 0.418)
+    coll.objects.link(lamp_ob)
+    parent_to_bone(lamp_ob, arm, 'body')
 
 
 # --------------------------------------------------------------------------
@@ -1296,6 +1434,7 @@ def build_robot(name='D17', loc=(0, 0, 0), rot_z=0.0):
     build_antenna(arm, mats, coll)
     build_body(arm, mats, coll)
     build_limbs(arm, mats, coll)
+    build_compartment(arm, mats, coll)
     calibrate_poles(arm)
     arm.location = loc
     arm.rotation_euler = (0, 0, math.radians(rot_z))
