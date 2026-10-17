@@ -1117,6 +1117,90 @@ def animate_idle(arm, frames):
                 _key(fp, 'rotation_axis_angle', frame=frame)
 
 
+RUN_CYCLE = 16       # frames per run cycle: two quick steps (0.67 s)
+RUN_STANCE = 0.375   # a foot is planted 6 of 16 frames, so both feet leave the ground briefly
+RUN_HALF = 0.075     # a planted foot travels +-7.5 cm relative to the hips
+RUN_LIFT = 0.06      # knees come up
+RUN_SPEED = 2 * RUN_HALF / (RUN_STANCE * RUN_CYCLE)   # 0.025 m/frame = 0.6 m/s, no foot slide
+
+
+def run_foot(t, phase):
+    """Relative forward offset, lift and swing progress (None when planted) for a run foot."""
+    u = (t - phase) % 1.0
+    if u < RUN_STANCE:
+        return -RUN_HALF + 2 * RUN_HALF * u / RUN_STANCE, 0.0, None
+    s = (u - RUN_STANCE) / (1 - RUN_STANCE)
+    return RUN_HALF - 2 * RUN_HALF * smoothstep(s), RUN_LIFT * math.sin(math.pi * s) ** 0.8, s
+
+
+def animate_run(arm, frames, travel):
+    """A hurried, slightly anxious scurry: short quick steps with a flight phase, a forward
+    lean, claws tucked up and pumping, a level head fixed ahead and the antenna streaming back."""
+    pb = arm.pose.bones
+    tau = 2 * math.pi
+    rad = math.radians
+    axes = {}
+    for side, _ in SIDES:
+        for f in ('finger_a', 'finger_b'):
+            b = arm.data.bones[f'{f}.{side}']
+            axes[f'{f}.{side}'] = (b.matrix_local.to_3x3().inverted() @ Vector((0, 1, 0))).normalized()
+    for name in pb.keys():
+        if not name.startswith('finger'):
+            pb[name].rotation_mode = 'XYZ'
+
+    progress = []
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        t = (f % RUN_CYCLE) / RUN_CYCLE
+        progress.append(RUN_SPEED * f)
+        pb['root'].location = (0, -RUN_SPEED * f if travel else 0.0, 0)
+        _key(pb['root'], 'location', frame=frame)
+
+        for side, s in SIDES:
+            rel, lift, sw = run_foot(t, 0.0 if side == 'L' else 0.5)
+            ik = pb[f'ik_foot.{side}']
+            ik.location = (0, rel, lift)
+            # Toes trail after push-off, then the foot flattens to reach for the ground.
+            trail = rad(28) * math.sin(math.pi * sw) * (1 - sw) * 1.6 if sw is not None else 0.0
+            ik.rotation_euler = (trail, 0, rad(-s * 4))
+            _key(ik, 'location', 'rotation_euler', frame=frame)
+
+        # Body: crouched, leaning in, compressing at mid-stance and rising through the flight.
+        step = 2 * t - RUN_STANCE      # 0 at each mid-stance, 0.5 mid-flight
+        body_rot = (9.0 + 1.5 * math.cos(tau * step),
+                    -2.0 * math.sin(tau * t),
+                    3.0 * math.sin(tau * t + 0.3))
+        body = pb['body']
+        body.location = (-0.005 * math.sin(tau * t), 0, -0.018 - 0.01 * math.cos(tau * step))
+        body.rotation_euler = [rad(v) for v in body_rot]
+        _key(body, 'location', 'rotation_euler', frame=frame)
+
+        # Head: level and fixed ahead, with only a slight lag.
+        world = (1.0 * math.cos(tau * step - 0.8), 0.8 * math.sin(tau * t - 0.6), 0.0)
+        pb['head'].rotation_euler = [rad(w - b) for w, b in zip(world, body_rot)]
+        _key(pb['head'], 'rotation_euler', frame=frame)
+
+        for i, back in enumerate((-9.0, -8.0, -7.0)):
+            pb[f'antenna_{i + 1}'].rotation_euler = (
+                rad(back + 3.0 * math.sin(tau * step - 1.0 - 0.6 * i)), 0,
+                rad(2.0 * math.sin(tau * t - 0.8 * i)))
+            _key(pb[f'antenna_{i + 1}'], 'rotation_euler', frame=frame)
+
+        # Claws tucked up to the chest, pumping opposite the legs, gripped shut.
+        for side, s in SIDES:
+            hand = pb[f'ik_hand.{side}']
+            hand.location = (-s * 0.05, -0.06 + 0.022 * s * math.cos(tau * t),
+                             0.15 + 0.008 * math.cos(tau * step - 1.2))
+            hand.rotation_euler = (rad(-38 + 8 * s * math.cos(tau * t)), rad(s * 6), rad(s * 12))
+            _key(hand, 'location', 'rotation_euler', frame=frame)
+            opening = rad(4.0 if side == 'L' else 0.0)
+            for fname, sign in (('finger_a', 1), ('finger_b', -1)):
+                fp = pb[f'{fname}.{side}']
+                fp.rotation_axis_angle = (sign * opening, *axes[f'{fname}.{side}'])
+                _key(fp, 'rotation_axis_angle', frame=frame)
+    return progress
+
+
 # --------------------------------------------------------------------------
 # Scene, lighting, cameras
 # --------------------------------------------------------------------------
@@ -1177,7 +1261,10 @@ def setup_render(args):
     scene.render.resolution_percentage = 100
     scene.render.fps = 24
     scene.render.image_settings.file_format = 'PNG'
-    scene.render.image_settings.color_mode = 'RGBA' if args.shot == 'sprites' else 'RGB'
+    scene.render.image_settings.color_mode = 'RGBA' if args.shot.endswith('sprites') else 'RGB'
+    if args.shot.startswith('run'):
+        scene.render.use_motion_blur = True
+        scene.render.motion_blur_shutter = 0.5
     scene.view_settings.view_transform = 'AgX'
     try:
         scene.view_settings.look = 'AgX - Medium High Contrast'
@@ -1221,6 +1308,9 @@ SHOTS = {
     'hero': ([('D17', (0, 0, 0), 0)], [960, 640]),
     'idle': ([('D17', (0, 0, 0), 0)], [960, 640]),
     'sprites': ([('D17', (0, 0, 0), 90)], [256, 256]),
+    'run': ([('D17', (0, 0, 0), 0)], [960, 640]),
+    'run_turnaround': ([('D17Front', (-0.33, 0, 0), 0), ('D17Side', (0.36, 0.05, 0), 90)], [960, 640]),
+    'run_sprites': ([('D17', (0, 0, 0), 90)], [256, 256]),
     'closeup': ([('D17Front', (-0.33, 0, 0), 0), ('D17Side', (0.36, 0.05, 0), 90)], [1440, 960]),
 }
 
@@ -1242,23 +1332,35 @@ def main():
     rigs = [build_robot(*p) for p in placements]
 
     hero = args.shot == 'hero'
-    frames = {'hero': HERO_FRAMES, 'idle': IDLE_FRAMES}.get(args.shot, CYCLE)
+    running = args.shot.startswith('run')
+    frames = {'hero': HERO_FRAMES, 'idle': IDLE_FRAMES, 'run': RUN_CYCLE * 3}.get(
+        args.shot, RUN_CYCLE if running else CYCLE)
     scene.frame_start, scene.frame_end = 1, frames
     if args.shot == 'idle':
         for arm in rigs:
             animate_idle(arm, frames)
+    elif running:
+        progress = [animate_run(arm, frames, args.shot == 'run') for arm in rigs][0]
     else:
         progress = [animate(arm, frames, hero) for arm in rigs][0]
 
-    setup_world_and_floor(transparent=args.shot == 'sprites')
+    setup_world_and_floor(transparent=args.shot.endswith('sprites'))
     setup_render(args)
     add_light('Key', 'AREA', (-1.2, -1.6, 2.4), (0, 0, 0.45), 150, 1.6, (1.0, 0.96, 0.9))
     add_light('Fill', 'AREA', (1.8, -1.2, 0.8), (0, 0, 0.4), 45, 2.5, (0.85, 0.95, 1.0))
     add_light('Rim', 'AREA', (0.6, 2.0, 1.6), (0, 0, 0.5), 140, 1.2)
     add_light('Top', 'AREA', (0, -0.3, 2.6), (0, 0, 0), 260, 1.2, (0.95, 1.0, 0.95))
 
-    if args.shot == 'turnaround':
+    if args.shot in ('turnaround', 'run_turnaround'):
         camera('Cam', (0.0, -2.35, 0.26), (0.0, 0, 0.42), lens=45)
+    elif args.shot == 'run':
+        rig = bpy.data.objects.new('CamRig', None)
+        scene.collection.objects.link(rig)
+        cam = camera('Cam', (-1.75, -0.85, 0.40), (0, -0.07, 0.38), lens=40)
+        cam.parent = rig
+        for i in range(frames):
+            rig.location = (0, -progress[i], 0)
+            rig.keyframe_insert('location', frame=i + 1)
     elif args.shot == 'idle':
         camera('Cam', (-1.05, -1.55, 0.42), (0, 0, 0.43), lens=45)
     elif args.shot == 'closeup':
