@@ -112,15 +112,16 @@
 
   <section id="title" class="layer">
     <div class="card">
-      <div class="eyebrow"><span>Dead Letter &middot; prototype</span><span>Scene 01 of 45 &middot; ~2 min</span></div>
+      <div class="eyebrow"><span>Dead Letter &middot; prototype</span><span>Scene 01 of 45 &middot; ~4 min</span></div>
       <h1><span class="code">DL-01</span> The Wake</h1>
       <p class="lede">A courier wakes beneath the refuge with a parcel still undelivered.</p>
       <dl class="controls">
-        <dt>Keyboard</dt><dd><kbd>A</kbd> <kbd>D</kbd> or arrows to move &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> use &middot; <kbd>Esc</kbd> pause</dd>
-        <dt>Gamepad</dt><dd>Stick to move &middot; <kbd>A</kbd> jump &middot; <kbd>X</kbd> use &middot; <kbd>Menu</kbd> pause</dd>
+        <dt>Keyboard</dt><dd><kbd>A</kbd> <kbd>D</kbd> or arrows to move &middot; <kbd>Shift</kbd> walk &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> use &middot; <kbd>Esc</kbd> pause</dd>
+        <dt>Gamepad</dt><dd>Stick to move (push fully to run) &middot; <kbd>A</kbd> jump &middot; <kbd>X</kbd> use &middot; <kbd>B</kbd> walk &middot; <kbd>Menu</kbd> pause</dd>
         <dt>Touch</dt><dd>On-screen buttons</dd>
       </dl>
       <div class="opts">
+        <label><input type="checkbox" id="opt-autorun" checked><span>Auto-run (hold Shift or B to walk)</span></label>
         <label><input type="checkbox" id="opt-sound" checked><span>Sound</span></label>
         <label><input type="checkbox" id="opt-assist"><span>Show a button prompt if I'm stuck</span></label>
         <label><input type="checkbox" id="opt-calm"><span>Reduce flicker and flashes</span></label>
@@ -138,6 +139,7 @@
       <div class="eyebrow"><span>DL-01 The Wake</span><span id="pause-time">0:00</span></div>
       <h2>Paused</h2>
       <div class="opts">
+        <label><input type="checkbox" id="opt-autorun-p" checked><span>Auto-run (hold Shift or B to walk)</span></label>
         <label><input type="checkbox" id="opt-sound-p" checked><span>Sound</span></label>
         <label><input type="checkbox" id="opt-assist-p"><span>Show a button prompt if I'm stuck</span></label>
         <label><input type="checkbox" id="opt-calm-p"><span>Reduce flicker and flashes</span></label>
@@ -154,7 +156,7 @@
     <div class="card">
       <div class="eyebrow"><span>End of DL-01</span><span id="end-time"></span></div>
       <h2>The job continues</h2>
-      <p>D-17 leaves the cradle bay with the parcel still sealed. Next: <strong>DL-02 The Weight of the Job</strong>, a floor plate and a gate.</p>
+      <p>D-17 steps through the bulkhead with the parcel still sealed. Next: <strong>DL-02 The Weight of the Job</strong>, a floor plate and a gate.</p>
       <div class="row">
         <button class="act" id="again" type="button">Play again</button>
         <button class="act secondary" id="again-skip" type="button">Play again, skip intro</button>
@@ -183,17 +185,28 @@ const SHUTTER_OPEN_DEG = 15;
 const LATCH_PIVOT = new THREE.Vector3(3.36, 0.12, 0.02);
 const LATCH_TILT = 8;
 const PULL_ROOT_X = 3.12;
-const CRATE = { x0: 4.5, x1: 5.1, h: 0.45 };
+const STEP = { x0: 4.1, x1: 4.9, h: 0.22 };     // fallen conveyor: the first hop
+const CRATE = { x0: 5.6, x1: 6.2, h: 0.45 };    // too high to hop: climb it
+const PIT = { x0: 6.6, x1: 7.1, y: -0.35 };     // drain trench
+const PLATFORMS = [STEP, CRATE];
+const HALL_X = 7.3;
+const CRANK_X = 9.62, CRANK_STROKES = 5;
+const DOOR = { x0: 10.0, x1: 10.8, h: 1.05 };
+const CORD_STAND = 0.59, CORD_BEAD = 0.70, CORD_SHADE = 2.03;
 const START_X = 1.0;
-const LEFT_LIMIT = -0.3;
-const EXIT_X = 6.7;
-const LOCKED_LIMIT = 3.14;
-const WALK = 0.45, CROUCH_WALK = 0.3;          // m/s, the decision D1 scale for a 0.71 m courier
+const LEFT_LIMIT = -0.3, RIGHT_LIMIT = 11.45, LOCKED_LIMIT = 3.14;
+const WALK = 0.9, RUN = 1.6, CROUCH_WALK = 0.5;   // m/s for a 0.71 m courier
+const CLIP_SPEED = { Walk: 0.79, Run: 1.52, CrouchWalk: 0.49 };   // speeds the clips were authored at
 const GRAVITY = 9.8, JUMP_APEX = 0.4;
 const JUMP_V = Math.sqrt(2 * GRAVITY * JUMP_APEX);
 const COYOTE = 0.1, JUMP_BUFFER = 0.12;
 const STAND_H = 0.76, CROUCH_H = 0.58, ANTENNA_TOP = 1.12;
-const LOOP_FRAMES = { Idle: 168, Walk: 16, CrouchWalk: 18, CrouchIdle: 48, JumpAir: 8 };
+const HALF = 0.17, FOOT = 0.08, STEP_UP = 0.07, FACE_D = 0.17, MANTLE_MIN = 0.24, MANTLE_MAX = 0.62;
+const MANTLE_KEYS = [[0, 0, 0], [6, 0, 0], [10, 0.03, 0.12], [14, 0.03, 0.18], [20, 0.05, 0.45],
+  [24, 0.05, 0.38], [32, 0.10, 0.78], [38, 0.20, 0.95], [44, 0.33, 1.0], [56, 0.38, 1.0]];   // build_dl01.py matches
+const MANTLE_FRAMES = 56;
+const HINT_LOOK = 5, HINT_LEAN = 10, HINT_GLYPH = 18;
+const LOOP_FRAMES = { Idle: 168, Walk: 11, Run: 10, CrouchWalk: 13, CrouchIdle: 48, JumpAir: 8, Crank: 24 };
 
 // Opening beats (frames), from the DL-01 beat sheet.
 const RELAY_SETS = [[120, 0.55], [168, 1.0], [336, 1.0]];
@@ -271,12 +284,13 @@ const WORN = {
   ParcelBrown: { base: [.3, .22, .13], dirt: [.15, .11, .07], chip: [.4, .33, .24], rough: .9, chipRough: .85, metal: 0, grime: 10, chipScale: 40, chipAmt: .75, dust: [.2, .18, .15], dustAmt: .7 },
 };
 const PLAIN = { EyeDark: [[.003, .003, .003], .3, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
+  Water: [[.01, .012, .012], .04, .3],
   Copper: [[.55, .3, .18], .35, 1], ReflectTag: [[.8, .78, .7], .15, .6] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
 const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
   CradleStatus: [.35, 1, .45, 0], Spark: [.7, .85, 1, 0], FarGlow: [.45, .55, .6, .09], RelayA: [.75, 1, .82, 0],
-  RelayB: [.75, 1, .82, 0], RelayC: [.75, 1, .82, 0] };
+  RelayB: [.75, 1, .82, 0], RelayC: [.75, 1, .82, 0], CordBulb: [1, .85, .6, 0], DoorGlow: [.6, .85, .72, 0] };
 
 const lin = (a) => new THREE.Color().setRGB(a[0], a[1], a[2]);
 function wornMaterial(name, s) {
@@ -335,7 +349,7 @@ function materialFor(src) {
 // Audio: everything synthesized, routed through a short depot reverb
 // ---------------------------------------------------------------------------
 const Sound = (() => {
-  let ctx = null, master, wet, hum, humGain, buzz, buzzGain, enabled = true;
+  let ctx = null, master, wet, hum, humGain, buzz, buzzGain, hissNode = null, enabled = true;
   function noiseBuffer(sec = 1) {
     const b = ctx.createBuffer(1, ctx.sampleRate * sec, ctx.sampleRate);
     const d = b.getChannelData(0);
@@ -394,7 +408,25 @@ const Sound = (() => {
     rattle(dur = 0.4) { for (let k = 0; k < dur * 30; k++) setTimeout(() => noise(0.012, 1800 + Math.random() * 1500, 2, 0.07, 'bandpass', 0.4), k * 33 + Math.random() * 10); },
     step(soft = 1) { noise(0.025, 900 + Math.random() * 300, 1.2, 0.07 * soft, 'bandpass', 0.25); tone(220, 0.03, 'sine', 0.02 * soft, 0.1); },
     jump() { noise(0.12, 700, 0.8, 0.05, 'bandpass', 0.2, 0.03); },
-    land() { noise(0.06, 400, 0.8, 0.14, 'lowpass', 0.3); tone(90, 0.08, 'sine', 0.08, 0.2); },
+    land(v = 1) { noise(0.06, 400, 0.8, 0.14 * v, 'lowpass', 0.3); tone(90, 0.08, 'sine', 0.08 * v, 0.2); },
+    lampClick() { noise(0.012, 3500, 2, 0.25, 'bandpass', 0.4); tone(1600, 0.02, 'square', 0.03, 0.2); },
+    buzzShort() { tone(120, 0.35, 'sawtooth', 0.02, 0.3, 118); },
+    ratchet() { for (let k = 0; k < 6; k++) setTimeout(() => noise(0.012, 2600, 3, 0.12, 'bandpass', 0.4), k * 70); },
+    doorRumble() { noise(0.45, 180, 0.7, 0.18, 'lowpass', 0.8, 0.05); tone(62, 0.4, 'triangle', 0.06, 0.6, 70); },
+    doorOpen() { tone(90, 0.6, 'triangle', 0.08, 1.0, 60); noise(0.3, 900, 1, 0.08, 'bandpass', 0.9); },
+    strain() { tone(780, 0.16, 'sine', 0.035, 0.3, 980); },
+    drip(v) { if (v <= 0) return; tone(1400 + Math.random() * 900, 0.05, 'sine', 0.05 * v, 0.9, 2200); },
+    crackle(v) { for (let k = 0; k < 6; k++) setTimeout(() => noise(0.015, 4500 + Math.random() * 3000, 3, 0.12 * v, 'bandpass', 0.5), k * 25); },
+    groan() { tone(48, 1.4, 'sawtooth', 0.02, 1.0, 41); },
+    hiss(level) {
+      if (!ctx) return;
+      if (!hissNode) {
+        const s = ctx.createBufferSource(); s.buffer = noiseBuffer(2); s.loop = true;
+        const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 2500;
+        hissNode = ctx.createGain(); hissNode.gain.value = 0; s.connect(f); f.connect(hissNode); hissNode.connect(master); s.start();
+      }
+      hissNode.gain.setTargetAtTime(level * 0.03, ctx.currentTime, 0.2);
+    },
     scrape() { noise(0.35, 2600, 4, 0.07, 'bandpass', 0.3, 0.03); },
     bonk() { tone(330, 0.07, 'square', 0.04, 0.3, 200); noise(0.04, 1200, 2, 0.08, 'bandpass', 0.4); },
     creak(dur = 0.5) { tone(70, dur, 'sawtooth', 0.04, 0.5, 95); },
@@ -408,12 +440,13 @@ const Sound = (() => {
 // ---------------------------------------------------------------------------
 // Input: keyboard, gamepad, touch
 // ---------------------------------------------------------------------------
-const input = { left: false, right: false, jumpHeld: false, jumpPressed: false, usePressed: false, axis: 0, lastActivity: 0 };
+const input = { left: false, right: false, jumpHeld: false, jumpPressed: false, usePressed: false, axis: 0, shift: false, padShift: false, keyShift: false, lastActivity: 0 };
 const keymap = { KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right', Space: 'jump', KeyW: 'jump', ArrowUp: 'jump', KeyE: 'use', Enter: 'use' };
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(); e.preventDefault(); return; }
   if (e.code === 'Backquote') { dbg.hidden = !dbg.hidden; return; }
   if (e.code === 'KeyR' && game.mode !== 'title') { loadCheckpoint(); return; }
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { input.keyShift = true; input.shift = true; return; }
   const k = keymap[e.code]; if (!k) return;
   e.preventDefault();
   if (e.repeat) return;
@@ -424,6 +457,7 @@ addEventListener('keydown', (e) => {
   input.lastActivity = game.clock;
 });
 addEventListener('keyup', (e) => {
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { input.keyShift = false; input.shift = input.padShift; return; }
   const k = keymap[e.code]; if (!k) return;
   if (k === 'left') input.left = false;
   if (k === 'right') input.right = false;
@@ -455,6 +489,7 @@ function pollGamepad() {
   if (edge(0)) { input.jumpPressed = true; }
   input.jumpHeld = input.jumpHeld || btn(0);
   if (edge(2)) input.usePressed = true;
+  input.padShift = btn(1) || btn(5); input.shift = input.keyShift || input.padShift;
   if (edge(9)) togglePause();
   if (input.axis || btn(0) || btn(2)) input.lastActivity = game.clock;
 }
@@ -465,8 +500,10 @@ function pollGamepad() {
 const game = {
   mode: 'title', clock: 0, sceneTime: 0, frame: 0, calm: false, assist: false,
   x: START_X, y: 0, vx: 0, vy: 0, facing: 1, yaw: Math.PI / 2, grounded: true, crouched: false,
-  coyote: 0, jumpBuffer: 0, landTimer: 0, mantle: null, pull: null, released: false, releaseTime: -1,
+  coyote: 0, jumpBuffer: 0, landTimer: 0, mantle: null, released: false, releaseTime: -1,
   shutterAngle: 0, leverAngle: 0, weightY: 1.56, idleTimer: 0, hintWeight: 0, checkpoint: 'start',
+  z: 0, yawOverride: null, doorOpen: 0, wheelAngle: 0, act: null, exit: null, cordOn: false, cordUsed: false,
+  cordPull: 0, cordOnTime: 0, peakY: 0, autorun: true,
   playStart: 0, ended: false, lastStepPhase: 0, endTime: 0, nextRelay: OPENING_FRAMES,
 };
 const refs = {};
@@ -509,7 +546,8 @@ async function load() {
   prepare(robotG.scene);
   scene.add(setG.scene);
   for (const n of ['Shutter', 'ShutterRail', 'LatchLever', 'LatchTag', 'Pulley', 'Counterweight', 'CounterweightStripes',
-    'RelayLamp0', 'RelayLamp1', 'RelayLamp2', 'WorkLampBulb', 'CradleStatus', 'Sparks', 'CradleContacts', 'ForegroundPipe']) {
+    'RelayLamp0', 'RelayLamp1', 'RelayLamp2', 'WorkLampBulb', 'CradleStatus', 'Sparks', 'CradleContacts', 'ForegroundPipe',
+    'ExitDoor', 'CrankWheel', 'CableSpark']) {
     refs[n] = setG.scene.getObjectByName(n);
   }
   // Shutter assembly pivots at its high end; the lever pivots on the latch body.
@@ -524,6 +562,12 @@ async function load() {
   weight.attach(refs.Counterweight); weight.attach(refs.CounterweightStripes);
   refs.weight = weight;
   refs.ForegroundPipe.castShadow = false;
+  const wheelPivot = new THREE.Group(); wheelPivot.position.set(CRANK_X, 0.45, -0.2); scene.add(wheelPivot);
+  wheelPivot.attach(refs.CrankWheel); refs.wheelPivot = wheelPivot;
+  // The live cable gets its own spark material so it flashes independently of the cradle.
+  const cableSpark = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: lin(EMIT.Spark), emissiveIntensity: 0 });
+  refs.CableSpark.traverse((o) => { if (o.isMesh) o.material = cableSpark; });
+  emissive.CableSpark = cableSpark;
 
   // Procedural chain (rail -> pulley -> counterweight), rebuilt each frame.
   const linkGeo = new THREE.TorusGeometry(0.011, 0.003, 4, 10);
@@ -556,6 +600,7 @@ async function load() {
   buildLights();
   buildDust();
   buildGrit();
+  buildAtmosphere(setG.scene);
   resize();
 }
 
@@ -584,8 +629,8 @@ function buildLights() {
 }
 
 function buildDust() {
-  const n = 320, pos = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) { pos[i * 3] = -1 + Math.random() * 7.5; pos[i * 3 + 1] = Math.random() * 2.3; pos[i * 3 + 2] = -1.0 + Math.random() * 2.2; }
+  const n = 520, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { pos[i * 3] = -1 + Math.random() * 12.5; pos[i * 3 + 1] = Math.random() * 3; pos[i * 3 + 2] = -1.5 + Math.random() * 2.7; }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   refs.dust = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xbab3a0, size: 0.009, transparent: true, opacity: 0.45, depthWrite: false }));
   scene.add(refs.dust);
@@ -793,24 +838,125 @@ function updateMechanisms(dt) {
   updateChain();
   // dust drift
   const p = refs.dust.geometry.attributes.position;
-  for (let i = 0; i < p.count; i++) { p.array[i * 3 + 1] += Math.sin(game.clock * 0.3 + i) * 0.0004; p.array[i * 3] += 0.0002; if (p.array[i * 3] > 6.5) p.array[i * 3] = -1; }
+  for (let i = 0; i < p.count; i++) { p.array[i * 3 + 1] += Math.sin(game.clock * 0.3 + i) * 0.0004; p.array[i * 3] += 0.0002; if (p.array[i * 3] > 11.5) p.array[i * 3] = -1; }
   p.needsUpdate = true;
+}
+
+// ---------------------------------------------------------------------------
+// Ground, ledges and ceilings
+// ---------------------------------------------------------------------------
+function floorAt(x) { return x > PIT.x0 && x < PIT.x1 ? PIT.y : 0; }
+function surfaceAt(x) {                       // the surface directly under one point
+  let h = floorAt(x);
+  for (const p of PLATFORMS) if (x >= p.x0 && x <= p.x1) h = Math.max(h, p.h);
+  return h;
+}
+function supportAt(x) { return Math.max(surfaceAt(x - FOOT), surfaceAt(x), surfaceAt(x + FOOT)); }
+function ledgeAhead(dir, range = 0.6) {       // first raised face ahead: distance from centre and its top
+  for (let d = 0.02; d <= range; d += 0.01) {
+    const h = surfaceAt(game.x + dir * d);
+    if (h > game.y + STEP_UP) return { dist: d, top: h };
+  }
+  return null;
+}
+function rightLimit() { return game.released ? RIGHT_LIMIT : LOCKED_LIMIT; }
+
+// ---------------------------------------------------------------------------
+// Interactions: cord lamp, latch, crank wheel, exit door
+// ---------------------------------------------------------------------------
+function nearUse() {
+  if (!game.grounded || game.y > 0.05) return null;
+  if (Math.abs(game.x - CORD_STAND) < 0.32) return 'cord';
+  if (!game.released && Math.abs(game.x - PULL_ROOT_X) < 0.34) return 'latch';
+  if (game.doorOpen < 1 && Math.abs(game.x - CRANK_X) < 0.36) return 'crank';
+  return null;
+}
+function beginUse(kind) {
+  game.act = { kind, phase: 'approach', t: 0, strokes: 0 };
+  if (kind === 'cord') game.act.standX = CORD_STAND, game.act.face = -1;
+  if (kind === 'latch') game.act.standX = PULL_ROOT_X, game.act.face = 1;
+  if (kind === 'crank') game.act.standX = CRANK_X, game.act.face = game.x < CRANK_X ? 1 : -1;
+}
+function updateAct(dt) {
+  const a = game.act;
+  a.t += dt;
+  if (a.phase === 'approach') {
+    game.facing = a.face;
+    if (a.kind === 'latch') game.crouched = true;
+    const dx = a.standX - game.x;
+    if (Math.abs(dx) < 0.012) {
+      game.x = a.standX; a.phase = 'act'; a.t = 0;
+      if (a.kind === 'cord') { setClip('Tug', 0.15); Sound.servo(0.2, 500, 900, 0.025); }
+      if (a.kind === 'latch') { setClip('Pull', 0.15); Sound.creak(0.6); }
+      if (a.kind === 'crank') { game.yawOverride = Math.PI; a.phase = 'turn'; }
+      return;
+    }
+    const v = (game.crouched ? CROUCH_WALK : WALK) * 0.8;
+    game.x += Math.sign(dx) * Math.min(Math.abs(dx), v * dt);
+    setClip(game.crouched ? 'CrouchWalk' : 'Walk', 0.15, v / (game.crouched ? CLIP_SPEED.CrouchWalk : CLIP_SPEED.Walk));
+    return;
+  }
+  if (a.kind === 'cord') {
+    const f = actions.Tug.time * FPS;
+    game.cordPull = f >= 14 && f < 26 ? Math.min(1, (f - 14) / 5) * (f < 23 ? 1 : 1 - (f - 23) / 3) : 0;
+    if (f >= 19 && !a.clicked) {
+      a.clicked = true; game.cordOn = !game.cordOn; game.cordOnTime = game.clock;
+      Sound.lampClick(); if (game.cordOn) Sound.buzzShort();
+    }
+    if (f >= 43) { game.act = null; setClip('Idle', 0.4); }
+  } else if (a.kind === 'latch') {
+    const f = actions.Pull.time * FPS;
+    game.leverAngle = leverAngleAt(Math.min(f, 40));
+    if (f > 20 && !a.creak2) { a.creak2 = true; Sound.creak(0.4); }
+    if (f >= 31 && !game.released) release();
+    if (f >= 39 && a.phase === 'act') { a.phase = 'flinch'; setClip('Flinch', 0.06); Sound.worried(); }
+    if (a.phase === 'flinch' && actions.Flinch.time >= 1.6) { game.act = null; game.crouched = false; setClip('Idle', 0.35); }
+  } else if (a.kind === 'crank') {
+    if (a.phase === 'turn') {
+      if (Math.abs(game.yaw - Math.PI) < 0.05) { a.phase = 'act'; setClip('Crank', 0.2); a.lastF = 0; }
+      return;
+    }
+    if (a.phase === 'act') {
+      const f = actions.Crank.time * FPS;
+      const stroke = f <= 12 ? smooth(f / 12) : 1;
+      game.wheelAngle = a.strokes * 60 + 60 * stroke;
+      const target = Math.min(1, (a.strokes + stroke) / CRANK_STROKES);
+      game.doorOpen = Math.max(game.doorOpen, target);
+      if (f < a.lastF) {                       // a stroke finished
+        a.strokes++; Sound.ratchet(); Sound.doorRumble();
+        if (a.strokes >= CRANK_STROKES) { a.phase = 'done'; game.doorOpen = 1; game.yawOverride = null; setClip('Idle', 0.3); Sound.doorOpen(); game.checkpoint = 'door'; }
+      }
+      if (f > 1 && f < 2 && !a.grunt) { a.grunt = true; }
+      if (f > 12) a.grunt = false;
+      a.lastF = f;
+    } else if (a.phase === 'done' && Math.abs(game.yaw - Math.PI / 2 * game.facing) < 0.1) {
+      game.act = null;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Player
 // ---------------------------------------------------------------------------
-function groundAt(x) { return x + 0.1 > CRATE.x0 && x - 0.1 < CRATE.x1 ? CRATE.h : 0; }
-function nearLatch() { return !game.released && Math.abs(game.x - PULL_ROOT_X) < 0.32 && game.grounded; }
-function crateFaceDistance() {
-  if (game.y > 0.05) return Infinity;
-  return game.facing > 0 ? CRATE.x0 - game.x : game.x - CRATE.x1;
+function startMantle(ledge) {
+  game.mantle = { t: 0, x0: game.x, y0: game.y, dir: game.facing, top: ledge.top, extra: Math.max(0, ledge.dist - FACE_D) };
+  game.vx = 0; game.vy = 0;
+  setClip('Mantle', 0.1);
+  Sound.jump(); setTimeout(() => Sound.scrape(), 380); setTimeout(() => Sound.strain(), 700);
+  setTimeout(() => Sound.scrape(), 1050); setTimeout(() => Sound.click(), 1400);
+}
+function mantleAt(f) {
+  for (let i = 0; i < MANTLE_KEYS.length - 1; i++) {
+    const [f0, w0, u0] = MANTLE_KEYS[i], [f1, w1, u1] = MANTLE_KEYS[i + 1];
+    if (f <= f1) { const k = f1 > f0 ? smooth((f - f0) / (f1 - f0)) : 1; return [w0 + (w1 - w0) * k, u0 + (u1 - u0) * k]; }
+  }
+  const l = MANTLE_KEYS[MANTLE_KEYS.length - 1]; return [l[1], l[2]];
 }
 
-function startMantle() {
-  game.mantle = { t: 0, x0: game.x, y0: game.y, dir: game.facing };
-  setClip('Mantle', 0.08);
-  Sound.scrape(); setTimeout(() => Sound.servo(0.3, 260, 520, 0.03), 250);
+function wantsRun(move) {
+  const shift = input.shift;
+  if (input.axis) return Math.abs(input.axis) > 0.65 ? game.autorun !== shift : false;
+  return game.autorun !== shift;
 }
 
 function updatePlayer(dt) {
@@ -819,43 +965,40 @@ function updatePlayer(dt) {
   game.jumpBuffer = Math.max(0, game.jumpBuffer - dt);
 
   if (game.mantle) {
-    const m = game.mantle, dur = 22 / FPS;
+    const m = game.mantle;
     m.t += dt;
-    const k = Math.min(1, m.t / dur);
-    const up = (CRATE.h - m.y0) * smooth((k - 0.15) / 0.55);
-    const fwd = 0.38 * smooth((k - 0.25) / 0.75);
-    game.x = m.x0 + m.dir * fwd; game.y = m.y0 + up;
-    if (k >= 1) { game.mantle = null; game.grounded = true; game.y = CRATE.h; game.vy = 0; setClip('Idle', 0.2); Sound.land(); }
+    const f = m.t * FPS;
+    const [fwd, frac] = mantleAt(f);
+    const approach = smooth(f / 10);
+    game.x = m.x0 + m.dir * (fwd + m.extra * approach);
+    game.y = m.y0 + frac * (m.top - m.y0);
+    if (f >= MANTLE_FRAMES) { game.mantle = null; game.grounded = true; game.y = m.top; setClip('Idle', 0.25); }
     return;
   }
-  if (game.pull) { updatePull(dt); return; }
+  if (game.exit) { updateExit(dt); return; }
+  if (game.act) { updateAct(dt); return; }
 
-  // Interact: the latch.
-  if (input.usePressed && nearLatch()) {
-    game.pull = { phase: 'approach', t: 0 };
-    game.facing = 1;
-    return;
-  }
+  const use = input.usePressed ? nearUse() : null;
+  if (use) { beginUse(use); return; }
 
-  // Facing and horizontal speed.
   if (move !== 0) game.facing = Math.sign(move);
-  const ceilingAhead = minCeiling(game.x - 0.12, game.x + game.facing * 0.22);
-  const clearance = ceilingAhead - game.y;
+  const clearance = minCeiling(game.x - 0.12, game.x + game.facing * 0.22) - game.y;
   if (game.grounded) {
     if (!game.crouched && clearance < 0.8) game.crouched = true;
     else if (game.crouched && clearance > 0.85) game.crouched = false;
   }
-  const maxV = (game.crouched ? CROUCH_WALK : WALK) * Math.min(1, Math.abs(move) * 1.1);
-  const target = Math.sign(move) * maxV;
-  const acc = game.grounded ? 3.2 : 1.6;
+  const run = wantsRun(move);
+  const topSpeed = game.crouched ? CROUCH_WALK : run ? RUN : WALK;
+  const target = Math.sign(move) * topSpeed * Math.min(1, Math.abs(move) * 1.15);
+  const acc = game.grounded ? (run ? 6 : 4.5) : 2.2;
   game.vx += Math.max(-acc * dt, Math.min(acc * dt, target - game.vx));
-  if (move === 0 && game.grounded) game.vx *= Math.max(0, 1 - 9 * dt);
+  if (move === 0 && game.grounded) game.vx *= Math.max(0, 1 - 10 * dt);
 
-  // Jump, with coyote time and an input buffer; mantle the crate when close to it.
+  // Jump (coyote time + buffer); near a ledge too high to hop, climb it instead.
   game.coyote = game.grounded ? COYOTE : Math.max(0, game.coyote - dt);
-  const face = crateFaceDistance();
-  if (game.jumpBuffer > 0 && face > 0.05 && face < 0.45 && Math.abs(game.facing) === 1 && (move === 0 || Math.sign(move) === game.facing)) {
-    game.jumpBuffer = 0; startMantle(); return;
+  if (game.jumpBuffer > 0 && game.grounded && (move === 0 || Math.sign(move) === game.facing)) {
+    const l = ledgeAhead(game.facing, 0.5);
+    if (l && l.top - game.y > MANTLE_MIN && l.top - game.y <= MANTLE_MAX && l.dist < FACE_D + 0.3) { game.jumpBuffer = 0; startMantle(l); return; }
   }
   if (game.jumpBuffer > 0 && game.coyote > 0 && !game.crouched) {
     game.vy = JUMP_V; game.grounded = false; game.coyote = 0; game.jumpBuffer = 0;
@@ -864,31 +1007,40 @@ function updatePlayer(dt) {
 
   // Integrate and collide.
   let nx = game.x + game.vx * dt;
-  const half = 0.17;
-  nx = Math.max(LEFT_LIMIT, nx);
-  if (!game.released) nx = Math.min(LOCKED_LIMIT, nx);
-  if (game.y < CRATE.h - 0.02) {
-    if (game.x <= CRATE.x0 - half && nx > CRATE.x0 - half) { nx = CRATE.x0 - half; game.vx = 0; }
-    if (game.x >= CRATE.x1 + half && nx < CRATE.x1 + half) { nx = CRATE.x1 + half; game.vx = 0; }
+  nx = Math.max(LEFT_LIMIT, Math.min(rightLimit(), nx));
+  const dir = Math.sign(nx - game.x);
+  if (dir) {
+    const lead = nx + dir * HALF;
+    if (surfaceAt(lead) > game.y + STEP_UP) { nx = game.x; game.vx = 0; }
   }
   if (!game.grounded || game.crouched) {
-    const clear = minCeiling(nx - 0.1, nx + 0.1) - game.y;
-    if (clear < CROUCH_H) nx = game.x;
+    if (minCeiling(nx - 0.1, nx + 0.1) - game.y < CROUCH_H) nx = game.x;
   }
   game.x = nx;
 
-  const floor = groundAt(game.x);
+  const support = supportAt(game.x);
   if (!game.grounded) {
     game.vy -= GRAVITY * dt;
     game.y += game.vy * dt;
-    const head = game.y + STAND_H;
-    if (game.vy > 0 && head > ceilingAt(game.x)) { game.vy = 0; game.y = ceilingAt(game.x) - STAND_H; Sound.bonk(); }
-    // Catch the crate edge mid-air.
-    const f2 = game.facing > 0 ? CRATE.x0 - game.x : game.x - CRATE.x1;
-    if (f2 > 0 && f2 < 0.3 && game.y < CRATE.h && game.y > 0.08) { startMantle(); return; }
-    if (game.y <= floor) { game.y = floor; game.vy = 0; game.grounded = true; game.landTimer = 0.25; setClip('Land', 0.06); Sound.land(); }
-  } else if (game.y > floor + 0.001) {
-    game.grounded = false; game.vy = 0; setClip('JumpAir', 0.1);
+    const ceil = ceilingAt(game.x);
+    if (game.vy > 0 && game.y + STAND_H > ceil) { game.vy = 0; game.y = ceil - STAND_H; Sound.bonk(); }
+    // Catch a ledge edge mid-air.
+    const l = ledgeAhead(game.facing, 0.32);
+    if (l && game.vy < 1.2 && l.top - game.y > MANTLE_MIN && l.top - game.y <= MANTLE_MAX + 0.1) { startMantle(l); return; }
+    if (game.y <= support) {
+      const fall = game.peakY - support;
+      game.y = support; game.vy = 0; game.grounded = true;
+      game.landTimer = fall > 0.25 ? 0.3 : 0.18; setClip('Land', 0.06); Sound.land(Math.min(1, 0.5 + fall));
+    }
+    game.peakY = Math.max(game.peakY, game.y);
+  } else if (game.y > support + 0.001) {
+    game.grounded = false; game.vy = 0; game.peakY = game.y; setClip('JumpAir', 0.12);
+  } else game.y = support;
+  if (game.grounded) game.peakY = game.y;
+
+  // Exit through the open door.
+  if (game.doorOpen >= 1 && game.x > DOOR.x0 + 0.15 && game.x < DOOR.x1 - 0.15 && game.grounded) {
+    game.exit = { t: 0 }; game.yawOverride = Math.PI; return;
   }
 
   // Ground animation.
@@ -896,60 +1048,59 @@ function updatePlayer(dt) {
     game.landTimer -= dt;
     if (game.landTimer <= 0) {
       const speed = Math.abs(game.vx);
-      if (game.crouched) setClip(speed > 0.03 ? 'CrouchWalk' : 'CrouchIdle', 0.22, speed > 0.03 ? speed / CROUCH_WALK : 1);
-      else setClip(speed > 0.03 ? 'Walk' : 'Idle', 0.22, speed > 0.03 ? Math.max(0.35, speed / WALK) : 1);
+      if (game.crouched) setClip(speed > 0.03 ? 'CrouchWalk' : 'CrouchIdle', 0.22, speed > 0.03 ? speed / CLIP_SPEED.CrouchWalk : 1);
+      else if (speed > 1.15) setClip('Run', 0.18, speed / CLIP_SPEED.Run);
+      else setClip(speed > 0.03 ? 'Walk' : 'Idle', 0.22, speed > 0.03 ? Math.max(0.4, speed / CLIP_SPEED.Walk) : 1);
     }
-    // Footsteps from the walk cycle's contacts.
-    if ((current === 'Walk' || current === 'CrouchWalk') && actions[current]) {
+    if ((current === 'Walk' || current === 'CrouchWalk' || current === 'Run') && actions[current]) {
       const a = actions[current], ph = (a.time / a.getClip().duration) % 1;
-      if ((game.lastStepPhase < 0.5 && ph >= 0.5) || ph < game.lastStepPhase) Sound.step(game.crouched ? 0.6 : 1);
+      if ((game.lastStepPhase < 0.5 && ph >= 0.5) || ph < game.lastStepPhase) Sound.step(game.crouched ? 0.6 : current === 'Run' ? 1.2 : 1);
       game.lastStepPhase = ph;
     }
   }
+  if (game.x > HALL_X + 0.2 && game.checkpoint !== 'door' && game.checkpoint !== 'hall') game.checkpoint = 'hall';
 }
 
-function updatePull(dt) {
-  const p = game.pull;
-  p.t += dt;
-  if (p.phase === 'approach') {
-    game.crouched = true;
-    const dx = PULL_ROOT_X - game.x;
-    if (Math.abs(dx) < 0.01) { p.phase = 'pull'; p.t = 0; setClip('Pull', 0.15); Sound.creak(0.6); return; }
-    game.x += Math.sign(dx) * Math.min(Math.abs(dx), CROUCH_WALK * dt);
-    setClip('CrouchWalk', 0.15, 1);
-  } else if (p.phase === 'pull') {
-    const f = actions.Pull.time * FPS;
-    game.leverAngle = leverAngleAt(Math.min(f, 40));
-    if (f > 20 && !p.creak2) { p.creak2 = true; Sound.creak(0.4); }
-    if (f >= 31 && !game.released) release();
-    if (f >= 39) { p.phase = 'flinch'; setClip('Flinch', 0.06); Sound.worried(); }
-  } else if (p.phase === 'flinch') {
-    if (actions.Flinch.time >= 1.6) { game.pull = null; game.crouched = false; setClip('Idle', 0.35); }
-  }
+function updateExit(dt) {
+  const e = game.exit;
+  e.t += dt;
+  if (Math.abs(game.yaw - Math.PI) > 0.05) { setClip('Walk', 0.2, 0.6); return; }
+  const center = (DOOR.x0 + DOOR.x1) / 2;
+  game.x += (center - game.x) * Math.min(1, dt * 3);
+  game.z -= WALK * 0.75 * dt;
+  setClip('Walk', 0.2, 0.75 * WALK / CLIP_SPEED.Walk);
+  if (game.z < -0.95 && !game.ended) { game.ended = true; finish(); }
 }
 
 // ---------------------------------------------------------------------------
 // Character polish after the mixer: turning, antenna under ceilings, curious look
 // ---------------------------------------------------------------------------
-function hintTarget() {
-  if (!game.released && game.x > 1.7 && game.x < 3.3) return new THREE.Vector3(3.33, 0.33, 0.02);
-  if (game.released && game.y < 0.05 && game.x > 3.2 && game.x < CRATE.x0) return new THREE.Vector3(CRATE.x0 + 0.02, CRATE.h + 0.02, -0.25);
-  return null;
-}
+const HINTS = [
+  { when: () => !game.cordUsed && game.x < 1.6 && game.clock - game.playStart < 45, at: new THREE.Vector3(0.42, 0.7, 0.04), key: 'use' },
+  { when: () => !game.released && game.x > 1.7 && game.x < 3.3, at: new THREE.Vector3(3.33, 0.33, 0.02), key: 'use' },
+  { when: () => game.released && game.y < 0.05 && game.x > 3.3 && game.x < STEP.x0, at: new THREE.Vector3(STEP.x0 + 0.05, STEP.h + 0.02, -0.1), key: 'jump' },
+  { when: () => game.y < CRATE.h - 0.1 && game.x > STEP.x1 - 0.3 && game.x < CRATE.x0, at: new THREE.Vector3(CRATE.x0 + 0.02, CRATE.h + 0.02, -0.25), key: 'jump' },
+  { when: () => game.y > -0.1 && game.x > CRATE.x1 - 0.1 && game.x < PIT.x0, at: new THREE.Vector3(PIT.x1 + 0.05, 0.02, 0), key: 'jump' },
+  { when: () => game.y < -0.1, at: new THREE.Vector3(PIT.x1 + 0.02, 0.02, 0), key: 'jump' },
+  { when: () => game.doorOpen < 1 && game.x > 8.6 && game.x < 10.0, at: new THREE.Vector3(CRANK_X, 0.45, -0.2), key: 'use' },
+  { when: () => game.doorOpen >= 1 && game.x > 9.0, at: new THREE.Vector3((DOOR.x0 + DOOR.x1) / 2, 0.5, -0.65), key: 'move' },
+];
+function hintTarget() { const h = HINTS.find((h) => h.when()); return h || null; }
+
 function updateCharacter(dt, playing) {
-  const targetYaw = game.facing > 0 ? Math.PI / 2 : -Math.PI / 2;
+  const targetYaw = game.yawOverride ?? (game.facing > 0 ? Math.PI / 2 : -Math.PI / 2);
   if (playing) {
-    const step = dt * 9;
+    const step = dt * 8;
     game.yaw += Math.max(-step, Math.min(step, targetYaw - game.yaw));
   }
-  d17.position.set(game.x, game.y, 0);
+  d17.position.set(game.x, game.y, game.z);
   d17.rotation.y = game.yaw;
   if (refs.kick) refs.kick.position.set(game.x + 0.5, game.y + 1.0, 1.3);
   d17.updateMatrixWorld(true);
   if (!playing) return;
 
-  // Antenna bends back under the shutter instead of passing through it.
-  const tipX = game.x - game.facing * 0.12;
+  // Antenna bends back under low ceilings instead of passing through them.
+  const tipX = game.x - Math.sin(game.yaw) * 0.12;
   const over = game.y + ANTENNA_TOP + 0.03 - ceilingAt(tipX);
   const bend = THREE.MathUtils.clamp(over / 0.35, 0, 1) * (game.crouched ? 0.2 : 1);
   if (bend > 0) {
@@ -957,67 +1108,199 @@ function updateCharacter(dt, playing) {
     rotateBoneWorld(refs.antenna, tq3.setFromAxisAngle(right, bend * THREE.MathUtils.degToRad(70)));
   }
 
-  // Curiosity as the hint system: after ~6 s idle near something useful he looks at it.
-  const target = hintTarget();
+  // Curiosity as the hint system: after a few idle seconds near something useful he looks at it.
+  const hint = hintTarget();
   const idle = game.clock - input.lastActivity;
-  const want = target && idle > 6 && game.grounded && !game.pull && !game.mantle ? 1 : 0;
+  const want = hint && idle > HINT_LOOK && game.grounded && !game.act && !game.mantle && !game.exit ? 1 : 0;
   game.hintWeight += (want - game.hintWeight) * Math.min(1, dt * 2.5);
-  if (game.hintWeight > 0.01 && target) {
+  if (game.hintWeight > 0.01 && hint) {
     const headPos = refs.head.getWorldPosition(tv1);
-    const dir = tv2.subVectors(target, headPos).normalize();
+    const dir = tv2.subVectors(hint.at, headPos).normalize();
     const fwd = new THREE.Vector3(Math.sin(game.yaw), 0, Math.cos(game.yaw));
     const q = new THREE.Quaternion().setFromUnitVectors(fwd, dir);
-    const tilt = new THREE.Quaternion().setFromAxisAngle(dir, THREE.MathUtils.degToRad(10));
-    q.premultiply(tilt);
+    q.premultiply(new THREE.Quaternion().setFromAxisAngle(dir, THREE.MathUtils.degToRad(10)));
     rotateBoneWorld(refs.head, new THREE.Quaternion().slerp(q, game.hintWeight * 0.85));
-    if (idle > 12) rotateBoneWorld(refs.body, new THREE.Quaternion().slerp(q, game.hintWeight * 0.15));
+    if (idle > HINT_LEAN) rotateBoneWorld(refs.body, new THREE.Quaternion().slerp(q, game.hintWeight * 0.15));
   }
   const cap = document.getElementById('keycap');
-  if (game.assist && target && idle > 20 && game.grounded) {
-    const s = target.clone().project(camera);
+  if (game.assist && hint && hint.key !== 'move' && idle > HINT_GLYPH && game.grounded && !game.act) {
+    const s = hint.at.clone().project(camera);
     cap.style.left = `${(s.x * 0.5 + 0.5) * canvas.clientWidth}px`;
     cap.style.top = `${(-s.y * 0.5 + 0.5) * canvas.clientHeight}px`;
-    cap.textContent = game.released ? (touchDevice ? 'JUMP' : 'Space') : (touchDevice ? 'USE' : 'E');
+    cap.textContent = hint.key === 'use' ? (touchDevice ? 'USE' : 'E') : (touchDevice ? 'JUMP' : 'Space');
     cap.hidden = false;
   } else cap.hidden = true;
 }
 
 // ---------------------------------------------------------------------------
-// Camera: opening move from the parcel lamp into the side-on view, then follow
+// Camera: opening move, then framing volumes along the scene
 // ---------------------------------------------------------------------------
-const cam = { start: null, drift: null, chest: null, x: 1.9, end: new THREE.Vector3(1.9, 1.0, 4.9), endTarget: new THREE.Vector3(1.9, 0.8, 0) };
+const cam = { start: null, drift: null, chest: null, x: 1.9, dist: 5.2, y: 1.0, look: 0.8, push: 0,
+  end: new THREE.Vector3(1.9, 1.0, 5.2), endTarget: new THREE.Vector3(1.9, 0.8, 0) };
 function captureChest() {
   mixer.setTime(0); setClip('Opening', 0); actions.Opening.time = 0; mixer.update(0);
   d17.position.set(START_X, 0, 0); d17.rotation.y = Math.PI / 2; d17.updateMatrixWorld(true);
   const chest = new THREE.Box3().setFromObject(refs.label).getCenter(new THREE.Vector3());
-  const facing = new THREE.Vector3(Math.sin(Math.PI / 2 - Math.PI / 4), 0, Math.cos(Math.PI / 2 - Math.PI / 4));
+  const facing = new THREE.Vector3(Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4));
   cam.chest = chest;
   cam.start = chest.clone().addScaledVector(facing, 1.05).add(new THREE.Vector3(0, 0.12, 0));
   cam.drift = chest.clone().addScaledVector(facing, 0.95).add(new THREE.Vector3(0, 0.11, 0));
 }
-function framingDistance(focal) {
+function widthFit(focal, width) {
   const hfov = 2 * Math.atan(18 / focal) * (camera.aspect < 1 ? camera.aspect : 1);
-  return Math.max(4.9, 4.4 / (2 * Math.tan(hfov / 2)));
+  return width / (2 * Math.tan(hfov / 2));
+}
+function volumeAt(x) {
+  // [distance, camera height, look height]: alcove, the hall reveal, the bulkhead.
+  const alcove = [5.2, 1.0, 0.8], hall = [9.2, 2.35, 1.95], bulk = [6.0, 1.15, 0.9];
+  const k1 = smooth((x - 6.9) / 0.9), k2 = smooth((x - 8.9) / 0.8);
+  return alcove.map((v, i) => v + (hall[i] - v) * k1 + (bulk[i] - hall[i]) * k2);
 }
 function updateCamera(dt, f) {
   if (game.mode === 'opening') {
     const k0 = f > 120 ? smooth((f - 120) / 180) : 0;
     const k = k0 * k0 * (3 - 2 * k0);
     const near = cam.start.clone().lerp(cam.drift, Math.min(1, f / 120));
-    const end = cam.end.clone(); end.z = framingDistance(35);
+    const end = cam.end.clone(); end.z = Math.max(5.2, widthFit(35, 4.6));
     const pos = near.lerp(end, k); pos.y += 0.35 * Math.sin(Math.PI * k);
     camera.position.copy(pos);
     camera.lookAt(cam.chest.clone().lerp(cam.endTarget, k));
     camera.setFocalLength(50 - 15 * k);
     return;
   }
-  const lead = game.facing * 0.9;
-  const want = THREE.MathUtils.clamp(game.x + lead, 1.2, 4.6);
+  const [vd, vy, vl] = volumeAt(game.x);
+  const pushWant = game.mantle ? 1 : game.act && game.act.kind !== 'latch' && game.act.phase !== 'approach' ? 0.8 : game.exit ? 0.6 : 0;
+  cam.push += (pushWant - cam.push) * Math.min(1, dt * 1.5);
+  const k = Math.min(1, dt * 1.4);
+  cam.dist += (Math.max(vd, widthFit(35, vd * 0.85)) * (1 - 0.22 * cam.push) - cam.dist) * k;
+  cam.y += (vy - 0.25 * cam.push + Math.max(0, game.y - 0.2) * 0.6 - cam.y) * k;
+  cam.look += (vl - 0.2 * cam.push + Math.max(0, game.y - 0.2) * 0.5 - cam.look) * k;
+  const inHall = smooth((game.x - 6.9) / 0.9) * (1 - smooth((game.x - 8.9) / 0.8));
+  const lead = game.exit ? 0 : game.facing * (0.6 + 0.35 * Math.abs(game.vx)) * (1 - 0.6 * inHall);
+  const want = THREE.MathUtils.clamp(game.x + lead, 1.2, 10.6);
+  scene.fog.density = 0.075 - 0.032 * inHall;
   cam.x += (want - cam.x) * Math.min(1, dt * 1.6);
-  const camY = 1.0 + Math.max(0, game.y - 0.2) * 0.6;
   camera.setFocalLength(35);
-  camera.position.set(cam.x, camY, framingDistance(35));
-  camera.lookAt(cam.x, 0.8 + Math.max(0, game.y - 0.2) * 0.5, 0);
+  camera.position.set(cam.x, cam.y, cam.dist);
+  camera.lookAt(cam.x, cam.look, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Atmosphere: drips, the live cable, steam, swaying hooks, light shafts, searchlight
+// ---------------------------------------------------------------------------
+const atmos = { drips: [], splashes: [], steam: [], nextSpark: 4, sparkUntil: 0, nextClank: 8 };
+function softSprite() {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d'); const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,255,255,0.9)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+}
+function buildAtmosphere(setRoot) {
+  // Hooks sway about their tops.
+  refs.hooks = [];
+  [[7.7, 1.5], [8.5, 1.9], [9.3, 1.3]].forEach(([x, len], i) => {
+    const pivot = new THREE.Group(); pivot.position.set(x, 3.2, -1.7); scene.add(pivot);
+    for (const n of [`Hook${i}`, `HookParcel${i}`]) { const o = setRoot.getObjectByName(n); if (o) pivot.attach(o); }
+    refs.hooks.push({ pivot, phase: i * 1.7, amp: 0.05 + 0.02 * i });
+  });
+  // Drips: shutter edge over the cradle, the gantry, and into the trench.
+  const dripGeo = new THREE.SphereGeometry(0.006, 6, 4); dripGeo.scale(1, 2.2, 1);
+  const dripMat = new THREE.MeshStandardMaterial({ color: 0x9fb4b0, roughness: 0.05, metalness: 0.2, emissive: 0x0a1210 });
+  const ringGeo = new THREE.RingGeometry(0.01, 0.014, 20); ringGeo.rotateX(-Math.PI / 2);
+  [[1.45, 0.62, 0, 3.1], [8.25, 3.1, -0.9, 2.3], [6.85, 2.5, 0.25, 2.7]].forEach(([x, y, z, every]) => {
+    const m = new THREE.Mesh(dripGeo, dripMat); m.visible = false; scene.add(m);
+    const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x9fb4b0, transparent: true, opacity: 0, depthWrite: false })); scene.add(ring);
+    atmos.drips.push({ m, ring, x, y, z, every, t: Math.random() * every, fall: -1 });
+  });
+  // Steam from the floor vent.
+  const sprite = softSprite();
+  for (let i = 0; i < 18; i++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: sprite, color: 0xb9c4c0, transparent: true, opacity: 0, depthWrite: false }));
+    s.position.set(8.7, 0.02, -0.45); scene.add(s); atmos.steam.push({ s, t: i / 18 * 3.2 });
+  }
+  // Light shafts through the broken roof of the hall.
+  const shaftMat = new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(0x9fc2b8) }, uOpacity: { value: 0.07 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform vec3 uColor; uniform float uOpacity; varying vec2 vUv; void main(){ float a = smoothstep(0.0, 0.5, vUv.y) * smoothstep(0.0, 0.25, 1.0 - abs(vUv.x - 0.5) * 2.0); gl_FragColor = vec4(uColor, a * uOpacity); }',
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
+  });
+  refs.shafts = [[7.9, -2.2, 0.15], [9.3, -3.4, -0.1], [11.0, -2.6, 0.2]].map(([x, z, tilt]) => {
+    const g = new THREE.CylinderGeometry(0.25, 0.9, 6.5, 24, 1, true);
+    const m = new THREE.Mesh(g, shaftMat.clone()); m.position.set(x, 3.4, z); m.rotation.z = tilt; scene.add(m); return m;
+  });
+  // Searchlight sweeping the far machinery.
+  const sl = new THREE.SpotLight(0xcfe6ff, 0, 22, THREE.MathUtils.degToRad(9), 0.5, 1.2);
+  sl.position.set(13.5, 6.5, -11); scene.add(sl, sl.target); refs.search = sl;
+  // Light for the cord lamp, the live cable and the doorway.
+  refs.cordLight = new THREE.PointLight(0xffd29a, 0, 3.2, 2); refs.cordLight.position.set(0.42, 1.95, -0.1); scene.add(refs.cordLight);
+  refs.cableLight = new THREE.PointLight(0xb8d4ff, 0, 3.5, 2); refs.cableLight.position.set(8.0, 1.3, -0.7); scene.add(refs.cableLight);
+  refs.doorLight = new THREE.PointLight(0x9fe0c0, 0, 4, 2); refs.doorLight.position.set(10.4, 0.6, -1.2); scene.add(refs.doorLight);
+  // A cool backlight behind the sorting carousel so the far machinery reads in silhouette.
+  const back = new THREE.PointLight(0x8fb6c4, 45, 16, 1.4); back.position.set(10.5, 3.4, -10.5); scene.add(back);
+  // A dim pool from the gantry over the crate, so the climb reads.
+  const pool = new THREE.SpotLight(0xc9d8d2, 9, 6, THREE.MathUtils.degToRad(32), 0.7, 2);
+  pool.position.set(5.6, 3.1, 0.9); pool.target.position.set(5.9, 0.2, 0); scene.add(pool, pool.target);
+  // The cord itself and its bead.
+  const cordGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+  refs.cord = new THREE.Line(cordGeo, new THREE.LineBasicMaterial({ color: 0x3a3630 })); scene.add(refs.cord);
+  refs.bead = new THREE.Mesh(new THREE.SphereGeometry(0.014, 10, 8), materialFor({ name: 'LeverRed' })); scene.add(refs.bead);
+}
+
+function updateAtmosphere(dt) {
+  const t = game.clock;
+  refs.hooks.forEach((h) => { h.pivot.rotation.z = Math.sin(t * 0.7 + h.phase) * h.amp; h.pivot.rotation.x = Math.sin(t * 0.45 + h.phase) * h.amp * 0.4; });
+  for (const d of atmos.drips) {
+    d.t += dt;
+    if (d.fall < 0 && d.t > d.every) { d.t = 0; d.fall = 0; d.every = 2 + Math.random() * 3; }
+    const floorY = surfaceAt(d.x) + (d.x > PIT.x0 && d.x < PIT.x1 ? 0.025 : 0);
+    if (d.fall >= 0) {
+      d.fall += dt; const y = d.y - 0.5 * GRAVITY * d.fall * d.fall;
+      d.m.visible = true; d.m.position.set(d.x, y, d.z);
+      if (y <= floorY) {
+        d.fall = -1; d.m.visible = false; d.ring.position.set(d.x, floorY + 0.002, d.z); d.ring.userData.t = 0;
+        const dist = Math.abs(d.x - game.x); if (game.mode === 'play' || game.mode === 'opening') Sound.drip(Math.max(0, 1 - dist / 6));
+      }
+    }
+    if (d.ring.userData.t !== undefined) {
+      d.ring.userData.t += dt; const k = d.ring.userData.t / 0.6;
+      d.ring.scale.setScalar(1 + k * 4); d.ring.material.opacity = Math.max(0, 0.5 * (1 - k));
+    }
+  }
+  for (const p of atmos.steam) {
+    p.t = (p.t + dt) % 3.2; const k = p.t / 3.2;
+    p.s.position.set(8.7 + Math.sin(k * 6 + p.t) * 0.06 + k * 0.15, 0.02 + k * 1.3, -0.45);
+    p.s.scale.setScalar(0.12 + k * 0.6); p.s.material.opacity = 0.16 * Math.sin(Math.PI * k);
+  }
+  // Live cable: a short crackle every few seconds.
+  if (t > atmos.nextSpark) { atmos.sparkUntil = t + 0.18; atmos.nextSpark = t + 3 + Math.random() * 5; Sound.crackle(Math.max(0.15, 1 - Math.abs(8 - game.x) / 6)); }
+  const live = t < atmos.sparkUntil && !game.calm ? (Math.sin(t * 90) > 0 ? 1 : 0.3) : 0;
+  emissive.CableSpark.emissiveIntensity = 50 * live;
+  refs.cableLight.intensity = 2.5 * live + (t < atmos.sparkUntil && game.calm ? 0.4 : 0);
+  // Searchlight sweep.
+  const a = t * 0.12;
+  refs.search.intensity = 140;
+  refs.search.target.position.set(10 + Math.sin(a) * 5, 2.2 + Math.sin(a * 1.7) * 1.2, -6);
+  refs.shafts.forEach((s, i) => { s.material.uniforms.uOpacity.value = 0.05 + 0.02 * Math.sin(t * 0.4 + i); });
+  // Cord lamp and its pull-cord.
+  const lampOn = game.cordOn ? (game.calm ? 1 : Math.min(1, (t - game.cordOnTime) * 6) * (t - game.cordOnTime < 0.4 ? (Math.sin(t * 70) > 0 ? 1 : 0.2) : 1)) : 0;
+  emissive.CordBulb.emissiveIntensity = 10 * lampOn;
+  refs.cordLight.intensity = 3.2 * lampOn;
+  const beadY = CORD_BEAD - 0.12 * game.cordPull + (game.cordSpring || 0);
+  game.cordSpring = (game.cordSpring || 0) * Math.pow(0.02, dt);
+  const pos = refs.cord.geometry.attributes.position;
+  pos.setXYZ(0, 0.42, CORD_SHADE, 0.04); pos.setXYZ(1, 0.42 + Math.sin(t * 1.3) * 0.004, beadY, 0.04); pos.needsUpdate = true;
+  refs.bead.position.set(0.42 + Math.sin(t * 1.3) * 0.004, beadY - 0.012, 0.04);
+  // Exit door rises with the crank.
+  refs.ExitDoor.position.y = game.doorOpen * (DOOR.h - 0.05);
+  refs.CrankWheel.rotation.z = 0;
+  refs.wheelPivot.rotation.z = -THREE.MathUtils.degToRad(game.wheelAngle);
+  emissive.DoorGlow.emissiveIntensity = 0.45 * smooth(game.doorOpen * 1.5);
+  refs.doorLight.intensity = 1.2 * game.doorOpen;
+  // Distant machinery.
+  if (t > atmos.nextClank && (game.mode === 'play')) { atmos.nextClank = t + 6 + Math.random() * 8; Math.random() < 0.6 ? Sound.distant() : Sound.groan(); }
+  Sound.hiss(Math.max(0, 1 - Math.abs(8.7 - game.x) / 2.5) * (game.mode === 'play' ? 1 : 0));
 }
 
 // ---------------------------------------------------------------------------
@@ -1027,15 +1310,24 @@ const titleEl = document.getElementById('title'), pauseEl = document.getElementB
 const skipBtn = document.getElementById('skip'), fadeEl = document.getElementById('fade'), dbg = document.getElementById('debug');
 let cuePtr = 0, prevMode = 'play';
 
-function resetWorld(fromShutter = false) {
-  Object.assign(game, { x: fromShutter ? 2.9 : START_X, y: 0, vx: 0, vy: 0, facing: 1, yaw: Math.PI / 2, grounded: true,
-    crouched: fromShutter ? false : false, mantle: null, pull: null, jumpBuffer: 0, coyote: 0, landTimer: 0, hintWeight: 0, ended: false });
-  game.released = fromShutter; game.shutterAngle = fromShutter ? SHUTTER_OPEN_DEG : 0; game.leverAngle = fromShutter ? 72 : 0;
-  game.weightY = fromShutter ? 0.12 : 1.56; game.releaseTime = fromShutter ? -10 : -1;
-  game.checkpoint = fromShutter ? 'shutter' : 'start';
+const CHECKPOINTS = {
+  start: { x: START_X, released: false, door: 0 },
+  shutter: { x: 2.9, released: true, door: 0 },
+  hall: { x: 7.45, released: true, door: 0 },
+  door: { x: 9.62, released: true, door: 1 },
+};
+function resetWorld(name = 'start') {
+  const c = CHECKPOINTS[name];
+  Object.assign(game, { x: c.x, y: 0, z: 0, vx: 0, vy: 0, facing: 1, yaw: Math.PI / 2, yawOverride: null, grounded: true,
+    crouched: false, mantle: null, act: null, exit: null, jumpBuffer: 0, coyote: 0, landTimer: 0, hintWeight: 0, ended: false, peakY: 0 });
+  game.released = c.released; game.shutterAngle = c.released ? SHUTTER_OPEN_DEG : 0; game.leverAngle = c.released ? 72 : 0;
+  game.weightY = c.released ? 0.12 : 1.56; game.releaseTime = c.released ? -10 : -1;
+  game.doorOpen = c.door; game.wheelAngle = c.door ? 300 : 0;
+  game.checkpoint = name;
 }
 function startOpening() {
-  resetWorld(false);
+  resetWorld('start');
+  game.cordOn = false; game.cordUsed = false; game.cordPull = 0;
   game.mode = 'opening'; game.sceneTime = 0; cuePtr = 0; game.nextRelay = OPENING_FRAMES;
   refs.grit.forEach((g) => (g.m.visible = false));
   Object.values(actions).forEach((a) => a.stop()); current = null;
@@ -1044,71 +1336,74 @@ function startOpening() {
   skipBtn.hidden = true;
   setTimeout(() => { if (game.mode === 'opening') skipBtn.hidden = false; }, 1500);
   touchEl.hidden = true;
+  fadeEl.style.opacity = 0;
 }
-function startPlay(fromShutter = false) {
+function startPlay(checkpoint = 'start') {
   const naturalEnd = game.mode === 'opening' && game.frame >= OPENING_FRAMES;
-  if (game.mode === 'opening' || game.mode === 'title' || game.mode === 'end') { resetWorld(fromShutter); }
+  resetWorld(checkpoint);
   if (!naturalEnd && game.frame < 380) refs.grit.forEach((g) => (g.m.visible = false));
   game.mode = 'play';
   game.sceneTime = Math.max(game.sceneTime, OPENING_FRAMES / FPS);
-  game.playStart = game.clock;
+  if (!game.playStart || checkpoint === 'start') game.playStart = game.clock;
   input.lastActivity = game.clock;
   skipBtn.hidden = true;
   touchEl.hidden = !touchDevice;
+  fadeEl.style.opacity = 0;
   Object.values(actions).forEach((a) => { if (a.getClip().name !== current) a.stop(); });
   setClip('Idle', naturalEnd ? 0.5 : 0.25);
   Sound.hum(1);
-  cam.x = THREE.MathUtils.clamp(game.x + 0.9, 1.2, 4.6);
+  cam.x = THREE.MathUtils.clamp(game.x + 0.9, 1.2, 10.6);
+  [cam.dist, cam.y, cam.look] = volumeAt(game.x);
 }
 function loadCheckpoint() {
   if (game.mode === 'title') return;
-  const shutter = game.checkpoint === 'shutter';
-  game.mode = 'end'; startPlay(shutter);
-  pauseEl.hidden = true;
+  pauseEl.hidden = true; endEl.hidden = true;
+  startPlay(game.checkpoint);
 }
 function togglePause() {
   if (game.mode === 'play' || game.mode === 'opening') {
     prevMode = game.mode; game.mode = 'paused'; pauseEl.hidden = false; syncOpts();
-    const t = Math.max(0, game.clock - game.playStart);
-    document.getElementById('pause-time').textContent = game.playStart ? fmt(t) : '0:00';
+    document.getElementById('pause-time').textContent = game.playStart ? fmt(Math.max(0, game.clock - game.playStart)) : '0:00';
     document.getElementById('resume').focus();
   } else if (game.mode === 'paused') { game.mode = prevMode; pauseEl.hidden = true; }
 }
 const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
 function finish() {
-  game.mode = 'end'; game.endTime = game.clock - game.playStart;
+  game.endTime = game.clock - game.playStart;
   fadeEl.style.opacity = 1;
-  setTimeout(() => { document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; endEl.hidden = false; document.getElementById('again').focus(); }, 1300);
   Sound.distant();
+  setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; endEl.hidden = false; document.getElementById('again').focus(); }, 1300);
 }
 
 // Options shared between the title and pause cards.
+const OPTS = { sound: true, assist: false, calm: false, autorun: true };
 function setOpt(name, value) {
   try { localStorage.setItem('dl01-' + name, value ? '1' : '0'); } catch (e) { /* storage unavailable */ }
   if (name === 'sound') Sound.setEnabled(value);
   if (name === 'assist') game.assist = value;
   if (name === 'calm') { game.calm = value; bloom.strength = value ? 0.35 : 0.55; }
+  if (name === 'autorun') game.autorun = value;
   syncOpts();
 }
-function getOpt(name, dflt) { try { const v = localStorage.getItem('dl01-' + name); return v === null ? dflt : v === '1'; } catch (e) { return dflt; } }
+function getOpt(name) { try { const v = localStorage.getItem('dl01-' + name); return v === null ? OPTS[name] : v === '1'; } catch (e) { return OPTS[name]; } }
 function syncOpts() {
-  const vals = { sound: getOpt('sound', true), assist: game.assist, calm: game.calm };
-  for (const [n, v] of Object.entries(vals)) { document.getElementById('opt-' + n).checked = v; document.getElementById('opt-' + n + '-p').checked = v; }
+  for (const n of Object.keys(OPTS)) { const v = getOpt(n); document.getElementById('opt-' + n).checked = v; document.getElementById('opt-' + n + '-p').checked = v; }
 }
-for (const n of ['sound', 'assist', 'calm']) {
+for (const n of Object.keys(OPTS)) {
   document.getElementById('opt-' + n).addEventListener('change', (e) => setOpt(n, e.target.checked));
   document.getElementById('opt-' + n + '-p').addEventListener('change', (e) => setOpt(n, e.target.checked));
 }
-game.assist = getOpt('assist', false); game.calm = getOpt('calm', false);
+game.assist = getOpt('assist'); game.calm = getOpt('calm'); game.autorun = getOpt('autorun');
+syncOpts();
 
-beginBtn.addEventListener('click', () => { Sound.start(); Sound.setEnabled(getOpt('sound', true)); titleEl.hidden = true; fadeEl.style.opacity = 0; startOpening(); canvas.focus?.(); });
-skipBtn.addEventListener('click', () => { startPlay(false); });
+beginBtn.addEventListener('click', () => { Sound.start(); Sound.setEnabled(getOpt('sound')); titleEl.hidden = true; startOpening(); });
+skipBtn.addEventListener('click', () => { startPlay('start'); });
 document.getElementById('resume').addEventListener('click', togglePause);
 document.getElementById('checkpoint').addEventListener('click', loadCheckpoint);
 document.getElementById('restart').addEventListener('click', () => { pauseEl.hidden = true; startOpening(); });
-document.getElementById('again').addEventListener('click', () => { endEl.hidden = true; fadeEl.style.opacity = 0; startOpening(); });
-document.getElementById('again-skip').addEventListener('click', () => { endEl.hidden = true; fadeEl.style.opacity = 0; game.mode = 'end'; startPlay(false); });
+document.getElementById('again').addEventListener('click', () => { endEl.hidden = true; startOpening(); });
+document.getElementById('again-skip').addEventListener('click', () => { endEl.hidden = true; game.playStart = 0; startPlay('start'); });
 
 // ---------------------------------------------------------------------------
 // Main loop
@@ -1129,36 +1424,33 @@ function frame(now) {
     if (game.mode === 'opening') {
       while (cuePtr < CUES.length && CUES[cuePtr][0] <= f) { CUES[cuePtr][1](); cuePtr++; }
       updateGrit(f);
-      if (f >= OPENING_FRAMES) startPlay(false);
+      if (f >= OPENING_FRAMES) startPlay('start');
     }
     if (game.mode === 'play') {
+      if (game.act && game.act.kind === 'cord') game.cordUsed = true;
       updatePlayer(dt);
-      if (!game.released || game.clock - game.releaseTime > 0.8) {
-        if (f >= game.nextRelay) { game.nextRelay += 144; [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, 0.7), i * 500)); }
-      }
-      if (game.x >= EXIT_X && !game.ended) { game.ended = true; finish(); }
+      if (f >= game.nextRelay) { game.nextRelay += 144; [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, Math.max(0.25, 0.8 - Math.abs(game.x - 2) / 8)), i * 500)); }
     }
-    if (active) updateMechanisms(dt);
+    if (active) { updateMechanisms(dt); updateAtmosphere(dt); }
     updateCharacter(dt, game.mode === 'play');
     applyLights(f);
     updateCamera(dt, f);
   }
   input.jumpPressed = false; input.usePressed = false;
   grain.uniforms.uTime.value = (now / 1000) % 100;
-  if (!dbg.hidden) dbg.textContent = `mode ${game.mode}\nframe ${f.toFixed(0)}  fps ${fpsAvg.toFixed(0)}\nx ${game.x.toFixed(2)}  y ${game.y.toFixed(2)}  vx ${game.vx.toFixed(2)}\nclip ${current}\ncrouch ${game.crouched}  ceiling ${ceilingAt(game.x).toFixed(2)}\ncheckpoint ${game.checkpoint}  released ${game.released}`;
+  if (!dbg.hidden) dbg.textContent = `mode ${game.mode}\nframe ${f.toFixed(0)}  fps ${fpsAvg.toFixed(0)}\nx ${game.x.toFixed(2)}  y ${game.y.toFixed(2)}  vx ${game.vx.toFixed(2)}\nclip ${current}\ncrouch ${game.crouched}  ceiling ${ceilingAt(game.x).toFixed(2)}\ncheckpoint ${game.checkpoint}  released ${game.released}  door ${game.doorOpen.toFixed(2)}\nact ${game.act ? game.act.kind + ':' + game.act.phase : '-'}  autorun ${game.autorun}`;
   if (mixer) composer.render();
   requestAnimationFrame(frame);
 }
 
 // Test hook for automated traversal checks.
-window.__dl01 = { game, skip: () => startPlay(false), input, actions: () => Object.keys(actions), cam, camera, refs };
+window.__dl01 = { game, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs };
 
 function boot() {
   resize();
   load().then(() => {
     loadStatus.textContent = 'Ready'; loadStatus.classList.add('ok');
     beginBtn.disabled = false; beginBtn.focus();
-    // Paint the dormant depot behind the title card.
     captureChest(); camera.position.copy(cam.start); camera.lookAt(cam.chest); camera.setFocalLength(50); applyLights(0);
   }).catch((err) => {
     console.error(err);

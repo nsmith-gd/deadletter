@@ -42,7 +42,17 @@ LATCH_PIVOT = Vector((3.36, 0.12))   # (x, z); the lever stands up from here
 LATCH_LEN = 0.21
 LATCH_TILT = 8.0                     # degrees toward D-17 at rest
 PULL_ROOT_X = 3.12
-CRATE = (4.5, 5.1, 0.45)             # x0, x1, height
+CRATE = (5.6, 6.2, 0.45)             # x0, x1, height (mantle)
+STEP = (4.1, 4.9, 0.22)              # fallen conveyor: x0, x1, height (first jump)
+PIT = (6.6, 7.1, -0.35)              # drain trench: x0, x1, floor height
+HALL_X = 7.3                         # the sorting hall opens up from here
+CRANK = (9.62, 0.2, 0.45)            # wheel centre (x, y, z); D-17 faces into the wall to turn it
+DOOR = (10.0, 10.8, 1.05)            # exit door in the bulkhead: x0, x1, height
+BULKHEAD_Y = 0.62
+CORD = (0.42, -0.04, 0.70, 2.05)     # pull-cord lamp: x, y, bead z, shade z
+MANTLE_KEYS = [(0, 0.0, 0.0), (6, 0.0, 0.0), (10, 0.03, 0.12), (14, 0.03, 0.18), (20, 0.05, 0.45),
+               (24, 0.05, 0.38), (32, 0.10, 0.78), (38, 0.20, 0.95), (44, 0.33, 1.0), (56, 0.38, 1.0)]
+MANTLE_FRAMES = 56                   # (frame, forward m, fraction of the ledge height); main.js matches
 CROUCH = -0.17                       # body drop when crouched
 
 # Opening beats (frames from the start of the scene).
@@ -97,6 +107,9 @@ def set_materials():
     m['spark'] = emission_material('Spark', (0.7, 0.85, 1.0), 0.0)
     m['farglow'] = emission_material('FarGlow', (0.45, 0.55, 0.6), 0.012)
     m['relay'] = [emission_material(f'Relay{c}', (0.75, 1.0, 0.82), 0.0) for c in 'ABC']
+    m['cordbulb'] = emission_material('CordBulb', (1.0, 0.85, 0.6), 0.0)
+    m['doorglow'] = emission_material('DoorGlow', (0.6, 0.85, 0.72), 0.0)
+    m['water'] = simple_material('Water', (0.01, 0.012, 0.012), 0.05, metallic=0.2)
     return m
 
 
@@ -225,12 +238,214 @@ def build_shutter(m, coll):
     obj('CounterweightStripes', bm, [m['yellow']], coll)
 
 
+def make_route_map(path):
+    """Faded depot route map: tunnels climbing from the depot to the homes, the school, the works
+    and the ward, with a 'you are here' dot. Symbols only, no words."""
+    from PIL import Image, ImageDraw, ImageFilter
+    import random as _r
+    rnd = _r.Random(5)
+    w, h = 1024, 680
+    img = Image.new('RGB', (w, h), (58, 70, 62))
+    d = ImageDraw.Draw(img)
+    for _ in range(90):
+        x, y, r = rnd.randint(0, w), rnd.randint(0, h), rnd.randint(10, 90)
+        c = rnd.randint(40, 70)
+        d.ellipse((x - r, y - r, x + r, y + r), fill=(c, c + 10, c + 2))
+    img = img.filter(ImageFilter.GaussianBlur(14))
+    d = ImageDraw.Draw(img)
+    ink, faded, red = (214, 206, 176), (150, 150, 128), (178, 64, 52)
+    d.rectangle((16, 16, w - 16, h - 16), outline=ink, width=6)
+    stations = {'depot': (170, 560), 'homes': (360, 420), 'school': (560, 470), 'works': (700, 300),
+                'ward': (840, 170), 'up': (900, 60)}
+    for a, b in (('depot', 'homes'), ('homes', 'school'), ('homes', 'works'), ('school', 'works'),
+                 ('works', 'ward'), ('ward', 'up')):
+        d.line((*stations[a], *stations[b]), fill=faded, width=14)
+        d.line((*stations[a], *stations[b]), fill=ink, width=5)
+    for name, (x, y) in stations.items():
+        d.ellipse((x - 30, y - 30, x + 30, y + 30), fill=(58, 70, 62), outline=ink, width=6)
+    x, y = stations['depot']            # parcel glyph
+    d.rectangle((x - 16, y - 12, x + 16, y + 14), outline=ink, width=4); d.line((x - 16, y, x + 16, y), fill=ink, width=3)
+    x, y = stations['homes']            # house
+    d.polygon([(x - 18, y), (x, y - 18), (x + 18, y)], outline=ink, width=4); d.rectangle((x - 13, y, x + 13, y + 16), outline=ink, width=4)
+    x, y = stations['school']           # bell
+    d.pieslice((x - 16, y - 18, x + 16, y + 14), 180, 360, outline=ink, width=4); d.line((x - 18, y, x + 18, y), fill=ink, width=4)
+    d.ellipse((x - 4, y + 4, x + 4, y + 12), fill=ink)
+    x, y = stations['works']            # wrench
+    d.line((x - 14, y + 14, x + 8, y - 8), fill=ink, width=6); d.ellipse((x + 2, y - 18, x + 20, y), outline=ink, width=4)
+    x, y = stations['ward']             # cross
+    d.rectangle((x - 5, y - 17, x + 5, y + 17), fill=ink); d.rectangle((x - 17, y - 5, x + 17, y + 5), fill=ink)
+    x, y = stations['up']               # arrow up
+    d.polygon([(x - 16, y + 8), (x, y - 14), (x + 16, y + 8)], fill=ink); d.rectangle((x - 5, y + 6, x + 5, y + 20), fill=ink)
+    x, y = stations['depot']            # you are here
+    d.ellipse((x + 34, y - 46, x + 58, y - 22), fill=red)
+    for k in range(5):                  # tally marks of past deliveries in the corner
+        d.line((60 + k * 18, 600, 66 + k * 18, 640), fill=faded, width=5)
+    d.line((52, 630, 150, 606), fill=faded, width=5)
+    img = img.filter(ImageFilter.GaussianBlur(1.4))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    img.save(path)
+
+
+def build_extension(m, coll):
+    """The second half of DL-01: cord lamp and route map, a fallen conveyor to hop onto, the
+    drain trench, the sorting hall, and the bulkhead with its crank wheel and exit door."""
+    rnd = random.Random(21)
+    # Pull-cord lamp over the cradle bay, and the route map it reveals.
+    cx, cy, bead, shade = CORD
+    bm = bmesh.new()
+    add_cyl(bm, (cx, cy, 2.45), (cx, cy, shade + 0.12), 0.004, seg=6)
+    add_cyl(bm, (cx, cy, shade + 0.12), (cx, cy, shade), 0.035, 0.11, seg=20)
+    obj('CordLampShade', bm, [m['depot_green']], coll)
+    bm = bmesh.new()
+    add_sphere(bm, (cx, cy, shade - 0.02), 0.03, seg=12)
+    obj('CordBulb', bm, [m['cordbulb']], coll)
+    rmap = os.path.join(TEX, 'route_map.png')
+    if not os.path.exists(rmap):
+        make_route_map(rmap)
+    textured_plane('RouteMap', (1.0, 0.66), (-0.05, 0.995, 1.25), 90, image_material('RouteMapMat', rmap), coll)
+    bm = bmesh.new()
+    add_box(bm, (-0.05, 1.0, 1.25), (1.06, 0.01, 0.72))
+    obj('RouteMapFrame', bm, [m['steel']], coll)
+
+    # Fallen conveyor: the first thing to jump onto.
+    x0, x1, h = STEP
+    bm = bmesh.new()
+    for y in (-0.22, 0.32):
+        add_box(bm, ((x0 + x1) / 2, y, h - 0.03), (x1 - x0, 0.05, 0.06))
+    for x in (x0 + 0.05, x1 - 0.05):
+        for y in (-0.22, 0.32):
+            add_box(bm, (x, y, (h - 0.06) / 2), (0.05, 0.05, h - 0.06))
+    add_box(bm, (x0 - 0.1, 0.05, 0.03), (0.24, 0.7, 0.06), rot=Matrix.Rotation(0.25, 4, 'Y'))
+    obj('StepFrame', bm, [m['steel']], coll)
+    bm = bmesh.new()
+    k = 0
+    x = x0 + 0.04
+    while x < x1 - 0.02:
+        add_cyl(bm, (x, -0.2, h - 0.012), (x, 0.3, h - 0.012), 0.016, seg=10)
+        x += 0.055
+        k += 1
+    obj('StepRollers', bm, [m['steel']], coll)
+
+    # Drain trench: broken grate bars hanging in, standing water at the bottom.
+    px0, px1, pz = PIT
+    bm = bmesh.new()
+    for i in range(7):
+        y = -0.5 + i * 0.18
+        a = Vector((px0 + 0.02, y, -0.01))
+        add_cyl(bm, a, a + Vector((rnd.uniform(0.08, 0.2), rnd.uniform(-0.05, 0.05), -rnd.uniform(0.1, 0.3))), 0.008, seg=6)
+    for i in range(5):
+        y = -0.4 + i * 0.25
+        add_cyl(bm, (px1 - 0.02, y, -0.01), (px1 - rnd.uniform(0.05, 0.15), y + 0.03, -rnd.uniform(0.05, 0.2)), 0.008, seg=6)
+    obj('TrenchGrate', bm, [m['steel']], coll)
+    bm = bmesh.new()
+    add_box(bm, ((px0 + px1) / 2, 4.0, pz + 0.025), (px1 - px0 - 0.05, 16, 0.002))
+    obj('TrenchWater', bm, [m['water']], coll)
+
+    # The sorting hall: gantry, columns, a huge sorting carousel, chutes, hanging hooks.
+    bm = bmesh.new()
+    for x in range(6, 17, 2):
+        add_box(bm, (x, 4.2, 3.5), (0.3, 0.3, 7))
+        add_box(bm, (x + 0.6, 8.0, 3.5), (0.4, 0.4, 7))
+    add_box(bm, (11.0, 2.4, 3.2), (12, 0.6, 0.12))
+    for x in range(6, 17):
+        add_box(bm, (x, 2.15, 3.45), (0.03, 0.03, 0.5))
+    add_box(bm, (11.0, 2.15, 3.68), (12, 0.04, 0.04))
+    add_torus(bm, (10.5, 7.0, 3.6), (0, 1, 0), 2.6, 0.12, seg=64, rseg=8)
+    add_torus(bm, (10.5, 7.0, 3.6), (0, 1, 0), 2.2, 0.06, seg=64, rseg=6)
+    for i in range(16):
+        a = 2 * math.pi * i / 16
+        p = Vector((10.5 + 2.6 * math.cos(a), 7.0, 3.6 + 2.6 * math.sin(a)))
+        add_box(bm, p - Vector((0, 0, 0.25)), (0.4, 0.5, 0.06))
+        add_cyl(bm, p, p - Vector((0, 0, 0.25)), 0.01, seg=4)
+    for x0c, x1c, y in ((7.5, 9.5, 5.5), (12.0, 14.5, 6.0), (13.5, 11.8, 3.6)):
+        add_cyl(bm, (x0c, y, 6.5), (x1c, y, 1.6), 0.35, seg=20)
+    obj('HallMachinery', bm, [m['steel']], coll)
+    for i, (x, length) in enumerate(((7.7, 1.5), (8.5, 1.9), (9.3, 1.3))):
+        bm = bmesh.new()
+        top = Vector((x, 1.7, 3.2))
+        add_cyl(bm, top, top - Vector((0, 0, length)), 0.006, seg=6)
+        add_torus(bm, top - Vector((0, 0, length + 0.03)), (1, 0, 0), 0.03, 0.006, seg=12, rseg=4)
+        obj(f'Hook{i}', bm, [m['steel']], coll)
+        bm = bmesh.new()
+        add_box(bm, top - Vector((0, 0, length + 0.16)), (0.26, 0.2, 0.2),
+                rot=Matrix.Rotation(rnd.uniform(-0.3, 0.3), 4, 'Z'))
+        obj(f'HookParcel{i}', bm, [m['paper']], coll)
+
+    # A live cable hanging from the gantry that sparks now and then.
+    bm = bmesh.new()
+    pts = [Vector((7.95, 0.75, 3.2)), Vector((7.9, 0.72, 2.2)), Vector((8.0, 0.7, 1.35))]
+    for a, b in zip(pts, pts[1:]):
+        add_cyl(bm, a, b, 0.012, seg=8)
+    obj('LiveCable', bm, [m['rubber']], coll)
+    bm = bmesh.new()
+    for i in range(5):
+        a = Vector((8.0, 0.7, 1.35))
+        add_cyl(bm, a, a + Vector((rnd.uniform(-0.06, 0.06), rnd.uniform(-0.06, 0.06), -rnd.uniform(0.02, 0.08))), 0.0015, seg=4)
+    obj('CableSpark', bm, [m['spark']], coll)
+    bm = bmesh.new()
+    add_box(bm, (8.7, 0.45, 0.005), (0.5, 0.4, 0.01))
+    for k in range(6):
+        add_box(bm, (8.48 + k * 0.088, 0.45, 0.012), (0.02, 0.38, 0.012))
+    obj('Vent', bm, [m['steel']], coll)
+
+    # Bulkhead with the exit door and its crank wheel.
+    dx0, dx1, dh = DOOR
+    by = BULKHEAD_Y
+    bm = bmesh.new()
+    panels = [(9.1, dx0, 0.0, 2.6), (dx1, 11.9, 0.0, 2.6), (dx0, dx1, dh, 2.6)]
+    for i, (a0, a1, z0, z1) in enumerate(panels):      # seamed wall panels like the alcove's
+        n = max(1, round((a1 - a0) / 0.95))
+        for k in range(n):
+            w = (a1 - a0) / n
+            rounded_box((w - 0.03, 0.3, z1 - z0 - 0.02), (a0 + w * (k + 0.5), by + 0.15, (z0 + z1) / 2), p=12, cuts=8,
+                        dents=((0.008, 3.0),), seed=31 + i * 5 + k, bm=bm, mat=0)
+    for k in range(3):                                   # end wall closing the lane
+        rounded_box((0.4, 0.97, 2.6), (11.9, -2.0 + k * 1.0, 1.3), p=12, cuts=8, dents=((0.008, 3.0),), seed=50 + k, bm=bm, mat=0)
+    obj('Bulkhead', bm, [m['wall']], coll)
+    bm = bmesh.new()
+    add_box(bm, (dx0 - 0.04, by - 0.02, dh / 2), (0.08, 0.08, dh + 0.08))
+    add_box(bm, (dx1 + 0.04, by - 0.02, dh / 2), (0.08, 0.08, dh + 0.08))
+    add_box(bm, ((dx0 + dx1) / 2, by - 0.02, dh + 0.06), (dx1 - dx0 + 0.16, 0.1, 0.12))
+    obj('DoorFrame', bm, [m['yellow']], coll)
+    door = []
+    n = int(dh / 0.075)
+    bm = bmesh.new()
+    for k in range(n):
+        add_box(bm, ((dx0 + dx1) / 2, by + 0.03, 0.04 + k * 0.075), (dx1 - dx0 - 0.02, 0.025, 0.07))
+    obj('ExitDoor', bm, [m['shutter']], coll)
+    bm = bmesh.new()
+    add_box(bm, ((dx0 + dx1) / 2, by + 0.9, dh / 2 + 0.2), (dx1 - dx0 + 0.6, 0.05, dh + 0.6))
+    obj('DoorGlow', bm, [m['doorglow']], coll)
+    bm = bmesh.new()
+    add_box(bm, ((dx0 + dx1) / 2, by + 0.5, -0.04), (dx1 - dx0, 0.9, 0.08))
+    add_box(bm, (dx0 + 0.25, by + 0.75, 0.01), (0.5, 0.5, 0.02))                  # a floor plate beyond
+    obj('DoorPassage', bm, [m['concrete']], coll)
+    wx, wy, wz = CRANK
+    bm = bmesh.new()
+    add_box(bm, (wx, wy + 0.16, wz / 2 + 0.05), (0.09, 0.09, wz + 0.1))
+    add_cyl(bm, (wx, wy + 0.12, wz), (wx, wy, wz), 0.02, seg=10)
+    obj('CrankPost', bm, [m['depot_green']], coll)
+    bm = bmesh.new()
+    add_torus(bm, (wx, wy, wz), (0, 1, 0), 0.15, 0.012, seg=32, rseg=8)
+    for i in range(4):
+        a = math.pi * i / 2 + math.pi / 4
+        add_cyl(bm, (wx, wy, wz), (wx + 0.15 * math.cos(a), wy, wz + 0.15 * math.sin(a)), 0.007, seg=6)
+    add_cyl(bm, (wx, wy - 0.01, wz), (wx, wy + 0.01, wz), 0.03, seg=12)
+    obj('CrankWheel', bm, [m['red']], coll)
+
+
 def build_set(m, coll):
     bm = bmesh.new()
-    add_box(bm, (3.0, 3.0, -0.05), (16, 14, 0.1))
+    px0, px1, pz = PIT
+    add_box(bm, ((px0 - 5.0) / 2, 4.0, -0.05), (px0 + 5.0, 16, 0.1))
+    add_box(bm, ((px1 + 17.0) / 2, 4.0, -0.05), (17.0 - px1, 16, 0.1))
+    add_box(bm, ((px0 + px1) / 2, 4.0, pz - 0.05), (px1 - px0, 16, 0.1))
+    for x in (px0, px1):  # trench walls
+        add_box(bm, (x, 4.0, pz / 2), (0.04, 16, -pz))
     obj('Floor', bm, [m['concrete']], coll)
     bm = bmesh.new()
-    add_box(bm, (2.3, -0.38, 0.0015), (7.6, 0.07, 0.003))
+    add_box(bm, ((-1.5 + px0) / 2, -0.38, 0.0015), (px0 + 1.5, 0.07, 0.003))
+    add_box(bm, ((px1 + 11.5) / 2, -0.38, 0.0015), (11.5 - px1, 0.07, 0.003))
     obj('SafetyLine', bm, [m['yellow']], coll)
 
     bm = bmesh.new()
@@ -275,7 +490,7 @@ def build_set(m, coll):
         z = sz[2] / 2 + (0.37 if k % 3 == 0 else 0.0)
         add_box(bm, (x, prnd.uniform(-0.4, 0.8), z), sz,
                 rot=Matrix.Rotation(prnd.uniform(-0.5, 0.5), 4, 'Z') @ Matrix.Rotation(prnd.uniform(-0.15, 0.15), 4, 'X'))
-    for x, y in ((0.35, 0.55), (1.55, 0.6), (2.6, 0.55), (4.2, 0.5), (4.3, -0.45), (5.4, 0.45)):
+    for x, y in ((0.35, 0.55), (1.55, 0.6), (2.6, 0.55), (3.7, 0.5), (5.2, -0.45), (6.4, 0.5)):
         sz = (prnd.uniform(0.1, 0.2), prnd.uniform(0.1, 0.2), prnd.uniform(0.07, 0.12))
         add_box(bm, (x, y, sz[2] / 2), sz, rot=Matrix.Rotation(prnd.uniform(-1, 1), 4, 'Z'))
     obj('Parcels', bm, [m['paper']], coll)
@@ -297,6 +512,7 @@ def build_set(m, coll):
     obj('Conveyor', bm, [m['steel']], coll)
 
     build_shutter(m, coll)
+    build_extension(m, coll)
 
     pic = os.path.join(TEX, 'depot_pictogram.png')
     if not os.path.exists(pic):
@@ -354,7 +570,7 @@ def build_set(m, coll):
         add_cyl(bm, (x, 3.6, 4.0), (x, 3.6, 2.0 + random.Random(int(x * 10)).uniform(-0.6, 0.4)), 0.01, seg=6)
     obj('Hall', bm, [m['steel']], coll)
     bm = bmesh.new()
-    add_box(bm, (6.0, 8.0, 2.5), (14, 0.1, 6))
+    add_box(bm, (7.0, 12.5, 4.0), (20, 0.1, 9))
     obj('FarWall', bm, [m['farglow']], coll)
     bm = bmesh.new()
     add_cyl(bm, (0.3, -1.05, 0.06), (1.9, -0.95, 0.07), 0.06, seg=20)
@@ -534,7 +750,7 @@ def clip_opening(arm):
 
 
 def gait(arm, name, frames, half, stance, lift, crouch=0.0, lean=3.0, head_pitch=2.0,
-         antenna_back=0.0, carry=None):
+         antenna_back=0.0, carry=None, arm_swing=0.012, bob=0.004, roll=2.0):
     """Continuous in-place gait (the game moves the character). Feet travel +-half."""
     c = Clip(arm, name, frames)
     tau = 2 * math.pi
@@ -552,13 +768,13 @@ def gait(arm, name, frames, half, stance, lift, crouch=0.0, lean=3.0, head_pitch
             dangle = 12 * math.sin(math.pi * sw) if sw is not None else 0.0
             feet[side] = ((0, rel, z), (dangle, 0, 0))
         sway = math.sin(tau * t)
-        body = (-0.006 * sway, 0, crouch - 0.003 + 0.004 * math.cos(2 * tau * t - tau * stance / 2))
-        body_rot = (lean + 0.8 * math.sin(2 * tau * t - 1.0), -2.0 * sway, 1.2 * math.sin(tau * t + 0.4))
+        body = (-0.006 * sway, 0, crouch - 0.003 + bob * math.cos(2 * tau * t - tau * stance / 2))
+        body_rot = (lean + 0.8 * math.sin(2 * tau * t - 1.0), -roll * sway, 1.2 * math.sin(tau * t + 0.4))
         world_head = (head_pitch, 1.0 * math.sin(tau * t - 1.2), 0.0)
         head = tuple(w - b for w, b in zip(world_head, body_rot))
         antenna = [(antenna_back * (1.0 if i == 0 else 0.25) + 2.5 * math.sin(2 * tau * t - 1.2 - 0.5 * i), 0)
                    for i in range(3)]
-        hands = {s: carry[s] + Vector((0, 0.012 * s * math.cos(tau * t), 0.005 * math.sin(2 * tau * t - 1.6)))
+        hands = {s: carry[s] + Vector((0, arm_swing * s * math.cos(tau * t), 0.005 * math.sin(2 * tau * t - 1.6)))
                  for _, s in SIDES}
         c.pose(frame, body=body, body_rot=body_rot, head=head, antenna=antenna, feet=feet, hands=hands)
     c.done()
@@ -602,33 +818,119 @@ def clip_jump(arm):
     c.done()
 
 
-def mantle_path(t):
-    """Root offset (forward, up) during the mantle; main.js uses the same curve."""
-    up = CRATE[2] * smoothstep((t - 0.15) / 0.55)
-    fwd = 0.38 * smoothstep((t - 0.25) / 0.75)
-    return fwd, up
+def mantle_at(f):
+    """Root offset (forward m, fraction of ledge height) at frame f; main.js uses the same keys."""
+    for (f0, w0, u0), (f1, w1, u1) in zip(MANTLE_KEYS, MANTLE_KEYS[1:]):
+        if f <= f1:
+            k = smoothstep((f - f0) / (f1 - f0)) if f1 > f0 else 1.0
+            return w0 + (w1 - w0) * k, u0 + (u1 - u0) * k
+    return MANTLE_KEYS[-1][1], MANTLE_KEYS[-1][2]
 
 
 def clip_mantle(arm):
-    frames = 22
-    c = Clip(arm, 'Mantle', frames)
-    d0 = 0.25                                   # starting distance from the crate face
-    for frame in range(1, frames + 1):
-        t = (frame - 1) / (frames - 1)
-        fwd, up = mantle_path(t)
-        edge_fwd, edge_up = d0 - fwd, CRATE[2] - up
-        grab = smoothstep(t / 0.15) * (1 - smoothstep((t - 0.72) / 0.2))
+    """A climb with effort and character: look up, hop and grab, heave, slip back, heave again,
+    the old left knee over the edge, tip onto the top, stand, and a glance back down."""
+    c = Clip(arm, 'Mantle', MANTLE_FRAMES)
+    h = CRATE[2]
+    d0 = 0.17                                   # collision stops him this far from the face
+    for frame in range(1, MANTLE_FRAMES + 1):
+        f = frame - 1
+        fwd, frac = mantle_at(f)
+        up = frac * h
+        ef, eu = d0 - fwd, h - up               # crate edge relative to the root
+        grab = track([(6, 0), (10, 1), (40, 1), (46, 0)], f)
         hands = {}
-        for _, s in SIDES:
-            target = Vector((s * 0.2, -edge_fwd, edge_up + 0.07))
+        for side, s in SIDES:
+            grip = Vector((s * 0.16, -ef + 0.02, eu + 0.06))
+            push = Vector((s * 0.16, -ef + 0.05, eu + 0.1))
+            target = grip.lerp(push, track([(36, 0), (44, 1)], f))
             hands[s] = CARRY[s].lerp(target - REST_WRIST[s], grab)
-        scrabble = math.sin(math.pi * min(1, max(0, (t - 0.15) / 0.55)))
-        feet = {side: ((0, 0.035 * s * math.sin(t * 30), 0.05 * scrabble), (20 * scrabble, 0, 0))
-                for side, s in SIDES}
-        lean = 15 * math.sin(math.pi * min(1, max(0, (t - 0.2) / 0.6)))
-        c.pose(frame, body=(0, 0, -0.02 * scrabble), body_rot=(4 + lean, 0, 0), head=(-8 * grab, 0, 0),
-               antenna=[(-18 * scrabble + 6 * math.sin(t * 20 - i), 0) for i in range(3)],
-               feet=feet, hands=hands, claws={'L': 4 + 20 * (1 - grab), 'R': 4 + 20 * (1 - grab)})
+        feet = {}
+        for side, s in SIDES:
+            if f < 10:
+                loc = (0, 0, 0)
+            elif (side == 'L' and f < 30) or (side == 'R' and f < 38):
+                # Scrabbling against the crate face, feet alternating.
+                phase = math.sin((f - 10) * 0.9 + (0 if side == 'L' else math.pi))
+                zw = 0.12 + 0.09 * phase + 0.1 * smoothstep((f - 20) / 12)
+                loc = (0, -(ef - 0.05), zw - up)
+            elif f < 46:
+                t0 = 30 if side == 'L' else 38
+                k = smoothstep((f - t0) / 6)
+                zw = (0.12 + 0.1) * (1 - k) + (h + 0.03) * k
+                loc = (0, -((ef - 0.05) * (1 - k) + (ef + 0.08) * k), zw - up)
+            else:
+                loc = (0, 0, 0)
+            rot = (25 * math.sin(math.pi * min(1, max(0, (f - 10) / 30))), 0, 0)
+            feet[side] = (loc, rot)
+        pitch = track([(0, 0), (6, -6), (10, 4), (20, 12), (24, 8), (32, 18), (38, 30), (44, 6), (50, 2), (56, 0)], f)
+        struggle = math.sin(math.pi * min(1, max(0, (f - 12) / 22)))
+        roll = 6 * struggle * math.sin(f * 0.9) + spring(f, 44, 5, decay=4, freq=1.4)
+        head = (track([(0, 0), (6, -28), (10, -20), (14, -10), (24, -14), (32, -6), (38, 10), (44, 0)], f),
+                3 * struggle * math.sin(f * 1.3),
+                track([(46, 0), (50, 60), (54, 60), (56, 35)], f))
+        body_z = track([(0, 0), (5, -0.04), (9, 0.01), (14, 0), (40, 0), (44, -0.03), (50, 0)], f)
+        antenna = [(-12 * struggle + 8 * math.sin(f * 0.8 - i) * struggle + spring(f, 44, 14 * (1 + 0.3 * i), decay=5, freq=1.3)
+                    + track([(0, 0), (6, -10), (10, 0)], f), 0) for i in range(3)]
+        opening = track([(0, 20), (9, 25), (10, 0), (40, 0), (44, 25), (52, 20)], f)
+        c.pose(frame, body=(0, 0, body_z), body_rot=(pitch, roll, 0), head=head, antenna=antenna,
+               feet=feet, hands=hands, claws={'L': opening, 'R': opening})
+    c.done()
+
+
+def clip_tug(arm):
+    """Reach up for the lamp's pull-cord on tiptoe, grip, tug it down, let go, look up at the light."""
+    frames = 44
+    c = Clip(arm, 'Tug', frames)
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        reach = track([(4, 0), (12, 1), (24, 1), (30, 0)], f)
+        pull = track([(14, 0), (19, 1), (23, 1), (26, 0)], f)
+        tiptoe = track([(6, 0), (12, 0.035), (15, 0.035), (19, -0.03), (26, 0)], f)
+        hands = {}
+        for side, s in SIDES:
+            if side == 'R':
+                target = Vector((-0.08, -0.15, 0.6 - 0.11 * pull))
+                hands[s] = CARRY[s].lerp(target - REST_WRIST[s], reach)
+            else:
+                hands[s] = CARRY[s] + Vector((0, 0.02, 0.03 * reach))
+        hand_rot = {'R': (-24 + 194 * reach, 0, 0), 'L': (-24, 6, 10)}
+        look = track([(0, 0), (6, -26), (24, -18), (30, -32), (40, -30), (44, -20)], f)
+        tilt = track([(26, 0), (34, 9), (44, 6)], f)
+        yaw = track([(30, 0), (38, 28), (44, 20)], f)
+        feet = {side: ((0, 0, 0), (-8 * tiptoe / 0.035 if tiptoe > 0 else 0, 0, 0)) for side, _ in SIDES}
+        antenna = [(track([(0, 0), (8, -8), (24, -6), (28, 0)], f) - spring(f, 26, 14 * (1 + 0.3 * i), decay=6), 0)
+                   for i in range(3)]
+        c.pose(frame, body=(0, 0, tiptoe), body_rot=(track([(0, 2), (12, -6), (19, 4), (26, 2)], f), 0, 0),
+               head=(look, tilt, yaw), antenna=antenna, feet=feet, hands=hands, hand_rot=hand_rot,
+               claws={'R': track([(10, 25), (14, 0), (23, 0), (25, 28), (34, CLAW_REST_OPEN['R'])], f),
+                      'L': CLAW_REST_OPEN['L']})
+    c.done()
+
+
+def clip_crank(arm):
+    """One stroke of the crank wheel (loops): grip the rim, haul it a sixth of a turn,
+    let go, reach back, grip again. D-17 faces the wheel, his back to the camera."""
+    frames = 24
+    c = Clip(arm, 'Crank', frames)
+    r, cz, cy = 0.15, CRANK[2], -0.2
+    for frame in range(1, frames + 2):
+        f = (frame - 1) % frames
+        turn = track([(0, 0), (12, 1)], f) if f <= 12 else track([(12, 1), (22, 0)], f)
+        lift_off = math.sin(math.pi * (f - 12) / 10) if 12 <= f <= 22 else 0.0
+        hands = {}
+        for side, s in SIDES:
+            a0 = math.radians(40 if side == 'L' else 220)
+            a = a0 - math.radians(60) * turn
+            target = Vector((r * math.cos(a), cy + 0.04 * lift_off, cz + r * math.sin(a)))
+            hands[s] = target - REST_WRIST[s]
+        effort = math.sin(math.pi * min(f, 12) / 12) if f <= 12 else 0.0
+        c.pose(frame, body=(0, -0.02 * effort, -0.012 - 0.012 * effort),
+               body_rot=(8 + 5 * effort, 2.5 * effort, 0),
+               head=(track([(0, -6), (8, -12), (14, -4), (24, -6)], f), 2 * effort, 0),
+               antenna=[(6 * effort + 3 * math.sin(f * 0.6 - i), 0) for i in range(3)],
+               hands=hands, hand_rot={'L': (-30, 0, 30), 'R': (-30, 0, -30)},
+               claws={'L': 0 if f < 12 or f > 21 else 26, 'R': 0 if f < 12 or f > 21 else 26})
     c.done()
 
 
@@ -752,14 +1054,19 @@ def main():
     arm.rotation_euler = (0, 0, 0)
 
     clip_idle(arm)
-    gait(arm, 'Walk', 16, half=0.09, stance=0.6, lift=0.03, crouch=-0.012)
-    gait(arm, 'CrouchWalk', 18, half=0.0675, stance=0.6, lift=0.022, crouch=CROUCH, lean=6,
+    gait(arm, 'Walk', 11, half=0.105, stance=0.58, lift=0.035, crouch=-0.02, bob=0.006, arm_swing=0.016)
+    gait(arm, 'Run', 10, half=0.12, stance=0.38, lift=0.065, crouch=-0.035, lean=10, head_pitch=0,
+         antenna_back=-14, carry={s: CARRY[s] + Vector((-s * 0.02, 0.02, 0.07)) for _, s in SIDES},
+         arm_swing=0.035, bob=0.012, roll=3.0)
+    gait(arm, 'CrouchWalk', 13, half=0.08, stance=0.6, lift=0.022, crouch=CROUCH, lean=6,
          head_pitch=-2, antenna_back=-65, carry=CROUCH_CARRY)
     clip_crouch_idle(arm)
     clip_jump(arm)
     clip_mantle(arm)
     clip_pull(arm)
     clip_flinch(arm)
+    clip_tug(arm)
+    clip_crank(arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False

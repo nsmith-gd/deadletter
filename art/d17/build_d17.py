@@ -877,8 +877,8 @@ def build_limbs(arm, mats, coll):
 # --------------------------------------------------------------------------
 
 def make_label_texture(path):
-    """Parcel label: child silhouette, destination glyph and room number, a small crooked-tree
-    stamp, postal marks. Drawn bold so it reads at handheld size."""
+    """Parcel label: child silhouette, destination glyph and room number, postal marks and the
+    sender's handwritten initials. Drawn bold so it reads at handheld size."""
     from PIL import Image, ImageDraw, ImageFilter
     import random
     rnd = random.Random(17)
@@ -924,13 +924,18 @@ def make_label_texture(path):
     d.ellipse((800, 300, 990, 490), outline=(120, 40, 34), width=8)
     for k in range(4):
         d.line((790, 330 + k * 34, 1000, 318 + k * 34), fill=(120, 40, 34), width=6)
-    # Crooked-tree stamp with a knot in one branch.
-    tree = (128, 46, 38)
-    d.ellipse((440, 380, 560, 500), outline=tree, width=6)
-    d.line((500, 488, 496, 440, 508, 410), fill=tree, width=10)
-    d.line((498, 445, 470, 418, 462, 398), fill=tree, width=7)
-    d.line((506, 425, 532, 404, 548, 410), fill=tree, width=7)
-    d.ellipse((470, 410, 484, 424), fill=tree)
+    # The sender's handwritten initials, "I.V.", in quick pen strokes with a flourish.
+    pen = (52, 44, 92)
+
+    def stroke(pts, w=7):
+        d.line(pts, fill=pen, width=w, joint='curve')
+    stroke([(452, 470), (458, 430), (466, 392), (470, 380)])                    # I
+    stroke([(446, 386), (482, 378)], 6)
+    stroke([(442, 474), (474, 466)], 6)
+    d.ellipse((486, 462, 496, 472), fill=pen)                                   # .
+    stroke([(508, 384), (522, 430), (532, 468), (548, 420), (566, 380)])        # V
+    d.ellipse((572, 462, 582, 472), fill=pen)                                   # .
+    stroke([(440, 492), (500, 486), (560, 490), (610, 482), (640, 470)], 5)     # flourish
     img = img.filter(ImageFilter.GaussianBlur(1.2))
     os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path)
