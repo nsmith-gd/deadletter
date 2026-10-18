@@ -42,6 +42,7 @@ RISE = 2.7                           # the platform's travel, bottom to landing
 DRUM = (54.05, 0.7, DECK + 3.6, 0.45)        # head drum: x, y, z, radius (axle along y)
 PULLEY = (51.2, 0.42, DECK + 3.6, 0.2)       # the pan chain's pulley, in line with the drum's hub
 YOKE = (53.6, 54.5, 1.45)            # the platform's chain anchors: x, x, height above its deck
+FAR_RAIL = (55.6, 55.75)             # the safety rail across the far landing (top DECK + 0.8)
 BELT = (57.7, 64.6)                  # the returns belt, flush with the floor
 TURN_X = 58.2                        # where crates leave the belt for the hatch
 TUNNEL = (64.6, 70.0)
@@ -521,13 +522,17 @@ def build_lift(m, coll):
     for y in (-0.38, 0.38):
         add_box(bm, ((px0 + px1) / 2, y, DECK + 0.002), (px1 - px0 + 0.07, 0.05, 0.004))
     _obj('G4PanBorder', bm, [m['yellow']], coll)
-    bm = bmesh.new()                                      # buffer stops at the pan's far end
-    for y in (-0.3, 0.3):
-        add_cyl(bm, (px1 + 0.06, y, DECK), (px1 + 0.06, y, DECK + 0.1), 0.04, seg=12)
-    _obj('G4PanStops', bm, [m['red']], coll)
+    # The buffer stops at the pan's far end, folded down flat on their hinges (none of it over 0.03 high),
+    # so the trolley rolls off the pan and on across the latched platform.
     bm = bmesh.new()
     for y in (-0.3, 0.3):
-        add_cyl(bm, (px1 + 0.06, y, DECK + 0.1), (px1 + 0.06, y, DECK + 0.13), 0.042, seg=12)
+        add_box(bm, (px1 + 0.04, y, DECK + 0.006), (0.06, 0.12, 0.012))                 # the hinge plate
+        add_cyl(bm, (px1 + 0.06, y - 0.05, DECK + 0.016), (px1 + 0.06, y + 0.05, DECK + 0.016), 0.012, seg=8)
+        add_cyl(bm, (px1 + 0.07, y, DECK + 0.022), (px1 + 0.17, y, DECK + 0.022), 0.02, seg=10)   # the stop, lying flat
+    _obj('G4PanStops', bm, [m['steel']], coll)
+    bm = bmesh.new()
+    for y in (-0.3, 0.3):
+        add_cyl(bm, (px1 + 0.17, y, DECK + 0.022), (px1 + 0.2, y, DECK + 0.022), 0.024, seg=10)
     _obj('G4PanStopCaps', bm, [m['rubber']], coll)
 
     # The head frame over the shaft, the drum and the pan pulley.
@@ -744,6 +749,20 @@ def build_belt(m, coll):
     bm = bmesh.new()
     add_sphere(bm, (57.35, 0.9, DECK + 2.1), 0.07, seg=14, scale=(1, 1, 0.9))
     _obj('BeaconLamp', bm, [m['beacon']], coll)
+    # The safety rail across the lane just beyond the shaft: 0.8 high, too high to climb from the platform,
+    # climbable from the trolley's top. Steel posts, a sheet infill to 0.62 (nothing to crawl under), a mid
+    # rail, and a yellow cap he climbs onto.
+    fx0, fx1 = FAR_RAIL
+    bm = bmesh.new()
+    fy0, fy1 = -0.72, 0.9
+    for y in (fy0 + 0.03, 0.1, fy1 - 0.03):
+        add_box(bm, ((fx0 + fx1) / 2, y, DECK + 0.38), (0.07, 0.06, 0.76))
+        add_box(bm, ((fx0 + fx1) / 2, y, DECK + 0.006), (fx1 - fx0 + 0.04, 0.12, 0.012))       # base plates
+    add_box(bm, ((fx0 + fx1) / 2, (fy0 + fy1) / 2, DECK + 0.33), (0.012, fy1 - fy0 - 0.06, 0.62))   # infill sheet
+    add_box(bm, ((fx0 + fx1) / 2, (fy0 + fy1) / 2, DECK + 0.45), (0.05, fy1 - fy0, 0.04))      # mid rail
+    add_box(bm, ((fx0 + fx1) / 2 - 0.008, -0.3, DECK + 0.22), (0.004, 0.32, 0.22), mat=2)       # a patch on the sheet
+    add_box(bm, ((fx0 + fx1) / 2, (fy0 + fy1) / 2, DECK + 0.78), (fx1 - fx0, fy1 - fy0, 0.04), mat=1)   # the cap
+    _obj('G4FarRail', bm, [m['steel'], m['yellow'], m['rust']], coll)
     _plane('G4BeltWarning', (0.42, 0.52), (57.0, 1.78, DECK + 1.25), _image_material('BeltWarningMat', os.path.join(TEX, 'belt_warning.png')), coll)
     _plane('G4ReturnsSign', (2.1, 0.36), (61.2, 1.78, DECK + 2.4), _image_material('ReturnsSignMat', os.path.join(TEX, 'returns_sign.png')), coll)
 

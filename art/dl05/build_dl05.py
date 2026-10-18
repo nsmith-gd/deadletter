@@ -5,7 +5,13 @@ DL-05 runs straight on from the DL-04 balcony stair, on a floor at 0:
   - ring C's ledge, open to the cave behind a low lip of rock;
   - the barricade that seals ring C, with a gap under it to crouch through;
   - ring C's lane: a low rock tunnel of shuttered homes (C-108 to C-112), dead bulbs on a cable and
-    a few still burning, a fallen duct;
+    a few still burning. The flood of R.Y. 42 is still told on it: a dried tideline at 1.2 m along the
+    wall and the facades (and inside C-114), mud below it, and halfway along, a stretch of lane sunk
+    into standing water (FloodDip, FloodWater). A length of ventilation duct fell on the lane before it
+    (PushDuct, with a red strap): pushed into the water, it is the bridge. Beside the path: C-108's
+    window, dimly lit, onto a table still set for a meal; letters jammed in C-110's slot, one sticking
+    out (C110Letter); C-112's door taped shut with the water-drop mark; ring C's red mail slot
+    (MailSlot9) by C-114;
   - home C-114, its door standing open: the hall with two pairs of shoes and a lamp still on, and the
     child's bedroom: the bed and the patched rabbit, a window painted on the wall and lit from behind,
     the photograph, the forwarding terminal and, behind the fallen desk, the growth marks and the tree;
@@ -37,7 +43,14 @@ BARRICADE = (80.2, 81.0)
 GAP = 0.62                            # clear height under the barricade
 LANE_C = (81.0, 88.5)
 LANE_CEIL = 2.6
-DUCT = (84.2, 84.6, 0.26)             # the fallen duct: x0, x1, height
+DUCT = (81.6, 83.1, 0.26, 0.4)        # PushDuct, lying along the lane at y 0: x0, x1, height, depth (y)
+DUCT_GRIP = (-0.775, 0.44)            # its red strap's grip bar: x from the duct's origin, height
+DIP = (83.4, 84.9, -0.25)             # FloodDip, across the lane: x0, x1, floor. The duct, pushed in, is the bridge
+WATER_Z = -0.1                        # FloodWater's surface
+TIDE_Z = 1.2                          # the flood's line: on the lane's wall, the facades and inside C-114
+C108_WIN = (82.6, 0.78, 0.62, 1.58)   # C-108's window, dimly lit: x, width, sill, head (lower than its neighbours')
+C110_SLOT = (83.8, 0.98)              # C-110's door slot: x, height
+MAILSLOT9 = (87.4, 0.45, 0.55)        # ring C's mail slot on its post: x, post centre y, slot height
 KNOCK_X = 88.2
 DOOR114 = (88.6, 1.3, 0.36)           # the cross-section wall: x, lintel underside, back jamb (opening y < this)
 KNOCK_AT = (88.52, 0.42, 0.57)        # the knock lands on the jamb's face here
@@ -54,11 +67,15 @@ SCREEN_Y = 1.0                        # the screen recess (the game draws the sc
 READER_Z = 0.72
 TERM_FRONT = 0.955                    # the terminal's front face (y); D-17 presents 0.26 m off it
 TERM_HOUSING = (94.48, 94.92, 0.62, 1.26)
-MARKS = (94.15, 95.25, 0.25, 1.25)      # the growth marks and the tree: x0, x1, z0, z1 (decal on the wall)
+MARKS = (94.15, 95.25, 1.1, 1.85)       # the growth marks and the tree: x0, x1, z0, z1 (decal on the wall)
+MARK_Z = (1.25, 1.325, 1.4, 1.475, 1.55)   # the five marks, M 2 to M 6, all above the flood's line
+TREE_Z = (1.21, 1.70)                   # the carved tree: foot, crown
+PAINTED_WINDOW = (91.72, 1.36, 0.8, 0.7)   # the window painted over the bed: x, z, width, height
 DESK_X, DESK_HALF, DESK_TOP = 94.7, 0.55, 0.55
 DESK_Y = 0.62                         # the desk's origin y (centre of its footprint, which runs 0.29 to 0.95)
-DESK_TILT = -9.0                      # it leans back against the terminal (degrees about x)
-DESK_SIDE_TILT = 6.0                  # and is down on its broken right side (degrees about y)
+DESK_TILT = -7.0                      # it leans back against the wall over the terminal (degrees about x)
+DESK_SIDE_TILT = 4.0                  # and is down on its broken right side (degrees about y)
+DESK_HUTCH = 1.86                     # its hutch: tall enough to hide the marks and the tree
 DESK_HANDLE = (-0.585, 0.44)          # its red grip bar, on its left end: x from the origin, height
 DESK_DRAG = 93.6                      # where it ends up (left end 93.05, right end 94.15)
 BACK_DOOR = (95.6, 1.3, 0.40)
@@ -204,18 +221,21 @@ def make_textures():
     d.line((mx, my + 8 * k, mx, my + 70 * k), fill=(34, 58, 44), width=5)
     _save(_age(img, 511, 0.7), 'school_sign.png', 32)
 
-    # The growth marks and the tree, on the wall behind the desk: 1 px is about 1 mm. The terminal hides
-    # the middle (x 94.48 to 94.92), so the marks climb on its left and the tree is scratched on its right.
-    W = 1024
-    img = Image.new('RGBA', (W, W), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
+    # The growth marks and the tree, on the wall behind the desk, both above the flood's line (TIDE_Z): the
+    # water took the lower part of the room and left these. 1 px is about 1.07 mm. The terminal hides the
+    # middle (x 94.48 to 94.92), so the marks climb on its left and the tree is scratched on its right.
     x0, z1 = MARKS[0], MARKS[3]
+    W = 1024
+    H = int(round(W * (MARKS[3] - MARKS[2]) / (MARKS[1] - MARKS[0])))
+    ppm = W / (MARKS[1] - MARKS[0])
+    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
 
     def px(x, z):
-        return ((x - x0) * W / (MARKS[1] - MARKS[0]), (z1 - z) * W / (MARKS[3] - MARKS[2]))
+        return ((x - x0) * ppm, (z1 - z) * ppm)
     rnd = random.Random(520)
     graphite = (34, 32, 38, 240)
-    for k, (age, year, z) in enumerate(((2, 38, 0.862), (3, 39, 0.928), (4, 40, 0.991), (5, 41, 1.064), (6, 42, 1.138))):
+    for k, (age, year, z) in enumerate(zip((2, 3, 4, 5, 6), (38, 39, 40, 41, 42), MARK_Z)):
         a, b = px(94.35, z), px(94.47, z + rnd.uniform(-0.004, 0.004))
         _line(d, [a, b], graphite, 6, rnd, 1.0, passes=2)
         # The label, in a grown-up's pencil, each written a little askew.
@@ -225,19 +245,20 @@ def make_textures():
         ld.text((72, 44), f'R.Y. {year}', font=_font(27, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
         lab = lab.rotate(rnd.uniform(-4, 4), resample=Image.BICUBIC)
         img.alpha_composite(lab, (int(a[0] - 168), int(a[1] - 40)))
-    sx, sy = px(94.47, 1.138)                                               # a child's star by the last one
+    sx, sy = px(94.47, MARK_Z[-1])                                          # a child's star by the last one
     d.line((sx + 12, sy - 22, sx + 26, sy + 6, sx + 2, sy - 12, sx + 30, sy - 12, sx + 6, sy + 6, sx + 12, sy - 22),
            fill=(70, 90, 170, 220), width=4)
-    tx, ty = px(95.05, 0.33)
+    tx, ty = px(95.05, TREE_Z[0])
+    ts = (TREE_Z[1] - TREE_Z[0]) / 0.93 * ppm                              # the unit tree is 0.93 tall, roots to crown
 
     def scratch(pts, weight):
         r = random.Random(int(pts[0][0] * 7 + pts[-1][1]))
         w = max(3, int(8 * weight))
         _line(d, [(x + 3, y + 3) for x, y in pts], (48, 38, 28, 170), w, r, 0.8, passes=2)   # the groove's shadow
         _line(d, pts, (240, 232, 212, 245), max(2, w - 2), r, 1.0, passes=3)              # the scratch itself
-    _crooked_tree(scratch, tx, ty, 540, sx=400)
+    _crooked_tree(scratch, tx, ty, ts, sx=ts * 0.74)
     for k in range(9):                                                      # false starts and stray marks
-        x, y = tx + rnd.uniform(-110, 120), ty - rnd.uniform(0, 480)
+        x, y = tx + rnd.uniform(-110, 120), ty - rnd.uniform(0.05, 0.9) * ts
         d.line((x, y, x + rnd.uniform(-14, 14), y + rnd.uniform(-10, 10)), fill=(236, 226, 204, 150), width=2)
     _save(img.filter(ImageFilter.GaussianBlur(0.7)), 'growth_marks.png', 48)
 
@@ -329,6 +350,11 @@ def make_textures():
         d.line(((x0_ + x1_) / 2 - 20, 236, (x0_ + x1_) / 2 + 20, 226), fill=(240, 200, 80, 255), width=8)
     for xa, ya, xb, yb in ((0, 0, w, 0), (0, h, w, h), (0, 0, 0, h), (w, 0, w, h), (w / 2, 0, w / 2 + 4, h), (0, 196, w, 190)):
         _line(d, [(xa, ya), (xb, yb)], (60, 96, 170, 255), 22, rnd, 3, passes=2)  # the painted frame and bars
+    # The water stood over the bed too: below the line the painting is faded and silted, the flowers
+    # nearly gone; the sun, high up, is untouched.
+    _, pz, _, ph = PAINTED_WINDOW
+    line = int(round((pz + ph / 2 - TIDE_Z) / ph * h))
+    _water_stain(img, line, rnd, scale=h / ph)
     _save(img.filter(ImageFilter.GaussianBlur(1.0)), 'window_paint.png', 64)
 
     # A crayon drawing pinned over the bed: the two of them and the rabbit, under the sun.
@@ -385,6 +411,144 @@ def make_textures():
         d.ellipse((4 + k * 10, 4 + k * 6, 252 - k * 10, 156 - k * 6), outline=col, width=7)
     _save(img.filter(ImageFilter.GaussianBlur(0.8)), 'rug.png', 24)
 
+    make_tideline()
+    make_drop_mark()
+
+
+def _tile_noise(w, h, cells, seed, octaves=3):
+    """Value noise in [0, 1] that tiles along x (cells: lattice cells across the width)."""
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    out = np.zeros((h, w))
+    amp, total = 1.0, 0.0
+    for o in range(octaves):
+        cx = cells * 2 ** o
+        cy = max(1, int(round(cx * h / w)))
+        lat = rng.random((cy + 2, cx))
+        u = np.arange(w) * cx / w
+        v = np.arange(h) * cy / h
+        i0, fu = u.astype(int), u - u.astype(int)
+        j0, fv = v.astype(int), v - v.astype(int)
+        fu, fv = fu * fu * (3 - 2 * fu), fv * fv * (3 - 2 * fv)
+        i1 = (i0 + 1) % cx
+        a = lat[j0][:, i0] * (1 - fu) + lat[j0][:, i1] * fu
+        b = lat[j0 + 1][:, i0] * (1 - fu) + lat[j0 + 1][:, i1] * fu
+        out += amp * (a * (1 - fv[:, None]) + b * fv[:, None])
+        total += amp
+        amp *= 0.5
+    return out / total
+
+
+def _water_stain(img, line, rnd, scale):
+    """Silt and fading over an RGBA picture below row `line` (the flood's line), with the line itself.
+    scale: pixels per metre."""
+    import numpy as np
+    from PIL import Image
+    a = np.asarray(img).astype(float)
+    h, w = a.shape[:2]
+    n = _tile_noise(w, h, 6, rnd.randint(0, 9999))
+    rows = np.arange(h)[:, None]
+    below = rows > line + 3 * (n - 0.5)
+    silt = np.array([118.0, 100.0, 74.0])
+    k = np.clip(0.42 + 0.35 * (n - 0.5) + 0.12 * np.clip((rows - line) / (0.15 * scale), 0, 1), 0, 0.8)
+    k = np.where(below, k, 0.0)[..., None]
+    grey = a[..., :3].mean(axis=2, keepdims=True)
+    faded = a[..., :3] * 0.45 + grey * 0.55
+    a[..., :3] = faded * (1 - k) + silt * k * 0.8 + faded * k * 0.2
+    band = np.abs(rows - line - 2 * (n - 0.5)) < max(2, 0.01 * scale)
+    a[..., :3] = np.where(band[..., None], a[..., :3] * 0.35 + np.array([40, 30, 20]) * 0.65, a[..., :3])
+    img.paste(Image.fromarray(np.clip(a, 0, 255).astype('uint8'), 'RGBA'))
+
+
+TIDE_TEX = (1.6, 1.28)                # the tideline decal's texture tiles 1.6 m along x and covers z 0 to 1.28
+
+
+def make_tideline():
+    """The flood's mark, a decal for walls (u = x / 1.6, v = z / 1.28): a dark ragged line at TIDE_Z where the
+    water stood longest, a fainter one below where it paused going down, mottled silt and drips under it and
+    caked mud at the foot. Darker and browner than the wall, never lighter: it is read as a change in the wall,
+    not as a stripe of light."""
+    import numpy as np
+    from PIL import Image, ImageFilter
+    W, H = 512, 320
+    tw, th = TIDE_TEX
+    rnd = random.Random(5600)
+    zc = (1.0 - (np.arange(H)[:, None] + 0.5) / H) * th                      # each row's height
+    xs = np.arange(W)[None, :]
+    n1 = _tile_noise(W, H, 8, 5601)
+    n2 = _tile_noise(W, H, 24, 5602, octaves=2)
+    ragged = (0.0035 * np.sin(2 * np.pi * 3 * xs / W + 0.4) + 0.0025 * np.sin(2 * np.pi * 11 * xs / W + 1.3)
+              + 0.004 * (n2[0:1, :] - 0.5))
+    top = TIDE_Z + ragged                                                     # the line's upper edge
+    under = top - zc                                                          # metres below the line
+    alpha = np.zeros((H, W))
+    col = np.zeros((H, W, 3))
+    silt, dark, mud = np.array([62.0, 51.0, 39.0]), np.array([30.0, 24.0, 18.0]), np.array([50.0, 41.0, 31.0])
+    # Mottled silt below the line, a little heavier toward the floor.
+    body = under > 0
+    a_body = np.clip(0.2 + 0.3 * (n1 - 0.45) + 0.1 * np.clip((TIDE_Z - zc) / TIDE_Z, 0, 1) + 0.08 * (n2 - 0.5), 0.06, 0.5)
+    alpha = np.where(body, a_body, alpha)
+    col[:] = silt
+    # Where the water paused on its way down: fainter lines at 1.06 and 0.74.
+    for zl, a_l, wl in ((1.06, 0.18, 0.006), (0.74, 0.14, 0.007)):
+        d_l = np.abs(zc - zl - 0.6 * ragged)
+        m_l = np.clip(1 - d_l / wl, 0, 1) * a_l
+        alpha = np.where(body, np.clip(alpha + m_l, 0, 1), alpha)
+    # Drips: dark runs from the line, of every length.
+    drip = np.zeros((H, W))
+    for _ in range(70):
+        x = rnd.randrange(W)
+        ln = rnd.uniform(0.04, 0.5)
+        wd = rnd.choice((1, 1, 2, 2, 3))
+        strength = rnd.uniform(0.12, 0.3)
+        for dx in range(wd):
+            xx = (x + dx) % W
+            fall = np.clip(1 - under[:, xx] / ln, 0, 1) * (under[:, xx] > 0)
+            drip[:, xx] = np.maximum(drip[:, xx], fall * strength)
+    alpha = np.where(body, np.clip(alpha + drip, 0, 0.7), alpha)
+    col = np.where((drip > 0.02)[..., None], col * 0.75 + dark * 0.25, col)
+    # The line itself: dark, about 1.5 cm, crisp on top and softer below.
+    band = np.clip(1 - np.maximum(under, 0) / 0.016, 0, 1) * (under > -0.0015)
+    band = band * np.clip(0.75 + 0.5 * (n2 - 0.5), 0.5, 0.95)
+    alpha = np.maximum(alpha, band * 0.9)
+    col = col * (1 - band[..., None]) + dark * band[..., None]
+    # Caked mud at the foot, with a ragged top.
+    foot = 0.2 + 0.06 * (n1[0:1, :] - 0.5) * 2 + 0.03 * (n2 - 0.5)
+    m_f = np.clip((foot - zc) / 0.05, 0, 1)
+    alpha = np.maximum(alpha, m_f * np.clip(0.62 + 0.3 * (n2 - 0.5), 0.4, 0.8))
+    col = col * (1 - m_f[..., None]) + mud * m_f[..., None]
+    rgba = np.dstack([np.clip(col, 0, 255), np.clip(alpha * 255, 0, 255)]).astype('uint8')
+    img = Image.fromarray(rgba, 'RGBA').filter(ImageFilter.GaussianBlur(0.5))
+    _save(img, 'tideline.png', 24)
+
+
+def make_drop_mark():
+    """The mark sprayed on C-112's door when ring C was cleared: a water drop over waves, and the year."""
+    from PIL import Image, ImageDraw, ImageFilter
+    w = h = 256
+    img = Image.new('RGBA', (w, h), (214, 208, 176, 0))                       # paint-coloured, so the blur cannot darken it
+    d = ImageDraw.Draw(img)
+    paint = (214, 208, 176, 235)
+    rnd = random.Random(5700)
+    cx, cy, r, top = 108, 118, 44, 22                                           # the drop: a point over a round foot
+    phi = math.acos(r / (cy - top))
+    arc = [(cx + r * math.sin(t), cy - r * math.cos(t)) for t in [phi + (2 * math.pi - 2 * phi) * k / 28 for k in range(29)]]
+    d.line([(cx, top)] + arc + [(cx, top)], fill=paint, width=10, joint='curve')
+    d.text((206, 112), '42', font=_font(46, 'mono-bold'), fill=paint, anchor='mm')   # the year, stencilled
+    for k in range(3):                                                         # waves under it
+        y = 184 + k * 20
+        wave = [(40 + i * 8, y + 6 * math.sin(i * 0.9 + k)) for i in range(23)]
+        d.line(wave, fill=paint, width=8, joint='curve')
+    for _ in range(160):                                                       # overspray
+        a, rr = rnd.uniform(0, 2 * math.pi), rnd.uniform(40, 120)
+        x, y = 124 + rr * math.cos(a), 130 + rr * math.sin(a) * 0.9
+        s_ = rnd.uniform(0.6, 1.8)
+        d.ellipse((x - s_, y - s_, x + s_, y + s_), fill=(214, 208, 176, rnd.randint(40, 140)))
+    for x in (cx - r + 4, cx + r - 6, 70, 190):                                # drips
+        y0 = rnd.uniform(150, 230)
+        d.line((x, y0, x + rnd.uniform(-1, 1), y0 + rnd.uniform(10, 26)), fill=(214, 208, 176, 170), width=3)
+    _save(img.filter(ImageFilter.GaussianBlur(0.8)), 'drop_mark.png', 24)
+
 
 # --------------------------------------------------------------------------
 # The set
@@ -410,6 +574,11 @@ def dl05_materials(m):
     m['toypatch'] = worn_material('ToyPatch', base=(0.42, 0.3, 0.08), dirt=(0.2, 0.14, 0.05),
                                   chip=(0.3, 0.32, 0.4), rough=0.95, chip_rough=0.95, metallic=0.0)
     m['deadbulb'] = simple_material('DeadBulb', (0.16, 0.16, 0.15), 0.25)
+    # The flood: dried silt and mud, the lamp still on over C-108's table, ring C's stamp lamp.
+    m['mud'] = worn_material('FloodMud', base=(0.062, 0.05, 0.036), dirt=(0.035, 0.028, 0.02),
+                             chip=(0.09, 0.076, 0.058), rough=0.95, chip_rough=0.85, metallic=0.0)
+    m['c108lamp'] = emission_material('C108Lamp', (1.0, 0.7, 0.42), 0.0)
+    m['slotlamp9'] = emission_material('SlotLamp9', (1.0, 0.62, 0.22), 0.0)
 
 
 def _rock(bm, center, size, seed, mat=0, cuts=5, p=2.0, rot=None, amp=None):
@@ -542,14 +711,48 @@ def build_barricade(m, coll):
                rot=_ry(math.radians(a)) @ _rx(math.radians(90)), uv_repeat=(ln / 0.24, 1))
 
 
+def _obj_at(name, bm, mats, coll, origin, sharp=35):
+    """A mesh object built in set coordinates, with its origin moved to `origin`."""
+    bmesh.ops.translate(bm, vec=-Vector(origin), verts=bm.verts)
+    ob = _obj(name, bm, mats, coll, sharp=sharp)
+    ob.location = origin
+    return ob
+
+
+def _mud_patches(name, patches, mat, coll, seed):
+    """Dried mud on a floor: flat ragged patches (x, y, z, radius), 2 mm proud, facing up."""
+    rnd = random.Random(seed)
+    verts, faces = [], []
+    for x, y, z, r in patches:
+        base, ring = len(verts), []
+        rot, sx = rnd.uniform(0, math.pi), rnd.uniform(1.2, 1.7)
+        for k in range(9):
+            a = 2 * math.pi * k / 9
+            rr = r * rnd.uniform(0.7, 1.05)
+            u, v = rr * sx * math.cos(a), rr * math.sin(a)
+            verts.append((x + u * math.cos(rot) - v * math.sin(rot), y + u * math.sin(rot) + v * math.cos(rot), z + 0.002))
+            ring.append(base + k)
+        faces.append(tuple(ring))
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    me.materials.append(mat)
+    ob = bpy.data.objects.new(name, me)
+    coll.objects.link(ob)
+    return ob
+
+
 def build_ring_c(m, coll):
-    """Ring C's lane: the floor, a low rock tunnel, three shuttered homes on the back wall with their
-    plates, a cable of bulbs (two still burning) and the duct that fell across the lane."""
+    """Ring C's lane: the floor (broken by the flood dip), a low rock tunnel, three shuttered homes on the
+    back wall with their plates, a cable of bulbs (two still burning), and the duct run under the roof
+    with the gap where a length fell. C-108's window is open and dimly lit onto a table set for a meal;
+    C-110's slot is jammed with letters, one sticking out; C-112 is taped shut with the water-drop mark."""
     l0, l1 = BARRICADE[0], DOOR114[0]
+    d0, d1, _ = DIP
     bm = bmesh.new()
-    add_box(bm, ((l0 + l1) / 2, 0.2, -0.15), (l1 - l0, 1.9, 0.3))
+    for a, b in ((l0, d0), (d1, l1)):                                       # the lane floor, either side of the dip
+        add_box(bm, ((a + b) / 2, 0.2, -0.15), (b - a, 1.9, 0.3))
+        add_box(bm, ((a + b) / 2, 0.86, 0.004), (b - a, 0.06, 0.008))     # a drain channel's grating along the wall
     add_box(bm, ((BACK_DOOR[0] + WORLD_END) / 2, 0.2, -0.15), (WORLD_END - BACK_DOOR[0], 1.9, 0.3))
-    add_box(bm, ((l0 + l1) / 2, 0.86, 0.004), (l1 - l0, 0.06, 0.008))     # a drain channel's grating along the wall
     _obj('D5Lane', bm, [m['concrete']], coll)
     # The tunnel: a rough rock roof at 2.6 over the lane, and the step up to the portal over the barricade.
     bm = bmesh.new()
@@ -558,17 +761,26 @@ def build_ring_c(m, coll):
     _rock_sheet(bm, (LANE_C[0] - 0.05, -0.75, LANE_CEIL), (l1 - LANE_C[0] + 0.1, 0, 0), (0, 0, 0.45), 24, 1, 0.05, 13.0)
     _obj('D5Tunnel', bm, [m['rock']], coll, sharp=75)
 
-    # The back wall and the homes along it.
+    # The back wall and the homes along it. C-108's window (lower than the others) is cut through the wall.
     bm = bmesh.new()                       # mats: 0 wall, 1 trim, 2 shutter, 3 wood, 4 slats
-    add_box(bm, ((LANE_C[0] + 87.2) / 2, BACK_Y + 0.08, LANE_CEIL / 2), (87.2 - LANE_C[0], 0.16, LANE_CEIL))
+    cw, cww, cz0, cz1 = C108_WIN
+    wa, wb = cw - cww / 2, cw + cww / 2
+    for a, b in ((LANE_C[0], wa), (wb, 87.2)):
+        add_box(bm, ((a + b) / 2, BACK_Y + 0.08, LANE_CEIL / 2), (b - a, 0.16, LANE_CEIL))
+    add_box(bm, (cw, BACK_Y + 0.08, cz0 / 2), (cww, 0.16, cz0))
+    add_box(bm, (cw, BACK_Y + 0.08, (cz1 + LANE_CEIL) / 2), (cww, 0.16, LANE_CEIL - cz1))
     homes = (('108', 81.15, 'shutter'), ('110', 83.2, 'door'), ('112', 85.25, 'taped'))
+    rnd = random.Random(5015)
     for num, a, kind in homes:
         dx, wx = a + 0.6, a + 1.45                                          # door and window centres
         add_box(bm, (a - 0.05, BACK_Y - 0.03, LANE_CEIL / 2), (0.14, 0.08, LANE_CEIL), mat=1)       # pilaster
         for sx in (-1, 1):                                                  # door frame
             add_box(bm, (dx + sx * 0.45, BACK_Y - 0.02, 1.0), (0.08, 0.06, 2.0), mat=1)
         add_box(bm, (dx, BACK_Y - 0.02, 2.02), (0.98, 0.06, 0.1), mat=1)
-        add_box(bm, (dx, BACK_Y - 0.06, 0.025), (0.95, 0.14, 0.05), mat=1)  # doorstep
+        if num == '110':                                                    # its threshold stood; the lane sank round it
+            add_box(bm, (dx, BACK_Y - 0.06, (DIP[2] - 0.05 + 0.05) / 2), (0.95, 0.14, 0.05 - DIP[2] + 0.05), mat=1)
+        else:
+            add_box(bm, (dx, BACK_Y - 0.06, 0.025), (0.95, 0.14, 0.05), mat=1)   # doorstep
         if kind == 'shutter':                                               # a roller shutter, down
             for k in range(14):
                 add_box(bm, (dx, BACK_Y + 0.004 - 0.003 * (k % 2), 0.07 + k * 0.132), (0.82, 0.02, 0.132), mat=2)
@@ -577,8 +789,18 @@ def build_ring_c(m, coll):
             add_box(bm, (dx, BACK_Y + 0.01, 0.98), (0.82, 0.03, 1.96), mat=3)
             for z in (0.5, 1.35):
                 add_box(bm, (dx, BACK_Y - 0.008, z), (0.6, 0.012, 0.6), mat=3)
-            add_box(bm, (dx, BACK_Y - 0.01, 0.98), (0.2, 0.02, 0.04), mat=1)       # the letter slot
+            add_box(bm, (dx, BACK_Y - 0.01, C110_SLOT[1]), (0.2, 0.02, 0.04), mat=1)       # the letter slot
             add_sphere(bm, (dx + 0.32, BACK_Y - 0.03, 0.95), 0.025, seg=10, mat=1)
+        if num == '108':                                                    # its window, low, the shutter broken open
+            for sx in (-1, 1):
+                add_box(bm, (wx + sx * 0.39, BACK_Y - 0.02, (cz0 + cz1) / 2), (0.06, 0.06, cz1 - cz0 + 0.04), mat=1)
+            add_box(bm, (wx, BACK_Y - 0.04, cz0 - 0.025), (0.86, 0.1, 0.05), mat=1)
+            add_box(bm, (wx, BACK_Y - 0.03, cz1 + 0.025), (0.86, 0.06, 0.05), mat=1)
+            for k, (z, tilt, yaw) in enumerate(((cz1 - 0.05, -30, 0.0), (cz1 - 0.14, -12, 0.06), (cz1 - 0.24, 25, -0.1))):
+                ln = 0.72 if k == 0 else 0.5 - 0.1 * k
+                add_box(bm, (wx - 0.36 + ln / 2 + (0.0 if k == 0 else 0.03), BACK_Y - 0.03, z), (ln, 0.012, 0.078), mat=4,
+                        rot=_rz(yaw) @ _ry(math.radians(4 * k)) @ _rx(math.radians(tilt)))
+            continue
         for sx in (-1, 1):                                                  # window frame and a shutter, closed
             add_box(bm, (wx + sx * 0.39, BACK_Y - 0.02, 1.38), (0.06, 0.06, 0.8), mat=1)
         for z in (0.97, 1.79):
@@ -589,20 +811,33 @@ def build_ring_c(m, coll):
     _obj('D5Homes', bm, [m['wall'], m['concrete'], m['shutter'], m['pigeon'], m['depot_green']], coll)
     for num, a, kind in homes:
         _plane(f'D5Plate{num}', (0.26, 0.114), (a + 1.06, BACK_Y - 0.052, 1.5), _image_material(f'D5Plate{num}Mat', _tex(f'plate_c{num}.png'), rough=0.3), coll)
-    # Letters jammed in C-110's slot and fallen on its step; tape across C-112's door; a dead plant at C-108.
+    build_c108_room(m, coll)
+
+    # Letters jammed in C-110's slot, more fallen on its threshold and on the lane short of the water, and
+    # the one sticking out, which he can pull free (C110Letter).
+    sx_, sz_ = C110_SLOT
     bm = bmesh.new()
     rnd = random.Random(5020)
     for k in range(5):
-        add_box(bm, (83.8 + rnd.uniform(-0.07, 0.07), BACK_Y - 0.03, 0.99 + k * 0.004), (0.16, 0.04, 0.003),
+        add_box(bm, (sx_ + rnd.uniform(-0.07, 0.07), BACK_Y - 0.03, sz_ + 0.01 + k * 0.004), (0.16, 0.04, 0.003),
                 rot=_rz(rnd.uniform(-0.15, 0.15)) @ _rx(math.radians(rnd.uniform(-20, 10))))
-    for k in range(7):
-        add_box(bm, (83.8 + rnd.uniform(-0.35, 0.35), BACK_Y - rnd.uniform(0.1, 0.4), 0.003 + k * 0.002), (0.16, 0.11, 0.003),
+    for k in range(3):                                                        # on the threshold
+        add_box(bm, (sx_ + rnd.uniform(-0.3, 0.3), BACK_Y - 0.075 + rnd.uniform(-0.02, 0.02), 0.052 + k * 0.002), (0.16, 0.11, 0.003),
+                rot=_rz(rnd.uniform(-0.3, 0.3)))
+    for k in range(4):                                                        # washed up short of the dip
+        add_box(bm, (DIP[0] - rnd.uniform(0.12, 0.5), rnd.uniform(0.45, 0.85), 0.003 + k * 0.002), (0.16, 0.11, 0.003),
                 rot=_rz(rnd.uniform(0, 3)))
     _obj('D5Letters', bm, [m['letters']], coll)
+    build_c110_letter(m, coll)
+
+    # C-112: taped shut, and the water-drop mark sprayed on its door above the tape.
     tape = bpy.data.materials['D5TapeMat']
     for k, a in enumerate((32, -32)):
         _plane(f'D5DoorTape{k}', (1.25, 0.06), (85.85, BACK_Y - 0.04 - 0.002 * k, 1.0), tape, coll,
                rot=_ry(math.radians(a)) @ _rx(math.radians(90)), uv_repeat=(5, 1))
+    _plane('D5DropMark112', (0.34, 0.34), (85.85, BACK_Y - 0.016, 1.46),
+           _image_material('D5DropMarkMat', _tex('drop_mark.png'), rough=0.6, alpha=True), coll,
+           rot=_ry(math.radians(-3)) @ _rx(math.radians(90)))
     bm = bmesh.new()
     add_cyl(bm, (81.45, 0.85, 0.0), (81.45, 0.85, 0.22), 0.09, 0.12, seg=12)
     _obj('D5PlantPot', bm, [m['concrete']], coll)
@@ -642,34 +877,319 @@ def build_ring_c(m, coll):
     _obj('LaneBulb', live, [m['lanebulb']], coll)
     _obj('D5DeadBulbs', dead, [m['deadbulb']], coll)
 
-    # The duct run under the roof, broken where a length fell; the length across the lane (0.26 high).
+    # The duct run under the roof, broken over the stretch where a length came down (PushDuct, below it).
     bm = bmesh.new()
-    dy, dz = 0.72, 2.32
-    for a, b in ((LANE_C[0], 83.85), (84.95, l1 - 0.1)):
-        add_box(bm, ((a + b) / 2, dy, dz), (b - a, 0.36, 0.2))
-        x = a + 0.4
+    dy, dz = 0.74, 2.32
+    g0, g1 = DUCT[0] - 0.15, DUCT[1] + 0.15
+    for a, b in ((LANE_C[0], g0), (g1, l1 - 0.1)):
+        add_box(bm, ((a + b) / 2, dy, dz), (b - a, DUCT[3] - 0.024, DUCT[2] - 0.012))
+        x = a + 0.4 if a > LANE_C[0] else a + 0.2
         while x < b:
-            add_box(bm, (x, dy, dz), (0.03, 0.38, 0.22))
-            add_cyl(bm, (x, dy, dz + 0.1), (x, dy, LANE_CEIL + 0.05), 0.006, seg=4)
+            add_box(bm, (x, dy, dz), (0.03, DUCT[3], DUCT[2]))
+            add_cyl(bm, (x, dy, dz + 0.13), (x, dy, LANE_CEIL + 0.05), 0.006, seg=4)
             x += 1.2
-    add_box(bm, (83.9, dy - 0.05, dz - 0.14), (0.06, 0.26, 0.12), rot=_ry(0.6))   # torn ends
-    for x, ln in ((84.2, 0.5), (84.7, 0.36)):                                   # dangling straps
-        add_box(bm, (x, dy, LANE_CEIL - ln / 2), (0.02, 0.004, ln), rot=_ry(0.12 if x < 84.4 else -0.2))
+    for x, sgn in ((g0, 1), (g1, -1)):                                          # torn ends, bent down
+        add_box(bm, (x + sgn * 0.05, dy - 0.06, dz - 0.15), (0.06, 0.28, 0.12), rot=_ry(sgn * 0.6))
+        add_box(bm, (x + sgn * 0.04, dy + 0.12, dz - 0.12), (0.05, 0.1, 0.1), rot=_ry(sgn * 0.9) @ _rx(0.4))
+    for x, ln in ((81.95, 0.5), (82.85, 0.36)):                                  # the hangers that let go
+        add_box(bm, (x, dy, LANE_CEIL - ln / 2), (0.02, 0.004, ln), rot=_ry(0.12 if x < 82.4 else -0.2))
     _obj('D5DuctRun', bm, [m['plate']], coll)
-    d0, d1, dh = DUCT
+
+
+def build_c108_room(m, coll):
+    """Behind C-108's window: a small room, the lamp over the table still on, dimly, and the table set for
+    a meal nobody came back to. The water stood over it too: the cloth is silted, a cup lies where it
+    floated, the floor is mud; the plates stayed put."""
+    cw, cww, cz0, cz1 = C108_WIN
+    rx0, rx1, ry0, ry1 = cw - 0.62, cw + 0.62, BACK_Y + 0.16, 2.25
+    bm = bmesh.new()                       # mats: 0 plaster, 1 floorboards
+    add_box(bm, ((rx0 + rx1) / 2, ry1 + 0.06, 1.15), (rx1 - rx0 + 0.24, 0.12, 2.3))
+    for x in (rx0 - 0.06, rx1 + 0.06):
+        add_box(bm, (x, (ry0 + ry1) / 2, 1.15), (0.12, ry1 - ry0, 2.3))
+    add_box(bm, ((rx0 + rx1) / 2, (ry0 + ry1) / 2, -0.03), (rx1 - rx0, ry1 - ry0, 0.06), mat=1)
+    add_box(bm, ((rx0 + rx1) / 2, (ry0 + ry1) / 2, 2.3), (rx1 - rx0, ry1 - ry0, 0.08))
+    _obj('D5Home108Room', bm, [m['homeplaster'], m['pigeon']], coll)
+    tx, ty, top = cw, 1.72, 0.74
+    bm = bmesh.new()                       # mats: 0 wood, 1 crockery, 2 cloth, 3 steel
+    add_box(bm, (tx, ty, top - 0.02), (0.92, 0.66, 0.04))
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            add_box(bm, (tx + sx * 0.41, ty + sy * 0.28, (top - 0.04) / 2), (0.045, 0.045, top - 0.04))
+    add_box(bm, (tx, ty, top + 0.003), (0.96, 0.7, 0.006), mat=2)                  # the cloth, and its front drop
+    add_box(bm, (tx, ty - 0.35, top - 0.06), (0.96, 0.006, 0.12), mat=2)
+    rnd = random.Random(5080)
+    places = ((tx - 0.24, ty - 0.17, 0.1), (tx + 0.24, ty - 0.17, 0.1), (tx, ty + 0.18, 0.075))   # two grown-ups, one small
+    for k, (px_, py_, r) in enumerate(places):
+        add_cyl(bm, (px_, py_, top + 0.006), (px_, py_, top + 0.022), r, r * 0.8, seg=14, mat=1)
+        add_box(bm, (px_ - r - 0.03, py_, top + 0.009), (0.012, 0.15, 0.004), mat=3)              # fork and knife
+        add_box(bm, (px_ + r + 0.03, py_, top + 0.009), (0.012, 0.16, 0.004), mat=3)
+        if k != 1:                                                                                  # cups
+            cx_, cy_ = px_ + r + 0.08, py_ + 0.1
+            add_cyl(bm, (cx_, cy_, top + 0.006), (cx_, cy_, top + 0.08), 0.032, 0.036, seg=8, mat=1)
+            add_torus(bm, (cx_ + 0.04, cy_, top + 0.045), (0, 1, 0), 0.018, 0.005, seg=6, rseg=3, mat=1)
+    cx_, cy_ = tx + 0.36, ty - 0.02                                                                 # the third, floated and tipped
+    p0 = Vector((cx_, cy_, top + 0.04))
+    add_cyl(bm, p0 - Vector((0.036, 0.012, 0)), p0 + Vector((0.036, 0.012, 0)), 0.034, 0.03, seg=8, mat=1)
+    add_cyl(bm, (tx - 0.02, ty + 0.0, top + 0.006), (tx - 0.02, ty, top + 0.17), 0.055, 0.042, seg=10, mat=1)   # the jug
+    add_torus(bm, (tx - 0.085, ty, top + 0.1), (0, 1, 0), 0.035, 0.007, seg=6, rseg=3, mat=1)
+    add_cyl(bm, (tx + 0.12, ty + 0.05, top + 0.006), (tx + 0.12, ty + 0.05, top + 0.025), 0.09, seg=10, mat=0)     # a bread board
+    for k, (x, y, ang) in enumerate(((tx - 0.3, ty + 0.46, 0.0), (tx + 0.3, ty + 0.46, 0.1), (tx + 0.02, ty - 0.52, math.pi - 0.25))):
+        rot = _rz(ang)                                                       # chairs: two at the far side, one pulled out
+        c = Vector((x, y, 0))
+        add_box(bm, c + rot @ Vector((0, 0, 0.44)), (0.4, 0.38, 0.03), rot=rot)
+        for sx in (-1, 1):                                                   # back posts to the floor; the front legs
+            add_box(bm, c + rot @ Vector((sx * 0.17, 0.17, 0.46)), (0.03, 0.03, 0.92), rot=rot)   # are never seen past the sill
+            add_box(bm, c + rot @ Vector((sx * 0.17, -0.16, 0.22)), (0.03, 0.03, 0.44), rot=rot)
+        add_box(bm, c + rot @ Vector((0, 0.17, 0.84)), (0.38, 0.025, 0.08), rot=rot)
+    # The lamp over the table: a cord from the ceiling, an enamel shade.
+    lz = 1.5
+    add_cyl(bm, (tx, ty, 2.26), (tx, ty, lz + 0.1), 0.004, seg=4, mat=3)
+    add_cyl(bm, (tx, ty, lz + 0.1), (tx, ty, lz - 0.02), 0.04, 0.17, seg=12, mat=1)
+    _obj('D5Table108', bm, [m['wood'], m['letters'], m['paper'], m['steel']], coll, sharp=50)
     bm = bmesh.new()
-    wx, t = d1 - d0, 0.012
+    add_sphere(bm, (tx, ty, lz + 0.0), 0.03, seg=10)
+    _obj('C108Lamp', bm, [m['c108lamp']], coll)
+    _mud_patches('D5Mud108', [(tx + rnd.uniform(-0.45, 0.45), rnd.uniform(1.3, 2.1), 0.0, rnd.uniform(0.14, 0.24)) for _ in range(4)],
+                 m['mud'], coll, 5081)
+
+
+def build_c110_letter(m, coll):
+    """The letter sticking out of C-110's slot, drooping, its face to the lane: an envelope 0.16 x 0.11, its
+    origin at its centre. The game pulls it free."""
+    sx_, sz_ = C110_SLOT
+    mat = bpy.data.materials.get('C110LetterMat') or simple_material('C110LetterMat', (0.62, 0.58, 0.48), 0.85)
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new('UVMap')
+    w, h, t = 0.16, 0.11, 0.003
+    # Its long edge across the slot; the face (+z before the droop) carries the address. UVs on the face only.
+    add_box(bm, (0, 0, 0), (w, h, t))
+    for f in bm.faces:
+        if f.normal.z > 0.5:
+            for lp in f.loops:
+                lp[uv].uv = (lp.vert.co.x / w + 0.5, lp.vert.co.y / h + 0.5)
+    rot = _rz(math.radians(-7)) @ _rx(math.radians(52))                      # out of the slot and drooping toward the lane
+    bmesh.ops.transform(bm, matrix=rot, verts=bm.verts)
+    inner = rot @ Vector((0, h / 2, 0))                                       # the end still in the slot
+    slot = Vector((sx_ + 0.05, BACK_Y - 0.005, sz_))
+    origin = slot - inner
+    ob = _obj('C110Letter', bm, [mat], coll, sharp=60)
+    ob.location = origin
+    return ob
+
+
+def build_flood(m, coll):
+    """Where the lane sank: the dip across the lane (FloodDip: its floor at -0.25, the slab's broken front lip,
+    the footing under the wall, broken slab in the water, silt), the standing water (FloodWater, at -0.1:
+    dark, still), mud dried on the lane each side, and a drowned shoe."""
+    d0, d1, dz = DIP
     cx = (d0 + d1) / 2
-    yl, yr = -0.58, 1.02
-    rot = _rz(math.radians(2.5))
-    piv = Vector((cx, 0.0, 0))
-    for c, s in (((0, (yl + yr) / 2, dh - t / 2), (wx, yr - yl, t)), ((0, (yl + yr) / 2, t / 2), (wx, yr - yl, t)),
-                 ((-wx / 2 + t / 2, (yl + yr) / 2, dh / 2), (t, yr - yl, dh)), ((wx / 2 - t / 2, (yl + yr) / 2, dh / 2), (t, yr - yl, dh))):
-        add_box(bm, piv + rot @ Vector(c), s, rot=rot)
-    for y in (-0.1, 0.5):                                                       # seams
-        add_box(bm, piv + rot @ Vector((0, y, dh / 2)), (wx + 0.02, 0.03, dh + 0.02), rot=rot)
-    add_box(bm, piv + rot @ Vector((0, yr - 0.08, dh + 0.02)), (wx * 0.9, 0.16, 0.04), rot=rot @ _rx(0.35))   # its crumpled end
-    _obj('D5Duct', bm, [m['plate']], coll)
+    bm = bmesh.new()                       # mats: 0 concrete, 1 mud, 2 steel
+    add_box(bm, (cx, 0.2, (dz - 0.07 + dz) / 2), (d1 - d0, 1.9, 0.07), mat=1)                      # the sunk floor, silted
+    rnd = random.Random(5090)
+    x = d0
+    while x < d1 - 0.01:                                                      # the slab's broken front lip
+        ln = min(d1 - x, rnd.uniform(0.18, 0.36))
+        ztop = rnd.uniform(-0.075, -0.05)
+        add_box(bm, (x + ln / 2, -0.685, (dz - 0.07 + ztop) / 2), (ln, 0.13, ztop - dz + 0.07),
+                rot=_rx(rnd.uniform(-0.04, 0.04)))
+        x += ln
+    add_box(bm, (cx, BACK_Y + 0.08, (dz - 0.07) / 2), (d1 - d0, 0.16, -(dz - 0.07)), mat=1)          # the wall's footing, muddied
+    for xe in (d0 + 0.0015, d1 - 0.0015):                                    # silt crusted on the broken ends, at the water
+        add_box(bm, (xe, 0.19, WATER_Z + 0.04), (0.003, 1.62, 0.1), mat=1)
+    for c, size, rx, ry in (((84.05, 0.6, -0.125), (0.46, 0.28, 0.07), -12, 10), ((83.72, -0.43, -0.13), (0.36, 0.24, 0.06), 14, -8)):
+        add_box(bm, c, size, rot=_ry(math.radians(ry)) @ _rx(math.radians(rx)))   # slabs broken off, tipped
+    rounded_box((0.36, 0.26, 0.1), (84.7, 0.74, -0.115), p=2.4, cuts=3, bm=bm, mat=1, dents=((0.01, 9.0),), seed=91)   # a silt bank
+    for k in range(4):                                                        # the drain grating, broken down into it
+        y = 0.83 + 0.02 * k
+        add_cyl(bm, (d0, y, 0.0), (d0 + 0.12 + 0.03 * k, y - 0.01, -0.1 - 0.03 * k), 0.006, seg=5, mat=2)
+    _obj_at('FloodDip', bm, [m['concrete'], m['mud'], m['steel']], coll, (cx, 0.0, dz))
+    # The water: one still sheet between the broken ends, behind the lip.
+    wy0, wy1 = -0.625, BACK_Y
+    wo = Vector((cx, (wy0 + wy1) / 2, WATER_Z))
+    me = bpy.data.meshes.new('FloodWater')                                     # facing up; no normal recalculation
+    me.from_pydata([Vector(v) - wo for v in ((d0 + 0.004, wy0, WATER_Z), (d1 - 0.004, wy0, WATER_Z),
+                                             (d1 - 0.004, wy1, WATER_Z), (d0 + 0.004, wy1, WATER_Z))], [], [(0, 1, 2, 3)])
+    me.materials.append(m['water'])
+    ob = bpy.data.objects.new('FloodWater', me)
+    ob.location = wo
+    coll.objects.link(ob)
+    # Mud dried on the lane each side of the dip, kept off the duct's path (|y| < 0.26) on the near side.
+    patches = []
+    for k in range(14):
+        if k < 6:
+            x, y = d0 - rnd.uniform(0.15, 0.7), rnd.choice((rnd.uniform(0.38, 0.75), rnd.uniform(-0.62, -0.36)))
+        else:
+            x, y = d1 + rnd.uniform(0.2, 0.95), rnd.uniform(-0.62, 0.75)
+        patches.append((x, y, 0.0, rnd.uniform(0.1, 0.2)))
+    _mud_patches('D5Mud', patches, m['mud'], coll, 5091)
+    # Scum dried and floating at the water's edges, which shows the surface for what it is (kept off the
+    # bridge's line, |y| < 0.22).
+    _mud_patches('D5Scum', [(84.78, 0.88, WATER_Z - 0.0015, 0.09), (83.55, 0.86, WATER_Z - 0.0015, 0.11), (84.3, 0.9, WATER_Z - 0.0015, 0.07),
+                            (84.75, -0.5, WATER_Z - 0.0015, 0.08), (83.5, -0.56, WATER_Z - 0.0015, 0.06), (84.2, 0.42, WATER_Z - 0.0015, 0.05),
+                            (83.95, -0.58, WATER_Z - 0.0015, 0.05)], m['mud'], coll, 5092)
+    # A drowned shoe: a grown-up's, on its side at the water's edge, half under.
+    def upper(c):
+        t = (c.x + 1) / 2                                                      # 0 at the heel, 1 at the toe
+        c.z = -1 + (c.z + 1) * (1 - 0.5 * t)
+        c.y *= 0.82 + 0.18 * math.sin(math.pi * min(1.0, t * 1.3))
+    bm = bmesh.new()                       # mats: 0 leather, 1 sole, 2 the dark inside
+    rounded_box((0.26, 0.092, 0.085), (0, 0, 0.056), p=2.4, cuts=4, mat=0, bm=bm, shape=upper, dents=((0.003, 9.0),), seed=93)
+    add_box(bm, (0.005, 0, 0.007), (0.27, 0.09, 0.014), mat=1)
+    add_box(bm, (-0.095, 0, 0.019), (0.07, 0.084, 0.022), mat=1)
+    add_sphere(bm, (-0.05, 0, 0.099), 0.034, seg=10, scale=(1.7, 1.0, 0.22), mat=2)
+    bmesh.ops.transform(bm, matrix=Matrix.Translation((84.48, -0.42, WATER_Z - 0.005)) @ _rz(0.5) @ _rx(math.radians(78)), verts=bm.verts)
+    _obj('D5DrownedShoe', bm, [m['pigeon'], m['rubber'], m['shaft']], coll, sharp=60)
+
+
+def build_duct(m, coll):
+    """PushDuct: a length of rectangular ventilation duct fallen along the lane, 0.26 high and 0.4 deep, with a
+    red strap round its left end and a grip on the strap at 0.44 (the push clips' height). Origin at its
+    base centre; the game pushes it along x and drops it into the dip (top then at about 0.01)."""
+    x0, x1, hh, dep = DUCT
+    L = x1 - x0 - 0.01                       # 1.49: it drops between the dip's broken ends with a few mm to spare
+    t = 0.008
+    yb, zb0, zb1 = dep - 0.024, 0.006, hh - 0.006
+    bm = bmesh.new()                       # mats: 0 sheet, 1 red, 2 dark inside, 3 steel
+    zc = (zb0 + zb1) / 2
+    for c, sz in (((0, 0, zb1 - t / 2), (L - 0.02, yb, t)), ((0, 0, zb0 + t / 2), (L - 0.02, yb, t)),
+                  ((0, -yb / 2 + t / 2, zc), (L - 0.02, t, zb1 - zb0)), ((0, yb / 2 - t / 2, zc), (L - 0.02, t, zb1 - zb0))):
+        add_box(bm, c, sz)
+    for fx in (-L / 2 + 0.015, 0.0, L / 2 - 0.015):                           # flanged joints: hollow rings
+        add_box(bm, (fx, 0, hh - 0.01), (0.03, dep, 0.02))
+        add_box(bm, (fx, 0, 0.01), (0.03, dep, 0.02))
+        for sy in (-1, 1):
+            add_box(bm, (fx, sy * (dep / 2 - 0.01), hh / 2), (0.03, 0.02, hh - 0.04))
+    for fx in (-0.37, 0.37):                                                  # stiffening beads
+        add_box(bm, (fx, 0, zb1 + 0.001), (0.012, yb, 0.003))
+        for sy in (-1, 1):
+            add_box(bm, (fx, sy * (yb / 2 + 0.0015), zc), (0.012, 0.003, zb1 - zb0))
+    for fx in (-L / 2 + 0.16, L / 2 - 0.16):                                  # dark inside, seen down the open ends
+        add_box(bm, (fx, 0, zc), (0.004, yb - 2 * t, zb1 - zb0 - 2 * t), mat=2)
+    # The strap, round the duct near its left end, its ratchet on the front.
+    sxp, sw = -L / 2 + 0.12, 0.045
+    add_box(bm, (sxp, 0, hh + 0.002), (sw, dep + 0.008, 0.004), mat=1)
+    add_box(bm, (sxp, 0, 0.002), (sw, dep + 0.008, 0.004), mat=1)
+    for sy in (-1, 1):
+        add_box(bm, (sxp, sy * (dep / 2 + 0.002), hh / 2), (sw, 0.004, hh), mat=1)
+    add_box(bm, (sxp, -dep / 2 - 0.014, hh * 0.55), (0.06, 0.022, 0.05), mat=3)
+    add_cyl(bm, (sxp - 0.03, -dep / 2 - 0.026, hh * 0.55 + 0.012), (sxp + 0.03, -dep / 2 - 0.026, hh * 0.55 + 0.012), 0.006, seg=6, mat=3)
+    # Its tail, looped up into a grip: two stiff runs from the top of the band to a red grip bar at 0.44.
+    gx, gz = DUCT_GRIP
+    for sy in (-1, 1):
+        p0, p1 = Vector((sxp, sy * 0.115, hh + 0.004)), Vector((gx, sy * 0.115, gz))
+        dv = p1 - p0
+        add_box(bm, (p0 + p1) / 2, (dv.length + 0.02, 0.04, 0.004), mat=1, rot=_ry(math.atan2(-dv.z, dv.x)))
+    add_cyl(bm, (gx, -0.135, gz), (gx, 0.135, gz), 0.017, seg=10, mat=1)
+    origin = Vector(((x0 + x1) / 2, 0.0, 0.0))
+    bmesh.ops.translate(bm, vec=origin, verts=bm.verts)
+    _obj_at('PushDuct', bm, [m['plate'], m['red'], m['shaft'], m['steel']], coll, origin)
+
+
+def build_mailslot(m, coll):
+    """MailSlot9: ring C's post box on the lane by C-114, a depot-green post with a red rimmed slot at 0.55
+    facing the lane, a hood over it and a stamp lamp (SlotLamp9) above. Origin at the post's foot."""
+    x, y, sz = MAILSLOT9
+    hw, top = 0.1, 0.84
+    fy = -hw                                                                  # the front face, relative to the post
+    bm = bmesh.new()                       # mats: 0 green, 1 red, 2 dark, 3 steel
+    add_box(bm, (0, 0, 0.03), (0.28, 0.28, 0.06))
+    add_box(bm, (0, 0, top / 2), (2 * hw, 2 * hw, top))
+    add_box(bm, (0, 0, top + 0.02), (0.26, 0.26, 0.04))
+    add_sphere(bm, (0, 0, top + 0.04), 0.13, seg=14, scale=(1, 1, 0.42), mat=0)        # a domed cap
+    add_box(bm, (0, fy - 0.004, sz), (0.15, 0.01, 0.022), mat=2)            # the slot
+    for dz_, w_, h_ in ((0.021, 0.19, 0.016), (-0.021, 0.19, 0.016)):       # its red rim
+        add_box(bm, (0, fy - 0.007, sz + dz_), (w_, 0.014, h_), mat=1)
+    for dx_ in (-0.087, 0.087):
+        add_box(bm, (dx_, fy - 0.007, sz), (0.016, 0.014, 0.058), mat=1)
+    add_box(bm, (0, fy - 0.025, sz + 0.05), (0.21, 0.05, 0.012), mat=3, rot=_rx(math.radians(-14)))   # the hood
+    add_cyl(bm, (0, fy, sz + 0.13), (0, fy - 0.012, sz + 0.13), 0.026, seg=14, mat=3)               # the lamp's bezel
+    for z in (0.12, top - 0.08):                                              # bands
+        add_box(bm, (0, 0, z), (2 * hw + 0.008, 2 * hw + 0.008, 0.02), mat=3)
+    bmesh.ops.translate(bm, vec=(x, y, 0.0), verts=bm.verts)
+    _obj_at('MailSlot9', bm, [m['depot_green'], m['red'], m['shaft'], m['steel']], coll, (x, y, 0.0), sharp=40)
+    bm = bmesh.new()
+    add_sphere(bm, (x, y + fy - 0.013, sz + 0.13), 0.018, seg=12, scale=(1, 0.6, 1))
+    _obj_at('SlotLamp9', bm, [m['slotlamp9']], coll, (x, y + fy - 0.013, sz + 0.13))
+
+
+def _project_decal(verts, faces, uvs, bvh, x0, x1, z0, z1, step=0.01, ahead=0.002):
+    """Lay a decal over whatever `bvh` shows the camera between x0..x1 and z0..z1: rays along +y find the
+    front surface for each cell; cells at the same depth are merged into rectangles, each a quad just
+    in front of its surface. UVs follow x and z, so the texture runs on unbroken across steps in depth."""
+    nx, nz = int(round((x1 - x0) / step)), int(round((z1 - z0) / step))
+    grid = []
+    for j in range(nz):
+        z = z0 + (j + 0.5) * step
+        row = []
+        for i in range(nx):
+            hit = bvh.ray_cast(Vector((x0 + (i + 0.5) * step, -1.5, z)), Vector((0, 1, 0)), 6.0)
+            row.append(None if hit[0] is None else int(round(hit[0].y * 1000)))
+        grid.append(row)
+    rects, active = [], {}
+    for j in range(nz + 1):
+        runs = set()
+        if j < nz:
+            row, i = grid[j], 0
+            while i < nx:
+                if row[i] is None:
+                    i += 1
+                    continue
+                k = i
+                while k + 1 < nx and row[k + 1] == row[i]:
+                    k += 1
+                runs.add((i, k + 1, row[i]))
+                i = k + 1
+        for key in list(active):
+            if key not in runs:
+                rects.append((key, active.pop(key), j))
+        for key in runs:
+            active.setdefault(key, j)
+    tw, th = TIDE_TEX
+    for (i0, i1, d), j0, j1 in rects:
+        xa, xb = x0 + i0 * step, x0 + i1 * step
+        za, zb = z0 + j0 * step, z0 + j1 * step
+        y = d / 1000 - ahead
+        base = len(verts)
+        for (x, z) in ((xa, za), (xb, za), (xb, zb), (xa, zb)):
+            verts.append((x, y, z))
+            uvs.append((x / tw, z / th))
+        faces.append((base, base + 1, base + 2, base + 3))
+    return len(rects)
+
+
+def build_tideline(m, coll):
+    """Tideline: the flood's mark at TIDE_Z, laid as a decal along the lane's wall and the home facades, in
+    C-108's room (seen through its window) and through C-114. The mud below it is in the same texture."""
+    from mathutils.bvhtree import BVHTree
+
+    def bvh_of(names):
+        bm = bmesh.new()
+        for n in names:
+            ob = bpy.data.objects[n]
+            me = ob.data.copy()
+            me.transform(ob.matrix_world)
+            bm.from_mesh(me)
+            bpy.data.meshes.remove(me)
+        tree = BVHTree.FromBMesh(bm)
+        bm.free()
+        return tree
+    top = TIDE_Z + 0.04
+    verts, faces, uvs = [], [], []
+    n = _project_decal(verts, faces, uvs, bvh_of(['D5Homes', 'D5Facade114']), LANE_C[0], DOOR114[0], 0.0, top)
+    cw, cww, cz0, _ = C108_WIN
+    n += _project_decal(verts, faces, uvs, bvh_of(['D5Home108Room']), cw - cww / 2, cw + cww / 2, cz0, top)
+    n += _project_decal(verts, faces, uvs, bvh_of(['D5Home114']), DOOR114[0], BACK_DOOR[0] + 0.07, 0.0, top)
+    me = bpy.data.meshes.new('Tideline')
+    me.from_pydata(verts, [], faces)
+    uv = me.uv_layers.new(name='UVMap')
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            uv.data[li].uv = uvs[me.loops[li].vertex_index]
+    me.materials.append(_image_material('D5TidelineMat', _tex('tideline.png'), rough=0.85, alpha=True))
+    ob = bpy.data.objects.new('Tideline', me)
+    coll.objects.link(ob)
+    print(f'Tideline: {n} quads')
+    return ob
 
 
 def build_home114(m, coll):
@@ -847,7 +1367,7 @@ def build_bedroom(m, coll):
     _obj('D5Quilt', bm, [quilt], coll)
 
     # The painted window over the bed: a real frame and sill, the painting, and the lamp behind it.
-    wx, wz, ww, wh = 91.72, 1.36, 0.8, 0.7
+    wx, wz, ww, wh = PAINTED_WINDOW
     bm = bmesh.new()
     for sx in (-1, 1):
         add_box(bm, (wx + sx * (ww / 2 + 0.03), BACK_Y - 0.02, wz), (0.06, 0.05, wh + 0.12))
@@ -859,11 +1379,11 @@ def build_bedroom(m, coll):
     bm = bmesh.new()
     add_box(bm, (wx, BACK_Y - 0.004, wz), (ww + 0.02, 0.004, wh + 0.02))
     _obj('WindowSun', bm, [m['windowsun']], coll)
-    # A drawing pinned over the foot of the bed.
-    _plane('D5Drawing', (0.3, 0.225), (92.42, BACK_Y - 0.008, 1.12), _image_material('D5DrawingMat', _tex('child_drawing.png'), rough=0.85), coll,
+    # A drawing pinned over the foot of the bed, above the flood's line.
+    _plane('D5Drawing', (0.3, 0.225), (92.42, BACK_Y - 0.008, 1.42), _image_material('D5DrawingMat', _tex('child_drawing.png'), rough=0.85), coll,
            rot=_ry(math.radians(4)) @ _rx(math.radians(90)))
     bm = bmesh.new()
-    add_sphere(bm, (92.42, BACK_Y - 0.016, 1.215), 0.008, seg=8)
+    add_sphere(bm, (92.42, BACK_Y - 0.016, 1.515), 0.008, seg=8)
     _obj('D5DrawingPin', bm, [m['steel']], coll)
     # A paper mobile from the ceiling over the bed: stars and a bird.
     bm, card = bmesh.new(), bmesh.new()
@@ -976,7 +1496,7 @@ def build_desk(m, coll):
     """The child's desk, with a pinboard hutch, fallen back against the wall in front of the terminal and
     the marks. One object, origin on the floor at the centre of its footprint; the game slides it along
     x by its red grip bar on the left end (0.44 high)."""
-    h, dd, top, hut = DESK_HALF, 0.42, DESK_TOP, 1.22
+    h, dd, top, hut = DESK_HALF, 0.42, DESK_TOP, DESK_HUTCH
     side = math.radians(DESK_SIDE_TILT)
     drop = (2 * h - 0.07) * math.sin(side)                                    # its right legs gave way
     bm = bmesh.new()                       # mats: 0 blue paint, 1 wood, 2 red, 3 paper, 4 cork
@@ -994,22 +1514,34 @@ def build_desk(m, coll):
     for sx in (-1, 1):
         add_box(bm, (0.12 + sx * 0.185, -dd / 2 + 0.02, top - 0.095), (0.012, 0.24, 0.06), mat=1)
     add_sphere(bm, (0.12, -dd / 2 - 0.115, top - 0.085), 0.016, seg=10, mat=1)
-    # The hutch: painted sides and a cap, a small shelf, a cork board with drawings pinned to it.
+    # The hutch: painted sides and a cap, two shelves, a cork board with drawings pinned to it. It stands tall
+    # enough to hide the marks and the tree on the wall behind it until it is dragged clear.
     for sx in (-1, 1):
         add_box(bm, (sx * (h - 0.01), dd / 2 - 0.08, (top + hut) / 2), (0.02, 0.16, hut - top))
     add_box(bm, (0, dd / 2 - 0.08, hut - 0.01), (2 * h, 0.17, 0.02))
-    add_box(bm, (0, dd / 2 - 0.08, 0.9), (2 * h - 0.04, 0.15, 0.018))
+    for z in (0.9, 1.4):
+        add_box(bm, (0, dd / 2 - 0.08, z), (2 * h - 0.04, 0.15, 0.018))
     add_box(bm, (0, dd / 2 - 0.006, (top + hut) / 2), (2 * h - 0.02, 0.012, hut - top), mat=4)
     rnd = random.Random(5050)
-    for k, (x, z) in enumerate(((-0.33, 0.74), (-0.05, 0.72), (0.3, 0.76), (-0.2, 1.04), (0.22, 1.06))):
+    for k, (x, z) in enumerate(((-0.33, 0.74), (-0.05, 0.72), (0.3, 0.76), (-0.2, 1.04), (0.22, 1.06), (-0.3, 1.62), (0.2, 1.66))):
         add_box(bm, (x, dd / 2 - 0.014, z), (0.15, 0.003, 0.11), mat=3, rot=_ry(rnd.uniform(-0.2, 0.2)))
+    bx = -h + 0.06                                                            # books on the upper shelf, slid over in the fall
+    for k in range(7):
+        bw, bh = rnd.uniform(0.022, 0.04), rnd.uniform(0.15, 0.22)
+        lean = 0.0 if k < 5 else -0.5
+        add_box(bm, (bx + bw / 2, dd / 2 - 0.085, 1.409 + bh / 2 * math.cos(lean)), (bw, 0.12, bh), mat=k % 2 * 3 + (1 if k % 3 == 0 else 0),
+                rot=_ry(lean))
+        bx += bw + 0.004 + (0.06 if k == 4 else 0)
     # Down on its broken right side, and tipped back until the hutch rests against the terminal.
     foot = Vector((-h + 0.035, 0, 0))
     bmesh.ops.transform(bm, matrix=Matrix.Translation(foot) @ _ry(side) @ Matrix.Translation(-foot), verts=bm.verts)
     pivot = Vector((0, dd / 2, 0))
     bmesh.ops.transform(bm, matrix=Matrix.Translation(pivot) @ _rx(math.radians(DESK_TILT)) @ Matrix.Translation(-pivot), verts=bm.verts)
+    # It rests against the terminal's conduit (front y 0.964) above the terminal.
     ymax = max(v.co.y for v in bm.verts)
-    bmesh.ops.translate(bm, vec=(0, (TERM_FRONT - 0.004 - DESK_Y) - ymax, -min(v.co.z for v in bm.verts)), verts=bm.verts)
+    bmesh.ops.translate(bm, vec=(0, (BACK_Y - 0.02 - 0.016 - 0.004 - DESK_Y) - ymax, -min(v.co.z for v in bm.verts)), verts=bm.verts)
+    clear = min(TERM_FRONT - 0.045 - (DESK_Y + v.co.y) for v in bm.verts if TERM_HOUSING[2] - 0.02 < v.co.z < TERM_HOUSING[3] + 0.03)
+    print(f'ChildDesk: clearance in front of the terminal and its hood {clear:.3f}')
     # The red grip bar on its left end, level, where a claw can take it.
     hx, hz = DESK_HANDLE
     add_cyl(bm, (hx, -0.11, hz), (hx, 0.11, hz), 0.014, seg=10, mat=2)
@@ -1111,12 +1643,16 @@ def build_set(dl01, m, coll):
     build_ledge(m, coll)
     build_barricade(m, coll)
     build_ring_c(m, coll)
+    build_flood(m, coll)
+    build_duct(m, coll)
+    build_mailslot(m, coll)
     build_home114(m, coll)
     build_bedroom(m, coll)
     build_terminal(m, coll)
     build_desk(m, coll)
     build_toy(m, coll)
     build_passage(m, coll)
+    build_tideline(m, coll)
 
 
 # --------------------------------------------------------------------------

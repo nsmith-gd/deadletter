@@ -36,6 +36,8 @@ HALL2_X1 = 26.9                      # recharge hall right wall; the lane leaves
 ROWS_Y = (1.65, 2.95, 4.25, 5.55, 6.85)
 NEAR_ROW_Y = 0.9                     # the row right behind the lane
 NUDGE_SLOT = 2                       # near-row slot of the courier D-17 can try to wake
+LEFT_WALL = (12.0, 12.32)             # the weighing room's left wall (the Sorting Hall's right): x0, x1
+GANTRY_DOOR = (-0.42, 0.42, 1.35, 2.4)  # the gantry doorway in it: y0, y1, sill, head (art/sorting_hall's gantry deck is at 1.35)
 GRIP = (0.29, 0.21)                  # the weight's bail: forward of D-17 when lifting, height on the weight
 WRIST_ABOVE_GRIP = 0.07
 
@@ -139,6 +141,7 @@ def dl02_materials(m):
     m['platebulb'] = emission_material('PlateBulb', (1.0, 0.9, 0.75), 0.0)
     m['rowlight'] = [emission_material(f'RowLight{i}', (0.8, 0.92, 0.95), 0.0) for i in range(len(ROWS_Y) + 1)]
     m['passage'] = emission_material('PassageGlow', (0.6, 0.85, 0.72), 0.0)
+    m['gantrylamp'] = emission_material('GantryLamp', (1.0, 0.76, 0.46), 0.0)
 
 
 def build_passage(m, coll):
@@ -151,16 +154,8 @@ def build_passage(m, coll):
     for x in (9.53, 13.87):
         add_box(bm, (x, 1.3, 0.72), (0.1, 0.84, 1.44))
     obj = _obj('Passage', bm, [m['wall']], coll)
-    # DL-02 back wall, seamed like the bulkhead, with the doorway D-17 steps out of.
-    bm = bmesh.new()
-    panels = [(WALL_X1, x0, 0.0, 2.6), (x1, GATE_X - 0.05, 0.0, 2.6), (x0, x1, dh, 2.6)]
-    for i, (a0, a1, z0, z1) in enumerate(panels):
-        n = max(1, round((a1 - a0) / 0.95))
-        for k in range(n):
-            w = (a1 - a0) / n
-            rounded_box((w - 0.03, 0.3, z1 - z0 - 0.02), (a0 + w * (k + 0.5), by + 0.15, (z0 + z1) / 2), p=12, cuts=8,
-                        dents=((0.008, 3.0),), seed=71 + i * 5 + k, bm=bm, mat=0)
-    _obj('WeighRoomWall', bm, [m['wall']], coll)
+    # The wall D-17 steps out through is now the Sorting Hall's back wall (art/sorting_hall); its doorway
+    # keeps this frame and glow. The weighing room's own back wall moves with the room (build_weigh_room).
     bm = bmesh.new()
     add_box(bm, (x0 - 0.04, by - 0.02, dh / 2), (0.08, 0.08, dh + 0.08))
     add_box(bm, (x1 + 0.04, by - 0.02, dh / 2), (0.08, 0.08, dh + 0.08))
@@ -172,14 +167,66 @@ def build_passage(m, coll):
     return obj
 
 
+def build_room_walls(m, coll):
+    """The weighing room's back wall (seamed like the bulkhead's, as it was when it held DL-01's doorway) and
+    its left wall, shared with the Sorting Hall, with the gantry doorway D-17 comes in by: x 12.0 to 12.32,
+    1.35 to 2.4 high, and a warm lamp over it on the hall's side (GantryLamp, the hall's brightest point)."""
+    lx0, lx1 = LEFT_WALL
+    gy0, gy1, sill, head = GANTRY_DOOR
+    by = 0.62
+    bm = bmesh.new()
+    a0, a1 = lx1, GATE_X - 0.05
+    n = max(1, round((a1 - a0) / 0.95))
+    for k in range(n):
+        w = (a1 - a0) / n
+        rounded_box((w - 0.03, 0.3, 2.58), (a0 + w * (k + 0.5), by + 0.15, 1.3), p=12, cuts=8,
+                    dents=((0.008, 3.0),), seed=71 + k, bm=bm, mat=0)
+    _obj('WeighRoomWall', bm, [m['wall']], coll)
+    # The left wall runs from the open front to behind the Sorting Hall's back wall, and up to its ceiling.
+    y_front, y_back, top = -1.6, 1.25, 4.65
+    cx, t = (lx0 + lx1) / 2, lx1 - lx0
+    bm = bmesh.new()
+    add_box(bm, (cx, (y_front + gy0) / 2, top / 2), (t, gy0 - y_front, top))
+    add_box(bm, (cx, (gy1 + y_back) / 2, top / 2), (t, y_back - gy1, top))
+    add_box(bm, (cx, (gy0 + gy1) / 2, sill / 2), (t, gy1 - gy0, sill))
+    add_box(bm, (cx, (gy0 + gy1) / 2, (head + top) / 2), (t, gy1 - gy0, top - head))
+    _obj('WeighRoomLeftWall', bm, [m['wall']], coll)
+    bm = bmesh.new()                                    # a steel frame round the opening, both faces
+    for x in (lx0 - 0.015, lx1 + 0.015):
+        for y in (gy0 - 0.03, gy1 + 0.03):
+            add_box(bm, (x, y, (sill + head) / 2 + 0.03), (0.03, 0.06, head - sill + 0.06))
+        add_box(bm, (x, (gy0 + gy1) / 2, head + 0.03), (0.03, gy1 - gy0 + 0.12, 0.06))
+    add_box(bm, (cx, (gy0 + gy1) / 2, sill - 0.01), (t + 0.06, gy1 - gy0, 0.02))              # the sill plate
+    _obj('GantryDoorFrame', bm, [m['steel']], coll)
+    bm = bmesh.new()                                    # hazard stripes on the sill's edge, hall side
+    for k in range(6):
+        add_box(bm, (lx0 - 0.032, gy0 + 0.07 + k * (gy1 - gy0 - 0.14) / 5, sill - 0.05), (0.004, 0.05, 0.07),
+                rot=Matrix.Rotation(0.6, 4, 'X'))
+    _obj('GantryDoorStripes', bm, [m['yellow']], coll)
+    # The lamp over the doorway, on the hall's side of the wall: a caged bulkhead light.
+    lz = head + 0.3
+    bm = bmesh.new()
+    add_box(bm, (lx0 - 0.03, 0.0, lz), (0.06, 0.2, 0.16))
+    add_cyl(bm, (lx0 - 0.06, 0.0, lz), (lx0 - 0.11, 0.0, lz), 0.065, 0.06, seg=16)
+    for k in range(4):
+        a = k * math.pi / 2 + math.pi / 4
+        add_cyl(bm, (lx0 - 0.06, 0.06 * math.cos(a), lz + 0.06 * math.sin(a)), (lx0 - 0.16, 0.035 * math.cos(a), lz + 0.035 * math.sin(a)), 0.005, seg=4)
+    add_cyl(bm, (lx0 - 0.03, 0.12, lz + 0.05), (lx0 - 0.03, 0.9, lz + 0.05), 0.01, seg=6)        # its conduit, back along the wall
+    _obj('GantryLampFixture', bm, [m['steel']], coll)
+    bm = bmesh.new()
+    add_sphere(bm, (lx0 - 0.13, 0.0, lz), 0.045, seg=14, scale=(0.8, 1, 1))
+    _obj('GantryLamp', bm, [m['gantrylamp']], coll)
+
+
 def build_weigh_room(m, coll):
     """The weighing room: the sorting weight by its stand, the trolley, the plate, the gate."""
     rnd = random.Random(202)
     # Ceiling, low over the room.
     bm = bmesh.new()
-    rounded_box((GATE_X - ROOM_X0 + 0.3, 2.6, 0.16), ((ROOM_X0 + GATE_X) / 2, -0.35, 2.68), p=5, cuts=12,
+    rounded_box((GATE_X + 0.15 - LEFT_WALL[0], 2.6, 0.16), ((LEFT_WALL[0] + GATE_X + 0.15) / 2, -0.35, 2.68), p=5, cuts=12,
                 dents=((0.02, 1.5), (0.008, 6.0)), seed=12, bm=bm, mat=0)
     _obj('WeighRoomCeiling', bm, [m['concrete']], coll)
+    build_room_walls(m, coll)
 
     # The sorting weight: a cast-iron bell weight with a bail handle, origin at its base.
     bm = bmesh.new()

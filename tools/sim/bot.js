@@ -1,9 +1,10 @@
-// A simulated first-time player for Dead Letter, DL-01 to DL-05. It runs inside the page, one call per game step
+// A simulated first-time player for Dead Letter's Chapter 1, DL-01 to DL-09. It runs inside the page, one call per game step
 // (60 Hz of game time), and drives the same input object the keyboard does. Everything it does is a real action in the
 // game; on top of that, a player model adds the time a person spends looking, reading, thinking and trying the wrong
 // thing first. Each run draws its own player (skill, curiosity) from a seed.
 window.__startBot = function (seed, opts = {}) {
   const D = window.__dl01, G = D.game, I = D.input;
+  const { OFF2, OFF3, OFF4 } = D.offsets;                              // where each stretch of the level now starts
   // --- random numbers ---------------------------------------------------------------------------------------------
   let a = seed >>> 0;
   const R = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -47,10 +48,10 @@ window.__startBot = function (seed, opts = {}) {
   }
   function* goTo(x, label, o) { const d = Math.sign(x - G.x) || 1; yield* walk(d, () => (d > 0 ? G.x >= x : G.x <= x), label, o); }
   // Walk toward x until the game offers this interaction, then press Use until it starts.
-  function* useAt(kinds, x, started, label) {
+  function* useAt(kinds, x, started, label, o = {}) {
     const ok = () => kinds.includes(D.near());
-    if (!ok()) { const d = Math.sign(x - G.x) || 1; yield* walk(d, () => ok() || (d > 0 ? G.x >= x + 0.4 : G.x <= x - 0.4), label); }
-    if (!ok()) { const d = Math.sign(x - G.x) || 1; yield* walk(d, ok, label + ' (back)', { max: 30 }); }
+    if (!ok()) { const d = Math.sign(x - G.x) || 1; yield* walk(d, () => ok() || (d > 0 ? G.x >= x + 0.4 : G.x <= x - 0.4), label, o); }
+    if (!ok()) { const d = Math.sign(x - G.x) || 1; yield* walk(d, ok, label + ' (back)', { max: 30, ...o }); }
     for (let k = 0; k < 12; k++) {
       yield* wait(react() * 0.5);
       use(); yield; yield;
@@ -66,64 +67,120 @@ window.__startBot = function (seed, opts = {}) {
     const x = U(lo, hi), back = G.x; note('wanders to ' + x.toFixed(1));
     try { yield* goTo(x, 'wander', { max: 25 }); yield* wait(think(2)); yield* goTo(back, 'wander back', { max: 25 }); } catch (e) { /* got as far as he got */ }
   }
-  // --- the scenes ---------------------------------------------------------------------------------------------------
+  // --- the scenes (Chapter 1, nine scenes) -----------------------------------------------------------------------
+  const K = D.k, C = () => G.ch1;
+  const actIs = (k) => () => !!(G.act && G.act.kind === k);
+  const free = () => !G.act && !G.mantle;
+  function* settle(max = 30) { yield* until(() => !G.act && !G.mantle && G.grounded, max, 'settle'); }
+  // An optional letter: pick it up if he's curious, and post it if a slot is near.
+  function* letter(id, x, p) {
+    if (!chance(p) || !/floor|slot/.test(D.letters[id])) return;
+    note('picks up the ' + id + ' letter');
+    try { yield* useAt(['pickLetter:' + id], x, actIs('pickLetter'), 'letter ' + id); yield* settle(); } catch (e) { note('letter missed: ' + e.message); }
+  }
+  function* post(slot, x, p) {
+    if (!(D.letters.held > 0) || !chance(p)) return;
+    note('posts a letter at slot ' + slot);
+    try { yield* useAt(['postLetter:' + slot], x, actIs('postLetter'), 'slot ' + slot); yield* settle(); } catch (e) { note('post missed: ' + e.message); }
+  }
+
   function* opening() {
     mark('opening');
     yield* until(() => G.mode === 'play', 120, 'opening');
-    mark('play'); mark('DL-01');
+    mark('play');
   }
 
-  function* dl01() {
-    yield* wait(think(3));                                            // getting the feel of the controls
+  // DL-01 The Wake: the latch, the step, the cart into the trench, the crank.
+  function* wake() {
+    yield* wait(think(3));
     if (chance(0.15 + 0.2 * (1 - P.skill))) { note('tries left first'); yield* walk(-1, () => G.x < 0.75, 'left first'); yield* wait(think(1)); }
-    if (chance(0.3 + 0.45 * P.curious)) {                              // the cord lamp, optional
-      note('pulls the cord'); yield* useAt(['cord'], 0.59, () => G.act && G.act.kind === 'cord', 'cord');
+    if (chance(0.3 + 0.45 * P.curious)) {
+      note('pulls the cord'); yield* useAt(['cord'], 0.59, actIs('cord'), 'cord');
       yield* until(() => !G.act, 20, 'cord done'); yield* wait(look(1.5));
     }
-    // The shutter: he crouches under it and finds it latched.
+    if (chance(0.2 + 0.5 * P.curious)) { note('weighs himself'); yield* goTo(2.2, 'scale'); yield* wait(look(2.0)); }
     yield* walk(1, () => G.x >= 2.98, 'to the shutter', { stall: 1.2 });
     if (mistakes && chance(0.7 - 0.45 * P.skill)) {
       note('pushes at the shutter');
       try { yield* walk(1, () => false, 'push', { stall: 1.5 + R() * 2, hop: false, max: 8 }); } catch (e) { /* pushed a while */ }
     }
     yield* wait(think(8));
-    yield* useAt(['latch'], 3.0, () => G.act && G.act.kind === 'latch', 'latch');
+    yield* useAt(['latch'], 3.0, actIs('latch'), 'latch');
     yield* until(() => G.released && !G.act, 30, 'latch done'); note('shutter up');
     yield* wait(look(1.2));
-    // Over the conveyor, the crate and the trench to the hall.
-    yield* walk(1, () => G.x > 8.2, 'to the hall');
-    mark('hall'); yield* wait(look(3.0));
-    // The crank. A first-timer often walks to the door first.
+    // The trench: try to jump it from the cart, fall in, and be back at the shutter.
+    yield* walk(1, () => G.x > 4.5, 'over the step');
+    if (mistakes && chance(0.6 - 0.35 * P.skill)) {
+      note('tries to jump the trench');
+      yield* walk(1, () => G.y > K.CART1.h - 0.05 && G.x > C().cart.x + K.CART1.half - 0.3, 'onto the cart', { max: 30 });
+      jump(); move(1); yield* wait(0.6); move(0);
+      yield* until(() => (G.act && G.act.kind === 'trenchStuck') || G.x > K.PIT.x1 + 0.1, 10, 'the jump');
+      if (G.act && G.act.kind === 'trenchStuck') { yield* until(() => G.mode === 'play' && !G.act && G.x < 3.5, 20, 'respawned'); note('back at the shutter'); yield* wait(think(8)); }
+    } else yield* wait(think(6));
+    if (C().cart.state === 'free') {
+      yield* useAt(['grabPush:cart'], C().cart.x - K.CART1.gap, actIs('grabPush'), 'cart', { hop: false });
+      yield* until(() => G.hold === 'push', 10, 'grip cart');
+      yield* walk(1, () => C().cart.state !== 'free', 'push the cart', { hop: false, keepHolding: true, max: 30 });
+      note('cart in the trench'); yield* until(() => C().cart.state === 'bridge', 5, 'bridge'); yield* wait(look(1.0));
+    }
+    yield* walk(1, () => G.x > 8.6, 'to the hall');
+    yield* wait(look(3.0));
     if (mistakes && chance(0.75 - 0.5 * P.skill)) {
       note('tries the door');
       try { yield* walk(1, () => false, 'to the door', { stall: 1.0 + R(), hop: false, max: 30 }); } catch (e) { /* walked a while */ }
       yield* wait(think(10));
-    }
-    else yield* wait(think(6));
-    yield* useAt(['crank'], 9.62, () => G.act && G.act.kind === 'crank', 'crank');
+    } else yield* wait(think(6));
+    yield* useAt(['crank'], 9.62, actIs('crank'), 'crank');
     yield* until(() => G.doorOpen >= 1 && !G.act, 60, 'door open'); note('door open');
     yield* wait(look(1.0));
     yield* walk(1, () => G.region === 2, 'through the door');
-    mark('DL-02');
   }
 
-  function* dl02() {
+  // DL-02 The Sorting Hall: the tube's letter and the slot; the box, the table, the gantry.
+  function* sortingHall() {
     yield* until(() => !G.transit, 60, 'passage');
     yield* wait(look(2.5));
-    // The plate: stand on it, see the gate rise, walk for the gate, and it drops.
+    yield* walk(1, () => G.x > K.SH.tubeX + 0.1, 'past the tube');
+    yield* until(() => D.letters.tube !== 'falling' && D.letters.tube !== 'cup', 3, 'tube letter');
+    yield* wait(look(1.2));
+    yield* letter('tube', K.SH.tubeX, 0.55 + 0.4 * P.curious);
+    yield* post(2, K.SH.slotX, 0.75);
+    yield* wait(look(1.5));
+    // The table is too high; the floor is closed. Try the jump, then the box.
+    if (mistakes && chance(0.8 - 0.35 * P.skill)) {
+      note('tries to climb the table');
+      try { yield* walk(1, () => G.x > K.SH.table.x0 + 0.3 && G.y > 0.5, 'at the table', { max: 6 + 6 * R() }); } catch (e) { /* bounced off it */ }
+      yield* wait(think(9));
+    } else yield* wait(think(5));
+    if (G.y > 0.5) { note('is on the table already'); }
+    else {
+      const box = C().box;
+      yield* useAt(['liftItem:box'], box.x, actIs('liftItem'), 'box');
+      yield* until(() => G.hold === 'item', 10, 'carrying');
+      yield* walk(1, () => G.x >= K.SH.table.x0 - 0.22 - K.GRIP_FWD, 'to the table', { hop: false, max: 30 });
+      use(); yield* until(() => G.act && G.act.kind === 'setdownItem', 3, 'set down'); yield* settle();
+      note('box at the table');
+    }
+    yield* wait(think(2));
+    yield* walk(1, () => G.x > K.SH.x1 + 0.6 && G.y < 0.05, 'up and over', { max: 60 });
+  }
+
+  // DL-03 The Weight of the Job: as before.
+  function* weightRoom() {
+    const plateX = OFF2 + 16.1;
+    yield* wait(look(2.5));
     const tries = mistakes ? (chance(0.85 - 0.3 * P.skill) ? (chance(0.45) ? 2 : 1) : 0) : 0;
     for (let k = 0; k < tries; k++) {
       note('stands on the plate');
-      yield* walk(1, () => G.x > 16.1, 'to the plate');
+      yield* walk(1, () => G.x > plateX, 'to the plate');
       yield* until(() => G.gate.y > 1.15, 20, 'gate up'); yield* wait(think(1.2));
-      yield* walk(1, () => G.x > 16.9 || G.gate.y < 0.5, 'for the gate');
-      yield* wait(1.2 + think(3)); yield* goTo(15.6, 'back off');
+      yield* walk(1, () => G.x > OFF2 + 16.9 || G.gate.y < 0.5, 'for the gate');
+      yield* wait(1.2 + think(3)); yield* goTo(OFF2 + 15.6, 'back off');
     }
-    yield* wander(12.6, 15.4, 0.5 - 0.3 * P.skill);
+    yield* wander(OFF2 + 12.6, OFF2 + 15.4, 0.5 - 0.3 * P.skill);
     yield* wait(think(tries ? 20 : 14));
-    // The weight onto the trolley, the trolley onto the plate.
-    yield* useAt(['lift'], 12.7, () => G.act && G.act.kind === 'lift', 'lift');
-    yield* until(() => G.hold === 'weight', 20, 'carrying'); note('carries the weight');
+    yield* useAt(['lift'], OFF2 + 12.7, actIs('lift'), 'lift');
+    yield* until(() => G.hold === 'weight', 20, 'carrying');
     yield* wait(think(6));
     yield* walk(1, () => G.x >= G.trolley.x - 0.42, 'to the trolley', { stall: 0.3, hop: false });
     for (let k = 0; k < 8 && !(G.act && G.act.kind === 'setdown'); k++) {
@@ -133,105 +190,153 @@ window.__startBot = function (seed, opts = {}) {
     yield* until(() => G.weight.state === 'trolley' && !G.act, 20, 'weight on trolley'); note('weight on the trolley');
     yield* wait(think(8));
     yield* useAt(['grabL'], G.trolley.x - 0.62, () => G.hold === 'trolley', 'grab');
-    yield* walk(1, () => G.trolley.x > 16.1, 'push to the plate', { hop: false, keepHolding: true });
+    yield* walk(1, () => G.trolley.x > plateX, 'push to the plate', { hop: false, keepHolding: true });
     use(); yield* until(() => !G.hold, 10, 'let go');
     yield* until(() => G.revealed, 30, 'revealed'); note('racks light');
     yield* until(() => !G.act, 30, 'reveal act');
     yield* wait(look(3.0));
-    yield* walk(1, () => G.x > 18.0, 'over the trolley, through the gate');
-    // The racks and the couriers: the realisation plays as he walks in; then on to the scanner.
-    if (chance(0.3 + 0.5 * P.curious)) { yield* walk(1, () => G.x > 20.5, 'among the couriers'); note('looks at the couriers'); yield* wait(look(3)); }
-    yield* walk(1, () => G.region === 3, 'to the scanner corridor', { max: 300 });
-    mark('DL-03');
+    yield* walk(1, () => G.x > K.GATE_X + 0.4, 'over the trolley, through the gate');
   }
 
-  function* dl03() {
+  // DL-04 The Racks: the bay wants a courier.
+  function* racks() {
+    if (chance(0.3 + 0.5 * P.curious)) { yield* walk(1, () => G.x > OFF2 + 20.5, 'among the couriers'); note('looks at the couriers'); yield* wait(look(3)); }
+    yield* walk(1, () => G.x > K.RK.courierX + 0.6, 'to the fallen courier', { max: 120 });
+    yield* wait(look(3.0));
+    if (mistakes && chance(0.8 - 0.3 * P.skill)) {
+      note('stands on the bay plate');
+      yield* walk(1, () => G.x > K.RK.plate.x0 + 0.3, 'on the plate');
+      yield* until(() => C().bayDoor > 0.6, 5, 'door opens'); yield* wait(think(1.5));
+      try { yield* walk(1, () => false, 'for the door', { stall: 0.6, hop: false, max: 6 }); } catch (e) { /* the door shut */ }
+      yield* wait(think(8));
+      if (chance(0.45 - 0.25 * P.skill)) { note('goes back for the trolley'); try { yield* goTo(K.GATE_X + 1.0, 'back toward the trolley', { max: 40 }); } catch (e) { /* */ } yield* wait(think(6)); }
+    } else yield* wait(think(6));
+    yield* useAt(['grabPush:courier'], C().courier.x + K.RK.gap, actIs('grabPush'), 'courier', { hop: false });
+    yield* until(() => G.hold === 'push', 10, 'grip courier');
+    yield* walk(1, () => C().courier.state !== 'free', 'drag the courier', { hop: false, keepHolding: true, max: 40 });
+    note('courier on the bay');
+    yield* until(() => C().courier.state === 'seated' && free(), 30, 'the cradle');
+    yield* settle(); yield* wait(look(3.5));
+    yield* walk(1, () => G.region === 3, 'through the bay door', { max: 60 });
+  }
+
+  // DL-05 Return to Sender: the scanner, the pit, the levers (with a ride into the pile for many).
+  function* returnToSender() {
     yield* walk(1, () => G.scan.phase !== 'idle', 'to the scanner');
     yield* until(() => G.scan.phase === 'reveal', 60, 'refusal');
     yield* wait(look(2.5));
-    try { yield* walk(1, () => false, 'slow walk', { max: U(1, 4), hop: false }); } catch (e) { /* walked for a while */ }
+    try { yield* walk(1, () => false, 'slow walk', { max: U(1, 4), hop: false }); } catch (e) { /* walked a while */ }
     yield* until(() => G.scan.phase === 'done', 90, 'label check');
     yield* wait(look(2.0));
-    // Many first-timers ride a carrier to see where it goes: into the pile, and back at the scanner.
     if (mistakes && chance(0.35 + 0.25 * P.curious + 0.15 * (1 - P.skill))) {
       note('rides a carrier to the chute');
-      yield* goTo(G.x < 31.0 ? 30.9 : 31.1, 'to the dock');
+      yield* goTo(G.x < K.DOCK_X ? K.DOCK_X - 0.1 : K.DOCK_X + 0.1, 'to the dock');
       yield* until(() => D.carriers().some((c) => c.state === 'dock'), 40, 'docked');
       yield* wait(react());
       for (let k = 0; k < 30 && !G.riding; k++) { jump(); yield* wait(0.4); }
       yield* until(() => G.act && G.act.kind === 'fall', 60, 'tipped');
-      yield* until(() => G.mode === 'play' && !G.act && !G.riding && G.y > -0.1 && Math.abs(G.x - 30.3) < 0.05, 30, 'respawned');
-      mark('DL-03 respawn'); note('respawned at the scanner'); yield* wait(think(8));
+      yield* until(() => G.mode === 'play' && !G.act && !G.riding && G.y > -0.1 && Math.abs(G.x - (OFF3 + 30.3)) < 0.05, 30, 'respawned');
+      mark('DL-05 respawn'); note('respawned at the scanner'); yield* wait(think(8));
     }
-    // The return line: work out the levers.
-    yield* wander(30.0, 35.8, 0.6 - 0.3 * P.skill);
+    yield* wander(OFF3 + 30.0, OFF3 + 35.8, 0.6 - 0.3 * P.skill);
     yield* wait(think(15));
-    let triedLocked = false, triedNoStart = false;
+    let triedLocked = false;
     for (let guard = 0; guard < 12 && !(G.route === 'exit' && G.belt.running); guard++) {
       if (G.belt.running && G.route !== 'exit') {
         if (mistakes && !triedLocked && chance(0.75 - 0.3 * P.skill)) {
           triedLocked = true; note('tries the points: locked');
-          yield* useAt(['leverPoints'], 34.25, () => G.act && G.act.kind === 'lever', 'points (locked)');
+          yield* useAt(['leverPoints'], OFF3 + 34.25, actIs('lever'), 'points (locked)');
           yield* until(() => !G.act, 20, 'locked'); yield* wait(think(10));
         }
-        yield* useAt(['leverStop'], 32.9, () => G.act && G.act.kind === 'lever', 'stop');
+        yield* useAt(['leverStop'], OFF3 + 32.9, actIs('lever'), 'stop');
         yield* until(() => !G.act, 20, 'stopped'); note('belt stopped'); yield* wait(think(4));
       } else if (!G.belt.running && G.route !== 'exit') {
-        yield* useAt(['leverPoints'], 34.25, () => G.act && G.act.kind === 'lever', 'points');
-        yield* until(() => !G.act, 20, 'thrown'); note('points thrown'); yield* wait(look(2.5));   // the route shot
+        yield* useAt(['leverPoints'], OFF3 + 34.25, actIs('lever'), 'points');
+        yield* until(() => !G.act, 20, 'thrown'); note('points thrown'); yield* wait(look(2.5));
       } else if (!G.belt.running && G.route === 'exit') {
-        if (mistakes && !triedNoStart && chance(0.4 - 0.25 * P.skill)) {
-          triedNoStart = true; note('waits at the dock with the belt stopped');
-          yield* goTo(31.1, 'dock'); yield* wait(U(5, 10)); yield* wait(think(6));
-        }
-        yield* useAt(['leverStop'], 32.9, () => G.act && G.act.kind === 'lever', 'start');
+        yield* useAt(['leverStop'], OFF3 + 32.9, actIs('lever'), 'start');
         yield* until(() => !G.act, 20, 'started'); note('belt started');
       }
       yield;
     }
     yield* wait(think(1.5));
-    yield* goTo(G.x < 31.0 ? 30.9 : 31.1, 'to the dock 2');
-    yield* until(() => D.carriers().some((c) => c.state === 'dock'), 40, 'docked 2');
+  }
+  function* board() {
+    yield* goTo(G.x < K.DOCK_X ? K.DOCK_X - 0.1 : K.DOCK_X + 0.1, 'to the dock');
+    yield* until(() => D.carriers().some((c) => c.state === 'dock'), 40, 'docked');
     yield* wait(react());
     for (let k = 0; k < 30 && !G.riding; k++) { if (D.near() === 'board') use(); else jump(); yield* wait(0.4); }
-    note('rides up the ramp');
     yield* until(() => G.upper && !G.riding && !G.act, 60, 'landed');
-    yield* wait(look(1.5));
-    // The gallery: the desk, the stopped clock, the day board.
-    yield* walk(1, () => G.x > 42.6, 'to the desk');
-    if (chance(0.35 + 0.5 * P.curious)) { note('reads the desk and the board'); yield* wait(look(4)); yield* walk(1, () => G.x > 44.6, 'board'); yield* wait(look(3)); }
-    yield* walk(1, () => G.region === 4, 'to the doorway');
-    mark('DL-04');
   }
 
-  function* dl04() {
+  // DL-06 The Heap: the gallery gate. Most ride up first, find it shut, and slide back down.
+  function* heap() {
+    const loadFirst = !mistakes || chance(0.3 * P.skill);
+    if (!loadFirst) {
+      note('rides up first'); yield* board(); yield* wait(look(2.0));
+      try { yield* walk(1, () => false, 'to the gate', { stall: 0.6, hop: false, max: 8 }); } catch (e) { /* */ }
+      yield* wait(think(10));
+      note('slides back down');
+      yield* walk(-1, () => G.act && G.act.kind === 'slide', 'to the slide', { hop: false, max: 20 });
+      yield* until(() => !G.act && !G.upper, 10, 'slid'); yield* wait(look(1.5) + think(6));
+    }
+    for (let attempt = 0; attempt < 4 && C().bucket < 1; attempt++) {
+      const w = C().weights.find((q) => q.state === 'floor');
+      if (!w) { yield* wait(2); continue; }
+      yield* useAt(['liftItem:w' + C().weights.indexOf(w)], w.x, actIs('liftItem'), 'weight');
+      yield* until(() => G.hold === 'item', 10, 'carrying');
+      yield* walk(-1, () => Math.abs(G.x - K.DOCK_X) < 0.5, 'to the dock', { hop: false, max: 20 });
+      yield* until(() => D.carriers().some((c) => c.state === 'dock'), 40, 'docked');
+      use(); yield* until(() => G.act && G.act.kind === 'loadCarrier', 3, 'load');
+      yield* settle(); note('weight in a carrier');
+      yield* until(() => C().bucket >= 1 || !D.carriers().some((c) => c.load), 40, 'the delivery');
+      yield* wait(look(2.0));
+    }
+    yield* wait(think(2));
+    yield* board();
+    yield* walk(1, () => G.x > K.HP.gateX + 0.5, 'through the gate', { max: 30 });
+    yield* until(() => D.letters.heap !== 'fallingRail', 3, 'rail letter');
+    yield* letter('heap', K.LETTERS[1].x, 0.45 + 0.45 * P.curious);
+    yield* post(6, K.SLOTS[1].x, 0.7);
+    if (chance(0.35 + 0.5 * P.curious)) { note('reads the desk and the board'); yield* wait(look(4)); yield* walk(1, () => G.x > OFF3 + 44.6, 'board'); yield* wait(look(3)); }
+    yield* walk(1, () => G.region === 4, 'to the doorway', { max: 60 });
+  }
+
+  // DL-07 The Handbrake: trolley onto the pan, the teeter, the pawl; then the trolley across, and over the rail.
+  function* handbrake() {
     yield* wait(look(2.5));
     if (chance(0.3 + 0.5 * P.curious)) { note('reads the lift sign'); yield* wait(look(3.5)); }
-    yield* wander(48.6, 52.6, 0.4 - 0.25 * P.skill);
+    yield* wander(OFF3 + 48.6, OFF3 + 52.6, 0.4 - 0.25 * P.skill);
     yield* wait(think(12));
-    // The trolley onto the pan.
-    yield* useAt(['grab4L'], G.trolley4.x - 0.7, () => G.hold === 'trolley4', 'grab trolley');
-    yield* walk(1, () => G.trolley4.x >= 51.45, 'push onto the pan', { hop: false, keepHolding: true, max: 120 });
-    yield* until(() => G.plat.h >= 0.999, 30, 'at the landing'); note('platform at the landing');
+    yield* useAt(['grab4L'], G.trolley4.x - K.PUSH_GAP4, () => G.hold === 'trolley4', 'grab trolley');
+    yield* walk(1, () => G.trolley4.x >= OFF3 + 51.45, 'push onto the pan', { hop: false, keepHolding: true, max: 120 });
+    yield* until(() => G.plat.h >= 0.999, 30, 'at the landing');
     yield* wait(look(1.5));
     use(); yield* until(() => !G.hold, 10, 'let go');
-    // Onto the platform: it drops under him.
     yield* walk(1, () => G.act && G.act.kind === 'teeter', 'onto the platform', { max: 60 });
     note('teeters'); yield* until(() => !G.act, 20, 'teeter done');
     yield* wait(think(10));
-    yield* useAt(['pawl'], 52.45, () => G.plat.latched || (G.act && G.act.kind === 'pawl'), 'pawl');
+    yield* useAt(['pawl'], K.PAWL_X, () => G.plat.latched || (G.act && G.act.kind === 'pawl'), 'pawl');
     yield* until(() => G.plat.latched, 20, 'latched'); note('pawl set');
     yield* until(() => !G.act, 20, 'proud');
-    // Across, past the trolley (he pats it), to the far landing; the belt's warning.
-    yield* walk(1, () => G.x > 56.1, 'to the far landing', { max: 90 });
+    if (mistakes && chance(0.85 - 0.3 * P.skill)) {
+      note('tries the rail');
+      try { yield* walk(1, () => false, 'at the rail', { stall: 1.0, max: 25 }); } catch (e) { /* */ }
+      yield* wait(think(12));
+      yield* walk(-1, () => G.x < G.trolley4.x - K.PUSH_GAP4 + 0.1, 'back round the trolley', { max: 40 });
+    }
+    yield* useAt(['grab4L'], G.trolley4.x - K.PUSH_GAP4, () => G.hold === 'trolley4', 'grab trolley again');
+    yield* walk(1, () => G.trolley4.x >= K.RAIL7.x0 - K.T4_HALF - 0.03, 'trolley to the rail', { hop: false, keepHolding: true, max: 60 });
+    use(); yield* until(() => !G.hold, 10, 'let go at the rail');
+    yield* wait(think(3));
+    yield* walk(1, () => G.x > K.RAIL7.x1 + 0.3 && G.y < 1.65, 'over the rail', { max: 30 });
     yield* until(() => G.belt4.state === 'run' && D.crates().length > 0, 40, 'belt running');
     yield* wait(look(1.5) + think(4));
-    // The crossing: hop or climb whatever comes down; timing varies with skill.
     note('starts the crossing');
-    const t0 = G.clock; let hops = 0, carried = 0, lastX = G.x, trigger = 0, stuck = 0, stuckAt = react(), lastStep = G.x;
+    const t0 = G.clock; let hops = 0, trigger = 0, stuck = 0, stuckAt = react(), lastStep = G.x;
     move(1);
     try {
-      while (G.x < 64.8) {
+      while (G.x < K.CG.x0 - 0.1) {
         if (G.clock - t0 > 400) throw new Error('stuck on the belt x=' + G.x.toFixed(2));
         move(G.act ? 0 : 1);
         const c = D.crates().filter((k) => k.state === 'belt' && k.x > G.x).sort((p, q) => p.x - q.x)[0];
@@ -239,35 +344,67 @@ window.__startBot = function (seed, opts = {}) {
         if (G.grounded && !G.mantle && !G.act) {
           if (!trigger) trigger = 0.62 + (mistakes ? gauss() * 0.14 * (1.3 - P.skill) : 0);
           if (ahead < trigger) { jump(); hops++; trigger = 0; stuck = 0; }
-          // Pushed back against a crate: he jumps once he notices.
           stuck = G.x < lastStep + 0.002 ? stuck + 1 / 60 : 0;
           if (stuck > stuckAt) { jump(); hops++; stuck = 0; stuckAt = react(); }
         }
         lastStep = G.x;
-        if (G.x < lastX - 0.6) { carried++; lastX = G.x; } else if (G.x > lastX) lastX = G.x;
         yield;
       }
     } finally { move(0); }
-    note(`crossed (${hops} hops, carried back ${carried} times)`);
-    // The tunnel and the refuge: the look back, the hopscotch, the awe are his own.
-    yield* walk(1, () => G.dl4.awed && !G.act, 'through the tunnel', { max: 200 });
-    yield* wait(look(4.0));                                           // taking in the city
-    yield* walk(1, () => G.region === 5, 'to the stair', { max: 120 });
-    mark('DL-05');
+    note(`crossed (${hops} hops)`);
   }
 
-  function* dl05() {
+  // DL-08 The Slipping Cage: three climbs, the cage, the pawl at the lit landing; then the tunnel and the city.
+  function* cage() {
+    yield* wait(look(2.0));
+    yield* walk(1, () => G.act && G.act.kind === 'cage', 'into the cage', { max: 60 });
+    note('in the cage');
+    for (let tries = 0; tries < 6; tries++) {
+      const cg = () => C().cage;
+      if (mistakes && chance(0.3 * (1 - P.skill))) { yield* until(() => cg().phase === 'lower', 5, 'lowering'); use(); note('throws the pawl early'); }
+      yield* until(() => cg().phase === 'stall' || cg().phase === 'crash' || cg().phase === 'caught', 20, 'the stall');
+      if (cg().phase === 'stall') {
+        yield* wait(opts.mechanical ? 0.1 : LN(0.45 + 0.4 * (1 - P.skill), 0.45));
+        use();
+      }
+      yield* until(() => cg().phase === 'caught' || cg().phase === 'crash', 10, 'bite or crash');
+      if (cg().phase === 'caught') { note('pawl bites at the landing'); break; }
+      note('missed: the cage drops to the buffers');
+      yield* until(() => cg().phase === 'top', 30, 'hauled back');
+      yield* wait(think(3));
+      yield* walk(1, () => G.act && G.act.kind === 'cage', 'back into the cage', { max: 20 });
+    }
+    yield* settle();
+    yield* wait(look(1.0));
+    yield* walk(1, () => G.dl4.awed && !G.act, 'through the tunnel', { max: 200 });
+    yield* wait(look(4.0));
+    yield* walk(1, () => G.region === 5, 'to the stair', { max: 120 });
+  }
+
+  // DL-09 The Child at the Address: the seal, the flood and the duct, C-114.
+  function* childAtTheAddress() {
     yield* wait(look(2.0));
     yield* walk(1, () => G.checkpoint === 'ringc', 'under the seal');
     if (chance(0.3 + 0.5 * P.curious)) { note('looks along ring C'); yield* wait(look(2.5)); }
-    yield* walk(1, () => G.dl5.knocked && !G.act && G.x > 88.3, 'to C-114', { max: 120 });
+    if (mistakes && chance(0.7 - 0.3 * P.skill)) {
+      note('hops the duct toward the water');
+      yield* walk(1, () => G.act && G.act.kind === 'waterFlinch', 'to the water', { max: 20 });
+      yield* settle(); yield* wait(think(9));
+      yield* walk(-1, () => G.x < C().duct.x - K.DUCT9.gap + 0.05, 'back over the duct', { max: 20 });
+    } else yield* wait(think(5));
+    yield* useAt(['grabPush:duct'], C().duct.x - K.DUCT9.gap, actIs('grabPush'), 'duct', { hop: false });
+    yield* until(() => G.hold === 'push', 10, 'grip duct');
+    yield* walk(1, () => C().duct.state !== 'free', 'push the duct', { hop: false, keepHolding: true, max: 30 });
+    yield* until(() => C().duct.state === 'bridge', 5, 'bridge'); note('duct bridges the flood');
+    yield* letter('c110', K.LETTERS[2].x, 0.4 + 0.45 * P.curious);
+    yield* post(9, K.SLOTS[2].x, 0.75);
+    yield* walk(1, () => G.dl5.knocked && !G.act && G.x > OFF4 + 88.3, 'to C-114', { max: 120 });
     yield* wait(look(2.0));
     yield* walk(1, () => G.dl5.toyUp && !G.act, 'past the bed', { max: 120 });
-    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the photograph'); yield* walk(1, () => G.x > 93.2, 'photo'); yield* wait(look(3.5)); }
-    // The desk: find that it moves.
+    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the photograph'); yield* walk(1, () => G.x > OFF4 + 93.2, 'photo'); yield* wait(look(3.5)); }
     if (mistakes && chance(0.6 - 0.35 * P.skill)) {
       note('walks past the desk to the back door');
-      try { yield* walk(1, () => G.x > 95.3, 'to the back door', { hop: false, max: 8 }); } catch (e) { /* blocked */ }
+      try { yield* walk(1, () => G.x > OFF4 + 95.3, 'to the back door', { hop: false, max: 8 }); } catch (e) { /* blocked */ }
       yield* wait(think(8));
     }
     yield* wait(think(12));
@@ -275,16 +412,19 @@ window.__startBot = function (seed, opts = {}) {
     yield* walk(-1, () => G.dl5.revealed, 'drag the desk', { hop: false, keepHolding: true, max: 60 });
     note('desk clear');
     yield* wait(0.8); use(); yield* until(() => !G.hold, 10, 'release');
-    yield* wait(look(3.5));                                           // the marks and the tree
+    yield* wait(look(3.5));
     yield* wait(think(5));
-    yield* useAt(['present'], 94.7, () => G.act && G.act.kind === 'present', 'terminal');
+    yield* useAt(['present'], OFF4 + 94.7, actIs('present'), 'terminal');
     yield* until(() => G.dl5.forwarded && !G.act, 30, 'forwarded'); note('forwarded');
     yield* wait(look(2.5));
     yield* walk(1, () => G.ended, 'out the back', { max: 120 });
     mark('end');
   }
 
-  const script = (function* () { yield* opening(); yield* dl01(); yield* dl02(); yield* dl03(); yield* dl04(); yield* dl05(); })();
+  const script = (function* () {
+    yield* opening(); yield* wake(); yield* sortingHall(); yield* weightRoom(); yield* racks();
+    yield* returnToSender(); yield* heap(); yield* handbrake(); yield* cage(); yield* childAtTheAddress();
+  })();
   // Scene splits by where he is, as the game draws them.
   window.__sim = {
     steps: opts.steps ?? 8, frames: 0, render: false, out,
@@ -292,6 +432,7 @@ window.__startBot = function (seed, opts = {}) {
       if (jumpUp > 0 && --jumpUp === 0) I.jumpHeld = false;
       if (out.done) return;
       if (G.mode === 'play' && G.checkpoint) mark('cp ' + G.checkpoint);
+      if (G.mode === 'play' && out.marks.play !== undefined) mark(D.scene().slice(0, 5));
       try {
         const r = script.next();
         if (r.done) out.done = true;

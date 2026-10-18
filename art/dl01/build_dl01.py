@@ -58,9 +58,12 @@ LATCH_PIVOT = Vector((3.24, 0.12))   # (x, z); the lever stands up from here, on
 LATCH_LEN = 0.21
 LATCH_TILT = 8.0                     # degrees toward D-17 at rest
 PULL_ROOT_X = 3.0
-CRATE = (5.6, 6.2, 0.45)             # x0, x1, height (mantle)
-STEP = (4.1, 4.9, 0.22)              # fallen conveyor: x0, x1, height (first jump)
-PIT = (6.6, 7.1, -0.35)              # drain trench: x0, x1, floor height
+MANTLE_H = 0.45                      # the ledge the Mantle clip is authored for (the old crate's top)
+STEP = (3.6, 4.4, 0.22)              # fallen conveyor: x0, x1, height (first jump)
+CART = (5.9, 0.65, 0.55, 0.44)       # DepotCart: centre x, half-length, deck top, push-bar height (bar at its left end)
+PIT = (6.6, 8.0, -0.8)               # drain trench: x0, x1, floor height (too deep to climb out of)
+PIT_Y1 = 2.2                         # the trench runs from the front of the floor back to here
+SCALE = (1.45, 0.05)                 # ParcelScale: platform centre x, platform top
 HALL_X = 7.3                         # the sorting hall opens up from here
 CRANK = (9.62, 0.2, 0.45)            # wheel centre (x, y, z); D-17 faces into the wall to turn it
 DOOR = (10.0, 10.8, 1.05)            # exit door in the bulkhead: x0, x1, height
@@ -332,7 +335,8 @@ def build_extension(m, coll):
     for x in (x0 + 0.05, x1 - 0.05):
         for y in (-0.22, 0.32):
             add_box(bm, (x, y, (h - 0.06) / 2), (0.05, 0.05, h - 0.06))
-    add_box(bm, (x0 - 0.1, 0.05, 0.03), (0.24, 0.7, 0.06), rot=Matrix.Rotation(0.25, 4, 'Y'))
+    # Its end plate lies fallen behind it, off the lane, clear of the shutter's foot and the latch.
+    add_box(bm, (x0 + 0.35, 0.72, 0.03), (0.24, 0.7, 0.06), rot=Matrix.Rotation(1.3, 4, 'Z') @ Matrix.Rotation(0.25, 4, 'Y'))
     obj('StepFrame', bm, [m['steel']], coll)
     bm = bmesh.new()
     k = 0
@@ -355,8 +359,17 @@ def build_extension(m, coll):
         add_cyl(bm, (px1 - 0.02, y, -0.01), (px1 - rnd.uniform(0.05, 0.15), y + 0.03, -rnd.uniform(0.05, 0.2)), 0.008, seg=6)
     obj('TrenchGrate', bm, [m['steel']], coll)
     bm = bmesh.new()
-    add_box(bm, ((px0 + px1) / 2, 4.0, pz + 0.025), (px1 - px0 - 0.05, 16, 0.002))
+    add_box(bm, ((px0 + px1) / 2, (PIT_Y1 - 4.0) / 2, pz + 0.04), (px1 - px0 - 0.05, PIT_Y1 + 4.0 - 0.05, 0.002))
     obj('TrenchWater', bm, [m['water']], coll)
+    # Silt and a couple of drowned parcels, off the cart's way (it lands in the lane, y -0.25 to 0.25).
+    bm = bmesh.new()
+    for x, y, sz, a in ((6.85, 1.1, (0.3, 0.24, 0.16), 0.4), (7.6, 1.6, (0.22, 0.2, 0.14), -0.7), (7.3, -0.9, (0.26, 0.2, 0.12), 1.1)):
+        add_box(bm, (x, y, pz + sz[2] / 2 - 0.02), sz, rot=Matrix.Rotation(a, 4, 'Z') @ Matrix.Rotation(0.15, 4, 'X'))
+    obj('TrenchParcels', bm, [m['paper']], coll)
+    bm = bmesh.new()
+    for x, y in ((px0 + 0.03, 0.9), (px1 - 0.03, -0.7), (px1 - 0.03, 1.4)):            # rust streaks down the walls
+        add_box(bm, (x, y, pz / 2), (0.004, rnd.uniform(0.08, 0.2), -pz * 0.9))
+    obj('TrenchStains', bm, [m['steel']], coll)
 
     # The sorting hall: gantry, columns, a huge sorting carousel, chutes, hanging hooks.
     bm = bmesh.new()
@@ -451,14 +464,196 @@ def build_extension(m, coll):
     obj('CrankWheel', bm, [m['red']], coll)
 
 
+def make_dispatch_board(path):
+    """The dispatch board's chalk: D-17's route for his last shift. Out of the depot, up the ramps, ticks at
+    each delivery made, and the last stop, C-114 with a parcel and a candle, ringed and never ticked.
+    Numbers and room codes only."""
+    from PIL import Image, ImageDraw, ImageFilter, ImageFont
+    rnd = random.Random(17)
+    w, h = 768, 480
+    img = Image.new('RGB', (w, h), (26, 34, 30))
+    d = ImageDraw.Draw(img, 'RGBA')
+    for _ in range(60):                                   # old chalk wiped round and round
+        x, y, r = rnd.uniform(0, w), rnd.uniform(0, h), rnd.uniform(30, 120)
+        d.ellipse((x - r, y - r * 0.4, x + r, y + r * 0.4), fill=(200, 205, 190, rnd.randint(4, 10)))
+
+    def font(size):
+        try:
+            return ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', size)
+        except OSError:
+            return ImageFont.load_default()
+
+    chalk = (222, 222, 206, 235)
+    soft = (200, 204, 190, 150)
+
+    def stroke(pts, fill=chalk, width=5):
+        for _ in range(2):
+            d.line([(x + rnd.uniform(-1.5, 1.5), y + rnd.uniform(-1.5, 1.5)) for x, y in pts], fill=fill, width=width, joint='curve')
+
+    def tick(x, y):
+        stroke([(x - 10, y), (x - 2, y + 10), (x + 14, y - 14)], width=5)
+    d.text((40, 30), 'D-17', font=font(64), fill=chalk)
+    d.text((250, 46), 'R.Y. 42', font=font(40), fill=soft)
+    stroke([(36, 108), (w - 40, 112)], soft, 3)
+    stops = [('DEPOT', None), ('B-21', True), ('B-40', True), ('C-102', True), ('C-109', True), ('C-114', False)]
+    pts = [(80, 420), (190, 330), (310, 380), (430, 270), (560, 320), (668, 190)]
+    for (a, b) in zip(pts, pts[1:]):                      # the route, dashed
+        n = 9
+        for k in range(n):
+            if k % 2 == 0:
+                p0 = (a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n)
+                p1 = (a[0] + (b[0] - a[0]) * (k + 1) / n, a[1] + (b[1] - a[1]) * (k + 1) / n)
+                stroke([p0, p1], chalk, 4)
+    for (label, done), (x, y) in zip(stops, pts):
+        if label == 'DEPOT':                              # a parcel glyph for the depot
+            stroke([(x - 22, y - 16), (x + 22, y - 16), (x + 22, y + 16), (x - 22, y + 16), (x - 22, y - 16)])
+            stroke([(x - 22, y), (x + 22, y)], width=3)
+            continue
+        d.ellipse((x - 9, y - 9, x + 9, y + 9), fill=chalk)
+        d.text((x + 16, y + 6), label, font=font(30), fill=chalk)
+        if done:
+            tick(x + 120, y + 20)
+    x, y = pts[-1]                                        # the last stop: ringed, a parcel with a candle, no tick
+    for k in range(2):
+        r = 46 + k * 6
+        stroke([(x + 50 + r * 1.5 * math.cos(t / 20 * 2 * math.pi), y + 22 + r * 0.8 * math.sin(t / 20 * 2 * math.pi)) for t in range(21)], chalk, 4)
+    px, py = x + 60, y - 92
+    stroke([(px - 24, py), (px + 24, py), (px + 24, py + 34), (px - 24, py + 34), (px - 24, py)])
+    stroke([(px, py), (px, py + 34)], width=3)
+    stroke([(px - 4, py - 4), (px - 4, py - 26)], width=6)
+    d.ellipse((px - 10, py - 42, px + 2, py - 26), fill=(230, 200, 120, 220))
+    for k in range(4):                                    # tally of the day's runs, in the corner
+        stroke([(560 + k * 16, 40), (566 + k * 16, 80)], soft, 5)
+    img = img.filter(ImageFilter.GaussianBlur(0.9))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    img.convert('RGB').quantize(32).save(path, optimize=True)
+
+
+def make_scale_dial(path):
+    """The parcel scale's dial: ticks round an arc from 0 at the left to the stops at the right, where a
+    stamp with a plus sign marks postage due."""
+    from PIL import Image, ImageDraw, ImageFilter
+    s = 256
+    img = Image.new('RGB', (s, s), (214, 206, 180))
+    d = ImageDraw.Draw(img)
+    ink, amber = (30, 28, 24), (196, 140, 40)
+    c = s / 2
+    d.ellipse((6, 6, s - 6, s - 6), outline=ink, width=8)
+
+    def at(k, r):
+        a = math.radians(-120 + 240 * k)                  # clockwise from straight up
+        return c + r * math.sin(a), c - r * math.cos(a)
+    for k in range(40):                                   # the postage-due band
+        x, y = at(0.78 + 0.22 * k / 39, 92)
+        d.ellipse((x - 8, y - 8, x + 8, y + 8), fill=amber)
+    for k in range(21):
+        x0, y0 = at(k / 20, 104)
+        x1, y1 = at(k / 20, 86 if k % 5 == 0 else 96)
+        d.line((x0, y0, x1, y1), fill=ink, width=6 if k % 5 == 0 else 3)
+    x, y = at(0.9, 58)                                    # a stamp with a plus
+    d.rectangle((x - 16, y - 20, x + 16, y + 20), outline=ink, width=4)
+    d.line((x - 8, y, x + 8, y), fill=ink, width=5)
+    d.line((x, y - 8, x, y + 8), fill=ink, width=5)
+    x, y = at(0.1, 62)                                    # and an empty stamp at 0
+    d.rectangle((x - 12, y - 15, x + 12, y + 15), outline=ink, width=3)
+    d.ellipse((c - 12, c - 12, c + 12, c + 12), fill=ink)
+    img = img.filter(ImageFilter.GaussianBlur(0.6))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    img.quantize(24).save(path, optimize=True)
+
+
+def build_cart(m, coll):
+    """DepotCart: a wheeled parcel cart 1.3 long, 0.5 deep, its slatted deck at 0.55, a parcel on its lower
+    shelf, a red push bar at its left end at 0.44. Origin at its base centre (CART); the grip and the four
+    caster wheels (origins at their axles) are its children, so they move with it."""
+    cx, half, top, bar = CART
+    bm = bmesh.new()
+    for k in range(6):                                    # deck slats, flush on top
+        add_box(bm, (0.015, -0.21 + k * 0.084, top - 0.018), (2 * half - 0.07, 0.074, 0.036), mat=0)
+    for y in (-0.23, 0.23):                               # frame rails, posts, lower shelf
+        add_box(bm, (0.015, y, top - 0.06), (2 * half - 0.07, 0.04, 0.05), mat=1)
+        for x in (-half + 0.06, half - 0.05):
+            add_box(bm, (x, y, 0.3), (0.04, 0.04, top - 0.14), mat=1)
+    for x in (-half + 0.06, 0.0, half - 0.05):
+        add_box(bm, (x, 0, top - 0.06), (0.04, 0.46, 0.05), mat=1)
+    add_box(bm, (0.015, 0, 0.19), (2 * half - 0.12, 0.44, 0.025), mat=0)
+    for x, y in ((-half + 0.13, -0.18), (-half + 0.13, 0.18), (half - 0.12, -0.18), (half - 0.12, 0.18)):
+        add_box(bm, (x, y, 0.145), (0.05, 0.05, 0.03), mat=1)            # caster plates and forks
+        for dy in (-0.022, 0.022):
+            add_box(bm, (x, y + dy, 0.105), (0.03, 0.006, 0.07), mat=1)
+    for y in (-0.15, 0.15):                               # the push bar's arms, out from the left end
+        add_box(bm, (-half + 0.03, y, bar), (0.07, 0.03, 0.03), mat=1)
+        add_box(bm, (-half + 0.06, y, (bar + top - 0.08) / 2), (0.03, 0.03, top - 0.08 - bar), mat=1)
+    add_cyl(bm, (-half, -0.18, bar), (-half, 0.18, bar), 0.014, seg=10, mat=1)
+    add_box(bm, (half - 0.02, 0.0, top - 0.12), (0.012, 0.16, 0.06), mat=2)   # a route tag on its right end
+    add_box(bm, (0.25, 0.05, 0.27), (0.42, 0.3, 0.13), mat=3)              # a parcel on the lower shelf
+    cart = obj('DepotCart', bm, [m['wood'], m['depot_green'], m['tag'], m['paper']], coll)
+    cart.location = (cx, 0, 0)
+    bm = bmesh.new()
+    add_cyl(bm, (-half, -0.12, bar), (-half, 0.12, bar), 0.019, seg=12)
+    grip = obj('DepotCartGrip', bm, [m['red']], coll)
+    grip.parent = cart
+    for i, (x, y) in enumerate(((-half + 0.13, -0.18), (-half + 0.13, 0.18), (half - 0.12, -0.18), (half - 0.12, 0.18))):
+        bm = bmesh.new()
+        add_cyl(bm, (0, -0.016, 0), (0, 0.016, 0), 0.065, seg=16)
+        add_box(bm, (0.04, 0, 0), (0.025, 0.034, 0.012))
+        wheel = obj(f'DepotCartWheel{i}', bm, [m['rubber']], coll)
+        wheel.parent = cart
+        wheel.location = (x, y, 0.065)
+
+
+def build_scale(m, coll):
+    """ParcelScale: a floor platform scale on the lane near the start, its platform at 0.05, with a dial on a
+    short column behind it (low enough to stay under the fallen shutter). ScaleNeedle pivots at the dial's
+    centre: rest pointing at 0 (up and to the left); the game swings it clockwise to postage due."""
+    sx, top = SCALE
+    bm = bmesh.new()
+    add_box(bm, (sx, 0.0, 0.012), (0.48, 0.44, 0.024), mat=0)                  # the base frame
+    add_box(bm, (sx, 0.0, top - 0.012), (0.42, 0.38, 0.024), mat=1)           # the platform, ridged
+    for k in range(7):
+        add_box(bm, (sx - 0.18 + k * 0.06, 0.0, top + 0.001), (0.012, 0.36, 0.003), mat=1)
+    add_box(bm, (sx, 0.3, 0.27), (0.07, 0.07, 0.5), mat=0)                    # the column
+    add_cyl(bm, (sx, 0.31, 0.52), (sx, 0.245, 0.52), 0.11, seg=28, mat=0)     # the dial's case
+    add_torus(bm, (sx, 0.243, 0.52), (0, 1, 0), 0.1, 0.008, seg=28, rseg=6, mat=2)
+    obj('ParcelScale', bm, [m['depot_green'], m['steel'], m['copper']], coll)
+    dial = os.path.join(TEX, 'scale_dial.png')
+    if not os.path.exists(dial):
+        make_scale_dial(dial)
+    textured_plane('ScaleDial', (0.19, 0.19), (sx, 0.243, 0.52), 90, image_material('ScaleDialMat', dial), coll)
+    bm = bmesh.new()
+    a = math.radians(-120)                                # pointing at 0
+    tip = Vector((0.075 * math.sin(a), 0, 0.075 * math.cos(a)))
+    add_cyl(bm, (0, 0, 0), tip, 0.004, 0.002, seg=6)
+    add_cyl(bm, (0, -0.004, 0), (0, 0.004, 0), 0.011, seg=12)
+    needle = obj('ScaleNeedle', bm, [m['rubber']], coll)
+    needle.location = (sx, 0.236, 0.52)
+
+
+def build_dispatch_board(m, coll):
+    """The dispatch board on the alcove's back wall, above the fallen shutter: D-17's route chalked on it."""
+    path = os.path.join(TEX, 'dispatch_board.png')
+    if not os.path.exists(path):
+        make_dispatch_board(path)
+    bx, bz, bw, bh = 1.05, 1.72, 0.72, 0.45
+    bm = bmesh.new()
+    add_box(bm, (bx, 0.985, bz), (bw + 0.06, 0.03, bh + 0.06))
+    add_box(bm, (bx, 0.955, bz - bh / 2 - 0.035), (bw, 0.05, 0.02))             # the chalk ledge
+    add_box(bm, (bx + 0.2, 0.948, bz - bh / 2 - 0.02), (0.05, 0.012, 0.012))    # a stub of chalk on it
+    obj('DispatchBoardFrame', bm, [m['wood']], coll)
+    textured_plane('DispatchBoard', (bw, bh), (bx, 0.968, bz), 90, image_material('DispatchBoardMat', path), coll)
+
+
 def build_set(m, coll):
     bm = bmesh.new()
     px0, px1, pz = PIT
     add_box(bm, ((px0 - 5.0) / 2, 4.0, -0.05), (px0 + 5.0, 16, 0.1))
     add_box(bm, ((px1 + 30.0 + OFF2) / 2, 4.0, -0.05), (30.0 + OFF2 - px1, 16, 0.1))   # on under the Sorting Hall and DL-03's rooms
-    add_box(bm, ((px0 + px1) / 2, 4.0, pz - 0.05), (px1 - px0, 16, 0.1))
+    y0, y1 = -4.0, PIT_Y1                 # the trench runs back to PIT_Y1; the floor goes on behind it
+    add_box(bm, ((px0 + px1) / 2, (y0 + y1) / 2, pz - 0.05), (px1 - px0, y1 - y0, 0.1))
+    add_box(bm, ((px0 + px1) / 2, (y1 + 12.0) / 2, -0.05), (px1 - px0, 12.0 - y1, 0.1))
     for x in (px0, px1):  # trench walls
-        add_box(bm, (x, 4.0, pz / 2), (0.04, 16, -pz))
+        add_box(bm, (x, (y0 + y1) / 2, pz / 2), (0.04, y1 - y0, -pz))
+    add_box(bm, ((px0 + px1) / 2, y1, pz / 2), (px1 - px0, 0.04, -pz))
     obj('Floor', bm, [m['concrete']], coll)
     bm = bmesh.new()
     add_box(bm, ((-1.5 + px0) / 2, -0.38, 0.0015), (px0 + 1.5, 0.07, 0.003))
@@ -561,19 +756,9 @@ def build_set(m, coll):
     add_sphere(bm, (1.7, 0.25, 2.08), 0.035, seg=12)
     obj('WorkLampBulb', bm, [m['bulb']], coll)
 
-    x0, x1, h = CRATE
-    cx = (x0 + x1) / 2
-    bm = bmesh.new()
-    for z in (0.06, 0.18, 0.3, 0.42):
-        add_box(bm, (cx, 0.05, z * h / 0.45), (x1 - x0, 0.6, 0.1))
-    obj('Crate', bm, [m['wood']], coll)
-    bm = bmesh.new()
-    for x in (x0, x1):
-        for y in (-0.25, 0.35):
-            add_box(bm, (x, y, h / 2), (0.03, 0.03, h + 0.01))
-    add_box(bm, (x0 + 0.02, -0.252, h - 0.01), (0.05, 0.004, 0.06))
-    add_cyl(bm, (x0, -0.262, h + 0.005), (x0, -0.262, h - 0.07), 0.008)
-    obj('CrateIron', bm, [m['steel']], coll)
+    build_cart(m, coll)
+    build_scale(m, coll)
+    build_dispatch_board(m, coll)
 
     bm = bmesh.new()
     for y, z in ((2.6, 0.7), (4.2, 1.0), (5.8, 0.8)):
@@ -886,7 +1071,7 @@ def clip_mantle(arm):
     """A climb with effort and character: look up, hop and grab, heave, slip back, heave again,
     the old left knee over the edge, tip onto the top, stand, and a glance back down."""
     c = Clip(arm, 'Mantle', MANTLE_FRAMES)
-    h = CRATE[2]
+    h = MANTLE_H
     d0 = 0.17                                   # collision stops him this far from the face
     for frame in range(1, MANTLE_FRAMES + 1):
         f = frame - 1

@@ -45,6 +45,36 @@ PIT = (36.4, 52.0, -6.0)             # x0, x1, floor height
 HEAP = (40.8, 3.0, 0.1, 3.4)         # centre x, centre y, peak height, spread
 CARRIER = dict(half=0.31, width=0.42, floor=0.14, rim=0.42)
 
+# DL-06 The Heap (docs/chapter1_build_spec.md, section 5): the gallery end of the same space.
+GATE_X, GATE_H, GATE_LIFT = 41.9, 1.6, 1.4       # the gallery gate: x, panel height, how far the game lifts it
+GATE_Y = (-0.44, 0.82)                           # the panel's span across the gallery (deck y -0.5 to 0.9)
+GATE_CHAIN_Y = 0.19                              # the gate's chain, at the panel's top centre
+DRUM = (41.7, 5.0)                               # the stepped drum's axle (x, z), along y; GatePulley
+DRUM_R = 0.2                                     # the gate's chain winds on this...
+HUB_R = DRUM_R * 0.4 / GATE_LIFT                 # ...while the bucket's pays off this: 1.4 m of gate per 0.4 of bucket
+BUCKET_X, BUCKET_Y = 39.0, 1.38                  # the bucket hangs behind the gallery, beside the ramp's top end
+BUCKET_HOOK_Z, BUCKET_RIM_Z, BUCKET_DROP = 1.55, 1.2, 0.4
+IDLER_R = 0.08                                   # the sheave over the bucket
+HEAP_WEIGHT_XS = (31.6, 31.85)                   # two sorting weights by the dock, on the lane
+SLIDE_X = (35.7, 38.9)                           # the return slide: its lip on the sorting floor, its head at the gallery
+SLIDE_Y, SLIDE_W = -0.4, 0.48                    # centre line and inner width (front edge of the lane)
+SLIDE_TOP_FLAT, SLIDE_RUNOUT, SLIDE_RUNOUT_Z = 38.65, 35.98, 0.06
+SLIDE_LIP = (35.78, 0.08)                        # where the run-out ends, and the radius of the lip
+HEAP_LETTER = (43.4, -0.47, 2.3)                 # snagged on the gallery's front rail
+MAILSLOT6 = (44.2, 0.3, 2.15)                    # the slot's mouth: 0.3 behind the lane, 0.55 above the deck
+CLOCK_X, DAYBOARD_X = 40.7, 45.3                 # moved along the gallery to make room for the gate and MailSlot6
+
+
+def slide_surface(x):
+    """Height of the slide's sliding surface at x (the curve the game moves D-17 along)."""
+    gz = GALLERY[2]
+    if x >= SLIDE_TOP_FLAT:
+        return gz
+    if x >= SLIDE_RUNOUT:
+        t = (x - SLIDE_RUNOUT) / (SLIDE_TOP_FLAT - SLIDE_RUNOUT)
+        return SLIDE_RUNOUT_Z + (gz - SLIDE_RUNOUT_Z) * smoothstep(t)
+    return SLIDE_RUNOUT_Z
+
 
 def _obj(name, bm, mats, coll, sharp=35):
     return d17.mesh_object(name, bm, mats, coll, sharp=sharp)
@@ -380,11 +410,12 @@ def build_return_line(m, coll):
         add_box(bm, (mid.x, RAIL_Y + dy, mid.y + 0.12), (length, 0.03, 0.26), rot=rot)
     _obj('Chute', bm, [m['shutter']], coll)
     # Guard rail at the pit edge, and the dock: a lamp, a stop line, the route board's frame.
+    # The rail stops short of the lane's front edge, where the return slide comes down past it (DL-06).
     bm = bmesh.new()
-    for y in (-0.55, 0.25):
+    for y in (-0.08, 0.25):
         add_box(bm, (FLOOR_X1 - 0.08, y, 0.5), (0.05, 0.05, 1.0))
     for z in (0.5, 0.95):
-        add_box(bm, (FLOOR_X1 - 0.08, -0.15, z), (0.05, 0.85, 0.04))
+        add_box(bm, (FLOOR_X1 - 0.08, 0.085, z), (0.05, 0.38, 0.04))
     add_box(bm, (DOCK_X, RAIL_Y - 0.3, 0.004), (0.06, 0.12, 0.008))
     _obj('GuardRail', bm, [m['yellow']], coll)
     bm = bmesh.new()
@@ -501,17 +532,21 @@ def build_gallery(m, coll):
     add_box(bm, ((r0 + r1) / 2, (-0.5 + RAIL_Y - 0.3) / 2, gz - 0.03), (r1 - r0, RAIL_Y - 0.3 + 0.5, 0.06))
     add_box(bm, ((r0 + r1) / 2, (RAIL_Y + 0.3 + 0.9) / 2, gz - 0.03), (r1 - r0, 0.9 - RAIL_Y - 0.3, 0.06))
     _obj('GalleryDeck', bm, [m['steel']], coll)
+    # DL-06: the front rail starts past the slide's head (open from gx0 to 39.15), the back rail past
+    # the bucket (open from gx0 to 39.45, where carriers tip), and the end rail is only a short stub
+    # behind the lane, clear of the slide's mouth and of the carriers coming off the ramp.
     bm = bmesh.new()
+    fx0, bx0 = 39.15, 39.45
     x = gx0
     while x <= gx1 + 1e-6:
-        add_box(bm, (x, -0.52, gz + 0.5), (0.04, 0.04, 1.0))
-        add_box(bm, (x, 0.88, gz + 0.5), (0.04, 0.04, 1.0))
+        add_box(bm, (max(x, fx0), -0.52, gz + 0.5), (0.04, 0.04, 1.0))
+        add_box(bm, (max(x, bx0), 0.88, gz + 0.5), (0.04, 0.04, 1.0))
         add_cyl(bm, (x, 0.2, gz - 0.06), (x, 0.2, 6.6), 0.012, seg=6)
         x += 1.2
     for z in (gz + 0.5, gz + 0.98):
-        add_box(bm, ((gx0 + gx1) / 2, -0.52, z), (gx1 - gx0, 0.04, 0.04))
-    add_box(bm, ((gx0 + gx1) / 2, 0.88, gz + 0.98), (gx1 - gx0, 0.04, 0.04))
-    add_box(bm, (gx0 - 0.02, 0.0, gz + 0.5), (0.04, 1.0, 0.04))
+        add_box(bm, ((fx0 + gx1) / 2, -0.52, z), (gx1 - fx0, 0.04, 0.04))
+    add_box(bm, ((bx0 + gx1) / 2, 0.88, gz + 0.98), (gx1 - bx0, 0.04, 0.04))
+    add_box(bm, (gx0 - 0.02, 0.1, gz + 0.5), (0.04, 0.4, 0.04))         # clamped to the hanger rod at y 0.2
     _obj('GalleryRails', bm, [m['yellow']], coll)
     # Where returned carriers drop back to the dispatch level.
     bm = bmesh.new()
@@ -545,20 +580,22 @@ def build_gallery(m, coll):
     _obj('DeskLetters', paper, [m['letters']], coll)
     _obj('InkPad', inky, [m['rubber']], coll)
     # The clock on its post, stopped.
+    # (It stood at 41.9 until the gallery gate took that spot; it is lower now, under the lamp.)
     bm = bmesh.new()
-    add_cyl(bm, (41.9, 0.85, gz), (41.9, 0.85, gz + 2.2), 0.03, seg=8)
-    add_cyl(bm, (41.9, 0.83, gz + 2.2), (41.9, 0.77, gz + 2.2), 0.2, seg=32)
+    ch = 2.0
+    add_cyl(bm, (CLOCK_X, 0.85, gz), (CLOCK_X, 0.85, gz + ch), 0.03, seg=8)
+    add_cyl(bm, (CLOCK_X, 0.83, gz + ch), (CLOCK_X, 0.77, gz + ch), 0.2, seg=32)
     _obj('ClockPost', bm, [m['depot_green']], coll)
     clock = _image_material('ClockMat', os.path.join(TEX, 'clock_face.png'), rough=0.3)
-    _plane('ClockFace', (0.36, 0.36), (41.9, 0.765, gz + 2.2), clock, coll)
-    # The day board on its easel.
+    _plane('ClockFace', (0.36, 0.36), (CLOCK_X, 0.765, gz + ch), clock, coll)
+    # The day board on its easel (moved right of MailSlot6).
     bm = bmesh.new()
     for dx in (-0.5, 0.5):
-        add_box(bm, (44.6 + dx, 0.8, gz + 0.75), (0.05, 0.05, 1.5), rot=Matrix.Rotation(0.12, 4, 'X'))
-    add_box(bm, (44.6, 0.83, gz + 1.0), (1.02, 0.03, 0.72))
+        add_box(bm, (DAYBOARD_X + dx, 0.8, gz + 0.75), (0.05, 0.05, 1.5), rot=Matrix.Rotation(0.12, 4, 'X'))
+    add_box(bm, (DAYBOARD_X, 0.83, gz + 1.0), (1.02, 0.03, 0.72))
     _obj('DayBoardEasel', bm, [m['wood']], coll)
     board = _image_material('DayBoardMat', os.path.join(TEX, 'day_board.png'), rough=0.9)
-    _plane('DayBoard', (0.96, 0.68), (44.6, 0.81, gz + 1.0), board, coll, rot=Matrix.Rotation(math.radians(90 - 7), 4, 'X'))
+    _plane('DayBoard', (0.96, 0.68), (DAYBOARD_X, 0.81, gz + 1.0), board, coll, rot=Matrix.Rotation(math.radians(90 - 7), 4, 'X'))
     # Residential access: the sign with tape across ring C, by the doorway (art/dl04 builds the wall).
     bm = bmesh.new()
     add_box(bm, (RESIDENTIAL_X + 0.1, 0.92, gz + 1.6), (0.9, 0.1, 3.2))
@@ -574,6 +611,360 @@ def build_gallery(m, coll):
         add_cyl(bm, (x, 0.2, 6.6), (x, 0.2, gz + 2.4), 0.005, seg=6)
         add_cyl(bm, (x, 0.2, gz + 2.42), (x, 0.2, gz + 2.32), 0.05, 0.1, seg=14)
     _obj('GalleryLamps', bm, [m['steel']], coll)
+
+
+# --------------------------------------------------------------------------
+# DL-06 The Heap: the gallery gate and its counterweight bucket, the sorting weights, the return
+# slide, the letter on the rail and MailSlot6 (docs/chapter1_build_spec.md, section 5).
+# --------------------------------------------------------------------------
+
+def _basis(d, n):
+    """4x4 rotation taking local X to d and local Z to n (n is made perpendicular to d)."""
+    d = Vector(d).normalized()
+    n = (Vector(n) - d * Vector(n).dot(d)).normalized()
+    return Matrix((d, n.cross(d), n)).transposed().to_4x4()
+
+
+def _chain(bm, a, b, R=0.026, r=0.0065, stretch=1.45, mat=0):
+    """Interlocking oval links from a to b, alternately turned through 90 degrees."""
+    a, b = Vector(a), Vector(b)
+    d = (b - a).normalized()
+    n1 = d.cross(Vector((0, 1, 0)) if abs(d.y) < 0.9 else Vector((1, 0, 0))).normalized()
+    n2 = d.cross(n1).normalized()
+    pitch = 2 * (R * stretch - r)                       # inside length of a link
+    n = max(1, round((b - a).length / pitch))
+    step = (b - a).length / n
+    for k in range(n):
+        verts = add_torus(bm, (0, 0, 0), (0, 0, 1), R, r, mat=mat, seg=6, rseg=3)
+        bmesh.ops.transform(bm, verts=verts, matrix=Matrix.Translation(a + d * step * (k + 0.5))
+                            @ _basis(d, n1 if k % 2 == 0 else n2) @ Matrix.Diagonal((stretch, 1, 1, 1)))
+    return n
+
+
+def _sweep(bm, stations, section, mat=0, cap=True):
+    """Extrude a closed cross-section along stations [(origin, u, v)]; a vertex is origin + u*a + v*b."""
+    rings = [[bm.verts.new(o + u * a + v * b) for a, b in section] for o, u, v in stations]
+    k = len(section)
+    for r0, r1 in zip(rings, rings[1:]):
+        for j in range(k):
+            bm.faces.new((r0[j], r0[(j + 1) % k], r1[(j + 1) % k], r1[j])).material_index = mat
+    if cap:
+        bm.faces.new(rings[0][::-1]).material_index = mat
+        bm.faces.new(rings[-1]).material_index = mat
+    return rings
+
+
+def _hopper(bm, top_c, top, bot, depth, t, mat=0):
+    """An open tapered box: top centre, top (x, y) and bottom (x, y) outer sizes, depth, wall thickness."""
+    c = Vector(top_c)
+    def ring(z, sx, sy):
+        return [bm.verts.new(c + Vector((px * sx / 2, py * sy / 2, z))) for px, py in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+    ot, ob = ring(0, *top), ring(-depth, *bot)
+    k = (top[0] - bot[0]) / depth                        # the walls' slope, to inset the inside evenly
+    it, ib = ring(0, top[0] - 2 * t, top[1] - 2 * t), ring(-depth + t, bot[0] - 2 * t + k * t, bot[1] - 2 * t + k * t)
+    for j in range(4):
+        n = (j + 1) % 4
+        for f in ((ob[j], ob[n], ot[n], ot[j]), (it[j], it[n], ib[n], ib[j]), (ot[j], ot[n], it[n], it[j])):
+            bm.faces.new(f).material_index = mat
+    bm.faces.new(ob[::-1]).material_index = mat
+    bm.faces.new(ib).material_index = mat
+
+
+def heap_textures():
+    from PIL import Image, ImageDraw, ImageFilter
+    # The light shaft over the letter: soft-edged, fading upward, with a few dust streaks.
+    w, h = 64, 256
+    img = Image.new('RGBA', (w, h))
+    px = img.load()
+    rnd = random.Random(61)
+    streaks = [(rnd.uniform(0.15, 0.85), rnd.uniform(0.03, 0.08), rnd.uniform(0.1, 0.3)) for _ in range(5)]
+    for i in range(w):
+        u = (i + 0.5) / w
+        across = math.sin(math.pi * u) ** 1.6
+        across *= 1 + sum(s * math.exp(-((u - c) / wd) ** 2) for c, wd, s in streaks)
+        for j in range(h):
+            v = 1 - (j + 0.5) / h                          # 0 at the bottom (the deck), 1 at the top
+            along = smoothstep(v / 0.06) * (0.35 + 0.65 * (1 - v) ** 0.8)
+            a = min(1.0, 0.42 * across * along)
+            px[i, j] = (255, 238, 208, int(255 * a))
+    img.save(os.path.join(TEX, 'heap_shaft.png'))
+    # MailSlot6's plate: an envelope going into a slot, and a stamp. Wordless.
+    img = Image.new('RGB', (128, 128), (200, 192, 168))
+    d = ImageDraw.Draw(img)
+    ink = (30, 34, 30)
+    d.rectangle((4, 4, 123, 123), outline=ink, width=5)
+    d.rectangle((26, 30, 102, 40), fill=ink)                     # the slot
+    d.rectangle((40, 52, 88, 84), outline=ink, width=5)          # the envelope
+    d.line((40, 52, 64, 70), fill=ink, width=4)
+    d.line((88, 52, 64, 70), fill=ink, width=4)
+    d.polygon([(64, 44), (54, 50), (74, 50)], fill=ink)          # up into the slot
+    d.ellipse((44, 92, 84, 116), outline=(150, 40, 34), width=4)  # the stamp it gets
+    img.filter(ImageFilter.GaussianBlur(0.6)).save(os.path.join(TEX, 'slot_picto.png'))
+
+
+def _letter_material():
+    """HeapLetter's paper: the Sorting Hall's shared letter atlas (art/sorting_hall/textures/letter_heap.png:
+    the front on the left half, the back with the child's drawing on the right), or plain paper if it
+    is missing."""
+    p = os.path.join(HERE, '..', 'sorting_hall', 'textures', 'letter_heap.png')
+    if os.path.exists(p):
+        return _image_material('HeapLetterMat', p, rough=0.85)
+    return simple_material('HeapLetterMat', (0.62, 0.58, 0.5), 0.85)
+
+
+def build_heap(m, coll):
+    gz = GALLERY[2]
+    heap_textures()
+
+    # The gallery gate: a shutter running in two channels, its chain up to the stepped drum.
+    gy = (GATE_Y[0] + GATE_Y[1]) / 2
+    span = GATE_Y[1] - GATE_Y[0]
+    bm = bmesh.new()
+    add_box(bm, (0, 0, GATE_H / 2), (0.03, span, GATE_H))
+    for k in range(1, 16):
+        add_box(bm, (0, 0, k * 0.1), (0.05, span - 0.02, 0.022))     # the shutter's ribs
+    add_box(bm, (0, 0, GATE_H - 0.025), (0.06, span, 0.05))
+    add_box(bm, (0, 0, 0.035), (0.07, span, 0.07), mat=1)            # a heavy bottom bar, safety yellow
+    add_torus(bm, (0, GATE_CHAIN_Y - gy, GATE_H + 0.03), (1, 0, 0), 0.025, 0.007, seg=10, rseg=4)
+    gate = _obj('GalleryGate', bm, [m['shutter'], m['yellow']], coll)
+    gate.location = (GATE_X, gy, gz)
+    # Its chain is its child, so it rises with it. The top end, where it meets the drum, runs on up
+    # into the guide tube as the gate rises, so the chain never shows past the drum.
+    bm = bmesh.new()
+    top = DRUM[1] - 0.02
+    n_gate = _chain(bm, (0, GATE_CHAIN_Y - gy, GATE_H + 0.05), (0, GATE_CHAIN_Y - gy, top - gz))
+    ob = _obj('GateChain', bm, [m['steel']], coll, sharp=100)
+    ob.parent = gate
+    # The gate's frame: two channels, a header, hangers up to the roof, and the chain's guide tube.
+    bm = bmesh.new()
+    fh = 4.8
+    for y, s in ((GATE_Y[0], -1), (GATE_Y[1], 1)):
+        add_box(bm, (GATE_X, y + s * 0.02, (gz + fh) / 2), (0.1, 0.02, fh - gz))            # web
+        for dx in (-0.042, 0.042):
+            add_box(bm, (GATE_X + dx, y + s * 0.01 - s * 0.025, (gz + fh) / 2), (0.012, 0.07, fh - gz))
+        add_box(bm, (GATE_X, y + s * 0.045, gz + 0.01), (0.2, 0.05, 0.02))                  # foot plate
+        add_cyl(bm, (GATE_X, y + s * 0.02, fh), (GATE_X, y + s * 0.02, 6.6), 0.012, seg=6)
+    add_box(bm, (GATE_X, gy, fh + 0.05), (0.12, span + 0.1, 0.1))
+    add_box(bm, (GATE_X, GATE_CHAIN_Y, (DRUM[1] + 0.05 + 6.45) / 2), (0.07, 0.07, 6.45 - DRUM[1] - 0.05))
+    add_box(bm, ((DRUM[0] + 0.1 + GATE_X) / 2, GATE_CHAIN_Y, 6.35), (GATE_X - DRUM[0] - 0.1, 0.05, 0.05))
+    # The hoist: a beam along the gallery roof (between the hall's roof beams at 39.0 and 43.5), a
+    # cross beam over the drum, the drum's two bearings on drop rods, and the sheave block's hanger.
+    add_box(bm, ((39.0 + 43.5) / 2, BUCKET_Y, 6.375), (4.5, 0.1, 0.1))
+    add_box(bm, (DRUM[0] + 0.05, (GATE_CHAIN_Y - 0.2 + BUCKET_Y + 0.2) / 2, 6.35), (0.1, BUCKET_Y - GATE_CHAIN_Y + 0.4, 0.12))
+    for y in (GATE_CHAIN_Y - 0.11, BUCKET_Y + 0.1):
+        add_box(bm, (DRUM[0], y, DRUM[1]), (0.12, 0.05, 0.1))
+        add_box(bm, (DRUM[0], y, (DRUM[1] + 6.29) / 2), (0.04, 0.03, 6.29 - DRUM[1]))
+    add_box(bm, (BUCKET_X + IDLER_R, BUCKET_Y, (5.45 + 6.34) / 2), (0.04, 0.04, 6.34 - 5.45))
+    _obj('GalleryGateFrame', bm, [m['steel']], coll)
+
+    # GatePulley: the stepped drum. The gate's chain winds on the big wheel (r 0.2, its right side
+    # over the gate) while the bucket's chain pays off the small hub at the back (r 0.057), so the
+    # gate rises 1.4 for the bucket's 0.4. Origin on the axle, which runs along y; the game turns it.
+    bm = bmesh.new()
+    wy = 0.0                                           # the big wheel, over the gate's chain
+    add_torus(bm, (0, wy, 0), (0, 1, 0), DRUM_R - 0.022, 0.024, seg=24, rseg=6)
+    add_cyl(bm, (0, wy - 0.035, 0), (0, wy + 0.035, 0), 0.05, seg=12)
+    for k in range(4):
+        add_box(bm, (0, wy, 0), (2 * DRUM_R - 0.04, 0.025, 0.035), rot=Matrix.Rotation(k * math.pi / 4, 4, 'Y'))
+    add_cyl(bm, (0, -0.135, 0), (0, BUCKET_Y - GATE_CHAIN_Y + 0.125, 0), 0.022, seg=10)      # the shaft
+    hy = BUCKET_Y - GATE_CHAIN_Y
+    add_cyl(bm, (0, hy - 0.045, 0), (0, hy + 0.045, 0), HUB_R, seg=12)
+    for dy in (-0.05, 0.05):
+        add_cyl(bm, (0, hy + dy - 0.006, 0), (0, hy + dy + 0.006, 0), HUB_R + 0.03, seg=12)
+    ob = _obj('GatePulley', bm, [m['shutter']], coll)
+    ob.location = (DRUM[0], GATE_CHAIN_Y, DRUM[1])
+
+    # The sheave over the bucket, in its block, and the run of chain along the roof to the hub.
+    bm = bmesh.new()
+    add_torus(bm, (0, 0, 0), (0, 1, 0), IDLER_R - 0.012, 0.014, seg=16, rseg=5)
+    add_cyl(bm, (0, -0.02, 0), (0, 0.02, 0), 0.03, seg=10)
+    ob = _obj('GateSheave', bm, [m['shutter']], coll)
+    ob.location = (BUCKET_X + IDLER_R, BUCKET_Y, DRUM[1] + HUB_R - IDLER_R)
+    idler_z = DRUM[1] + HUB_R - IDLER_R
+    bm = bmesh.new()
+    for dy in (-0.045, 0.045):                                     # cheeks, tall enough to hide the chain's spare end
+        add_box(bm, (BUCKET_X + IDLER_R - 0.01, BUCKET_Y + dy, (idler_z - 0.11 + 5.47) / 2), (0.24, 0.01, 5.47 - idler_z + 0.11))
+    add_box(bm, (BUCKET_X + IDLER_R - 0.01, BUCKET_Y, 5.47), (0.24, 0.1, 0.03))
+    add_cyl(bm, (BUCKET_X + IDLER_R, BUCKET_Y - 0.06, idler_z), (BUCKET_X + IDLER_R, BUCKET_Y + 0.06, idler_z), 0.012, seg=8)
+    _obj('GateSheaveBlock', bm, [m['steel']], coll)
+    bm = bmesh.new()
+    run_z = DRUM[1] + HUB_R
+    _chain(bm, (BUCKET_X + IDLER_R, BUCKET_Y, run_z), (DRUM[0], BUCKET_Y, run_z))
+    _obj('GateChainRun', bm, [m['steel']], coll, sharp=100)
+
+    # GateBucket: a steel hopper on a bail, hanging behind the gallery beside the ramp's top end.
+    # Origin at its chain hook; the game lowers it (and BucketChain with it) 0.4 as it fills.
+    rim = BUCKET_RIM_Z - BUCKET_HOOK_Z
+    top, bot, depth = (0.56, 0.52), (0.3, 0.28), 0.42
+    bm = bmesh.new()
+    _hopper(bm, (0, 0, rim), top, bot, depth, 0.02)
+    for s in (-1, 1):                                              # the rim, safety yellow
+        add_box(bm, (s * top[0] / 2, 0, rim + 0.012), (0.03, top[1] + 0.03, 0.03), mat=1)
+        add_box(bm, (0, s * top[1] / 2, rim + 0.012), (top[0] + 0.03, 0.03, 0.03), mat=1)
+    for z in (rim - 0.16, rim - 0.3):                              # stiffening bands
+        f = (rim - z) / depth
+        add_box(bm, (0, -(top[1] - (top[1] - bot[1]) * f) / 2 - 0.004, z), (top[0] - (top[0] - bot[0]) * f, 0.012, 0.03))
+    bail = [(top[0] / 2 + 0.03, rim + 0.02), (top[0] / 2 + 0.03, rim + 0.12), (0.17, rim + 0.3), (0.0, -0.035)]
+    for s in (-1, 1):
+        add_cyl(bm, (s * (top[0] / 2 - 0.01), 0, rim + 0.02), (s * (top[0] / 2 + 0.05), 0, rim + 0.02), 0.022, seg=10)
+        for (x0, z0), (x1, z1) in zip(bail, bail[1:]):
+            add_cyl(bm, (s * x0, 0, z0), (s * x1, 0, z1), 0.011, seg=6)
+    add_torus(bm, (0, 0, -0.005), (1, 0, 0), 0.028, 0.008, seg=10, rseg=4)
+    add_box(bm, (0, 0, -0.04), (0.08, 0.03, 0.02))
+    bucket = _obj('GateBucket', bm, [m['shutter'], m['yellow']], coll)
+    bucket.location = (BUCKET_X, BUCKET_Y, BUCKET_HOOK_Z)
+    # Its chain: hook to the sheave, plus the spare that stays in the block until the bucket drops.
+    bm = bmesh.new()
+    n_bucket = _chain(bm, (0, 0, 0.02), (0, 0, idler_z - BUCKET_HOOK_Z + BUCKET_DROP + 0.03))
+    ob = _obj('BucketChain', bm, [m['steel']], coll, sharp=100)
+    ob.parent = bucket                                             # it drops with the bucket
+    # The tipping spout: from the deck's back edge down over the bucket's front half.
+    bm = bmesh.new()
+    a, b = Vector((0.9, gz)), Vector((1.2, gz - 0.27))
+    ang = math.atan2(b.y - a.y, b.x - a.x)
+    mid = (a + b) / 2
+    ln = (b - a).length
+    add_box(bm, (BUCKET_X, mid.x, mid.y - 0.008), (0.62, ln, 0.016), rot=Matrix.Rotation(ang, 4, 'X'))
+    for s in (-1, 1):
+        add_box(bm, (BUCKET_X + s * 0.31, mid.x, mid.y + 0.03), (0.012, ln, 0.08), rot=Matrix.Rotation(ang, 4, 'X'))
+    add_box(bm, (BUCKET_X, 0.9, gz - 0.04), (0.66, 0.03, 0.06))
+    _obj('BucketSpout', bm, [m['shutter']], coll)
+
+    # Two sorting weights by the dock, the same casting as DL-03's (art/dl02 SortWeight), on the lane.
+    for i, x in enumerate(HEAP_WEIGHT_XS):
+        bm = bmesh.new()
+        add_cyl(bm, (0, 0, 0.0), (0, 0, 0.02), 0.088, 0.09, seg=24)
+        add_cyl(bm, (0, 0, 0.02), (0, 0, 0.12), 0.09, 0.075, seg=24)
+        add_cyl(bm, (0, 0, 0.12), (0, 0, 0.15), 0.075, 0.035, seg=24)
+        add_torus(bm, (0, 0, 0.165), (1, 0, 0), 0.042, 0.009, seg=20, rseg=6)
+        weight = _obj(f'HeapWeight{i}', bm, [m['red']], coll)
+        weight.location = (x, 0, 0)
+        weight.rotation_euler = (0, 0, math.radians(8 - 21 * i))   # not quite lined up
+        bm = bmesh.new()
+        add_cyl(bm, (0, 0, 0.07), (0, 0, 0.09), 0.0905, 0.0885, seg=24)
+        ob = _obj(f'HeapWeight{i}Band', bm, [m['paper']], coll)
+        ob.parent = weight                                         # the game moves the weight; the band goes with it
+
+    # ReturnSlide: a steel parcel slide along the lane's front edge, from the gallery's end down past
+    # the ramp, the chute and the pit to the sorting floor, with a rounded lip at the bottom.
+    pts = []                                                       # (x, z) on the sliding surface, head first
+    for k in range(4):
+        x = GALLERY[0] - (GALLERY[0] - SLIDE_TOP_FLAT) * k / 3
+        pts.append(Vector((x, gz)))
+    for k in range(1, 41):
+        x = SLIDE_TOP_FLAT - (SLIDE_TOP_FLAT - SLIDE_RUNOUT) * k / 40
+        pts.append(Vector((x, slide_surface(x))))
+    for k in range(1, 4):
+        pts.append(Vector((SLIDE_RUNOUT - (SLIDE_RUNOUT - SLIDE_LIP[0]) * k / 3, SLIDE_RUNOUT_Z)))
+    lc = Vector((SLIDE_LIP[0], SLIDE_RUNOUT_Z - SLIDE_LIP[1]))
+    for k in range(1, 8):
+        th = math.radians(90 + 70 * k / 7)
+        pts.append(lc + SLIDE_LIP[1] * Vector((math.cos(th), math.sin(th))))
+    frames = []
+    for i, p in enumerate(pts):
+        t = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+        nrm = Vector((t.y, -t.x))
+        frames.append((Vector((p.x, 0, p.y)), Vector((0, 1, 0)), Vector((nrm.x, 0, nrm.y))))
+    y0, y1, wt, bed = SLIDE_Y - SLIDE_W / 2, SLIDE_Y + SLIDE_W / 2, 0.025, 0.03
+    # The walls are low at the head (so he can get in) and fade out round the lip.
+    # Lower near the bottom too, where he walks past it on the sorting floor.
+    wall = [(0.13 * smoothstep((GALLERY[0] - p.x) / 0.3) + 0.05) * (1 - 0.92 * smoothstep((SLIDE_LIP[0] - p.x) / 0.07))
+            * (0.6 + 0.4 * smoothstep((p.x - SLIDE_RUNOUT) / 0.9)) for p in pts]
+    bm = bmesh.new()
+    rings = []
+    for (o, u, v), h in zip(frames, wall):
+        sec = [(y0 - wt, -bed), (y1 + wt, -bed), (y1 + wt, h), (y1, h), (y1, 0), (y0, 0), (y0, h), (y0 - wt, h)]
+        rings.append([bm.verts.new(o + u * a + v * b) for a, b in sec])
+    for r0, r1 in zip(rings, rings[1:]):
+        for j in range(8):
+            bm.faces.new((r0[j], r0[(j + 1) % 8], r1[(j + 1) % 8], r1[j]))
+    bm.faces.new(rings[0][::-1])
+    bm.faces.new(rings[-1])
+    for yc in (y0 - wt / 2, y1 + wt / 2):                          # rolled edges along the walls' tops
+        sec = [(0.016 * math.cos(2 * math.pi * j / 6), 0.016 * math.sin(2 * math.pi * j / 6)) for j in range(6)]
+        _sweep(bm, [(o + u * yc + v * h, u, v) for (o, u, v), h in zip(frames, wall)], sec)
+    # Legs: over the pit down into the dark (like the ramp's trestle), on the floor short feet.
+    for x in (37.0, 37.75, 38.45):
+        zt = slide_surface(x) - bed - 0.05
+        for y in (y0 + 0.03, y1 - 0.03):
+            add_box(bm, (x, y, (zt - 3.5) / 2), (0.05, 0.05, zt + 3.5))
+        add_box(bm, (x, SLIDE_Y, zt + 0.02), (0.07, SLIDE_W + 0.04, 0.05))
+        add_box(bm, (x, SLIDE_Y, zt - 0.6), (0.04, SLIDE_W - 0.04, 0.04))
+    for x in (35.86, 36.12, 36.34):                                # feet under the run-out
+        zt = slide_surface(x) - bed
+        add_box(bm, (x, SLIDE_Y, zt / 2), (0.08, SLIDE_W, zt))
+    _obj('ReturnSlide', bm, [m['shutter']], coll)
+
+    # HeapLetter: caught by a twist of parcel twine on the gallery's front rail, in a shaft of light.
+    # Origin at its centre; the front (address side) faces the camera.
+    lx, ly, lz = HEAP_LETTER
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new('UVMap')
+    add_box(bm, (0, 0, 0), (0.16, 0.004, 0.11))
+    bm.normal_update()
+    for f in bm.faces:
+        n = f.normal
+        for lp in f.loops:
+            co = lp.vert.co
+            u, v = co.x / 0.16 + 0.5, co.z / 0.11 + 0.5
+            # Atlas: the front (facing -y, the camera) on the left half, the back on the right half.
+            lp[uv].uv = (0.5 * u, v) if n.y < -0.5 else (0.5 + 0.5 * (1 - u), v) if n.y > 0.5 else (0.49, 0.5)
+    letter = _obj('HeapLetter', bm, [_letter_material()], coll)
+    letter.location = (lx, ly, lz)
+    letter.rotation_euler = (math.radians(-8), math.radians(17), math.radians(-6))
+    bm = bmesh.new()
+    corner = Vector((lx - 0.05, ly + 0.004, lz + 0.065))
+    twine = [Vector((lx - 0.08, -0.52, gz + 0.98)), Vector((lx - 0.095, -0.5, gz + 0.9)), corner + Vector((-0.012, 0, 0.02)),
+             corner + Vector((0.01, 0.006, -0.006)), Vector((lx - 0.03, -0.505, gz + 0.86)), Vector((lx - 0.05, -0.52, gz + 0.98))]
+    for p0, p1 in zip(twine, twine[1:]):
+        add_cyl(bm, p0, p1, 0.0025, seg=5)
+    add_cyl(bm, twine[0], twine[0] + Vector((0.01, -0.012, -0.12)), 0.0025, seg=5)   # a loose end
+    _obj('HeapLetterTwine', bm, [m['paper']], coll)
+    shaft = d17._new_material('HeapShaftMat')
+    mat, nt, bsdf = shaft
+    tex = nt.nodes.new('ShaderNodeTexImage')
+    tex.image = bpy.data.images.load(os.path.join(TEX, 'heap_shaft.png'), check_existing=True)
+    bsdf.inputs['Base Color'].default_value = (0, 0, 0, 1)
+    nt.links.new(tex.outputs['Color'], bsdf.inputs['Emission Color'])
+    nt.links.new(tex.outputs['Alpha'], bsdf.inputs['Alpha'])
+    bsdf.inputs['Emission Strength'].default_value = 0.8
+    if hasattr(mat, 'surface_render_method'):
+        mat.surface_render_method = 'BLENDED'
+    slope = 0.073                                                  # light from up and a little to the right
+    bm = bmesh.new()
+    uvl = bm.loops.layers.uv.new('UVMap')
+    zb, zt = gz + 0.005, 6.4
+    xb, xt = lx - slope * (lz - zb), lx + slope * (zt - lz)
+    sy = ly + 0.05                                                 # just behind the letter
+    vs = [bm.verts.new(p) for p in ((xb - 0.17, sy, zb), (xb + 0.17, sy, zb), (xt + 0.09, sy, zt), (xt - 0.09, sy, zt))]
+    f = bm.faces.new(vs)
+    for lp, c in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+        lp[uvl].uv = c
+    _obj('HeapLightShaft', bm, [mat], coll)
+
+    # MailSlot6: a pillar box on the gallery's back edge beside the old sorting desk. Origin at the
+    # slot's mouth, 0.3 behind the lane and 0.55 above the deck; SlotLamp6 sits on its cap.
+    mx, my, mz = MAILSLOT6
+    bm = bmesh.new()
+    bz = mz - gz                                                   # 0.55: the deck is at local -0.55
+    add_cyl(bm, (0, 0.12, -bz), (0, 0.12, -0.17), 0.055, seg=14)
+    add_box(bm, (0, 0.12, -bz + 0.01), (0.2, 0.2, 0.02))
+    add_box(bm, (0, 0.12, 0.02), (0.26, 0.24, 0.36))
+    add_box(bm, (0, 0.12, 0.215), (0.29, 0.27, 0.03))
+    add_cyl(bm, (-0.145, 0.12, 0.23), (0.145, 0.12, 0.23), 0.07, seg=16)
+    add_box(bm, (0, -0.002, 0), (0.15, 0.006, 0.024), mat=2)                         # the slot itself, dark
+    for (cx, cz, sx, sz) in ((0, 0.024, 0.2, 0.016), (0, -0.024, 0.2, 0.016), (-0.092, 0, 0.016, 0.064), (0.092, 0, 0.016, 0.064)):
+        add_box(bm, (cx, -0.006, cz), (sx, 0.014, sz), mat=1)                         # its red rim
+    add_box(bm, (0, -0.02, 0.04), (0.2, 0.04, 0.008), mat=1, rot=Matrix.Rotation(-0.35, 4, 'X'))   # the hood
+    add_cyl(bm, (0, -0.004, 0.27), (0, 0.07, 0.27), 0.034, seg=12)                   # the lamp's bezel
+    slot = _obj('MailSlot6', bm, [m['depot_green'], m['red'], m['shaft']], coll)
+    slot.location = MAILSLOT6
+    _plane('MailSlot6Plate', (0.1, 0.1), (mx, my - 0.002, mz - 0.1), _image_material('SlotPictoMat', os.path.join(TEX, 'slot_picto.png')), coll)
+    bm = bmesh.new()
+    add_sphere(bm, (0, 0, 0), 0.026, seg=12, scale=(1, 0.7, 1))
+    ob = _obj('SlotLamp6', bm, [emission_material('SlotLamp6', (1.0, 0.62, 0.25), 0.0)], coll)
+    ob.location = (mx, my - 0.012, mz + 0.27)
+    return dict(gate_links=n_gate, bucket_links=n_bucket)
 
 
 def build_carrier(m, coll):
@@ -617,6 +1008,7 @@ def build_set(dl01, m, coll):
     build_return_line(m, coll)
     build_pit(m, coll)
     build_gallery(m, coll)
+    build_heap(m, coll)
     build_carrier(m, coll)
 
 
