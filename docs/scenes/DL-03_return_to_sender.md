@@ -22,9 +22,11 @@
 | Time from the refusal | What happens |
 |---|---|
 | 0 to 0.8 s | The refusal: a dissonant low chord, the buzzer, the screen's red cross. |
-| 0.8 to 11.8 s | **The pit.** The camera goes wide and high, looking down at the heap. D-17 can walk, but only slowly (`SadWalk`). He looks at the heap, and the music swells to a timpani-and-cymbal peak over phrase B's E-flat bars. |
-| 11.8 to 15.3 s | **The label.** Near silence: a held high A and the music box finding the first bars. He checks his label. |
-| From 15.3 s | **Purpose.** The theme at a walking tempo, turning for the first time to the relative major. The belt starts with a klaxon. |
+| 0 to 3.2 s (before the refusal) | **The scan.** He stands to attention (`Attention`) as the bar sweeps him, and the camera is close and low beside the arch. At the refusal he deflates. |
+| 0.8 to 11.5 s | **The pit.** He walks slowly to the rail by himself (the player can steer). The camera starts behind him and cranes up and out over the heap, and the music swells to a timpani-and-cymbal peak as he reaches the rail. |
+| 11.5 to 14.5 s | **The edge.** He leans over the rail and looks down (`PeekDown`), seen from high over his shoulder, while the climax falls away. |
+| 14.5 to 18 s | **The label.** Near silence: a held high A and the music box finding the first bars. He checks his label in close-up. |
+| From 18.4 s | **Purpose.** The theme at a walking tempo, turning for the first time to the relative major. The belt starts with a klaxon. |
 
 DL-02 now has the same treatment. When D-17 first walks in among the couriers:
 - **He stops** for `Realise`, 6.5 s:

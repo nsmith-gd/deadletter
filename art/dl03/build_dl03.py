@@ -283,6 +283,8 @@ def build_return_line(m, coll):
     bm = bmesh.new()
     add_box(bm, ((30.0 + hx0) / 2, 4.0, -0.05), (hx0 - 30.0, 16, 0.1))
     add_box(bm, ((hx1 + FLOOR_X1) / 2, 4.0, -0.05), (FLOOR_X1 - hx1, 16, 0.1))
+    add_box(bm, ((30.0 + FLOOR_X1) / 2, -3.8, -1.4), (FLOOR_X1 - 30.0, 0.4, 2.8))     # the slab's thickness, seen from the pit
+    add_box(bm, (FLOOR_X1 - 0.3, 3.0, -1.0), (0.6, 13.6, 2.0))
     add_box(bm, (HATCH_X, (-4.0 + RAIL_Y - 0.3) / 2, -0.05), (hx1 - hx0, RAIL_Y - 0.3 + 4.0, 0.1))
     add_box(bm, (HATCH_X, (RAIL_Y + 0.3 + 12.0) / 2, -0.05), (hx1 - hx0, 12.0 - RAIL_Y - 0.3, 0.1))
     add_box(bm, (FLOOR_X1 + 0.05, 3.0, -3.0), (0.1, 12, 6.0))           # the pit's near wall, under the floor edge
@@ -745,7 +747,119 @@ def clip_realise(dl01, arm):
     c.done()
 
 
+# --------------------------------------------------------------------------
+# Quirks: small, specific reactions for particular moments
+# --------------------------------------------------------------------------
+
+def clip_attention(dl01, arm):
+    """Under the scanner: he notices it, stands to attention as the bar sweeps him, follows it down
+    with his eyes, and deflates at the refusal (frame 77, 3.2 s; the game's scan timing matches)."""
+    track, spring, Clip, CARRY = dl01.track, dl01.spring, dl01.Clip, dl01.CARRY
+    frames = 108
+    c = Clip(arm, 'Attention', frames)
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        stand = track([(4, 0), (14, 1), (77, 1), (84, 0)], f)
+        deflate = track([(77, 0), (86, 1)], f)
+        follow = track([(12, -14), (53, 16), (60, 6), (70, 4)], f) if f < 77 else 4
+        head = (track([(0, 0), (6, -18), (12, -14)], f) * (1 - stand) + follow * stand + 22 * deflate,
+                track([(60, 0), (66, 6), (77, 0)], f), track([(30, 0), (36, -6), (44, 0)], f))
+        antenna = [(-18 * stand + 32 * deflate * (0.8 + 0.15 * i) + spring(f, 8, -10) + spring(f, 77, 8, decay=5), 0) for i in range(3)]
+        hands = {s: CARRY[s].lerp(CARRY[s] + Vector((s * 0.025, 0.02, -0.03)), stand).lerp(CARRY[s] + Vector((0, -0.01, -0.045)), deflate)
+                 for _, s in SIDES}
+        feet = {side: ((-s * 0.012 * stand, 0, 0), (0, 0, 0)) for side, s in SIDES}
+        c.pose(frame, body=(0, 0, 0.008 * stand - 0.025 * deflate), body_rot=(-5 * stand + 7 * deflate, 0, 0),
+               head=head, antenna=antenna, hands=hands, feet=feet,
+               claws={'L': track([(4, CLAW_REST_OPEN['L']), (12, 2), (80, 2), (90, 14)], f),
+                      'R': track([(4, CLAW_REST_OPEN['R']), (12, 2)], f)})
+    c.done()
+
+
+def clip_proud(dl01, arm):
+    """It worked: two little bounces on his toes, chest out, antenna wiggling, a nod."""
+    track, spring, Clip, CARRY = dl01.track, dl01.spring, dl01.Clip, dl01.CARRY
+    frames = 40
+    c = Clip(arm, 'Proud', frames)
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        bounce = sum(math.sin(math.pi * (f - t0) / 7) for t0 in (6, 15) if t0 <= f <= t0 + 7)
+        tiptoe = 0.02 * max(0.0, bounce)
+        feet = {side: ((0, 0, 0), (-10 * max(0.0, bounce), 0, 0)) for side, s in SIDES}
+        hands = {s: CARRY[s] + Vector((s * 0.02 * max(0.0, bounce), 0, 0.03 * max(0.0, bounce))) for _, s in SIDES}
+        c.pose(frame, body=(0, 0, tiptoe), body_rot=(track([(0, 0), (6, -6), (26, -5), (40, 0)], f), 0, 0),
+               head=(track([(0, 0), (6, -10), (24, -8), (29, 8), (34, -2), (40, 0)], f), track([(4, 0), (10, 8), (24, 6), (32, 0)], f), 0),
+               antenna=[(-10 + 9 * math.sin(f * 1.3 - i) * math.exp(-f / 22) + spring(f, 6, -10 * (1 + 0.3 * i)), 0) for i in range(3)],
+               feet=feet, hands=hands, claws={'L': 22 + 10 * max(0.0, bounce), 'R': 4 + 18 * max(0.0, bounce)})
+    c.done()
+
+
+def clip_peek_down(dl01, arm):
+    """At an edge: he leans out, one claw on the rail, and looks right down; a tiny recoil, a step back."""
+    track, spring, Clip, REST, CARRY = dl01.track, dl01.spring, dl01.Clip, dl01.REST_WRIST, dl01.CARRY
+    frames = 72
+    c = Clip(arm, 'PeekDown', frames)
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        lean = track([(0, 0), (16, 1), (46, 1), (52, 0.55), (64, 0.5), (72, 0)], f)
+        recoil = track([(44, 0), (48, 1), (58, 0)], f)
+        body, rot = (0, -0.03 * lean + 0.02 * recoil, -0.015 * lean), (16 * lean - 6 * recoil, 0, 0)
+        rail = {1: Vector((0.1, -0.24, 0.5)), -1: Vector((-0.1, -0.24, 0.5))}
+        import build_dl02
+        held = build_dl02.reach(rail, body, rot, REST)
+        hands = {1: CARRY[1].lerp(held[1], track([(4, 0), (14, 1), (60, 1), (70, 0)], f)), -1: CARRY[-1]}
+        head = (track([(0, 0), (16, 34), (44, 40), (48, 18), (58, 26), (72, 4)], f), track([(20, 0), (30, 8), (44, 4)], f), 0)
+        antenna = [(30 * lean + spring(f, 46, -16 * (1 + 0.3 * i), decay=4), 0) for i in range(3)]
+        feet = {side: ((0, 0.03 * track([(52, 0), (64, 1)], f) if side == 'R' else 0, 0), (0, 0, 0)) for side, s in SIDES}
+        c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands, feet=feet,
+               hand_rot={'L': (-40, 0, 10), 'R': (-24, -6, -10)}, claws={'L': track([(8, 20), (14, 2), (60, 2), (68, 20)], f), 'R': CLAW_REST_OPEN['R']})
+    c.done()
+
+
+def clip_brush_off(dl01, arm):
+    """Out of a tub full of old post: a shake from the shoulders down, both claws brushing his chest
+    and sides, a last tap on the window, and a nod."""
+    track, spring, Clip, REST, CARRY = dl01.track, dl01.spring, dl01.Clip, dl01.REST_WRIST, dl01.CARRY
+    frames = 60
+    c = Clip(arm, 'BrushOff', frames)
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        shake = 7 * math.sin(f * 1.9) * math.exp(-f / 7) if f < 18 else 0
+        brushL = math.sin(math.pi * min(1, max(0, (f - 16) / 10))) * (1 if f < 40 else 0)
+        brushR = math.sin(math.pi * min(1, max(0, (f - 24) / 10))) * (1 if f < 40 else 0)
+        chest = {1: Vector((0.1 - 0.08 * math.sin(f * 0.9), -0.23, 0.34 + 0.04 * math.sin(f * 0.9))),
+                 -1: Vector((-0.1 + 0.08 * math.sin(f * 0.9 + 1), -0.23, 0.34 + 0.04 * math.sin(f * 0.9 + 1)))}
+        tap = Vector((-0.05, -0.245 - 0.015 * max(0, math.sin(math.pi * (f - 42) / 5)) * (1 if 42 <= f <= 47 else 0), 0.41))
+        hands = {1: CARRY[1].lerp(chest[1] - REST[1], brushL),
+                 -1: CARRY[-1].lerp(chest[-1] - REST[-1], brushR).lerp(tap - REST[-1], track([(38, 0), (42, 1), (48, 1), (54, 0)], f))}
+        c.pose(frame, body=(0, 0, -0.006 * abs(shake) / 7), body_rot=(track([(0, 0), (20, 8), (40, 6), (52, -3), (60, 0)], f), shake, 0),
+               head=(track([(0, 0), (20, 22), (40, 20), (50, -6), (55, 4), (60, 0)], f), -shake * 1.4, 0),
+               antenna=[(14 * math.sin(f * 2.1 - i) * math.exp(-f / 9) + spring(f, 50, -12), 0) for i in range(3)],
+               hands=hands, hand_rot={'L': (-60, 0, 30), 'R': (-60, 0, -30)}, claws={'L': 8, 'R': 4})
+    c.done()
+
+
+def clip_startle(dl01, arm):
+    """A bang nearby: a jolt, claws up, antenna stiff, head pulled in; then he settles and looks."""
+    track, spring, Clip, CARRY = dl01.track, dl01.spring, dl01.Clip, dl01.CARRY
+    frames = 30
+    c = Clip(arm, 'Startle', frames)
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        jolt = track([(0, 0), (2, 1), (8, 1), (22, 0)], f, ease=lambda x: ease_back(x, 0.6))
+        hands = {s: CARRY[s] + Vector((s * 0.05 * jolt, 0.02 * jolt, 0.12 * jolt)) for _, s in SIDES}
+        c.pose(frame, body=(0, 0.02 * jolt, 0.025 * math.sin(math.pi * min(1, f / 6)) - 0.015 * jolt),
+               body_rot=(-8 * jolt, 0, 0), head=(14 * jolt, track([(8, 0), (14, -10), (24, -6), (30, 0)], f), 0),
+               antenna=[(-40 * jolt + spring(f, 8, 12), 0) for i in range(3)], hands=hands,
+               claws={'L': 30 * jolt + CLAW_REST_OPEN['L'] * (1 - jolt), 'R': 28 * jolt})
+    c.done()
+
+
 def add_clips(dl01, arm):
+    clip_attention(dl01, arm)
+    clip_proud(dl01, arm)
+    clip_peek_down(dl01, arm)
+    clip_brush_off(dl01, arm)
+    clip_startle(dl01, arm)
     clip_check_label(dl01, arm)
     clip_lever(dl01, arm, 'LeverPull')
     clip_lever(dl01, arm, 'LeverStuck', stuck=True)

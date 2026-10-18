@@ -406,8 +406,8 @@ def build_extension(m, coll):
             w = (a1 - a0) / n
             rounded_box((w - 0.03, 0.3, z1 - z0 - 0.02), (a0 + w * (k + 0.5), by + 0.15, (z0 + z1) / 2), p=12, cuts=8,
                         dents=((0.008, 3.0),), seed=31 + i * 5 + k, bm=bm, mat=0)
-    for k in range(3):                                   # end wall closing the lane
-        rounded_box((0.4, 0.97, 2.6), (11.9, -2.0 + k * 1.0, 1.3), p=12, cuts=8, dents=((0.008, 3.0),), seed=50 + k, bm=bm, mat=0)
+    for k in range(2):                                   # end wall closing the lane, kept out of the foreground
+        rounded_box((0.4, 0.97, 2.6), (11.9, -1.0 + k * 1.0, 1.3), p=24, cuts=8, dents=((0.004, 3.0),), seed=50 + k, bm=bm, mat=0)
     obj('Bulkhead', bm, [m['wall']], coll)
     bm = bmesh.new()
     add_box(bm, (dx0 - 0.04, by - 0.02, dh / 2), (0.08, 0.08, dh + 0.08))

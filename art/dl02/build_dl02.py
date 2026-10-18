@@ -678,7 +678,7 @@ def build_couriers(dl01, slots, out_coll):
         ob = bpy.data.objects.new(f'Courier{key}', me)
         out_coll.objects.link(ob)
         dec = ob.modifiers.new('lod', 'DECIMATE')
-        dec.ratio = 0.18
+        dec.ratio = 0.09
         meshes[key] = ob
         arm.animation_data.action = None
     # Keep the slots: most filled, a few empty, the odd one fallen.

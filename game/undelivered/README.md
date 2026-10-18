@@ -99,6 +99,12 @@ stuck-prompt option on, a key glyph appears at about 18 s.
 - DL-02: the room, and solved.
 - DL-03: scanned, and the gallery landing.
 
+## Camera, quirks and performance
+
+- **Camera:** key moments use authored shots that blend out of the side-on camera: the crank, the realisation among the couriers, the scanner, the crane over the pit, the label close-up, and the ride up the ramp. Heavy impacts shake it a little; calm mode turns the shake off.
+- **Quirks:** D-17 has short reactions for particular moments. He stands to attention at the scanner, bounces proudly when something works, peeks over edges, brushes himself off after the ride, and is startled by a slam.
+- **Performance:** see the budget in `docs/direction.md`. The resolution adapts to the frame rate.
+
 ## Music
 
 The score is in `assets/music/` and is composed and rendered by `art/music/compose_dl01.py` (see its

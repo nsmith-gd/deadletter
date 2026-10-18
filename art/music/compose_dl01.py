@@ -777,11 +777,12 @@ def cue_kin():
 
 def cue_dead():
     """DL-03. The scanner rejects room 114 (0 s); the pit of undeliverable parcels opens below him and
-    the music swells over it (peak about 10 s); he checks his label in near silence (12-16.5 s); then
-    the theme comes back with purpose and, for the first time, turns to a major key (16.5 s on)."""
+    the music swells as he walks to the rail (peak about 10-11.5 s); it falls away while he peers over
+    and checks his label in near silence (12.5-18 s); then the theme comes back with purpose and, for
+    the first time, turns to a major key (18.4 s on). The game's scan timing matches."""
     rng = np.random.default_rng(808)
-    m = Mix(76)
-    m['air'].add(wind(76, 0.045, rng) * env_curve(int(76 * SR), 1, 14), 0)
+    m = Mix(78)
+    m['air'].add(wind(78, 0.045, rng) * env_curve(int(78 * SR), 1, 14), 0)
     # Rejection: a low, close dissonance.
     for name, v in (('D2', 0.5), ('Eb2', 0.42), ('A2', 0.3)):
         m['piano'].add(piano(name, v, 3.5, rng), 0.05, pan_for(name))
@@ -791,7 +792,7 @@ def cue_dead():
         e = env_curve(n, 0.6, 2.0, [0.6, 1, 0.8]) * trem.astype(np.float32) * 0.22
         m['strings'].add(bowed(np.full(n, hz(name), np.float32), e, kind, rng), 0.0, -0.2)
     # The pit: phrase B's last four bars, swelling.
-    t0, bl = 2.0, 2.4
+    t0, bl = 2.0, 2.6
     for k, bar in enumerate(range(12, 16)):
         string_bar(m['strings'], bar, t0 + k * bl, [0.32, 0.46, 0.6, 0.66][k], rng, bars=bl / BAR, attack=0.8,
                    release=2.2 if k == 3 else 1.4)
@@ -803,14 +804,14 @@ def cue_dead():
         h = HARMONY[bar]
         for j, name in enumerate([h['bass'], octave(h['bass'], 1)] + h['lh'][:2]):
             m['piano'].add(piano(name, 0.36 + 0.05 * k, bl + 1.2, rng), t0 + k * bl + 0.02 * j, pan_for(name))
-    timp_roll(m['perc'], 'A1', 6.0, 9.2, 0.05, 0.6, rng, hit=0.7)
-    m['perc'].add(cymbal_swell(10, 3.2, 0.018, rng, decay=1.2), 6.0, 0.2)
+    timp_roll(m['perc'], 'A1', 6.6, 9.8, 0.05, 0.6, rng, hit=0.7)
+    m['perc'].add(cymbal_swell(10, 3.2, 0.018, rng, decay=1.6), 6.6, 0.2)
     # He checks his label: one high note held, the music box finding the first bars.
-    string_note(m['strings'], 'A5', 11.4, 5.5, 0.06, 'violin', 0.4, 1.0, 2.5, rng=rng)
-    for t, name, v in ((12.3, 'F5', 0.3), (12.9, 'E5', 0.26), (13.6, 'D5', 0.3), (14.6, 'D5', 0.24), (15.6, 'A4', 0.24)):
+    string_note(m['strings'], 'A5', 12.6, 6.2, 0.06, 'violin', 0.4, 1.2, 2.5, rng=rng)
+    for t, name, v in ((14.6, 'F5', 0.3), (15.2, 'E5', 0.26), (15.9, 'D5', 0.3), (16.9, 'D5', 0.24), (17.9, 'A4', 0.24)):
         m['box'].add(music_box(name, v, rng), t, 0.3)
     # Renewed purpose: phrase A at a walking tempo, turning at the end to F major.
-    t1, bl = 16.6, 2.7
+    t1, bl = 18.4, 2.7
     bars = [0, 1, 2, 3, 4, 5, 16, 17]
     for k, bar in enumerate(bars):
         for t, name, beats in scaled_events([bar], t1 + k * bl, bl):
