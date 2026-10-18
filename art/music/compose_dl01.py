@@ -5,7 +5,7 @@ synthesized instruments: a felt piano, an old music box, a string section, a
 solo cello, and wind and room tone. All are mixed through a convolution hall
 and a little tape.
 
-    python compose_dl01.py --out ../../game/dl01/assets/music
+    python compose_dl01.py --out ../../game/undelivered/assets/music
 
 The cues:
     wake  ~56 s  The opening and the first steps. The music box remembers three
@@ -631,6 +631,70 @@ def cue_end():
     return m.render()
 
 
+def scaled_events(bars, t0, bar_len, transpose=0):
+    """Theme bars at another tempo: (time, note, seconds)."""
+    out = []
+    for k, b in enumerate(bars):
+        t = t0 + k * bar_len
+        for n, beats in THEME[b]:
+            d = beats * bar_len / 3
+            out.append((t, octave(n, transpose) if transpose else n, d))
+            t += d
+    return out
+
+
+def cue_threshold():
+    """The bulkhead opens and D-17 goes through: light, the theme's first breath, and a new room."""
+    rng = np.random.default_rng(505)
+    m = Mix(44)
+    m['air'].add(wind(44, 0.04, rng) * env_curve(int(44 * SR), 2, 10), 0)
+    string_note(m['strings'], 'A5', 0.0, 6.0, 0.07, 'violin', 0.4, 2.5, 3, rng=rng)
+    string_note(m['strings'], 'D6', 0.5, 5.5, 0.05, 'violin', 0.5, 2.5, 3, rng=rng)
+    m['piano'].add(piano('D2', 0.4, 5, rng), 0.6, -0.3)
+    t0 = 3.5
+    play_melody(m['piano'], melody_events(range(4), t0), 0.46, rng)
+    for k in range(4):
+        lh_arpeggio(m['piano'], k, t0 + k * BAR, 0.3 - 0.02 * k, rng, 'flow' if k < 3 else 'sparse')
+        string_bar(m['strings'], k, t0 + k * BAR, 0.2 - 0.02 * k, rng, bass=k > 0, release=2.4 if k == 3 else 1.6)
+    # He steps out into the weighing room: the music box answers with the first two notes, and it stops there.
+    m['box'].add(music_box('F6', 0.26, rng), t0 + 4 * BAR + 0.6, 0.35)
+    m['box'].add(music_box('E6', 0.22, rng), t0 + 4 * BAR + 1.5, 0.35)
+    string_note(m['strings'], 'D3', t0 + 4 * BAR, 10, 0.16, 'cello', -0.3, 2.0, 7, rng=rng)
+    string_note(m['strings'], 'A3', t0 + 4 * BAR, 10, 0.1, 'viola', 0.1, 2.0, 7, rng=rng)
+    return m.render()
+
+
+def cue_racks():
+    """The lights come on over the racks, row after row of couriers. A slow chorale on phrase B,
+    and at the end the music box remembers its three notes: his job is still his."""
+    rng = np.random.default_rng(606)
+    m = Mix(62)
+    m['air'].add(wind(62, 0.045, rng) * env_curve(int(62 * SR), 2, 12), 0)
+    # Each row of lights is a low, soft note: a roll call (the game lights the rows at these times).
+    for t, name in ((1.0, 'D3'), (2.2, 'A2'), (3.4, 'F2'), (4.6, 'D2'), (5.8, 'Bb1'), (7.0, 'A1')):
+        m['piano'].add(piano(name, 0.34, 4.5, rng), t + human(rng, 8), pan_for(name))
+        m['piano'].add(piano(octave(name, 2), 0.12, 2.5, rng), t + 0.02, pan_for(name) + 0.3)
+    # Phrase B as a chorale, a bar every 4 s.
+    t0, bar_len = 8.0, 4.0
+    for k in range(8, 16):
+        dyn = [0.22, 0.25, 0.28, 0.27, 0.36, 0.3, 0.25, 0.2][k - 8]
+        string_bar(m['strings'], k, t0 + (k - 8) * bar_len, dyn, rng, bars=bar_len / BAR, attack=1.6, release=2.6)
+    vl, voff = legato_line(scaled_events(range(8, 16), 0, bar_len), 0, 'violin', 0.22, rng, vib_cents=12, tail=3.0)
+    m['solo'].add(vl, t0 + voff, 0.25)
+    for k, b in enumerate(range(8, 16)):
+        if k % 2 == 0:
+            name = HARMONY[b]['bass']
+            m['piano'].add(piano(octave(name, 1), 0.2, 5, rng), t0 + k * bar_len + human(rng), pan_for(name))
+    # The parcel's three notes, and the open A held under them.
+    t1 = t0 + 8 * bar_len
+    for t, name, v in ((t1 + 0.8, 'F5', 0.3), (t1 + 1.8, 'E5', 0.26), (t1 + 3.2, 'D5', 0.28)):
+        m['box'].add(music_box(name, v, rng), t, 0.3)
+    string_note(m['strings'], 'A2', t1, 12, 0.18, 'cello', -0.3, 1.0, 8, rng=rng)
+    string_note(m['strings'], 'E3', t1, 12, 0.12, 'viola', 0.0, 1.0, 8, rng=rng)
+    string_note(m['strings'], 'D4', t1 + 3.2, 9, 0.08, 'violin', 0.3, 1.5, 7, rng=rng)
+    return m.render()
+
+
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
@@ -651,12 +715,12 @@ def fade_tail(st, seconds=2.0):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default='../../game/dl01/assets/music')
+    ap.add_argument('--out', default='../../game/undelivered/assets/music')
     ap.add_argument('--wav', default=None, help='also keep the WAV masters here')
     ap.add_argument('--only', nargs='*')
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
-    cues = {'wake': cue_wake, 'bed': cue_bed, 'hall': cue_hall, 'end': cue_end}
+    cues = {'wake': cue_wake, 'bed': cue_bed, 'hall': cue_hall, 'threshold': cue_threshold, 'racks': cue_racks, 'end': cue_end}
     rendered = {}
     for name, fn in cues.items():
         if args.only and name not in args.only:

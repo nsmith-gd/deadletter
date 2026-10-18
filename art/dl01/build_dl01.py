@@ -1,14 +1,17 @@
-"""DL-01 The Wake: builds the scene-1 set and D-17's gameplay clips, exported for the
-playable prototype in game/dl01/.
+"""Chapter 1 (DL-01 The Wake and DL-02 The Weight of the Job): builds the continuous set and
+D-17's gameplay clips, exported for the playable prototype in game/undelivered/. The DL-02 half
+lives in art/dl02/build_dl02.py and is called from here.
 
-    python build_dl01.py --out ../../game/dl01/assets
+    python build_dl01.py --out ../../game/undelivered/assets
 
 Writes:
-  set.glb  the static set plus the moving parts the game drives by name
-           (shutter assembly, latch lever, counterweight, relay lamps, work bulb, cradle
-           status lamp, sparks)
-  d17.glb  D-17 rigged, with clips: Opening, Idle, Walk, CrouchWalk, CrouchIdle,
-           JumpStart, JumpAir, Land, Mantle, Pull, Flinch
+  set.glb       the static set plus the moving parts the game drives by name (shutter assembly,
+                latch lever, counterweight, relay lamps, crank wheel, exit door; DL-02's weight,
+                trolley, floor plate, gate and gauge needle, rack row lights)
+  d17.glb       D-17 rigged, with clips: Opening, Idle, Walk, Run, CrouchWalk, CrouchIdle, JumpStart,
+                JumpAir, Land, Mantle, Pull, Flinch, Tug, Crank, Lift, SetDown, SetDownHigh,
+                CarryIdle, CarryWalk, Grab, PushIdle, PushWalk, Nudge
+  couriers.glb  three baked poses of a dormant courier and the rack slots to instance them at
 
 Coordinates: metres, Blender Z up. The playable plane is y = 0 and D-17 travels along +x.
 glTF converts to Y up, so Blender (x, y, z) becomes (x, z, -y) in the game.
@@ -21,12 +24,14 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', 'd17'))
+sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
 import bmesh  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
 import build_d17 as d17  # noqa: E402
+import build_dl02 as dl02  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
                        SIDES, CLAW_REST_OPEN, _key)
@@ -36,7 +41,7 @@ D17_START = Vector((1.0, 0.0, 0.0))
 OPENING_FRAMES = 480                 # 20 s at 24 fps
 DORMANT_YAW = -45.0                  # slumped three-quarters toward camera
 
-# Shared with the game (game/dl01/main.js keeps the same numbers).
+# Shared with the game (game/undelivered/index.html keeps the same numbers).
 SHUTTER_PATH = [Vector((0.2, 1.60)), Vector((2.0, 0.62)), Vector((3.2, 0.60)), Vector((3.4, 0.02))]
 LATCH_PIVOT = Vector((3.36, 0.12))   # (x, z); the lever stands up from here
 LATCH_LEN = 0.21
@@ -392,7 +397,7 @@ def build_extension(m, coll):
     dx0, dx1, dh = DOOR
     by = BULKHEAD_Y
     bm = bmesh.new()
-    panels = [(9.1, dx0, 0.0, 2.6), (dx1, 11.9, 0.0, 2.6), (dx0, dx1, dh, 2.6)]
+    panels = [(9.1, dx0, 0.0, 2.6), (dx1, 12.45, 0.0, 2.6), (dx0, dx1, dh, 2.6)]   # runs on to hide the passage
     for i, (a0, a1, z0, z1) in enumerate(panels):      # seamed wall panels like the alcove's
         n = max(1, round((a1 - a0) / 0.95))
         for k in range(n):
@@ -438,7 +443,7 @@ def build_set(m, coll):
     bm = bmesh.new()
     px0, px1, pz = PIT
     add_box(bm, ((px0 - 5.0) / 2, 4.0, -0.05), (px0 + 5.0, 16, 0.1))
-    add_box(bm, ((px1 + 17.0) / 2, 4.0, -0.05), (17.0 - px1, 16, 0.1))
+    add_box(bm, ((px1 + 30.0) / 2, 4.0, -0.05), (30.0 - px1, 16, 0.1))
     add_box(bm, ((px0 + px1) / 2, 4.0, pz - 0.05), (px1 - px0, 16, 0.1))
     for x in (px0, px1):  # trench walls
         add_box(bm, (x, 4.0, pz / 2), (0.04, 16, -pz))
@@ -750,7 +755,7 @@ def clip_opening(arm):
 
 
 def gait(arm, name, frames, half, stance, lift, crouch=0.0, lean=3.0, head_pitch=2.0,
-         antenna_back=0.0, carry=None, arm_swing=0.012, bob=0.004, roll=2.0):
+         antenna_back=0.0, carry=None, arm_swing=0.012, bob=0.004, roll=2.0, claws=None):
     """Continuous in-place gait (the game moves the character). Feet travel +-half."""
     c = Clip(arm, name, frames)
     tau = 2 * math.pi
@@ -776,7 +781,7 @@ def gait(arm, name, frames, half, stance, lift, crouch=0.0, lean=3.0, head_pitch
                    for i in range(3)]
         hands = {s: carry[s] + Vector((0, arm_swing * s * math.cos(tau * t), 0.005 * math.sin(2 * tau * t - 1.6)))
                  for _, s in SIDES}
-        c.pose(frame, body=body, body_rot=body_rot, head=head, antenna=antenna, feet=feet, hands=hands)
+        c.pose(frame, body=body, body_rot=body_rot, head=head, antenna=antenna, feet=feet, hands=hands, claws=claws)
     c.done()
 
 
@@ -1042,6 +1047,7 @@ def main():
     set_coll = bpy.data.collections.new('DL01_Set')
     scene.collection.children.link(set_coll)
     build_set(m, set_coll)
+    slots = dl02.build_set(sys.modules[__name__], m, set_coll)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
@@ -1067,6 +1073,7 @@ def main():
     clip_flinch(arm)
     clip_tug(arm)
     clip_crank(arm)
+    dl02.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False
@@ -1076,7 +1083,11 @@ def main():
     export(os.path.join(out, 'd17.glb'), robot_objs)
     set_objs = [o for o in set_coll.all_objects if o.type in ('MESH', 'CURVE')]
     export(os.path.join(out, 'set.glb'), set_objs)
-    pack_for_web(out, ('d17', 'set'))
+    courier_coll = bpy.data.collections.new('Couriers')
+    scene.collection.children.link(courier_coll)
+    dl02.build_couriers(sys.modules[__name__], slots, courier_coll)
+    export(os.path.join(out, 'couriers.glb'), list(courier_coll.all_objects))
+    pack_for_web(out, ('d17', 'set', 'couriers'))
     if args.blend:
         bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(args.blend))
     print('exported', out)
