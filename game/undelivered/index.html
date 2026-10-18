@@ -2882,7 +2882,7 @@ function currentShot() {
     // The marks and the tree, held, the first time.
     if (game.clock - game.marksShotAt < 3.6) return { name: 'marks', pos: V3(94.65, 0.72, 0.9), look: V3(94.65, 0.68, -1.0), focal: 50, ease: 1.2 };
     if (a && a.kind === 'present' && a.phase === 'act') return { name: 'terminal', pos: V3(X + 0.55, Y + 1.05, 0.75), look: V3(TERM5_X, 0.9, WALL5_Z), focal: 42, ease: 1.4 };
-    if (a && a.kind === 'toy' && a.phase === 'act') return { name: 'toy', pos: V3(X + 1.05, Y + 1.0, 0.35), look: V3(TOY5_X - 0.05, 0.42, -0.35), focal: 36, ease: 1.6 };
+    if (a && a.kind === 'toy' && a.phase === 'act') return { name: 'toy', pos: V3(X + 1.15, Y + 1.15, -0.1), look: V3(TOY5_X - 0.02, 0.44, -0.36), focal: 34, ease: 1.6 };
   }
   if (game.region === 4) {
     const p = game.plat;

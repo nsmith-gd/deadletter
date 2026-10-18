@@ -10,7 +10,7 @@
 | Requirement (from the overview) | How the build meets it |
 |---|---|
 | A sorting scanner rejects the obsolete address and directs its carrier toward a storage chute | D-17 walks under the scanner and it sweeps him. His three chest lamps answer its three lamps, the same handshake as the DL-01 relay. Its screen reads his label (a door glyph and **114**), then refuses it: **RING C SEALED**, with a red cross and RETURN. The floor arrows light toward the chute, and a carrier rises from the dispatch hatch to take him there. |
-| Stop the belt and switch the track to a manual service exit before boarding it | Carriers are hauled along the return line by a chain belt to a junction. Straight on is the chute; the points can lift to a service ramp that climbs to the gallery. The points are interlocked: while the belt runs, they won't move (a red lamp, and D-17 tugs and fails). Stop the belt with the red lever, throw the yellow points lever, restart the belt, then board a carrier at the dock. |
+| Stop the belt and switch the track to a manual service exit before boarding it | Carriers are hauled along the return line by a chain belt to a junction. Straight on is the chute; the points can lift to a service ramp that climbs to the gallery. The points are interlocked: while the belt runs, they won't move (a red lamp, and D-17 tugs and fails). Stop the belt with the red lever, throw the points lever (red, on a yellow stand), restart the belt, then board a carrier at the dock. |
 | A visible pile of permanently undeliverable parcels explains the automated response | **Dead Letters**: a pit of decades of returned post, heaped up to the mouth of the chute, under a wall of pigeonholes and an enamel sign. Carriers keep tipping more into it. |
 | Let the rejected parcels appear before the chute starts | The pit is revealed right after the refusal while everything is still. The belt and its carriers start only after D-17 has checked his label. |
 | D-17 checks the label again, then moves with renewed purpose | `CheckLabel`: he looks down, taps the window twice, reads, lifts his head, antenna up, a small nod and a chirp. The music turns to the theme in F major. |
@@ -49,9 +49,14 @@ x: 26.9 corridor  28.9 SCANNER  30.5 hatch  31.0 DOCK   32.9 STOP   34.25 POINTS
   - Each takes the route the points are set to when it reaches the junction.
   - Chute carriers tip their parcels into the chute, where they slide and tumble onto the heap.
 - **Boarding:**
-  - D-17 refuses (shakes his head at the route board) unless the belt is running and the route is set to the service ramp.
-  - He hops in, rides crouched with his claws on the rim, and hops out onto the gallery.
-- **Safety:** there is no failure state, since he never boards a carrier bound for the chute.
+  - Any carrier standing on the floor can be boarded, with Use or Jump beside it (playtest: let the player try things).
+  - He hops in and rides crouched with his claws on the rim. Use or Jump again hops him out.
+  - On the service ramp, a chase of green lamps shows the route; he hops out onto the gallery, and the empty carrier
+    sinks back down through the return slot.
+- **Failure:** ridden to the chute, the carrier tips him into the pile with the dead letters. He respawns at the
+  `scanned` checkpoint, and the pit's reveal is not replayed.
+- **The carriers' return:** after tipping, each carrier runs back along the return line and sinks through a return
+  hatch in the sorting floor, instead of vanishing.
 
 ## 4. New models
 
@@ -70,7 +75,7 @@ All are procedural, in `art/dl03/build_dl03.py`:
   - The storage chute.
   - The ramp trestle over the pit edge.
   - The pit hall, with a pigeonhole wall of about 800 cubbies, most still holding letters.
-- **Pit dressing:** hanging lamps and the enamel DEAD LETTERS sign.
+- **Pit dressing:** hanging lamps and the enamel UNDELIVERABLE sign.
 - **The heap:** about 1,700 parcels and 600 letters, instanced by the game on the same height function the Blender scene uses for the stamped parcels.
 - **Gallery:**
   - The deck and railings, and the return slot.
@@ -87,7 +92,7 @@ Everything here is read from the world; there are no logs.
 | Notice by the scanner | Ring C is sealed; rooms C-100 to C-160 are out of service; their post is held at Dead Letters; couriers must not attempt delivery past the seal. Refuge Year 43. | Room 114 is in ring C. The ring was sealed a year after the parcel was posted (R.Y. 42). |
 | Poster on the sorting floor | REFUGE POSTAL SERVICE: "Every parcel finds its door." | The service's old promise. D-17 is the last thing keeping it. |
 | The heap and its stamps | RETURN TO SENDER · ADDRESS NOT IN SERVICE | What the system has done with every such parcel since. |
-| The enamel sign | DEAD LETTERS · UNDELIVERABLE · HELD FOR CLAIM · DO NOT SORT | The working title, said once by the world itself. |
+| The enamel sign | UNDELIVERABLE · HELD FOR CLAIM · DO NOT SORT | What the pit is for. (The playtest found the title on it too on the nose, so it is gone.) |
 | The day board | Deliveries per day by refuge year: 1,240 in year 30, 540 in 42, then 210, 96, 41, 12, 5, 2 in 109, and nothing chalked against 110. | The community shrank to nothing. The last other resident died in year 109, nine years before the game (R.Y. 118). |
 | The stopped clock, the desk left mid-shift | | Work ended without anyone deciding it should. |
 | Residential access sign | Rings A, B and C, with tape across C. | Where he is going anyway. |

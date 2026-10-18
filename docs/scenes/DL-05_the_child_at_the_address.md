@@ -1,6 +1,6 @@
 # DL-05 The Child at the Address: production plan
 
-**Status:** in production for the playable prototype (`game/undelivered/`)
+**Status:** built as a playable prototype (`game/undelivered/`), for director review
 **Source:** Dead Letter 45 Scene Overview, scene 05 (16 October 2026)
 **Sequence:** DL-04 → DL-05 → DL-06, with no cut on either side
 **Duration target:** 3 to 4 minutes. The overview gives 2; scenes run a touch longer from DL-04 on.
@@ -25,13 +25,13 @@
 |---|---|
 | **Down to ring C** | The stair off the DL-04 balcony brings him down to ring C's ledge. The cave city rises behind him. |
 | **The seal** | A barricade of sheet metal across the lane: RING C SEALED · R.Y. 43, and tape. There is a gap under it; he crouches through. |
-| **Ring C** | A dark lane of shuttered homes (C-108 to C-112), dead bulbs on a cable, a few still burning. A fallen duct to hop. |
-| **C-114** | The last door stands open. He knocks on the frame twice and waits (`Knock`): nobody. He goes in. |
+| **Ring C** | Abandoned and nearly dark: shuttered homes (C-108 to C-112), dead bulbs on a cable, two still burning, one of them failing. A fallen duct to hop. |
+| **C-114** | The last door stands open. He steps up beside it, knocks on the jamb twice and waits (`Knock`): nobody. He goes in. |
 | **The hall** | A small pair of shoes beside a large pair. A lamp still on. |
 | **The bedroom** | The rabbit on the bed, the painted window, the photograph. The desk fallen against the wall, the terminal above it. |
-| **The desk** | He drags it clear. The music comes in: the parcel's three notes become a lullaby. |
+| **The desk** | He steps in to its red grip bar and drags it clear. The music comes in: the parcel's three notes become a lullaby. |
 | **The terminal** | The handshake, and the school destination. His label changes: the screen's school mark replaces the door. |
-| **The rabbit** | On the way out, he sits it up. |
+| **The rabbit** | Passing the bed on his way to the desk, he sits it up. |
 | **Out the back** | A back door onto a service stair, with a sign for the school on ring B. The end card. |
 
 ## 3. Layout (metres along the lane; this scene's floor is at 0)
@@ -41,12 +41,21 @@ x: 74.65-76.8 stair down from the DL-04 balcony (1.6 -> 0)   76.8 ledge   80.2-8
    81.0-88.5 ring C lane (duct 84.2-84.6, 0.26 high)   88.2 knock   88.6 C-114 door (lintel 1.3)
    88.7-90.6 hall   90.6 inner door (lintel 1.25)   90.65-95.6 bedroom   95.6 back door   97.2 end
 bedroom: bed 91.0-92.5 (top 0.42, behind the lane)   toy (92.2, top of bed)   painted window over the bed
-         shelf and photograph 93.4   terminal 94.7 (screen 0.95 high, reader 0.72)   growth marks 94.0-95.3
-         the desk: x 94.7 (half-length 0.36, 0.55 high), dragged left to between 93.4 and 94.15
+         shelf and photograph 93.4   terminal 94.48-94.92 (screen 0.95 high, reader 0.73)   growth marks 94.15-95.25
+         the desk: x 94.7 (half-length 0.55, about 0.55 high), dragged left to a centre of 93.55 (93.0-94.1)
 ```
 
 Blender coordinates as before: the lane at y = 0, behind it +y, travel along +x. The back walls of the lane, the
 hall and the bedroom are at y = 1.0. The homes are cut away toward the camera.
+
+The bed, the desk and the terminal stand against the back wall, off the lane, so D-17 walks in front of them. To
+use the desk he steps in to its grip bar (y 0.62) and steps back out when he lets go. He steps in to y 0.64 to
+knock, and to y 0.70 to present.
+
+**Light:** ring C is abandoned and nearly dark (see *Light by level* in `docs/direction.md`). Two bulbs burn on the
+lane, at x 81.65 (just inside the seal, failing) and 86.6. Inside C-114 the hall lamp, left on, and the painted
+window are the main lights; C-114's front window glows faintly with the lamp behind its curtains. The home is the one
+warm pocket in the dark.
 
 ## 4. Models (`art/dl05/build_dl05.py`)
 
@@ -63,25 +72,26 @@ hall and the bedroom are at y = 1.0. The homes are cut away toward the camera.
 | `D5Shelf`, `D5Photo` | The shelf and the photograph. |
 | `ForwardTerminal`, `TermLamp0`, `TermLamp1`, `TermLamp2` | The terminal, with a screen recess (the game draws the screen) at (94.7, 1.0, 0.95), 0.32 x 0.24, and its three lamps. |
 | `D5Marks` | The growth marks and the carved tree, on the wall behind the desk. |
-| `ChildDesk` | The fallen desk, its origin on the floor at the centre of its footprint (x 94.7). It leans back against the wall and covers it up to about 1.15 m. The game slides it along x. |
+| `ChildDesk` | The fallen desk, its origin on the floor at the centre of its footprint (x 94.7, y 0.62). Half-length 0.55, so it covers the marks and the tree on both sides of the terminal. It leans back 9° against the terminal, its hutch reaching about 1.2 m, with a red grip bar on its left end (0.585 from the centre). The game slides it along x. |
 | `D5BackDoor`, `D5SchoolSign` | The back door frame and a sign: SCHOOL, RING B, with an arrow. |
 
 ## 5. Clips
 
 | Clip | Frames | What it is |
 |---|---|---|
-| `Knock` | 48 | Facing a door frame 0.3 m ahead: he raises his right claw, knocks twice at about 0.6 m, waits with his head tilted, and lowers it. |
-| `Present` | 64 | Facing a wall terminal 0.26 m away (the game turns him and steps him in): he leans his chest window toward the reader (0.72 high) and holds it still while the lamps answer (frames 20, 25 and 30). He straightens with a small nod (frame 50). |
-| `Straighten` | 52 | Facing the bed: both claws to the toy (0.35 ahead, 0.5 high), he sits it up (the game rotates it between frames 14 and 26), pats its head once, and steps back. |
+| `Knock` | 48 | Stepped in beside the door, facing along the lane: he raises his right claw, knocks twice on the jamb at about 0.56 m (frames 14 and 20), waits with his head tilted, and lowers it. |
+| `Present` | 64 | Facing the terminal 0.26 m away (the game turns him and steps him in): he rises onto his toes and arches his chest window up toward the reader, and holds still while the lamps answer (frames 20, 25 and 30). He comes down with a small nod (frame 50). |
+| `Straighten` | 52 | Facing the bed: both claws to the toy (0.35 ahead, about 0.47 high), he sits it up (the game rotates it between frames 14 and 26), pats its head once (frame 33), and steps back. |
 
 ## 6. Camera
 
 | Shot | When | Framing |
 |---|---|---|
-| `knock` | `Knock` | Low, behind and to the right of him at the doorway, looking into the dark hall. |
+| `knock` | `Knock` | Low, in front and to the left of him, past him to the doorway and the lit hall (30 mm). |
 | `desk` | While the desk moves | Eases in a little from the room framing toward the wall (40 mm). |
 | `marks` | The desk clears, the first time only | Close on the growth marks and the tree (50 mm, 3.5 s). |
 | `terminal` | `Present` | Over his shoulder to the screen. |
+| `toy` | `Straighten` | From his right, above the bed's foot, so the rabbit reads as it sits up (34 mm). |
 
 ## 7. Music
 

@@ -1,6 +1,6 @@
-# Undelivered (DL-01 to DL-04): playable prototype
+# Undelivered (DL-01 to DL-05): playable prototype
 
-A browser-playable build of the first four scenes of chapter 1, played as one continuous level with no cut between
+A browser-playable build of the first five scenes of chapter 1, played as one continuous level with no cut between
 them. It follows the scene plans in `docs/scenes/` and the standing direction in `docs/direction.md`. It uses D-17 and
 the set from Blender, and the gameplay code mirrors the mechanisms planned for the Unity build.
 
@@ -88,10 +88,13 @@ stuck-prompt option on, a key glyph appears at about 18 s.
    - The pit of dead letters opens below. He can only walk slowly while he takes it in, and the music swells.
    - Then he checks his label and the theme turns hopeful.
 2. **The return line.**
-   - Carriers rise at the hatch, stop at the dock and are hauled to the chute.
-   - Boarding one bound for the chute is refused, and the points won't move while the belt runs.
-   - Stop the belt (red lever), throw the points (yellow lever), restart the belt, and board at the dock.
-3. **The gallery.** He rides up the service ramp and hops out over the pit. Walk past the old sorting desk, the stopped clock and the
+   - Carriers rise from the return hatch, stop at the dock and are hauled to the chute, where they tip their load into the pile.
+   - Any carrier standing on the floor can be boarded: Use or Jump beside it. Use or Jump again to hop out.
+   - Ride one to the chute and it tips him into the pile with the dead letters. He respawns at the scanner checkpoint.
+   - Stop the belt (red lever), throw the points (red lever on a yellow stand), restart the belt, and board at the dock.
+     A line of green lamps along the ramp shows the way the points now send the carriers.
+3. **The gallery.** He rides up the service ramp and hops out over the pit. The empty carrier sinks back down through
+   the return slot. Walk past the old sorting desk, the stopped clock and the
    day board to the residential access doorway, and on into DL-04.
 
 ## DL-04 The Handbrake (about 27 m, 6 to 7 minutes)
@@ -113,23 +116,43 @@ stuck-prompt option on, a key glyph appears at about 18 s.
 5. **The refuge.**
    - The tunnel opens onto a balcony high in the atrium: three rings of homes around a void.
    - He stops at the rail (`Awe`), the camera cranes up and out, and the music swells.
-   - He walks on slowly to the stair for the end card.
+   - The atrium is the refuge's underground city: a chasm dug into the rock, the poorest industrial levels at the
+     bottom, the upper city rising into the haze. He walks on slowly to the stair down to ring C, and into DL-05.
+
+## DL-05 The Child at the Address (about 23 m, 3 to 4 minutes)
+
+1. **Ring C.**
+   - The stair brings him down to ring C's ledge. The lane is sealed (RING C SEALED · R.Y. 43); crouch under the barricade.
+   - Ring C is abandoned and nearly dark: one failing bulb, shuttered homes, a fallen duct to hop.
+2. **C-114.** The last door is open. He steps up to it and knocks twice (`Knock`), and waits. Nobody.
+3. **The bedroom.**
+   - Passing the bed, he sits the patched rabbit up and pats it (`Straighten`). Any move cancels it.
+   - A low desk has fallen against the back wall, over the forwarding terminal. Use at its red grip bar and drag it
+     clear. Pencil growth marks and a crooked carved tree are behind it, and the music comes in.
+4. **The terminal.** Use at it. He presents his chest window to the reader (`Present`), his three lamps answer its three,
+   and the screen reads NOBODY AT THIS ADDRESS, then FORWARD TO SCHOOL, RING B. His label is stamped.
+5. **Out the back.** The back door opens onto a service passage and a sign for the school. The end card.
 
 **Checkpoints:**
 - DL-01: start, shutter open, hall, door open.
 - DL-02: the room, and solved.
 - DL-03: scanned, and the gallery landing.
 - DL-04: the goods hall, the far landing (pawl set), and the tunnel mouth.
+- DL-05: through the seal, the bedroom, and after the terminal.
+
+Cinematics play once. After a respawn, a shot that has been seen is skipped, unless it shows how a puzzle works.
 
 ## Camera, quirks and performance
 
 - **Camera:** key moments use authored shots that blend out of the side-on camera.
   - Earlier scenes: the crank, the realisation among the couriers, the scanner, the crane over the pit, the label close-up, and the ride up the ramp.
   - DL-04: the shaft from over his shoulder, the platform's first rise, the pawl's click, the look back, the hopscotch from above, and the crane out over the atrium.
+  - DL-05: the knock, the desk dragging, a held look at the growth marks (first time only), the terminal over his shoulder, and the rabbit.
   - Heavy impacts shake it a little; calm mode turns the shake off.
 - **Quirks:** D-17 has short reactions for particular moments.
   - Earlier scenes: he stands to attention at the scanner, bounces proudly when something works, peeks over edges, brushes himself off after the ride, and is startled by a slam.
   - DL-04: he scrambles off the unlatched platform, pats the trolley goodbye, looks back at the depot, hops the chalk squares, and stands in awe at the rail.
+  - DL-05: he knocks at the door, sits the rabbit up, and nods when the terminal answers.
 - **Performance:** see the budget in `docs/direction.md`. The resolution adapts to the frame rate.
 
 ## Music
@@ -144,6 +167,7 @@ README). It is sparse:
 - The refusal, a swell over the pit, near silence for the label check, then the theme in F major.
 - A warm F major and the parcel's three notes when the pawl drops home.
 - `refuge`: near silence, then phrase B broadening into F major, peaking as the camera reaches its widest over the atrium.
+- `child`: when the desk clears the marks, the parcel's three notes become a lullaby on the music box, piano and strings.
 - After it, over the end card, the full theme ending in a music-box *Happy Birthday*.
 
 The bed stops in the tunnel, and so does the depot's relay pulse, which has sounded every six seconds since the wake.
@@ -157,4 +181,4 @@ cd art/dl01
 python build_dl01.py --out ../../game/undelivered/assets     # needs bpy 5.2 (Python 3.13); builds DL-02 too
 ```
 
-This builds DL-02 (`art/dl02`), DL-03 (`art/dl03`) and DL-04 (`art/dl04`) too. It writes `set`, `d17` and `couriers` (the dormant couriers' three poses and their rack slots), each as `.glb` and `.json`.
+This builds DL-02 (`art/dl02`), DL-03 (`art/dl03`), DL-04 (`art/dl04`) and DL-05 (`art/dl05`) too. It writes `set`, `d17` and `couriers` (the dormant couriers' three poses and their rack slots), each as `.glb` and `.json`.
