@@ -458,25 +458,26 @@ def clip_set_down(dl01, arm, name, base):
     for frame in range(1, frames + 1):
         f = frame - 1
         z = track([(0, -0.035), (12, -0.035 - 0.04 * deep), (18, -0.04 - 0.03 * deep), (30, -0.01), (36, 0)], f)
-        pitch = track([(0, -4), (12, 10), (18, 12), (30, 4), (36, 0)], f)
+        pitch = track([(0, -4), (12, 10), (18, 12), (30, 4), (36, 0)], f) * (0.25 + 0.75 * deep)   # bowing less to the deck
         lean_in = track([(0, 0), (12, 1), (24, 1), (32, 0)], f)   # forward over his feet to reach down
         body, rot = (0, 0.01 * (1 - smoothstep(f / 10)) - 0.045 * lean_in, z), (pitch, 0, 0)
         lower = track([(0, 0), (12, 1)], f)
         targets = {s: up[s].lerp(down[s], lower) for _, s in SIDES}
         # After letting go: the right claw comes up and pats the top once, from out to the side.
         pat = {s: targets[s] for _, s in SIDES}
-        top = Vector((-0.1, -GRIP[0] + 0.01, base + 0.3))
+        top = Vector((-0.13, -GRIP[0] + 0.03, base + 0.26))
         pat[-1] = top + Vector((0, 0, track([(19, 0.04), (22, 0.0), (24, 0.03)], f)))
         patting = track([(15, 0), (19, 1), (25, 1), (28, 0)], f)
         hands = reach(blend(targets, pat, patting), body, rot, REST)
         hands = blend(hands, CARRY, track([(26, 0), (36, 1)], f))
         claw = track([(0, 2), (14, 2), (16, 28), (36, CLAW_REST_OPEN['L'])], f)
-        head = (track([(0, 6), (12, 26), (24, 24), (30, 8), (36, 0)], f), track([(22, 0), (27, 9), (36, 0)], f), 0)
+        head = (track([(0, 6), (12, 26), (24, 24), (30, 8), (36, 0)], f) * (0.4 + 0.6 * deep),   # the deck is nearer his eyes
+                track([(22, 0), (27, 9), (36, 0)], f), 0)
         antenna = [(track([(0, -4), (12, 8), (16, 0)], f) - spring(f, 16, 8 * (1 + 0.3 * i), decay=5), 0) for i in range(3)]
         c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands,
-               hand_rot={'L': HOLD_HAND['L'], 'R': (-10, -54 + 9 * patting, 0)},
+               hand_rot=HOLD_HAND,
                claws={'L': claw, 'R': track([(0, 2), (14, 2), (16, 28), (19, 10), (36, CLAW_REST_OPEN['R'])], f)},
-               elbows={side: 1 - track([(26, 0), (36, 1)], f) for side, _ in SIDES})
+               elbows={side: 1 - track([(30, 0), (36, 1)], f) for side, _ in SIDES})
     c.done()
 
 
@@ -528,7 +529,13 @@ def carry_gait(dl01, arm):
 
 
 def push_targets(fwd=0.32):
-    return {s: Vector((s * 0.12, -fwd, TROLLEY_HANDLE + 0.05)) for _, s in SIDES}
+    """Wrists just behind and above the push bar, claws forward over it (PUSH_HAND). The bar is out of
+    his reach from where he stands, so the push clips lean his body in over his feet (PUSH_LEAN)."""
+    return {s: Vector((s * 0.12, -fwd + 0.06, TROLLEY_HANDLE + 0.03)) for _, s in SIDES}
+
+
+PUSH_LEAN = 0.06                    # m the body leans in toward the bar, over his feet
+PUSH_HAND = {'L': (-60, 0, 10), 'R': (-60, 0, -10)}
 
 
 def clip_push(dl01, arm):
@@ -539,11 +546,11 @@ def clip_push(dl01, arm):
     c = Clip(arm, 'PushIdle', 48)
     for frame in range(1, 50):
         t = (frame - 1) / 48
-        body, rot = (0, 0, -0.02 + 0.003 * math.sin(tau * t)), (8 + 0.6 * math.sin(tau * t), 0, 0)
+        body, rot = (0, -PUSH_LEAN, -0.02 + 0.003 * math.sin(tau * t)), (3 + 0.6 * math.sin(tau * t), 0, 0)
         hands = reach(push_targets(), body, rot, REST)
         c.pose(frame, body=body, body_rot=rot, head=(-6 + 1.5 * math.sin(tau * t - 0.6) - rot[0] * 0.5, 0, 0),
                antenna=[(-6 + 2 * math.sin(tau * t - i), 0) for i in range(3)], hands=hands,
-               hand_rot={'L': (-40, 0, 10), 'R': (-40, 0, -10)}, claws={'L': 2, 'R': 2})
+               hand_rot=PUSH_HAND, claws={'L': 2, 'R': 2}, elbows={'L': 1, 'R': 1})
     c.done()
     frames, half, stance, lift = 12, 0.07, 0.62, 0.026
     c = Clip(arm, 'PushWalk', frames)
@@ -559,12 +566,12 @@ def clip_push(dl01, arm):
                 rel, zf, sw = half - 2 * half * smoothstep(k), lift * math.sin(math.pi * k) ** 0.8, k
             feet[side] = ((0, rel, zf), (10 * math.sin(math.pi * sw) if sw is not None else 0, 0, 0))
         sway = math.sin(tau * t)
-        body = (-0.006 * sway, 0, -0.03 + 0.004 * math.cos(2 * tau * t))
-        rot = (11 + 1.0 * math.sin(2 * tau * t - 1.0), -2.0 * sway, 1.0 * math.sin(tau * t + 0.4))
+        body = (-0.006 * sway, -PUSH_LEAN - 0.015, -0.03 + 0.004 * math.cos(2 * tau * t))
+        rot = (2 + 1.0 * math.sin(2 * tau * t - 1.0), -2.0 * sway, 1.0 * math.sin(tau * t + 0.4))
         hands = reach(push_targets(), body, rot, REST)
         c.pose(frame, body=body, body_rot=rot, head=(-8 - rot[0] * 0.5, -rot[1], 0), feet=feet,
                antenna=[(-10 + 2.5 * math.sin(2 * tau * t - 1.2 - 0.5 * i), 0) for i in range(3)],
-               hands=hands, hand_rot={'L': (-40, 0, 10), 'R': (-40, 0, -10)}, claws={'L': 2, 'R': 2})
+               hands=hands, hand_rot=PUSH_HAND, claws={'L': 2, 'R': 2}, elbows={'L': 1, 'R': 1})
     c.done()
 
 
@@ -576,12 +583,16 @@ def clip_grab(dl01, arm):
     for frame in range(1, frames + 1):
         f = frame - 1
         k = smoothstep(f / 10)
-        body, rot = (0, 0, -0.02 * k), (8 * k, 0, 0)
-        hands = blend(CARRY, reach(push_targets(), body, rot, REST), k)
+        body, rot = (0, -PUSH_LEAN * k, -0.02 * k), (3 * k, 0, 0)
+        # The claws come forward first, then up to the bar, around the pod's front corners.
+        held = reach(push_targets(), body, rot, REST)
+        hands = {s: CARRY[s] + Vector(((held[s] - CARRY[s]).x * k, (held[s] - CARRY[s]).y * min(1.0, 1.6 * k),
+                                       (held[s] - CARRY[s]).z * k ** 1.5)) for _, s in SIDES}
         c.pose(frame, body=body, body_rot=rot, head=(track([(0, 0), (5, 14), (13, -4)], f), 0, 0),
                antenna=[(-6 * k, 0)] * 3, hands=hands,
-               hand_rot={'L': (-24 - 16 * k, 0, 10), 'R': (-24 - 16 * k, 0, -10)},
-               claws={'L': track([(0, 20), (6, 30), (10, 2)], f), 'R': track([(0, 1), (6, 30), (10, 2)], f)})
+               hand_rot={'L': (-24 - 36 * k, 0, 10), 'R': (-24 - 36 * k, 0, -10)},
+               claws={'L': track([(0, 20), (6, 30), (10, 2)], f), 'R': track([(0, 1), (6, 30), (10, 2)], f)},
+               elbows={'L': min(1.0, 2 * k), 'R': min(1.0, 2 * k)})
     c.done()
 
 
@@ -595,18 +606,22 @@ def clip_nudge(dl01, arm):
         f = frame - 1
         reachk = track([(4, 0), (16, 1), (50, 1), (62, 0)], f)
         tap = sum(math.sin(math.pi * (f - t0) / 5) for t0 in (18, 26) if t0 <= f <= t0 + 5)
-        body = (0, -0.02 * reachk, 0.0)
-        rot = (track([(0, 0), (16, 6), (50, 6), (62, 2), (84, 4)], f), 0, 0)
-        target = Vector((-0.05, -0.33 - 0.02 * tap, 0.5))
-        right = reach({1: Vector((0, 0, 0)), -1: target}, body, rot, REST)[-1]
-        hands = {1: CARRY[1] + Vector((0, 0, 0.01 * reachk)), -1: CARRY[-1].lerp(right, reachk)}
+        body = (0, -0.03 * reachk, 0.0)
+        rot = (track([(0, 0), (16, 3), (50, 3), (62, 2), (84, 4)], f), 0, 0)
+        # The courier's shoulder is past his reach: the claw points out to it and its tip does the
+        # tapping, the wrist out to the right and the elbow out (a reach for it with the wrist ran
+        # the arm through the pod).
+        tip = Vector((-0.05, -0.33 - 0.02 * tap, 0.47))
+        right = reach({1: Vector((0, 0, 0)), -1: tip + Vector((-0.07, 0.09, 0))}, body, rot, REST)[-1] - CARRY[-1]
+        right = CARRY[-1] + Vector((right.x * reachk, right.y * min(1.0, 1.6 * reachk), right.z * reachk ** 1.5))  # out, then up
+        hands = {1: CARRY[1] + Vector((0, 0, 0.01 * reachk)), -1: right}
         wait = track([(30, 0), (36, 1), (50, 1), (60, 0)], f)
         head = (track([(0, 0), (12, -6), (30, -4), (50, -2), (64, 16), (84, 22)], f),
                 track([(28, 0), (36, 12), (50, 10), (60, 0)], f), track([(40, 0), (46, -8), (54, 0)], f))
         antenna = [(track([(0, 0), (30, 0), (36, -18), (50, -14), (64, 10), (84, 26)], f) * (0.7 + 0.2 * i)
                     + spring(f, 18, 4) + spring(f, 26, 4), 0) for i in range(3)]
         c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands,
-               hand_rot={'L': (-24, 6, 10), 'R': (-24 - 50 * reachk, 0, -10)},
+               hand_rot={'L': (-24, 6, 10), 'R': (-24 - 66 * reachk, 0, -10 + 43 * reachk)}, elbows={'R': min(1.0, 2 * reachk)},
                claws={'L': CLAW_REST_OPEN['L'], 'R': track([(4, 1), (14, 10), (50, 10), (60, 1)], f)})
     c.done()
 

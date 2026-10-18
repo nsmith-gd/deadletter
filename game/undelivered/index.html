@@ -311,7 +311,8 @@ const WORN = {
 const PLAIN = { EyeDark: [[.003, .003, .003], .3, 0], Shaft: [[.004, .004, .004], .9, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
   Water: [[.01, .012, .012], .04, .3],
   Copper: [[.55, .3, .18], .35, 1], ReflectTag: [[.8, .78, .7], .15, .6], BeltRubber: [[.02, .02, .019], .8, 0],
-  AtriumPlaster: [[.3, .28, .22], .9, 0], AtriumDark: [[.006, .006, .006], .8, 0], AtriumStone: [[.05, .05, .048], .95, 0],
+  AtriumPlaster: [[.2, .185, .15], .9, 0], AtriumDark: [[.006, .006, .006], .8, 0], AtriumStone: [[.058, .052, .045], .95, 0],
+  AtriumCut: [[.085, .078, .066], .95, 0], AtriumSheet: [[.075, .082, .08], .6, .4], AtriumRust: [[.11, .048, .025], .85, 0], AtriumWet: [[.008, .009, .009], .18, .3],
   Barricade: [[.4, .06, .04], .7, 0], Brass: [[.45, .32, .12], .45, .8] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
 const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
@@ -326,6 +327,7 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   HallBulb4: [1, .88, .7, 0], AtLanding: [1, .62, .18, 0], PawlLamp: [1, .2, .1, 0], BeaconLamp: [1, .55, .12, 0], TunnelBulb: [.95, .9, .78, 0],
   RampLamp0: [.55, 1, .65, 0], RampLamp1: [.55, 1, .65, 0], RampLamp2: [.55, 1, .65, 0], RampLamp3: [.55, 1, .65, 0], RampLamp4: [.55, 1, .65, 0], RampLamp5: [.55, 1, .65, 0],
   WindowSun: [1, .78, .45, 0], HomeLampBulb: [1, .85, .62, 0], LaneBulb: [1, .8, .55, 0], TermLamp0: [.6, 1, .75, 0], TermLamp1: [.6, 1, .75, 0], TermLamp2: [.6, 1, .75, 0],
+  AtriumUpperLights: [1, .66, .34, 2], AtriumUpperGlow: [1, .58, .28, 1.5],
   RingLamp: [1, .78, .5, 0], RingLampRed: [1, .18, .1, 0], HomeLight: [1, .72, .4, 0], SkyPanel: [.7, .8, .9, 0] };
 
 const lin = (a) => new THREE.Color().setRGB(a[0], a[1], a[2]);
@@ -2270,7 +2272,7 @@ const BELT4 = { x0: 57.7, x1: 64.6, speed: 0.32 }, CHUTE4_TOP = new THREE.Vector
 const CRATES = [{ half: 0.18, h: 0.18 }, { half: 0.21, h: 0.23 }, { half: 0.2, h: 0.42 }];
 const TUNNEL_X0 = 64.6, HOP4_X = 66.3, HOPS4 = [[18, 26], [28, 36], [38, 48]];
 const VISTA_X0 = 70.0, AWE_X = 71.3, EXIT4_X = 74.55, STAIR_X = 74.65;
-const ATRIUM4 = new THREE.Vector3(74.0, -6, -41.5);         // where the wide view looks: the core stands off to the right
+const ATRIUM4 = new THREE.Vector3(78.5, 20, -50);            // where the wide view looks: ring C up to the chimney mouth
 
 const platTop = () => DECK - RISE * (1 - game.plat.h);
 // How much of the trolley is on the pan (it rolls on gradually), and the pan's whole load.
@@ -2314,7 +2316,8 @@ function buildDL04(setRoot) {
   const beltMat = new THREE.MeshStandardMaterial({ map: refs.belt4Tex, roughness: 0.85, metalness: 0 });
   refs.ReturnsBelt.traverse((o) => { if (o.isMesh) o.material = beltMat; });
   // The atrium is far detail: plain materials, seen from either side.
-  for (const n of ['AtriumPlaster', 'AtriumDark', 'AtriumStone', 'Barricade']) if (materialCache[n]) materialCache[n].side = THREE.DoubleSide;
+  for (const n of ['AtriumPlaster', 'AtriumDark', 'AtriumStone', 'Barricade', 'AtriumCut', 'AtriumSheet', 'AtriumRust', 'AtriumWet']) if (materialCache[n]) materialCache[n].side = THREE.DoubleSide;
+  refs.fans = ['AtriumFanLow', 'AtriumFanHigh'].map((n) => setRoot.getObjectByName(n)).filter(Boolean);
   // Chains: the platform's two from the drum, the pan's over its pulley; rebuilt as they run.
   refs.chain4 = new THREE.InstancedMesh(new THREE.TorusGeometry(0.02, 0.0055, 4, 10), materialFor({ name: 'DepotSteel' }), 440);
   refs.chain4.frustumCulled = false; scene.add(refs.chain4);
@@ -2337,10 +2340,10 @@ function buildDL04(setRoot) {
   scene.add(hemi, sky, sky.target);
   refs.dl04FarLights = [beacon, P(0xf2e6c8, 2.6, 4.5, 66.0, DECK + 1.85, -1.0), P(0xf2e6c8, 2.6, 4.5, 68.9, DECK + 1.85, -1.0), hemi, sky];
   // What is left of the sky array still lets down a little light: faint shafts through the void.
-  refs.skyShafts = [[72.0, -36.0, 0.05], [80.5, -44.0, -0.06], [76.0, -52.0, 0.03]].map(([x, z, tilt]) => {
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 6.0, 46, 20, 1, true), refs.shafts[0].material.clone());
-    m.material.uniforms.uColor.value = new THREE.Color(0xa8c0cc); m.material.uniforms.uOpacity.value = 0;
-    m.position.set(x, 3, z); m.rotation.z = tilt; m.visible = false; scene.add(m); return m;
+  refs.skyShafts = [[80.0, 18, -63.0, 0.04]].map(([x, y, z, tilt]) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(3.0, 9.0, 60, 20, 1, true), refs.shafts[0].material.clone());
+    m.material.uniforms.uColor.value = new THREE.Color(0xffc890); m.material.uniforms.uOpacity.value = 0;
+    m.position.set(x, y, z); m.rotation.z = tilt; m.visible = false; scene.add(m); return m;
   });
 }
 
@@ -2496,14 +2499,15 @@ function updateDL04(dt) {
   emissive.RingLamp.emissiveIntensity = 6;
   emissive.RingLampRed.emissiveIntensity = 2 + 1.2 * Math.sin(game.clock * 1.3);
   emissive.HomeLight.emissiveIntensity = 5;
-  emissive.SkyPanel.emissiveIntensity = 0.55;
+  emissive.SkyPanel.emissiveIntensity = 1.0;
+  refs.fans.forEach((f, i) => f.rotateY(dt * (i ? 0.6 : 1.1)));
   refs.skyShafts.forEach((m, i) => { m.visible = vista > 0.01; m.material.uniforms.uOpacity.value = vista * (0.022 + 0.008 * Math.sin(game.clock * 0.25 + i * 2)); });
   // Out of the depot: its hum and its relay pulse fall away; the refuge's air comes up.
   const hum = inR4 ? 1 - 0.8 * smooth((game.x - 60) / 8) : game.region === 5 ? 0.2 : 1;
   if (Math.abs(hum - (refs.humLevel ?? 1)) > 0.02) { refs.humLevel = hum; Sound.hum(hum); }
   Sound.air(inR4 ? smooth((game.x - 65) / 6) : game.region === 5 ? 1 - 0.7 * smooth((game.x - 80) / 2) : 0);
   // The atrium: a long view through a cool haze.
-  const far = 60 + 140 * vista;
+  const far = 60 + 160 * vista;
   if (Math.abs(camera.far - far) > 1) { camera.far = far; camera.updateProjectionMatrix(); }
   scene.fog.color.setRGB(0.0012 + 0.009 * vista, 0.0015 + 0.013 * vista, 0.0015 + 0.016 * vista);
   scene.background.copy(scene.fog.color);
@@ -2869,8 +2873,8 @@ function currentShot() {
     // The refuge: from his shoulder out over the atrium, craning up and back to a high, wide view.
     if ((a && a.kind === 'awe') || (game.dl4.awed && X > VISTA_X0 - 0.4)) {
       const k = smooth((game.clock - game.aweStart - 1.0) / 7.0);
-      const pos = V3(X + 0.45, Y + 0.95, 1.35).lerp(V3(X + 2.4, Y + 5.4, 7.2), k);
-      const look = V3(X - 0.4, Y + 0.4, -12).lerp(ATRIUM4, k);
+      const pos = V3(X + 0.45, Y + 0.95, 1.35).lerp(V3(X + 3.2, Y + 7.9, 8.5), k);
+      const look = V3(78, 12, -50).lerp(ATRIUM4, k);
       return { name: 'vista', pos, look, focal: 32 - 8 * k, ease: 0.8 };
     }
   }
@@ -3128,7 +3132,7 @@ function frameFor(x) {
     v4 = lerp3(v4, fit([5.8, 1.3, 0.9], 5.6), kt);
     v4 = lerp3(v4, fit([7.6, 2.2, 1.0], 7.2), kv);
     cx += (tx - cx) * k4; v = lerp3(v, v4, k4);
-    fog += (0.05 + 0.012 * kt - 0.0435 * kv - fog) * k4;
+    fog += (0.05 + 0.012 * kt - 0.053 * kv - fog) * k4;
   }
   // DL-05: ring C's ledge with the cave behind, the low lane, the home (close), the back passage.
   const k5 = game.upper ? smooth((x - 75.6) / 1.4) : 0;
@@ -3144,7 +3148,7 @@ function frameFor(x) {
     v5 = lerp3(v5, fit([4.9, 1.05, 0.72], 4.9), kh);
     v5 = lerp3(v5, fit([5.6, 1.1, 0.75], 5.6), ke);
     cx += (tx - cx) * k5; v = lerp3(v, v5, k5);
-    fog += (0.016 + 0.05 * kl - 0.025 * kh - fog) * k5;
+    fog += (0.01 + 0.056 * kl - 0.025 * kh - fog) * k5;
   }
   return { cx, v, fog };
 }
