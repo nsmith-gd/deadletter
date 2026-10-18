@@ -16,7 +16,7 @@
 | Warn before the moving hazard; checkpoint after the puzzle, before the crossing | The belt is still when he reaches the far landing. Then a bell, an amber beacon and the klaxon start it, and the first crate slides down its chute in full view before he can step on. The checkpoint `latched` is on the far landing. |
 | Handmade reinforcement surrounds the original safety catch | The pawl housing is patched with welded plates, extra bolts, a strap clamp and a wired-on spare spring. Six brass repair tags are wired to it, each stamped with a refuge year and initials. Lift 1, beside it, failed: its platform lies broken at the bottom of its shaft. |
 | Crossing into the residential access tunnel commits D-17 to a journey beyond his depot | At the tunnel mouth he stops and looks back at the depot (`LookBack`). The depot's three-lamp relay pulse, heard since the first second of DL-01, fades out behind him. |
-| Familiar depot → a much larger inhabited system now gone quiet | The tunnel has children's chalk on its floor and walls. It opens onto a balcony high in the refuge's central atrium: three rings of homes around a void, nearly every window dark. |
+| Familiar depot → a much larger inhabited system now gone quiet | The tunnel has children's chalk on its floor and walls. It opens onto a balcony over the refuge itself: a city dug into a chasm in the rock. The poorest, most industrial levels are at the bottom, near-dark and abandoned; the levels climb the cliffs, lit more and more toward the upper city in the haze. A larger world lies ahead and above. |
 | The latch has a distinct mechanical click | The pawl gets its own sound (a ratchet, then a hard double click), a close-up insert on the dog dropping home, a small shake and `Proud`. |
 | Beyond the crossing, lose the depot rhythm and reveal the size of the refuge | The relay pulse and the hum fall away in the tunnel. On the balcony the camera cranes up and out over the atrium, `refuge` swells, and D-17 stands in awe (`Awe`). |
 
@@ -34,13 +34,13 @@
 | **Warning** | 3:20 | Checkpoint. The returns belt starts with the bell, the beacon and the klaxon, and the first crate comes down its chute. |
 | **The crossing** | 3:40 | 6.8 m of belt running against him at 0.32 m/s, with a crate about every 3.5 s. Low crates are hopped, tall ones climbed. |
 | **The tunnel** | 4:40 | At the tunnel mouth he looks back at the depot (`LookBack`). The relay pulse fades. A chalk hopscotch grid on the floor: he hops it (`Hopscotch`). Chalk suns, houses and stick figures on the wall at a child's height. |
-| **The refuge** | 5:30 | The tunnel's back wall opens onto a balcony over the atrium. He stops at the rail and takes it in (`Awe`, 6.5 s): the camera cranes up and out, and `refuge` swells to its peak. Then he walks on slowly, and the scene ends on the stair down to ring B. |
+| **The refuge** | 5:30 | The tunnel's back wall opens onto a balcony over the chasm city. He stops at the rail and takes it in (`Awe`, 6.5 s): the camera cranes up and out, and `refuge` swells to its peak. Then he walks on slowly, down the stair to ring C, and into DL-05 with no cut. |
 
 ## 3. Layout (metres along the lane; deck height 1.6 m)
 
 ```
 x: 47.5 door   48.6 goods hall   49.5 trolley   50.5-51.9 PAN   52.45 PAWL   52.8-55.3 SHAFT   57.8 belt end
-   64.6 tunnel mouth   66.4-68.2 hopscotch   70.0-74.6 balcony   71.4 awe   74.3 stair down (end card)
+   64.6 tunnel mouth   66.4-68.2 hopscotch   70.0-74.6 balcony   71.4 awe   74.75 stair down to ring C (DL-05)
 ```
 
 **Loads on the pan** (a fraction of what brings the platform to the landing):
@@ -69,12 +69,19 @@ x: 47.5 door   48.6 goods hall   49.5 trolley   50.5-51.9 PAN   52.45 PAWL   52.
   - The platform with its yoke and back rail, and the shaft walls and the rack.
   - The pawl, its lever on a stand, the reinforcement and the repair tags.
   - The dial and the two lamps.
-- **The returns belt:** the conveyor frame, its rollers and the belt surface (the game scrolls it), the chute from the rings, the turn hatch at the end, the beacon, and three crate templates that the game clones.
+- **The returns belt:** the conveyor frame, its rollers and the belt surface (the game scrolls it), the chute from the rings, the turn hatch at the end (lit, with rubber flaps that swing as each crate passes through, so the crates visibly go somewhere), the beacon, and three crate templates that the game clones.
 - **The tunnel:** arched ribs, a tiled back wall, lamps, the ring signs, and the chalk floor and wall.
-- **The atrium:**
-  - The balcony and the stair.
-  - Three rings of homes on two floors each, with walkways, railings, bridges to the central core, the core itself and the dead sky array.
-  - Barricades across ring C.
+- **The chasm city** (the director's reference: a whole city in a deep chasm, read in layers; not a clean silo):
+  - The balcony and the stair, on ring C's lip.
+  - **Foreground:** two noise-displaced rock walls with tool-cut terraces. Ring C (the poorest) has container stacks,
+    doors cut into the rock, barricades and a few failing red lamps, with steel galleries stacked down toward the mist.
+    Ring B is the works: arched halls, galleries, a crane, pipes and a lift tower. Ring A has plaster homes, a few lit.
+  - **Mid-ground:** arched viaducts at four heights with piers into the mist, two catwalks, five waterfalls, cables,
+    stalactites and low mist.
+  - **Background:** the upper city on three rock tiers 150 to 300 m off: lit window grids, towers, domes, chimneys and a
+    great domed hall, with skyline cards and a cool haze behind, under a crack of sky in the roof.
+  - **Light by level:** no point lights. The chance that a lamp or window is lit grows with height, from 2% in the depths
+    and 5% on ring C to 65% in the upper city. A cool haze makes the dark levels read as silhouettes.
 
 ## 5. Lore
 
@@ -87,7 +94,7 @@ Everything here is read from the world.
 | Repair tags on the pawl | R.Y. 58 J.O., 71 T.M., 84 J.O., 96 A.K., 103 M., 107 M. | The catch was kept going by hand for fifty years. The last two tags are the same single initial, ten years after the others stop. |
 | Returns belt sign | RETURNS FROM THE RINGS → DEAD LETTERS | The rings' post still comes down by itself, to the pit he has just left. |
 | Chalk in the tunnel | Hopscotch 1 to 8, a big sun, houses, stick figures | Children played here, in a tunnel, under a sun they had to draw. |
-| The atrium | Ring letters A, B and C painted metres high; ring C barricaded and taped; walkway lamps still on; about three hundred dark windows and one lit, high on ring A, far across | A town gone quiet, with perhaps one person left in it. |
+| The chasm city | Ring letters A, B and C painted metres high; ring C barricaded, dark and failing; light growing level by level up to the upper city; one lit home window on ring A, far across | The bottom of a class system, abandoned first. A larger world above, and perhaps one person left nearby. |
 
 ## 6. Camera
 
@@ -99,7 +106,7 @@ Everything here is read from the world.
 | The far landing | While the belt starts | The framing widens over the belt, so the whole belt and its first crate read. |
 | `lookback` | `LookBack` | From inside the tunnel, low, back past him to the depot (34 mm). |
 | `hopscotch` | `Hopscotch` | Up and over him, so the chalk squares read (36 mm). |
-| `vista` | `Awe` and the slow walk after | From his shoulder out over the atrium, craning up and back to a high wide view with the core off to the right (32 mm, then 24 mm). |
+| `vista` | `Awe` and the slow walk after | From his shoulder down the chasm over the low viaduct, craning up and back to a high wide view: the cliffs either side, the stacked viaducts, and the upper city rising in the haze (32 mm, then 24 mm). |
 
 The goods hall's own framing is lower and wider than the hall before it, so the shaft's depth and the platform at
 its bottom stay in view.
