@@ -110,6 +110,8 @@ Don't make it a clean, regular silo.
 
 The light is warm amber against that haze. The first reveal from DL-04's balcony must say that a larger world lies ahead and above. On the poorest levels, homes stay mostly dark; the lights are the city's systems still running.
 
+**Light by level:** abandoned lower levels get very little light: a failing bulb or two, a lamp left on behind a door, light falling from far above. Darkness is the default down there, and a lit room is an event. Light grows with height: sparse on the middle tiers, warm and dense toward the upper city, where people still live. Keep what the player must read (the path, the red interactables) lit, even in the dark.
+
 ## World building
 
 Lore is read from the world, never from a log.

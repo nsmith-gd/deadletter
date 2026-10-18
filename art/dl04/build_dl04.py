@@ -51,8 +51,8 @@ BALCONY = (70.0, 74.6)
 # wall, near to far (x, y): the chasm opens ahead of the balcony and bends away to the right.
 CHASM_LEFT = ((68.5, 12.0), (57.0, 22.0), (50.0, 40.0), (54.0, 68.0), (64.0, 98.0), (70.0, 132.0), (73.0, 172.0),
               (78.0, 215.0), (84.0, 262.0), (90.0, 312.0))
-CHASM_RIGHT = ((90.5, 10.0), (103.0, 20.0), (114.0, 40.0), (113.0, 70.0), (107.0, 100.0), (110.0, 132.0), (121.0, 168.0),
-               (135.0, 205.0), (149.0, 255.0), (162.0, 312.0))
+CHASM_RIGHT = ((90.5, 10.0), (104.0, 20.0), (117.0, 38.0), (112.0, 68.0), (102.0, 98.0), (106.0, 128.0), (118.0, 160.0),
+               (133.0, 200.0), (148.0, 252.0), (162.0, 312.0))
 CHASM_FLOOR = -48.0                  # the depths, under the mist
 # The terraces, bottom up: ring, height, and the offsets of its lip and back wall into the rock. Ring C,
 # level with the balcony, is the poorest; ring B holds the works; ring A is better built.
@@ -63,9 +63,9 @@ CHASM_FACES = ((-48.0, -9.0), (-36.0, -6.0), (-25.0, -3.5), (-15.0, -1.5), (-6.0
                (7.5, 6.6), (10.2, 4.8), 'B', (14.5, 11.3), (17.5, 11.0), (20.0, 9.6), (22.3, 8.4), 'A', (27.0, 14.3),
                (30.0, 14.0), (36.0, 13.0), (44.0, 12.0), (54.0, 10.5), (66.0, 8.0), (80.0, 4.0), (96.0, -1.0), (112.0, -7.0))
 # The upper city's tiers down the chasm: front edge (y), top (z), depth.
-MESAS = ((168.0, 14.0, 34.0), (202.0, 30.0, 40.0), (242.0, 48.0, 75.0))
+MESAS = ((150.0, 12.0, 32.0), (184.0, 28.0, 36.0), (222.0, 46.0, 72.0))
 # Viaducts across the chasm: how far down it (y), deck height, width, spans.
-VIADUCTS = ((72.0, 12.0, 7.0, 4), (100.0, -8.0, 5.0, 4), (128.0, 26.0, 6.0, 5), (190.0, 40.0, 6.0, 6))
+VIADUCTS = ((80.0, -2.0, 7.0, 4), (104.0, -16.0, 5.0, 3), (120.0, 20.0, 6.0, 4), (174.0, 36.0, 6.0, 6))
 HOME_U = 160.0                       # the one lit home window: ring A on the left wall, this far along
 
 
@@ -1208,6 +1208,10 @@ def _ring_c(b, W, rnd, blocked):
                 rp = c + F * (d / 2 + 0.75) + Vector((0, 0, 2.35))
                 add_box(b['rust'], rp, (w + 0.4, 1.6, 0.05), rot=_rot(T, F) @ Matrix.Rotation(-0.2, 4, 'X'))
             step = w + rnd.uniform(0.4, 2.0)
+        elif near and r < 0.62:                       # a works still running, among the sealed homes
+            w = rnd.uniform(4.5, 7.0)
+            _hall(b, back + F * 0.3, T, F, w, rnd.uniform(3.6, 4.6), True, rnd)
+            step = w + rnd.uniform(1.0, 2.5)
         else:
             c = back + F * 0.25
             _arch(b['dark'], c, T, F, 2.2, 2.8, seg=4)
@@ -1235,9 +1239,9 @@ def _ring_b(b, W, rnd, blocked):
             continue
         lip, back, T, F = _wledge(W, u, 'B')
         k += 1
-        if u < 100:
+        if u < 120:
             w, h = rnd.uniform(5.5, 9.0), rnd.uniform(4.2, 6.2)
-            _hall(b, back + F * 0.3, T, F, w, h, rnd.random() < 0.7, rnd)
+            _hall(b, back + F * 0.3, T, F, w, h, rnd.random() < 0.8, rnd)
             if rnd.random() < 0.4:                   # a gallery above the hall, and its own row of lit windows
                 g = back + F * 1.0 + Vector((0, 0, h + 1.0))
                 add_box(b['sheet'], g, (w + 1.5, 2.0, 0.14), rot=_rot(T, F))
@@ -1307,6 +1311,40 @@ def _wall_lights(b, W, rnd):
             for i in range(rnd.randint(1, 4)):
                 _face(b['glow'] if rnd.random() < 0.55 else b['haze'], q + T * (i * 2.2), T, -n, 1.2, 1.5)
         u += rnd.uniform(3.0, 7.0)
+
+
+def _low_galleries(b, W, u0, u1, rnd):
+    """Below ring C, down the cliff toward the mist: stacked steel galleries along the face, doorways cut
+    behind them (some lit, the works below), lamps, and ladders between."""
+    for z in (-7.0, -14.0, -21.0):
+        u = u0 + rnd.uniform(0, 6)
+        while u < u1:
+            run = rnd.uniform(10.0, 22.0)
+            pts = []
+            v = u
+            while v < min(u + run, u1):
+                pts.append((v, _wface(W, v, z, 0.2)))
+                v += 3.0
+            for (va, a), (vb, c) in zip(pts, pts[1:]):
+                d = c - a
+                T = Vector((d.x, d.y, 0)).normalized()
+                F = -_wframe(W, va)[2]
+                if T.cross(F).z < 0:
+                    T = -T
+                add_box(b['sheet'], (a + c) / 2 + F * 0.9, (d.length + 0.05, 1.8, 0.12), rot=_rot(T, F))
+                add_box(b['sheet'], (a + c) / 2 + F * 1.75 + Vector((0, 0, 1.0)), (d.length + 0.05, 0.05, 0.05), rot=_rot(T, F))
+                r = rnd.random()
+                if r < 0.45:
+                    _arch(b['glow'] if r < 0.3 else b['dark'], a + F * 0.05, T, F, 1.6, 2.4, seg=3)
+                if rnd.random() < 0.3:
+                    add_box(b['lamp'], a + F * 1.7 + Vector((0, 0, 2.2)), (0.26, 0.26, 0.26), rot=_rot(T, F))
+            if len(pts) > 2 and z > -21:
+                q = pts[len(pts) // 2][1]
+                F = -_wframe(W, pts[len(pts) // 2][0])[2]
+                for s in (-0.3, 0.3):
+                    T = Vector((F.y, -F.x, 0))
+                    add_cyl(b['sheet'], q + F * 1.4 + T * s, q + F * 1.4 + T * s + Vector((0, 0, -7.0)), 0.04, seg=4)
+            u += run + rnd.uniform(4.0, 12.0)
 
 
 def _lift_tower(b, base, top_z, T, F, rnd):
@@ -1675,7 +1713,7 @@ def build_atrium(m, coll):
     _cliff(rock, ((69.6, 1.45), (69.6, 3.4), (69.1, 6.0), (68.2, 8.6), (66.9, 11.5), (64.9, 14.5)),
            ((-48.0, -6.0), (-25.0, -2.0), (-4.0, 0.8), (1.0, 1.0), (6.0, 0.8), (12.0, 1.0), (18.0, 1.4), (25.0, 2.2),
             (34.0, 3.5), (44.0, 5.5), (54.0, 9.0)), -1, amp=0.3)
-    _cliff(rock, ((64.6, 1.6), (66.4, 1.6), (68.2, 1.6), (69.7, 1.6)),            # the rock the tunnel is cut through
+    _cliff(rock, ((64.8, 1.7), (66.4, 1.6), (68.2, 1.6), (69.7, 1.6)),            # the rock the tunnel is cut through
            ((3.95, 0.1), (7.0, 0.4), (10.5, 0.9), (14.0, 2.0)), -1, amp=0.25)
     _cliff(rock, ((72.0, 2.7), (71.8, 5.5), (71.0, 8.4), (69.6, 11.3), (67.6, 14.3)),   # ring C, left of the balcony
            ((-48.0, -5.0), (-20.0, -2.0), (-8.0, -1.0), (-3.5, -0.2), (-0.03, 0.0)), -1, amp=0.12,
@@ -1687,7 +1725,7 @@ def build_atrium(m, coll):
            ((-48.0, -5.0), (-1.0, 0.0), (3.6, 0.0), (8.0, -0.6), (14.0, 0.4), (20.0, 1.2), (27.0, 2.0), (36.0, 4.0), (50.0, 8.0)), 1, amp=0.3)
 
     # The upper city, down the chasm and up: three tiers, the great dome on the last.
-    civic = Vector((112.0, 282.0, MESAS[-1][1]))
+    civic = Vector((108.0, 258.0, MESAS[-1][1]))
     for tier, (y0, top, depth) in enumerate(MESAS):
         _mesa(rock, b, WL, WR, y0, top, depth, tier, rnd, civic if tier == 2 else None)
     _civic(b, civic, rnd)
@@ -1704,6 +1742,7 @@ def build_atrium(m, coll):
         found = _ring_a(b, W, rnd, blocked['A'], home=HOME_U if W is WL else None)
         lit = lit or found
         _wall_lights(b, W, rnd)
+        _low_galleries(b, W, 22.0, 120.0, rnd)
         # Pipes along ring B's back wall, near, and risers up out of the mist.
         pts = []
         for u in range(0, 96, 6):
@@ -1732,7 +1771,7 @@ def build_atrium(m, coll):
     for y, z, width, spans in VIADUCTS:
         _viaduct(b, WL, WR, y, z, width, spans, rnd)
     _catwalk(b, WL, WR, 44.0, -5.0, rnd)
-    _catwalk(b, WL, WR, 150.0, 18.0, rnd)
+    _catwalk(b, WL, WR, 140.0, 10.0, rnd)
     for (ua, ra), (ub, rb), sag in (((25.0, 'B'), (35.0, 'B'), 5.0), ((55.0, 'C'), (48.0, 'B'), 4.0), ((80.0, 'A'), (95.0, 'A'), 7.0)):
         a = _wledge(WL, ua, ra)[0] + Vector((0, 0, 4.0))
         c = _wledge(WR, ub, rb)[0] + Vector((0, 0, 4.0))
