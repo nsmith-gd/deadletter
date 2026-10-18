@@ -103,6 +103,13 @@ and cramped, with pipes, ducts, cables and machinery everywhere. The higher the 
 they are to the surface and the more polished they become. That gradient is the refuge's class system.
 Don't make it a clean, regular silo.
 
+**The look (director's reference):** a whole city in a deep chasm, read in layers.
+- **Foreground:** dark cliffs with warm-lit dwellings and workshops carved into them, galleries, pipes, lifts and cranes.
+- **Mid-ground:** heavy arched viaducts spanning the chasm at different heights, waterfalls into misty depths, stalactites overhead.
+- **Background, higher up:** the grander upper city of domes, towers and chimneys, rising out of cool blue haze.
+
+The light is warm amber against that haze. The first reveal from DL-04's balcony must say that a larger world lies ahead and above. On the poorest levels, homes stay mostly dark; the lights are the city's systems still running.
+
 ## World building
 
 Lore is read from the world, never from a log.

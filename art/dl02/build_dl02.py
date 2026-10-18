@@ -584,10 +584,8 @@ def clip_grab(dl01, arm):
         f = frame - 1
         k = smoothstep(f / 10)
         body, rot = (0, -PUSH_LEAN * k, -0.02 * k), (3 * k, 0, 0)
-        # The claws come forward first, then up to the bar, around the pod's front corners.
         held = reach(push_targets(), body, rot, REST)
-        hands = {s: CARRY[s] + Vector(((held[s] - CARRY[s]).x * k, (held[s] - CARRY[s]).y * min(1.0, 1.6 * k),
-                                       (held[s] - CARRY[s]).z * k ** 1.5)) for _, s in SIDES}
+        hands = {s: dl01.reach_around(CARRY[s], held[s], k) for _, s in SIDES}   # forward first, then up to the bar
         c.pose(frame, body=body, body_rot=rot, head=(track([(0, 0), (5, 14), (13, -4)], f), 0, 0),
                antenna=[(-6 * k, 0)] * 3, hands=hands,
                hand_rot={'L': (-24 - 36 * k, 0, 10), 'R': (-24 - 36 * k, 0, -10)},
@@ -612,9 +610,8 @@ def clip_nudge(dl01, arm):
         # tapping, the wrist out to the right and the elbow out (a reach for it with the wrist ran
         # the arm through the pod).
         tip = Vector((-0.05, -0.33 - 0.02 * tap, 0.47))
-        right = reach({1: Vector((0, 0, 0)), -1: tip + Vector((-0.07, 0.09, 0))}, body, rot, REST)[-1] - CARRY[-1]
-        right = CARRY[-1] + Vector((right.x * reachk, right.y * min(1.0, 1.6 * reachk), right.z * reachk ** 1.5))  # out, then up
-        hands = {1: CARRY[1] + Vector((0, 0, 0.01 * reachk)), -1: right}
+        right = reach({1: Vector((0, 0, 0)), -1: tip + Vector((-0.07, 0.09, 0))}, body, rot, REST)[-1]
+        hands = {1: CARRY[1] + Vector((0, 0, 0.01 * reachk)), -1: dl01.reach_around(CARRY[-1], right, reachk)}
         wait = track([(30, 0), (36, 1), (50, 1), (60, 0)], f)
         head = (track([(0, 0), (12, -6), (30, -4), (50, -2), (64, 16), (84, 22)], f),
                 track([(28, 0), (36, 12), (50, 10), (60, 0)], f), track([(40, 0), (46, -8), (54, 0)], f))

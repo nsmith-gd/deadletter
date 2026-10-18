@@ -1862,16 +1862,18 @@ def clip_pat(dl01, arm):
         f = frame - 1
         reach = track([(2, 0), (12, 1), (36, 1), (44, 0)], f)
         tap = sum(math.sin(math.pi * (f - t0) / 5) for t0 in (14, 21) if t0 <= f <= t0 + 5)
-        body, rot = (0, -0.015 * reach, -0.01 * reach), (track([(0, 0), (12, 8), (36, 8), (44, 0)], f), 0, 0)
-        target = Vector((-0.04, -0.27, T4_TOP + 0.075 + 0.025 * tap))
+        body, rot = (0, 0, -0.01 * reach), (track([(0, 0), (12, 4), (36, 4), (44, 0)], f), 0, 0)
+        # The ballast is past his reach: the wrist stays out to the right, elbow out, and the claw points
+        # in to it so its tip does the patting (a reach for it with the wrist ran the arm through the pod).
+        target = Vector((-0.13, -0.235, T4_TOP + 0.03 + 0.025 * tap))
         right = _reach({1: Vector((0, 0, 0)), -1: target}, body, rot, REST)[-1]
-        hands = {1: CARRY[1], -1: CARRY[-1].lerp(right, reach)}
+        hands = {1: CARRY[1], -1: dl01.reach_around(CARRY[-1], right, reach)}
         head = (track([(0, 0), (10, 18), (30, 16), (36, 8), (40, 20), (44, 4), (48, 0)], f),
                 track([(8, 0), (14, 10), (30, 8), (38, 0)], f), 0)
         antenna = [(track([(0, 0), (12, 6), (30, 8), (40, -8), (48, -2)], f) + spring(f, 40, -8 * (1 + 0.3 * i), decay=4), 0)
                    for i in range(3)]
         c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands,
-               hand_rot={'L': (-24, 6, 10), 'R': (-24 - 40 * reach, 0, -10)},
+               hand_rot={'L': (-24, 6, 10), 'R': (-24 - 53 * reach, 0, -10 + 42 * reach)}, elbows={'R': min(1.0, 2 * reach)},
                claws={'L': CLAW_REST_OPEN['L'], 'R': track([(2, 1), (10, 12), (34, 12), (42, 1)], f)})
     c.done()
 

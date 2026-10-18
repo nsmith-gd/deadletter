@@ -666,6 +666,13 @@ def window_claw(s, k, start=(-24, 0, 0)):
     return tuple(a + (b - a) * k for a, b in zip(start, WINDOW_CLAW[s]))
 
 
+def reach_around(start, end, k):
+    """IK-hand offset easing from `start` to `end` that comes forward first and up after, so a claw
+    reaching up in front goes around the pod's front corner instead of through it."""
+    d = end - start
+    return start + Vector((d.x * k, d.y * min(1.0, 1.6 * k), d.z * k ** 1.5))
+
+
 class Clip:
     """Keys one action on the rig, then stashes it as an NLA track for export."""
 
@@ -932,16 +939,14 @@ def clip_tug(arm):
         f = frame - 1
         reach = track([(4, 0), (12, 1), (24, 1), (30, 0)], f)
         pull = track([(14, 0), (19, 1), (23, 1), (26, 0)], f)
-        tiptoe = track([(6, 0), (12, 0.05), (15, 0.05), (19, -0.03), (26, 0)], f)
+        tiptoe = track([(6, 0), (12, 0.035), (15, 0.035), (19, -0.03), (26, 0)], f)
         hands = {}
         for side, s in SIDES:
             if side == 'R':
                 # The bead hangs right at his face: the wrist comes up out in front of it, elbow out,
                 # and the claw angles back in to the bead, the head turned toward it and out of the way.
-                # It comes forward first and then up, around the pod's shoulder.
-                target = Vector((-0.13, -0.21, 0.55 - 0.11 * pull))
-                d = target - REST_WRIST[s] - CARRY[s]
-                hands[s] = CARRY[s] + Vector((d.x * reach, d.y * min(1.0, 1.6 * reach), d.z * reach ** 1.5))
+                target = Vector((-0.13, -0.21, 0.56 - 0.11 * pull))
+                hands[s] = reach_around(CARRY[s], target - REST_WRIST[s], reach)
             else:
                 hands[s] = CARRY[s] + Vector((0, 0.02, 0.03 * reach))
         hand_rot = {'R': (-24 - 180 * reach, 20 * reach, -8 * reach), 'L': (-24, 6, 10)}   # swung up in front, not back through him
@@ -976,7 +981,7 @@ def clip_crank(arm):
         effort = math.sin(math.pi * min(f, 12) / 12) if f <= 12 else 0.0
         # The wheel is as close as his chest: he stands back from it, tall, and hauls leaning back,
         # elbows out, the claws held on the rim through the lean (they reached through the pod).
-        body, rot = (0, 0.04 + 0.01 * effort, 0.02 - 0.012 * effort), (-2 + 2 * effort, 2.5 * effort, 0)
+        body, rot = (0, 0.035 + 0.01 * effort, 0.012 - 0.012 * effort), (-2 + 2 * effort, 2.5 * effort, 0)
         hands = dl02.reach(targets, body, rot, REST_WRIST)
         c.pose(frame, body=body, body_rot=rot,
                head=(track([(0, -6), (8, -12), (14, -4), (24, -6)], f), 2 * effort, 0),

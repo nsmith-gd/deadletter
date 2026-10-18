@@ -654,6 +654,12 @@ def lever_handle(angle_deg, dist=0.26):
     return Vector((0, -(dist - LEVER_LEN * math.sin(a)), LEVER_PIVOT_Z + LEVER_LEN * math.cos(a)))
 
 
+def lever_shaft(angle_deg, z=0.37, dist=0.26):
+    """The point on the lever's shaft at height z, relative to D-17 facing it. The T-handle is at his
+    eye level and, pushed away, beyond his reach, so he grips the shaft at shoulder height."""
+    return Vector((0, -(dist - (z - LEVER_PIVOT_Z) * math.tan(math.radians(angle_deg))), z))
+
+
 LEVER_AWAY, LEVER_NEAR = -18.0, 6.0          # degrees from upright; the game matches
 
 
@@ -672,10 +678,12 @@ def clip_lever(dl01, arm, name, stuck=False):
             k = track([(0, 0), (10, 0), (22, 1)], f)
             reach = track([(0, 0), (8, 1), (24, 1), (30, 0)], f)
             strain = track([(10, 0), (14, 1), (22, 0.3)], f)
-        grip = lever_handle(LEVER_AWAY + (LEVER_NEAR - LEVER_AWAY) * k)
-        body = (0, 0.03 * strain + 0.02 * k, -0.02 * reach - 0.01 * strain)
+        shaft = lever_shaft(LEVER_AWAY + (LEVER_NEAR - LEVER_AWAY) * k)
+        # Leaning in to reach it, then back as it comes; the wrists out to the shaft's sides (elbows
+        # out) and the claws closing on it from both sides.
+        body = (0, -0.03 * reach * (1 - k) + 0.03 * k, -0.02 * reach - 0.01 * strain)
         rot = (track([(0, 0), (8, 8), (12, 8)], f) - 10 * strain, 0, 0)
-        targets = {s: grip + Vector((s * 0.05, 0, 0.04)) for _, s in SIDES}
+        targets = {s: shaft + Vector((s * 0.12, 0.03, 0.025)) for _, s in SIDES}
         inv = dl02_reach(targets, body, rot, REST)
         hands = {s: CARRY[s].lerp(inv[s], reach) for _, s in SIDES}
         if stuck:
@@ -686,7 +694,9 @@ def clip_lever(dl01, arm, name, stuck=False):
         antenna = [(-6 * strain + spring(f, 22 if not stuck else 28, 8 * (1 + 0.3 * i), decay=5), 0) for i in range(3)]
         claw = track([(0, 20), (7, 28), (9, 1), (24 if not stuck else 28, 1), (30 if not stuck else 34, 20)], f)
         c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands,
-               hand_rot={'L': (-60, 0, 20), 'R': (-60, 0, -20)}, claws={'L': claw, 'R': claw})
+               hand_rot={side: (-24 - 36 * reach ** 2, s * (6 + 58 * reach ** 2), -s * (-10 + 56 * reach ** 2))
+                         for side, s in SIDES},
+               claws={'L': claw, 'R': claw}, elbows={'L': reach, 'R': reach})
     c.done()
 
 
@@ -834,7 +844,7 @@ def clip_peek_down(dl01, arm):
         lean = track([(0, 0), (16, 1), (46, 1), (52, 0.55), (64, 0.5), (72, 0)], f)
         recoil = track([(44, 0), (48, 1), (58, 0)], f)
         body, rot = (0, -0.03 * lean + 0.02 * recoil, -0.015 * lean), (16 * lean - 6 * recoil, 0, 0)
-        rail = {1: Vector((0.1, -0.24, 0.5)), -1: Vector((-0.1, -0.24, 0.5))}
+        rail = {1: Vector((0.27, -0.24, 0.5)), -1: Vector((-0.27, -0.24, 0.5))}   # out beside his head as he leans over
         import build_dl02
         held = build_dl02.reach(rail, body, rot, REST)
         hands = {1: CARRY[1].lerp(held[1], track([(4, 0), (14, 1), (60, 1), (70, 0)], f)), -1: CARRY[-1]}
@@ -842,7 +852,8 @@ def clip_peek_down(dl01, arm):
         antenna = [(30 * lean + spring(f, 46, -16 * (1 + 0.3 * i), decay=4), 0) for i in range(3)]
         feet = {side: ((0, 0.03 * track([(52, 0), (64, 1)], f) if side == 'R' else 0, 0), (0, 0, 0)) for side, s in SIDES}
         c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands, feet=feet,
-               hand_rot={'L': (-40, 0, 10), 'R': (-24, -6, -10)}, claws={'L': track([(8, 20), (14, 2), (60, 2), (68, 20)], f), 'R': CLAW_REST_OPEN['R']})
+               hand_rot={'L': (-40, 0, 10), 'R': (-24, -6, -10)}, claws={'L': track([(8, 20), (14, 2), (60, 2), (68, 20)], f), 'R': CLAW_REST_OPEN['R']},
+               elbows={'L': 1})
     c.done()
 
 

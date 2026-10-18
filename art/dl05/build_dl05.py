@@ -142,6 +142,8 @@ def _save(img, name, colors):
     """Lore textures are flat colour: a small palette keeps them light in set.glb."""
     from PIL import Image
     q = img.quantize(colors, method=Image.Quantize.FASTOCTREE if img.mode == 'RGBA' else Image.Quantize.MEDIANCUT)
+    if img.mode == 'RGBA':
+        q = q.convert('RGBA')             # decals stay true RGBA: some loaders ignore a palette's transparency
     q.save(_tex(name), optimize=True)
 
 
@@ -214,7 +216,7 @@ def make_textures():
     rnd = random.Random(520)
     graphite = (58, 56, 62, 225)
     for k, (age, year, z) in enumerate(((2, 38, 0.862), (3, 39, 0.928), (4, 40, 0.991), (5, 41, 1.064), (6, 42, 1.138))):
-        a, b = px(94.335, z), px(94.47, z + rnd.uniform(-0.004, 0.004))
+        a, b = px(94.35, z), px(94.47, z + rnd.uniform(-0.004, 0.004))
         _line(d, [a, b], graphite, 5, rnd, 1.0, passes=2)
         # The label, in a grown-up's pencil, each written a little askew.
         lab = Image.new('RGBA', (190, 48), (0, 0, 0, 0))
@@ -222,7 +224,7 @@ def make_textures():
         ld.text((4, 40), f'M {age}', font=_font(32, 'serif'), fill=graphite, anchor='ls')
         ld.text((62, 40), f'R.Y. {year}', font=_font(22, 'sans'), fill=(58, 56, 62, 205), anchor='ls')
         lab = lab.rotate(rnd.uniform(-4, 4), resample=Image.BICUBIC)
-        img.alpha_composite(lab, (int(a[0] - 150), int(a[1] - 36)))
+        img.alpha_composite(lab, (int(a[0] - 142), int(a[1] - 36)))
     sx, sy = px(94.47, 1.138)                                               # a child's star by the last one
     d.line((sx + 12, sy - 22, sx + 26, sy + 6, sx + 2, sy - 12, sx + 30, sy - 12, sx + 6, sy + 6, sx + 12, sy - 22),
            fill=(70, 90, 170, 220), width=4)
@@ -569,7 +571,7 @@ def build_ring_c(m, coll):
         add_box(bm, (dx, BACK_Y - 0.06, 0.025), (0.95, 0.14, 0.05), mat=1)  # doorstep
         if kind == 'shutter':                                               # a roller shutter, down
             for k in range(14):
-                add_box(bm, (dx, BACK_Y + 0.004 - 0.006 * (k % 2), 0.07 + k * 0.132), (0.82, 0.02, 0.128), mat=2)
+                add_box(bm, (dx, BACK_Y + 0.004 - 0.003 * (k % 2), 0.07 + k * 0.132), (0.82, 0.02, 0.132), mat=2)
             add_box(bm, (dx, BACK_Y - 0.04, 1.93), (0.86, 0.1, 0.12), mat=2)
         else:                                                               # a wooden door, shut
             add_box(bm, (dx, BACK_Y + 0.01, 0.98), (0.82, 0.03, 1.96), mat=3)
