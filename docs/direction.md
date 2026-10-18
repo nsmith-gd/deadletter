@@ -27,6 +27,19 @@ service"), the moment must be felt, not just seen.
 - **Sparseness still holds.** Between these moments, music stays sparse (the GDD's "sparse music at
   transitions"). The bed sits low and puzzles keep their room tone.
 
+## Colour language: what you can use is red
+
+Anything D-17 can use carries red paint: handles, levers, the crank wheel, the pull-cord's bead, the
+sorting weight, the trolleys' grips, the pawl lever, the desk's edge. Nothing else in a scene is that
+red. On a phone screen this is how the player finds what matters. Light helps too: a pool of light
+over an interactable that would otherwise sit in shadow (the crank wheel).
+
+## Let the player try things
+
+If something looks like it can be climbed into or ridden, let the player do it, even if it ends badly.
+The carriers in DL-03 can be boarded anywhere, by Use or by jumping into one. Riding one to the chute
+tips D-17 onto the heap of dead post, and he is back at the checkpoint after a fade.
+
 ## Use the camera
 
 The side-on framing is the default, not a rule. For a moment that matters, the camera leaves it for an
@@ -37,6 +50,11 @@ authored shot with its own position, aim and lens, eased in and back out (`curre
 - **Shake for impacts.** A short, damped shake when something heavy lands (the shutter, the gate, a carrier tipping), never for footsteps. Calm mode turns it off.
 
 Play carries on under a shot where it can, and any shot hands back smoothly.
+
+**Cinematics play once.** After a respawn or a checkpoint reload, authored moments the player has
+already sat through are skipped (the realisation among the couriers, the look back, the hopscotch, the
+awe, the knock, the hold on the growth marks). Shots that show how a puzzle works play every time
+(the platform rising, the points thrown to the ramp, the pawl's click). Starting over clears this.
 
 ## D-17's quirks
 
@@ -76,6 +94,14 @@ quirk, a look back, a moment of scale. The puzzles themselves keep their size.
   iconography.
 - D-17 never walks on his arms, and his head is steady when he walks.
 - Most players want automatic running, so Auto-run is on by default.
+
+## The refuge's levels
+
+The refuge is an underground city dug into the rock, and the story climbs it. The bottom, where D-17
+starts, is the poorest and most industrial: the depot, the returns pit, ring C. It is rushed, patched
+and cramped, with pipes, ducts, cables and machinery everywhere. The higher the levels, the closer
+they are to the surface and the more polished they become. That gradient is the refuge's class system.
+Don't make it a clean, regular silo.
 
 ## World building
 

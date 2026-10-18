@@ -892,6 +892,42 @@ def cue_refuge():
     return m.render()
 
 
+def cue_child():
+    """DL-05. The desk scrapes clear and the growth marks are there. The music box finds the parcel's three
+    notes, slowly, and they become a lullaby (phrase A at a rocking pace) over soft piano and strings that
+    swell a little as he takes in the marks and the tree. It thins to a single high note, held, as the
+    terminal answers."""
+    rng = np.random.default_rng(1111)
+    m = Mix(50)
+    m['air'].add(wind(50, 0.03, rng) * env_curve(int(50 * SR), 3, 12), 0)
+    string_note(m['strings'], 'A5', 0.0, 5.0, 0.05, 'violin', 0.4, 2.0, 2.0, rng=rng)
+    m['piano'].add(piano('D2', 0.3, 5, rng), 0.2, -0.3)
+    for t, name, v in ((1.2, 'F5', 0.34), (2.5, 'E5', 0.3), (4.0, 'D5', 0.34)):
+        m['box'].add(music_box(name, v, rng), t, 0.3)
+    # The lullaby: the music box on phrase A, the piano rocking under it.
+    t0, bl = 6.0, 3.4
+    for t, name, d in scaled_events(range(4), t0, bl, transpose=1):
+        m['box'].add(music_box(name, 0.3, rng), t + human(rng, 8), 0.3)
+    for k in range(8):
+        lh_arpeggio(m['piano'], k, t0 + k * bl, 0.2 + 0.02 * min(k, 4), rng, 'sparse')
+    dyn = [0.1, 0.13, 0.17, 0.22, 0.3, 0.34, 0.28, 0.2]
+    for k in range(8):
+        string_bar(m['strings'], k, t0 + k * bl, dyn[k], rng, bars=bl / BAR, bass=k >= 2, attack=1.6, release=2.2)
+    # Bars 5-8: the piano takes the tune, the music box answers each phrase an octave up.
+    for t, name, d in scaled_events(range(4, 8), t0 + 4 * bl, bl):
+        m['piano'].add(piano(name, 0.36, d * 1.1, rng), t + human(rng), pan_for(name))
+    for k, (name, v) in enumerate((('A5', 0.22), ('D6', 0.2), ('E6', 0.18), ('C#6', 0.18))):
+        m['box'].add(music_box(name, v, rng), t0 + (4 + k) * bl + 2.2, 0.35)
+    vl, voff = legato_line(scaled_events(range(4, 7), 0, bl, transpose=1), 0, 'violin', 0.16, rng, vib_cents=14, tail=1.5)
+    m['strings'].add(vl, t0 + 4 * bl + voff, 0.35)
+    # The terminal answers: one high note, held, and a low D under it.
+    t1 = t0 + 8 * bl
+    string_note(m['strings'], 'A5', t1, 12, 0.07, 'violin', 0.4, 1.5, 6, shape=[1, 1, 0.8, 0.5], rng=rng)
+    string_note(m['strings'], 'D3', t1, 12, 0.1, 'cello', -0.3, 2.0, 6, rng=rng)
+    m['box'].add(music_box('D6', 0.22, rng), t1 + 3.0, 0.35)
+    return m.render()
+
+
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
@@ -918,8 +954,8 @@ def main():
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     cues = {'wake': cue_wake, 'bed': cue_bed, 'hall': cue_hall, 'threshold': cue_threshold, 'racks': cue_racks,
-            'kin': cue_kin, 'dead': cue_dead, 'latch': cue_latch, 'refuge': cue_refuge, 'end': cue_end}
-    files = {'latch': 'dl04_latch', 'refuge': 'dl04_refuge'}
+            'kin': cue_kin, 'dead': cue_dead, 'latch': cue_latch, 'refuge': cue_refuge, 'child': cue_child, 'end': cue_end}
+    files = {'latch': 'dl04_latch', 'refuge': 'dl04_refuge', 'child': 'dl05_child'}
     reference = ('wake', 'hall', 'end')
     rendered = {}
     for name, fn in cues.items():
