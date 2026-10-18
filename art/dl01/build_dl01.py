@@ -1,6 +1,6 @@
-"""Chapter 1 (DL-01 The Wake to DL-04 The Handbrake): builds the continuous set and D-17's gameplay
-clips, exported for the playable prototype in game/undelivered/. DL-02, DL-03 and DL-04 live in
-art/dl02, art/dl03 and art/dl04 and are called from here.
+"""Chapter 1 (DL-01 The Wake to DL-05 The Child at the Address): builds the continuous set and D-17's gameplay
+clips, exported for the playable prototype in game/undelivered/. DL-02 to DL-05 live in art/dl02 to
+art/dl05 and are called from here.
 
     python build_dl01.py --out ../../game/undelivered/assets
 
@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.join(HERE, '..', 'd17'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl04'))
+sys.path.insert(0, os.path.join(HERE, '..', 'dl05'))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
 import bmesh  # noqa: E402
@@ -36,6 +37,7 @@ import build_d17 as d17  # noqa: E402
 import build_dl02 as dl02  # noqa: E402
 import build_dl03 as dl03  # noqa: E402
 import build_dl04 as dl04  # noqa: E402
+import build_dl05 as dl05  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
                        SIDES, CLAW_REST_OPEN, _key)
@@ -47,10 +49,10 @@ DORMANT_YAW = -45.0                  # slumped three-quarters toward camera
 
 # Shared with the game (game/undelivered/index.html keeps the same numbers).
 SHUTTER_PATH = [Vector((0.2, 1.60)), Vector((2.0, 0.62)), Vector((3.2, 0.60)), Vector((3.4, 0.02))]
-LATCH_PIVOT = Vector((3.36, 0.12))   # (x, z); the lever stands up from here
+LATCH_PIVOT = Vector((3.24, 0.12))   # (x, z); the lever stands up from here, on D-17's side of the shutter's foot
 LATCH_LEN = 0.21
 LATCH_TILT = 8.0                     # degrees toward D-17 at rest
-PULL_ROOT_X = 3.12
+PULL_ROOT_X = 3.0
 CRATE = (5.6, 6.2, 0.45)             # x0, x1, height (mantle)
 STEP = (4.1, 4.9, 0.22)              # fallen conveyor: x0, x1, height (first jump)
 PIT = (6.6, 7.1, -0.35)              # drain trench: x0, x1, floor height
@@ -214,11 +216,12 @@ def build_shutter(m, coll):
     px, pz = LATCH_PIVOT
     bm = bmesh.new()
     add_box(bm, (3.4, 0.2, 0.035), (0.05, 1.5, 0.06))                    # bottom rail
-    add_box(bm, (3.4, -0.02, 0.1), (0.07, 0.1, 0.16))                     # latch body
+    add_box(bm, (3.29, -0.02, 0.09), (0.07, 0.1, 0.14))                    # latch body, inside the shutter's foot
+    add_box(bm, (3.345, -0.02, 0.05), (0.08, 0.05, 0.03))                  # its strap to the bottom rail
     add_cyl(bm, (px, -0.1, pz), (px, 0.06, pz), 0.014)                    # lever pivot
     obj('ShutterRail', bm, [m['steel']], coll)
     bm = bmesh.new()
-    add_box(bm, (3.44, -0.02, 0.012), (0.14, 0.14, 0.024))                # floor bracket stays put
+    add_box(bm, (3.3, -0.02, 0.012), (0.14, 0.14, 0.024))                 # floor bracket stays put
     obj('LatchBracket', bm, [m['steel']], coll)
 
     # T-handled lever, modelled upright about its pivot so the game can rotate it.
@@ -635,8 +638,32 @@ def build_cradle(m, coll):
 
 REST_WRIST = {s: Vector((s * 0.262, -0.01, 0.113)) for _, s in SIDES}
 CARRY = {s: Vector((-s * 0.04, -0.09, 0.112)) for _, s in SIDES}
-CROUCH_CARRY = {s: Vector((-s * 0.04, -0.09, 0.112 + 0.17)) for _, s in SIDES}
-FOLDED = {s: Vector((-s * 0.162, -0.215, 0.327)) for _, s in SIDES}
+CROUCH_CARRY = {s: Vector((-s * 0.02, -0.1, 0.112 + 0.17)) for _, s in SIDES}   # out past the pod's sides
+CROUCH_ELBOWS = {'L': 1.0, 'R': 1.0}  # crouched, the claws ride up by the pod: elbows out
+FOLDED = {s: Vector((-s * 0.142, -0.23, 0.327)) for _, s in SIDES}   # claws over the compartment, elbows out
+ELBOW_OUT = 0.4                      # m the elbow's IK pole swings out to the side at elbows=1 (Clip.pose)
+# A claw on the parcel window (rig space, body at rest). A straight reach from the shoulder to the glass
+# runs through the pod, so the wrist stays out past the pod's front corner, elbow out, and the claw
+# turns in to lay its tip on the glass. Taps lift it off the glass (WINDOW_OUT).
+WINDOW_WRIST = {s: Vector((s * 0.163, -0.268, 0.403)) for _, s in SIDES}
+WINDOW_CLAW = {s: (79, 0, s * 59) for _, s in SIDES}            # hand_rot that aims the claw at the glass
+WINDOW_OUT = {s: Vector((s * 0.3, -0.94, 0.15)) for _, s in SIDES}   # off the glass, a little outward
+
+
+def window_reach(s, start, k, tap=0.0, target=None, arc=0.12):
+    """IK-hand offset bringing a claw from `start` (k = 0) to the window (k = 1). The wrist arcs out in
+    front (`arc`) so the claw comes onto the glass from the front instead of up through the bezel; a tap
+    of 1 lifts it 2 cm off the glass. `target` replaces WINDOW_WRIST, for a claw laid elsewhere on the chest."""
+    wrist = WINDOW_WRIST[s] if target is None else target
+    lift = arc * k * math.sqrt(max(0.0, 1 - k)) + 0.02 * tap
+    return start.lerp(wrist - REST_WRIST[s], k) + WINDOW_OUT[s] * lift
+
+
+def window_claw(s, k, start=(-24, 0, 0)):
+    """hand_rot easing from `start` (k = 0) to the claw laid on the window (k = 1). The claw turns in
+    ahead of the reach, so it arrives already aimed at the glass."""
+    k = 1 - (1 - k) ** 2
+    return tuple(a + (b - a) * k for a, b in zip(start, WINDOW_CLAW[s]))
 
 
 class Clip:
@@ -661,7 +688,9 @@ class Clip:
                 self.axes[f'{f}.{side}'] = (b.matrix_local.to_3x3().inverted() @ Vector((0, 1, 0))).normalized()
 
     def pose(self, frame, body=(0, 0, 0), body_rot=(0, 0, 0), head=(0, 0, 0), yaw=0.0,
-             antenna=((0, 0), (0, 0), (0, 0)), feet=None, hands=None, hand_rot=None, claws=None):
+             antenna=((0, 0), (0, 0), (0, 0)), feet=None, hands=None, hand_rot=None, claws=None, elbows=None):
+        """`elbows` (0 to 1 per side) swings that elbow's IK pole out to the side. The pole rests behind
+        the elbow, which folds the elbow in through the pod when a claw comes up and across the front."""
         rad = math.radians
         pb = self.pb
         pb['root'].rotation_euler = (0, 0, rad(yaw))
@@ -679,6 +708,7 @@ class Clip:
             h.location = (hands or CARRY)[s] if hands is not None else CARRY[s]
             hr = (hand_rot or {}).get(side, (-24, s * 6, s * 10))
             h.rotation_euler = [rad(v) for v in hr]
+            pb[f'pole_elbow.{side}'].location = (s * ELBOW_OUT * (elbows or {}).get(side, 0.0), 0, 0)
             opening = rad((claws or {}).get(side, CLAW_REST_OPEN[side]))
             for fname, sign in (('finger_a', 1), ('finger_b', -1)):
                 fp = pb[f'{fname}.{side}']
@@ -688,6 +718,7 @@ class Clip:
         for side, _ in SIDES:
             _key(pb[f'ik_foot.{side}'], 'location', 'rotation_euler', frame=frame)
             _key(pb[f'ik_hand.{side}'], 'location', 'rotation_euler', frame=frame)
+            _key(pb[f'pole_elbow.{side}'], 'location', frame=frame)
             for fname in ('finger_a', 'finger_b'):
                 _key(pb[f'{fname}.{side}'], 'rotation_axis_angle', frame=frame)
 
@@ -743,7 +774,7 @@ def clip_opening(arm):
                 tap = sum(max(0.0, math.sin(math.pi * (f - t0) / 6)) for t0 in (CHECK + 8, CHECK + 16)
                           if t0 <= f <= t0 + 6)
                 loc.y += 0.012 * tap
-                loc.x += 0.03 * track([(CHECK + 18, 0), (CHECK + 24, 1), (CHECK + 28, -0.6), (RELIEF, 0)], f)
+                loc.z -= 0.03 * track([(CHECK + 18, 0), (CHECK + 24, 1), (CHECK + 28, -0.15), (RELIEF, 0)], f)  # down the seal
             hands[s] = loc.lerp(CARRY[s], carry)
             hand_rot[side] = (-20 - 4 * carry, s * 6 * carry, s * 10 * carry)
             claws[side] = track([(0, 0), (CHECK + 6, 0), (CHECK + 10, 6), (RELIEF, 6),
@@ -754,12 +785,13 @@ def clip_opening(arm):
             lift = 0.022 * math.sin(math.pi * (f - t0) / 10) if t0 <= f <= t0 + 10 else 0.0
             feet[side] = ((0, 0, lift), (10 * lift / 0.022, 0, 0))
         c.pose(frame, body=(0, 0, z), body_rot=(pitch, roll, 0), head=(hp, hr, hy), yaw=yaw,
-               antenna=antenna, feet=feet, hands=hands, hand_rot=hand_rot, claws=claws)
+               antenna=antenna, feet=feet, hands=hands, hand_rot=hand_rot, claws=claws,
+               elbows={'L': 1 - carry ** 3, 'R': 1 - carry ** 3})
     c.done()
 
 
 def gait(arm, name, frames, half, stance, lift, crouch=0.0, lean=3.0, head_pitch=2.0,
-         antenna_back=0.0, carry=None, arm_swing=0.012, bob=0.004, roll=2.0, claws=None):
+         antenna_back=0.0, carry=None, arm_swing=0.012, bob=0.004, roll=2.0, claws=None, elbows=None):
     """Continuous in-place gait (the game moves the character). Feet travel +-half."""
     c = Clip(arm, name, frames)
     tau = 2 * math.pi
@@ -785,7 +817,8 @@ def gait(arm, name, frames, half, stance, lift, crouch=0.0, lean=3.0, head_pitch
                    for i in range(3)]
         hands = {s: carry[s] + Vector((0, arm_swing * s * math.cos(tau * t), 0.005 * math.sin(2 * tau * t - 1.6)))
                  for _, s in SIDES}
-        c.pose(frame, body=body, body_rot=body_rot, head=head, antenna=antenna, feet=feet, hands=hands, claws=claws)
+        c.pose(frame, body=body, body_rot=body_rot, head=head, antenna=antenna, feet=feet, hands=hands, claws=claws,
+               elbows=elbows)
     c.done()
 
 
@@ -796,7 +829,7 @@ def clip_crouch_idle(arm):
         t = (frame - 1) / 48
         c.pose(frame, body=(0, 0, CROUCH + 0.002 * math.sin(tau * t)), body_rot=(6, 0, 0),
                head=(-2 + 1.5 * math.sin(tau * t - 0.6), 0, 0),
-               antenna=[(-65 if i == 0 else -12, 0) for i in range(3)], hands=CROUCH_CARRY)
+               antenna=[(-65 if i == 0 else -12, 0) for i in range(3)], hands=CROUCH_CARRY, elbows=CROUCH_ELBOWS)
     c.done()
 
 
@@ -848,12 +881,14 @@ def clip_mantle(arm):
         up = frac * h
         ef, eu = d0 - fwd, h - up               # crate edge relative to the root
         grab = track([(6, 0), (10, 1), (40, 1), (46, 0)], f)
-        hands = {}
+        # Wrists over the crate's top, claws hooked on it; then pressing down on the edge as he comes
+        # over. Placed in rig space through the body's lean, elbows out: the edge is at his chest, and
+        # an offset that ignored the lean put the claws inside the pod.
+        targets = {}
         for side, s in SIDES:
-            grip = Vector((s * 0.16, -ef + 0.02, eu + 0.06))
-            push = Vector((s * 0.16, -ef + 0.05, eu + 0.1))
-            target = grip.lerp(push, track([(36, 0), (44, 1)], f))
-            hands[s] = CARRY[s].lerp(target - REST_WRIST[s], grab)
+            grip = Vector((s * 0.18, -ef - 0.035, eu + 0.07))
+            push = Vector((s * 0.19, -ef + 0.0, eu + 0.1))
+            targets[s] = grip.lerp(push, track([(36, 0), (44, 1)], f))
         feet = {}
         for side, s in SIDES:
             if f < 10:
@@ -882,8 +917,10 @@ def clip_mantle(arm):
         antenna = [(-12 * struggle + 8 * math.sin(f * 0.8 - i) * struggle + spring(f, 44, 14 * (1 + 0.3 * i), decay=5, freq=1.3)
                     + track([(0, 0), (6, -10), (10, 0)], f), 0) for i in range(3)]
         opening = track([(0, 20), (9, 25), (10, 0), (40, 0), (44, 25), (52, 20)], f)
+        held = dl02.reach(targets, (0, 0, body_z), (pitch, roll, 0), REST_WRIST)
+        hands = {s: CARRY[s].lerp(held[s], grab) for _, s in SIDES}
         c.pose(frame, body=(0, 0, body_z), body_rot=(pitch, roll, 0), head=head, antenna=antenna,
-               feet=feet, hands=hands, claws={'L': opening, 'R': opening})
+               feet=feet, hands=hands, claws={'L': opening, 'R': opening}, elbows={'L': grab, 'R': grab})
     c.done()
 
 
@@ -895,25 +932,29 @@ def clip_tug(arm):
         f = frame - 1
         reach = track([(4, 0), (12, 1), (24, 1), (30, 0)], f)
         pull = track([(14, 0), (19, 1), (23, 1), (26, 0)], f)
-        tiptoe = track([(6, 0), (12, 0.035), (15, 0.035), (19, -0.03), (26, 0)], f)
+        tiptoe = track([(6, 0), (12, 0.05), (15, 0.05), (19, -0.03), (26, 0)], f)
         hands = {}
         for side, s in SIDES:
             if side == 'R':
-                target = Vector((-0.08, -0.15, 0.6 - 0.11 * pull))
-                hands[s] = CARRY[s].lerp(target - REST_WRIST[s], reach)
+                # The bead hangs right at his face: the wrist comes up out in front of it, elbow out,
+                # and the claw angles back in to the bead, the head turned toward it and out of the way.
+                # It comes forward first and then up, around the pod's shoulder.
+                target = Vector((-0.13, -0.21, 0.55 - 0.11 * pull))
+                d = target - REST_WRIST[s] - CARRY[s]
+                hands[s] = CARRY[s] + Vector((d.x * reach, d.y * min(1.0, 1.6 * reach), d.z * reach ** 1.5))
             else:
                 hands[s] = CARRY[s] + Vector((0, 0.02, 0.03 * reach))
-        hand_rot = {'R': (-24 + 194 * reach, 0, 0), 'L': (-24, 6, 10)}
+        hand_rot = {'R': (-24 - 180 * reach, 20 * reach, -8 * reach), 'L': (-24, 6, 10)}   # swung up in front, not back through him
         look = track([(0, 0), (6, -26), (24, -18), (30, -32), (40, -30), (44, -20)], f)
         tilt = track([(26, 0), (34, 9), (44, 6)], f)
-        yaw = track([(30, 0), (38, 28), (44, 20)], f)
+        yaw = track([(0, 0), (6, -20), (24, -16), (30, 0), (38, 28), (44, 20)], f)
         feet = {side: ((0, 0, 0), (-8 * tiptoe / 0.035 if tiptoe > 0 else 0, 0, 0)) for side, _ in SIDES}
         antenna = [(track([(0, 0), (8, -8), (24, -6), (28, 0)], f) - spring(f, 26, 14 * (1 + 0.3 * i), decay=6), 0)
                    for i in range(3)]
         c.pose(frame, body=(0, 0, tiptoe), body_rot=(track([(0, 2), (12, -6), (19, 4), (26, 2)], f), 0, 0),
                head=(look, tilt, yaw), antenna=antenna, feet=feet, hands=hands, hand_rot=hand_rot,
                claws={'R': track([(10, 25), (14, 0), (23, 0), (25, 28), (34, CLAW_REST_OPEN['R'])], f),
-                      'L': CLAW_REST_OPEN['L']})
+                      'L': CLAW_REST_OPEN['L']}, elbows={'R': min(1.0, 2 * reach)})
     c.done()
 
 
@@ -927,19 +968,22 @@ def clip_crank(arm):
         f = (frame - 1) % frames
         turn = track([(0, 0), (12, 1)], f) if f <= 12 else track([(12, 1), (22, 0)], f)
         lift_off = math.sin(math.pi * (f - 12) / 10) if 12 <= f <= 22 else 0.0
-        hands = {}
+        targets = {}
         for side, s in SIDES:
-            a0 = math.radians(40 if side == 'L' else 220)
+            a0 = math.radians(30 if side == 'L' else 210)
             a = a0 - math.radians(60) * turn
-            target = Vector((r * math.cos(a), cy + 0.04 * lift_off, cz + r * math.sin(a)))
-            hands[s] = target - REST_WRIST[s]
+            targets[s] = Vector((r * math.cos(a), cy + 0.04 * lift_off, cz + r * math.sin(a)))
         effort = math.sin(math.pi * min(f, 12) / 12) if f <= 12 else 0.0
-        c.pose(frame, body=(0, -0.02 * effort, -0.012 - 0.012 * effort),
-               body_rot=(8 + 5 * effort, 2.5 * effort, 0),
+        # The wheel is as close as his chest: he stands back from it, tall, and hauls leaning back,
+        # elbows out, the claws held on the rim through the lean (they reached through the pod).
+        body, rot = (0, 0.04 + 0.01 * effort, 0.02 - 0.012 * effort), (-2 + 2 * effort, 2.5 * effort, 0)
+        hands = dl02.reach(targets, body, rot, REST_WRIST)
+        c.pose(frame, body=body, body_rot=rot,
                head=(track([(0, -6), (8, -12), (14, -4), (24, -6)], f), 2 * effort, 0),
                antenna=[(6 * effort + 3 * math.sin(f * 0.6 - i), 0) for i in range(3)],
                hands=hands, hand_rot={'L': (-30, 0, 30), 'R': (-30, 0, -30)},
-               claws={'L': 0 if f < 12 or f > 21 else 26, 'R': 0 if f < 12 or f > 21 else 26})
+               claws={'L': 0 if f < 12 or f > 21 else 26, 'R': 0 if f < 12 or f > 21 else 26},
+               elbows={'L': 1, 'R': 1})
     c.done()
 
 
@@ -954,28 +998,37 @@ def lever_grip(f):
     return Vector((px - LATCH_LEN * math.sin(a), pz + LATCH_LEN * math.cos(a)))
 
 
+PULL_SIT = 0.12                       # m the crouched body sits back from his feet for the pull
+PULL_HOOK = {s: Vector((s * 0.03, 0.075, -0.075)) for _, s in SIDES}  # wrist from the bar end
+PULL_HOOK_ROT = (125, 16, -57)        # degrees added to the hand at full reach: claws forward and up
+
+
 def clip_pull(arm):
-    """Crouched under the shutter, both claws on the T-handle, two heaves; it gives on the second."""
+    """Crouched under the shutter, both claws on the T-handle, two heaves; it gives on the second.
+    The bar is at his head height when he crouches: he sits back from it, elbows out, and hooks the
+    claws forward under it (a reach up and over the bar would put the forearms through his head)."""
     frames = 40
     c = Clip(arm, 'Pull', frames)
     for frame in range(1, frames + 1):
         f = frame - 1
         lean_back = track([(0, 0), (12, 0), (20, 0.03), (24, 0.015), (30, 0.05), (34, 0.08), (40, 0.07)], f)
         pitch = track([(0, 6), (12, 6), (20, -12), (24, -6), (30, -16), (34, -8), (40, -4)], f)
-        g = lever_grip(min(f, 31))
+        g = lever_grip(min(f, 30))       # the claws let go as it gives
         reach = smoothstep(f / 8) * (1 - smoothstep((f - 33) / 6))
-        hands = {}
-        for side, s in SIDES:
-            lateral = -0.13 if side == 'R' else 0.09
-            target = Vector((lateral, -(g.x - PULL_ROOT_X) + lean_back, g.y + 0.08 - CROUCH))
-            hands[s] = CROUCH_CARRY[s].lerp(target - REST_WRIST[s], reach)
         grip = track([(0, 25), (8, 25), (12, 2), (31, 2), (34, 30), (40, 30)], f)
         strain = track([(12, 0), (20, 1), (24, 0.4), (30, 1), (34, 0)], f)
-        c.pose(frame, body=(0, lean_back, CROUCH - 0.01 * strain), body_rot=(pitch, 0, 0),
+        body = (0, PULL_SIT + lean_back, CROUCH - 0.01 * strain)
+        # Wrists behind and below the bar ends (rig space), claws pointing forward and up onto it.
+        bar = {s: Vector((-0.13 if s < 0 else 0.09, -(g.x - PULL_ROOT_X), g.y)) + PULL_HOOK[s] for _, s in SIDES}
+        held = dl02.reach(bar, body, (pitch, 0, 0), REST_WRIST)
+        hands = {s: CROUCH_CARRY[s].lerp(held[s], reach) for _, s in SIDES}
+        hook = {side: (-10 - PULL_HOOK_ROT[0] * reach, s * PULL_HOOK_ROT[1] * reach, s * (20 + PULL_HOOK_ROT[2] * reach))
+                for side, s in SIDES}
+        c.pose(frame, body=body, body_rot=(pitch, 0, 0),
                head=(track([(0, 4), (10, 10), (20, -6), (24, 0), (30, -8), (34, 2)], f),
                      3 * strain * math.sin(f * 2.1), 0),
                antenna=[(-65 + 6 * strain * math.sin(f * 1.7 + i) if i == 0 else -12, 0) for i in range(3)],
-               hands=hands, hand_rot={'L': (-10, 0, 20), 'R': (-10, 0, -20)}, claws={'L': grip, 'R': grip})
+               hands=hands, hand_rot=hook, claws={'L': grip, 'R': grip}, elbows=CROUCH_ELBOWS)
     c.done()
 
 
@@ -987,13 +1040,16 @@ def clip_flinch(arm):
         f = frame - 1
         cover = track([(0, 0), (3, 1), (18, 1), (34, 0)], f, ease=lambda x: ease_back(x, 0.6))
         z = CROUCH + track([(0, 0), (3, -0.03), (18, -0.03), (40, 0.0)], f)
-        hands = {s: CROUCH_CARRY[s].lerp(Vector((-s * 0.14, -0.06, 0.42)), cover) for _, s in SIDES}
+        # Forearms up in front of his face, elbows out, claws standing up over it (a cover straight up
+        # past the pod would put the claws through his head).
+        hands = {s: CROUCH_CARRY[s].lerp(Vector((-s * 0.06, -0.23, 0.42)), cover) for _, s in SIDES}
         peek_tilt = track([(16, 0), (26, 10), (40, 6)], f)
         c.pose(frame, body=(0, 0.04 * cover, z), body_rot=(track([(0, 6), (3, -8), (18, -6), (40, 4)], f), 0, 0),
                head=(track([(0, 0), (3, 14), (18, 12), (30, -6), (40, -3)], f), peek_tilt, 0),
                antenna=[(-80 * cover - 40 * (1 - cover) + spring(f, 18, 10, decay=6) * (i + 1), 0) for i in range(3)],
-               hands=hands, hand_rot={'L': (-60 * cover - 24 * (1 - cover), 0, 0), 'R': (-60 * cover - 24 * (1 - cover), 0, 0)},
-               claws={'L': 4, 'R': 2})
+               hands=hands, hand_rot={'L': (-150 * cover - 24 * (1 - cover), 0, -15 * cover),
+                                      'R': (-150 * cover - 24 * (1 - cover), 0, 15 * cover)},
+               claws={'L': 4, 'R': 2}, elbows=CROUCH_ELBOWS)
     c.done()
 
 
@@ -1001,6 +1057,10 @@ def clip_idle(arm):
     arm.animation_data_create()
     arm.animation_data.action = bpy.data.actions.new('Idle')
     d17.animate_idle(arm, d17.IDLE_FRAMES)
+    for side, _ in SIDES:                    # the elbow poles at rest, as every Clip keys them
+        pole = arm.pose.bones[f'pole_elbow.{side}']
+        pole.location = (0, 0, 0)
+        _key(pole, 'location', frame=1)
     ad = arm.animation_data
     t = ad.nla_tracks.new()
     t.name = 'Idle'
@@ -1054,6 +1114,7 @@ def main():
     slots = dl02.build_set(sys.modules[__name__], m, set_coll)
     dl03.build_set(sys.modules[__name__], m, set_coll)
     dl04.build_set(sys.modules[__name__], m, set_coll)
+    dl05.build_set(sys.modules[__name__], m, set_coll)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
@@ -1071,7 +1132,7 @@ def main():
          antenna_back=-14, carry={s: CARRY[s] + Vector((-s * 0.02, 0.02, 0.07)) for _, s in SIDES},
          arm_swing=0.035, bob=0.012, roll=3.0)
     gait(arm, 'CrouchWalk', 13, half=0.08, stance=0.6, lift=0.022, crouch=CROUCH, lean=6,
-         head_pitch=-2, antenna_back=-65, carry=CROUCH_CARRY)
+         head_pitch=-2, antenna_back=-65, carry=CROUCH_CARRY, elbows=CROUCH_ELBOWS)
     clip_crouch_idle(arm)
     clip_jump(arm)
     clip_mantle(arm)
@@ -1082,6 +1143,7 @@ def main():
     dl02.add_clips(sys.modules[__name__], arm)
     dl03.add_clips(sys.modules[__name__], arm)
     dl04.add_clips(sys.modules[__name__], arm)
+    dl05.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False

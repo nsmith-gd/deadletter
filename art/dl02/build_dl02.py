@@ -187,7 +187,7 @@ def build_weigh_room(m, coll):
     add_cyl(bm, (0, 0, 0.02), (0, 0, 0.12), 0.09, 0.075, seg=24)
     add_cyl(bm, (0, 0, 0.12), (0, 0, 0.15), 0.075, 0.035, seg=24)
     add_torus(bm, (0, 0, 0.165), (1, 0, 0), 0.042, 0.009, seg=20, rseg=6)
-    ob = _obj('SortWeight', bm, [m['iron']], coll)
+    ob = _obj('SortWeight', bm, [m['red']], coll)              # red: something he can pick up
     ob.location = (WEIGHT_X, 0, 0)
     bm = bmesh.new()
     add_cyl(bm, (0, 0, 0.07), (0, 0, 0.09), 0.0905, 0.0885, seg=24)
@@ -223,7 +223,7 @@ def build_weigh_room(m, coll):
     ob.location = (TROLLEY_X, 0, 0)
     bm = bmesh.new()
     add_cyl(bm, (-h - 0.02, -0.12, hh), (-h - 0.02, 0.12, hh), 0.017, seg=10)
-    ob = _obj('TrolleyGrip', bm, [m['rubber']], coll)
+    ob = _obj('TrolleyGrip', bm, [m['red']], coll)
     ob.location = (TROLLEY_X, 0, 0)
     for i, (x, y) in enumerate(((-h + 0.06, -0.14), (-h + 0.06, 0.14), (h - 0.06, -0.14), (h - 0.06, 0.14))):
         bm = bmesh.new()
@@ -404,12 +404,15 @@ def blend(a, b, k):
     return {s: a[s].lerp(b[s], k) for _, s in SIDES}
 
 
-def grip_targets(fwd, z, lateral=0.045):
-    """Both claws on the bail, wrists just above it."""
+def grip_targets(fwd, z, lateral=0.12):
+    """Both claws on the bail: wrists just above it and out to its sides (his arms are too short to
+    bring them together in front of the pod), the claws angled in onto it (HOLD_HAND)."""
     return {s: Vector((s * lateral, -fwd, z + WRIST_ABOVE_GRIP)) for _, s in SIDES}
 
 
-HOLD_FWD, HOLD_Z = 0.33, 0.3        # the bail while carried, clear of the pod: forward of the root, height (weight base = this - 0.21)
+HOLD_FWD, HOLD_Z = 0.23, 0.3        # the bail while carried, clear of the pod: forward of the root, height (weight base = this - 0.21)
+HOLD_HAND = {'L': (-10, 54, 0), 'R': (-10, -54, 0)}   # hand_rot: claws angled in from the wrists onto the bail
+HOLD_ELBOWS = {'L': 1, 'R': 1}      # elbows out (Clip.pose), so the forearms pass outside the pod
 HOLD_BODY, HOLD_ROT = (0, 0.01, -0.035), (-4, 0, 0)
 
 
@@ -425,7 +428,9 @@ def clip_lift(dl01, arm):
         pitch = track([(0, 0), (8, 12), (22, 12), (26, 10), (34, -4), (40, -4)], f)
         strain = track([(14, 0), (18, 1), (22, 0.3), (26, 1), (32, 0.6), (36, 0)], f)
         roll = 3 * strain * math.sin(f * 1.9)
-        body, rot = (0, 0.01 * smoothstep((f - 26) / 8), z), (pitch, roll, 0)
+        # Squatting, he shifts forward over his feet: the bail on the floor is otherwise out of reach.
+        lean_in = track([(0, 0), (8, 1), (26, 1), (34, 0)], f)
+        body, rot = (0, 0.01 * smoothstep((f - 26) / 8) - 0.045 * lean_in, z), (pitch, roll, 0)
         lift = track([(0, 0), (22, 0), (23, 0.03), (24, 0.0), (26, 0.0), (34, 1)], f)
         up = grip_targets(HOLD_FWD, HOLD_Z)
         targets = {s: low[s].lerp(up[s], lift) + Vector((0, 0, 0.012 * strain * math.sin(f * 2.3))) for _, s in SIDES}
@@ -438,7 +443,7 @@ def clip_lift(dl01, arm):
                     - spring(f, 34, 10 * (1 + 0.3 * i), decay=5), 0) for i in range(3)]
         feet = {side: ((s * 0.015 * smoothstep(f / 8), 0, 0), (0, 0, 0)) for side, s in SIDES}
         c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, feet=feet, hands=hands,
-               hand_rot={'L': (-10, 0, 25), 'R': (-10, 0, -25)}, claws={'L': claw, 'R': claw})
+               hand_rot=HOLD_HAND, claws={'L': claw, 'R': claw}, elbows=HOLD_ELBOWS)
     c.done()
 
 
@@ -454,21 +459,24 @@ def clip_set_down(dl01, arm, name, base):
         f = frame - 1
         z = track([(0, -0.035), (12, -0.035 - 0.04 * deep), (18, -0.04 - 0.03 * deep), (30, -0.01), (36, 0)], f)
         pitch = track([(0, -4), (12, 10), (18, 12), (30, 4), (36, 0)], f)
-        body, rot = (0, 0.01 * (1 - smoothstep(f / 10)), z), (pitch, 0, 0)
+        lean_in = track([(0, 0), (12, 1), (24, 1), (32, 0)], f)   # forward over his feet to reach down
+        body, rot = (0, 0.01 * (1 - smoothstep(f / 10)) - 0.045 * lean_in, z), (pitch, 0, 0)
         lower = track([(0, 0), (12, 1)], f)
         targets = {s: up[s].lerp(down[s], lower) for _, s in SIDES}
-        # After letting go: the right claw comes up and pats the top once.
+        # After letting go: the right claw comes up and pats the top once, from out to the side.
         pat = {s: targets[s] for _, s in SIDES}
-        top = Vector((-0.02, -GRIP[0] + 0.01, base + 0.25))
+        top = Vector((-0.1, -GRIP[0] + 0.01, base + 0.3))
         pat[-1] = top + Vector((0, 0, track([(19, 0.04), (22, 0.0), (24, 0.03)], f)))
-        hands = reach(blend(targets, pat, track([(15, 0), (19, 1), (25, 1), (28, 0)], f)), body, rot, REST)
+        patting = track([(15, 0), (19, 1), (25, 1), (28, 0)], f)
+        hands = reach(blend(targets, pat, patting), body, rot, REST)
         hands = blend(hands, CARRY, track([(26, 0), (36, 1)], f))
         claw = track([(0, 2), (14, 2), (16, 28), (36, CLAW_REST_OPEN['L'])], f)
         head = (track([(0, 6), (12, 26), (24, 24), (30, 8), (36, 0)], f), track([(22, 0), (27, 9), (36, 0)], f), 0)
         antenna = [(track([(0, -4), (12, 8), (16, 0)], f) - spring(f, 16, 8 * (1 + 0.3 * i), decay=5), 0) for i in range(3)]
         c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands,
-               hand_rot={'L': (-10, 0, 25), 'R': (-10, 0, -25)},
-               claws={'L': claw, 'R': track([(0, 2), (14, 2), (16, 28), (19, 10), (36, CLAW_REST_OPEN['R'])], f)})
+               hand_rot={'L': HOLD_HAND['L'], 'R': (-10, -54 + 9 * patting, 0)},
+               claws={'L': claw, 'R': track([(0, 2), (14, 2), (16, 28), (19, 10), (36, CLAW_REST_OPEN['R'])], f)},
+               elbows={side: 1 - track([(26, 0), (36, 1)], f) for side, _ in SIDES})
     c.done()
 
 
@@ -485,7 +493,7 @@ def clip_carry_idle(dl01, arm):
         hands = reach(targets, body, rot, REST)
         c.pose(frame, body=body, body_rot=rot, head=(6 + 2 * math.sin(tau * t), 0, 0),
                antenna=[(-4 + 3 * math.sin(tau * t - i), 0) for i in range(3)], hands=hands,
-               hand_rot={'L': (-10, 0, 25), 'R': (-10, 0, -25)}, claws={'L': 2, 'R': 2})
+               hand_rot=HOLD_HAND, claws={'L': 2, 'R': 2}, elbows=HOLD_ELBOWS)
     c.done()
 
 
@@ -515,7 +523,7 @@ def carry_gait(dl01, arm):
         head = (6 - rot[0], 1.2 * math.sin(tau * t - 1.2) - rot[1], 0)
         c.pose(frame, body=body, body_rot=rot, head=head, feet=feet,
                antenna=[(-6 + 3 * math.sin(2 * tau * t - 1.2 - 0.5 * i), 0) for i in range(3)],
-               hands=hands, hand_rot={'L': (-10, 0, 25), 'R': (-10, 0, -25)}, claws={'L': 2, 'R': 2})
+               hands=hands, hand_rot=HOLD_HAND, claws={'L': 2, 'R': 2}, elbows=HOLD_ELBOWS)
     c.done()
 
 

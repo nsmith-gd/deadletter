@@ -19,7 +19,7 @@ import random
 
 import bpy
 import bmesh
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Vector, noise
 
 import build_d17 as d17
 import build_dl03 as dl03
@@ -47,10 +47,23 @@ TURN_X = 58.2                        # where crates leave the belt for the hatch
 TUNNEL = (64.6, 70.0)
 HOP = (66.4, 68.2)                   # the chalk hopscotch
 BALCONY = (70.0, 74.6)
-ATRIUM = (77.3, 41.5, 40.0)          # centre x, y and radius of the refuge's atrium (the core stands off to the right)
-RINGS = (('A', 8.0), ('B', -5.0), ('C', -18.0))   # walkway levels
-ATRIUM_FLOOR, ATRIUM_TOP = -26.0, 26.0
-ARC = (math.radians(-39), math.radians(219))      # the near side, toward the camera, is left open
+# The refuge's cave: a cavern dug into the mountain, the city terraced up its walls. Its footprint (ring C's
+# lip) is egg-shaped: narrow at the near end, where the balcony looks in, and wide across the far side.
+CAVE = (78.0, 47.0, 34.0, 12.0, 40.0)   # centre x, y; half-width (mean, and its swell toward the far side); half-depth
+CAVE_ARC = (math.radians(-65), math.radians(245))   # the near side, toward the camera, is cut away
+CAVE_FLOOR = -11.0                   # the industrial floor, well below the balcony
+# The terraces, bottom up: ring, height, and the offsets of its lip and back wall out from the footprint.
+# Ring C, level with the balcony, is the poorest; 'U' is the first of the upper levels, only lights.
+TIERS = (('C', 0.0, 0.0, 7.0), ('B', 10.0, 2.0, 8.5), ('A', 22.0, 4.0, 11.0), ('U', 32.0, 7.0, 10.5))
+# The rock between them (height, offset): each face leans out over the terrace below, so the homes sit in
+# niches under the next ledge.
+CAVE_FACES = ((-13.5, 2.0), (-9.0, 0.8), (-4.5, -0.4), 'C', (2.5, 7.3), (5.0, 7.0), (6.8, 5.8), (8.6, 3.8),
+              'B', (12.5, 8.8), (15.5, 8.5), (17.8, 7.2), (20.2, 5.6), 'A', (24.5, 11.3), (27.5, 11.0),
+              (30.0, 9.8), (31.2, 8.0), 'U', (35.0, 10.7), (38.0, 9.5))
+# The chimney up toward the surface: its mouth (where the vault closes) and its top (x, y, half-axes, z).
+CHIMNEY = ((80.0, 64.0, 15.0, 12.5, 50.0), (84.0, 84.0, 9.0, 8.0, 120.0))
+FAN_T = 96.0                         # the floor fan in the far wall (degrees round the footprint)
+LIT_T = math.radians(84)             # the one lit window, on ring A, far across
 
 
 def _obj(name, bm, mats, coll, sharp=35):
@@ -122,6 +135,22 @@ def make_textures():
     d.text((200, 452), 'SET PAWL', font=_font(60), fill=ink)
     d.text((200, 522), 'BEFORE BOARDING', font=_font(52), fill=ink)
     _age(img, 41, 0.6).save(os.path.join(TEX, 'lift2_sign.png'))
+
+    # The plate by the shaft's edge: the lever, the pawl, the platform held.
+    img = Image.new('RGB', (630, 420), cream)
+    d = ImageDraw.Draw(img)
+    d.rectangle((10, 10, 620, 410), outline=ink, width=10)
+    d.line((70, 330, 140, 150), fill=(150, 36, 30), width=18)              # the lever, pulled toward you
+    d.ellipse((122, 128, 160, 166), fill=(150, 36, 30))
+    d.rectangle((40, 330, 170, 350), fill=ink)
+    d.arc((60, 140, 220, 300), 200, 290, fill=ink, width=8)
+    d.polygon([(66, 186), (82, 150), (100, 192)], fill=ink)
+    d.rectangle((300, 250, 590, 272), fill=ink)                             # the platform, and the dog over it
+    d.line((360, 200, 430, 245), fill=(150, 36, 30), width=16)
+    d.ellipse((346, 188, 372, 214), fill=ink)
+    d.text((230, 40), 'SET PAWL', font=_font(64), fill=ink)
+    d.text((232, 300), 'before boarding', font=_font(40, 'sans'), fill=ink)
+    _age(img, 49, 0.7).save(os.path.join(TEX, 'pawl_plate.png'))
 
     # Lift 1's enamel plate.
     img = Image.new('RGB', (640, 240), cream)
@@ -333,11 +362,17 @@ def dl04_materials(m):
     m['tote'] = worn_material('ToteGreen', base=(0.08, 0.11, 0.09), dirt=(0.05, 0.05, 0.04),
                               chip=(0.16, 0.18, 0.15), rough=0.7, chip_rough=0.6, metallic=0.0)
     m['belt'] = d17._new_material('BeltRubber')[0]
-    m['plaster'] = simple_material('AtriumPlaster', (0.3, 0.28, 0.22), 0.9)
+    m['plaster'] = simple_material('AtriumPlaster', (0.2, 0.185, 0.15), 0.9)
     m['dark'] = simple_material('AtriumDark', (0.006, 0.006, 0.006), 0.8)
-    m['stone'] = simple_material('AtriumStone', (0.05, 0.05, 0.048), 0.95)
+    m['stone'] = simple_material('AtriumStone', (0.058, 0.052, 0.045), 0.95)
     m['barricade'] = simple_material('Barricade', (0.4, 0.06, 0.04), 0.7)
     m['brass'] = simple_material('Brass', (0.45, 0.32, 0.12), 0.45, metallic=0.8)
+    m['cut'] = simple_material('AtriumCut', (0.085, 0.078, 0.066), 0.95)
+    m['sheet'] = simple_material('AtriumSheet', (0.075, 0.082, 0.08), 0.6, metallic=0.4)
+    m['rust'] = simple_material('AtriumRust', (0.11, 0.048, 0.025), 0.85)
+    m['wet'] = simple_material('AtriumWet', (0.008, 0.009, 0.009), 0.18)
+    m['upperlights'] = emission_material('AtriumUpperLights', (1.0, 0.66, 0.34), 2.0)
+    m['upperglow'] = emission_material('AtriumUpperGlow', (1.0, 0.58, 0.28), 1.5)
 
 
 def build_goods_hall(m, coll):
@@ -638,6 +673,8 @@ def build_lift(m, coll):
     add_cyl(bm, (0, -0.003, 0), (0, 0.003, 0), 0.009, seg=10)
     _obj('LiftNeedle', bm, [m['red']], coll).location = (gx, 0.802, gz - 0.02)
 
+    _plane('G4PawlPlate', (0.42, 0.28), (PAWL_X + 0.05, 1.78, DECK + 1.25), _image_material('PawlPlateMat', os.path.join(TEX, 'pawl_plate.png')), coll)
+
     # The sign over the pan.
     sign = _image_material('Lift2SignMat', os.path.join(TEX, 'lift2_sign.png'))
     _plane('G4Lift2Sign', (0.9, 0.64), (51.2, 1.78, DECK + 2.45), sign, coll)
@@ -681,10 +718,16 @@ def build_belt(m, coll):
         add_box(bm, (x, 1.78, DECK + 0.3), (0.06, 0.1, 0.6))
     add_box(bm, ((bx0 + TURN_X + 0.5) / 2, 1.78, DECK + 0.62), (TURN_X + 0.5 - bx0, 0.1, 0.06))
     _obj('G4TurnHatch', bm, [m['yellow']], coll)
-    bm = bmesh.new()
+    bm = bmesh.new()                                      # rubber flaps, hinged at the top; the game swings them
+    hinge = ((bx0 + TURN_X + 0.5) / 2, 1.76, DECK + 0.58)
     for k in range(7):
-        add_box(bm, (bx0 + 0.12 + k * 0.1, 1.76, DECK + 0.3), (0.085, 0.008, 0.56))
-    _obj('G4TurnFlaps', bm, [m['rubber']], coll)
+        add_box(bm, (bx0 + 0.12 + k * 0.1 - hinge[0], 0, -0.28), (0.085, 0.008, 0.56))
+    _obj('TurnFlaps', bm, [m['rubber']], coll).location = hinge
+    bm, bulb = bmesh.new(), bmesh.new()                   # a lamp over the hatch, so the crates are seen to go in
+    add_box(bm, ((bx0 + TURN_X + 0.5) / 2, 1.72, DECK + 0.95), (0.3, 0.12, 0.08))
+    add_sphere(bulb, ((bx0 + TURN_X + 0.5) / 2, 1.66, DECK + 0.88), 0.035, seg=10)
+    _obj('G4HatchLamp', bm, [m['steel']], coll)
+    _obj('G4HatchBulb', bulb, [m['hallbulb']], coll)
     bm = bmesh.new()
     for x in range(int((TURN_X + 0.4 - bx0) / 0.09)):
         add_cyl(bm, (bx0 + 0.05 + x * 0.09, 0.62, DECK + 0.02), (bx0 + 0.05 + x * 0.09, 1.7, DECK + 0.02), 0.02, seg=8)
@@ -726,6 +769,9 @@ def build_tunnel(m, coll):
     and children's chalk on the floor and the wall."""
     t0, t1 = TUNNEL
     bm = bmesh.new()
+    add_box(bm, ((t0 + t1) / 2, 0.1, DECK - 1.45), (t1 - t0, 3.4, 2.9))     # the floor (it was missing)
+    _obj('G4TunnelFloor', bm, [m['concrete']], coll)
+    bm = bmesh.new()
     add_box(bm, ((t0 + t1) / 2, 1.42, DECK + 1.2), (t1 - t0, 0.1, 2.4))
     _obj('G4TunnelBack', bm, [m['wall']], coll)
     _plane('G4TunnelTiles', (t1 - t0, 1.9), ((t0 + t1) / 2, 1.36, DECK + 0.95),
@@ -762,38 +808,834 @@ def build_tunnel(m, coll):
     _plane('ChalkWall', (3.6, 0.9), (67.5, 1.34, DECK + 0.48), chalk, coll)
 
 
-def _annulus(bm, cx, cy, r0, r1, z0, z1, a0, a1, seg, mat=0):
-    """A ring segment between radii r0 and r1, heights z0 and z1, angles a0 to a1 (closed with caps)."""
-    rings = []
+# --------------------------------------------------------------------------
+# The refuge's cave: rock, terraces, homes and industry. Far detail: flat and plain.
+# --------------------------------------------------------------------------
+
+def _cave_lip(t):
+    """Ring C's lip at angle t, before the rock's lumps: an egg, with bays and bulges."""
+    cx, cy, a0, swell, b = CAVE
+    a = a0 + swell * math.sin(t) + 8.0 * math.cos(t) * (1 + math.sin(t)) / 2     # wider to the right, away from the near end
+    k = 1 + 0.09 * math.sin(3 * t + 0.7) + 0.06 * math.sin(5 * t + 2.1)
+    return Vector((cx + a * k * math.cos(t), cy + b * k * math.sin(t), 0.0))
+
+
+def _cave_frame(t):
+    """Ring C's lip at angle t, the wall's direction there (t increasing) and its normal out into the rock."""
+    p = _cave_lip(t)
+    d = (_cave_lip(t + 1e-4) - _cave_lip(t - 1e-4)).normalized()
+    return p, d, Vector((d.y, -d.x, 0.0))
+
+
+def _cave_d(p, z, rough=True):
+    """How far the rock bulges out (or bites in) at a point of the footprint and a height: big slow lumps,
+    and on the faces, a rougher grain. Lip and back of a terrace share it, so the terraces stay level."""
+    q = Vector((p.x * 0.045, p.y * 0.045, z * 0.06))
+    d = 3.0 * noise.noise(q) + 1.2 * noise.noise(q * 3.1 + Vector((7.1, 3.3, 1.9)))
+    if rough:
+        d += 1.3 * noise.noise(q * 9.0 + Vector((2.2, 9.1, 4.4)))
+        d += 0.5 * abs(noise.noise(Vector((q.x * 2.0, q.y * 2.0, z * 0.9))))      # strata
+    return d
+
+
+def _tier_dz(t, ring):
+    """Each terrace was cut in level stretches, a step of a metre or two between them. Ring C stays level
+    near the balcony, where it meets the lane."""
+    seed = {'C': 0.5, 'B': 3.7, 'A': 7.9, 'U': 11.3}[ring]
+    v = noise.noise(Vector((math.cos(t) * 1.7, math.sin(t) * 1.7, seed)))
+    dz = 1.2 * round(v * 3.0)
+    if ring == 'C':
+        a = abs((math.degrees(t) + 90 + 180) % 360 - 180)
+        dz *= smoothstep((a - 35) / 30)
+    return dz
+
+
+def _warp(t, z):
+    """The terraces' steps, carried by the rock between them."""
+    zs = [(tz, _tier_dz(t, r)) for r, tz, _, _ in TIERS]
+    if z <= zs[0][0]:
+        return zs[0][1] * smoothstep((z - CAVE_FLOOR) / (zs[0][0] - CAVE_FLOOR))
+    for (za, da), (zb, db) in zip(zs, zs[1:]):
+        if z <= zb:
+            return da + (db - da) * (z - za) / (zb - za)
+    top = CAVE_FACES[-1][0]
+    return zs[-1][1] * (1 - smoothstep((z - zs[-1][0]) / (top - zs[-1][0])))
+
+
+def _cave_pt(t, z, off, rough=True):
+    p, _, n = _cave_frame(t)
+    return p + n * (off + _cave_d(p, z, rough)) + Vector((0, 0, z + _warp(t, z)))
+
+
+def _cave_rows():
+    """The wall's rows bottom up: (height, offset, rough, terrace) where terrace marks a lip row."""
+    rows = []
+    tiers = {t[0]: t for t in TIERS}
+    for r in CAVE_FACES:
+        if isinstance(r, str):
+            _, z, lip, back = tiers[r]
+            rows += [(z, lip, False, r), (z, back, False, None)]
+        else:
+            rows.append((r[0], r[1], True, None))
+    return rows
+
+
+def _tier(ring):
+    return next(t for t in TIERS if t[0] == ring)
+
+
+def _ledge(t, ring):
+    """A terrace at angle t: its lip, its back wall, the wall's direction and the way out to the void."""
+    _, z, lip, back = _tier(ring)
+    p, d, n = _cave_frame(t)
+    dd = _cave_d(p, z, False)
+    up = Vector((0, 0, z + _tier_dz(t, ring)))
+    return p + n * (lip + dd) + up, p + n * (back + dd) + up, d, -n
+
+
+def _wall_off(t, z):
+    """The wall's offset at angle t and height z (between its rows): to stand things just off it."""
+    p, _, _ = _cave_frame(t)
+    rows = _cave_rows()
+    for (za, oa, ra, _), (zb, ob, rb, _) in zip(rows, rows[1:]):
+        if za <= z <= zb and zb > za:
+            f = (z - za) / (zb - za)
+            return (oa + _cave_d(p, za, ra)) * (1 - f) + (ob + _cave_d(p, zb, rb)) * f
+    return rows[-1][1] + _cave_d(p, rows[-1][0], rows[-1][2])
+
+
+def _blocked(t, spans):
+    return any(abs(t - c) < h for c, h in spans)
+
+
+def _rot(T, F):
+    """Local x along T, local y along F (out toward the void), z up."""
+    return Matrix(((T.x, F.x, 0, 0), (T.y, F.y, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1)))
+
+
+def _face(bm, c, T, F, w, h, mat=0, up=Vector((0, 0, 1))):
+    """A flat quad centred at c, w along T and h along up, facing F."""
+    hw, hh = T * (w / 2), up * (h / 2)
+    vs = [bm.verts.new(c + a) for a in (-hw - hh, -hw + hh, hw + hh, hw - hh)]
+    f = bm.faces.new(vs)
+    f.material_index = mat
+    f.normal_update()
+    if f.normal.dot(F) < 0:
+        f.normal_flip()
+    return f
+
+
+def _arch(bm, c, T, F, w, h, seg=6):
+    """A dark tunnel mouth: an arched opening, c at the middle of its sill, facing F."""
+    r = w / 2
+    pts = [c - T * r, c + T * r]
     for k in range(seg + 1):
-        a = a0 + (a1 - a0) * k / seg
-        c, s = math.cos(a), math.sin(a)
-        rings.append([bm.verts.new((cx + r * c, cy + r * s, z)) for r, z in ((r0, z0), (r1, z0), (r1, z1), (r0, z1))])
-    for k in range(seg):
-        a, b = rings[k], rings[k + 1]
-        for i in range(4):
-            bm.faces.new((a[i], b[i], b[(i + 1) % 4], a[(i + 1) % 4])).material_index = mat
-    bm.faces.new(rings[0][::-1]).material_index = mat
-    bm.faces.new(rings[-1]).material_index = mat
+        a = math.pi * k / seg
+        pts.append(c + T * (r * math.cos(a)) + Vector((0, 0, h - r + r * math.sin(a))))
+    f = bm.faces.new([bm.verts.new(p) for p in pts])
+    f.normal_update()
+    if f.normal.dot(F) < 0:
+        f.normal_flip()
 
 
-def _quad(bm, center, size, rot, mat=0):
-    """One face, facing the rotated -y (the atrium's modules face the void this way): far detail is flat."""
-    w, h = size[0] / 2, size[1] / 2
-    m = Matrix.Translation(center) @ rot
-    vs = [bm.verts.new(m @ Vector(p)) for p in ((-w, 0, -h), (w, 0, -h), (w, 0, h), (-w, 0, h))]
-    bm.faces.new(vs).material_index = mat
+def _wire(bm, pts, r, mat=0):
+    """A thin three-sided tube through pts: cables, far off."""
+    rings = []
+    for i, p in enumerate(pts):
+        d = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+        u = d.cross(Vector((0, 0, 1)))
+        u = u.normalized() if u.length > 1e-3 else Vector((1, 0, 0))
+        v = d.cross(u)
+        rings.append([bm.verts.new(p + (u * math.cos(a) + v * math.sin(a)) * r) for a in (0.0, 2.094, 4.189)])
+    for a, b in zip(rings, rings[1:]):
+        for k in range(3):
+            bm.faces.new((a[k], a[(k + 1) % 3], b[(k + 1) % 3], b[k])).material_index = mat
+
+
+def _pipe(bm, pts, r, seg=8):
+    """A pipe along a polyline: one tube, its joints shared."""
+    rings = []
+    for i, p in enumerate(pts):
+        d = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+        u = d.cross(Vector((0, 0, 1)))
+        u = u.normalized() if u.length > 1e-3 else Vector((1, 0, 0))
+        v = d.cross(u)
+        rings.append([bm.verts.new(p + (u * math.cos(a) + v * math.sin(a)) * r) for a in [2 * math.pi * k / seg for k in range(seg)]])
+    for a, b in zip(rings, rings[1:]):
+        for k in range(seg):
+            bm.faces.new((a[k], a[(k + 1) % seg], b[(k + 1) % seg], b[k]))
+    bm.faces.new(rings[0])
+    bm.faces.new(rings[-1][::-1])
+
+
+def _sag(a, b, sag, n=14):
+    return [a.lerp(b, i / n) - Vector((0, 0, 4 * sag * (i / n) * (1 - i / n))) for i in range(n + 1)]
+
+
+def _cave_obj(name, bm, mats, coll, smooth=False, sharp=50):
+    """Like _obj, but keeps the winding as built (far quads face the camera) and shades flat unless asked."""
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    for mat in mats:
+        me.materials.append(mat)
+    me.polygons.foreach_set('use_smooth', [smooth] * len(me.polygons))
+    if smooth:
+        me.set_sharp_from_angle(angle=math.radians(sharp))
+    ob = bpy.data.objects.new(name, me)
+    coll.objects.link(ob)
+    return ob
+
+
+def _grid_faces(bm, grid, mat_of=lambda r, c: 0, cyclic=False, flip=False):
+    cols = len(grid[0])
+    for r in range(len(grid) - 1):
+        for c in range(cols if cyclic else cols - 1):
+            c1 = (c + 1) % cols
+            vs = (grid[r][c], grid[r + 1][c], grid[r + 1][c1], grid[r][c1])
+            if flip:
+                vs = vs[::-1]
+            try:
+                bm.faces.new(vs).material_index = mat_of(r, c)
+            except ValueError:
+                pass
+
+
+def _cave_shell(bm):
+    """The cavern: the terraced wall around the open near side, the vault closing over it, and the
+    chimney the city climbs toward the surface. Terrace tops are tool-cut (material 1), the rest raw rock."""
+    t0, t1 = CAVE_ARC
+    nw = 150
+    ts = [t0 + (t1 - t0) * i / nw for i in range(nw + 1)]
+    rows = _cave_rows()
+    grid = [[bm.verts.new(_cave_pt(t, z, off, rough)) for t in ts] for z, off, rough, _ in rows]
+    _grid_faces(bm, grid, lambda r, c: 1 if rows[r][3] else 0)
+    # The vault: the wall's top row on round the near side, then up and in to the chimney's mouth.
+    gap = 2 * math.pi - (t1 - t0)
+    ng = max(4, int(nw * gap / (t1 - t0)))
+    tg = [t1 + gap * i / ng for i in range(1, ng)]
+    ztop, offtop = rows[-1][0], rows[-1][1]
+    top = grid[-1] + [bm.verts.new(_cave_pt(t, ztop, offtop)) for t in tg]
+    allt = ts + tg
+    mx, my, ma, mb, mz = CHIMNEY[0]
+    vault = [top]
+    base = [v.co.copy() for v in top]
+    for k in range(1, 6):
+        ph = k / 5 * math.pi / 2
+        f = 1 - math.cos(ph)
+        z = ztop + (mz - ztop) * math.sin(ph)
+        row = []
+        for t, b in zip(allt, base):
+            mpt = Vector((mx + ma * math.cos(t), my + mb * math.sin(t), mz))
+            p = b.lerp(mpt, f)
+            p.z = z + 2.5 * math.sin(math.pi * f) * noise.noise(Vector((p.x, p.y, 3.0)) * 0.08)
+            row.append(bm.verts.new(p))
+        vault.append(row)
+    # The chimney: up and back, narrowing, toward the upper levels and the surface.
+    hz = CHIMNEY[1][4]
+    for k in range(1, 9):
+        z = mz + (hz - mz) * k / 8
+        cx, cy, a, b = _chimney_at(z)
+        row = []
+        for t in allt:
+            c, s = math.cos(t), math.sin(t)
+            j = _chimney_j(cx + a * c, cy + b * s, z)
+            row.append(bm.verts.new(Vector((cx + a * c * j, cy + b * s * j, z))))
+        vault.append(row)
+    _grid_faces(bm, vault, cyclic=True)
+
+
+def _chimney_at(z):
+    """The chimney's centre and half-axes at a height."""
+    (mx, my, ma, mb, mz), (hx, hy, ha, hb, hz) = CHIMNEY
+    f = (z - mz) / (hz - mz)
+    return mx + (hx - mx) * f, my + (hy - my) * f, ma + (ha - ma) * f, mb + (hb - mb) * f
+
+
+def _chimney_j(x, y, z):
+    return 1.0 + 0.16 * noise.noise(Vector((x, y, z)) * 0.12)
+
+
+def _cliff(bm, lip, rows, side, top_back=None, mat_top=1, amp=0.6):
+    """A rock face along a polyline (lip, in plan), rows (height, offset into the rock) bottom up; side +1
+    puts the rock on the polyline's right. With top_back, a tool-cut top from the lip back to those points."""
+    pts = [Vector((x, y, 0)) for x, y in lip]
+    ns = []
+    for i in range(len(pts)):
+        d = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+        ns.append(Vector((d.y, -d.x, 0)) * side)
+    grid = []
+    for z, off in rows:
+        rough = abs(z - rows[-1][0]) > 1e-3 or top_back is None
+        grid.append([bm.verts.new(p + n * (off + amp * _cave_d(p, z, rough)) + Vector((0, 0, z))) for p, n in zip(pts, ns)])
+    _grid_faces(bm, grid, flip=side < 0)
+    if top_back:
+        zt = rows[-1][0]
+        back = [bm.verts.new(Vector((x, y, zt))) for x, y in top_back]
+        _grid_faces(bm, [grid[-1], back], lambda r, c: mat_top, flip=side < 0)
+
+
+def _lump(bm, c, size, seed):
+    """A mass of rock: a spur standing out of the wall, or a fall of it."""
+    res = bmesh.ops.create_icosphere(bm, subdivisions=2, radius=1.0)
+    off = Vector((seed * 3.1, seed * 1.7, seed * 2.3))
+    for v in res['verts']:
+        n = v.co.normalized()
+        k = 1 + 0.32 * noise.noise(n * 1.6 + off) + 0.12 * noise.noise(n * 4.0 + off)
+        v.co = c + Vector((n.x * size[0], n.y * size[1], n.z * size[2])) * k
+
+
+def _pillar(bm, x, y, r0, seed, z0=CAVE_FLOOR - 1.5, z1=46.5, taper=None, lean=(0.0, 0.0)):
+    """A natural column of rock, floor to vault, waisted in the middle and leaning; with taper (radius
+    fraction at z0), a stalactite hanging from the vault instead."""
+    rows = []
+    n = 13
+    for k in range(n):
+        z = z0 + (z1 - z0) * k / (n - 1)
+        u = k / (n - 1)
+        if taper is None:
+            f = (z - 14.0) / 30.0
+            r = r0 * (0.7 + 1.1 * f * f)
+        else:
+            r = r0 * (taper + (1 - taper) * u ** 0.7)
+        cx = x + lean[0] * u + 1.6 * noise.noise(Vector((seed, z * 0.06, 1.0)))
+        cy = y + lean[1] * u + 1.6 * noise.noise(Vector((seed, z * 0.06, 7.0)))
+        ring = []
+        for i in range(11):
+            a = 2 * math.pi * i / 11
+            p = Vector((math.cos(a), math.sin(a), 0))
+            j = 1 + 0.4 * noise.noise(Vector((p.x * 1.4 + seed, p.y * 1.4, z * 0.09))) + 0.15 * noise.noise(Vector((p.x * 4 + seed, p.y * 4, z * 0.3)))
+            ring.append(bm.verts.new(Vector((cx, cy, z)) + p * r * j))
+        rows.append(ring)
+    _grid_faces(bm, rows, cyclic=True, flip=True)
+    if taper is not None:
+        bm.faces.new(rows[0])
+
+
+def _floor_z(x, y):
+    q = Vector((x * 0.05, y * 0.05, 0.3))
+    return CAVE_FLOOR + 0.7 * noise.noise(q) + 0.25 * noise.noise(q * 4 + Vector((1.7, 0.2, 0.0)))
+
+
+def _cave_floor(bm):
+    xs = [20.0 + 2.5 * i for i in range(48)]
+    ys = [-4.0 + 2.5 * j for j in range(44)]
+    grid = [[bm.verts.new((x, y, _floor_z(x, y))) for x in xs] for y in ys]
+    cx, cy, a0, sw, b = CAVE
+
+    def inside(r, c):
+        x, y = xs[c] + 1.25, ys[r] + 1.25
+        return ((x - cx) / (a0 + sw + 9)) ** 2 + ((y - cy) / (b + 9)) ** 2 < 1.0 or y < 16
+    for r in range(len(ys) - 1):
+        for c in range(len(xs) - 1):
+            if inside(r, c):
+                bm.faces.new((grid[r][c], grid[r][c + 1], grid[r + 1][c + 1], grid[r + 1][c]))
+    for v in [v for v in bm.verts if not v.link_faces]:
+        bm.verts.remove(v)
+
+
+def _container(b, c, T, F, size, rnd, front=True):
+    """A shipping-box home: w along T, d along F, h up, its front toward F: a door, maybe a window, dark."""
+    w, d, h = size
+    add_box(b['rust'] if rnd.random() < 0.55 else b['sheet'], c + Vector((0, 0, h / 2)), size, rot=_rot(T, F))
+    if not front:
+        return
+    fc = c + F * (d / 2 + 0.02)
+    u = rnd.uniform(-0.3, 0.3) * w
+    _face(b['dark'], fc + T * u + Vector((0, 0, 0.95)), T, F, 0.85, 1.9)
+    if w > 3 and rnd.random() < 0.6:
+        side = -1 if u > 0 else 1
+        _face(b['dark'], fc + T * (side * w * 0.28) + Vector((0, 0, 1.45)), T, F, 1.1, 0.7)
+
+
+def _house(b, c, T, F, w, d, floors, rnd, mat):
+    """A built home: plaster or sheet walls, a slab roof (now and then a tank or a flue on it), windows in
+    a row on each floor."""
+    h = 3.0 * floors + 0.3
+    add_box(mat, c + Vector((0, 0, h / 2)), (w, d, h), rot=_rot(T, F))
+    add_box(b['cut'] if rnd.random() < 0.6 else b['rust'], c + Vector((0, 0, h + 0.1)) + F * 0.2, (w + 0.3, d + 0.5, 0.2), rot=_rot(T, F))
+    r = rnd.random()
+    if r < 0.3:
+        q = c + T * rnd.uniform(-w / 3, w / 3) - F * (d / 4) + Vector((0, 0, h + 0.2))
+        add_cyl(b['rust'] if r < 0.15 else b['sheet'], q, q + Vector((0, 0, 1.3)), 0.6, seg=8)
+    elif r < 0.5:
+        q = c + T * rnd.uniform(-w / 3, w / 3) - F * (d / 3) + Vector((0, 0, h))
+        add_cyl(b['sheet'], q, q + Vector((0, 0, 2.2)), 0.12, seg=6)
+    fc = c + F * (d / 2 + 0.02)
+    n = max(1, int(w / 1.9))
+    door = rnd.randrange(n)
+    for f in range(floors):
+        for i in range(n):
+            u = (i - (n - 1) / 2) * (w / n)
+            if f == 0 and i == door:
+                _face(b['dark'], fc + T * u + Vector((0, 0, 1.0)), T, F, 0.9, 2.0)
+            elif rnd.random() < 0.85:
+                _face(b['dark'], fc + T * u + Vector((0, 0, 3.0 * f + 1.6)), T, F, 0.95, 1.0)
+
+
+def _barricade(b, c, T, F, span, rnd):
+    """A seal across a terrace: overlapping sheets on posts from lip to back wall, taped across."""
+    k = max(2, int(span / 1.1))
+    for i in range(k):
+        u = (i + 0.5) / k - 0.5
+        add_box(b['rust'] if rnd.random() < 0.6 else b['sheet'], c + F * (u * span) + T * (0.05 * (i % 2)) + Vector((0, 0, 1.3 + rnd.uniform(-0.1, 0.15))),
+                (0.04, span / k + 0.15, 2.6), rot=_rot(T, F) @ Matrix.Rotation(rnd.uniform(-0.04, 0.04), 4, 'X'))
+    for s in (-1, 1):
+        add_box(b['barricade'], c - T * 0.08 + Vector((0, 0, 1.4 + 0.3 * s)), (0.03, span * 0.95, 0.16),
+                rot=_rot(T, F) @ Matrix.Rotation(s * 0.18, 4, 'X'))
+
+
+def _ring_c(b, rnd, blocked):
+    """Ring C, the lowest and poorest: shipping boxes stacked two high in the niches under ring B, lean-to
+    sheet, scaffold, sealed with barricades and tape; a few red lamps."""
+    t0, t1 = CAVE_ARC
+    t = t0 + 0.12
+    k = 0
+    while t < t1 - 0.12:
+        if _blocked(t, blocked):
+            t += 0.03
+            continue
+        lip, back, T, F = _ledge(t, 'C')
+        depth = (back - lip).length
+        k += 1
+        if k % 8 == 0:
+            # A barricade across the terrace, lip to back wall, taped, with a red lamp.
+            _barricade(b, (lip + back) / 2, T, F, depth + 0.6, rnd)
+            add_box(b['red'], lip + F * 0.1 + Vector((0, 0, 2.8)), (0.3, 0.3, 0.3))
+            t += 2.5 / 40
+            continue
+        endon = rnd.random() < 0.35
+        w, d = (2.45, 6.0) if endon else (6.1, 2.45)
+        d = min(d, depth - 0.6)
+        c = back + F * (d / 2 + 0.15) - Vector((0, 0, 0.2))
+        _container(b, c, T, F, (w, d, 2.6), rnd)
+        clear = _tier('B')[1] + _tier_dz(t, 'B') - lip.z
+        if rnd.random() < 0.6 and clear > 8.0:
+            w2 = 2.45 if rnd.random() < 0.5 else min(w, 6.1)
+            _container(b, c + T * rnd.uniform(-0.6, 0.6) + Vector((0, 0, 2.62)) - F * 0.3, T, F, (w2, 2.45, 2.5), rnd)
+            if rnd.random() < 0.5:                   # the stair up: a plank
+                sp = c + F * (d / 2 + 0.7) + T * (w / 2 - 0.6) + Vector((0, 0, 1.3))
+                add_box(b['sheet'], sp, (2.9, 0.7, 0.08), rot=_rot(T, F) @ Matrix.Rotation(-0.75, 4, 'Y'))
+        if rnd.random() < 0.5:                       # a lean-to of corrugated sheet off the front
+            rp = c + F * (d / 2 + 0.75) + Vector((0, 0, 2.35))
+            add_box(b['rust' if rnd.random() < 0.5 else 'sheet'], rp, (w + 0.4, 1.6, 0.05), rot=_rot(T, F) @ Matrix.Rotation(-0.2, 4, 'X'))
+            for s in (-1, 1):
+                add_box(b['sheet'], c + F * (d / 2 + 1.45) + T * (s * w / 2) + Vector((0, 0, 1.05)), (0.08, 0.08, 2.1), rot=_rot(T, F))
+        elif rnd.random() < 0.35:                    # a scaffold of poles and a deck
+            for s in (-1, 1):
+                add_box(b['sheet'], c + F * (d / 2 + 0.5) + T * (s * w * 0.45) + Vector((0, 0, 2.6)), (0.08, 0.08, 5.2), rot=_rot(T, F))
+            add_box(b['sheet'], c + F * (d / 2 + 0.5) + Vector((0, 0, 2.62)), (w, 0.6, 0.06), rot=_rot(T, F))
+        t += (w + rnd.uniform(0.3, 2.6)) / 40
+
+
+def _ring_b(b, rnd, blocked):
+    """Ring B: block homes of plaster and sheet, one or two floors, a few boxes between; a parapet of
+    cut stone at the lip and a lamp now and then."""
+    t0, t1 = CAVE_ARC
+    t = t0 + 0.14
+    k = 0
+    while t < t1 - 0.14:
+        if _blocked(t, blocked):
+            t += 0.03
+            continue
+        lip, back, T, F = _ledge(t, 'B')
+        k += 1
+        r = rnd.random()
+        if r < 0.3:
+            w, d = 6.1, 2.45
+            _container(b, back + F * (d / 2 + 0.2), T, F, (w, d, 2.6), rnd)
+            if rnd.random() < 0.4:
+                _container(b, back + F * (d / 2 + 0.1) + Vector((0, 0, 2.62)), T, F, (2.45, 2.45, 2.5), rnd)
+        else:
+            w = rnd.uniform(3.6, 6.5)
+            d = rnd.uniform(3.2, 4.4)
+            _house(b, back + F * (d / 2 + 0.1) + Vector((0, 0, -0.1)), T, F, w, d, 2 if rnd.random() < 0.6 else 1, rnd,
+                   b['plaster'] if r < 0.62 else (b['sheet'] if r < 0.85 else b['rust']))
+        lp = lip - F * 0.3
+        add_box(b['cut'], lp + Vector((0, 0, 0.45)), (w + 1.2, 0.25, 0.9), rot=_rot(T, F))
+        if k % 4 == 0 and rnd.random() < 0.7:
+            add_box(b['sheet'], lp + Vector((0, 0, 1.4)), (0.08, 0.08, 2.8), rot=_rot(T, F))
+            add_box(b['lamp'] if rnd.random() < 0.55 else b['sheet'], lp + F * 0.3 + Vector((0, 0, 2.75)), (0.3, 0.3, 0.3), rot=_rot(T, F))
+        t += (w + rnd.uniform(0.2, 1.6)) / 45
+
+
+def _ring_a(b, rnd, blocked):
+    """Ring A: the best built down here. Rows of two-floor plaster homes with slab roofs and windows in
+    rows, a parapet; nearly every window dark, one lit, far across."""
+    t0, t1 = CAVE_ARC
+    t = t0 + 0.16
+    k = 0
+    lit = None
+    while t < t1 - 0.16:
+        if _blocked(t, blocked):
+            t += 0.03
+            continue
+        lip, back, T, F = _ledge(t, 'A')
+        k += 1
+        w = rnd.uniform(6.0, 8.0)
+        d = rnd.uniform(4.5, 5.5)
+        floors = 2 if rnd.random() < 0.75 else 1
+        c = back + F * (d / 2 + 0.1) + Vector((0, 0, -0.1))
+        _house(b, c, T, F, w, d, floors, rnd, b['plaster'] if rnd.random() < 0.8 else b['sheet'])
+        if floors == 2 and rnd.random() < 0.3:      # a room built on top, set back
+            _house(b, c - F * 1.2 + T * rnd.uniform(-1, 1) + Vector((0, 0, 6.5)), T, F, w * 0.55, d * 0.5, 1, rnd, b['sheet'])
+        if lit is None and t > LIT_T:
+            lit = (c + F * (d / 2 + 0.04) + T * (w * 0.25) + Vector((0, 0, 4.6)), T, F)
+        lp = lip - F * 0.3
+        add_box(b['cut'], lp + Vector((0, 0, 0.5)), (w + 0.6, 0.25, 1.0), rot=_rot(T, F))
+        if k % 3 == 1 and rnd.random() < 0.75:
+            add_box(b['sheet'], lp + Vector((0, 0, 1.6)), (0.08, 0.08, 3.2), rot=_rot(T, F))
+            add_box(b['lamp'] if rnd.random() < 0.6 else b['sheet'], lp + F * 0.3 + Vector((0, 0, 3.1)), (0.32, 0.32, 0.32), rot=_rot(T, F))
+        t += (w + rnd.uniform(0.3, 1.2) + (6.0 if rnd.random() < 0.15 else 0.0)) / 50
+    return lit
+
+
+def _upper_lights(b, rnd):
+    """The levels above: no more than lights, lamps left burning along their terraces. The upper terrace
+    across the far side (its windows dark), then rows of lamps up the chimney, more of them lit the higher
+    they are."""
+    t = math.radians(12)
+    while t < math.radians(168):
+        lip, bk, T, F = _ledge(t, 'U')
+        if rnd.random() < 0.5:
+            _face(b['dark'], bk + F * 0.3 + Vector((0, 0, rnd.choice((1.2, 2.8)))), T, F, 1.2, 0.9)
+        if rnd.random() < 0.18:
+            _face(b['upper'], lip - F * 0.2 + Vector((0, 0, 1.6)), T, F, 0.55, 0.55)
+        t += rnd.uniform(0.02, 0.06)
+    for z in (54.0, 57.5, 61.0, 65.0, 69.5, 74.5, 80.0, 86.0, 96.0, 106.0):
+        cx, cy, a, bb = _chimney_at(z)
+        f = min(1.0, (z - 50.0) / 40.0)
+        n = int(26 + 20 * f)
+        for i in range(n):
+            t = 2 * math.pi * (i + rnd.random() * 0.6) / n
+            if rnd.random() < (0.15 if math.sin(t) > 0.2 else 0.45):
+                continue
+            c, s = math.cos(t), math.sin(t)
+            j = _chimney_j(cx + a * c, cy + bb * s, z)
+            p = Vector((cx + (a * j - 0.8) * c, cy + (bb * j - 0.8) * s, z + rnd.uniform(-0.6, 0.6)))
+            F = Vector((-c * bb, -s * a, 0)).normalized()
+            T = Vector((-F.y, F.x, 0))
+            if rnd.random() < 0.3 + 0.45 * f:
+                _face(b['upper'], p, T, F, 0.8 + 0.4 * f, 0.8 + 0.4 * f)
+            else:
+                _face(b['dark'], p, T, F, 1.3, 1.0)
+
+
+def _risers(b, rnd):
+    """Pipe runs up the walls from the floor, bracketed to the terraces, some to the vault and some
+    turning along under a terrace's lip; and the big duct from the floor fan."""
+    rows = _cave_rows()
+    for deg, rr, count, top, run in ((-44, 0.55, 2, 'B', 22), (-8, 0.9, 1, None, 0), (24, 0.6, 3, 'A', -26),
+                                      (62, 1.1, 1, None, 0), (128, 0.6, 2, 'B', 30), (160, 0.8, 1, None, 0),
+                                      (198, 0.55, 3, 'A', -20), (232, 0.7, 1, 'C', -14)):
+        t = math.radians(deg)
+        p, T, n = _cave_frame(t)
+        zt = _tier(top)[1] + _tier_dz(t, top) - 1.0 if top else 40.0
+        lo = min(_cave_d(p, z, rough) + off for z, off, rough, _ in rows if -11.5 < z < zt + 1)
+        for j in range(count):
+            sh = (j - (count - 1) / 2) * (2 * rr + 0.35)
+            base = p + n * (lo - rr - 0.5) + T * sh
+            pts = [base + Vector((0, 0, CAVE_FLOOR - 1)), base + Vector((0, 0, zt - j * 0.1))]
+            if top:
+                # Along under the terrace's lip, following it round.
+                _, z, lip, _ = _tier(top)
+                steps = max(2, int(abs(run) / 3))
+                for s in range(1, steps + 1):
+                    ts = t + (run / 40.0) * s / steps
+                    q, _, nq = _cave_frame(ts)
+                    pts.append(q + nq * (lip + _cave_d(q, z, False) - rr - 0.6 - j * (2 * rr + 0.3)) + Vector((0, 0, zt - j * 0.1)))
+            _pipe(b['rust'] if (deg + j) % 3 == 0 else b['sheet'], pts, rr, seg=8)
+            for ring, z, lip, back in TIERS[:3]:
+                if z + _tier_dz(t, ring) > zt:
+                    break
+                q = p + n * (lip + _cave_d(p, z, False)) + T * sh + Vector((0, 0, z + _tier_dz(t, ring) - 0.6))
+                add_cyl(b['sheet'], Vector((base.x, base.y, q.z)), q, 0.08, seg=4)
+    # The big duct from the floor fan up the far wall, past every terrace.
+    t = math.radians(FAN_T)
+    p, T, n = _cave_frame(t)
+    lo = min(off + _cave_d(p, z, rough) for z, off, rough, _ in rows if -1.0 < z < 34)
+    c = p + n * (lo - 1.7)
+    add_box(b['sheet'], c + Vector((0, 0, 16.0)), (2.6, 2.6, 33.0), rot=_rot(T, -n))
+    add_box(b['sheet'], c + Vector((0, 0, 32.5)) + T * 4.0, (8.0, 2.6, 2.6), rot=_rot(T, -n))
+
+
+def _fan(blades, frame, hub, axis, radius, n_blades):
+    """A ventilation fan: its ring goes in frame (world), its blades in their own mesh around their local
+    Z (the spin axis), to be placed at hub."""
+    add_torus(frame, hub, axis, radius + 0.35, 0.32, seg=28, rseg=6)
+    for k in range(n_blades):
+        a = 2 * math.pi * k / n_blades
+        rot = Matrix.Rotation(a, 4, 'Z') @ Matrix.Rotation(0.38, 4, 'X')
+        add_box(blades, rot @ Vector((radius * 0.52, 0, 0)), (radius * 0.9, radius * 0.32, 0.08), rot=rot)
+    add_cyl(blades, (0, 0, -0.5), (0, 0, 0.5), radius * 0.14, seg=12)
+
+
+def _floor_works(b, rnd):
+    """The cave floor: tanks, a pump house, pipes, a trunk main, floor shacks, scrap, and puddles."""
+    def fz(x, y):
+        return _floor_z(x, y) - 0.3
+    for x, y, r, h in ((70.5, 17.0, 3.2, 7.5), (78.5, 21.5, 2.6, 6.0), (63.5, 25.0, 3.8, 9.0), (59.0, 36.0, 3.0, 6.5), (98.0, 33.0, 3.4, 8.0)):
+        z = fz(x, y)
+        mat = b['rust'] if rnd.random() < 0.5 else b['sheet']
+        add_cyl(mat, (x, y, z), (x, y, z + h), r, seg=18)
+        add_cyl(mat, (x, y, z + h), (x, y, z + h + r * 0.35), r, 0.4, seg=18)
+        for k in range(2):
+            add_cyl(b['sheet'], (x, y, z + h * (0.3 + 0.4 * k)), (x, y, z + h * (0.3 + 0.4 * k) + 0.25), r + 0.06, seg=18)
+        add_box(b['sheet'], (x - r - 0.25, y, z + h / 2 + 1), (0.12, 0.5, h + 2))
+    for x, y in ((86.5, 24.0), (88.0, 31.0)):
+        z = fz(x, y)
+        add_cyl(b['rust'], (x - 4.5, y, z + 2.4), (x + 4.5, y, z + 2.4), 1.7, seg=14)
+        for s in (-3, 3):
+            add_box(b['cut'], (x + s, y, z + 0.4), (0.6, 2.8, 1.2))
+    # The pump house, its pumps outside, and the pipes between.
+    x, y = 81.5, 13.0
+    z = fz(x, y)
+    add_box(b['sheet'], (x, y, z + 1.8), (6.5, 3.8, 3.6))
+    add_box(b['rust'], (x, y, z + 3.75), (7.2, 4.4, 0.08), rot=Matrix.Rotation(0.06, 4, 'X'))
+    _face(b['dark'], Vector((x - 1.5, y + 1.92, z + 1.1)), Vector((1, 0, 0)), Vector((0, 1, 0)), 1.1, 2.2)
+    for k in range(3):
+        px = x - 2.2 + 2.2 * k
+        add_cyl(b['sheet'], (px, y + 2.6, z + 0.7), (px, y + 4.0, z + 0.7), 0.6, seg=12)
+        add_box(b['cut'], (px, y + 3.3, z + 0.2), (1.2, 1.8, 0.4))
+    pz = fz(75, 20) + 0.7
+    for a, c in (((70.5, 17.0), (80.0, 15.6)), ((78.5, 21.5), (82.0, 16.6)), ((63.5, 25.0), (70.5, 17.0)), ((86.5, 24.0), (83.0, 16.6))):
+        add_cyl(b['rust'], (a[0], a[1], pz), (c[0], c[1], pz), 0.35, seg=8)
+    # A trunk main along the floor to the far wall on stands, and up the cliff to ring C's shelf.
+    pts = [Vector((84.0, 4.6, 0.6)), Vector((84.0, 6.5, fz(84, 6.5) + 1.6))]
+    for k in range(11):
+        y0 = 10.0 + 7.0 * k
+        pts.append(Vector((84.0 - 0.15 * k * k, y0, fz(84, y0) + 1.6)))
+        add_box(b['cut'], (84.0 - 0.15 * k * k, y0, fz(84, y0) + 0.4), (1.8, 0.4, 0.8))
+    _pipe(b['sheet'], pts, 0.8, seg=10)
+    # Shacks on the floor between the machines: people live even down here.
+    for x, y, a in ((66.0, 12.0, 0.4), (60.0, 18.0, 0.9), (74.0, 30.0, -0.3), (92.0, 18.0, 1.3), (95.0, 41.0, 0.2), (55.0, 28.0, 1.6), (68.0, 36.0, 0.1)):
+        T = Vector((math.cos(a), math.sin(a), 0))
+        F = Vector((-T.y, T.x, 0))
+        _container(b, Vector((x, y, fz(x, y) + 0.3)), T, F, (6.1, 2.45, 2.6), rnd)
+        if rnd.random() < 0.5:
+            add_box(b['rust'], Vector((x, y, fz(x, y) + 2.85)) + F * 1.6, (6.6, 1.8, 0.05), rot=_rot(T, F) @ Matrix.Rotation(-0.15, 4, 'X'))
+    for _ in range(26):
+        x, y = rnd.uniform(52, 104), rnd.uniform(8, 80)
+        s = (rnd.uniform(0.6, 2.5), rnd.uniform(0.6, 2.0), rnd.uniform(0.3, 1.2))
+        add_box(b['rust' if rnd.random() < 0.6 else 'sheet'], (x, y, fz(x, y) + s[2] / 2), s, rot=_rz(rnd.uniform(0, 3)) @ Matrix.Rotation(rnd.uniform(-0.2, 0.2), 4, 'X'))
+    for x, y, r in ((74.0, 11.0, 2.2), (68.0, 23.0, 1.6), (88.5, 13.0, 2.6), (77.0, 34.0, 3.0), (62.0, 31.0, 1.8), (93.0, 27.0, 1.5), (82.0, 45.0, 3.5), (70.0, 52.0, 2.4)):
+        z = max(_floor_z(x + r * math.cos(a), y + r * math.sin(a)) for a in (0, 1.57, 3.14, 4.71)) + 0.03
+        vs = [b['wet'].verts.new((x + r * math.cos(a) * (1 + 0.3 * math.sin(3 * a)), y + r * 0.7 * math.sin(a), z)) for a in [2 * math.pi * i / 10 for i in range(10)]]
+        b['wet'].faces.new(vs)
+
+
+def _trestle(b, p, T, F, zb):
+    """A lattice tower from the floor up to p: four legs and braces."""
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            q = p + T * (sx * 1.2) + F * (sy * 1.2)
+            add_box(b['sheet'], Vector((q.x, q.y, (zb + p.z) / 2)), (0.25, 0.25, p.z - zb), rot=_rot(T, F))
+    z = zb + 3
+    while z < p.z - 1:
+        for s in (-1, 1):
+            add_box(b['sheet'], p + F * (s * 1.2) + Vector((0, 0, z - p.z)), (2.6, 0.1, 0.1), rot=_rot(T, F))
+            add_box(b['sheet'], p + T * (s * 1.2) + Vector((0, 0, z - p.z)), (0.1, 2.6, 0.1), rot=_rot(T, F))
+        z += 3.5
+
+
+def _crossings(b, rnd):
+    """Catwalks across the void (ring C's, pipes slung under it, on trestles from the floor; ring B's pipe
+    bridge further back), plank bridges sagging between terraces, ladders and stairs."""
+    for ta, tb, ring, pipes, legs in ((214, 14, 'C', 2, (0.3, 0.64)), (134, 52, 'B', 1, (0.5,))):
+        la, _, _, _ = _ledge(math.radians(ta), ring)
+        lb, _, _, _ = _ledge(math.radians(tb), ring)
+        la.z = lb.z = min(la.z, lb.z) - 0.15
+        d = lb - la
+        L = d.length
+        T = d.normalized()
+        F = Vector((-T.y, T.x, 0))
+        mid = (la + lb) / 2
+        add_box(b['sheet'], mid, (L + 2, 1.5, 0.12), rot=_rot(T, F))
+        for s in (-1, 1):
+            add_box(b['sheet'], mid + F * (s * 0.72) + Vector((0, 0, 1.0)), (L + 2, 0.05, 0.05), rot=_rot(T, F))
+        x = 0.0
+        while x < L:
+            for s in (-1, 1):
+                add_box(b['sheet'], la + T * x + F * (s * 0.72) + Vector((0, 0, 0.5)), (0.05, 0.05, 1.0), rot=_rot(T, F))
+            x += 4.0
+        for j in range(pipes):
+            off = F * (0.45 * (2 * j - 1) if pipes > 1 else 0) + Vector((0, 0, -0.9))
+            add_cyl(b['rust' if j else 'sheet'], la + off, lb + off, 0.45, seg=10)
+        for f in legs:
+            p = la.lerp(lb, f)
+            _trestle(b, p, T, F, _floor_z(p.x, p.y) - 0.3)
+    # Plank bridges, sagging, between terraces across a corner of the void.
+    for (ta, ra), (tb, rb), sag in (((35, 'A'), (100, 'U'), 2.2), ((205, 'B'), (150, 'A'), 1.6)):
+        a, _, _, _ = _ledge(math.radians(ta), ra)
+        c, _, _, _ = _ledge(math.radians(tb), rb)
+        pts = _sag(a + Vector((0, 0, 0.1)), c + Vector((0, 0, 0.1)), sag, 16)
+        side = Vector((-(c - a).y, (c - a).x, 0)).normalized()
+        for p, q in zip(pts, pts[1:]):
+            d = q - p
+            T = Vector((d.x, d.y, 0)).normalized()
+            pitch = math.atan2(d.z, Vector((d.x, d.y)).length)
+            add_box(b['rust'], (p + q) / 2, (d.length, 1.0, 0.08), rot=_rot(T, Vector((-T.y, T.x, 0))) @ Matrix.Rotation(-pitch, 4, 'Y'))
+        for s in (-1, 1):
+            _wire(b['cable'], [p + Vector((0, 0, 1.0)) + side * (0.5 * s) for p in pts], 0.035)
+    # Ladders: ring C up to ring B's lip, ring B up to ring A's.
+    for deg, lo, hi in ((-30, 'C', 'B'), (35, 'C', 'B'), (100, 'C', 'B'), (150, 'C', 'B'), (210, 'C', 'B'),
+                        (10, 'B', 'A'), (75, 'B', 'A'), (128, 'B', 'A'), (190, 'B', 'A')):
+        t = math.radians(deg)
+        _, zh, liph, _ = _tier(hi)
+        _, zl, _, _ = _tier(lo)
+        p, T, n = _cave_frame(t)
+        top = p + n * (liph + _cave_d(p, zh, False) - 0.35) + Vector((0, 0, zh + _tier_dz(t, hi) + 0.9))
+        bot = p + n * (liph + _cave_d(p, zl, False) - 0.2) + Vector((0, 0, zl + _tier_dz(t, lo)))
+        for s in (-1, 1):
+            add_cyl(b['sheet'], bot + T * (s * 0.28), top + T * (s * 0.28), 0.04, seg=4)
+        k = int((top - bot).length / 0.9)
+        for i in range(1, k):
+            _face(b['sheet'], bot.lerp(top, i / k), T, -n, 0.56, 0.06)
+    # Stairs: two flights from ring B to ring A, sloped plates with a rail.
+    for deg in (48, 168):
+        t = math.radians(deg)
+        _, zb, _, _ = _tier('B')
+        _, za, lipa, _ = _tier('A')
+        zb += _tier_dz(t, 'B')
+        za += _tier_dz(t, 'A')
+        p, T, n = _cave_frame(t)
+        base = p + n * (lipa + _cave_d(p, za, False) - 1.0)
+        half = (za - zb) / 2
+        for z0, s in ((zb, 1), (zb + half, -1)):
+            c = base + T * (s * half / 2) + Vector((0, 0, z0 + half / 2))
+            R = _rot(T, -n) @ Matrix.Rotation(-math.atan2(half, half) * s, 4, 'Y')
+            add_box(b['sheet'], c, (half * 1.414, 1.1, 0.18), rot=R)
+            add_box(b['sheet'], c - n * 0.55 + Vector((0, 0, 0.9)), (half * 1.414, 0.05, 0.05), rot=R)
+        add_box(b['sheet'], base + T * half + Vector((0, 0, zb + half - 0.1)), (1.6, 1.4, 0.15), rot=_rot(T, -n))
+
+
+def _cables(b, rnd):
+    """Cables strung across the void and along the terraces, with a bulb here and there: warm, a few red
+    on ring C, many dead."""
+    spans = ((205, 'C', -25, 'C', 3.0), (170, 'C', 30, 'C', 5.0), (230, 'B', 120, 'C', 4.0), (-40, 'B', 70, 'B', 6.0),
+             (140, 'B', 40, 'A', 6.0), (195, 'A', 15, 'A', 8.0), (100, 'A', 55, 'U', 3.0), (240, 'C', 160, 'B', 3.0))
+    for ta, ra, tb, rb, sag in spans:
+        a, _, _, _ = _ledge(math.radians(ta), ra)
+        c, _, _, _ = _ledge(math.radians(tb), rb)
+        pts = _sag(a + Vector((0, 0, 3.2)), c + Vector((0, 0, 3.2)), sag, 18)
+        _wire(b['cable'], pts, 0.05)
+        for i in range(2, len(pts) - 2, 2):
+            r = rnd.random()
+            key = 'red' if (ra == 'C' and r < 0.2) else ('lamp' if r < 0.38 else ('cable' if r < 0.7 else None))
+            if key:
+                add_box(b[key], pts[i] - Vector((0, 0, 0.25)), (0.28, 0.28, 0.32))
+    # Along ring C's back wall: festoons from niche to niche, mostly dead.
+    t0, t1 = CAVE_ARC
+    t = t0 + 0.1
+    while t < t1 - 0.2:
+        t2 = t + rnd.uniform(0.1, 0.2)
+        _, a, _, F = _ledge(t, 'C')
+        _, c, _, F2 = _ledge(t2, 'C')
+        pts = _sag(a + F * 1.5 + Vector((0, 0, 3.0)), c + F2 * 1.5 + Vector((0, 0, 3.0)), 0.6, 4)
+        _wire(b['cable'], pts, 0.03)
+        r = rnd.random()
+        if r < 0.12:
+            add_box(b['red'], pts[2] - Vector((0, 0, 0.2)), (0.22, 0.22, 0.26))
+        elif r < 0.2:
+            add_box(b['lamp'], pts[2] - Vector((0, 0, 0.2)), (0.22, 0.22, 0.26))
+        t = t2
+
+
+def _stains(b, rnd):
+    """Water stains down the rock below the terraces' lips and in streaks down the wall."""
+    t0, t1 = CAVE_ARC
+    for _ in range(70):
+        t = rnd.uniform(t0 + 0.05, t1 - 0.05)
+        ring, z, lip, back = rnd.choice(TIERS[:3] + (('F', 37.0, 9.5, 9.5),))
+        p, T, n = _cave_frame(t)
+        w = rnd.uniform(0.5, 2.2)
+        length = rnd.uniform(3.0, 9.0)
+        col = []
+        for k in range(5):
+            zz = z - length * k / 4
+            c = p + n * (_wall_off(t, zz) - 0.6) + Vector((0, 0, zz + _warp(t, zz)))
+            ww = w * (1 - 0.15 * k)
+            col.append((c - T * ww / 2, c + T * ww / 2))
+        vs = [(b['wet'].verts.new(l), b['wet'].verts.new(r)) for l, r in col]
+        for (a0, a1), (c0, c1) in zip(vs, vs[1:]):
+            b['wet'].faces.new((a0, a1, c1, c0))
+
+
+def _carved(b, rnd):
+    """Homes cut straight into the rock: rows of doors and windows in the cliff below ring C, over the
+    works on the floor, with plank walkways and ladders down; more in the pillar; laundry strung out."""
+    for z0, t_a, t_b, step in ((-8.6, -30, 215, 0.045), (-4.4, -10, 195, 0.05)):
+        t = math.radians(t_a)
+        run = []
+        while t < math.radians(t_b):
+            if rnd.random() < 0.3:
+                if len(run) > 2:
+                    _walkway(b, run, rnd)
+                run = []
+                t += step * rnd.uniform(1, 3)
+                continue
+            z = z0 + _warp(t, z0)
+            p, T, n = _cave_frame(t)
+            c = p + n * (_wall_off(t, z0 + 1.0) - 0.12) + Vector((0, 0, z))
+            if rnd.random() < 0.55:
+                _face(b['dark'], c + Vector((0, 0, 1.0)), T, -n, 0.9, 1.9)
+            else:
+                _face(b['dark'], c + Vector((0, 0, 1.4)), T, -n, 0.9, 0.8)
+                if rnd.random() < 0.5:
+                    _face(b['rust'], c + Vector((0, 0, 1.4)) - n * 0.03, T, -n, 0.95, 0.85)
+            run.append((t, c))
+            t += step * rnd.uniform(0.7, 1.4)
+        if len(run) > 2:
+            _walkway(b, run, rnd)
+    # In the pillar: a few doors and a ladder.
+    for k in range(9):
+        a = rnd.uniform(-2.6, -0.6)
+        z = rnd.uniform(-8.0, 6.0)
+        c = Vector((96.0 + 4.0 * (z + 12.5) / 58 + 3.4 * math.cos(a), 63.0 + 6.0 * (z + 12.5) / 58 + 3.4 * math.sin(a), z))
+        F = Vector((math.cos(a), math.sin(a), 0))
+        _face(b['dark'], c, Vector((-F.y, F.x, 0)), F, 0.9, 1.6)
+
+
+def _walkway(b, run, rnd):
+    """Planks along the cliff under a row of cut homes, on brackets, and a ladder down to the floor."""
+    for (ta, ca), (tb, cb) in zip(run, run[1:]):
+        if (cb - ca).length > 6:
+            continue
+        _, _, na = _cave_frame(ta)
+        d = cb - ca
+        T = Vector((d.x, d.y, 0)).normalized()
+        F = Vector((-T.y, T.x, 0))
+        add_box(b['rust'] if rnd.random() < 0.5 else b['sheet'], (ca + cb) / 2 - na * 0.6 - Vector((0, 0, 0.05)), (d.length + 0.1, 1.1, 0.08), rot=_rot(T, F))
+    t, c = run[len(run) // 2]
+    _, T, n = _cave_frame(t)
+    top, bot = c - n * 1.0, c - n * 1.6
+    bot.z = _floor_z(bot.x, bot.y)
+    for s in (-1, 1):
+        add_cyl(b['sheet'], bot + T * (s * 0.28), top + T * (s * 0.28) + Vector((0, 0, 0.9)), 0.04, seg=4)
+    if rnd.random() < 0.6:                            # washing on a line
+        t2, c2 = run[min(len(run) - 1, len(run) // 2 + 2)]
+        _, _, n2 = _cave_frame(t2)
+        a, e = c - n * 0.9 + Vector((0, 0, 2.3)), c2 - n2 * 0.9 + Vector((0, 0, 2.3))
+        pts = _sag(a, e, 0.3, 6)
+        _wire(b['cable'], pts, 0.02)
+        for p in pts[1:-1]:
+            if rnd.random() < 0.7:
+                d = (e - a).normalized()
+                _face(b['plaster'] if rnd.random() < 0.6 else b['rust'], p - Vector((0, 0, 0.35)), d, Vector((-d.y, d.x, 0)), 0.5, 0.6)
 
 
 def build_atrium(m, coll):
-    """The balcony and stair, and the refuge's atrium: three rings of homes on two floors each around a
-    void, their walkways and railings, bridges to the central core, the dead sky array overhead, ring C
-    barricaded. Everything faces the void; the near side, toward the camera, is left open."""
+    """The balcony and stair down to ring C, and the refuge's cave: a cavern dug into the mountain with the
+    city terraced up its walls. Ring C, level with the balcony, is the poorest: stacked shipping boxes,
+    sealed and dark. Ring B and ring A above are better built; the levels above them are only lights, up a
+    chimney toward the surface, with a faint warm glow at its top. Pipes, a duct and fans, tanks and pumps
+    on the floor below, catwalks, ladders and cables strung across with a few bulbs. The near side, toward
+    the camera, is cut away."""
     b0, b1 = BALCONY
     bm = bmesh.new()
     add_box(bm, ((b0 + b1) / 2, 0.7, DECK - 0.15), (b1 - b0, 3.4, 0.3))
     add_box(bm, ((b0 + b1) / 2, 0.7, DECK - 1.0), (b1 - b0 - 0.4, 2.6, 1.4))
-    for k in range(9):                                    # the stair down toward ring B
+    for k in range(9):                                    # the stair down to ring C's ledge
         add_box(bm, (b1 + 0.15 + k * 0.24, 0.3, DECK - 0.1 - k * 0.2), (0.26, 1.1, 0.2))
     _obj('G4Balcony', bm, [m['concrete']], coll)
     bm = bmesh.new()
@@ -811,129 +1653,154 @@ def build_atrium(m, coll):
     add_box(bm, (b0 - 0.1, 1.45, DECK + 1.6), (0.3, 0.3, 3.2))
     _obj('G4BalconyWalls', bm, [m['wall']], coll)
 
-    cx, cy, R = ATRIUM
-    a0, a1 = ARC
     rnd = random.Random(470)
-    # The atrium wall, floor and roof.
-    bm = bmesh.new()
-    _annulus(bm, cx, cy, R + 0.2, R + 1.0, ATRIUM_FLOOR, ATRIUM_TOP, a0, a1, 72)
-    _obj('AtriumWall', bm, [m['stone']], coll)
-    bm = bmesh.new()
-    _annulus(bm, cx, cy, 0.0, R + 1.0, ATRIUM_FLOOR - 0.5, ATRIUM_FLOOR, 0, 2 * math.pi, 48)
-    _annulus(bm, cx, cy, 0.0, R + 1.0, ATRIUM_TOP, ATRIUM_TOP + 0.6, 0, 2 * math.pi, 48)
-    _obj('AtriumFloorRoof', bm, [m['stone']], coll)
-    # The sky array under the roof: panels that once made a day; a few still faintly lit.
-    panels, dead = bmesh.new(), bmesh.new()
-    for i in range(-9, 10):
-        for j in range(-9, 10):
-            px, py = cx + i * 3.6, cy + j * 3.6
-            if math.hypot(px - cx, py - cy) > R - 8:
-                continue
-            if rnd.random() < 0.3:                       # the rest are dead, dark against the dark roof
-                add_box(panels, (px, py, ATRIUM_TOP - 0.15), (3.0, 3.0, 0.08))
-    _obj('AtriumSkyPanels', panels, [m['skypanel']], coll)
-    dead.free()
+    keys = ('plaster', 'sheet', 'rust', 'dark', 'barricade', 'cut', 'wet', 'cable', 'lamp', 'red', 'upper')
+    b = {k: bmesh.new() for k in keys}
+    # Where the terraces are interrupted: spurs of uncut rock, tunnel mouths, the painted letters.
+    spurs = {'C': ((20, 7.0), (148, 8.0), (205, 6.0)), 'B': ((-22, 7.0), (112, 6.5), (178, 8.5)),
+             'A': ((44, 8.0), (138, 7.5), (214, 7.0))}
+    tunnels = {'C': ((-32, 3.6, 3.2), (62, 4.2, 3.6), (128, 3.6, 3.2), (226, 3.2, 3.0)),
+               'B': ((18, 3.4, 3.0), (92, 4.6, 3.8), (192, 3.4, 3.0)),
+               'A': ((66, 3.6, 3.2), (162, 3.6, 3.2))}
+    letters = {'C': 104.0, 'B': 80.0, 'A': 112.0}
+    blocked = {r: [(math.radians(a), s / 40 * 0.9) for a, s in spurs[r]] + [(math.radians(a), (w + 2.5) / 80) for a, w, _ in tunnels[r]]
+               + [(math.radians(letters[r]), 0.11)] for r in 'CBA'}
 
-    facade, openings, trim, planters, lamps, red = (bmesh.new() for _ in range(6))
-    step = 4.2 / R
-    lit = None
-    zr = 0.0
-    for ring, zr in RINGS:
-        # Walkway slab, fascia band, railing, and the homes on two floors at the wall.
-        _annulus(trim, cx, cy, R - 5.0, R + 0.2, zr - 0.5, zr, a0, a1, 64)
-        _annulus(trim, cx, cy, R - 5.05, R - 4.95, zr + 0.95, zr + 1.0, a0, a1, 64)
-        n_posts = int((a1 - a0) / math.radians(5))
-        for k in range(n_posts + 1):
-            a = a0 + (a1 - a0) * k / n_posts
-            p = (cx + (R - 5.0) * math.cos(a), cy + (R - 5.0) * math.sin(a))
-            add_box(trim, (p[0], p[1], zr + 0.5), (0.06, 0.06, 1.0))
-            if k % 3 == 0:
-                bulb = (p[0] + 0.15 * math.cos(a), p[1] + 0.15 * math.sin(a), zr + 1.1)
-                if ring != 'C':
-                    add_box(lamps, bulb, (0.16, 0.16, 0.16))
-                elif k % 12 == 0:
-                    add_box(red, bulb, (0.16, 0.16, 0.16))
-        a = a0 + step / 2
-        idx = 0
-        while a < a1 - step / 2:
-            rot = _rz(a + math.pi / 2)
-            out = Vector((math.cos(a), math.sin(a), 0))
-            inward = -out
+    # The rock: the cavern, its floor, spurs and pillars; the buttress the tunnel comes through (left of the
+    # balcony), the shelves of ring C either side of it, and the rock rising past the lane's end.
+    rock = bmesh.new()
+    _cave_shell(rock)
+    _cave_floor(rock)
+    for r in 'CBA':
+        for i, (a, s) in enumerate(spurs[r]):
+            lip, back, T, F = _ledge(math.radians(a), r)
+            _lump(rock, back + (lip - back) * 0.45 + Vector((0, 0, s * 0.35)), (s * 0.8, s * 0.55, s * 0.75), i * 3.3 + ord(r))
+    _pillar(rock, 96.0, 63.0, 4.2, 5.0, lean=(4.0, 6.0))
+    _pillar(rock, 59.0, 58.0, 6.5, 2.0, z0=17.0, z1=47.0, taper=0.08, lean=(-3.0, 2.0))
+    _lump(rock, Vector((92.0, 70.0, CAVE_FLOOR + 1.0)), (7.0, 5.0, 3.5), 9.0)          # falls of rock, never cleared
+    _lump(rock, Vector((52.0, 48.0, CAVE_FLOOR + 0.5)), (6.0, 6.0, 3.0), 11.0)
+    _cliff(rock, ((69.6, 1.45), (69.6, 3.4), (69.1, 6.0), (68.2, 8.6), (66.9, 11.5), (64.9, 14.5)),
+           ((-13.5, -1.5), (-9.0, -0.4), (-4.0, 0.8), (1.0, 1.0), (6.0, 0.8), (12.0, 1.0), (18.0, 1.4), (25.0, 2.2),
+            (31.0, 3.5), (36.0, 5.5), (41.0, 9.0)), -1, amp=0.3)
+    _cliff(rock, ((64.6, 1.6), (66.4, 1.6), (68.2, 1.6), (69.7, 1.6)),            # the rock the tunnel is cut through
+           ((3.95, 0.1), (7.0, 0.4), (10.5, 0.9), (14.0, 2.0)), -1, amp=0.25)
+    _cliff(rock, ((72.0, 2.7), (71.8, 5.5), (71.0, 8.4), (69.6, 11.3), (67.6, 14.3)),   # ring C, left of the balcony
+           ((-13.5, -2.0), (-8.0, -1.0), (-3.5, -0.2), (-0.03, 0.0)), -1, amp=0.12,
+           top_back=((69.4, 2.5), (69.2, 5.2), (68.4, 8.0), (67.2, 10.8), (65.4, 13.8)))
+    _cliff(rock, ((76.4, 2.05), (78.5, 2.1), (80.5, 2.3), (82.5, 2.9), (84.5, 3.9), (86.2, 5.5), (87.5, 7.6), (88.4, 10.2), (89.0, 13.0)),
+           ((-13.5, -2.5), (-9.5, -1.4), (-5.5, -0.4), (-1.8, 0.4), (-0.03, 0.0)), 1, amp=0.12,
+           top_back=((76.4, 1.22), (78.5, 1.22), (80.5, 1.22), (82.5, 1.22), (84.5, 1.22), (86.2, 1.22), (88.5, 1.25), (91.0, 2.5), (92.5, 6.0)))
+    _cliff(rock, ((100.5, 1.6), (96.5, 2.6), (93.0, 4.6), (90.4, 7.4), (88.6, 10.8), (87.4, 14.5)),   # rock rising past the lane's end
+           ((-13.5, -2.0), (-1.0, 0.0), (3.6, 0.0), (8.0, -0.6), (14.0, 0.4), (20.0, 1.2), (27.0, 2.0), (34.0, 4.0), (41.0, 8.0)), 1, amp=0.3)
+    _cave_obj('AtriumRock', rock, [m['stone'], m['cut']], coll, smooth=True)
 
-            def at(u, depth, z):
-                t = Vector((-math.sin(a), math.cos(a), 0))
-                return Vector((cx, cy, 0)) + out * R + t * u + inward * depth + Vector((0, 0, z))
-            _quad(facade, at(0, 0.2, zr + 2.8), (4.0, 5.6), rot)
-            add_box(trim, at(-2.0, 0.17, zr + 2.8), (0.24, 0.34, 5.6), rot=rot)
-            add_box(trim, at(0, 0.24, zr + 2.78), (4.0, 0.12, 0.1), rot=rot)
-            door = rnd.choice((-1.1, 1.1))
-            _quad(openings, at(door, 0.21, zr + 1.0), (0.9, 2.0), rot)
-            _quad(openings, at(-door * 0.75, 0.21, zr + 1.45), (1.2, 1.0), rot)
-            for wx in (-0.95, 0.95):
-                if rnd.random() < 0.25:
-                    continue                                 # shutters closed: plaster shows
-                _quad(openings, at(wx, 0.21, zr + 4.15), (0.95, 0.95), rot)
-                if rnd.random() < 0.4:
-                    add_box(planters, at(wx, 0.3, zr + 3.72), (0.9, 0.14, 0.14), rot=rot)
-            # One window lit, high on ring A, across the void.
-            if ring == 'A' and lit is None and a > math.radians(70):
-                lit = (at(0.95, 0.24, zr + 2.8 + 1.35), rot)
-            idx += 1
-            a += step
-        # Bridges from the walkway to the core.
-        for ab in (math.radians(20), math.radians(90), math.radians(160)):
-            c, s = math.cos(ab), math.sin(ab)
-            mid = (R - 5.0 + 5.0) / 2
-            rot = _rz(ab)
-            add_box(trim, (cx + c * mid, cy + s * mid, zr - 0.25), (R - 10.0, 2.0, 0.4), rot=rot)
-            for side in (-1, 1):
-                p = Vector((cx + c * mid, cy + s * mid, zr + 0.5)) + Vector((-s, c, 0)) * side
-                add_box(trim, p, (R - 10.0, 0.05, 0.05), rot=rot)
-            if ring == 'C':
-                p = Vector((cx + c * (R - 6.0), cy + s * (R - 6.0), zr + 0.6))
-                for k in range(3):
-                    add_box(red, p + Vector((0, 0, -0.3 + k * 0.35)), (0.12, 2.1, 0.14), rot=rot @ Matrix.Rotation(0.25 * (1 if k % 2 else -1), 4, 'X'))
-    _obj('AtriumFacades', facade, [m['plaster']], coll)
-    _obj('AtriumOpenings', openings, [m['dark']], coll)
-    _obj('AtriumTrim', trim, [m['stone']], coll)
-    _obj('AtriumPlanters', planters, [m['wood']], coll)
-    _obj('AtriumLamps', lamps, [m['ringlamp']], coll)
-    _obj('AtriumRedLamps', red, [m['ringred']], coll)
+    # Tunnel mouths cut into the terraces' back walls, and the big one at the floor where the rails go in.
+    for r in 'CBA':
+        for a, w, h in tunnels[r]:
+            _, back, T, F = _ledge(math.radians(a), r)
+            _arch(b['dark'], back + F * 0.25, T, F, w, h)
+            add_box(b['sheet'], back + F * 0.3 + Vector((0, 0, h + 0.25)), (w + 0.6, 0.3, 0.3), rot=_rot(T, F))
+            if rnd.random() < 0.6:
+                add_box(b['lamp'] if r != 'C' else b['red'], back + F * 0.5 + Vector((0, 0, h + 0.55)), (0.3, 0.3, 0.3), rot=_rot(T, F))
+    t = math.radians(140)
+    p, T, n = _cave_frame(t)
+    c = p + n * (_wall_off(t, -9.0) - 1.2) + Vector((0, 0, CAVE_FLOOR - 0.3))
+    _arch(b['dark'], c, T, -n, 8.0, 7.0, seg=8)
+    for s in (-1, 1):
+        add_box(b['sheet'], c + T * (s * 4.3) + Vector((0, 0, 3.5)), (0.5, 0.6, 7.0), rot=_rot(T, -n))
+        _pipe(b['rust'], [c + T * (s * 0.8) - n * 0.5 + Vector((0, 0, 0.35)), c + T * (s * 0.8) - n * 22 + Vector((0, 0, 0.35))], 0.09, seg=4)
+
+    _ring_c(b, rnd, blocked['C'])
+    _ring_b(b, rnd, blocked['B'])
+    lit = _ring_a(b, rnd, blocked['A'])
+    _upper_lights(b, rnd)
+    _risers(b, rnd)
+    _floor_works(b, rnd)
+    _crossings(b, rnd)
+    _cables(b, rnd)
+    _stains(b, rnd)
+    _carved(b, rnd)
+    # Ring C either side of the balcony: boxes on the shelves against the drop.
+    for x0, y0, a, d, stack in ((87.0, 2.6, 1.571, 4.2, 2), (90.4, 2.6, 1.571, 2.45, 3), (89.6, 5.4, 1.87, 2.45, 1)):
+        T = Vector((math.cos(a), math.sin(a), 0))
+        F = Vector((-T.y, T.x, 0))
+        for s in range(stack):
+            dd = d if s < 2 else 2.45
+            c = Vector((x0, y0, 2.62 * s)) + F * (dd / 2) + T * (0.3 * s * (1 if s % 2 else -1))
+            _container(b, c, T, F, (2.45, dd, 2.6), rnd)
+    add_box(b['red'], Vector((70.6, 10.4, 2.3)), (0.28, 0.28, 0.3))
+    _barricade(b, Vector((69.0, 12.6, 0.0)), Vector((0.25, -0.97, 0)), Vector((0.97, 0.25, 0)), 3.2, rnd)
+
+    # The fans: one at the floor in the far wall feeding the duct, one across the chimney's mouth. Their
+    # blades are their own meshes, spinning about their local Z (the game's local Y).
+    frame, fans = b['sheet'], []
+    t = math.radians(FAN_T)
+    p, _, n = _cave_frame(t)
+    hub = p + n * (_wall_off(t, -5.5) - 1.4) + Vector((0, 0, -5.5 + _warp(t, -5.5)))
+    blades = bmesh.new()
+    _fan(blades, frame, hub, -n, 4.6, 5)
+    for s in (-1, 1):
+        add_box(frame, hub + Vector((0, 0, s * 5.2)), (11.0, 0.6, 0.6), rot=_rot(Vector((-n.y, n.x, 0)), -n))
+    fans.append(('AtriumFanLow', blades, hub, -n))
+    mx, my, ma, mb, mz = CHIMNEY[0]
+    hub2 = Vector((mx, my, mz - 1.5))
+    blades = bmesh.new()
+    _fan(blades, frame, hub2, Vector((0, 0, 1)), 11.0, 4)
+    for a in (0.3, 1.87):
+        add_box(frame, hub2 + Vector((0, 0, 0.9)), (2 * ma + 6, 0.7, 0.7), rot=_rz(a))
+    fans.append(('AtriumFanHigh', blades, hub2, Vector((0, 0, 1))))
+    for name, bmf, h, axis in fans:
+        ob = _cave_obj(name, bmf, [m['sheet']], coll)
+        ob.location = h
+        ob.rotation_mode = 'QUATERNION'
+        ob.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis)
+    # The glow of the upper levels at the chimney's top, and above it, a glimpse of the real sky.
+    cx, cy, a, bb = _chimney_at(112.0)
+    glow, sky = bmesh.new(), bmesh.new()
+    ring_o = [glow.verts.new((cx + a * 1.1 * math.cos(t), cy + bb * 1.1 * math.sin(t), 112.0)) for t in [2 * math.pi * i / 24 for i in range(24)]]
+    ring_i = [glow.verts.new((cx + a * 0.3 * math.cos(t), cy + bb * 0.3 * math.sin(t), 113.5)) for t in [2 * math.pi * i / 24 for i in range(24)]]
+    for i in range(24):
+        j = (i + 1) % 24
+        glow.faces.new((ring_o[i], ring_i[i], ring_i[j], ring_o[j]))
+    sky.faces.new([sky.verts.new((cx + a * 0.32 * math.cos(t), cy + bb * 0.32 * math.sin(t), 118.0)) for t in [-2 * math.pi * i / 16 for i in range(16)]])
+    _cave_obj('AtriumUpperGlow', glow, [m['upperglow']], coll)
+    _cave_obj('AtriumSkyGlimpse', sky, [m['skypanel']], coll)
+
+    mats = {'plaster': m['plaster'], 'sheet': m['sheet'], 'rust': m['rust'], 'dark': m['dark'], 'barricade': m['barricade'],
+            'cut': m['cut'], 'wet': m['wet'], 'cable': m['rubber'], 'lamp': m['ringlamp'], 'red': m['ringred'], 'upper': m['upperlights']}
+    names = {'plaster': 'AtriumHomes', 'sheet': 'AtriumSheet', 'rust': 'AtriumRust', 'dark': 'AtriumOpenings',
+             'barricade': 'AtriumBarricades', 'cut': 'AtriumCutStone', 'wet': 'AtriumWet', 'cable': 'AtriumCables',
+             'lamp': 'AtriumLamps', 'red': 'AtriumRedLamps', 'upper': 'AtriumUpperLights'}
+    for k in keys:
+        if len(b[k].verts):                       # round things share their normals; boxes stay crisp
+            _cave_obj(names[k], b[k], [mats[k]], coll, smooth=k in ('sheet', 'rust', 'cable'), sharp=150 if k == 'cable' else 50)
+        else:
+            b[k].free()
     if lit:
         bm = bmesh.new()
-        add_box(bm, lit[0], (0.9, 0.04, 0.9), rot=lit[1])
-        _obj('AtriumLitWindow', bm, [m['homelight']], coll)
-    # The core: a column through the middle, with its lift shafts and a band at each ring.
-    bm = bmesh.new()
-    add_cyl(bm, (cx, cy, ATRIUM_FLOOR), (cx, cy, ATRIUM_TOP), 5.0, seg=40)
-    for _, zr in RINGS:
-        add_cyl(bm, (cx, cy, zr - 0.6), (cx, cy, zr + 0.1), 5.4, seg=40)
-    _obj('AtriumCore', bm, [m['stone']], coll)
-    bm = bmesh.new()
-    for ab in (math.radians(-110), math.radians(-90), math.radians(-70)):
-        c, s = math.cos(ab), math.sin(ab)
-        add_box(bm, (cx + c * 5.02, cy + s * 5.02, 0), (1.3, 0.1, ATRIUM_TOP - ATRIUM_FLOOR - 1), rot=_rz(ab + math.pi / 2))
-    _obj('AtriumCoreShafts', bm, [m['dark']], coll)
-    # Ring letters, painted on the wall over each ring, across the void and to either side.
-    for ring, zr in RINGS:
+        add_box(bm, lit[0], (1.0, 0.06, 1.1), rot=_rot(lit[1], lit[2]))
+        _cave_obj('AtriumLitWindow', bm, [m['homelight']], coll)
+    # The ring letters, painted on the back wall of each terrace between the homes: one each.
+    for ring, a in letters.items():
         mat = _image_material(f'RingLetter{ring}', os.path.join(TEX, f'ring_{ring}.png'), rough=0.9, alpha=True)
-        for k, ab in enumerate((math.radians(60), math.radians(120))):
-            p = (cx + (R - 0.05) * math.cos(ab), cy + (R - 0.05) * math.sin(ab), zr + 7.4)
-            p = (cx + (R + 0.15) * math.cos(ab), cy + (R + 0.15) * math.sin(ab), zr + 7.4)
-            _plane(f'AtriumRing{ring}{k}', (4.2, 4.2), p, mat, coll, rot=_rz(ab - math.pi / 2) @ Matrix.Rotation(math.radians(90), 4, 'X'))
+        _, back, T, F = _ledge(math.radians(a), ring)
+        size = 4.6 if ring == 'C' else 5.0
+        p = back + F * 0.35 + Vector((0, 0, size / 2 + 0.3))
+        ang = math.atan2(F.y, F.x) + math.pi / 2
+        _plane(f'AtriumRing{ring}', (size, size), p, mat, coll,
+               rot=_rz(ang) @ Matrix.Rotation(math.radians(90), 4, 'X') @ Matrix.Rotation(rnd.uniform(-0.06, 0.06), 4, 'Z'))
 
 
 def residential_doorway(m, coll):
     """DL-03's end wall gets its doorway: the lane runs on through it into DL-04."""
     gz = DECK
     bm = bmesh.new()
-    for y0, y1 in ((-0.55, -0.42), (0.45, 0.95)):
-        add_box(bm, (DOOR4_X, (y0 + y1) / 2, gz + 1.6), (0.3, y1 - y0, 3.2))
+    # Only the back of the wall and the lintel: a post toward the camera would read as a wall he walks through.
+    add_box(bm, (DOOR4_X, 0.7, gz + 1.6), (0.3, 0.5, 3.2))
     add_box(bm, (DOOR4_X, 0.2, gz + 2.35), (0.3, 1.5, 1.7))
     _obj('ResidentialWall', bm, [m['wall']], coll)
     bm = bmesh.new()
-    for y in (-0.44, 0.44):
-        add_box(bm, (DOOR4_X - 0.16, y, gz + 0.75), (0.06, 0.06, 1.5))
+    add_box(bm, (DOOR4_X - 0.16, 0.44, gz + 0.75), (0.06, 0.06, 1.5))
     add_box(bm, (DOOR4_X - 0.16, 0.0, gz + 1.5), (0.06, 0.94, 0.08))
     _obj('ResidentialDoorFrame', bm, [m['yellow']], coll)
 
@@ -970,7 +1837,7 @@ def clip_teeter(dl01, arm):
         buckle = track([(0, 0), (3, 1), (8, 0.6), (12, 0.3), (22, 0.8), (28, 0)], f)
         up = track([(0, 0), (4, 1), (20, 1), (30, 0.2), (38, 0)], f)
         wheel = math.sin(f * 1.4) * track([(4, 0), (6, 1), (14, 1), (20, 0)], f)
-        hands = {s: CARRY[s] + Vector((s * 0.09 * up, 0.02 * up + 0.04 * wheel * s, 0.17 * up + 0.05 * wheel))
+        hands = {s: CARRY[s] + Vector((s * 0.1 * up, -0.04 * up + 0.04 * wheel * s, 0.17 * up + 0.05 * wheel))  # up and out in front, clear of the shoulders
                  for _, s in SIDES}
         tuck = track([(12, 0), (15, 0.06), (19, 0.06), (22, 0)], f)
         feet = {side: ((0, 0.01 * s, tuck), (-20 * tuck / 0.06, 0, 0)) for side, s in SIDES}
@@ -980,7 +1847,7 @@ def clip_teeter(dl01, arm):
                head=(track([(0, 0), (3, 30), (10, 26), (14, 6), (24, 14), (30, 24), (38, 10)], f),
                      track([(24, 0), (30, 8), (38, 4)], f), 0),
                antenna=[(spring(f, 0, -28 * (1 + 0.3 * i), decay=5, freq=1.3) + spring(f, 22, 14, decay=4), 0) for i in range(3)],
-               hands=hands, hand_rot={'L': (-40 - 30 * up, 0, 20), 'R': (-40 - 30 * up, 0, -20)},
+               hands=hands, hand_rot={'L': (-40 - 30 * up, 0, 20), 'R': (-40 - 30 * up, 0, -20)}, elbows={'L': up, 'R': up},
                claws={'L': 34 * up + CLAW_REST_OPEN['L'] * (1 - up), 'R': 30 * up}, feet=feet)
     c.done()
 
@@ -1047,8 +1914,7 @@ def clip_look_back(dl01, arm):
     for frame in range(1, frames + 1):
         f = frame - 1
         reach = track([(30, 0), (40, 1), (58, 1), (66, 0)], f)
-        window = Vector((-0.05, -0.24, 0.41))
-        hands = {1: CARRY[1], -1: CARRY[-1].lerp(window - REST[-1], reach)}
+        hands = {1: CARRY[1], -1: dl01.window_reach(-1, CARRY[-1], reach)}     # elbow out, claw turned in to the glass
         head = (track([(0, 0), (12, -8), (30, -6), (40, 18), (56, 16), (64, 0), (68, 14), (74, -4), (84, 0)], f),
                 track([(6, 0), (16, 8), (30, 6), (40, 0)], f),
                 track([(6, 0), (18, 12), (28, -10), (36, 0)], f))
@@ -1056,7 +1922,7 @@ def clip_look_back(dl01, arm):
                     - spring(f, 70, 10 * (1 + 0.3 * i), decay=5), 0) for i in range(3)]
         c.pose(frame, body=(0, 0, track([(0, 0), (40, -0.01), (64, -0.01), (72, 0.004), (84, 0)], f)),
                body_rot=(track([(0, 0), (40, 6), (60, 6), (70, -2), (84, 0)], f), 0, 0), head=head, antenna=antenna,
-               hands=hands, hand_rot={'L': (-24, 6, 10), 'R': (-24 - 70 * reach, 0, -20 * reach)},
+               hands=hands, hand_rot={'L': (-24, 6, 10), 'R': dl01.window_claw(-1, reach)}, elbows={'R': reach},
                claws={'L': CLAW_REST_OPEN['L'], 'R': track([(30, 1), (38, 5), (58, 5), (66, 1)], f)})
     c.done()
 
@@ -1078,15 +1944,16 @@ def clip_awe(dl01, arm):
         yaw = track([(14, 0), (42, 34), (72, -34), (90, 0)], f)
         tilt = track([(40, 0), (50, 6), (66, -6), (90, 0), (120, 4), (136, 0)], f)
         hold = track([(88, 0), (100, 1), (128, 1), (140, 0)], f)
-        window = Vector((-0.05, -0.24, 0.41))
-        hands = {1: CARRY[1].lerp(Vector((0.05, -0.23, 0.36)) - REST[1], hold), -1: CARRY[-1].lerp(window - REST[-1], hold)}
+        # Both claws on the window, elbows out; the left one a little lower.
+        hands = {1: dl01.window_reach(1, CARRY[1], hold, target=dl01.WINDOW_WRIST[1] - Vector((0, 0, 0.015))),
+                 -1: dl01.window_reach(-1, CARRY[-1], hold)}
         antenna = [(track([(0, 0), (20, -18), (88, -22), (110, 4), (136, 0), (160, -6)], f) * (0.8 + 0.15 * i)
                     + spring(f, 136, -8), 0) for i in range(3)]
         c.pose(frame, body=(0, -fwd * 0.6, track([(0, 0), (20, 0.008), (70, 0.008), (100, -0.012), (130, -0.012), (150, 0)], f)),
                body_rot=(track([(0, 0), (14, -3), (40, -8), (70, -6), (92, 6), (120, 6), (138, 0)], f), 0, 0),
                head=(pitch, tilt, yaw), feet=feet, hands=hands,
-               hand_rot={'L': (-24 - 40 * hold, 6, 10), 'R': (-24 - 70 * hold, 0, -20 * hold)},
-               claws={'L': CLAW_REST_OPEN['L'] * (1 - hold) + 4 * hold, 'R': track([(88, 1), (98, 5), (128, 5), (140, 1)], f)})
+               hand_rot={'L': dl01.window_claw(1, hold, (-24, 6, 10)), 'R': dl01.window_claw(-1, hold)},
+               elbows={'L': hold, 'R': hold}, claws={'L': CLAW_REST_OPEN['L'] * (1 - hold) + 4 * hold, 'R': track([(88, 1), (98, 5), (128, 5), (140, 1)], f)})
     c.done()
 
 

@@ -35,7 +35,8 @@ RAIL_Y = 0.55                        # the return line runs just behind the lane
 HATCH_X, DOCK_X, JUNCTION_X, TIP_X = 30.5, 31.0, 34.6, 36.5
 BLADE_END = (35.25, 0.32)            # the points blade, raised (x, z)
 RAMP_TOP = (38.5, 1.6)
-LANDING_X, RETURN_X = 39.7, 41.3     # where a carrier stops on the gallery, and where it drops away
+LANDING_X, RETURN_X = 39.7, 41.3     # where a carrier stops on the gallery, and its return lift
+RETURN3 = (35.9,)                    # the return lift on the sorting floor, just short of the tip
 GALLERY = (38.85, 47.4, 1.6)         # x0, x1, deck height
 STOP_LEVER_X, POINTS_LEVER_X, LEVER_Y = 32.9, 34.25, 0.3
 LEVER_PIVOT_Z, LEVER_LEN = 0.2, 0.42
@@ -122,7 +123,7 @@ def make_textures():
     d.text((48, 130), 'NOTICE', font=_font(64), fill=(120, 30, 26))
     y = 236
     for line in ('RING C IS SEALED.', '', 'Rooms C-100 to C-160', 'are no longer in service.', '',
-                 'Post for these rooms will be', 'held at DEAD LETTERS until', 'it is claimed.', '',
+                 'Post for these rooms will be', 'held in the returns pit', 'until it is claimed.', '',
                  'Couriers: do not attempt', 'delivery past the seal.'):
         d.text((48, y), line, font=_font(30, 'mono-bold' if line.isupper() else 'mono'), fill=ink)
         y += 46
@@ -169,8 +170,8 @@ def make_textures():
     img = Image.new('RGB', (1600, 400), (24, 26, 24))
     d = ImageDraw.Draw(img)
     d.rectangle((14, 14, 1586, 386), outline=cream, width=12)
-    d.text((80, 64), 'DEAD LETTERS', font=_font(172), fill=cream)
-    d.text((86, 296), 'UNDELIVERABLE  .  HELD FOR CLAIM  .  DO NOT SORT', font=_font(46, 'sans'), fill=(170, 164, 140))
+    d.text((80, 70), 'UNDELIVERABLE', font=_font(164), fill=cream)
+    d.text((86, 296), 'HELD FOR CLAIM  .  DO NOT SORT', font=_font(46, 'sans'), fill=(170, 164, 140))
     _age(img, 4, 0.6).save(os.path.join(TEX, 'dead_letters_sign.png'))
 
     # The residential access sign, with tape across ring C.
@@ -283,21 +284,27 @@ def build_return_line(m, coll):
     # Floor with a hole for the hatch, a shaft below it, and the pit edge.
     bm = bmesh.new()
     add_box(bm, ((30.0 + hx0) / 2, 4.0, -0.05), (hx0 - 30.0, 16, 0.1))
-    add_box(bm, ((hx1 + FLOOR_X1) / 2, 4.0, -0.05), (FLOOR_X1 - hx1, 16, 0.1))
+    rx0, rx1 = RETURN3[0] - 0.36, RETURN3[0] + 0.36                    # the return lift's hatch by the tip
+    add_box(bm, ((hx1 + rx0) / 2, 4.0, -0.05), (rx0 - hx1, 16, 0.1))
+    add_box(bm, ((rx1 + FLOOR_X1) / 2, 4.0, -0.05), (FLOOR_X1 - rx1, 16, 0.1))
+    add_box(bm, ((rx0 + rx1) / 2, (-4.0 + RAIL_Y - 0.3) / 2, -0.05), (rx1 - rx0, RAIL_Y - 0.3 + 4.0, 0.1))
+    add_box(bm, ((rx0 + rx1) / 2, (RAIL_Y + 0.3 + 12.0) / 2, -0.05), (rx1 - rx0, 12.0 - RAIL_Y - 0.3, 0.1))
     add_box(bm, ((30.0 + FLOOR_X1) / 2, -3.8, -1.4), (FLOOR_X1 - 30.0, 0.4, 2.8))     # the slab's thickness, seen from the pit
-    add_box(bm, (FLOOR_X1 - 0.3, 3.0, -1.0), (0.6, 13.6, 2.0))
+    add_box(bm, (FLOOR_X1 - 0.05, 3.0, -1.0), (0.1, 13.6, 2.0))
     add_box(bm, (HATCH_X, (-4.0 + RAIL_Y - 0.3) / 2, -0.05), (hx1 - hx0, RAIL_Y - 0.3 + 4.0, 0.1))
     add_box(bm, (HATCH_X, (RAIL_Y + 0.3 + 12.0) / 2, -0.05), (hx1 - hx0, 12.0 - RAIL_Y - 0.3, 0.1))
     add_box(bm, (FLOOR_X1 + 0.05, 3.0, -3.0), (0.1, 12, 6.0))           # the pit's near wall, under the floor edge
     _obj('SortingFloor', bm, [m['concrete']], coll)
     bm = bmesh.new()
     add_box(bm, (HATCH_X, RAIL_Y, -0.5), (hx1 - hx0, 0.6, 0.9))
+    add_box(bm, ((rx0 + rx1) / 2, RAIL_Y, -0.5), (rx1 - rx0, 0.6, 0.9))
     _obj('HatchShaft', bm, [m['shaft']], coll)
     bm = bmesh.new()
-    for y in (RAIL_Y - 0.31, RAIL_Y + 0.31):
-        add_box(bm, (HATCH_X, y, 0.004), (hx1 - hx0 + 0.08, 0.04, 0.008))
-    for x in (hx0 - 0.02, hx1 + 0.02):
-        add_box(bm, (x, RAIL_Y, 0.004), (0.04, 0.66, 0.008))
+    for c0, c1 in ((hx0, hx1), (rx0, rx1)):
+        for y in (RAIL_Y - 0.31, RAIL_Y + 0.31):
+            add_box(bm, ((c0 + c1) / 2, y, 0.004), (c1 - c0 + 0.08, 0.04, 0.008))
+        for x in (c0 - 0.02, c1 + 0.02):
+            add_box(bm, (x, RAIL_Y, 0.004), (0.04, 0.66, 0.008))
     _obj('HatchFrame', bm, [m['yellow']], coll)
     # Back wall of the sorting floor, tall, with the poster; a beam and lamps above.
     bm = bmesh.new()
@@ -353,6 +360,14 @@ def build_return_line(m, coll):
             add_box(bm, (x, RAIL_Y + dy, (z + base) / 2), (0.06, 0.06, z - base))
         add_box(bm, (x, RAIL_Y, z - 0.02), (0.08, 0.5, 0.05))
     _obj('RampTrestle', bm, [m['steel']], coll)
+    # Lamps up the ramp, beside the rail: dark until the points are set to it, then they run upward.
+    for k in range(6):
+        u = (k + 0.5) / 6
+        x = BLADE_END[0] + (RAMP_TOP[0] - BLADE_END[0]) * u
+        z = BLADE_END[1] + (RAMP_TOP[1] - BLADE_END[1]) * u
+        bm = bmesh.new()
+        add_box(bm, (x, RAIL_Y + 0.27, z + 0.05), (0.07, 0.05, 0.04))
+        _obj(f'RampLamp{k}', bm, [emission_material(f'RampLamp{k}', (0.55, 1.0, 0.65), 0.0)], coll)
     # The storage chute: a long steel trough from the tip down into the heap.
     bm = bmesh.new()
     a, b = Vector((TIP_X + 0.1, -0.05)), Vector((39.3, -2.4))
@@ -380,11 +395,13 @@ def build_return_line(m, coll):
     add_sphere(bm, (DOCK_X + 0.5, 1.46, 1.16), 0.035, seg=12)
     _obj('DockLamp', bm, [m['docklamp']], coll)
     # The two levers: the belt stop (red) and the points (yellow), each pivoting on its stand.
-    for name, x, mat in (('StopLever', STOP_LEVER_X, m['red']), ('PointsLever', POINTS_LEVER_X, m['yellow'])):
+    # Both handles are red (things he can use are red); the stands tell them apart.
+    for name, x, stand in (('StopLever', STOP_LEVER_X, m['depot_green']), ('PointsLever', POINTS_LEVER_X, m['yellow'])):
+        mat = m['red']
         bm = bmesh.new()
         add_box(bm, (x, LEVER_Y, 0.1), (0.16, 0.2, 0.2))
         add_box(bm, (x + 0.09, LEVER_Y, 0.25), (0.02, 0.12, 0.5) if name == 'StopLever' else (0.02, 0.12, 0.3))
-        _obj(name + 'Stand', bm, [m['depot_green']], coll)
+        _obj(name + 'Stand', bm, [stand], coll)
         bm = bmesh.new()
         add_cyl(bm, (0, 0, 0), (0, 0, LEVER_LEN), 0.014, seg=8)
         add_cyl(bm, (-0.07, 0, LEVER_LEN), (0.07, 0, LEVER_LEN), 0.02, seg=10)
@@ -413,10 +430,13 @@ def build_pit(m, coll):
     bm = bmesh.new()
     add_box(bm, ((x0 + x1) / 2, 3.0, fz - 0.05), (x1 - x0, 12, 0.1))
     add_box(bm, ((x0 + x1) / 2, 9.1, (fz + 7) / 2), (x1 - x0, 0.2, 7 - fz))
-    add_box(bm, (x1, 3.0, (fz + 7) / 2), (0.2, 12, 7 - fz))
+    add_box(bm, (x1, 5.45, (fz + 7) / 2), (0.2, 7.1, 7 - fz))           # behind DL-04's goods hall (y > 1.9)
     for x in (39.0, 43.5, 48.0):
         add_box(bm, (x, 8.7, (fz + 7) / 2), (0.4, 0.4, 7 - fz))
-        add_box(bm, (x, 3.0, 6.6), (0.3, 12, 0.35))
+        if x < 47.0:
+            add_box(bm, (x, 3.0, 6.6), (0.3, 12, 0.35))
+        else:
+            add_box(bm, (x, 5.45, 6.6), (0.3, 7.1, 0.35))
     _obj('PitHall', bm, [m['wall']], coll)
     # The pigeonhole wall: hundreds of cubbies, most of them still holding something.
     bm, letters = bmesh.new(), bmesh.new()
@@ -475,7 +495,11 @@ def build_gallery(m, coll):
     day board, and the residential access at the far end."""
     gx0, gx1, gz = GALLERY
     bm = bmesh.new()
-    add_box(bm, ((gx0 + gx1) / 2, 0.2, gz - 0.03), (gx1 - gx0, 1.4, 0.06))
+    r0, r1 = RETURN_X - 0.36, RETURN_X + 0.36
+    add_box(bm, ((gx0 + r0) / 2, 0.2, gz - 0.03), (r0 - gx0, 1.4, 0.06))
+    add_box(bm, ((r1 + gx1) / 2, 0.2, gz - 0.03), (gx1 - r1, 1.4, 0.06))
+    add_box(bm, ((r0 + r1) / 2, (-0.5 + RAIL_Y - 0.3) / 2, gz - 0.03), (r1 - r0, RAIL_Y - 0.3 + 0.5, 0.06))
+    add_box(bm, ((r0 + r1) / 2, (RAIL_Y + 0.3 + 0.9) / 2, gz - 0.03), (r1 - r0, 0.9 - RAIL_Y - 0.3, 0.06))
     _obj('GalleryDeck', bm, [m['steel']], coll)
     bm = bmesh.new()
     x = gx0
@@ -491,8 +515,17 @@ def build_gallery(m, coll):
     _obj('GalleryRails', bm, [m['yellow']], coll)
     # Where returned carriers drop back to the dispatch level.
     bm = bmesh.new()
-    add_box(bm, (RETURN_X + 0.15, RAIL_Y, gz - 0.02), (0.75, 0.5, 0.05))
-    _obj('ReturnSlot', bm, [m['shaft']], coll)
+    for y in (RAIL_Y - 0.33, RAIL_Y + 0.33):
+        add_box(bm, (RETURN_X, y, gz + 0.004), (0.8, 0.04, 0.008))
+    for x in (RETURN_X - 0.38, RETURN_X + 0.38):
+        add_box(bm, (x, RAIL_Y, gz + 0.004), (0.04, 0.7, 0.008))
+    _obj('ReturnSlot', bm, [m['yellow']], coll)
+    bm = bmesh.new()                                                      # the duct the empties go down
+    for y in (RAIL_Y - 0.34, RAIL_Y + 0.34):
+        add_box(bm, (RETURN_X, y, (gz - 0.06 + PIT[2]) / 2), (0.74, 0.03, gz - 0.06 - PIT[2]))
+    for x in (RETURN_X - 0.37, RETURN_X + 0.37):
+        add_box(bm, (x, RAIL_Y, (gz - 0.06 + PIT[2]) / 2), (0.03, 0.7, gz - 0.06 - PIT[2]))
+    _obj('ReturnDuct', bm, [m['shutter']], coll)
     # The old sorting desk, left as it was: stamps, an ink pad, a stack of letters, a mug.
     bm, paper, inky = bmesh.new(), bmesh.new(), bmesh.new()
     add_box(bm, (42.6, 0.72, gz + 0.42), (0.9, 0.36, 0.04))
@@ -601,8 +634,7 @@ def clip_check_label(dl01, arm):
         f = frame - 1
         reach = track([(6, 0), (16, 1), (46, 1), (56, 0)], f)
         tap = sum(math.sin(math.pi * (f - t0) / 5) for t0 in (18, 25) if t0 <= f <= t0 + 5)
-        window = Vector((-0.06, -0.24 - 0.02 * tap, 0.41))
-        right = CARRY[-1].lerp(window - REST[-1], reach)
+        right = dl01.window_reach(-1, CARRY[-1], reach, tap)     # elbow out, the claw turned in to the glass
         hands = {1: CARRY[1] + Vector((0, 0, 0.01 * reach)), -1: right}
         pitch = track([(0, 0), (8, 6), (48, 6), (60, -3), (84, -2)], f)
         head = (track([(0, 0), (8, 30), (46, 32), (58, -4), (64, 8), (70, -2), (84, 0)], f),
@@ -611,7 +643,7 @@ def clip_check_label(dl01, arm):
                     - spring(f, 56, 16 * (1 + 0.3 * i), decay=6), 0) for i in range(3)]
         c.pose(frame, body=(0, 0, track([(0, 0), (8, -0.01), (50, -0.01), (60, 0.006), (84, 0)], f)),
                body_rot=(pitch, 0, 0), head=head, antenna=antenna, hands=hands,
-               hand_rot={'L': (-24, 6, 10), 'R': (-24 - 70 * reach, 0, -20 * reach)},
+               hand_rot={'L': (-24, 6, 10), 'R': dl01.window_claw(-1, reach)}, elbows={'R': reach},
                claws={'L': CLAW_REST_OPEN['L'], 'R': track([(6, 1), (14, 6), (48, 6), (56, 1)], f)})
     c.done()
 
@@ -696,7 +728,8 @@ def clip_ride(dl01, arm):
         hands = dl02_reach(targets, body, rot, REST)
         c.pose(frame, body=body, body_rot=rot, head=(-4 + 2 * math.sin(tau * t - 0.5) - rot[0], 3 * math.sin(tau * t), 0),
                antenna=[(-8 + 4 * math.sin(2 * tau * t - i), 0) for i in range(3)], hands=hands,
-               hand_rot={'L': (-50, 0, 20), 'R': (-50, 0, -20)}, claws={'L': 2, 'R': 2})
+               hand_rot={'L': (-50, 0, 20), 'R': (-50, 0, -20)}, claws={'L': 2, 'R': 2},
+               elbows={'L': 1, 'R': 1})      # crouched, the claws come up past the pod: elbows out
     c.done()
 
 
@@ -731,9 +764,8 @@ def clip_realise(dl01, arm):
         tilt = track([(40, 0), (56, 6), (76, -4), (88, 0), (128, 0), (144, 10), (156, 6)], f)
         droop = track([(0, 0), (20, 0), (80, 26), (110, 30), (130, 24), (156, 42)], f)
         reach = track([(90, 0), (100, 1), (116, 1), (126, 0)], f)
-        window = Vector((-0.05, -0.24, 0.42))
-        hands = {1: CARRY[1] + Vector((0, 0, -0.01 * droop / 42)),
-                 -1: (CARRY[-1] + Vector((0, 0, -0.01 * droop / 42))).lerp(window - REST[-1], reach)}
+        hands = {1: CARRY[1] + Vector((0, 0, -0.01 * droop / 42)),     # right: elbow out, claw turned in to the glass
+                 -1: dl01.window_reach(-1, CARRY[-1] + Vector((0, 0, -0.01 * droop / 42)), reach)}
         step = track([(0, 0), (6, 0.03), (14, 0.025)], f)
         feet = {side: ((0, step * (1 if side == 'L' else 0.6), 0.012 * math.sin(math.pi * min(1, f / 8)) if side == 'L' else 0), (0, 0, 0))
                 for side, s in SIDES}
@@ -741,7 +773,7 @@ def clip_realise(dl01, arm):
         c.pose(frame, body=(0, step * 0.8, sag), body_rot=(track([(0, 0), (8, -4), (20, 0), (140, 2), (156, 6)], f), 0, 0),
                head=(pitch, tilt, yaw), feet=feet, hands=hands,
                antenna=[(droop * (0.8 + 0.15 * i) + spring(f, 6, -8), 0) for i in range(3)],
-               hand_rot={'L': (-24, 6, 10), 'R': (-24 - 70 * reach, 0, -20 * reach)},
+               hand_rot={'L': (-24, 6, 10), 'R': dl01.window_claw(-1, reach)}, elbows={'R': reach},
                claws={'L': CLAW_REST_OPEN['L'], 'R': track([(90, 1), (98, 5), (116, 5), (126, 1)], f)})
     c.done()
 
@@ -825,15 +857,22 @@ def clip_brush_off(dl01, arm):
         shake = 7 * math.sin(f * 1.9) * math.exp(-f / 7) if f < 18 else 0
         brushL = math.sin(math.pi * min(1, max(0, (f - 16) / 10))) * (1 if f < 40 else 0)
         brushR = math.sin(math.pi * min(1, max(0, (f - 24) / 10))) * (1 if f < 40 else 0)
-        chest = {1: Vector((0.1 - 0.08 * math.sin(f * 0.9), -0.23, 0.34 + 0.04 * math.sin(f * 0.9))),
-                 -1: Vector((-0.1 + 0.08 * math.sin(f * 0.9 + 1), -0.23, 0.34 + 0.04 * math.sin(f * 0.9 + 1)))}
-        tap = Vector((-0.05, -0.245 - 0.015 * max(0, math.sin(math.pi * (f - 42) / 5)) * (1 if 42 <= f <= 47 else 0), 0.41))
-        hands = {1: CARRY[1].lerp(chest[1] - REST[1], brushL),
-                 -1: CARRY[-1].lerp(chest[-1] - REST[-1], brushR).lerp(tap - REST[-1], track([(38, 0), (42, 1), (48, 1), (54, 0)], f))}
+        # The claws lie on his chest with the elbows out (a reach straight in runs through the pod) and
+        # brush across the window and out to the sides, just off the glass.
+        brush = {1: brushL, -1: brushR}
+        sweep = {1: math.sin(f * 0.9), -1: math.sin(f * 0.9 + 1)}
+        chest = {s: dl01.WINDOW_WRIST[s] + 0.012 * dl01.WINDOW_OUT[s] + Vector((-s * 0.02 * sweep[s], 0, 0.02 * sweep[s]))
+                 for _, s in SIDES}
+        hands = {s: dl01.window_reach(s, CARRY[s], brush[s], target=chest[s], arc=0.06) for _, s in SIDES}
+        knock = track([(38, 0), (42, 1), (48, 1), (54, 0)], f)
+        tap = max(0, math.sin(math.pi * (f - 42) / 5)) * (1 if 42 <= f <= 47 else 0)
+        hands[-1] = dl01.window_reach(-1, hands[-1], knock, 0.75 * tap)
+        right = max(brushR, knock)
         c.pose(frame, body=(0, 0, -0.006 * abs(shake) / 7), body_rot=(track([(0, 0), (20, 8), (40, 6), (52, -3), (60, 0)], f), shake, 0),
                head=(track([(0, 0), (20, 22), (40, 20), (50, -6), (55, 4), (60, 0)], f), -shake * 1.4, 0),
                antenna=[(14 * math.sin(f * 2.1 - i) * math.exp(-f / 9) + spring(f, 50, -12), 0) for i in range(3)],
-               hands=hands, hand_rot={'L': (-60, 0, 30), 'R': (-60, 0, -30)}, claws={'L': 8, 'R': 4})
+               hands=hands, hand_rot={'L': dl01.window_claw(1, brushL, (-60, 0, 30)), 'R': dl01.window_claw(-1, right, (-60, 0, -30))},
+               elbows={'L': brushL, 'R': right}, claws={'L': 8, 'R': 4})
     c.done()
 
 
