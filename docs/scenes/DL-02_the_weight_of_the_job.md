@@ -18,6 +18,16 @@
 | His careful handling of a mundane weight shows his temperament | He squats, checks his grip, heaves twice, carries it with short, careful steps, sets it down gently and pats it once. |
 | Cinematic beat: keep plate and gate together; widen only after the solution | Once the plate holds without him, the rack lights come on row by row. The camera widens over the hall for about 8 s, and D-17 stops to look. |
 
+## 1a. The realisation (added after review)
+
+Seeing the other couriers should feel like realising D-17 may be the last of his kind (`docs/direction.md`):
+- **Roll call.** When the plate holds, the rack lights come on row by row, each with a low piano note. The camera widens and he looks.
+- **He stops.** When he first walks in among the racks, he plays `Realise` (6.5 s):
+  - He looks along the rows as his antenna sinks.
+  - He touches his own chest window, then looks back at them, and his head goes down.
+- **The swell.** The music (`kin`) builds over about 25 s to the biggest climax so far.
+- **He walks slowly.** Until the far end of the hall, he can only walk with `SadWalk` (0.39 m/s), and the camera sits low at the couriers' eye level, easing slowly.
+
 ## 2. No cut between scenes
 
 DL-01 used to end with a fade and a card. Now the bulkhead door leads straight on:
@@ -29,7 +39,7 @@ DL-01 used to end with a fade and a card. Now the bulkhead door leads straight o
 
 The camera trucks with him the whole way, from the hall's framing to the room's, and nothing fades. The far scene's lights switch over while he is behind the wall, so only one scene's lights cost anything at a time.
 
-The single end card now comes at the end of DL-02, as D-17 walks on toward DL-03's scanner.
+DL-02 runs on into DL-03 the same way, through the corridor to the scanner. The single end card is at the end of the last built scene.
 
 ## 3. Layout (metres along the lane)
 

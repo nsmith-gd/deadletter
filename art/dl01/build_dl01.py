@@ -25,6 +25,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', 'd17'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
+sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
 import bmesh  # noqa: E402
@@ -32,6 +33,7 @@ from mathutils import Matrix, Vector  # noqa: E402
 
 import build_d17 as d17  # noqa: E402
 import build_dl02 as dl02  # noqa: E402
+import build_dl03 as dl03  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
                        SIDES, CLAW_REST_OPEN, _key)
@@ -1048,6 +1050,7 @@ def main():
     scene.collection.children.link(set_coll)
     build_set(m, set_coll)
     slots = dl02.build_set(sys.modules[__name__], m, set_coll)
+    dl03.build_set(sys.modules[__name__], m, set_coll)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
@@ -1074,6 +1077,7 @@ def main():
     clip_tug(arm)
     clip_crank(arm)
     dl02.add_clips(sys.modules[__name__], arm)
+    dl03.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False

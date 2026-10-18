@@ -1,7 +1,7 @@
-# Undelivered (DL-01 and DL-02): playable prototype
+# Undelivered (DL-01 to DL-03): playable prototype
 
-A browser-playable build of the first two scenes of chapter 1, played as one continuous level with no cut between
-them. It follows `docs/scenes/DL-01_the_wake.md` and `docs/scenes/DL-02_the_weight_of_the_job.md`. It uses D-17 and
+A browser-playable build of the first three scenes of chapter 1, played as one continuous level with no cut between
+them. It follows the scene plans in `docs/scenes/` and the standing direction in `docs/direction.md`. It uses D-17 and
 the set from Blender, and the gameplay code mirrors the mechanisms planned for the Unity build.
 
 ## Run locally
@@ -76,12 +76,28 @@ stuck-prompt option on, a key glyph appears at about 18 s.
    - Park it, with the weight, on the plate.
 3. **The reveal.** The rack lights come on row by row over 55 dormant couriers like D-17, and the camera widens.
    Climb over the trolley (the weight is a ledge) and walk under the gate.
-4. **The recharge hall.** Optional: Use at the courier slumped by the lane, and he tries to wake it.
-   Walk on toward the red scanner lamp (DL-03) for the end card.
+4. **The recharge hall.**
+   - As he walks in among them, he stops and understands (`Realise`) while the music swells.
+   - He walks on slowly past the racks, with the camera at the couriers' eye level.
+   - Optional: Use at the courier slumped by the lane, and he tries to wake it.
+
+## DL-03 Return to Sender (about 20 m, 3 minutes)
+
+1. **The scanner.**
+   - It reads his label (room 114) and refuses it: ring C is sealed.
+   - The pit of dead letters opens below. He can only walk slowly while he takes it in, and the music swells.
+   - Then he checks his label and the theme turns hopeful.
+2. **The return line.**
+   - Carriers rise at the hatch, stop at the dock and are hauled to the chute.
+   - Boarding one bound for the chute is refused, and the points won't move while the belt runs.
+   - Stop the belt (red lever), throw the points (yellow lever), restart the belt, and board at the dock.
+3. **The gallery.** He rides up the service ramp and hops out over the pit. Walk past the old sorting desk, the stopped clock and the
+   day board to the residential access for the end card.
 
 **Checkpoints:**
 - DL-01: start, shutter open, hall, door open.
 - DL-02: the room, and solved.
+- DL-03: scanned, and the gallery landing.
 
 ## Music
 
@@ -91,8 +107,9 @@ README). It is sparse:
 - A quiet 48 s loop under play.
 - A cello cue at the sorting-hall reveal.
 - A short threshold cue as the bulkhead opens and D-17 walks through into DL-02.
-- A chorale when the rack lights come on over the couriers.
-- The full theme at the end of the recharge hall, ending in a music-box *Happy Birthday* over the end card.
+- A roll call when the rack lights come on, then a full swell as he walks in among the couriers.
+- The refusal, a swell over the pit, near silence for the label check, then the theme in F major.
+- The full theme at the end of the gallery, ending in a music-box *Happy Birthday* over the end card.
 
 Music has its own toggle in the title and pause menus, and it dips while paused.
 
@@ -103,4 +120,4 @@ cd art/dl01
 python build_dl01.py --out ../../game/undelivered/assets     # needs bpy 5.2 (Python 3.13); builds DL-02 too
 ```
 
-This writes `set`, `d17` and `couriers` (the dormant couriers' three poses and their rack slots), each as `.glb` and `.json`.
+This builds DL-02 (`art/dl02`) and DL-03 (`art/dl03`) too. It writes `set`, `d17` and `couriers` (the dormant couriers' three poses and their rack slots), each as `.glb` and `.json`.

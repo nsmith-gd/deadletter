@@ -1,0 +1,107 @@
+# DL-03 Return to Sender: production plan
+
+**Status:** built as a playable prototype (`game/undelivered/`), for director review
+**Source:** Dead Letter 45 Scene Overview, scene 03 (16 October 2026); GDD v0.1 world history
+**Sequence:** DL-02 → DL-03 → DL-04, with no cut on either side
+**Duration target:** 2 to 3 minutes
+
+## 1. What the scene must do
+
+| Requirement (from the overview) | How the build meets it |
+|---|---|
+| A sorting scanner rejects the obsolete address and directs its carrier toward a storage chute | D-17 walks under the scanner and it sweeps him. His three chest lamps answer its three lamps, the same handshake as the DL-01 relay. Its screen reads his label (a door glyph and **114**), then refuses it: **RING C SEALED**, with a red cross and RETURN. The floor arrows light toward the chute, and a carrier rises from the dispatch hatch to take him there. |
+| Stop the belt and switch the track to a manual service exit before boarding it | Carriers are hauled along the return line by a chain belt to a junction. Straight on is the chute; the points can lift to a service ramp that climbs to the gallery. The points are interlocked: while the belt runs, they won't move (a red lamp, and D-17 tugs and fails). Stop the belt with the red lever, throw the yellow points lever, restart the belt, then board a carrier at the dock. |
+| A visible pile of permanently undeliverable parcels explains the automated response | **Dead Letters**: a pit of decades of returned post, heaped up to the mouth of the chute, under a wall of pigeonholes and an enamel sign. Carriers keep tipping more into it. |
+| Let the rejected parcels appear before the chute starts | The pit is revealed right after the refusal while everything is still. The belt and its carriers start only after D-17 has checked his label. |
+| D-17 checks the label again, then moves with renewed purpose | `CheckLabel`: he looks down, taps the window twice, reads, lifts his head, antenna up, a small nod and a chirp. The music turns to the theme in F major. |
+| The parcel stays secured in his chest throughout | He rides in the carrier with the parcel in his compartment. Only the returned post goes into the pit. |
+| Player understanding: an invalid address ends the task → the task still deserves a physical search | The notice by the scanner says why. The residential access sign at the far end (tape across ring C) says where he is going anyway. |
+
+## 2. The emotional beat (see `docs/direction.md`)
+
+| Time from the refusal | What happens |
+|---|---|
+| 0 to 0.8 s | The refusal: a dissonant low chord, the buzzer, the screen's red cross. |
+| 0.8 to 11.8 s | **The pit.** The camera goes wide and high, looking down at the heap. D-17 can walk, but only slowly (`SadWalk`). He looks at the heap, and the music swells to a timpani-and-cymbal peak over phrase B's E-flat bars. |
+| 11.8 to 15.3 s | **The label.** Near silence: a held high A and the music box finding the first bars. He checks his label. |
+| From 15.3 s | **Purpose.** The theme at a walking tempo, turning for the first time to the relative major. The belt starts with a klaxon. |
+
+DL-02 now has the same treatment. When D-17 first walks in among the couriers:
+- **He stops** for `Realise`, 6.5 s:
+  - He looks along the rows as his antenna sinks.
+  - He touches his own chest, then looks back at them.
+- **The music:** `kin` swells to the biggest climax so far.
+- **Then slowly:** he walks with `SadWalk` past the racks, with the camera low at the couriers' eye level, until the far end of the hall.
+
+## 3. Layout (metres along the lane)
+
+```
+x: 26.9 corridor  28.9 SCANNER  30.5 hatch  31.0 DOCK   32.9 STOP   34.25 POINTS   34.6 junction   36.4 pit edge
+                                 |rail behind the lane (z -0.55): hatch -> dock -> junction -> tip (36.5) -> chute
+                                                                     \-> points lift -> ramp -> gallery (1.6 m)
+   gallery 38.85 ... landing 39.7 ... desk 42.6 ... day board 44.6 ... residential access 47.0 (end card)
+```
+
+- **Carriers:**
+  - A new one rises at the hatch about every 6 s while the belt runs, and waits 3.4 s at the dock with a bell.
+  - Each takes the route the points are set to when it reaches the junction.
+  - Chute carriers tip their parcels into the chute, where they slide and tumble onto the heap.
+- **Boarding:**
+  - D-17 refuses (shakes his head at the route board) unless the belt is running and the route is set to the service ramp.
+  - He hops in, rides crouched with his claws on the rim, and hops out onto the gallery.
+- **Safety:** there is no failure state, since he never boards a carrier bound for the chute.
+
+## 4. New models
+
+All are procedural, in `art/dl03/build_dl03.py`:
+- **Scanner:** the arch, with a housing, three lamps and a sweeping bar. The game draws its screen.
+- **Return line:**
+  - Rails, sleepers and a scrolling chain belt.
+  - The dispatch hatch and shaft.
+  - The hinged points blade.
+- **Levers and board:**
+  - The stop lever and the points lever on their stands.
+  - The interlock lamp.
+  - The route board, which the game draws.
+- **Sorting carrier:** a steel tub, a flanged chassis, a lamp and a plate. The game clones it.
+- **Chute, ramp and pit:**
+  - The storage chute.
+  - The ramp trestle over the pit edge.
+  - The pit hall, with a pigeonhole wall of about 800 cubbies, most still holding letters.
+- **Pit dressing:** hanging lamps and the enamel DEAD LETTERS sign.
+- **The heap:** about 1,700 parcels and 600 letters, instanced by the game on the same height function the Blender scene uses for the stamped parcels.
+- **Gallery:**
+  - The deck and railings, and the return slot.
+  - A sorting desk left mid-shift: stamps, an ink pad, a stack of letters, a mug.
+  - The stopped clock and the day board on its easel.
+  - The residential access wall.
+
+## 5. Lore
+
+Everything here is read from the world; there are no logs.
+
+| Where | What it says | What it means |
+|---|---|---|
+| Notice by the scanner | Ring C is sealed; rooms C-100 to C-160 are out of service; their post is held at Dead Letters; couriers must not attempt delivery past the seal. Refuge Year 43. | Room 114 is in ring C. The ring was sealed a year after the parcel was posted (R.Y. 42). |
+| Poster on the sorting floor | REFUGE POSTAL SERVICE: "Every parcel finds its door." | The service's old promise. D-17 is the last thing keeping it. |
+| The heap and its stamps | RETURN TO SENDER · ADDRESS NOT IN SERVICE | What the system has done with every such parcel since. |
+| The enamel sign | DEAD LETTERS · UNDELIVERABLE · HELD FOR CLAIM · DO NOT SORT | The working title, said once by the world itself. |
+| The day board | Deliveries per day by refuge year: 1,240 in year 30, 540 in 42, then 210, 96, 41, 12, 5, 2 in 109, and nothing chalked against 110. | The community shrank to nothing. The last other resident died in year 109, nine years before the game (R.Y. 118). |
+| The stopped clock, the desk left mid-shift | | Work ended without anyone deciding it should. |
+| Residential access sign | Rings A, B and C, with tape across C. | Where he is going anyway. |
+
+The dates are proposals that fit the GDD:
+- The refuge has stood about 118 years.
+- Mara was born 82 years ago, and the parcel was posted when she was six (R.Y. 42).
+- The last other resident died 9 years ago.
+
+## 6. Checkpoints
+
+- **scanned**: on the sorting floor after the label check. The belt is running and the route is set to the chute.
+- **landing**: on the gallery.
+
+## 7. Open questions
+
+- **The ring C seal.** Does it need a physical seal in DL-04 or DL-05, or is the notice enough?
+- **The day board.** Is it too explicit? It is optional to read, and the GDD's three essential conclusions don't depend on it.
+- **The ride up.** It is about 7 s with no control. Allow hopping out partway, or keep it as a short breather after the beat?

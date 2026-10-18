@@ -138,7 +138,6 @@ def dl02_materials(m):
                                chip=(0.2, 0.19, 0.17), rough=0.55, chip_rough=0.4, metallic=0.7)
     m['platebulb'] = emission_material('PlateBulb', (1.0, 0.9, 0.75), 0.0)
     m['rowlight'] = [emission_material(f'RowLight{i}', (0.8, 0.92, 0.95), 0.0) for i in range(len(ROWS_Y) + 1)]
-    m['scanner'] = emission_material('ScannerLamp', (1.0, 0.22, 0.12), 0.0)
     m['passage'] = emission_material('PassageGlow', (0.6, 0.85, 0.72), 0.0)
 
 
@@ -380,20 +379,6 @@ def build_recharge_hall(m, coll):
             add_box(bm, ((xa + xb) / 2, y, 2.585), (xb - xa + 0.3, 0.05, 0.02))
         _obj(f'RowTube{r}', bm, [m['rowlight'][r]], coll)
 
-    # The lane out, and a red scanner lamp beyond: DL-03 waits there.
-    bm = bmesh.new()
-    add_box(bm, (28.3, 0.65, 1.3), (2.6, 0.1, 2.6))
-    add_box(bm, (28.3, -0.2, 2.65), (2.6, 1.8, 0.1))
-    add_box(bm, (28.6, 0.45, 0.2), (1.6, 0.4, 0.06))
-    _obj('ExitCorridor', bm, [m['wall']], coll)
-    bm = bmesh.new()
-    for y in (-0.5, 0.55):
-        add_box(bm, (29.0, y, 0.75), (0.08, 0.08, 1.5))
-    add_box(bm, (29.0, 0.02, 1.52), (0.1, 1.15, 0.1))
-    _obj('ScannerArch', bm, [m['steel']], coll)
-    bm = bmesh.new()
-    add_sphere(bm, (29.0, -0.2, 1.62), 0.03, seg=12)
-    _obj('ScannerLamp', bm, [m['scanner']], coll)
     return slots
 
 

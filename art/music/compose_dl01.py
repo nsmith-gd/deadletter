@@ -84,6 +84,9 @@ THEME = [
     [('D5', 2), ('Bb4', 1)],
     [('C5', 1), ('Bb4', 1), ('G4', 1)],
     [('A4', 3)],
+    # 17-18: a cadence into the relative major, for DL-03's renewed purpose.
+    [('G5', 1.5), ('F5', 0.5), ('E5', 1)],
+    [('F5', 3)],
 ]
 
 # Harmony per bar: (bass, piano left-hand tones, string upper voices). A bar
@@ -105,6 +108,8 @@ HARMONY = [
     dict(bass='D2', lh=['F2', 'Bb2', 'D3'], up=['F3', 'Bb3', 'D4']),
     dict(bass='Bb1', lh=['D2', 'G2', 'Bb2'], up=['G3', 'Bb3', 'D4']),
     dict(bass='A1', lh=['E2', 'A2', 'D3'], up=['E3', 'A3', 'D4'], turn=dict(lh=['C#3', 'E3'], up=['E3', 'A3', 'C#4'])),
+    dict(bass='C2', lh=['G2', 'C3', 'E3'], up=['E3', 'G3', 'C4']),
+    dict(bass='F1', lh=['C2', 'F2', 'A2'], up=['F3', 'A3', 'C4']),
 ]
 
 
@@ -218,6 +223,49 @@ def music_box(name, vel, rng=RNG):
     out += butter(click, 3000, 'high') * 0.12
     out *= np.minimum(1, t / 0.001)
     return (out * (0.06 * vel)).astype(np.float32)
+
+
+_TIMP = {}
+
+
+def timp_stroke(name, rng=RNG):
+    """One soft-mallet timpani stroke at full level (cached per pitch)."""
+    if name not in _TIMP:
+        f = hz(name)
+        t = np.arange(int(2.6 * SR)) / SR
+        out = np.zeros_like(t)
+        for ratio, amp, tau in ((1.0, 1.0, 1.3), (1.504, 0.45, 0.7), (1.742, 0.22, 0.45), (2.0, 0.3, 0.5), (2.245, 0.1, 0.3)):
+            out += amp * np.exp(-t / tau) * np.sin(2 * np.pi * f * ratio * t * (1 + 0.006 * np.exp(-t / 0.06)) + rng.uniform(0, 6.28))
+        thump = onepole_lp(rng.standard_normal(len(t)).astype(np.float32), 300) * np.exp(-t / 0.025)
+        out = (out * np.minimum(1, t / 0.004) + thump * 1.5).astype(np.float32)
+        _TIMP[name] = onepole_lp(out, 1800)
+    return _TIMP[name]
+
+
+def timp_roll(tr, name, t0, t1, dyn0, dyn1, rng=RNG, rate=15.0, hit=0.0):
+    """A roll that swells from dyn0 to dyn1, optionally ending on an accented stroke."""
+    x = timp_stroke(name, rng)
+    t, k = t0, 0
+    while t < t1:
+        u = (t - t0) / max(1e-3, t1 - t0)
+        v = dyn0 + (dyn1 - dyn0) * u ** 1.6
+        tr.add(x * (0.035 * v * rng.uniform(0.8, 1.0)), t + rng.normal(0, 0.005), -0.1 if k % 2 else 0.05)
+        t += 1.0 / rate
+        k += 1
+    if hit:
+        tr.add(x * (0.07 * hit), t1, 0.0)
+
+
+def cymbal_swell(seconds, peak, level, rng=RNG, decay=1.6):
+    """A mallet roll on a suspended cymbal: shimmer rising to `peak` s, then ringing away."""
+    n = int(seconds * SR)
+    t = np.arange(n) / SR
+    x = butter(rng.standard_normal(n).astype(np.float32), [2500, 13000], 'band')
+    ring = sum(butter(rng.standard_normal(n).astype(np.float32), [f * 0.97, f * 1.03], 'band') * a
+               for f, a in ((3150, 0.6), (5300, 0.5), (7900, 0.35)))
+    env = np.where(t < peak, (t / peak) ** 3, np.exp(-(t - peak) / decay))
+    trem = 1 + 0.25 * np.sin(2 * np.pi * 11 * t)
+    return ((x + ring) * env * trem * level).astype(np.float32)
 
 
 STRING_BODY = {
@@ -446,9 +494,9 @@ class Mix:
 
     def __init__(self, seconds):
         self.seconds = seconds
-        self.stems = {k: Track(seconds) for k in ('piano', 'box', 'strings', 'solo', 'air')}
-        self.wet = {'piano': 0.55, 'box': 0.7, 'strings': 0.5, 'solo': 0.42, 'air': 0.25}
-        self.gain = {'piano': 1.0, 'box': 0.8, 'strings': 0.55, 'solo': 0.5, 'air': 0.4}
+        self.stems = {k: Track(seconds) for k in ('piano', 'box', 'strings', 'solo', 'air', 'perc')}
+        self.wet = {'piano': 0.55, 'box': 0.7, 'strings': 0.5, 'solo': 0.42, 'air': 0.25, 'perc': 0.5}
+        self.gain = {'piano': 1.0, 'box': 0.8, 'strings': 0.55, 'solo': 0.5, 'air': 0.4, 'perc': 0.2}
 
     def __getitem__(self, k):
         return self.stems[k]
@@ -665,33 +713,117 @@ def cue_threshold():
 
 
 def cue_racks():
-    """The lights come on over the racks, row after row of couriers. A slow chorale on phrase B,
-    and at the end the music box remembers its three notes: his job is still his."""
+    """The lights come on over the racks, row after row (the game lights the rows at these times).
+    Each row is a low, soft piano note: a roll call. Then a held D minor, waiting: the swell comes
+    when D-17 walks in among them (cue 'kin')."""
     rng = np.random.default_rng(606)
-    m = Mix(62)
-    m['air'].add(wind(62, 0.045, rng) * env_curve(int(62 * SR), 2, 12), 0)
-    # Each row of lights is a low, soft note: a roll call (the game lights the rows at these times).
+    m = Mix(26)
+    m['air'].add(wind(26, 0.045, rng) * env_curve(int(26 * SR), 2, 8), 0)
     for t, name in ((1.0, 'D3'), (2.2, 'A2'), (3.4, 'F2'), (4.6, 'D2'), (5.8, 'Bb1'), (7.0, 'A1')):
         m['piano'].add(piano(name, 0.34, 4.5, rng), t + human(rng, 8), pan_for(name))
         m['piano'].add(piano(octave(name, 2), 0.12, 2.5, rng), t + 0.02, pan_for(name) + 0.3)
-    # Phrase B as a chorale, a bar every 4 s.
-    t0, bar_len = 8.0, 4.0
-    for k in range(8, 16):
-        dyn = [0.22, 0.25, 0.28, 0.27, 0.36, 0.3, 0.25, 0.2][k - 8]
-        string_bar(m['strings'], k, t0 + (k - 8) * bar_len, dyn, rng, bars=bar_len / BAR, attack=1.6, release=2.6)
-    vl, voff = legato_line(scaled_events(range(8, 16), 0, bar_len), 0, 'violin', 0.22, rng, vib_cents=12, tail=3.0)
-    m['solo'].add(vl, t0 + voff, 0.25)
-    for k, b in enumerate(range(8, 16)):
-        if k % 2 == 0:
-            name = HARMONY[b]['bass']
-            m['piano'].add(piano(octave(name, 1), 0.2, 5, rng), t0 + k * bar_len + human(rng), pan_for(name))
-    # The parcel's three notes, and the open A held under them.
-    t1 = t0 + 8 * bar_len
-    for t, name, v in ((t1 + 0.8, 'F5', 0.3), (t1 + 1.8, 'E5', 0.26), (t1 + 3.2, 'D5', 0.28)):
+    for name, kind, pan, d, t in (('D2', 'bass', -0.15, 0.2, 1.0), ('D3', 'cello', -0.3, 0.2, 2.2), ('A3', 'viola', 0.0, 0.14, 4.6),
+                                  ('F4', 'violin', 0.25, 0.1, 7.0), ('E5', 'violin', 0.4, 0.06, 9.0)):
+        string_note(m['strings'], name, t, 22 - t, d, kind, pan, 3.0, 7, shape=[0.6, 1, 1, 0.7], rng=rng)
+    m['box'].add(music_box('A5', 0.2, rng), 10.5, 0.4)
+    return m.render()
+
+
+def cue_kin():
+    """D-17 walks in among the couriers and understands what they are: like him, and gone. The
+    realisation is slow (the game slows his walk and the camera); the music swells to the one full
+    climax so far, phrase A broadened to a bar every 3.5 s, then lets go."""
+    rng = np.random.default_rng(707)
+    m = Mix(70)
+    m['air'].add(wind(70, 0.04, rng) * env_curve(int(70 * SR), 3, 14), 0)
+    # He stops and looks along the rows: a low pedal and single high notes, one for each look.
+    string_note(m['strings'], 'D2', 0.0, 44, 0.24, 'bass', -0.15, 4.0, 10, shape=[0.5, 0.8, 1, 1, 0.6, 0.3], rng=rng)
+    string_note(m['strings'], 'D3', 1.0, 6.5, 0.16, 'cello', -0.3, 3.0, 2.5, rng=rng)
+    for t, name in ((1.2, 'A5'), (2.6, 'F5'), (4.1, 'D5'), (5.6, 'E5')):
+        m['piano'].add(piano(name, 0.26, 3.5, rng), t + human(rng), pan_for(name))
+    # The theme broadens and builds: cello first, then the violins, then everything.
+    t0, bl = 7.0, 3.5
+    dyn = [0.18, 0.22, 0.27, 0.33, 0.42, 0.52, 0.62, 0.72]
+    for k in range(8):
+        string_bar(m['strings'], k, t0 + k * bl, dyn[k], rng, bars=bl / BAR, attack=1.0 + 0.2 * (k < 2),
+                   release=3.5 if k == 7 else 1.8)
+        if k < 6:
+            lh_arpeggio(m['piano'], k, t0 + k * bl, 0.24 + 0.035 * k, rng, 'flow')
+    line, off = legato_line(scaled_events(range(0, 4), 0, bl, transpose=-1), 0, 'cello', 0.5, rng, tail=1.0)
+    m['solo'].add(line, t0 + off, -0.1)
+    vl, voff = legato_line(scaled_events(range(4, 8), 0, bl), 0, 'violin', 0.6, rng, vib_cents=16, tail=3.0)
+    m['solo'].add(vl, t0 + 4 * bl + voff, 0.15)
+    v8, v8off = legato_line(scaled_events(range(5, 8), 0, bl, transpose=1), 0, 'violin', 0.26, rng, vib_cents=14, tail=3.0)
+    m['strings'].add(v8, t0 + 5 * bl + v8off, 0.35)
+    vc, vcoff = legato_line(scaled_events(range(4, 8), 0, bl, transpose=-2), 0, 'cello', 0.34, rng, vib_cents=12, tail=3.0)
+    m['solo'].add(vc, t0 + 4 * bl + vcoff, -0.35)
+    # The peak, bar 8: big chords on the piano, the timpani roll, the cymbal.
+    peak = t0 + 7 * bl
+    for k, bar in ((6, 6), (7, 7)):
+        h = HARMONY[bar]
+        for j, name in enumerate([h['bass'], octave(h['bass'], 1)] + h['lh']):
+            m['piano'].add(piano(name, 0.5 + 0.08 * (k == 7), bl + 1.5, rng), t0 + k * bl + 0.02 * j, pan_for(name))
+    timp_roll(m['perc'], 'A1', peak - 6.0, peak, 0.05, 0.75, rng, hit=0.9)
+    m['perc'].add(cymbal_swell(14, 5.2, 0.022, rng), peak - 5.2, 0.2)
+    # Then it lets go: D minor, B-flat, the dominant, quieter each time; the parcel's three notes.
+    t1 = t0 + 8 * bl
+    for k, (bar, d) in enumerate(((0, 0.42), (1, 0.26), (6, 0.18), (7, 0.13))):
+        string_bar(m['strings'], bar, t1 + k * 3.6, d, rng, bars=3.6 / BAR, attack=0.8, release=3.0 if k == 3 else 1.8)
+    m['piano'].add(piano('D2', 0.42, 6, rng), t1, -0.3)
+    for t, name, v in ((t1 + 7.5, 'F5', 0.3), (t1 + 8.6, 'E5', 0.26), (t1 + 10.0, 'D5', 0.28)):
+        m['box'].add(music_box(name, v, rng), t, 0.35)
+    return m.render()
+
+
+def cue_dead():
+    """DL-03. The scanner rejects room 114 (0 s); the pit of undeliverable parcels opens below him and
+    the music swells over it (peak about 10 s); he checks his label in near silence (12-16.5 s); then
+    the theme comes back with purpose and, for the first time, turns to a major key (16.5 s on)."""
+    rng = np.random.default_rng(808)
+    m = Mix(76)
+    m['air'].add(wind(76, 0.045, rng) * env_curve(int(76 * SR), 1, 14), 0)
+    # Rejection: a low, close dissonance.
+    for name, v in (('D2', 0.5), ('Eb2', 0.42), ('A2', 0.3)):
+        m['piano'].add(piano(name, v, 3.5, rng), 0.05, pan_for(name))
+    for name, kind in (('D2', 'cello'), ('Eb2', 'bass')):
+        n = int(4.5 * SR)
+        trem = 0.75 + 0.25 * np.sin(2 * np.pi * 7 * np.arange(n) / SR)
+        e = env_curve(n, 0.6, 2.0, [0.6, 1, 0.8]) * trem.astype(np.float32) * 0.22
+        m['strings'].add(bowed(np.full(n, hz(name), np.float32), e, kind, rng), 0.0, -0.2)
+    # The pit: phrase B's last four bars, swelling.
+    t0, bl = 2.0, 2.4
+    for k, bar in enumerate(range(12, 16)):
+        string_bar(m['strings'], bar, t0 + k * bl, [0.32, 0.46, 0.6, 0.66][k], rng, bars=bl / BAR, attack=0.8,
+                   release=2.2 if k == 3 else 1.4)
+    vl, voff = legato_line(scaled_events(range(12, 16), 0, bl), 0, 'violin', 0.55, rng, vib_cents=16, tail=1.2)
+    m['solo'].add(vl, t0 + voff, 0.15)
+    v2, v2off = legato_line(scaled_events(range(12, 16), 0, bl, transpose=1), 0, 'violin', 0.24, rng, vib_cents=14, tail=1.2)
+    m['strings'].add(v2, t0 + v2off, 0.35)
+    for k, bar in enumerate(range(12, 16)):
+        h = HARMONY[bar]
+        for j, name in enumerate([h['bass'], octave(h['bass'], 1)] + h['lh'][:2]):
+            m['piano'].add(piano(name, 0.36 + 0.05 * k, bl + 1.2, rng), t0 + k * bl + 0.02 * j, pan_for(name))
+    timp_roll(m['perc'], 'A1', 6.0, 9.2, 0.05, 0.6, rng, hit=0.7)
+    m['perc'].add(cymbal_swell(10, 3.2, 0.018, rng, decay=1.2), 6.0, 0.2)
+    # He checks his label: one high note held, the music box finding the first bars.
+    string_note(m['strings'], 'A5', 11.4, 5.5, 0.06, 'violin', 0.4, 1.0, 2.5, rng=rng)
+    for t, name, v in ((12.3, 'F5', 0.3), (12.9, 'E5', 0.26), (13.6, 'D5', 0.3), (14.6, 'D5', 0.24), (15.6, 'A4', 0.24)):
         m['box'].add(music_box(name, v, rng), t, 0.3)
-    string_note(m['strings'], 'A2', t1, 12, 0.18, 'cello', -0.3, 1.0, 8, rng=rng)
-    string_note(m['strings'], 'E3', t1, 12, 0.12, 'viola', 0.0, 1.0, 8, rng=rng)
-    string_note(m['strings'], 'D4', t1 + 3.2, 9, 0.08, 'violin', 0.3, 1.5, 7, rng=rng)
+    # Renewed purpose: phrase A at a walking tempo, turning at the end to F major.
+    t1, bl = 16.6, 2.7
+    bars = [0, 1, 2, 3, 4, 5, 16, 17]
+    for k, bar in enumerate(bars):
+        for t, name, beats in scaled_events([bar], t1 + k * bl, bl):
+            m['piano'].add(piano(name, 0.5, beats * 1.05, rng), t + human(rng), pan_for(name))
+        lh_arpeggio(m['piano'], bar, t1 + k * bl, 0.3, rng, 'flow' if k < 7 else 'sparse')
+        if k >= 2:
+            string_bar(m['strings'], bar, t1 + k * bl, 0.16 + 0.02 * k, rng, bars=bl / BAR, attack=0.9,
+                       release=5.0 if k == 7 else 1.5)
+    t2 = t1 + 7 * bl
+    m['box'].add(music_box('F6', 0.26, rng), t2 + 0.3, 0.35)
+    m['box'].add(music_box('C6', 0.2, rng), t2 + 1.2, 0.35)
+    for name, kind, pan, d in (('F2', 'bass', -0.15, 0.18), ('F3', 'cello', -0.3, 0.2), ('A3', 'viola', 0.0, 0.14), ('C5', 'violin', 0.3, 0.08)):
+        string_note(m['strings'], name, t2, 12, d, kind, pan, 1.5, 8, shape=[1, 0.9, 0.6], rng=rng)
     return m.render()
 
 
@@ -720,7 +852,8 @@ def main():
     ap.add_argument('--only', nargs='*')
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
-    cues = {'wake': cue_wake, 'bed': cue_bed, 'hall': cue_hall, 'threshold': cue_threshold, 'racks': cue_racks, 'end': cue_end}
+    cues = {'wake': cue_wake, 'bed': cue_bed, 'hall': cue_hall, 'threshold': cue_threshold, 'racks': cue_racks,
+            'kin': cue_kin, 'dead': cue_dead, 'end': cue_end}
     rendered = {}
     for name, fn in cues.items():
         if args.only and name not in args.only:
@@ -730,12 +863,16 @@ def main():
         if name != 'bed':
             st = fade_tail(st)
         rendered[name] = st
-    # One gain for every cue, so their balance is as written.
-    peak = max(float(np.abs(s).max()) for s in rendered.values())
+    # One gain for every cue, so their balance is as written. The reference is the gentler cues, so a
+    # swell can rise above them; a soft limiter catches its peaks.
+    ref = [rendered[k] for k in ('wake', 'hall', 'end') if k in rendered] or list(rendered.values())
+    peak = max(float(np.abs(s).max()) for s in ref)
     gain = 10 ** (-1.0 / 20) / peak
     for name, st in rendered.items():
         # Tape hiss, added at its final level, about 64 dB down.
-        st = st * gain + hiss(st.shape[1], 0.0011, np.random.default_rng(5))
+        st = st * gain
+        st = np.where(np.abs(st) > 0.7, np.sign(st) * (0.7 + 0.25 * np.tanh((np.abs(st) - 0.7) / 0.25)), st)
+        st = st + hiss(st.shape[1], 0.0011, np.random.default_rng(5))
         rms = 20 * np.log10(np.sqrt((st ** 2).mean()) + 1e-9)
         print(f'{name}: {st.shape[1] / SR:.1f} s, peak {20 * np.log10(np.abs(st).max()):.1f} dBFS, rms {rms:.1f} dBFS')
         wav = os.path.join(args.wav or args.out, f'dl01_{name}.wav')
