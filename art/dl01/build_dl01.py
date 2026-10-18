@@ -775,15 +775,16 @@ def clip_opening(arm):
         for side, s in SIDES:
             loc = FOLDED[s].copy()
             loc.z += track([(SHIELD, 0), (SHIELD + 5, -0.012), (CHECK, -0.012), (CHECK + 8, 0)], f)
+            tap = 0.0
             if side == 'L':
                 loc = loc.lerp(Vector((-0.11, -0.16, 0.2)), track([(CHECK, 0), (CHECK + 8, 1)], f))
             else:
                 tap = sum(max(0.0, math.sin(math.pi * (f - t0) / 6)) for t0 in (CHECK + 8, CHECK + 16)
                           if t0 <= f <= t0 + 6)
-                loc.y += 0.012 * tap
+                loc += Vector((0, 0.004, 0.02)) * tap      # with the claw tipped back (hand_rot) onto the glass
                 loc.z -= 0.03 * track([(CHECK + 18, 0), (CHECK + 24, 1), (CHECK + 28, -0.15), (RELIEF, 0)], f)  # down the seal
             hands[s] = loc.lerp(CARRY[s], carry)
-            hand_rot[side] = (-20 - 4 * carry, s * 6 * carry, s * 10 * carry)
+            hand_rot[side] = (-20 - 4 * carry + 39 * tap, s * 6 * carry, s * 10 * carry)
             claws[side] = track([(0, 0), (CHECK + 6, 0), (CHECK + 10, 6), (RELIEF, 6),
                                  (SHAKE + 18, CLAW_REST_OPEN[side])], f)
         feet = {}

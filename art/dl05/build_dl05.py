@@ -214,17 +214,17 @@ def make_textures():
     def px(x, z):
         return ((x - x0) * W / (MARKS[1] - MARKS[0]), (z1 - z) * W / (MARKS[3] - MARKS[2]))
     rnd = random.Random(520)
-    graphite = (58, 56, 62, 225)
+    graphite = (34, 32, 38, 240)
     for k, (age, year, z) in enumerate(((2, 38, 0.862), (3, 39, 0.928), (4, 40, 0.991), (5, 41, 1.064), (6, 42, 1.138))):
         a, b = px(94.35, z), px(94.47, z + rnd.uniform(-0.004, 0.004))
-        _line(d, [a, b], graphite, 5, rnd, 1.0, passes=2)
+        _line(d, [a, b], graphite, 6, rnd, 1.0, passes=2)
         # The label, in a grown-up's pencil, each written a little askew.
-        lab = Image.new('RGBA', (190, 48), (0, 0, 0, 0))
+        lab = Image.new('RGBA', (200, 52), (0, 0, 0, 0))
         ld = ImageDraw.Draw(lab)
-        ld.text((4, 40), f'M {age}', font=_font(32, 'serif'), fill=graphite, anchor='ls')
-        ld.text((62, 40), f'R.Y. {year}', font=_font(22, 'sans'), fill=(58, 56, 62, 205), anchor='ls')
+        ld.text((4, 44), f'M {age}', font=_font(38, 'serif'), fill=graphite, anchor='ls')
+        ld.text((72, 44), f'R.Y. {year}', font=_font(27, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
         lab = lab.rotate(rnd.uniform(-4, 4), resample=Image.BICUBIC)
-        img.alpha_composite(lab, (int(a[0] - 142), int(a[1] - 36)))
+        img.alpha_composite(lab, (int(a[0] - 168), int(a[1] - 40)))
     sx, sy = px(94.47, 1.138)                                               # a child's star by the last one
     d.line((sx + 12, sy - 22, sx + 26, sy + 6, sx + 2, sy - 12, sx + 30, sy - 12, sx + 6, sy + 6, sx + 12, sy - 22),
            fill=(70, 90, 170, 220), width=4)
