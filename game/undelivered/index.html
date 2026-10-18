@@ -2261,7 +2261,7 @@ function updateFall(a, dt) {
 // Back to the last checkpoint, through a fade. Moments already seen are not replayed.
 function respawn() {
   fadeEl.style.opacity = 1;
-  setTimeout(() => { if (game.mode === 'play') startPlay(game.checkpoint); }, 1300);
+  game.respawnAt = game.clock + 1.3;                  // on the game's clock, so a pause holds it
 }
 
 // ---------------------------------------------------------------------------
@@ -3561,10 +3561,28 @@ function adaptResolution(rawDt) {
 function frame(now) {
   const rawDt = Math.min(0.5, (now - last) / 1000);
   const dt = Math.min(0.05, rawDt); last = now;
+  const sim = window.__sim;
+  if (sim) {
+    // Test only: a simulated player drives the game at a fixed 60 Hz, several steps per frame, rendering now and then.
+    for (let i = 0; i < sim.steps; i++) { sim.bot?.(1 / 60); step(1 / 60); }
+    if (refs.cull) updateCulling();
+    if (mixer && (sim.render || ++sim.frames % 30 === 0)) composer.render();
+    requestAnimationFrame(frame);
+    return;
+  }
   adaptResolution(rawDt);
   if (refs.cull && (Math.floor(now / 100) !== frame.lastCull)) { frame.lastCull = Math.floor(now / 100); updateCulling(); }
+  step(dt);
+  grain.uniforms.uTime.value = (now / 1000) % 100;
+  if (!dbg.hidden) dbg.textContent = `mode ${game.mode}\nframe ${game.frame.toFixed(0)}  fps ${fpsAvg.toFixed(0)}\nx ${game.x.toFixed(2)}  y ${game.y.toFixed(2)}  vx ${game.vx.toFixed(2)}\nclip ${current}\ncrouch ${game.crouched}  ceiling ${ceilingAt(game.x).toFixed(2)}\ncheckpoint ${game.checkpoint}  released ${game.released}  door ${game.doorOpen.toFixed(2)}\nact ${game.act ? game.act.kind + ':' + game.act.phase : '-'}  autorun ${game.autorun}`;
+  if (mixer) composer.render();
+  requestAnimationFrame(frame);
+}
+// One step of the game.
+function step(dt) {
   fpsAvg += (1 / Math.max(dt, 1e-3) - fpsAvg) * 0.05;
   game.clock += dt;
+  if (game.respawnAt && game.clock >= game.respawnAt && game.mode === 'play') { game.respawnAt = 0; startPlay(game.checkpoint); }
   pollGamepad();
   const active = game.mode === 'opening' || game.mode === 'play';
   if (active) game.sceneTime += dt;
@@ -3596,16 +3614,12 @@ function frame(now) {
     updateCamera(dt, f);
   }
   input.jumpPressed = false; input.usePressed = false;
-  grain.uniforms.uTime.value = (now / 1000) % 100;
-  if (!dbg.hidden) dbg.textContent = `mode ${game.mode}\nframe ${f.toFixed(0)}  fps ${fpsAvg.toFixed(0)}\nx ${game.x.toFixed(2)}  y ${game.y.toFixed(2)}  vx ${game.vx.toFixed(2)}\nclip ${current}\ncrouch ${game.crouched}  ceiling ${ceilingAt(game.x).toFixed(2)}\ncheckpoint ${game.checkpoint}  released ${game.released}  door ${game.doorOpen.toFixed(2)}\nact ${game.act ? game.act.kind + ':' + game.act.phase : '-'}  autorun ${game.autorun}`;
-  if (mixer) composer.render();
-  requestAnimationFrame(frame);
 }
 
 // Test hook for automated traversal checks.
 window.__dl01 = { game, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
   clip: () => current, renderer, carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
-  crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen };
+  crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse() };
 
 function boot() {
   resize();
