@@ -2085,7 +2085,7 @@ function currentShot() {
   const X = game.x, Y = game.y, a = game.act, sc = game.scan;
   // DL-01: the bulkhead rising, from low beside him as he hauls the wheel.
   if (a && a.kind === 'crank' && a.phase === 'act') {
-    return { name: 'crank', pos: V3(X - 0.6, 0.42, 1.9), look: V3(X + 0.6, 0.78, -0.55), focal: 30, ease: 0.8 };
+    return { name: 'crank', pos: V3(X - 1.25, 0.5, 2.55), look: V3(X + 0.75, 0.92, -0.55), focal: 31, ease: 0.8 };
   }
   // DL-02: the realisation. Over his shoulder toward the racks, then round to his face as he touches his chest.
   if (a && a.kind === 'realise') {
