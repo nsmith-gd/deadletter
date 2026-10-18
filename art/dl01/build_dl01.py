@@ -28,6 +28,8 @@ sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl04'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl05'))
+for _d in ('sorting_hall', 'racks', 'cage'):
+    sys.path.insert(0, os.path.join(HERE, '..', _d))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
 import bmesh  # noqa: E402
@@ -38,6 +40,9 @@ import build_dl02 as dl02  # noqa: E402
 import build_dl03 as dl03  # noqa: E402
 import build_dl04 as dl04  # noqa: E402
 import build_dl05 as dl05  # noqa: E402
+import build_sorting_hall as sorting_hall  # noqa: E402
+import build_racks as racks  # noqa: E402
+import build_cage as cage  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
                        SIDES, CLAW_REST_OPEN, _key)
@@ -450,7 +455,7 @@ def build_set(m, coll):
     bm = bmesh.new()
     px0, px1, pz = PIT
     add_box(bm, ((px0 - 5.0) / 2, 4.0, -0.05), (px0 + 5.0, 16, 0.1))
-    add_box(bm, ((px1 + 30.0) / 2, 4.0, -0.05), (30.0 - px1, 16, 0.1))
+    add_box(bm, ((px1 + 30.0 + OFF2) / 2, 4.0, -0.05), (30.0 + OFF2 - px1, 16, 0.1))   # on under the Sorting Hall and DL-03's rooms
     add_box(bm, ((px0 + px1) / 2, 4.0, pz - 0.05), (px1 - px0, 16, 0.1))
     for x in (px0, px1):  # trench walls
         add_box(bm, (x, 4.0, pz / 2), (0.04, 16, -pz))
@@ -1104,9 +1109,9 @@ def pack_for_web(out, names):
 
 # Each later stretch of the level moves along x by its offset, so scenes can be inserted between them
 # (docs/chapter1_plan.md). Keep these in step with OFF2..OFF4 in game/undelivered/index.html.
-OFF2 = 0.0   # the weight room and the racks, after the Sorting Hall
-OFF3 = 0.0   # the return line to Lift 2's belt, after the Racks
-OFF4 = 0.0   # the tunnel, the city and ring C, after the Slipping Cage
+OFF2 = 13.0  # the weight room and the racks, after the Sorting Hall
+OFF3 = 21.0  # the return line to Lift 2's belt, after the Racks
+OFF4 = 30.0  # the tunnel, the city and ring C, after the Slipping Cage
 SPLIT4 = 64.55   # in DL-04's set, what starts at or beyond this is the tunnel side
 
 
@@ -1148,6 +1153,10 @@ def main():
     before = set(bpy.data.objects)
     dl05.build_set(sys.modules[__name__], m, set_coll)
     shift_new(before, lambda o: OFF4)
+    # The scenes inserted between those stretches are built where they stand.
+    sorting_hall.build_set(sys.modules[__name__], m, set_coll)
+    racks.build_set(sys.modules[__name__], m, set_coll)
+    cage.build_set(sys.modules[__name__], m, set_coll)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
@@ -1177,6 +1186,9 @@ def main():
     dl03.add_clips(sys.modules[__name__], arm)
     dl04.add_clips(sys.modules[__name__], arm)
     dl05.add_clips(sys.modules[__name__], arm)
+    sorting_hall.add_clips(sys.modules[__name__], arm)
+    racks.add_clips(sys.modules[__name__], arm)
+    cage.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False

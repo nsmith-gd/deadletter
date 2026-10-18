@@ -1,9 +1,12 @@
-# DL-05 The Child at the Address: production plan
+# DL-09 The Child at the Address: production plan
 
 **Status:** built as a playable prototype (`game/undelivered/`), for director review
 **Source:** Dead Letter 45 Scene Overview, scene 05 (16 October 2026)
-**Sequence:** DL-04 → DL-05 → DL-06, with no cut on either side
-**Duration target:** 3 to 4 minutes. The overview gives 2; scenes run a touch longer from DL-04 on.
+**Sequence:** DL-08 → DL-09 → DL-10, with no cut on either side
+
+> **Renumbered 18 October 2026.** Chapter 1 now has nine scenes; this was DL-05. The rework in
+> `docs/chapter1_plan.md` and `docs/chapter1_build_spec.md` supersedes this plan where they differ.
+**Duration target:** 3 to 4 minutes. The overview gives 2; scenes run a touch longer from DL-07 on.
 
 ## 1. What the scene must do
 
@@ -23,7 +26,7 @@
 
 | Beat | What happens |
 |---|---|
-| **Down to ring C** | The stair off the DL-04 balcony brings him down to ring C's ledge. The cave city rises behind him. |
+| **Down to ring C** | The stair off the DL-07 balcony brings him down to ring C's ledge. The cave city rises behind him. |
 | **The seal** | A barricade of sheet metal across the lane: RING C SEALED · R.Y. 43, and tape. There is a gap under it; he crouches through. |
 | **Ring C** | Abandoned and nearly dark: shuttered homes (C-108 to C-112), dead bulbs on a cable, two still burning, one of them failing. A fallen duct to hop. |
 | **C-114** | The last door stands open. He steps up beside it, knocks on the jamb twice and waits (`Knock`): nobody. He goes in. |
@@ -37,7 +40,7 @@
 ## 3. Layout (metres along the lane; this scene's floor is at 0)
 
 ```
-x: 74.65-76.8 stair down from the DL-04 balcony (1.6 -> 0)   76.8 ledge   80.2-81.0 BARRICADE (gap 0.62 high)
+x: 74.65-76.8 stair down from the DL-07 balcony (1.6 -> 0)   76.8 ledge   80.2-81.0 BARRICADE (gap 0.62 high)
    81.0-88.5 ring C lane (duct 84.2-84.6, 0.26 high)   88.2 knock   88.6 C-114 door (lintel 1.3)
    88.7-90.6 hall   90.6 inner door (lintel 1.25)   90.65-95.6 bedroom   95.6 back door   97.2 end
 bedroom: bed 91.0-92.5 (top 0.42, behind the lane)   toy (92.2, top of bed)   painted window over the bed

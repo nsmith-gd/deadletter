@@ -1,8 +1,11 @@
-# DL-03 Return to Sender: production plan
+# DL-05 Return to Sender: production plan
 
 **Status:** built as a playable prototype (`game/undelivered/`), for director review
 **Source:** Dead Letter 45 Scene Overview, scene 03 (16 October 2026); GDD v0.1 world history
-**Sequence:** DL-02 → DL-03 → DL-04, with no cut on either side
+**Sequence:** DL-04 → DL-05 → DL-06, with no cut on either side
+
+> **Renumbered 18 October 2026.** Chapter 1 now has nine scenes; this was DL-03. The rework in
+> `docs/chapter1_plan.md` and `docs/chapter1_build_spec.md` supersedes this plan where they differ.
 **Duration target:** 2 to 3 minutes
 
 ## 1. What the scene must do
@@ -28,7 +31,7 @@
 | 14.5 to 18 s | **The label.** Near silence: a held high A and the music box finding the first bars. He checks his label in close-up. |
 | From 18.4 s | **Purpose.** The theme at a walking tempo, turning for the first time to the relative major. The belt starts with a klaxon. |
 
-DL-02 now has the same treatment. When D-17 first walks in among the couriers:
+DL-03 now has the same treatment. When D-17 first walks in among the couriers:
 - **He stops** for `Realise`, 6.5 s:
   - He looks along the rows as his antenna sinks.
   - He touches his own chest, then looks back at them.
@@ -41,7 +44,7 @@ DL-02 now has the same treatment. When D-17 first walks in among the couriers:
 x: 26.9 corridor  28.9 SCANNER  30.5 hatch  31.0 DOCK   32.9 STOP   34.25 POINTS   34.6 junction   36.4 pit edge
                                  |rail behind the lane (z -0.55): hatch -> dock -> junction -> tip (36.5) -> chute
                                                                      \-> points lift -> ramp -> gallery (1.6 m)
-   gallery 38.85 ... landing 39.7 ... desk 42.6 ... day board 44.6 ... residential access doorway 47.5 (on into DL-04)
+   gallery 38.85 ... landing 39.7 ... desk 42.6 ... day board 44.6 ... residential access doorway 47.5 (on into DL-07)
 ```
 
 - **Carriers:**
@@ -109,6 +112,6 @@ The dates are proposals that fit the GDD:
 
 ## 7. Open questions
 
-- **The ring C seal.** Does it need a physical seal in DL-04 or DL-05, or is the notice enough?
+- **The ring C seal.** Does it need a physical seal in DL-07 or DL-09, or is the notice enough?
 - **The day board.** Is it too explicit? It is optional to read, and the GDD's three essential conclusions don't depend on it.
 - **The ride up.** It is about 7 s with no control. Allow hopping out partway, or keep it as a short breather after the beat?

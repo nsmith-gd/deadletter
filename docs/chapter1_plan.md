@@ -1,6 +1,6 @@
 # Chapter 1 "Undelivered": the rework
 
-**Status:** proposed for director review, 18 October 2026
+**Status:** approved by the director, 18 October 2026; in production (`docs/chapter1_build_spec.md`)
 **Rules:** `docs/puzzle_principles.md`
 **Target:**
 
@@ -216,27 +216,25 @@ A proposal for the lower levels' history, told only through the world.
 The letters' payoff, proposed: each posted letter is kept. In the last chapter, Mara recognises one. The other two are
 stamped RETURN, and the game never says who sent them.
 
-## 6. Numbering and the overview
+## 6. Numbering
 
-Chapter 1 grows from five scenes to nine. Two ways to fit the overview:
+The director chose to renumber, so the game is now 49 scenes and about 155 minutes (`docs/scene_overview.md`).
+Chapter 1 runs 1 to 9, and the old scenes 6 to 45 are now 10 to 49.
 
-1. **Renumber:** the game becomes 49 scenes, and later chapters keep their scenes. The 150-minute total rises by about
-   five minutes. **Recommended:** the gap between the overview and play is in Chapter 1.
-2. **Hold 45 scenes:** absorb the four new ones by merging four quiet scenes in later chapters.
-
-Working IDs, until a choice is made:
-
-| Working ID | Scene | Status |
+| Scene | Name | Was |
 |---|---|---|
-| DL-01 | The Wake | built, reworked |
-| DL-01b | The Sorting Hall | new |
-| DL-02 | The Weight of the Job | built |
-| DL-02b | The Racks | new |
-| DL-03 | Return to Sender | built |
-| DL-03b | The Heap | new |
-| DL-04 | The Handbrake | built, reworked |
-| DL-04b | The Slipping Cage | new |
-| DL-05 | The Child at the Address | built, reworked |
+| DL-01 | The Wake | DL-01, reworked |
+| DL-02 | The Sorting Hall | new |
+| DL-03 | The Weight of the Job | DL-02 |
+| DL-04 | The Racks | new |
+| DL-05 | Return to Sender | DL-03 |
+| DL-06 | The Heap | new |
+| DL-07 | The Handbrake | DL-04, reworked |
+| DL-08 | The Slipping Cage | new |
+| DL-09 | The Child at the Address | DL-05, reworked |
+
+The scene docs were renamed to match. The code keeps its original module names, so `art/dl02` builds DL-03; see the
+game README.
 
 ## 7. Building it
 
@@ -250,12 +248,13 @@ Working IDs, until a choice is made:
      against this plan before moving on.
 3. **Then** a timed playtest of the whole chapter by someone who hasn't played it.
 
-## 8. Questions for the director
+## 8. Decisions (director, 18 October 2026)
 
-1. **The flood:** is water the right cause for ring C's sealing?
-2. **The courier:** is using a fallen courier as the bay's weight (scene 4) the right tone? Or is it too dark, in
-   which case the courier could be a training dummy?
-3. **Numbering:** renumber to 49 scenes, or hold 45?
-4. **The letters:** should they change the epilogue, or stay pure curiosity?
-5. **Sheepy:** a stopwatch log of one Sheepy playthrough would give us real numbers for its pacing. The research could
-   only find reviews and walkthroughs.
+1. **The flood is canon.** Water broke into ring C in R.Y. 42; the ring was sealed in R.Y. 43.
+2. **The fallen courier is the right tone.** D-17 drags one of his own onto the bay, and leaves it there.
+3. **Renumber.** The game is now 49 scenes (section 6).
+4. **Letters can change the epilogue, but the story must be understood without them.**
+   - Many players don't like reading, so visuals are their story language. Every essential story beat is carried by
+     an image, an action or a tableau, never by a letter, a sign or a screen alone.
+   - Letters add depth for those who look.
+5. **Sheepy:** a stopwatch log of one playthrough is still worth doing, to give us real numbers for its pacing.

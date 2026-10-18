@@ -1,5 +1,8 @@
 # DL-01 The Wake: production plan
 
+> **Renumbered 18 October 2026.** Chapter 1 now has nine scenes; the next scene is DL-02 The Sorting Hall. The
+> rework in `docs/chapter1_plan.md` and `docs/chapter1_build_spec.md` supersedes this plan where they differ.
+
 **Status:** proposal for director review
 **Source:** Dead Letter 45 Scene Overview, scene 01 (16 October 2026)
 **Character:** D-17 as built in `art/d17/`. He is 0.71 m to the top of his head and walks on two legs. His claw arms carry things and climb; they are never used to walk.
@@ -13,7 +16,7 @@
 | Teach move, jump and interact without a tutorial panel | Each verb is forced by geometry the player can read before acting. D-17's own curiosity acts as the hint system (section 6) |
 | A current reaches a long-dead charging cradle through a relay with the depot pictogram; its three-lamp pulse lights D-17 | The relay is the scene's light source and its clock. Its pulse also lights the latch, guiding the eye |
 | He checks his sealed parcel before his own casing | Authored boot beat: he shields and checks the compartment first, then straightens himself |
-| A child silhouette and destination mark establish the job; the power source is unexplained | The parcel label is legible in one close framing. The relay cable runs up into darkness with no payoff until DL-38 |
+| A child silhouette and destination mark establish the job; the power source is unexplained | The parcel label is legible in one close framing. The relay cable runs up into darkness with no payoff until DL-42 |
 | Player understanding: dormant machine → courier with an unfinished assignment | Tested directly (section 9) |
 | Cinematic beat: parcel lamp first, then the relay pulse reveals the collapse | Opening shot list (section 4) |
 
@@ -26,16 +29,16 @@ The current model has no parcel compartment. Scene 1 depends on one, so the mode
    - The warm glow behind the window is the **parcel lamp**, the first thing the player sees.
 2. **Parcel label.** It must read at Switch handheld size inside the close framing.
    - It carries a bold child silhouette and a destination mark (room glyph and number).
-   - Proposal: one small stamp beside the mark, so the crooked tree in DL-05 can pay it off. See decision D3.
+   - Proposal: one small stamp beside the mark, so the crooked tree in DL-09 can pay it off. See decision D3.
 3. **Three indicator lamps.** The pod's three warm slits already exist. They become D-17's half of a handshake with the relay: when the relay pulses its three lamps, his three answer.
-   - This marks him as depot equipment, not a saviour, which is the point of DL-02.
-   - It gives DL-38's repeated relay pulse a visible echo on his body.
+   - This marks him as depot equipment, not a saviour, which is the point of DL-03.
+   - It gives DL-42's repeated relay pulse a visible echo on his body.
 4. **Eye sensors.** Optional: a faint glint deep inside each eye socket that flickers on at boot (decision D4).
    - Without it, "looking" relies only on head direction, which is weak in a dark room at handheld size.
 5. **Knee foreshadow.** The left knee actuator is visibly older: a strap repair and a slightly different finish.
-   - It makes one audible click when he first stands. This seeds DL-34 (the knee buckles) and DL-37 (Mara repairs it) without a limp.
+   - It makes one audible click when he first stands. This seeds DL-38 (the knee buckles) and DL-41 (Mara repairs it) without a limp.
 6. **Charging cradle.** A wall-mounted cradle shaped to receive his backpack drums, with two contact arms that spark when power arrives.
-   - Design it as standard depot equipment; DL-02 shows rows of identical cradles.
+   - Design it as standard depot equipment; DL-03 shows rows of identical cradles.
 
 ## 3. Layout
 
@@ -45,7 +48,7 @@ A single 2.5D plane, read left to right. Distances are in metres at D-17's scale
 x:  0        1        2        3        4        5        6        7
     |  dead  | CRADLE |  RELAY on wall (y 1.4), cable rises into dark
     |  end   |  D-17  |        ______ fallen shutter ________
-    |  racks |  start |       /  low passage (0.6 m)   |latch|  CRATE (0.45 m)   → DL-02
+    |  racks |  start |       /  low passage (0.6 m)   |latch|  CRATE (0.45 m)   → DL-03
     |________|________|______/________________________|_____|____[####]______________
                                                        x 3.1
 ```
@@ -58,11 +61,11 @@ x:  0        1        2        3        4        5        6        7
   - The **release latch** is on the shutter's side rail at x 3.1, 0.35 m up, reachable while crouched.
   - A visible chain runs from the latch to the counterweight drum overhead, so cause and effect is readable before touching anything.
 - **Crate (x 4.5–5.1):** 0.45 m tall. That is too high to step (step limit 0.12 m) and well within a jump-and-mantle (decision D1). A few spilled parcels lie nearby.
-- **Exit (x 7):** DL-02's floor plate and gate are visible beyond, so the player's next goal is already in view.
+- **Exit (x 7):** DL-03's floor plate and gate are visible beyond, so the player's next goal is already in view.
 
 **Background layers:**
 - parallax rows of dead sorting conveyors
-- an empty cradle rack, previewing DL-02
+- an empty cradle rack, previewing DL-03
 - distant collapsed ceiling
 
 Nothing in the background implies a path the player can't take (GDD rule).
@@ -72,14 +75,14 @@ Nothing in the background implies a path the player can't take (GDD rule).
 | Time | Beat | Camera | D-17 performance | Sound |
 |---|---|---|---|---|
 | 0:00–0:05 | Black. The parcel lamp flickers on. | Tight on the compartment window (frame about 1 m wide) | Dormant: slumped in the cradle, head pitched down about 30°, antenna drooped, claws folded over the compartment | Low hum; the lamp's faint tick |
-| 0:05–0:09 | Relay clicks; three lamps pulse left to right, twice. The cradle contacts spark. | Slow pull back to about 4 m as each pulse reveals more of the collapse | D-17's three indicator lamps answer the second pulse | Three-tone relay click (the pattern reused in DL-38); spark crackle |
+| 0:05–0:09 | Relay clicks; three lamps pulse left to right, twice. The cradle contacts spark. | Slow pull back to about 4 m as each pulse reveals more of the collapse | D-17's three indicator lamps answer the second pulse | Three-tone relay click (the pattern reused in DL-42); spark crackle |
 | 0:09–0:15 | Boot | Settles to the gameplay frame (about 5 m) | Antenna twitches; eye glints flicker; the head lifts in small servo steps; the knee clicks; the legs unfold and he rises off the cradle | Servo whirs, rising in pitch; one knee click |
 | 0:15–0:18 | Grit falls from the shutter | Holds | Both claws shield the compartment and the head ducks. He looks down, taps the window and checks the seal; the label is legible here. Then a small antenna perk of relief | Grit patter; one soft two-note servo chirp (his "voice") |
 | 0:18–0:20 | Straightens himself | Holds | Shakes the dust off his head, a little shimmy. Control passes over with no cut | Rattle of loose panels |
 | 0:20–1:00 | Explore; find the latch | Follow camera, slight look-ahead to the right | Contextual crouch-walk under the shutter; reaches toward the latch | Shutter creaks; the relay keeps pulsing |
 | about 1:00 | Pull the latch | Small push in on the latch and drum together | Two-claw pull with his whole body leaning back. When the counterweight drops he **flinches** (timid), then peeks up | Chain run-out, counterweight thud, shutter rattling up |
 | 1:10–1:40 | Crate | Follow | Jump: crouch for anticipation, spring, claws up. Mantle: the claws hook the edge, the feet scrabble, he pulls up and hops down | Claw scrape; soft landing thump; antenna wobble |
-| 1:40–2:00 | Exit toward DL-02 | Look-ahead widens to show the plate and gate | Walks on. Optionally a single glance back at the cradle (not forced) | Depot rhythm starts in the distance |
+| 1:40–2:00 | Exit toward DL-03 | Look-ahead widens to show the plate and gate | Walks on. Optionally a single glance back at the cradle (not forced) | Depot rhythm starts in the distance |
 
 ## 5. Verbs taught and how
 
@@ -200,11 +203,11 @@ The world is then scaled around him.
 
 **D2 · Parcel compartment.** A front hatch with a window and lamp on the pod, as in section 2. Do his three indicator lamps answer the relay?
 
-**D3 · Tree stamp.** Show a small tree stamp on the parcel label now, so DL-05 pays it off? Or keep the tree entirely for DL-05?
+**D3 · Tree stamp.** Show a small tree stamp on the parcel label now, so DL-09 pays it off? Or keep the tree entirely for DL-09?
 
 **D4 · Eye glints.** Faint sensor glints inside the eye sockets, or keep them pure dark holes, as in the concept?
 
-**D5 · Knee.** An older left knee with one click at boot, to foreshadow DL-34 and DL-37?
+**D5 · Knee.** An older left knee with one click at boot, to foreshadow DL-38 and DL-41?
 
 **D6 · DL-01 as the motion and contact proof.** The overview leaves 2D-spline versus stylised-3D open until an in-engine proof. DL-01 tests the hardest presentation problem early: a dark room lit by pulsing light, with contact between claws and latch and between feet and crate. I propose building it twice from the same rig:
 - the 3D D-17 in the 2.5D plane

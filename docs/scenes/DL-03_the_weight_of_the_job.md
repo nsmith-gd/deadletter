@@ -1,8 +1,11 @@
-# DL-02 The Weight of the Job: production plan
+# DL-03 The Weight of the Job: production plan
 
 **Status:** built as a playable prototype (`game/undelivered/`), for director review
 **Source:** Dead Letter 45 Scene Overview, scene 02 (16 October 2026)
-**Sequence:** DL-01 → DL-02 → DL-03, with no cut on either side
+**Sequence:** DL-02 → DL-03 → DL-04, with no cut on either side
+
+> **Renumbered 18 October 2026.** Chapter 1 now has nine scenes; this was DL-02. The rework in
+> `docs/chapter1_plan.md` and `docs/chapter1_build_spec.md` supersedes this plan where they differ.
 **Duration target:** 4 minutes
 
 ## 1. What the scene must do
@@ -39,13 +42,13 @@ DL-01 used to end with a fade and a card. Now the bulkhead door leads straight o
 
 The camera trucks with him the whole way, from the hall's framing to the room's, and nothing fades. The far scene's lights switch over while he is behind the wall, so only one scene's lights cost anything at a time.
 
-DL-02 runs on into DL-03 the same way, through the corridor to the scanner. The single end card is at the end of the last built scene.
+DL-03 runs on into DL-05 the same way, through the corridor to the scanner. The single end card is at the end of the last built scene.
 
 ## 3. Layout (metres along the lane)
 
 ```
 x: 12.1   12.6     13.2        14.55          15.8-16.55    17.6                       25.6  26.9
-   | end  | weight | doorway   | trolley      | PLATE       | GATE |  recharge hall: 6 rows of racks  | exit -> DL-03
+   | end  | weight | doorway   | trolley      | PLATE       | GATE |  recharge hall: 6 rows of racks  | exit -> DL-05
    | wall | + stand| (passage) | (push bar on |             | +gauge                                |
    |      |        |           |  its left)   |             |      |  near row: the courier he nudges  |
 ```

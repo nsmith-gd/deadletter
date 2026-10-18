@@ -112,6 +112,10 @@ Their reward is meaning or delight, not stats: a story fact, a joke, a sound or 
 playful, like Sheepy's piano, phone and joke achievement: a parcel scale that weighs D-17, a stamp machine, a tube
 that coughs out a letter.
 
+**Visuals are the story language** (director, 18 October 2026). Many players don't read, so every essential story beat
+must land through an image, an action or a tableau. Letters, signs and screens add depth, and never carry the only
+copy of something the player needs.
+
 Each chapter has one major secret. Ours are **undelivered letters**: D-17 finds one and posts it at a red mail slot,
 where it is stamped. Each tells a small story of the refuge, and together they can change the epilogue, as Inside's
 orbs do.
