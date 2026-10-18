@@ -123,6 +123,7 @@
       <div class="opts">
         <label><input type="checkbox" id="opt-autorun" checked><span>Auto-run (hold Shift or B to walk)</span></label>
         <label><input type="checkbox" id="opt-sound" checked><span>Sound</span></label>
+        <label><input type="checkbox" id="opt-music" checked><span>Music</span></label>
         <label><input type="checkbox" id="opt-assist"><span>Show a button prompt if I'm stuck</span></label>
         <label><input type="checkbox" id="opt-calm"><span>Reduce flicker and flashes</span></label>
       </div>
@@ -141,6 +142,7 @@
       <div class="opts">
         <label><input type="checkbox" id="opt-autorun-p" checked><span>Auto-run (hold Shift or B to walk)</span></label>
         <label><input type="checkbox" id="opt-sound-p" checked><span>Sound</span></label>
+        <label><input type="checkbox" id="opt-music-p" checked><span>Music</span></label>
         <label><input type="checkbox" id="opt-assist-p"><span>Show a button prompt if I'm stuck</span></label>
         <label><input type="checkbox" id="opt-calm-p"><span>Reduce flicker and flashes</span></label>
       </div>
@@ -434,8 +436,83 @@ const Sound = (() => {
     chain(dur = 0.55) { for (let k = 0; k < 22; k++) setTimeout(() => noise(0.01, 3500, 3, 0.07, 'bandpass', 0.5), dur * 1000 * Math.pow(k / 22, 0.7)); },
     thud() { tone(55, 0.45, 'sine', 0.35, 0.9, 38); noise(0.18, 260, 0.7, 0.25, 'lowpass', 0.9); },
     distant() { tone(110, 0.35, 'triangle', 0.025, 1.0, 104); noise(0.05, 900, 1, 0.03, 'bandpass', 1.0); },
+    context: () => ctx, output: () => master,
   };
 })();
+
+// The score (art/music/compose_dl01.py). Sparse by design: a cue at the wake, the hall and the
+// door, and a quiet loop under play between them.
+const Music = (() => {
+  const FILES = { wake: 'dl01_wake', bed: 'dl01_bed', hall: 'dl01_hall', end: 'dl01_end' };
+  const LEVEL = { wake: 0.55, hall: 0.5, end: 0.6 }, BED_LEVEL = 0.26;
+  const BED_LOOP = [2, 50];            // one 48 s period, padded by 2 s on each side
+  const raw = {}, decoded = {};
+  let ctx = null, bus = null, enabled = true, paused = false;
+  let cue = null, bedSrc = null, bedGain = null, bedWanted = false;
+  function prefetch() {
+    for (const [k, f] of Object.entries(FILES)) {
+      raw[k] = fetch(`assets/music/${f}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+    }
+  }
+  function get(name) {
+    if (!decoded[name]) decoded[name] = raw[name].then((ab) => (ab ? ctx.decodeAudioData(ab.slice(0)) : null)).catch(() => null);
+    return decoded[name];
+  }
+  function level() { return enabled ? (paused ? 0.45 : 1) : 0; }
+  function init() {
+    if (bus || !Sound.context()) return;
+    ctx = Sound.context();
+    bus = ctx.createGain(); bus.gain.value = level(); bus.connect(Sound.output());
+    bedGain = ctx.createGain(); bedGain.gain.value = 0; bedGain.connect(bus);
+    Object.keys(FILES).forEach(get);
+  }
+  function fadeOut(g, sec) { g.gain.cancelScheduledValues(ctx.currentTime); g.gain.setTargetAtTime(0, ctx.currentTime, sec / 4); }
+  function updateBed() {
+    if (!ctx) return;
+    const on = bedWanted && !cue;
+    bedGain.gain.cancelScheduledValues(ctx.currentTime);
+    bedGain.gain.setTargetAtTime(on ? BED_LEVEL : 0, ctx.currentTime, on ? 2.5 : 0.8);
+    if (on && !bedSrc) {
+      get('bed').then((b) => {
+        if (!b || bedSrc) return;
+        bedSrc = ctx.createBufferSource(); bedSrc.buffer = b; bedSrc.loop = true;
+        [bedSrc.loopStart, bedSrc.loopEnd] = BED_LOOP;
+        bedSrc.connect(bedGain); bedSrc.start(0, BED_LOOP[0]);
+      });
+    }
+  }
+  return {
+    prefetch, init,
+    // Play a cue from the top, fading out any cue already playing. The bed waits until it ends.
+    play(name) {
+      if (!ctx) return;
+      this.stop(1.5);
+      const asked = ctx.currentTime;
+      const c = { name, src: null, gain: ctx.createGain() };
+      c.gain.gain.value = LEVEL[name]; c.gain.connect(bus);
+      cue = c; updateBed();
+      get(name).then((b) => {
+        if (cue !== c || !b) { if (cue === c) { cue = null; updateBed(); } return; }
+        c.src = ctx.createBufferSource(); c.src.buffer = b; c.src.connect(c.gain);
+        // Start where it would be had it decoded instantly, so the wake stays in step with the opening.
+        c.src.start(0, Math.min(Math.max(0, ctx.currentTime - asked), b.duration - 0.1));
+        c.src.onended = () => { if (cue === c) { cue = null; updateBed(); } };
+      });
+    },
+    stop(sec = 1.5) {
+      if (!cue) return;
+      const c = cue; cue = null;
+      fadeOut(c.gain, sec);
+      setTimeout(() => { try { c.src && c.src.stop(); } catch (e) { /* already stopped */ } c.gain.disconnect(); }, sec * 1000 + 200);
+      updateBed();
+    },
+    playing: () => (cue ? cue.name : null),
+    bed(on) { bedWanted = on; updateBed(); },
+    setEnabled(on) { enabled = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
+    setPaused(on) { paused = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
+  };
+})();
+Music.prefetch();
 
 // ---------------------------------------------------------------------------
 // Input: keyboard, gamepad, touch
@@ -924,7 +1001,7 @@ function updateAct(dt) {
       game.doorOpen = Math.max(game.doorOpen, target);
       if (f < a.lastF) {                       // a stroke finished
         a.strokes++; Sound.ratchet(); Sound.doorRumble();
-        if (a.strokes >= CRANK_STROKES) { a.phase = 'done'; game.doorOpen = 1; game.yawOverride = null; setClip('Idle', 0.3); Sound.doorOpen(); game.checkpoint = 'door'; }
+        if (a.strokes >= CRANK_STROKES) { a.phase = 'done'; game.doorOpen = 1; game.yawOverride = null; setClip('Idle', 0.3); Sound.doorOpen(); game.checkpoint = 'door'; Music.bed(false); Music.play('end'); }
       }
       if (f > 1 && f < 2 && !a.grunt) { a.grunt = true; }
       if (f > 12) a.grunt = false;
@@ -1059,6 +1136,7 @@ function updatePlayer(dt) {
     }
   }
   if (game.x > HALL_X + 0.2 && game.checkpoint !== 'door' && game.checkpoint !== 'hall') game.checkpoint = 'hall';
+  if (game.x > HALL_X + 0.2 && !game.heardHall && game.doorOpen < 1) { game.heardHall = true; Music.play('hall'); }
 }
 
 function updateExit(dt) {
@@ -1329,6 +1407,7 @@ function startOpening() {
   resetWorld('start');
   game.cordOn = false; game.cordUsed = false; game.cordPull = 0;
   game.mode = 'opening'; game.sceneTime = 0; cuePtr = 0; game.nextRelay = OPENING_FRAMES;
+  game.heardHall = false; Music.setPaused(false); Music.bed(false); Music.play('wake');
   refs.grit.forEach((g) => (g.m.visible = false));
   Object.values(actions).forEach((a) => a.stop()); current = null;
   setClip('Opening', 0);
@@ -1339,8 +1418,13 @@ function startOpening() {
   fadeEl.style.opacity = 0;
 }
 function startPlay(checkpoint = 'start') {
-  const naturalEnd = game.mode === 'opening' && game.frame >= OPENING_FRAMES;
+  const fromOpening = game.mode === 'opening';
+  const naturalEnd = fromOpening && game.frame >= OPENING_FRAMES;
   resetWorld(checkpoint);
+  // The wake plays on into the first steps; any other cue gives way to the bed.
+  if (!fromOpening && Music.playing() !== 'wake') Music.stop(2);
+  game.heardHall = checkpoint === 'hall' || checkpoint === 'door';
+  Music.setPaused(false); Music.bed(true);
   if (!naturalEnd && game.frame < 380) refs.grit.forEach((g) => (g.m.visible = false));
   game.mode = 'play';
   game.sceneTime = Math.max(game.sceneTime, OPENING_FRAMES / FPS);
@@ -1362,10 +1446,10 @@ function loadCheckpoint() {
 }
 function togglePause() {
   if (game.mode === 'play' || game.mode === 'opening') {
-    prevMode = game.mode; game.mode = 'paused'; pauseEl.hidden = false; syncOpts();
+    prevMode = game.mode; game.mode = 'paused'; pauseEl.hidden = false; syncOpts(); Music.setPaused(true);
     document.getElementById('pause-time').textContent = game.playStart ? fmt(Math.max(0, game.clock - game.playStart)) : '0:00';
     document.getElementById('resume').focus();
-  } else if (game.mode === 'paused') { game.mode = prevMode; pauseEl.hidden = true; }
+  } else if (game.mode === 'paused') { game.mode = prevMode; pauseEl.hidden = true; Music.setPaused(false); }
 }
 const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
@@ -1377,10 +1461,11 @@ function finish() {
 }
 
 // Options shared between the title and pause cards.
-const OPTS = { sound: true, assist: false, calm: false, autorun: true };
+const OPTS = { sound: true, music: true, assist: false, calm: false, autorun: true };
 function setOpt(name, value) {
   try { localStorage.setItem('dl01-' + name, value ? '1' : '0'); } catch (e) { /* storage unavailable */ }
   if (name === 'sound') Sound.setEnabled(value);
+  if (name === 'music') Music.setEnabled(value);
   if (name === 'assist') game.assist = value;
   if (name === 'calm') { game.calm = value; bloom.strength = value ? 0.35 : 0.55; }
   if (name === 'autorun') game.autorun = value;
@@ -1397,7 +1482,7 @@ for (const n of Object.keys(OPTS)) {
 game.assist = getOpt('assist'); game.calm = getOpt('calm'); game.autorun = getOpt('autorun');
 syncOpts();
 
-beginBtn.addEventListener('click', () => { Sound.start(); Sound.setEnabled(getOpt('sound')); titleEl.hidden = true; startOpening(); });
+beginBtn.addEventListener('click', () => { Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); titleEl.hidden = true; startOpening(); });
 skipBtn.addEventListener('click', () => { startPlay('start'); });
 document.getElementById('resume').addEventListener('click', togglePause);
 document.getElementById('checkpoint').addEventListener('click', loadCheckpoint);
@@ -1444,7 +1529,7 @@ function frame(now) {
 }
 
 // Test hook for automated traversal checks.
-window.__dl01 = { game, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs };
+window.__dl01 = { game, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing() };
 
 function boot() {
   resize();

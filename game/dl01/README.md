@@ -26,7 +26,8 @@ three.js 0.169.0 loads from jsDelivr. The models are in `assets/` as `.glb`, and
 | Back to checkpoint | R | (in the pause menu) |
 | Developer overlay | ` | |
 
-Auto-run is on by default; turn it off in the title or pause menu and Shift runs instead. On
+Auto-run is on by default; turn it off in the title or pause menu and Shift runs instead. Sound and
+Music have separate toggles. On
 touch devices, on-screen buttons appear once play begins.
 
 ## The scene, left to right (about 12 m, 3 to 4 minutes)
@@ -63,6 +64,17 @@ touch devices, on-screen buttons appear once play begins.
 stuck-prompt option on, a key glyph appears at about 18 s.
 
 **Checkpoints:** start, shutter open, hall, door open.
+
+## Music
+
+The score is in `assets/music/` and is composed and rendered by `art/music/compose_dl01.py` (see its
+README). It is sparse:
+- A cue for the wake.
+- A quiet 48 s loop under play.
+- A cello cue at the sorting-hall reveal.
+- The full theme when the bulkhead opens, ending in a music-box *Happy Birthday* over the end card.
+
+Music has its own toggle in the title and pause menus, and it dips while paused.
 
 ## Rebuild the assets
 
