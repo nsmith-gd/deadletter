@@ -2654,7 +2654,7 @@ function updateTriggers4() {
   if (x > AWE_X && !d.awed) {
     d.awed = true;
     if (once('awe')) { game.aweStart = game.clock; game.vx = 0; game.act = { kind: 'awe', phase: 'turn', t: 0 }; return true; }
-    game.aweStart = game.clock - 8;                     // seen before: straight to the wide view
+    game.aweStart = game.clock - 60;                    // seen before: no crane, he just walks on
   }
   return false;
 }
@@ -2866,10 +2866,7 @@ const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 const shotCam = { w: 0, live: false, pos: new THREE.Vector3(), look: new THREE.Vector3(), focal: 35, name: null, shake: 0, seed: 0 };
 function currentShot() {
   const X = game.x, Y = game.y, a = game.act, sc = game.scan;
-  // DL-01: the bulkhead rising, from low beside him as he hauls the wheel.
-  if (a && a.kind === 'crank' && a.phase === 'act') {
-    return { name: 'crank', pos: V3(X - 1.25, 0.5, 2.55), look: V3(X + 0.75, 0.92, -0.55), focal: 31, ease: 0.8 };
-  }
+  // Only the story's emotional beats take the camera away from the side view; gameplay never does.
   // DL-02: the realisation. Over his shoulder toward the racks, then round to his face as he touches his chest.
   if (a && a.kind === 'realise') {
     // Low and in front of him, the rows filling the frame behind; then in close as he touches his chest.
@@ -2878,28 +2875,17 @@ function currentShot() {
       look: V3(X - 0.1 + 0.1 * k, 0.6 - 0.1 * k, -1.4 + 1.4 * k), focal: 30 + 20 * k, ease: 1.1 };
   }
   if (game.region === 5) {
-    if (a && a.kind === 'knock' && a.phase === 'act') return { name: 'knock', pos: V3(X - 0.75, Y + 0.62, 0.75), look: V3(X + 0.4, Y + 0.5, -0.5), focal: 30, ease: 1.4 };
-    // The desk shifting: the camera eases a little closer to the wall.
-    if (game.hold === 'desk' && Math.abs(game.desk5.v) > 0.02 && !game.dl5.revealed) return { name: 'desk', pos: V3(X + 0.7, Y + 0.95, 3.0), look: V3(X + 0.7, Y + 0.55, -0.9), focal: 40, ease: 0.6 };
     // The marks and the tree, held, the first time.
     if (game.clock - game.marksShotAt < 3.6) return { name: 'marks', pos: V3(94.65, 0.72, 0.9), look: V3(94.65, 0.68, -1.0), focal: 50, ease: 1.2 };
     if (a && a.kind === 'present' && a.phase === 'act') return { name: 'terminal', pos: V3(X + 0.55, Y + 1.05, 0.75), look: V3(TERM5_X, 0.9, WALL5_Z), focal: 42, ease: 1.4 };
     if (a && a.kind === 'toy' && a.phase === 'act') return { name: 'toy', pos: V3(X + 1.15, Y + 1.15, -0.1), look: V3(TOY5_X - 0.02, 0.44, -0.36), focal: 34, ease: 1.6 };
   }
   if (game.region === 4) {
-    const p = game.plat;
-    // Leaning over the shaft: out over the drop beside him, looking down past him at the platform.
-    if (a && a.kind === 'quirk' && a.clip === 'PeekDown' && X < SHAFT.x0) return { name: 'shaft', pos: V3(X + 0.3, Y + 1.9, 1.8), look: V3(X + 1.15, platTop() + 0.3, -0.3), focal: 26, ease: 1.0 };
-    // The platform's first full rise: closer and lower, him and the trolley on the left, the shaft opening on the right.
-    if (p.riseStart > 0 && game.clock - p.riseStart < 5.5 && !p.latched) return { name: 'rise', pos: V3(52.3, DECK + 0.85, 4.4), look: V3(52.7, DECK - 0.75 + 0.7 * p.h, -0.3), focal: 30, ease: 1.0 };
-    // The click: close on the housing and its repair tags as the dog drops into its bracket, him at the lever beside it.
-    if (game.clock - game.pawlClickAt < 1.8) return { name: 'pawl', pos: V3(52.98, DECK + 0.55, 0.95), look: V3(52.74, DECK + 0.2, -0.5), focal: 48, ease: 2.4 };
     // Looking back at the depot from the tunnel mouth: from inside the tunnel, low, past him.
     if (a && a.kind === 'lookback') return { name: 'lookback', pos: V3(X + 1.6, Y + 0.5, 1.15), look: V3(X - 4.0, Y + 0.7, -0.5), focal: 34, ease: 1.2 };
-    // The chalk squares: up and over him, so the hopscotch reads.
-    if (a && a.kind === 'hopscotch') return { name: 'hopscotch', pos: V3(X + 0.9, Y + 1.55, 1.75), look: V3(X + 0.45, Y, -0.05), focal: 36, ease: 1.4 };
-    // The refuge: from his shoulder out over the atrium, craning up and back to a high, wide view.
-    if ((a && a.kind === 'awe') || (game.dl4.awed && X > VISTA_X0 - 0.4)) {
+    // The refuge: from his shoulder out over the city, craning up and back to a high, wide view; it lets go of
+    // the view a few seconds after he does, and the camera comes back to him.
+    if ((a && a.kind === 'awe') || (game.dl4.awed && game.clock - game.aweStart < 10.5)) {
       const k = smooth((game.clock - game.aweStart - 1.0) / 7.0);
       const pos = V3(X + 0.45, Y + 0.95, 1.35).lerp(V3(X + 3.2, Y + 7.9, 8.5), k);
       const look = V3(95, 12, -160).lerp(ATRIUM4, k);
@@ -2907,14 +2893,10 @@ function currentShot() {
     }
   }
   if (game.region === 3) {
-    // Down the chute with the post: follow him onto the heap.
-    if (a && a.kind === 'fall') return { name: 'fall', pos: V3(X - 0.6, Y + 2.0, 4.2), look: V3(X + 0.4, Y + 0.2, -0.8), focal: 30, ease: 2.2 };
-    // The points thrown to the service ramp: the blade lifting into the ramp, and the lamps running up it.
-    if (game.clock - (game.routeShotAt ?? -100) < 2.6) return { name: 'route', pos: V3(34.0, 1.55, 4.0), look: V3(36.5, 0.75, -0.6), focal: 30, ease: 2.0 };
     // The scanner: close and low beside the arch, the screen in frame.
     if (sc.phase === 'scan') return { name: 'scan', pos: V3(SCANNER_X - 1.25, 0.64, 2.9 - 0.3 * smooth(sc.t / 4)), look: V3(SCANNER_X + 0.4, 0.95, -0.3), focal: 38, ease: 1.6 };
     // The pit: from just behind him, crane up and out over the heap as he walks to the rail.
-    if (sc.phase === 'reveal' || (a && a.kind === 'quirk' && a.clip === 'PeekDown' && !game.upper && X > 35)) {
+    if (sc.phase === 'reveal') {
       const k = smooth((sc.t - SCAN.REVEAL - 1.2) / 6.5);
       const pos = V3(X - 1.4, 1.2, 2.0).lerp(V3(36.4, 4.6, 9.6), k);
       const look = V3(39.6, -0.6, -2.4).lerp(V3(40.4, -1.5, -2.7), k);
@@ -2922,8 +2904,6 @@ function currentShot() {
     }
     // The label: close on his chest and face, the pit beyond.
     if (sc.phase === 'check') return { name: 'check', pos: V3(Math.min(X + 0.6, FLOOR3_X1 - 0.2), 0.78, 1.3), look: V3(X + 0.02, 0.52, 0), focal: 50, ease: 1.2 };
-    // The ride up the ramp: low alongside, looking ahead and down over the heap.
-    if (game.riding && X > 33.6) return { name: 'ride', pos: V3(X - 1.2, Y + 0.5, 2.6), look: V3(X + 1.8, Y - 1.2, -2.3), focal: 29, ease: 1.3 };
   }
   return null;
 }
