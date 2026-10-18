@@ -307,13 +307,20 @@ const WORN = {
   PigeonWood: { base: [.12, .085, .055], dirt: [.06, .045, .03], chip: [.2, .15, .1], rough: .85, chipRough: .8, metal: 0, grime: 6, chipScale: 30, chipAmt: .75, dust: [.1, .09, .08], dustAmt: .6 },
   PlateSteel: { base: [.11, .115, .11], dirt: [.06, .04, .025], chip: [.2, .19, .17], rough: .55, chipRough: .4, metal: .7, grime: 5, chipScale: 30, chipAmt: .7, dust: [.1, .095, .085], dustAmt: .4 },
   ToteGreen: { base: [.08, .11, .09], dirt: [.05, .05, .04], chip: [.16, .18, .15], rough: .7, chipRough: .6, metal: 0, grime: 12, chipScale: 40, chipAmt: .72, dust: [.1, .1, .09], dustAmt: .5 },
+  CaveRock: { base: [.05, .048, .045], dirt: [.028, .026, .024], chip: [.085, .08, .072], rough: .95, chipRough: .9, metal: 0, grime: 1.5, chipScale: 8, chipAmt: .7, streak: .7 },
+  HomePlaster: { base: [.34, .29, .21], dirt: [.17, .14, .10], chip: [.24, .20, .15], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, streak: .6 },
+  BedroomPaint: { base: [.46, .38, .22], dirt: [.25, .20, .12], chip: [.34, .29, .21], rough: .85, chipRough: .9, metal: 0, grime: 3, chipScale: 20, chipAmt: .74, streak: .4 },
+  BedroomDado: { base: [.20, .30, .26], dirt: [.10, .13, .10], chip: [.34, .29, .21], rough: .8, chipRough: .9, metal: 0, grime: 4, chipScale: 24, chipAmt: .7 },
+  ChildPaint: { base: [.12, .24, .42], dirt: [.06, .09, .12], chip: [.20, .14, .08], rough: .6, chipRough: .8, metal: 0, grime: 8, chipScale: 40, chipAmt: .7 },
+  ToyFabric: { base: [.36, .33, .30], dirt: [.18, .15, .12], chip: [.42, .40, .36], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
+  ToyPatch: { base: [.42, .30, .08], dirt: [.20, .14, .05], chip: [.30, .32, .40], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
 };
 const PLAIN = { EyeDark: [[.003, .003, .003], .3, 0], Shaft: [[.004, .004, .004], .9, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
   Water: [[.01, .012, .012], .04, .3],
   Copper: [[.55, .3, .18], .35, 1], ReflectTag: [[.8, .78, .7], .15, .6], BeltRubber: [[.02, .02, .019], .8, 0],
   AtriumPlaster: [[.2, .185, .15], .9, 0], AtriumDark: [[.006, .006, .006], .8, 0], AtriumStone: [[.058, .052, .045], .95, 0],
   AtriumCut: [[.085, .078, .066], .95, 0], AtriumSheet: [[.075, .082, .08], .6, .4], AtriumRust: [[.11, .048, .025], .85, 0], AtriumWet: [[.008, .009, .009], .18, .3],
-  Barricade: [[.4, .06, .04], .7, 0], Brass: [[.45, .32, .12], .45, .8] };
+  Barricade: [[.4, .06, .04], .7, 0], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
 const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
@@ -326,7 +333,7 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   RowLight4: [.8, .92, .95, 0], RowLight5: [.8, .92, .95, 0],
   HallBulb4: [1, .88, .7, 0], AtLanding: [1, .62, .18, 0], PawlLamp: [1, .2, .1, 0], BeaconLamp: [1, .55, .12, 0], TunnelBulb: [.95, .9, .78, 0],
   RampLamp0: [.55, 1, .65, 0], RampLamp1: [.55, 1, .65, 0], RampLamp2: [.55, 1, .65, 0], RampLamp3: [.55, 1, .65, 0], RampLamp4: [.55, 1, .65, 0], RampLamp5: [.55, 1, .65, 0],
-  WindowSun: [1, .78, .45, 0], HomeLampBulb: [1, .85, .62, 0], LaneBulb: [1, .8, .55, 0], TermLamp0: [.6, 1, .75, 0], TermLamp1: [.6, 1, .75, 0], TermLamp2: [.6, 1, .75, 0],
+  WindowSun: [1, .72, .38, 0], HomeLampBulb: [1, .76, .46, 0], LaneBulb: [.78, .88, 1, 0], TermLamp0: [.75, 1, .82, 0], TermLamp1: [.75, 1, .82, 0], TermLamp2: [.75, 1, .82, 0],
   AtriumUpperLights: [1, .66, .34, 2], AtriumUpperGlow: [1, .58, .28, 1.5],
   RingLamp: [1, .78, .5, 0], RingLampRed: [1, .18, .1, 0], HomeLight: [1, .72, .4, 0], SkyPanel: [.7, .8, .9, 0] };
 
@@ -1126,7 +1133,6 @@ function surfaceAt(x) {                       // the surface directly under one 
   }
   if (x > DUCT5.x0 - 1) {
     if (x >= DUCT5.x0 && x <= DUCT5.x1) h = Math.max(h, DUCT5.h);                                     // the fallen duct
-    if (Math.abs(x - game.desk5.x) <= DESK5.half - 0.04) h = Math.max(h, DESK5.h);                 // the desk
   }
   return h;
 }
@@ -1179,7 +1185,7 @@ function beginUse(kind) {
   game.vx = 0;
   if (kind === 'setdown') { beginSetDown(); return; }
   if (kind === 'leverStop' || kind === 'leverPoints' || kind === 'board') { beginUse3(kind); return; }
-  if (kind === 'present' || kind === 'toy' || kind === 'grabDeskL' || kind === 'grabDeskR') { beginUse5(kind); return; }
+  if (kind === 'present' || kind === 'toy' || kind === 'grabDeskL') { beginUse5(kind); return; }
   game.act = { kind, phase: 'approach', t: 0, strokes: 0 };
   if (kind === 'lift') { const side = Math.sign(game.weight.x - game.x) || game.facing; game.act.standX = game.weight.x - side * GRIP_FWD; game.act.face = side; }
   if (kind === 'grabL' || kind === 'grabR' || kind === 'grab4L' || kind === 'grab4R') {
@@ -1198,8 +1204,9 @@ function updateAct(dt) {
   if (a.phase === 'approach') {
     game.facing = a.face;
     if (a.kind === 'latch') game.crouched = true;
-    const dx = a.standX - game.x;
-    if (Math.abs(dx) < 0.012) {
+    const dx = a.standX - game.x, zTo = a.hold === 'desk' ? DESK5.z : game.z, dz = zTo - game.z;
+    if (dz) game.z += Math.sign(dz) * Math.min(Math.abs(dz), 0.45 * dt);
+    if (Math.abs(dx) < 0.012 && Math.abs(dz) < 0.004) {
       game.x = a.standX; a.phase = 'act'; a.t = 0;
       if (a.kind === 'cord') { setClip('Tug', 0.15); Sound.servo(0.2, 500, 900, 0.025); }
       if (a.kind === 'latch') { setClip('Pull', 0.15); Sound.creak(0.6); }
@@ -2660,7 +2667,8 @@ const beltCarry4 = () => (game.region === 4 && game.grounded && beltRunning4() &
 const STAIR_X0 = 74.75, STAIR_SLOPE = 0.833, REGION5_X = 76.75;
 const BARRICADE5 = { x0: 80.2, x1: 81.0, gap: 0.62 }, DUCT5 = { x0: 84.2, x1: 84.6, h: 0.26 };
 const KNOCK5_X = 88.2, INNER5_X = 90.6, TOY5_X = 92.2, TERM5_X = 94.7, END5_X = 97.2;
-const DESK5 = { x: 94.7, half: 0.36, h: 0.55, min: 93.4, clear: 94.15 }, PUSH_GAP5 = 0.66, DRAG_SPEED = 0.26;
+const DESK5 = { x: 94.7, half: 0.55, z: -0.62, min: 93.55, clear: 93.65 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
+const KNOCK5_Z = -0.64;                                                                     // stepped in to knock on the door jamb
 const WALL5_Z = -1.0;
 
 function buildDL05(setRoot) {
@@ -2669,6 +2677,7 @@ function buildDL05(setRoot) {
     const g = new THREE.Group(); g.position.set(DESK5.x, 0, 0); scene.add(g); g.attach(refs.ChildDesk); refs.deskGroup = g;
   }
   if (refs.Toy) refs.toySlump = refs.Toy.quaternion.clone();
+  setRoot.getObjectByName('D5Window114Glow')?.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.emissiveIntensity = 0.9; } });
   // The terminal's screen, drawn here.
   refs.term5 = canvasPanel(256, 192, new THREE.Vector3(TERM5_X, 0.95, -0.985), [0.32, 0.24]);
   drawTerminal('idle', 0);
@@ -2677,7 +2686,7 @@ function buildDL05(setRoot) {
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
   const sun = new THREE.SpotLight(0xffc98a, 0, 4, THREE.MathUtils.degToRad(48), 0.7, 1.6);
   sun.position.set(91.75, 1.5, -0.9); sun.target.position.set(92.0, 0.2, -0.1); sun.userData.base = 9; scene.add(sun, sun.target);
-  refs.dl05Lights = [P(0xffc890, 1.1, 3.6, 83.8, 1.9, -0.5), P(0xffd2a0, 0.8, 2.6, 88.3, 1.1, -0.35), P(0xffd9b0, 3.0, 4, 89.6, 1.9, -0.4),
+  refs.dl05Lights = [P(0xdfe6f2, 1.0, 3.6, 81.65, 1.85, -0.5), P(0xdfe6f2, 0.9, 3.4, 86.6, 1.85, -0.5), P(0xffd9b0, 3.0, 4, 89.6, 1.9, -0.4),
     sun, P(0xffe2c4, 2.4, 4.5, 93.4, 1.8, 0.5), P(0x9fe0c8, 0, 2.5, TERM5_X, 1.0, -0.6)];
   refs.termLight = refs.dl05Lights[5];
 }
@@ -2741,8 +2750,8 @@ function updateDL05(dt) {
     refs.Toy.quaternion.copy(refs.toySlump).slerp(tq3.identity(), k);
   }
   // Lights: the lane, the home, and the terminal once it has answered.
-  if (inR5 && game.lightRegion === 4 && game.x > 80.6) setRegionLights(5);
-  else if (game.lightRegion === 5 && (game.region !== 5 || game.x < 80.2)) setRegionLights(4);
+  if (inR5 && game.lightRegion === 4 && game.x > 79.6) setRegionLights(5);
+  else if (game.lightRegion === 5 && (game.region !== 5 || game.x < 79.2)) setRegionLights(4);
   // The lane bulb is failing: a slow sag, a buzz, and now and then a drop-out.
   const t = game.clock, drop = Math.sin(t * 0.7) > 0.93 && Math.sin(t * 31) > -0.2 ? 0.15 : 1;
   const sag = game.calm ? 1 : drop * (0.78 + 0.14 * Math.sin(t * 1.3) + 0.08 * Math.sin(t * 47));
@@ -2750,6 +2759,9 @@ function updateDL05(dt) {
   refs.dl05Lights[0].intensity *= sag;
   refs.termLight.intensity = game.dl5.forwarded ? 1.6 : 0.5;
   glow('WindowSun', 2.6); glow('HomeLampBulb', 7); glow('LaneBulb', 5 * sag);
+  if (!game.act && game.hold !== 'desk' && game.z < 0 && inR5) {
+    game.z = Math.min(0, game.z + 0.45 * dt);                      // back out to the lane after letting go of the desk
+  }
   const term = game.act && game.act.kind === 'present' && game.act.phase === 'act' ? actions.Present.time * FPS : -1;
   for (let i = 0; i < 3; i++) {
     const on = term >= 20 + i * 5 && term < 28 + i * 5;
@@ -2766,10 +2778,7 @@ function nearUse5() {
   if (game.y > 0.05) return null;
   const d = game.desk5;
   if (!game.dl5.forwarded && d.x <= DESK5.clear && Math.abs(game.x - TERM5_X) < 0.36) return 'present';
-  for (const side of [1, -1]) {
-    const stand = d.x - side * PUSH_GAP5;
-    if (Math.abs(game.x - stand) < 0.34 && game.x * side < d.x * side && stand > INNER5_X + 0.2 && stand < 95.4) return side > 0 ? 'grabDeskL' : 'grabDeskR';
-  }
+  if (!game.dl5.forwarded && Math.abs(game.x - (d.x - PUSH_GAP5)) < 0.4) return 'grabDeskL';
   if (!game.dl5.toyUp && Math.abs(game.x - TOY5_X) < 0.4) return 'toy';
   return null;
 }
@@ -2777,14 +2786,14 @@ function beginUse5(kind) {
   game.vx = 0;
   if (kind === 'present') { game.act = { kind: 'present', phase: 'approach', t: 0, standX: TERM5_X, face: 1 }; return; }
   if (kind === 'toy') { game.act = { kind: 'toy', phase: 'approach', t: 0, standX: TOY5_X, face: 1, cancel: true }; return; }
-  const side = kind === 'grabDeskL' ? 1 : -1;
+  const side = 1;
   game.act = { kind: 'grab', phase: 'approach', t: 0, side, standX: game.desk5.x - side * PUSH_GAP5, face: side, hold: 'desk' };
 }
 const ACT5 = new Set(['present', 'toy', 'knock']);
 function updateAct5(a, dt) {
   // Present and the toy: turn to the wall, step in, the clip, step back.
   if (a.kind === 'present' || a.kind === 'toy') {
-    const clip = a.kind === 'present' ? 'Present' : 'Straighten', to = a.kind === 'present' ? WALL5_Z + 0.3 : -0.22;
+    const clip = a.kind === 'present' ? 'Present' : 'Straighten', to = a.kind === 'present' ? WALL5_Z + 0.3 : 0;
     if (a.kind === 'toy' && a.phase !== 'out' && (input.left || input.jumpPressed) && a.t > 0.3) a.phase = 'out';
     if (a.phase === 'turn') { if (Math.abs(game.yaw - Math.PI) < 0.05) a.phase = 'in'; else setClip('Walk', 0.2, 0.6); return; }
     if (a.phase === 'in' || a.phase === 'out') {
@@ -2812,11 +2821,23 @@ function updateAct5(a, dt) {
     }
     return;
   }
+  if (a.kind === 'knock' && (a.phase === 'in' || a.phase === 'out')) {
+    const to = a.phase === 'in' ? KNOCK5_Z : 0, dz = to - game.z;
+    game.yawOverride = Math.PI * (a.phase === 'in' ? 0.82 : 0.18);
+    if (Math.abs(dz) < 0.004) {
+      game.z = to;
+      if (a.phase === 'out') { game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; return; }
+      a.phase = 'act'; game.yawOverride = Math.PI / 2; setClip('Knock', 0.25); return;
+    }
+    game.z += Math.sign(dz) * Math.min(Math.abs(dz), 0.45 * dt);
+    setClip('Walk', 0.2, 0.45 / CLIP_SPEED.Walk);
+    return;
+  }
   if (a.kind === 'knock') {
     const f = actions.Knock.time * FPS;
     if (f >= 14 && !a.k1) { a.k1 = true; Sound.knock(); }
-    if (f >= 21 && !a.k2) { a.k2 = true; Sound.knock(); }
-    if (f >= 47) { game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+    if (f >= 20 && !a.k2) { a.k2 = true; Sound.knock(); }
+    if (f >= 47) { a.phase = 'out'; setClip('Idle', 0.3); }
   }
 }
 // Moments that start by themselves as he reaches them.
@@ -2826,7 +2847,7 @@ function updateTriggers5() {
   if (x > BARRICADE5.x1 + 0.3 && game.checkpoint !== 'ringc' && !['bedroom', 'forwarded'].includes(game.checkpoint)) game.checkpoint = 'ringc';
   if (x > KNOCK5_X - 0.05 && !d.knocked) {
     d.knocked = true;
-    if (once('knock')) { game.vx = 0; game.facing = 1; game.act = { kind: 'knock', phase: 'act', t: 0 }; setClip('Knock', 0.2); return true; }
+    if (once('knock')) { game.vx = 0; game.facing = 1; game.act = { kind: 'knock', phase: 'in', t: 0 }; return true; }
   }
   if (x > INNER5_X + 0.4 && game.checkpoint === 'ringc') game.checkpoint = 'bedroom';
   if (x > TOY5_X - 0.05 && x < TOY5_X + 0.3 && !d.toyUp && !d.toyTried && game.facing > 0) {
@@ -2855,13 +2876,13 @@ function currentShot() {
       look: V3(X - 0.1 + 0.1 * k, 0.6 - 0.1 * k, -1.4 + 1.4 * k), focal: 30 + 20 * k, ease: 1.1 };
   }
   if (game.region === 5) {
-    if (a && a.kind === 'knock') return { name: 'knock', pos: V3(X - 0.9, Y + 0.55, 1.5), look: V3(X + 1.2, Y + 0.55, -0.6), focal: 34, ease: 1.4 };
+    if (a && a.kind === 'knock' && a.phase === 'act') return { name: 'knock', pos: V3(X - 0.75, Y + 0.62, 0.75), look: V3(X + 0.4, Y + 0.5, -0.5), focal: 30, ease: 1.4 };
     // The desk shifting: the camera eases a little closer to the wall.
     if (game.hold === 'desk' && Math.abs(game.desk5.v) > 0.02 && !game.dl5.revealed) return { name: 'desk', pos: V3(X + 0.7, Y + 0.95, 3.0), look: V3(X + 0.7, Y + 0.55, -0.9), focal: 40, ease: 0.6 };
     // The marks and the tree, held, the first time.
     if (game.clock - game.marksShotAt < 3.6) return { name: 'marks', pos: V3(94.65, 0.72, 0.9), look: V3(94.65, 0.68, -1.0), focal: 50, ease: 1.2 };
     if (a && a.kind === 'present' && a.phase === 'act') return { name: 'terminal', pos: V3(X + 0.55, Y + 1.05, 0.75), look: V3(TERM5_X, 0.9, WALL5_Z), focal: 42, ease: 1.4 };
-    if (a && a.kind === 'toy' && a.phase === 'act') return { name: 'toy', pos: V3(X + 0.9, Y + 0.75, 1.1), look: V3(TOY5_X, 0.45, -0.6), focal: 42, ease: 1.6 };
+    if (a && a.kind === 'toy' && a.phase === 'act') return { name: 'toy', pos: V3(X + 1.05, Y + 1.0, 0.35), look: V3(TOY5_X - 0.05, 0.42, -0.35), focal: 36, ease: 1.6 };
   }
   if (game.region === 4) {
     const p = game.plat;
@@ -2966,7 +2987,7 @@ function updateQuirkTriggers() {
 // ---------------------------------------------------------------------------
 const HINTS = [
   // DL-05
-  { region: 5, when: () => !game.dl5.revealed && game.hold !== 'desk' && game.x > INNER5_X && game.x < game.desk5.x, at: () => new THREE.Vector3(game.desk5.x - DESK5.half, 0.45, 0), key: 'use' },
+  { region: 5, when: () => !game.dl5.revealed && game.hold !== 'desk' && game.x > INNER5_X && game.x < game.desk5.x, at: () => new THREE.Vector3(game.desk5.x - 0.585, 0.62, DESK5.z), key: 'use' },
   { region: 5, when: () => game.hold === 'desk' && game.desk5.x > DESK5.clear, at: new THREE.Vector3(93.6, 0.05, 0), key: 'move' },
   { region: 5, when: () => game.dl5.revealed && !game.dl5.forwarded, at: new THREE.Vector3(TERM5_X, 0.95, WALL5_Z), key: 'use' },
   { region: 5, when: () => game.dl5.forwarded && game.x < END5_X, at: new THREE.Vector3(96.4, 0.6, 0), key: 'move' },
@@ -3401,7 +3422,7 @@ function resetWorld(name = 'start') {
   game.dl4 = { entered: game.region === 4, patted: !!c.latched, lookedBack: !!c.tunnel, hopped: false, refuge: false, awed: false, triedPawl: false };
   camera.far = 60; camera.updateProjectionMatrix(); refs.humLevel = undefined; refs.chainKey = null;
   // DL-05: the desk against the wall, or dragged clear and the terminal answered.
-  Object.assign(game.desk5, { x: c.forwarded ? DESK5.min + 0.2 : DESK5.x, v: 0, lastX: undefined });
+  Object.assign(game.desk5, { x: c.forwarded ? DESK5.min : DESK5.x, v: 0, lastX: undefined });
   game.dl5 = { knocked: !!c.ringc && c.x > KNOCK5_X, revealed: !!c.forwarded, forwarded: !!c.forwarded, toyUp: false, toyTried: !!c.forwarded };
   game.marksShotAt = -100;
   if (c.ringc) Object.assign(game.dl4, { lookedBack: true, hopped: true, refuge: true, awed: true });

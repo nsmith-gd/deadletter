@@ -612,7 +612,8 @@ def build_ring_c(m, coll):
         add_cyl(bm, (81.45, 0.85, 0.2), (81.45 + 0.12 * math.cos(a), 0.85 + 0.08 * math.sin(a), 0.42 + 0.1 * (k % 3)), 0.004, seg=4)
     _obj('D5PlantDead', bm, [m['wood']], coll)
 
-    # The cable of bulbs: hooks under the roof, a sagging cable, bulbs on drops. Two still burn.
+    # The cable of bulbs: hooks under the roof, a sagging cable, bulbs on drops. Ring C has been dark since
+    # R.Y. 43: only two still burn, far apart, one inside the seal and one near C-114 (the LaneBulb object).
     hooks = [81.1, 83.15, 85.2, 87.2, 88.45]
     cy = 0.5
     bm, live, dead = bmesh.new(), bmesh.new(), bmesh.new()
@@ -629,7 +630,7 @@ def build_ring_c(m, coll):
             add_cyl(bm, (p, cy, cable_z(p)), (q, cy, cable_z(q)), 0.006, seg=4)
     for x in hooks:
         add_cyl(bm, (x, cy, 2.5), (x, cy, LANE_CEIL + 0.02), 0.008, seg=5)
-    bulbs = [(81.65, False), (82.55, True), (83.75, False), (84.75, False), (85.75, False), (86.6, True), (87.75, False)]
+    bulbs = [(81.65, True), (82.55, False), (83.75, False), (84.75, False), (85.75, False), (86.6, True), (87.75, False)]
     for k, (x, lit) in enumerate(bulbs):
         z0 = cable_z(x)
         z1 = z0 - 0.22 - 0.06 * (k % 2)
