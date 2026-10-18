@@ -66,7 +66,7 @@ CHASM_FACES = ((-48.0, -9.0), (-36.0, -6.0), (-25.0, -3.5), (-15.0, -1.5), (-6.0
 MESAS = ((150.0, 12.0, 32.0), (184.0, 28.0, 36.0), (222.0, 46.0, 72.0))
 # Viaducts across the chasm: how far down it (y), deck height, width, spans.
 VIADUCTS = ((80.0, -2.0, 7.0, 4), (104.0, -16.0, 5.0, 3), (120.0, 20.0, 6.0, 4), (174.0, 36.0, 6.0, 6))
-HOME_U = 160.0                       # the one lit home window: ring A on the left wall, this far along
+HOME_U = 48.0                        # the one lit home window: ring A on the right wall, this far along, facing the balcony
 
 
 def _obj(name, bm, mats, coll, sharp=35):
@@ -376,7 +376,7 @@ def dl04_materials(m):
     m['masonry'] = simple_material('AtriumMasonry', (0.15, 0.135, 0.115), 0.85)
     m['windowglow'] = emission_material('AtriumWindowGlow', (1.0, 0.6, 0.28), 2.5)
     m['hazelights'] = emission_material('AtriumHazeLights', (0.62, 0.76, 0.95), 1.5)
-    m['mist'] = emission_material('AtriumMist', (0.32, 0.4, 0.48), 0.15)
+    m['mist'] = emission_material('AtriumMist', (0.32, 0.4, 0.48), 0.1)
 
 
 def build_goods_hall(m, coll):
@@ -942,6 +942,16 @@ def _wledge(W, u, ring):
     return p + n * (lip + dd) + up, p + n * (back + dd) + up, Vector((F.y, -F.x, 0.0)), F
 
 
+def _litp(z):
+    """How likely a lamp or window is still lit at a height: the abandoned depths almost dark, the light
+    growing up the levels to the upper city, where people still live."""
+    table = ((-50.0, 0.01), (-5.0, 0.02), (4.0, 0.05), (14.0, 0.16), (26.0, 0.32), (40.0, 0.5), (60.0, 0.65))
+    for (za, pa), (zb, pb) in zip(table, table[1:]):
+        if z <= zb:
+            return pa + (pb - pa) * max(0.0, (z - za) / (zb - za))
+    return table[-1][1]
+
+
 def _blocked(u, spans):
     return any(abs(u - c) < h for c, h in spans)
 
@@ -1110,7 +1120,7 @@ def _container(b, c, T, F, size, rnd, front=True):
         _face(b['dark'], fc + T * (side * w * 0.28) + Vector((0, 0, 1.45)), T, F, 1.1, 0.7)
 
 
-def _house(b, c, T, F, w, d, floors, rnd, mat):
+def _house(b, c, T, F, w, d, floors, rnd, mat, lit=0.0):
     """A built home: plaster or sheet walls, a slab roof (now and then a tank or a flue on it), windows in
     a row on each floor, dark."""
     h = 3.0 * floors + 0.3
@@ -1132,7 +1142,7 @@ def _house(b, c, T, F, w, d, floors, rnd, mat):
             if f == 0 and i == door:
                 _face(b['dark'], fc + T * u + Vector((0, 0, 1.0)), T, F, 0.9, 2.0)
             elif rnd.random() < 0.85:
-                _face(b['dark'], fc + T * u + Vector((0, 0, 3.0 * f + 1.6)), T, F, 0.95, 1.0)
+                _face(b['glow'] if rnd.random() < lit else b['dark'], fc + T * u + Vector((0, 0, 3.0 * f + 1.6)), T, F, 0.95, 1.0)
 
 
 def _barricade(b, c, T, F, span, rnd):
@@ -1210,7 +1220,7 @@ def _ring_c(b, W, rnd, blocked):
             step = w + rnd.uniform(0.4, 2.0)
         elif near and r < 0.62:                       # a works still running, among the sealed homes
             w = rnd.uniform(4.5, 7.0)
-            _hall(b, back + F * 0.3, T, F, w, rnd.uniform(3.6, 4.6), True, rnd)
+            _hall(b, back + F * 0.3, T, F, w, rnd.uniform(3.6, 4.6), rnd.random() < _litp(back.z), rnd)
             step = w + rnd.uniform(1.0, 2.5)
         else:
             c = back + F * 0.25
@@ -1223,8 +1233,8 @@ def _ring_c(b, W, rnd, blocked):
             ml, _, mT, mF = _wledge(W, u + step / 2, 'C')
             add_box(b['sheet'], ml - mF * 0.2 + Vector((0, 0, 1.0)), (step, 0.05, 0.05), rot=_rot(mT, mF))
             add_box(b['sheet'], lip - F * 0.2 + Vector((0, 0, 0.5)), (0.06, 0.06, 1.0), rot=_rot(T, F))
-        if rnd.random() < 0.12:
-            add_box(b['lamp'] if rnd.random() < 0.5 else b['red'], lip - F * 0.3 + Vector((0, 0, 2.4)), (0.28, 0.28, 0.3))
+        if rnd.random() < 0.08:                      # a failing lamp, mostly the red ones
+            add_box(b['lamp'] if rnd.random() < 0.25 else b['red'], lip - F * 0.3 + Vector((0, 0, 2.4)), (0.28, 0.28, 0.3))
         u += step
 
 
@@ -1241,24 +1251,24 @@ def _ring_b(b, W, rnd, blocked):
         k += 1
         if u < 120:
             w, h = rnd.uniform(5.5, 9.0), rnd.uniform(4.2, 6.2)
-            _hall(b, back + F * 0.3, T, F, w, h, rnd.random() < 0.8, rnd)
+            _hall(b, back + F * 0.3, T, F, w, h, rnd.random() < _litp(back.z), rnd)
             if rnd.random() < 0.4:                   # a gallery above the hall, and its own row of lit windows
                 g = back + F * 1.0 + Vector((0, 0, h + 1.0))
                 add_box(b['sheet'], g, (w + 1.5, 2.0, 0.14), rot=_rot(T, F))
                 add_box(b['sheet'], g + F * 0.95 + Vector((0, 0, 1.0)), (w + 1.5, 0.05, 0.05), rot=_rot(T, F))
                 for i in range(3):
-                    _face(b['glow'] if rnd.random() < 0.6 else b['dark'], back + F * 0.32 + T * ((i - 1) * w / 3) + Vector((0, 0, h + 2.4)), T, F, 1.1, 1.2)
+                    _face(b['glow'] if rnd.random() < _litp(back.z + h + 2.4) else b['dark'], back + F * 0.32 + T * ((i - 1) * w / 3) + Vector((0, 0, h + 2.4)), T, F, 1.1, 1.2)
             if rnd.random() < 0.5:
                 for i in range(rnd.randint(1, 3)):
                     s = rnd.uniform(0.8, 1.5)
                     add_box(b['rust' if rnd.random() < 0.5 else 'sheet'], lip - F * rnd.uniform(1.0, 2.5) + T * rnd.uniform(-w / 2, w / 2) + Vector((0, 0, s / 2)), (s, s, s), rot=_rot(T, F))
             step = w + rnd.uniform(1.2, 3.0)
             gl, _, gT, gF = _wledge(W, u + step / 2 - w / 2, 'B')
-            _gallery(b, gl, gT, gF, step, k % 2 == 0, rnd)
+            _gallery(b, gl, gT, gF, step, rnd.random() < 2 * _litp(gl.z), rnd)
         else:
             if rnd.random() < 0.6:
-                _arch(b['glow'] if rnd.random() < 0.55 else b['dark'], back + F * 0.3, T, F, rnd.uniform(4, 7), rnd.uniform(3.5, 5.5), seg=4)
-            if k % 2 == 0:
+                _arch(b['glow'] if rnd.random() < _litp(back.z) else b['dark'], back + F * 0.3, T, F, rnd.uniform(4, 7), rnd.uniform(3.5, 5.5), seg=4)
+            if rnd.random() < 2 * _litp(lip.z):
                 _face(b['lamp'], lip - F * 0.3 + Vector((0, 0, 2.2)), T, F, 0.45, 0.45)
             step = rnd.uniform(8.0, 13.0)
         u += step
@@ -1279,19 +1289,19 @@ def _ring_a(b, W, rnd, blocked, home=None):
         if u < 170:
             w, d = rnd.uniform(6.0, 8.5), rnd.uniform(4.5, 5.5)
             c = back + F * (d / 2 + 0.1) - Vector((0, 0, 0.1))
-            _house(b, c, T, F, w, d, 2 if rnd.random() < 0.75 else 3, rnd, b['plaster'] if rnd.random() < 0.8 else b['sheet'])
+            _house(b, c, T, F, w, d, 2 if rnd.random() < 0.75 else 3, rnd, b['plaster'] if rnd.random() < 0.8 else b['sheet'], 0.5 * _litp(c.z))
             if home is not None and lit is None and u > home:
                 lit = (c + F * (d / 2 + 0.05) + T * (w * 0.25) + Vector((0, 0, 4.6)), T, F)
             add_box(b['cut'], lip - F * 0.3 + Vector((0, 0, 0.5)), (w + 0.8, 0.25, 1.0), rot=_rot(T, F))
-            if k % 2 == 0 and rnd.random() < 0.8:
+            if rnd.random() < 1.6 * _litp(lip.z):
                 add_box(b['lamp'], lip - F * 0.1 + Vector((0, 0, 2.6)), (0.35, 0.35, 0.35), rot=_rot(T, F))
                 add_box(b['sheet'], lip - F * 0.3 + Vector((0, 0, 1.3)), (0.08, 0.08, 2.6), rot=_rot(T, F))
             step = w + rnd.uniform(0.3, 1.5)
         else:
             for i in range(3):
-                if rnd.random() < 0.3:
+                if rnd.random() < _litp(back.z + 6):
                     _face(b['glow'], back + F * 0.3 + T * (i * 2.4) + Vector((0, 0, rnd.choice((1.6, 4.6)))), T, F, 1.2, 1.4)
-            if k % 2 == 0:
+            if rnd.random() < 1.6 * _litp(lip.z):
                 _face(b['lamp'], lip - F * 0.3 + Vector((0, 0, 2.4)), T, F, 0.6, 0.6)
             step = rnd.uniform(9.0, 13.0)
         u += step
@@ -1309,7 +1319,8 @@ def _wall_lights(b, W, rnd):
             q = p + n * (_cave_d(p, 30.0, False) + 9.0) + Vector((0, 0, z))
             T = Vector((-n.y, n.x, 0.0))
             for i in range(rnd.randint(1, 4)):
-                _face(b['glow'] if rnd.random() < 0.55 else b['haze'], q + T * (i * 2.2), T, -n, 1.2, 1.5)
+                if rnd.random() < 0.4 + _litp(z):
+                    _face(b['glow'] if rnd.random() < 0.6 + 0.3 * _litp(z) else b['haze'], q + T * (i * 2.2), T, -n, 1.2, 1.5)
         u += rnd.uniform(3.0, 7.0)
 
 
@@ -1333,11 +1344,10 @@ def _low_galleries(b, W, u0, u1, rnd):
                     T = -T
                 add_box(b['sheet'], (a + c) / 2 + F * 0.9, (d.length + 0.05, 1.8, 0.12), rot=_rot(T, F))
                 add_box(b['sheet'], (a + c) / 2 + F * 1.75 + Vector((0, 0, 1.0)), (d.length + 0.05, 0.05, 0.05), rot=_rot(T, F))
-                r = rnd.random()
-                if r < 0.45:
-                    _arch(b['glow'] if r < 0.3 else b['dark'], a + F * 0.05, T, F, 1.6, 2.4, seg=3)
-                if rnd.random() < 0.3:
-                    add_box(b['lamp'], a + F * 1.7 + Vector((0, 0, 2.2)), (0.26, 0.26, 0.26), rot=_rot(T, F))
+                if rnd.random() < 0.45:
+                    _arch(b['glow'] if rnd.random() < _litp(z) else b['dark'], a + F * 0.05, T, F, 1.6, 2.4, seg=3)
+                if rnd.random() < 0.04:                # a failing lamp
+                    add_box(b['red'] if rnd.random() < 0.5 else b['lamp'], a + F * 1.7 + Vector((0, 0, 2.2)), (0.26, 0.26, 0.26), rot=_rot(T, F))
             if len(pts) > 2 and z > -21:
                 q = pts[len(pts) // 2][1]
                 F = -_wframe(W, pts[len(pts) // 2][0])[2]
@@ -1363,7 +1373,8 @@ def _lift_tower(b, base, top_z, T, F, rnd):
     add_box(b['sheet'], base + Vector((0, 0, top_z + 0.4)), (4.0, 4.0, 0.4), rot=_rot(T, F))
     add_torus(b['sheet'], base + Vector((0, 0, top_z + 2.2)), T, 1.6, 0.12, seg=16, rseg=4)
     cz = top_z - 9.0
-    add_box(b['glow'], base + Vector((0, 0, cz + 1.4)), (2.2, 2.2, 2.6), rot=_rot(T, F))
+    add_box(b['rust'], base + Vector((0, 0, cz + 0.05)), (2.2, 2.2, 0.1), rot=_rot(T, F))
+    add_box(b['red'], base + F * 2.1 + Vector((0, 0, top_z + 0.9)), (0.3, 0.3, 0.3), rot=_rot(T, F))
     for sx in (-1, 1):
         for sy in (-1, 1):
             add_box(b['sheet'], base + T * (sx * 1.15) + F * (sy * 1.15) + Vector((0, 0, cz + 1.4)), (0.12, 0.12, 2.9), rot=_rot(T, F))
@@ -1397,7 +1408,8 @@ def _platform(b, lip, T, F, w, out, rnd, crane=False):
     for i in range(rnd.randint(2, 4)):
         s = rnd.uniform(0.9, 1.6)
         add_box(b['rust' if rnd.random() < 0.5 else 'sheet'], c + T * rnd.uniform(-w / 3, w / 3) + F * rnd.uniform(-out / 4, out / 4) + Vector((0, 0, s / 2)), (s, s * 1.2, s), rot=_rot(T, F))
-    add_box(b['lamp'], lip + F * (out - 0.1) + T * (w / 2) + Vector((0, 0, 2.2)), (0.32, 0.32, 0.32), rot=_rot(T, F))
+    if rnd.random() < 2.5 * _litp(lip.z):
+        add_box(b['lamp'], lip + F * (out - 0.1) + T * (w / 2) + Vector((0, 0, 2.2)), (0.32, 0.32, 0.32), rot=_rot(T, F))
     if crane:
         _crane(b, c - T * (w / 3), T, F, rnd)
 
@@ -1447,7 +1459,7 @@ def _viaduct(b, WL, WR, y, z, width, spans, rnd):
         add_box(stone, a + T * (L / 2) + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 0.5)), (L, 0.4, 1.0), rot=_rot(T, F))
         x = 4.0
         while x < L - 2:
-            if rnd.random() < 0.8:
+            if rnd.random() < 1.5 * _litp(z):
                 add_box(b['glow'], a + T * x + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 2.6)), (0.5, 0.5, 0.5), rot=_rot(T, F))
                 add_box(b['sheet'], a + T * x + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 1.8)), (0.1, 0.1, 1.6), rot=_rot(T, F))
             x += 9.0 + rnd.uniform(-1, 2)
@@ -1468,7 +1480,7 @@ def _catwalk(b, WL, WR, y, z, rnd):
     x = 6.0
     while x < d.length - 3:
         p = a.lerp(e, x / d.length)
-        if rnd.random() < 0.6:
+        if rnd.random() < 2 * _litp(z):
             add_box(b['glow'], p + F * 0.7 + Vector((0, 0, 1.4)), (0.35, 0.35, 0.35), rot=_rot(T, F))
         x += 10.0
 
@@ -1522,7 +1534,7 @@ def _mesa(rock, b, WL, WR, y0, top, depth, tier, rnd, avoid=None):
         x = xl + 6 + i * 7 + rnd.uniform(-1, 1)
         for zz in (top - 7.0, top - 15.0):
             if zz > -18 and rnd.random() < 0.6:
-                _arch(b['glow'] if rnd.random() < 0.6 else b['dark'], Vector((x, y0 - 3.6, zz)), T, F, 3.0, 4.0, seg=4)
+                _arch(b['glow'] if rnd.random() < 0.15 + _litp(zz) else b['dark'], Vector((x, y0 - 3.6, zz)), T, F, 3.0, 4.0, seg=4)
     # The city on top: rows of lots back from the edge.
     yy = y0 + 6.0
     dpt = 8.0
@@ -1558,7 +1570,7 @@ def _block(b, c, w, d, h, tier, rnd):
         add_box(b['masonry'], c + Vector((0, 0, h + 0.6 + h * 0.2)), (w * 0.6, d * 0.6, h * 0.4))
     fy = c.y - d / 2 - 0.05
     F, T = Vector((0, -1.0, 0)), Vector((-1.0, 0, 0))
-    lit = 0.25 + 0.12 * tier
+    lit = 0.38 + 0.14 * tier
     nx, nz = max(1, int(w / 2.6)), max(1, int(h / 3.4))
     for i in range(nx):
         for j in range(nz):
@@ -1575,7 +1587,7 @@ def _tower(b, c, r, h, rnd):
     else:
         _dome(b['sheet'], c + Vector((0, 0, h)), r * 1.1, 10)
     for k in range(int(h / 6)):
-        if rnd.random() < 0.5:
+        if rnd.random() < 0.7:
             _face(b['glow'], c + Vector((0, -r - 0.05, 3.0 + 6.0 * k)), Vector((-1, 0, 0)), Vector((0, -1, 0)), 0.9, 1.6)
 
 
@@ -1739,7 +1751,7 @@ def build_atrium(m, coll):
         blocked = {r: [(u, 4.0)] if L is W else [] for r, (L, u) in letters.items()}
         _ring_c(b, W, rnd, blocked['C'] + ([(18.0, 6.0)] if W is WL else [(26.0, 9.0)]))
         _ring_b(b, W, rnd, blocked['B'] + ([(44.0, 8.0)] if W is WL else [(30.0, 10.0)]))
-        found = _ring_a(b, W, rnd, blocked['A'], home=HOME_U if W is WL else None)
+        found = _ring_a(b, W, rnd, blocked['A'], home=HOME_U if W is WR else None)
         lit = lit or found
         _wall_lights(b, W, rnd)
         _low_galleries(b, W, 22.0, 120.0, rnd)
@@ -1778,7 +1790,7 @@ def build_atrium(m, coll):
         pts = _sag(a, c, sag, 18)
         _wire(b['cable'], pts, 0.05)
         for i in range(2, len(pts) - 2, 2):
-            if rnd.random() < 0.5:
+            if rnd.random() < 2 * _litp(pts[i].z):
                 add_box(b['glow'], pts[i] - Vector((0, 0, 0.3)), (0.32, 0.32, 0.36))
     # Water falling into the depths, and the mist they fall into.
     for W, u, z, w in ((WL, 96.0, 12.0, 3.0), (WR, 58.0, -2.0, 2.2), (WR, 150.0, 30.0, 5.0), (WL, 230.0, 40.0, 6.0)):
