@@ -727,6 +727,9 @@ def build_couriers(dl01, slots, out_coll):
 
 def build_set(dl01, m, coll):
     dl02_materials(m)
-    build_passage(m, coll)
+    build_passage(m, coll)          # the passage from DL-01 stays where it is; the rooms move by OFF2
+    before = set(bpy.data.objects)
     build_weigh_room(m, coll)
-    return build_recharge_hall(m, coll)
+    slots = build_recharge_hall(m, coll)
+    dl01.shift_new(before, lambda o: dl01.OFF2)
+    return [(r, k, x + dl01.OFF2, y) for r, k, x, y in slots]

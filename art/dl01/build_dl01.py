@@ -1102,6 +1102,27 @@ def pack_for_web(out, names):
             json.dump({'format': 'glb-base64', 'data': data}, fh)
 
 
+# Each later stretch of the level moves along x by its offset, so scenes can be inserted between them
+# (docs/chapter1_plan.md). Keep these in step with OFF2..OFF4 in game/undelivered/index.html.
+OFF2 = 0.0   # the weight room and the racks, after the Sorting Hall
+OFF3 = 0.0   # the return line to Lift 2's belt, after the Racks
+OFF4 = 0.0   # the tunnel, the city and ring C, after the Slipping Cage
+SPLIT4 = 64.55   # in DL-04's set, what starts at or beyond this is the tunnel side
+
+
+def world_min_x(o):
+    return min((o.matrix_world @ Vector(c)).x for c in o.bound_box) if o.type in ('MESH', 'CURVE') else o.location.x
+
+
+def shift_new(before, dx_for):
+    """Move every top-level object created since `before` along x by dx_for(object)."""
+    bpy.context.view_layer.update()
+    for o in [o for o in bpy.data.objects if o not in before and o.parent is None]:
+        dx = dx_for(o)
+        if dx:
+            o.location.x += dx
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', required=True)
@@ -1117,10 +1138,16 @@ def main():
     set_coll = bpy.data.collections.new('DL01_Set')
     scene.collection.children.link(set_coll)
     build_set(m, set_coll)
-    slots = dl02.build_set(sys.modules[__name__], m, set_coll)
+    slots = dl02.build_set(sys.modules[__name__], m, set_coll)    # moves its rooms by OFF2 itself
+    before = set(bpy.data.objects)
     dl03.build_set(sys.modules[__name__], m, set_coll)
+    shift_new(before, lambda o: OFF3)
+    before = set(bpy.data.objects)
     dl04.build_set(sys.modules[__name__], m, set_coll)
+    shift_new(before, lambda o: OFF4 if o.name.startswith(('Atrium', 'G4Portal')) or world_min_x(o) >= SPLIT4 else OFF3)
+    before = set(bpy.data.objects)
     dl05.build_set(sys.modules[__name__], m, set_coll)
+    shift_new(before, lambda o: OFF4)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
