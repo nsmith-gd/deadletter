@@ -42,19 +42,28 @@ tips D-17 onto the heap of dead post, and he is back at the checkpoint after a f
 
 ## Use the camera
 
-The side-on framing is the default, not a rule. For a moment that matters, the camera leaves it for an
-authored shot with its own position, aim and lens, eased in and back out (`currentShot()` in the game):
-- **Low and close for intimacy.** Use a 45 to 55 mm lens: his face as he touches his chest among the couriers, the label check.
-- **Wide and high for scale.** Use a 24 to 32 mm lens: the crane up and out over the pit, the ride up the ramp with the heap below, the crane out over the refuge's atrium.
-- **Beside him for effort.** At the crank, low behind his shoulder, the door rising ahead.
-- **Shake for impacts.** A short, damped shake when something heavy lands (the shutter, the gate, a carrier tipping), never for footsteps. Calm mode turns it off.
+One continuous side-on shot is the game's camera, the way Limbo and Inside play as one shot. Gameplay never takes
+it away. Framing changes (wider over a puzzle room, closer in a tight space, higher over a drop) blend over one to
+three seconds as D-17 moves, and the whole puzzle stays in frame while the player thinks.
 
-Play carries on under a shot where it can, and any shot hands back smoothly.
+**Authored shots are reserved for emotional moments** (`currentShot()` in the game). Each is eased in and back
+out, and never shows puzzle information the side view doesn't. In Chapter 1 there are seven:
+- **DL-02:** the realisation among the couriers.
+- **DL-03:** the scan, the pit and the label check, as one sequence.
+- **DL-04:** the look back at the depot, and the crane out over the city, which hands back to D-17.
+- **DL-05:** the growth marks, the terminal answering, and the rabbit.
 
-**Cinematics play once.** After a respawn or a checkpoint reload, authored moments the player has
-already sat through are skipped (the realisation among the couriers, the look back, the hopscotch, the
-awe, the knock, the hold on the growth marks). Shots that show how a puzzle works play every time
-(the platform rising, the points thrown to the ramp, the pawl's click). Starting over clears this.
+The lenses:
+- **Low and close for intimacy:** 45 to 55 mm.
+- **Wide and high for scale:** 24 to 32 mm, about once a chapter.
+
+Not shots: cranks, levers, lifts, pawls, carts, falls and quirks all play in the side view. A cause and its effect
+must be readable in the side view, through a visible cable, rod, light or sound.
+
+**Shake for impacts.** A short, damped shake when something heavy lands, never for footsteps. Calm mode turns it off.
+
+**Cinematics play once.** After a respawn or a checkpoint reload, authored moments the player has already sat
+through are skipped. Starting over clears this.
 
 ## D-17's quirks
 
@@ -85,8 +94,8 @@ The browser build must run smoothly on an ordinary laptop. Keep within these lim
 
 ## Scene length
 
-From DL-04 on, scenes run a touch longer than the overview's targets. That room goes to the beats between puzzles: a
-quirk, a look back, a moment of scale. The puzzles themselves keep their size.
+Scenes earn their length with distinct rooms and beats, never by making a puzzle slower or harder. See
+`docs/puzzle_principles.md` for the rules and `docs/chapter1_plan.md` for how Chapter 1 reaches its target.
 
 ## Tone
 
