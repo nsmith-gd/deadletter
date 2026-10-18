@@ -1,6 +1,6 @@
-"""Chapter 1 (DL-01 The Wake and DL-02 The Weight of the Job): builds the continuous set and
-D-17's gameplay clips, exported for the playable prototype in game/undelivered/. The DL-02 half
-lives in art/dl02/build_dl02.py and is called from here.
+"""Chapter 1 (DL-01 The Wake to DL-04 The Handbrake): builds the continuous set and D-17's gameplay
+clips, exported for the playable prototype in game/undelivered/. DL-02, DL-03 and DL-04 live in
+art/dl02, art/dl03 and art/dl04 and are called from here.
 
     python build_dl01.py --out ../../game/undelivered/assets
 
@@ -26,6 +26,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', 'd17'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
+sys.path.insert(0, os.path.join(HERE, '..', 'dl04'))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
 import bmesh  # noqa: E402
@@ -34,6 +35,7 @@ from mathutils import Matrix, Vector  # noqa: E402
 import build_d17 as d17  # noqa: E402
 import build_dl02 as dl02  # noqa: E402
 import build_dl03 as dl03  # noqa: E402
+import build_dl04 as dl04  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
                        SIDES, CLAW_REST_OPEN, _key)
@@ -1051,6 +1053,7 @@ def main():
     build_set(m, set_coll)
     slots = dl02.build_set(sys.modules[__name__], m, set_coll)
     dl03.build_set(sys.modules[__name__], m, set_coll)
+    dl04.build_set(sys.modules[__name__], m, set_coll)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
@@ -1078,6 +1081,7 @@ def main():
     clip_crank(arm)
     dl02.add_clips(sys.modules[__name__], arm)
     dl03.add_clips(sys.modules[__name__], arm)
+    dl04.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False

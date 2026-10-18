@@ -7,7 +7,8 @@ DL-03 continues straight on from DL-02's recharge hall:
     by a chain belt to the storage chute, tipping returned parcels into the pit;
   - the pit itself, Dead Letters: decades of undeliverable post under a wall of pigeonholes;
   - the upper gallery over the pit, reached only by riding a carrier up the service ramp once the
-    belt is stopped and the points are thrown; at its far end, the residential access (DL-04).
+    belt is stopped and the points are thrown; at its far end, the residential access doorway, which
+    art/dl04 builds and DL-04 continues through.
 
 Coordinates as before: metres, Blender Z up, the lane at y = 0, travel along +x.
 """
@@ -525,12 +526,10 @@ def build_gallery(m, coll):
     _obj('DayBoardEasel', bm, [m['wood']], coll)
     board = _image_material('DayBoardMat', os.path.join(TEX, 'day_board.png'), rough=0.9)
     _plane('DayBoard', (0.96, 0.68), (44.6, 0.81, gz + 1.0), board, coll, rot=Matrix.Rotation(math.radians(90 - 7), 4, 'X'))
-    # Residential access: a doorway, the sign with tape across ring C.
+    # Residential access: the sign with tape across ring C, by the doorway (art/dl04 builds the wall).
     bm = bmesh.new()
-    add_box(bm, (RESIDENTIAL_X + 0.5, 0.2, gz + 1.6), (0.3, 1.5, 3.2))
     add_box(bm, (RESIDENTIAL_X + 0.1, 0.92, gz + 1.6), (0.9, 0.1, 3.2))
-    add_box(bm, (RESIDENTIAL_X + 0.1, 0.2, gz + 2.8), (0.9, 1.5, 0.8))
-    _obj('ResidentialWall', bm, [m['wall']], coll)
+    _obj('ResidentialReturn', bm, [m['wall']], coll)
     rsign = _image_material('ResidentialMat', os.path.join(TEX, 'residential_sign.png'))
     _plane('ResidentialSign', (0.8, 0.32), (RESIDENTIAL_X - 0.2, 0.86, gz + 1.65), rsign, coll)
     bm = bmesh.new()

@@ -1,4 +1,4 @@
-"""DL-01 The Wake: the score.
+"""Chapter 1 (DL-01 to DL-04): the score.
 
 Renders four cues for the playable scene from a written score with small
 synthesized instruments: a felt piano, an old music box, a string section, a
@@ -828,6 +828,70 @@ def cue_dead():
     return m.render()
 
 
+def cue_latch():
+    """DL-04. The safety pawl drops home: a warm F major under the parcel's three notes, and it settles."""
+    rng = np.random.default_rng(909)
+    m = Mix(11)
+    for j, name in enumerate(('F2', 'C3', 'A3', 'F4', 'C5')):
+        m['piano'].add(piano(name, 0.34 - 0.03 * j, 6, rng), 0.12 + 0.06 * j, pan_for(name))
+    for name, kind, pan, d in (('F2', 'bass', -0.15, 0.16), ('F3', 'cello', -0.3, 0.18), ('C4', 'viola', 0.0, 0.12), ('A4', 'violin', 0.3, 0.08)):
+        string_note(m['strings'], name, 0.2, 8.5, d, kind, pan, 1.2, 3.5, shape=[0.7, 1, 0.8], rng=rng)
+    for t, name, v in ((1.2, 'F5', 0.36), (1.9, 'E5', 0.3), (2.8, 'D5', 0.34), (4.1, 'C5', 0.26)):
+        m['box'].add(music_box(name, v, rng), t, 0.3)
+    m['piano'].add(piano('A5', 0.16, 4, rng), 5.4, 0.4)
+    return m.render()
+
+
+def cue_refuge():
+    """DL-04. D-17 steps out of the tunnel onto a balcony high in the refuge's atrium. Awe, not grief:
+    near silence (a high string light over a low pedal), then phrase B broadens toward F major with the
+    violins in octaves and a timpani roll on the dominant; the peak on F major (about 11.4 s) is timed to
+    the camera reaching its widest. Then it lets go: B-flat, D minor, the music box, an open fifth."""
+    rng = np.random.default_rng(1010)
+    m = Mix(40)
+    m['air'].add(wind(40, 0.05, rng) * env_curve(int(40 * SR), 2, 12), 0)
+    string_note(m['strings'], 'A5', 0.0, 4.0, 0.05, 'violin', 0.45, 2.0, 1.5, rng=rng)
+    string_note(m['strings'], 'E6', 0.4, 3.6, 0.035, 'violin', 0.55, 2.0, 1.5, rng=rng)
+    string_note(m['strings'], 'F1', 0.0, 18.0, 0.2, 'bass', -0.15, 3.0, 4, shape=[0.4, 0.8, 1, 1], rng=rng)
+    m['piano'].add(piano('F2', 0.3, 5, rng), 0.3, -0.3)
+    m['piano'].add(piano('C6', 0.14, 3, rng), 1.6, 0.45)
+    # Phrase B, broadening: bars 9-11, then the cadence into F major (bars 17-18).
+    t0, bl = 2.6, 2.2
+    bars = [8, 9, 10, 16]
+    dyn = [0.2, 0.28, 0.38, 0.5]
+    for k, bar in enumerate(bars):
+        string_bar(m['strings'], bar, t0 + k * bl, dyn[k], rng, bars=bl / BAR, attack=0.8 + 0.3 * (k == 0), release=1.6)
+        lh_arpeggio(m['piano'], bar, t0 + k * bl, 0.24 + 0.04 * k, rng, 'flow')
+    cl, coff = legato_line(scaled_events(bars, 0, bl, transpose=-1), 0, 'cello', 0.45, rng, tail=0.6)
+    m['solo'].add(cl, t0 + coff, -0.15)
+    vl, voff = legato_line(scaled_events(bars[1:], 0, bl), 0, 'violin', 0.5, rng, vib_cents=16, tail=0.6)
+    m['solo'].add(vl, t0 + bl + voff, 0.15)
+    v8, v8off = legato_line(scaled_events(bars[2:], 0, bl, transpose=1), 0, 'violin', 0.24, rng, vib_cents=14, tail=0.6)
+    m['strings'].add(v8, t0 + 2 * bl + v8off, 0.35)
+    # The peak: F major, held, everything in; the timpani on C rolls into it, the cymbal swells to it.
+    peak = t0 + 4 * bl
+    for name, kind, pan, d in (('F1', 'bass', -0.15, 0.5), ('F2', 'cello', -0.3, 0.55), ('C3', 'cello', -0.2, 0.4), ('A3', 'viola', 0.0, 0.42),
+                               ('C4', 'viola', 0.1, 0.36), ('F4', 'violin', 0.25, 0.34), ('A4', 'violin', 0.35, 0.3)):
+        string_note(m['strings'], name, peak, 6.0, d, kind, pan, 0.5, 3.0, shape=[1, 0.9, 0.75, 0.55], rng=rng)
+    for line_note, kind, gain, pan in (('F5', 'violin', 0.55, 0.15), ('F6', 'violin', 0.25, 0.35), ('F4', 'cello', 0.36, -0.35)):
+        string_note(m['solo'], line_note, peak, 5.0, gain, kind, pan, 0.3, 2.6, shape=[1, 0.95, 0.8], rng=rng)
+    for j, name in enumerate(('F1', 'F2', 'C3', 'A3', 'F4', 'C5', 'A5')):
+        m['piano'].add(piano(name, 0.52 - 0.03 * j, 6, rng), peak + 0.03 * j, pan_for(name))
+    timp_roll(m['perc'], 'C2', peak - 3.6, peak, 0.05, 0.7, rng, hit=0.85)
+    m['perc'].add(cymbal_swell(10, 3.6, 0.02, rng, decay=1.8), peak - 3.6, 0.2)
+    # It lets go: B-flat, then D minor, quieter; the parcel's three notes; an open fifth that stays.
+    t1 = peak + 6.2
+    string_bar(m['strings'], 1, t1, 0.26, rng, bars=3.6 / BAR, attack=1.2, release=2.0)
+    string_bar(m['strings'], 0, t1 + 3.6, 0.17, rng, bars=3.6 / BAR, attack=1.2, release=2.5)
+    m['piano'].add(piano('Bb1', 0.34, 5, rng), t1, -0.3)
+    m['piano'].add(piano('D2', 0.3, 6, rng), t1 + 3.6, -0.3)
+    for t, name, v in ((t1 + 4.6, 'F6', 0.3), (t1 + 5.5, 'E6', 0.26), (t1 + 6.7, 'D6', 0.28)):
+        m['box'].add(music_box(name, v, rng), t, 0.35)
+    for name, kind, pan, d in (('D3', 'cello', -0.3, 0.14), ('A3', 'viola', 0.1, 0.1), ('A4', 'violin', 0.35, 0.05)):
+        string_note(m['strings'], name, t1 + 7.0, 12, d, kind, pan, 2.0, 7, shape=[1, 0.9, 0.6], rng=rng)
+    return m.render()
+
+
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
@@ -854,10 +918,13 @@ def main():
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     cues = {'wake': cue_wake, 'bed': cue_bed, 'hall': cue_hall, 'threshold': cue_threshold, 'racks': cue_racks,
-            'kin': cue_kin, 'dead': cue_dead, 'end': cue_end}
+            'kin': cue_kin, 'dead': cue_dead, 'latch': cue_latch, 'refuge': cue_refuge, 'end': cue_end}
+    files = {'latch': 'dl04_latch', 'refuge': 'dl04_refuge'}
+    reference = ('wake', 'hall', 'end')
     rendered = {}
     for name, fn in cues.items():
-        if args.only and name not in args.only:
+        # The reference cues are always rendered, so a cue rendered alone still gets the shared gain.
+        if args.only and name not in args.only and name not in reference:
             continue
         print('rendering', name, flush=True)
         st = fn()
@@ -866,21 +933,23 @@ def main():
         rendered[name] = st
     # One gain for every cue, so their balance is as written. The reference is the gentler cues, so a
     # swell can rise above them; a soft limiter catches its peaks.
-    ref = [rendered[k] for k in ('wake', 'hall', 'end') if k in rendered] or list(rendered.values())
-    peak = max(float(np.abs(s).max()) for s in ref)
+    peak = max(float(np.abs(rendered[k]).max()) for k in reference)
     gain = 10 ** (-1.0 / 20) / peak
     for name, st in rendered.items():
+        if args.only and name not in args.only:
+            continue
         # Tape hiss, added at its final level, about 64 dB down.
         st = st * gain
         st = np.where(np.abs(st) > 0.7, np.sign(st) * (0.7 + 0.25 * np.tanh((np.abs(st) - 0.7) / 0.25)), st)
         st = st + hiss(st.shape[1], 0.0011, np.random.default_rng(5))
         rms = 20 * np.log10(np.sqrt((st ** 2).mean()) + 1e-9)
         print(f'{name}: {st.shape[1] / SR:.1f} s, peak {20 * np.log10(np.abs(st).max()):.1f} dBFS, rms {rms:.1f} dBFS')
-        wav = os.path.join(args.wav or args.out, f'dl01_{name}.wav')
+        stem = files.get(name, f'dl01_{name}')
+        wav = os.path.join(args.wav or args.out, f'{stem}.wav')
         if args.wav:
             os.makedirs(args.wav, exist_ok=True)
         write_wav(wav, st)
-        mp3 = os.path.join(args.out, f'dl01_{name}.mp3')
+        mp3 = os.path.join(args.out, f'{stem}.mp3')
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', wav, '-c:a', 'libmp3lame', '-q:a', '3', mp3], check=True)
         if not args.wav:
             os.remove(wav)

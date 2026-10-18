@@ -94,7 +94,7 @@
 </script>
 
 <div id="app">
-  <canvas id="view" aria-label="Dead Letter, scenes DL-01 to DL-03, playable"></canvas>
+  <canvas id="view" aria-label="Dead Letter, scenes DL-01 to DL-04, playable"></canvas>
   <div id="fade"></div>
   <div id="keycap" hidden></div>
   <div id="debug" hidden></div>
@@ -112,8 +112,8 @@
 
   <section id="title" class="layer">
     <div class="card">
-      <div class="eyebrow"><span>Dead Letter &middot; chapter 1 &middot; prototype</span><span>Scenes 01&ndash;03 of 45 &middot; ~14 min</span></div>
-      <h1><span class="code">DL-01&ndash;03</span> Undelivered</h1>
+      <div class="eyebrow"><span>Dead Letter &middot; chapter 1 &middot; prototype</span><span>Scenes 01&ndash;04 of 45 &middot; ~20 min</span></div>
+      <h1><span class="code">DL-01&ndash;04</span> Undelivered</h1>
       <p class="lede">A courier wakes beneath the refuge with a parcel still undelivered, and finds out what he is.</p>
       <dl class="controls">
         <dt>Keyboard</dt><dd><kbd>A</kbd> <kbd>D</kbd> or arrows to move &middot; <kbd>Shift</kbd> walk &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> use &middot; <kbd>Esc</kbd> pause</dd>
@@ -131,7 +131,7 @@
         <button class="act" id="begin" type="button" disabled>Begin</button>
         <span class="status" id="load-status" role="status">Loading the depot&hellip;</span>
       </div>
-      <p class="note">DL-01 The Wake, DL-02 The Weight of the Job and DL-03 Return to Sender run as one, with no cut between them. Headphones recommended.</p>
+      <p class="note">DL-01 The Wake, DL-02 The Weight of the Job, DL-03 Return to Sender and DL-04 The Handbrake run as one, with no cut between them. Headphones recommended.</p>
     </div>
   </section>
 
@@ -156,9 +156,9 @@
 
   <section id="end" class="layer" hidden>
     <div class="card">
-      <div class="eyebrow"><span>End of DL-03</span><span id="end-time"></span></div>
-      <h2>Not in service</h2>
-      <p>The depot says room 114 no longer exists and its post belongs in the pit. D-17 checked his label and took the service ramp instead. Next: <strong>DL-04 The Handbrake</strong>, out of the depot and toward the residential rings.</p>
+      <div class="eyebrow"><span>End of DL-04</span><span id="end-time"></span></div>
+      <h2>The refuge</h2>
+      <p>D-17 set the pawl that someone kept mending for fifty years, left the goods trolley on its pan, and walked out of the depot into a town of three rings and one lit window. Next: <strong>DL-05 The Child at the Address</strong>, room 114, ring C.</p>
       <div class="row">
         <button class="act" id="again" type="button">Play again</button>
         <button class="act secondary" id="again-skip" type="button">Play again, skip intro</button>
@@ -306,10 +306,13 @@ const WORN = {
   LetterPaper: { base: [.55, .52, .45], dirt: [.3, .27, .2], chip: [.62, .6, .55], rough: .9, chipRough: .9, metal: 0, grime: 18, chipScale: 40, chipAmt: .8, dust: [.5, .48, .42], dustAmt: .5 },
   PigeonWood: { base: [.12, .085, .055], dirt: [.06, .045, .03], chip: [.2, .15, .1], rough: .85, chipRough: .8, metal: 0, grime: 6, chipScale: 30, chipAmt: .75, dust: [.1, .09, .08], dustAmt: .6 },
   PlateSteel: { base: [.11, .115, .11], dirt: [.06, .04, .025], chip: [.2, .19, .17], rough: .55, chipRough: .4, metal: .7, grime: 5, chipScale: 30, chipAmt: .7, dust: [.1, .095, .085], dustAmt: .4 },
+  ToteGreen: { base: [.08, .11, .09], dirt: [.05, .05, .04], chip: [.16, .18, .15], rough: .7, chipRough: .6, metal: 0, grime: 12, chipScale: 40, chipAmt: .72, dust: [.1, .1, .09], dustAmt: .5 },
 };
 const PLAIN = { EyeDark: [[.003, .003, .003], .3, 0], Shaft: [[.004, .004, .004], .9, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
   Water: [[.01, .012, .012], .04, .3],
-  Copper: [[.55, .3, .18], .35, 1], ReflectTag: [[.8, .78, .7], .15, .6] };
+  Copper: [[.55, .3, .18], .35, 1], ReflectTag: [[.8, .78, .7], .15, .6], BeltRubber: [[.02, .02, .019], .8, 0],
+  AtriumPlaster: [[.3, .28, .22], .9, 0], AtriumDark: [[.006, .006, .006], .8, 0], AtriumStone: [[.05, .05, .048], .95, 0],
+  Barricade: [[.4, .06, .04], .7, 0], Brass: [[.45, .32, .12], .45, .8] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
 const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
@@ -319,7 +322,9 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   ScanLamp2: [1, .25, .12, 0], ScanBar: [1, .2, .1, 0], GuideArrow: [1, .3, .12, 0], DockLamp: [1, .7, .3, 0], Interlock: [1, .2, .1, 0],
   PitBulb: [1, .86, .66, 0], GalleryBulb: [.9, .95, 1, 0], CarrierLamp: [1, .6, .2, 0],
   RowLight0: [.8, .92, .95, 0], RowLight1: [.8, .92, .95, 0], RowLight2: [.8, .92, .95, 0], RowLight3: [.8, .92, .95, 0],
-  RowLight4: [.8, .92, .95, 0], RowLight5: [.8, .92, .95, 0] };
+  RowLight4: [.8, .92, .95, 0], RowLight5: [.8, .92, .95, 0],
+  HallBulb4: [1, .88, .7, 0], AtLanding: [1, .62, .18, 0], PawlLamp: [1, .2, .1, 0], BeaconLamp: [1, .55, .12, 0], TunnelBulb: [.95, .9, .78, 0],
+  RingLamp: [1, .78, .5, 0], RingLampRed: [1, .18, .1, 0], HomeLight: [1, .72, .4, 0], SkyPanel: [.7, .8, .9, 0] };
 
 const lin = (a) => new THREE.Color().setRGB(a[0], a[1], a[2]);
 function wornMaterial(name, s) {
@@ -367,7 +372,12 @@ function materialFor(src) {
     const e = EMIT[name];
     m = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: lin(e), emissiveIntensity: e[3], roughness: 0.4 });
     emissive[name] = m;
-  } else if (src.map) { m = new THREE.MeshStandardMaterial({ map: src.map, roughness: 0.75 }); }
+  } else if (src.map) {
+    // Painted decals (the chalk, the ring letters) keep their alpha.
+    const decal = src.transparent || /^(Chalk|RingLetter)/.test(name);
+    m = new THREE.MeshStandardMaterial({ map: src.map, roughness: 0.75, transparent: decal, depthWrite: !decal, alphaTest: decal ? 0.02 : 0 });
+    if (decal) { m.polygonOffset = true; m.polygonOffsetFactor = -2; }
+  }
   else m = src;
   m.name = name;
   materialCache[name] = m;
@@ -378,7 +388,7 @@ function materialFor(src) {
 // Audio: everything synthesized, routed through a short depot reverb
 // ---------------------------------------------------------------------------
 const Sound = (() => {
-  let ctx = null, master, wet, hum, humGain, buzz, buzzGain, hissNode = null, rollNode = null, tubeNode = null, beltNode = null, enabled = true;
+  let ctx = null, master, wet, hum, humGain, buzz, buzzGain, hissNode = null, rollNode = null, tubeNode = null, beltNode = null, drumNode = null, airNode = null, enabled = true;
   function noiseBuffer(sec = 1) {
     const b = ctx.createBuffer(1, ctx.sampleRate * sec, ctx.sampleRate);
     const d = b.getChannelData(0);
@@ -493,7 +503,7 @@ const Sound = (() => {
     // DL-03: the scanner, the return line, the levers, the pit.
     scanSweep() { tone(520, 1.6, 'sine', 0.03, 0.4, 1400); noise(1.6, 3000, 8, 0.02, 'bandpass', 0.3, 0.2); },
     reject() { [0, 0.32].forEach((d) => setTimeout(() => { tone(196, 0.26, 'square', 0.05, 0.5); tone(207, 0.26, 'square', 0.04, 0.5); }, d * 1000)); },
-    lift() { tone(140, 1.2, 'sawtooth', 0.015, 0.4, 210); noise(1.2, 600, 2, 0.03, 'bandpass', 0.4, 0.2); },
+    hatchLift() { tone(140, 1.2, 'sawtooth', 0.015, 0.4, 210); noise(1.2, 600, 2, 0.03, 'bandpass', 0.4, 0.2); },
     bell() { tone(1568, 0.5, 'sine', 0.04, 0.8); setTimeout(() => tone(1175, 0.7, 'sine', 0.035, 0.8), 160); },
     klaxon() { [0, 0.45].forEach((d) => setTimeout(() => tone(330, 0.36, 'sawtooth', 0.035, 0.7, 300), d * 1000)); },
     beltStop() { tone(110, 0.6, 'sawtooth', 0.04, 0.6, 50); noise(0.2, 700, 1, 0.12, 'bandpass', 0.6); },
@@ -511,6 +521,41 @@ const Sound = (() => {
       }
       beltNode.gain.setTargetAtTime(level * 0.05, ctx.currentTime, 0.25);
     },
+    // DL-04: the lift and its pawl, the returns belt, the refuge.
+    drum(level) {
+      if (!ctx) return;
+      if (!drumNode) {
+        drumNode = ctx.createGain(); drumNode.gain.value = 0; drumNode.connect(master);
+        const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2300; bp.Q.value = 1.2; bp.connect(drumNode);
+        const s = ctx.createBufferSource(); s.buffer = noiseBuffer(2); s.loop = true;
+        const am = ctx.createGain(); am.gain.value = 0.5; s.connect(am); am.connect(bp); s.start();
+        const lfo = ctx.createOscillator(); lfo.frequency.value = 16; const lg = ctx.createGain(); lg.gain.value = 0.5; lfo.connect(lg); lg.connect(am.gain); lfo.start();
+        const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 62; const og = ctx.createGain(); og.gain.value = 0.6; o.connect(og); og.connect(drumNode); o.start();
+      }
+      drumNode.gain.setTargetAtTime(level * 0.07, ctx.currentTime, 0.08);
+    },
+    pawlClick() {
+      for (let k = 0; k < 4; k++) setTimeout(() => noise(0.01, 3000 + k * 300, 3, 0.12, 'bandpass', 0.4), k * 28);
+      setTimeout(() => { noise(0.014, 4200, 2.5, 0.5, 'bandpass', 0.6); tone(2900, 0.025, 'square', 0.05, 0.3); }, 130);
+      setTimeout(() => { noise(0.02, 2100, 2, 0.55, 'bandpass', 0.8); tone(170, 0.18, 'square', 0.08, 0.6, 110); tone(52, 0.35, 'sine', 0.16, 0.7, 44); }, 205);
+    },
+    pawlClatter() { for (let k = 0; k < 5; k++) setTimeout(() => noise(0.012, 2400 + Math.random() * 900, 2.5, 0.16, 'bandpass', 0.5), k * 45 + Math.random() * 15); tone(260, 0.08, 'square', 0.025, 0.4, 210); },
+    liftCrash(v = 1) { tone(46, 0.6, 'sine', 0.38 * v, 1.0, 36); noise(0.25, 300, 0.7, 0.3 * v, 'lowpass', 1.0); noise(0.08, 1500, 1, 0.3 * v, 'bandpass', 1.0); Sound.chain(0.5); },
+    lurch() { noise(0.05, 1200, 1, 0.3, 'bandpass', 0.7); tone(120, 0.25, 'triangle', 0.08, 0.7, 80); Sound.chain(0.3); },
+    alarmBell() { for (let k = 0; k < 9; k++) setTimeout(() => { tone(1240, 0.07, 'triangle', 0.045, 0.7); tone(2610, 0.04, 'sine', 0.015, 0.7); }, k * 55); },
+    crateLand(v = 1) { tone(110, 0.14, 'sine', 0.1 * v, 0.6, 80); noise(0.06, 700, 1, 0.16 * v, 'bandpass', 0.6); },
+    air(level) {
+      if (!ctx) return;
+      if (!airNode) {
+        airNode = ctx.createGain(); airNode.gain.value = 0; airNode.connect(master);
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; lp.connect(airNode);
+        const s = ctx.createBufferSource(); s.buffer = noiseBuffer(2); s.loop = true;
+        const am = ctx.createGain(); am.gain.value = 0.7; s.connect(am); am.connect(lp); s.start();
+        const lfo = ctx.createOscillator(); lfo.frequency.value = 0.09; const lg = ctx.createGain(); lg.gain.value = 0.3; lfo.connect(lg); lg.connect(am.gain); lfo.start();
+        const r = ctx.createGain(); r.gain.value = 0.6; lp.connect(r); r.connect(Sound.send);
+      }
+      airNode.gain.setTargetAtTime(level * 0.09, ctx.currentTime, 0.8);
+    },
     context: () => ctx, output: () => master,
   };
 })();
@@ -519,8 +564,8 @@ const Sound = (() => {
 // door, and a quiet loop under play between them.
 const Music = (() => {
   const FILES = { wake: 'dl01_wake', bed: 'dl01_bed', hall: 'dl01_hall', threshold: 'dl01_threshold', racks: 'dl01_racks', kin: 'dl01_kin',
-    dead: 'dl01_dead', end: 'dl01_end' };
-  const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.62, dead: 0.62, end: 0.6 }, BED_LEVEL = 0.26;
+    dead: 'dl01_dead', latch: 'dl04_latch', refuge: 'dl04_refuge', end: 'dl01_end' };
+  const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.62, dead: 0.62, latch: 0.55, refuge: 0.64, end: 0.6 }, BED_LEVEL = 0.26;
   const BED_LOOP = [2, 50];            // one 48 s period, padded by 2 s on each side
   const raw = {}, decoded = {};
   let ctx = null, bus = null, enabled = true, paused = false;
@@ -572,7 +617,7 @@ const Music = (() => {
         c.src = ctx.createBufferSource(); c.src.buffer = b; c.src.connect(c.gain);
         // Start where it would be had it decoded instantly, so the wake stays in step with the opening.
         c.src.start(0, Math.min(Math.max(0, ctx.currentTime - asked), b.duration - 0.1));
-        c.src.onended = () => { if (cue === c) { cue = null; updateBed(); } };
+        c.src.onended = () => { if (cue === c) { cue = null; updateBed(); if (c.next) this.play(c.next); } };
       });
     },
     stop(sec = 1.5) {
@@ -583,6 +628,8 @@ const Music = (() => {
       updateBed();
     },
     playing: () => (cue ? cue.name : null),
+    // Play a cue when the one now playing ends by itself (or now, if nothing is playing).
+    queue(name) { if (cue) cue.next = name; else this.play(name); },
     bed(on) { bedWanted = on; updateBed(); },
     setEnabled(on) { enabled = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
     setPaused(on) { paused = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
@@ -661,11 +708,14 @@ const game = {
   // DL-02
   region: 1, transit: null, hold: null, holdSide: 1, weight: { x: WEIGHT_X, y: 0, state: 'floor', off: 0, blend: 0 },
   trolley: { x: TROLLEY_X, v: 0, spin: 0 }, gate: { y: 0, v: 0, ticked: 0 }, load: 0, needle: 0, gateEverOpen: false,
-  revealed: false, revealTime: -100, rowsLit: 0, nudged: false, endMusic: false, realised: false,
+  revealed: false, revealTime: -100, rowsLit: 0, nudged: false, realised: false,
   // DL-03
   scan: { phase: 'idle', t: 0 }, belt: { running: false }, route: 'chute', carrierSeq: 0, lastSpawn: -100, upper: false,
   riding: null, lampBoost: [0, 0, 0], stopLever: -18, pointsLever: -18, blade: 0, leverHold: null, lookAt: null,
   triedBoard: false, triedPoints: false, lightRegion: 1, peeked: {},
+  // DL-04
+  trolley4: { x: 49.5, v: 0 }, plat: { h: 0, v: 0, latched: false, lurch: false, riseStart: -100, riseSeen: false, ticked: 0 },
+  pawlLever: -18, pawlHold: null, pawlDip: 0, pawlDrop: -100, pawlClickAt: -100, belt4: { state: 'idle', t: 0, next: 0 }, dl4: {}, aweStart: -100,
 };
 const refs = {};
 let mixer, actions = {}, current = null, d17, model;
@@ -689,9 +739,10 @@ async function loadModel(url) {
   return gltf;
 }
 
-// Only three lamps cast shadows (the relay and work lamp in the alcove, the lamp over the plate), so
-// only the props near them cast: walls, floors and anything far away never enter a shadow pass.
-const SHADOW_ZONES = [[-2.5, 7.0], [13.8, 18.4]];
+// Only four lamps cast shadows (the relay and work lamp in the alcove, the lamps over the DL-02 plate and
+// the DL-04 pan), never more than two lit at once, and only the props near them cast: walls, floors and
+// anything far away never enter a shadow pass.
+const SHADOW_ZONES = [[-2.5, 7.0], [13.8, 18.4], [48.4, 56.0]];
 const _sb = new THREE.Box3(), _ss = new THREE.Vector3();
 function castsShadow(o) {
   if (o.isSkinnedMesh) return true;
@@ -772,6 +823,7 @@ async function load() {
   buildAtmosphere(setG.scene);
   buildDL02(setG.scene, courierG.scene);
   buildDL03(setG.scene);
+  buildDL04(setG.scene);
   buildCulling(setG.scene);
   resize();
 }
@@ -801,7 +853,7 @@ function buildLights() {
 
 function buildDust() {
   const n = 1000, pos = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) { pos[i * 3] = -1 + Math.random() * 28; pos[i * 3 + 1] = Math.random() * 3; pos[i * 3 + 2] = -1.5 + Math.random() * 2.7; }
+  for (let i = 0; i < n; i++) { pos[i * 3] = -1 + Math.random() * 28; pos[i * 3 + 1] = Math.random() * 3; pos[i * 3 + 2] = -1.5 + Math.random() * 2.0; }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   refs.dust = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xbab3a0, size: 0.009, transparent: true, opacity: 0.45, depthWrite: false }));
   scene.add(refs.dust);
@@ -927,7 +979,7 @@ function setClip(name, fade = 0.2, timeScale = 1) {
 }
 
 const tq1 = new THREE.Quaternion(), tq2 = new THREE.Quaternion(), tq3 = new THREE.Quaternion();
-const tv1 = new THREE.Vector3(), tv2 = new THREE.Vector3(), tv3 = new THREE.Vector3();
+const tv1 = new THREE.Vector3(), tv2 = new THREE.Vector3(), tv3 = new THREE.Vector3(), tv4 = new THREE.Vector3();
 function rotateBoneWorld(bone, q) {
   bone.parent.getWorldQuaternion(tq1);
   bone.getWorldQuaternion(tq2);
@@ -1014,7 +1066,13 @@ function updateMechanisms(dt) {
   updateChain();
   // dust drift
   const p = refs.dust.geometry.attributes.position;
-  for (let i = 0; i < p.count; i++) { p.array[i * 3 + 1] += Math.sin(game.clock * 0.3 + i) * 0.0004; p.array[i * 3] += 0.0002; if (p.array[i * 3] > 27) p.array[i * 3] = -1; }
+  // It drifts, and stays around the camera wherever he goes.
+  const base = game.upper ? DECK : 0;
+  for (let i = 0; i < p.count; i++) {
+    p.array[i * 3 + 1] += Math.sin(game.clock * 0.3 + i) * 0.0004; p.array[i * 3] += 0.0002;
+    const dx = p.array[i * 3] - cam.x;
+    if (dx > 14 || dx < -14) { p.array[i * 3] -= Math.sign(dx) * 28; p.array[i * 3 + 1] = base + Math.random() * 3; p.array[i * 3 + 2] = -1.5 + Math.random() * 2.0; }
+  }
   p.needsUpdate = true;
 }
 
@@ -1022,6 +1080,7 @@ function updateMechanisms(dt) {
 // Ground, ledges and ceilings
 // ---------------------------------------------------------------------------
 function floorAt(x) {
+  if (x > SHAFT.x0 && x < SHAFT.x1) return platTop();
   if (x > CORRIDOR_X0) return game.upper ? GALLERY.h : 0;
   return x > PIT.x0 && x < PIT.x1 ? PIT.y : 0;
 }
@@ -1033,6 +1092,11 @@ function surfaceAt(x) {                       // the surface directly under one 
     if (Math.abs(x - t.x) <= TROLLEY_HALF) h = Math.max(h, TROLLEY_DECK);
     const base = w.state === 'floor' ? 0 : w.state === 'trolley' ? TROLLEY_DECK : null;
     if (base !== null && Math.abs(x - weightX()) <= WEIGHT_R) h = Math.max(h, base + WEIGHT_H);
+  }
+  if (x > DOOR4_X) {
+    // The goods trolley is solid to the top of its ballast; crates on the belt are solid while in the lane.
+    if (Math.abs(x - game.trolley4.x) <= T4_HALF - 0.04) h = Math.max(h, DECK + T4_TOP);
+    for (const c of refs.crates || []) if (c.state !== 'chute' && c.z > -0.25 && Math.abs(x - c.x) <= c.half) h = Math.max(h, DECK + c.h);
   }
   return h;
 }
@@ -1050,14 +1114,17 @@ function ledgeAhead(dir, range = 0.6) {       // first raised face ahead: distan
   return null;
 }
 function gateBlocks() { return game.gate.y < CROUCH_H + 0.02; }
+function liftOpen() { return game.plat.latched || game.plat.h >= 0.985; }
 function leftLimit() {
   if (game.region === 1) return LEFT_LIMIT;
+  if (game.region === 4) return game.x >= SHAFT.x1 - 0.05 && !liftOpen() ? SHAFT.x1 + HALF - 0.08 : DOOR4_X - 0.6;
   if (game.region === 3) return game.upper ? GALLERY.x0 + 0.15 : REGION3_X - 0.15;
   return game.x > GATE_X && gateBlocks() ? GATE_X + 0.06 + HALF : ROOM_LEFT;
 }
 function rightLimit() {
   if (game.region === 1) return game.released ? RIGHT_LIMIT : LOCKED_LIMIT;
-  if (game.region === 3) return game.upper ? EXIT3_X + 2 : FLOOR3_X1 - 0.25;
+  if (game.region === 3) return game.upper ? REGION4_X + 1 : FLOOR3_X1 - 0.25;
+  if (game.region === 4) return game.x <= SHAFT.x0 + 0.05 && !liftOpen() ? SHAFT.x0 - HALF + 0.08 : EXIT4_X + 3;
   return game.x < GATE_X && gateBlocks() ? GATE_X - 0.06 - HALF : EXIT2_X + 2;
 }
 
@@ -1065,6 +1132,7 @@ function rightLimit() {
 // Interactions: cord lamp, latch, crank wheel, exit door
 // ---------------------------------------------------------------------------
 function nearUse() {
+  if (game.region === 4) return nearUse4();
   if (game.region === 3) return nearUse3();
   if (game.region === 2) return nearUse2();
   if (!game.grounded || game.y > 0.05) return null;
@@ -1080,10 +1148,11 @@ function beginUse(kind) {
   if (kind === 'leverStop' || kind === 'leverPoints' || kind === 'board') { beginUse3(kind); return; }
   game.act = { kind, phase: 'approach', t: 0, strokes: 0 };
   if (kind === 'lift') { const side = Math.sign(game.weight.x - game.x) || game.facing; game.act.standX = game.weight.x - side * GRIP_FWD; game.act.face = side; }
-  if (kind === 'grabL' || kind === 'grabR') {
-    const side = kind === 'grabL' ? 1 : -1;
-    Object.assign(game.act, { kind: 'grab', side, standX: game.trolley.x - side * PUSH_GAP, face: side });
+  if (kind === 'grabL' || kind === 'grabR' || kind === 'grab4L' || kind === 'grab4R') {
+    const four = kind.startsWith('grab4'), side = kind.endsWith('L') ? 1 : -1, t = four ? game.trolley4 : game.trolley;
+    Object.assign(game.act, { kind: 'grab', side, standX: t.x - side * (four ? PUSH_GAP4 : PUSH_GAP), face: side, hold: four ? 'trolley4' : 'trolley' });
   }
+  if (kind === 'pawl') Object.assign(game.act, { standX: PAWL_X, face: 1 });
   if (kind === 'nudge') { game.act.standX = refs.nudgeAt.x; game.act.face = game.facing; }
   if (kind === 'cord') game.act.standX = CORD_STAND, game.act.face = -1;
   if (kind === 'latch') game.act.standX = PULL_ROOT_X, game.act.face = 1;
@@ -1103,7 +1172,8 @@ function updateAct(dt) {
       if (a.kind === 'crank') { game.yawOverride = Math.PI; a.phase = 'turn'; }
       if (a.kind === 'lift') { setClip('Lift', 0.15); }
       if (a.kind === 'grab') { setClip('Grab', 0.12); Sound.tap(); }
-      if (a.kind === 'nudge' || a.kind === 'board' || a.kind === 'lever') { game.yawOverride = Math.PI; a.phase = 'turn'; }
+      if (a.kind === 'nudge' || a.kind === 'board' || a.kind === 'lever' || a.kind === 'pawl') { game.yawOverride = Math.PI; a.phase = 'turn'; }
+      if (a.kind === 'pat') { a.phase = 'act'; setClip('Pat', 0.2); }
       return;
     }
     const v = (game.crouched ? CROUCH_WALK : WALK) * 0.8;
@@ -1147,7 +1217,8 @@ function updateAct(dt) {
     } else if (a.phase === 'done' && Math.abs(game.yaw - Math.PI / 2 * game.facing) < 0.1) {
       game.act = null; playQuirk('Proud');
     }
-  } else updateAct2(a, dt);
+  } else if (ACT4.has(a.kind)) updateAct4(a, dt);
+  else updateAct2(a, dt);
 }
 
 // ---------------------------------------------------------------------------
@@ -1187,6 +1258,7 @@ function updatePlayer(dt) {
     const f = m.t * FPS;
     const [fwd, frac] = mantleAt(f);
     const approach = smooth(f / 10);
+    if (game.region === 4 && beltRunning4() && game.x > BELT4.x0 && game.x < BELT4.x1) m.x0 -= BELT4.speed * dt;   // climbing a crate as it rides
     game.x = m.x0 + m.dir * (fwd + m.extra * approach);
     game.y = m.y0 + frac * (m.top - m.y0);
     if (f >= MANTLE_FRAMES) { game.mantle = null; game.grounded = true; game.y = m.top; setClip('Idle', 0.25); }
@@ -1232,7 +1304,8 @@ function updatePlayer(dt) {
     setClip('JumpAir', 0.08); Sound.jump();
   }
 
-  // Integrate and collide.
+  // Integrate and collide; on the returns belt he is carried back while he walks.
+  const carry = beltCarry4() * dt;
   let nx = game.x + game.vx * dt;
   nx = Math.max(leftLimit(), Math.min(rightLimit(), nx));
   const dir = Math.sign(nx - game.x);
@@ -1240,6 +1313,7 @@ function updatePlayer(dt) {
     const lead = nx + dir * HALF;
     if (surfaceAt(lead) > game.y + STEP_UP) { nx = game.x; game.vx = 0; }
   }
+  if (carry && surfaceAt(nx + carry - HALF) <= game.y + STEP_UP) nx += carry;
   if (!game.grounded || game.crouched) {
     if (minCeiling(nx - 0.1, nx + 0.1) - game.y < CROUCH_H) nx = game.x;
   }
@@ -1271,8 +1345,10 @@ function updatePlayer(dt) {
     game.transit = { stage: 0 }; game.yawOverride = Math.PI; game.vx = 0; return;
   }
   if (game.region === 2 && game.x > REGION3_X) game.region = 3;
-  if (game.region === 3 && game.upper && game.x > MUSIC_END3_X && !game.endMusic) { game.endMusic = true; Music.bed(false); Music.play('end'); }
-  if (game.region === 3 && game.upper && game.x >= EXIT3_X && game.grounded) { game.exit = { t: 0 }; return; }
+  // Through the residential doorway into DL-04, and back if he turns round.
+  if (game.region === 3 && game.upper && game.x > REGION4_X) { game.region = 4; if (!game.dl4.entered) { game.dl4.entered = true; game.checkpoint = 'goods'; } }
+  else if (game.region === 4 && game.x < REGION4_X - 0.2) game.region = 3;
+  if (game.region === 4 && updateTriggers4()) return;
 
   // Ground animation.
   if (game.grounded) {
@@ -1291,7 +1367,7 @@ function updatePlayer(dt) {
 }
 
 function stepSounds() {
-  const walking = { Walk: 1, CrouchWalk: 0.6, Run: 1.2, CarryWalk: 1.1, PushWalk: 0.8, SadWalk: 0.7 };
+  const walking = { Walk: 1, CrouchWalk: 0.6, Run: 1.2, CarryWalk: 1.1, PushWalk: game.hold === 'trolley4' ? 1.1 : 0.8, SadWalk: 0.7 };
   if (!walking[current] || !actions[current]) return;
   const a = actions[current], d = a.getClip().duration, ph = (((a.time / d) % 1) + 1) % 1;
   if ((game.lastStepPhase < 0.5 && ph >= 0.5) || ph < game.lastStepPhase - 0.5) Sound.step(walking[current] * (game.crouched ? 0.6 : 1));
@@ -1302,6 +1378,7 @@ function stepSounds() {
 function paceSlow() {
   if (game.region === 2) return game.realised && game.x > GATE_X && game.x < KIN_UNTIL_X;
   if (game.region === 3) return game.scan.phase === 'reveal';
+  if (game.region === 4) return !!game.dl4.awed && game.x > VISTA_X0 - 0.4 && game.x < EXIT4_X;
   return false;
 }
 
@@ -1310,10 +1387,12 @@ function updateExit(dt) {
   const e = game.exit;
   e.t += dt;
   game.facing = 1;
-  game.x += WALK * 0.8 * dt;
-  setClip('Walk', 0.2, 0.8 * WALK / CLIP_SPEED.Walk);
+  const v = game.region === 4 ? SLOW_WALK * 1.4 : WALK * 0.8;
+  game.x += v * dt;
+  if (game.region === 4) game.y = DECK - Math.max(0, game.x - STAIR_X) * 0.83;     // down the stair toward ring B
+  setClip('Walk', 0.2, v / CLIP_SPEED.Walk);
   stepSounds();
-  if (e.t > 0.4 && !game.ended) { game.ended = true; finish(); }
+  if (e.t > (game.region === 4 ? 0.9 : 0.4) && !game.ended) { game.ended = true; finish(); }
 }
 
 // From the DL-01 doorway: away from the camera, right along the passage behind the wall, back
@@ -1477,7 +1556,7 @@ function updateAct2(a, dt) {
     if (f >= 21 && !a.patted) { a.patted = true; Sound.knock(); }
     if (f >= 35) { game.act = null; game.hold = null; setClip('Idle', 0.3); }
   } else if (a.kind === 'grab') {
-    if (actions.Grab.time * FPS >= 13) { game.act = null; game.hold = 'trolley'; game.holdSide = a.side; setClip('PushIdle', 0.15); }
+    if (actions.Grab.time * FPS >= 13) { game.act = null; game.hold = a.hold || 'trolley'; game.holdSide = a.side; setClip('PushIdle', 0.15); }
   } else if (a.kind === 'nudge') {
     // Turn to the courier, step in, reach and tap, wait, step back.
     if (a.phase === 'turn') { if (Math.abs(game.yaw - Math.PI) < 0.05) a.phase = 'in'; else setClip('Walk', 0.2, 0.6); return; }
@@ -1504,29 +1583,30 @@ function updateAct2(a, dt) {
 
 // Carrying the weight or pushing the trolley: slower, no running or jumping.
 function updateHold(dt, move) {
-  const t = game.trolley, w = game.weight;
-  if (game.hold === 'trolley' && input.jumpPressed) { game.hold = null; setClip('Idle', 0.25); return; }
-  const pushing = game.hold === 'trolley';
-  const top = pushing ? (w.state === 'trolley' ? PUSH_LOADED : PUSH_SPEED) : CARRY_WALK;
+  const four = game.hold === 'trolley4', t = four ? game.trolley4 : game.trolley, w = game.weight;
+  const pushing = game.hold === 'trolley' || four;
+  if (pushing && input.jumpPressed) { game.hold = null; setClip('Idle', 0.25); return; }
+  const top = four ? PUSH_HEAVY : pushing ? (w.state === 'trolley' ? PUSH_LOADED : PUSH_SPEED) : CARRY_WALK;
   if (pushing) game.facing = game.holdSide; else if (move) game.facing = Math.sign(move);
-  const target = Math.sign(move) * top * Math.min(1, Math.abs(move) * 1.15);
-  game.vx += Math.max(-3 * dt, Math.min(3 * dt, target - game.vx));
+  const target = Math.sign(move) * top * Math.min(1, Math.abs(move) * 1.15), acc = four ? 1.4 : 3;   // the goods trolley is slow to get going
+  game.vx += Math.max(-acc * dt, Math.min(acc * dt, target - game.vx));
   if (!move) game.vx *= Math.max(0, 1 - 10 * dt);
   let nx = Math.max(leftLimit(), Math.min(rightLimit(), game.x + game.vx * dt));
   const dir = Math.sign(nx - game.x);
   if (dir && !(pushing && dir === game.holdSide) && surfaceAt(nx + dir * HALF) > game.y + STEP_UP) nx = game.x;
   if (pushing) {
-    // The trolley goes where his hands go, within the room, and stops against the weight.
-    let tx = THREE.MathUtils.clamp(nx + game.holdSide * PUSH_GAP, TROLLEY_MIN, TROLLEY_MAX);
-    if (w.state === 'floor') {
+    // The trolley goes where his hands go, within the room, and stops against the weight (or the pan's buffers).
+    const gap = four ? PUSH_GAP4 : PUSH_GAP;
+    let tx = THREE.MathUtils.clamp(nx + game.holdSide * gap, four ? T4_MIN : TROLLEY_MIN, four ? T4_MAX : TROLLEY_MAX);
+    if (!four && w.state === 'floor') {
       const gap = TROLLEY_HALF + WEIGHT_R + 0.01;
       if (w.x > t.x && tx > w.x - gap) tx = Math.min(tx, w.x - gap);
       if (w.x < t.x && tx < w.x + gap) tx = Math.max(tx, w.x + gap);
     }
-    nx = tx - game.holdSide * PUSH_GAP;
+    nx = tx - game.holdSide * gap;
     if (nx < leftLimit() || nx > rightLimit()) { nx = game.x; tx = t.x; }
     t.v = (tx - t.x) / Math.max(dt, 1e-4); t.x = tx;
-    if (Math.abs(t.v) > 0.05 && Math.random() < dt * 0.6) Sound.squeak();
+    if (Math.abs(t.v) > 0.05 && Math.random() < dt * (four ? 1.2 : 0.6)) Sound.squeak();
   }
   if (Math.abs(nx - game.x) < 1e-6) game.vx = 0;
   game.x = nx;
@@ -1546,7 +1626,7 @@ function updateDL02(dt) {
   refs.trolleyGroup.position.x = t.x;
   const roll = t.x - (t.lastX ?? t.x); t.lastX = t.x;
   refs.wheels.forEach((wh) => (wh.rotation.z -= roll / 0.04));
-  Sound.roll(game.hold === 'trolley' ? Math.min(1, Math.abs(roll) / dt / 0.5) : 0);
+  if (game.region === 2) Sound.roll(game.hold === 'trolley' ? Math.min(1, Math.abs(roll) / dt / 0.5) : 0);
   if (game.hold !== 'trolley') t.v = 0;
 
   const before = game.load;
@@ -1633,7 +1713,6 @@ const HATCH_X = 30.5, DOCK_X = 31.0, JUNCTION_X = 34.6, TIP_X = 36.5, BLADE_END 
 const LANDING_X = 39.7, RETURN_X = 41.3, GALLERY = { x0: 38.85, x1: 47.4, h: 1.6 };
 const STOP_LEVER_X = 32.9, POINTS_LEVER_X = 34.25, LEVER_Z = -0.3, LEVER_AWAY = -18, LEVER_NEAR = 6;
 const CARRIER_FLOOR = 0.14, BELT_SPEED = 0.6, DOCK_WAIT = 3.4, SPAWN_EVERY = 6.0, CARRIER_GAP = 0.8;
-const EXIT3_X = 46.6, MUSIC_END3_X = 44.2;
 const HEAP = { x: 41.5, z: -3.0, sx: 4.2, sz: 3.0, peak: -0.4, floor: -6.0 };   // art/dl03 matches
 const CHUTE = [[36.6, 0.0], [39.3, -2.4]];
 // Scanner beats (seconds from the scan starting); the 'dead' cue starts at REJECT.
@@ -1794,6 +1873,9 @@ function setRegionLights(r) {
   [refs.cableLight, refs.doorLight, refs.back, refs.search].forEach((l) => (l.visible = r <= 2));
   refs.dl02Lights.forEach((l) => (l.visible = r === 2 || (l === refs.scannerLight && r === 3)));
   refs.dl03Lights.forEach((l) => (l.visible = r === 3));
+  refs.dl04HallLights.forEach((l) => (l.visible = r === 4 || (r === 3 && game.upper)));
+  refs.dl04MidLights.forEach((l) => (l.visible = r === 4));
+  refs.dl04FarLights.forEach((l) => (l.visible = r === 4));
   game.lightRegion = r;
 }
 
@@ -1818,7 +1900,7 @@ function spawnCarrier(rising = true) {
   const c = { root, pivot, s: rising ? 0 : S_DOCK, route: null, state: rising ? 'rise' : 'dock', wait: 0, t: 0, payload, ridden: false, id: game.carrierSeq++ };
   refs.carriers.push(c);
   game.lastSpawn = game.clock;
-  Sound.lift();
+  Sound.hatchLift();
   return c;
 }
 function removeCarrier(c) { scene.remove(c.root); refs.carriers.splice(refs.carriers.indexOf(c), 1); }
@@ -1949,7 +2031,7 @@ function updateDL03(dt) {
   updateCarriers(dt);
   const run = game.belt.running;
   if (run) refs.beltTex.offset.x -= BELT_SPEED * dt * 6;
-  Sound.belt(game.region === 3 ? (run ? 1 : 0) * Math.max(0.2, 1 - Math.abs(game.x - 33) / 9) : 0);
+  if (game.region !== 4) Sound.belt(game.region === 3 ? (run ? 1 : 0) * Math.max(0.2, 1 - Math.abs(game.x - 33) / 9) : 0);
   // Levers and points follow their state.
   const ease = (cur, want) => cur + (want - cur) * Math.min(1, dt * 8);
   game.stopLever = ease(game.stopLever, game.leverHold?.which === 'stop' ? game.leverHold.angle : run ? LEVER_AWAY : LEVER_NEAR);
@@ -2062,6 +2144,7 @@ function updateAct3(a, dt) {
     if (hopTo(a, { x: game.x, y: GALLERY.h, z: 0 }, dt)) {
       game.act = null; game.riding.ridden = false; game.riding = null; game.upper = true; game.grounded = true; game.y = GALLERY.h;
       game.yawOverride = null; game.facing = 1; game.checkpoint = 'landing'; setClip('Idle', 0.3); input.lastActivity = game.clock;
+      setRegionLights(3);
       playQuirk('BrushOff');
     }
   }
@@ -2074,6 +2157,389 @@ function updateRide(dt) {
   Sound.roll(game.belt.running && c.state === 'move' ? 0.7 : 0);
   if (c.state === 'unload' && !game.act) { game.act = { kind: 'alight', phase: 'turn', t: 0 }; game.yawOverride = 0; }
 }
+
+// ---------------------------------------------------------------------------
+// DL-04 The Handbrake. Goods Lift 2's platform sits at the bottom of its shaft, and load on the pan
+// raises it: D-17 alone halfway, the goods trolley with its ballast all the way. Up there it is only
+// balanced until the safety pawl drops home. Then the returns belt, the tunnel, and the refuge.
+// ---------------------------------------------------------------------------
+const DECK = 1.6, DOOR4_X = 47.5, REGION4_X = 47.75;
+const T4_X = 49.5, T4_HALF = 0.36, T4_TOP = 0.44, PUSH_GAP4 = 0.7, PUSH_HEAVY = 0.34;
+const PAN = { x0: 50.5, x1: 51.9 }, T4_MIN = 48.95, T4_MAX = 51.9 - 0.04 - 0.36;   // the buffer stops at the pan's end
+const PAWL_X = 52.45, PAWL_Z = -0.3, PAWL_REST = 1.75;
+const SHAFT = { x0: 52.8, x1: 55.3 }, RISE = 2.7, PLAT_SPEED = 0.6;
+const LOAD4 = { d17: 0.5, trolley: 1.05 };
+const DRUM4 = { x: 54.05, y: DECK + 3.6, z: -0.7, r: 0.45 }, HUB4 = { z: -0.42, r: 0.2 }, PULLEY4 = { x: 51.2, y: DECK + 3.6, r: 0.2 };
+const YOKE4 = [53.6, 54.5, 1.45];
+const BELT4 = { x0: 57.7, x1: 64.6, speed: 0.32 }, CHUTE4_TOP = new THREE.Vector3(64.3, DECK + 1.38, -1.75), CHUTE4_X = 64.25;
+const CRATES = [{ half: 0.18, h: 0.18 }, { half: 0.21, h: 0.23 }, { half: 0.2, h: 0.42 }];
+const TUNNEL_X0 = 64.6, HOP4_X = 66.3, HOPS4 = [[18, 26], [28, 36], [38, 48]];
+const VISTA_X0 = 70.0, AWE_X = 71.3, EXIT4_X = 74.55, STAIR_X = 74.65;
+const ATRIUM4 = new THREE.Vector3(74.0, -6, -41.5);         // where the wide view looks: the core stands off to the right
+
+const platTop = () => DECK - RISE * (1 - game.plat.h);
+// How much of the trolley is on the pan (it rolls on gradually), and the pan's whole load.
+function panTrolleyK() {
+  const t = game.trolley4;
+  return THREE.MathUtils.clamp((t.x - (PAN.x0 - T4_HALF + 0.1)) / (2 * T4_HALF - 0.2), 0, 1);
+}
+function panLoad() {
+  const d17On = game.region === 4 && game.x > PAN.x0 - 0.04 && game.x < PAN.x1 + 0.04 && game.y < DECK + 0.6;
+  return LOAD4.trolley * panTrolleyK() + (d17On ? LOAD4.d17 : 0);
+}
+const onPlatform4 = () => game.region === 4 && game.x > SHAFT.x0 + 0.02 && game.x < SHAFT.x1 - 0.02 && game.y < DECK + 0.3 && game.y > platTop() - 0.12;
+const beltRunning4 = () => game.belt4.state === 'run';
+function crateAhead() {
+  let best = null;
+  for (const c of refs.crates || []) if (c.state === 'belt' && c.x > game.x && c.x - game.x < 1.6 && (!best || c.x < best.x)) best = c;
+  return best;
+}
+
+function buildDL04(setRoot) {
+  for (const n of ['GoodsTrolley', 'GoodsTrolleyGrip', 'GoodsBallast', 'GoodsStraps', 'GoodsWheel0', 'GoodsWheel1', 'GoodsWheel2', 'GoodsWheel3',
+    'GoodsPan', 'HeadDrum', 'PanPulley', 'GoodsPlatform', 'GoodsPlatformFrame', 'GoodsPlatformRail', 'Pawl', 'PawlLever', 'PawlLamp',
+    'AtLandingLamp', 'LiftNeedle', 'ReturnsBelt', 'BeaconLamp', 'ReturnCrate0', 'ReturnCrate1', 'ReturnCrate2']) refs[n] = setRoot.getObjectByName(n);
+  const group = (x, names) => { const g = new THREE.Group(); g.position.set(x, 0, 0); scene.add(g); names.forEach((n) => g.attach(refs[n])); return g; };
+  refs.trolley4Group = group(T4_X, ['GoodsTrolley', 'GoodsTrolleyGrip', 'GoodsBallast', 'GoodsStraps', 'GoodsWheel0', 'GoodsWheel1', 'GoodsWheel2', 'GoodsWheel3']);
+  refs.wheels4 = [0, 1, 2, 3].map((i) => refs['GoodsWheel' + i]);
+  refs.platGroup = group(0, ['GoodsPlatform', 'GoodsPlatformFrame', 'GoodsPlatformRail']);
+  refs.panY = refs.GoodsPan.position.y;
+  // Crate templates stay hidden; the belt clones them.
+  refs.crateTemplates = [0, 1, 2].map((i) => refs['ReturnCrate' + i]);
+  refs.crateTemplates.forEach((t) => { t.visible = false; t.traverse((o) => { o.userData.noCull = true; }); });
+  refs.crates = [];
+  // The pawl lamp shows red, then green; the belt scrolls.
+  refs.pawlLampMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xff3020, emissiveIntensity: 4 });
+  refs.PawlLamp.traverse((o) => { if (o.isMesh) o.material = refs.pawlLampMat; });
+  const c = document.createElement('canvas'); c.width = 64; c.height = 32;
+  const g = c.getContext('2d'); g.fillStyle = '#161614'; g.fillRect(0, 0, 64, 32);
+  g.fillStyle = '#2b2a26'; for (let k = 0; k < 4; k++) g.fillRect(k * 16 + 1, 0, 5, 32);
+  g.fillStyle = 'rgba(200,190,160,0.06)'; for (let k = 0; k < 40; k++) g.fillRect(Math.random() * 64, Math.random() * 32, 2, 1);
+  refs.belt4Tex = new THREE.CanvasTexture(c); refs.belt4Tex.wrapS = THREE.RepeatWrapping; refs.belt4Tex.colorSpace = THREE.SRGBColorSpace;
+  const beltMat = new THREE.MeshStandardMaterial({ map: refs.belt4Tex, roughness: 0.85, metalness: 0 });
+  refs.ReturnsBelt.traverse((o) => { if (o.isMesh) o.material = beltMat; });
+  // The atrium is far detail: plain materials, seen from either side.
+  for (const n of ['AtriumPlaster', 'AtriumDark', 'AtriumStone', 'Barricade']) if (materialCache[n]) materialCache[n].side = THREE.DoubleSide;
+  // Chains: the platform's two from the drum, the pan's over its pulley; rebuilt as they run.
+  refs.chain4 = new THREE.InstancedMesh(new THREE.TorusGeometry(0.02, 0.0055, 4, 10), materialFor({ name: 'DepotSteel' }), 440);
+  refs.chain4.frustumCulled = false; scene.add(refs.chain4);
+  // Lights: a lamp over the pan (it casts), the far landing, the bottom of the shaft, the beacon,
+  // the tunnel, and a cool fill for the atrium.
+  const pan = new THREE.SpotLight(0xffe2c0, 0, 8, THREE.MathUtils.degToRad(52), 0.6, 2);
+  pan.position.set(51.0, DECK + 2.8, 0.1); pan.target.position.set(51.6, DECK, -0.1);
+  pan.castShadow = true; pan.shadow.mapSize.set(512, 512); pan.shadow.camera.far = 5.5; pan.shadow.bias = -0.001; pan.shadow.radius = 4;
+  scene.add(pan, pan.target);
+  const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
+  pan.userData.base = 15;
+  // The two by the door may be on with DL-03's gallery; the rest only once the camera is past the door.
+  refs.dl04HallLights = [pan, P(0xffd8b0, 4.5, 6, 56.5, DECK + 2.6, -0.1)];
+  refs.dl04MidLights = [P(0x9fb8c0, 2.2, 4.5, 54.05, DECK - 1.9, -0.3), P(0xffd0a0, 6, 6, 60.2, DECK + 2.6, -0.2),
+    P(0xffd0a0, 5, 6, 63.2, DECK + 2.6, -0.2), P(0xffe0c0, 3.2, 2.2, 53.05, DECK + 0.7, 0.2)];
+  const beacon = new THREE.SpotLight(0xffa040, 0, 9, THREE.MathUtils.degToRad(24), 0.5, 1.6);
+  beacon.position.set(57.35, DECK + 2.1, -0.9); scene.add(beacon, beacon.target); refs.beacon4 = beacon;
+  const hemi = new THREE.HemisphereLight(0xa9bcc6, 0x0b0e0f, 0); hemi.userData.base = 2.2;
+  const sky = new THREE.DirectionalLight(0xc0d2dc, 0); sky.position.set(77.3, 30, -41.5); sky.target.position.set(70, -20, -30); sky.userData.base = 1.6;
+  scene.add(hemi, sky, sky.target);
+  refs.dl04FarLights = [beacon, P(0xf2e6c8, 2.6, 4.5, 66.0, DECK + 1.85, -1.0), P(0xf2e6c8, 2.6, 4.5, 68.9, DECK + 1.85, -1.0), hemi, sky];
+  // What is left of the sky array still lets down a little light: faint shafts through the void.
+  refs.skyShafts = [[72.0, -36.0, 0.05], [80.5, -44.0, -0.06], [76.0, -52.0, 0.03]].map(([x, z, tilt]) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 6.0, 46, 20, 1, true), refs.shafts[0].material.clone());
+    m.material.uniforms.uColor.value = new THREE.Color(0xa8c0cc); m.material.uniforms.uOpacity.value = 0;
+    m.position.set(x, 3, z); m.rotation.z = tilt; m.visible = false; scene.add(m); return m;
+  });
+}
+
+// Lift 2: the pan, the drum and its chains, the platform, the pawl, the dial and the lamps.
+const chainM = new THREE.Matrix4(), chainQ = new THREE.Quaternion(), chainS = new THREE.Vector3(1, 1, 1), zAxis = new THREE.Vector3(0, 0, 1), xAxis = new THREE.Vector3(1, 0, 0);
+function updateChain4() {
+  const run = game.plat.h * RISE, top = platTop(), sp = 0.045;
+  const segs = [
+    [YOKE4[0], DRUM4.y, DRUM4.z, YOKE4[0], top + YOKE4[2], DRUM4.z, 0, true],
+    [YOKE4[1], DRUM4.y, DRUM4.z, YOKE4[1], top + YOKE4[2], DRUM4.z, 0, true],
+    [DRUM4.x, DRUM4.y + HUB4.r, HUB4.z, PULLEY4.x, PULLEY4.y + PULLEY4.r, HUB4.z, run * 0.45, false],
+    [PULLEY4.x - PULLEY4.r, PULLEY4.y, HUB4.z, PULLEY4.x - PULLEY4.r, DECK + 0.03 - 0.03 * Math.min(1, panLoad() / LOAD4.trolley), HUB4.z, run * 0.45, false],
+  ];
+  let n = 0;
+  for (const [ax, ay, az, bx, by, bz, phase, fromB] of segs) {
+    tv1.set(ax, ay, az); tv2.set(bx, by, bz);
+    const len = tv1.distanceTo(tv2), dir = tv3.subVectors(tv2, tv1).normalize();
+    const along = tq1.setFromUnitVectors(up, dir);
+    const off = ((phase % sp) + sp) % sp;
+    for (let i = 0; n < 440; i++) {
+      const d = off + i * sp;
+      if (d > len) break;
+      const p = fromB ? tv4.copy(tv2).addScaledVector(dir, -d) : tv4.copy(tv1).addScaledVector(dir, d);
+      chainQ.setFromUnitVectors(zAxis, xAxis).premultiply(along).premultiply(tq2.setFromAxisAngle(dir, i % 2 ? Math.PI / 2 : 0));
+      refs.chain4.setMatrixAt(n++, chainM.compose(p, chainQ, chainS));
+    }
+  }
+  refs.chain4.count = n;
+  refs.chain4.instanceMatrix.needsUpdate = true;
+}
+function latchPawl() {
+  const p = game.plat;
+  p.latched = true; game.pawlDrop = game.clock; game.pawlClickAt = game.clock;
+  Sound.pawlClick(); shake(0.22); Music.play('latch');
+}
+
+// Crates of returned post: down the chute from the rings, along the belt, off through the hatch.
+function spawnCrate() {
+  const r = Math.random(), type = r < 0.55 ? 0 : r < 0.85 ? 1 : 2;
+  const m = refs.crateTemplates[type].clone(true);
+  m.visible = true; m.traverse((o) => { o.visible = true; if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; } });
+  scene.add(m);
+  const c = { m, type, half: CRATES[type].half, h: CRATES[type].h, x: CHUTE4_X, z: CHUTE4_TOP.z, state: 'chute', t: 0, spin: (Math.random() - 0.5) * 0.4 };
+  refs.crates.push(c);
+  Sound.scrape();
+}
+function updateCrates(dt) {
+  const b = game.belt4, run = b.state === 'run';
+  if (run) {
+    b.next -= dt;
+    const last = refs.crates[refs.crates.length - 1];
+    const clear = Math.abs(game.x - CHUTE4_X) > 0.75 || game.y > DECK + 0.55;
+    if (b.next <= 0 && clear && (!last || (last.state !== 'chute' && last.x < CHUTE4_X - 1.25))) { spawnCrate(); b.next = 2.9 + Math.random() * 1.3; }
+  }
+  for (const c of [...refs.crates]) {
+    if (c.state === 'chute') {
+      c.t += dt / 0.75;
+      const k = Math.min(1, c.t);
+      c.x = CHUTE4_TOP.x + (CHUTE4_X - CHUTE4_TOP.x) * k;
+      c.z = CHUTE4_TOP.z * (1 - k);
+      c.y = CHUTE4_TOP.y + (DECK - CHUTE4_TOP.y) * k + 0.04 * Math.sin(Math.PI * k);
+      c.m.rotation.set(-0.6 * (1 - k), c.spin, 0);
+      if (k >= 1) { c.state = 'belt'; c.y = DECK; c.m.rotation.set(0, c.spin, 0); Sound.crateLand(Math.max(0.2, 1 - Math.abs(game.x - c.x) / 8)); }
+    } else if (c.state === 'belt') {
+      if (run) c.x -= BELT4.speed * dt;
+      if (c.x - c.half <= 58.0) { c.state = 'turn'; c.t = 0; }
+    } else if (c.state === 'turn') {
+      c.t += dt;
+      c.z = -1.75 * smooth(c.t / 1.3);
+      c.m.rotation.y = c.spin + 0.35 * smooth(c.t / 1.3);
+      if (c.t > 1.45) { scene.remove(c.m); refs.crates.splice(refs.crates.indexOf(c), 1); continue; }
+    }
+    c.m.position.set(c.x, c.y ?? DECK, c.z);
+  }
+}
+
+function updateDL04(dt) {
+  if (!refs.platGroup) return;
+  const t = game.trolley4, p = game.plat, inR4 = game.region === 4;
+  // The trolley and its wheels.
+  refs.trolley4Group.position.x = t.x;
+  const roll = t.x - (t.lastX ?? t.x); t.lastX = t.x;
+  refs.wheels4.forEach((w) => (w.rotation.z -= roll / 0.055));
+  if (inR4) Sound.roll(game.hold === 'trolley4' ? Math.min(1.2, Math.abs(roll) / dt / 0.3) : 0);
+  if (game.hold !== 'trolley4') t.v = 0;
+  // The platform follows the pan's load: up slowly, down fast. The pawl holds it at the landing.
+  const pan = panLoad();
+  const want = p.latched ? 1 : p.lurch ? 1 - 0.1 / RISE : THREE.MathUtils.clamp(pan - (onPlatform4() ? LOAD4.d17 : 0), 0, 1);
+  const before = p.h;
+  if (want > p.h + 1e-4) {
+    p.v = 0; p.h = Math.min(want, p.h + (PLAT_SPEED / RISE) * dt);
+    if (Math.abs(p.h - p.ticked) > 0.04) { p.ticked = p.h; Sound.gateTick(); }
+    if (pan >= 0.9 && p.h < 0.75 && !p.riseSeen && panTrolleyK() >= 0.85) { p.riseSeen = true; p.riseStart = game.clock; }
+    if (p.h >= 1 - 1e-4 && before < 1 - 1e-4) Sound.clunk();
+  } else if (want < p.h - 1e-4) {
+    p.v = Math.min(3.4, p.v + 8 * dt); p.h = Math.max(want, p.h - (p.v / RISE) * dt);
+    if (p.h <= want + 1e-4 && p.v > 0.6) {
+      const v = Math.min(1, p.v / 3);
+      Sound.liftCrash(v); shake(0.55 * v);
+      if (inR4 && !game.act && Math.abs(game.x - 53.5) < 3.2 && !onPlatform4()) playQuirk('Startle');
+      p.v = 0;
+    }
+    p.ticked = p.h;
+  }
+  const moving = Math.abs(p.h - before) / Math.max(dt, 1e-4) * RISE;
+  Sound.drum(inR4 || game.upper ? Math.min(1, moving / 0.6) : 0);
+  refs.platGroup.position.y = -RISE * (1 - p.h);
+  refs.GoodsPan.position.y = refs.panY - 0.03 * Math.min(1, pan / LOAD4.trolley);
+  refs.HeadDrum.rotation.z = -p.h * RISE / DRUM4.r;
+  refs.PanPulley.rotation.z = p.h * RISE * 0.45 / PULLEY4.r;
+  refs.LiftNeedle.rotation.z = THREE.MathUtils.degToRad((1 - 2 * p.h) * 100);
+  const chainKey = p.h.toFixed(4) + pan.toFixed(3);
+  if ((game.upper || inR4) && chainKey !== refs.chainKey) { refs.chainKey = chainKey; updateChain4(); }
+  game.lookAt = p.riseStart > 0 && game.clock - p.riseStart < 4.5 && !p.latched ? 'platform' : game.lookAt === 'platform' ? null : game.lookAt;
+  // The pawl and its lever; the lamps.
+  const ease = (cur, w) => cur + (w - cur) * Math.min(1, dt * 8);
+  game.pawlLever = ease(game.pawlLever, game.pawlHold ?? (p.latched ? LEVER_NEAR : LEVER_AWAY));
+  refs.PawlLever.rotation.x = THREE.MathUtils.degToRad(game.pawlLever);
+  let pawl = PAWL_REST - (game.pawlDip || 0);
+  if (p.latched) { const k = game.clock - game.pawlDrop; pawl = k < 0.12 ? PAWL_REST * (1 - (k / 0.12) ** 2) : 0.09 * Math.abs(Math.sin((k - 0.12) * 38)) * Math.exp(-(k - 0.12) * 14); }
+  refs.Pawl.rotation.z = pawl;
+  const atTop = p.h >= 0.985;
+  emissive.AtLanding.emissiveIntensity = atTop ? 6 : p.h > 0.02 && want > p.h ? 2.5 * (Math.sin(game.clock * 9) > 0 ? 1 : 0) : 0;
+  refs.pawlLampMat.emissive.setHex(p.latched ? 0x40ff70 : 0xff3020);
+  refs.pawlLampMat.emissiveIntensity = p.latched ? 4 : atTop ? 2.5 + 2 * Math.sin(game.clock * 6) : 2;
+  // The returns belt: a warning, then it runs; crates come down from the rings.
+  const b = game.belt4;
+  if (b.state === 'warn') {
+    const prev = b.t; b.t += dt;
+    for (const k of [0, 0.9, 1.8]) if (prev <= k && b.t > k) Sound.alarmBell();
+    if (b.t > 2.7) { b.state = 'run'; b.next = 0.3; Sound.klaxon(); }
+  }
+  updateCrates(dt);
+  if (beltRunning4()) refs.belt4Tex.offset.x += BELT4.speed * dt * 2;
+  if (inR4) Sound.belt(beltRunning4() ? Math.max(0.12, 1 - Math.abs(game.x - 61) / 7) : 0);
+  const warn = b.state !== 'idle';
+  const flash = warn ? (game.calm ? 0.7 : 0.5 + 0.5 * Math.sin(game.clock * 7)) : 0;
+  emissive.BeaconLamp.emissiveIntensity = 7 * flash;
+  refs.beacon4.intensity = game.lightRegion === 4 && warn ? 7 : 0;
+  const a = game.clock * 3.2;
+  refs.beacon4.target.position.set(57.35 + Math.cos(a) * 2.5, DECK + 0.4, -0.9 + Math.sin(a) * 2.5);
+  // Lights by where the camera is: the depot's behind the residential door, the rings' beyond the tunnel.
+  if (inR4 && game.lightRegion === 3 && cam.x > 54) setRegionLights(4);
+  else if (game.lightRegion === 4 && (game.region === 3 || cam.x < 53)) setRegionLights(3);
+  const vista = inR4 ? smooth((game.x - 69.0) / 2.0) : 0;
+  [...refs.dl04HallLights, ...refs.dl04MidLights].forEach((l) => (l.intensity = l.userData.base));
+  refs.dl04FarLights.forEach((l, i) => { if (i > 0) l.intensity = l.userData.base * (i >= 3 ? vista : 1); });
+  emissive.HallBulb4.emissiveIntensity = 9;
+  emissive.TunnelBulb.emissiveIntensity = 7;
+  emissive.RingLamp.emissiveIntensity = 6;
+  emissive.RingLampRed.emissiveIntensity = 2 + 1.2 * Math.sin(game.clock * 1.3);
+  emissive.HomeLight.emissiveIntensity = 5;
+  emissive.SkyPanel.emissiveIntensity = 0.55;
+  refs.skyShafts.forEach((m, i) => { m.visible = vista > 0.01; m.material.uniforms.uOpacity.value = vista * (0.022 + 0.008 * Math.sin(game.clock * 0.25 + i * 2)); });
+  // Out of the depot: its hum and its relay pulse fall away; the refuge's air comes up.
+  const hum = inR4 ? 1 - 0.8 * smooth((game.x - 60) / 8) : 1;
+  if (Math.abs(hum - (refs.humLevel ?? 1)) > 0.02) { refs.humLevel = hum; Sound.hum(hum); }
+  Sound.air(inR4 ? smooth((game.x - 65) / 6) : 0);
+  // The atrium: a long view through a cool haze.
+  const far = 60 + 140 * vista;
+  if (Math.abs(camera.far - far) > 1) { camera.far = far; camera.updateProjectionMatrix(); }
+  scene.fog.color.setRGB(0.0012 + 0.009 * vista, 0.0015 + 0.013 * vista, 0.0015 + 0.016 * vista);
+  scene.background.copy(scene.fog.color);
+}
+
+// Interactions ------------------------------------------------------------------------------
+function nearUse4() {
+  if (!game.grounded) return null;
+  if (game.hold === 'trolley4') return 'release';
+  if (game.y > DECK + 0.05) return null;
+  const t = game.trolley4;
+  if (!game.plat.latched && Math.abs(game.x - PAWL_X) < 0.36) return 'pawl';
+  for (const side of [1, -1]) {
+    const stand = t.x - side * PUSH_GAP4;
+    const free = Math.max(surfaceAt(stand - FOOT), surfaceAt(stand), surfaceAt(stand + FOOT)) < DECK + 0.05 && stand > DOOR4_X && stand < SHAFT.x0 - 0.2;
+    if (Math.abs(game.x - stand) < 0.34 && free && game.x * side < t.x * side) return side > 0 ? 'grab4L' : 'grab4R';
+  }
+  return null;
+}
+function startTeeter() {
+  const x = game.x, back = x < (SHAFT.x0 + SHAFT.x1) / 2 ? SHAFT.x0 - 0.28 : SHAFT.x1 + 0.28;
+  game.act = { kind: 'teeter', phase: 'act', t: 0, from: { x, y: game.y }, to: back };
+  game.vx = 0; game.plat.lurch = true; game.dl4.teetered = true;
+  setClip('Teeter', 0.08); Sound.lurch(); Sound.worried(); shake(0.3);
+}
+function startPat() {
+  const t = game.trolley4, stand = t.x + T4_HALF + 0.24;
+  if (game.dl4.patted || game.region !== 4 || panTrolleyK() < 1 || Math.abs(game.x - stand) > 1.4) { game.dl4.patted = true; return; }
+  game.act = { kind: 'pat', phase: 'approach', t: 0, standX: stand, face: -1 }; game.vx = 0;
+}
+const ACT4 = new Set(['pawl', 'teeter', 'pat', 'lookback', 'hopscotch', 'awe']);
+function updateAct4(a, dt) {
+  if (a.kind === 'pawl') {
+    if (a.phase === 'turn') { if (Math.abs(game.yaw - Math.PI) < 0.05) a.phase = 'in'; else setClip('Walk', 0.2, 0.6); return; }
+    if (a.phase === 'in' || a.phase === 'out') {
+      const to = a.phase === 'in' ? PAWL_Z + 0.26 : 0, dz = to - game.z;
+      if (Math.abs(dz) < 0.004) {
+        game.z = to;
+        if (a.phase === 'out') {
+          game.act = null; game.yawOverride = null; game.pawlHold = null; game.pawlDip = 0; setClip('Idle', 0.3);
+          if (game.plat.latched && !game.dl4.patted) { game.act = { kind: 'quirk', clip: 'Proud', phase: 'act', t: 0, cancel: false, then: startPat }; setClip('Proud', 0.15); }
+          return;
+        }
+        a.stuck = game.plat.h < 0.985; a.phase = 'act'; a.from = game.pawlLever; a.to = LEVER_NEAR;
+        setClip(a.stuck ? 'LeverStuck' : 'LeverPull', 0.15); Sound.servo(0.15, 400, 700, 0.02);
+        return;
+      }
+      game.z += Math.sign(dz) * Math.min(Math.abs(dz), 0.4 * dt);
+      setClip('Walk', 0.2, (a.phase === 'out' ? -0.45 : 0.45) / CLIP_SPEED.Walk);
+      return;
+    }
+    const f = actions[a.stuck ? 'LeverStuck' : 'LeverPull'].time * FPS;
+    if (a.stuck) {
+      // The dog comes down onto the rack's face and rattles there: the platform isn't at the landing.
+      const jig = (f > 10 && f < 17 ? Math.sin((f - 10) * 0.9) : 0) + (f > 19 && f < 26 ? 1.4 * Math.sin((f - 19) * 0.9) : 0);
+      game.pawlHold = a.from + 6 * Math.max(0, jig) + 2 * jig;
+      game.pawlDip = 0.45 * Math.max(0, jig);
+      if (f > 12 && !a.c1) { a.c1 = true; Sound.pawlClatter(); }
+      if (f > 21 && !a.c2) { a.c2 = true; Sound.pawlClatter(); game.dl4.triedPawl = true; }
+      if (f >= 45) { a.phase = 'out'; game.pawlHold = null; game.pawlDip = 0; }
+    } else {
+      game.pawlHold = a.from + (a.to - a.from) * smooth((f - 10) / 12);
+      if (f >= 22 && !a.done) { a.done = true; latchPawl(); }
+      if (f >= 33) { a.phase = 'out'; game.pawlHold = null; }
+    }
+    return;
+  }
+  if (a.kind === 'teeter') {
+    const f = actions.Teeter.time * FPS;
+    if (f < 12) game.y = platTop();
+    else {
+      const k = Math.min(1, (f - 12) / 10);
+      game.x = a.from.x + (a.to - a.from.x) * smooth(k);
+      game.y = platTop() * (1 - k) + DECK * k + 0.3 * Math.sin(Math.PI * k);
+    }
+    if (f >= 12 && !a.jumped) { a.jumped = true; Sound.jump(); }
+    if (f >= 22 && !a.landed) { a.landed = true; Sound.land(0.7); game.plat.lurch = false; game.y = DECK; }
+    if (f >= 37) { game.act = null; game.grounded = true; game.y = DECK; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+    return;
+  }
+  if (a.kind === 'pat') {
+    const f = actions.Pat.time * FPS;
+    if (f >= 16 && !a.p1) { a.p1 = true; Sound.knock(); }
+    if (f >= 23 && !a.p2) { a.p2 = true; Sound.knock(); }
+    if (f >= 47) { game.act = null; game.dl4.patted = true; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+    return;
+  }
+  if (a.kind === 'hopscotch') {
+    const f = actions.Hopscotch.time * FPS;
+    if (f < 17 && (input.left || input.jumpPressed)) { game.act = null; setClip('Idle', 0.2); return; }
+    let dx = 0, dy = 0;
+    for (const [s, e] of HOPS4) {
+      const k = (f - s) / (e - s);
+      dx += 0.32 * smooth(k);
+      if (k > 0 && k < 1) dy += 0.09 * Math.sin(Math.PI * k);
+      if (k >= 1 && !a['l' + s]) { a['l' + s] = true; Sound.step(0.9); }
+    }
+    game.x = a.x0 + dx; game.y = DECK + dy;
+    if (f >= 69) { game.act = null; game.y = DECK; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+    return;
+  }
+  // LookBack and Awe: turn (back toward the depot, or out to the atrium), the clip, and turn home.
+  const turnTo = a.kind === 'lookback' ? -Math.PI / 2 : Math.PI, clip = a.kind === 'lookback' ? 'LookBack' : 'Awe';
+  const end = a.kind === 'lookback' ? 83 : 158;
+  if (a.phase === 'turn') {
+    game.yawOverride = turnTo;
+    if (Math.abs(game.yaw - turnTo) < 0.05) { a.phase = 'act'; setClip(clip, 0.35); } else setClip('Walk', 0.2, 0.45);
+    return;
+  }
+  if (a.phase === 'act') { if (actions[clip].time * FPS >= end) { a.phase = 'back'; game.yawOverride = Math.PI / 2; } return; }
+  if (Math.abs(game.yaw - Math.PI / 2) < 0.05) {
+    game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.35); input.lastActivity = game.clock;
+  } else setClip('Walk', 0.2, 0.45);
+}
+
+// Moments that start by themselves as he gets to them.
+function updateTriggers4() {
+  const d = game.dl4, x = game.x;
+  if (game.act || game.hold || game.mantle) return false;
+  // Onto the platform before the pawl is set: it drops under him at once, and he scrambles back.
+  if (!game.plat.latched && onPlatform4()) { startTeeter(); return true; }
+  if (!game.grounded) return false;
+  if (game.plat.latched && x > SHAFT.x1 + 0.35 && x < BELT4.x0 && game.checkpoint === 'goods') game.checkpoint = 'latched';
+  if (game.plat.latched && x > SHAFT.x1 + 0.6 && game.belt4.state === 'idle') { game.belt4.state = 'warn'; game.belt4.t = 0; }
+  if (x > TUNNEL_X0 + 0.25 && (game.checkpoint === 'goods' || game.checkpoint === 'latched')) game.checkpoint = 'tunnel';
+  if (x > TUNNEL_X0 + 0.6 && !d.lookedBack) { d.lookedBack = true; game.vx = 0; game.act = { kind: 'lookback', phase: 'turn', t: 0 }; Music.bed(false); return true; }
+  if (x > HOP4_X && x < HOP4_X + 0.5 && !d.hopped && game.facing > 0) { d.hopped = true; game.vx = 0; game.act = { kind: 'hopscotch', phase: 'act', t: 0, x0: x }; setClip('Hopscotch', 0.2); return true; }
+  if (x > VISTA_X0 - 0.6 && !d.refuge) { d.refuge = true; Music.bed(false); Music.play('refuge'); }
+  if (x > AWE_X && !d.awed) { d.awed = true; game.aweStart = game.clock; game.vx = 0; game.act = { kind: 'awe', phase: 'turn', t: 0 }; return true; }
+  if (x >= EXIT4_X && d.awed) { game.exit = { t: 0 }; return true; }
+  return false;
+}
+// The belt carries whatever stands on it, D-17 and crates alike.
+const beltCarry4 = () => (game.region === 4 && game.grounded && beltRunning4() && game.x > BELT4.x0 && game.x < BELT4.x1 ? -BELT4.speed : 0);
 
 // ---------------------------------------------------------------------------
 // Authored camera shots. While a moment is playing, the camera leaves its side-on framing for a
@@ -2093,6 +2559,26 @@ function currentShot() {
     const k = smooth((actions.Realise.time - 3.7) / 1.6);
     return { name: 'realise', pos: V3(X + 1.7 - 0.8 * k, 0.42 + 0.2 * k, 1.0 + 0.3 * k),
       look: V3(X - 0.1 + 0.1 * k, 0.6 - 0.1 * k, -1.4 + 1.4 * k), focal: 30 + 20 * k, ease: 1.1 };
+  }
+  if (game.region === 4) {
+    const p = game.plat;
+    // Leaning over the shaft: out over the drop beside him, looking down past him at the platform.
+    if (a && a.kind === 'quirk' && a.clip === 'PeekDown' && X < SHAFT.x0) return { name: 'shaft', pos: V3(X + 0.3, Y + 1.9, 1.8), look: V3(X + 1.15, platTop() + 0.3, -0.3), focal: 26, ease: 1.0 };
+    // The platform's first full rise: closer and lower, him and the trolley on the left, the shaft opening on the right.
+    if (p.riseStart > 0 && game.clock - p.riseStart < 5.5 && !p.latched) return { name: 'rise', pos: V3(52.3, DECK + 0.85, 4.4), look: V3(52.7, DECK - 0.75 + 0.7 * p.h, -0.3), focal: 30, ease: 1.0 };
+    // The click: close on the housing and its repair tags as the dog drops into its bracket, him at the lever beside it.
+    if (game.clock - game.pawlClickAt < 1.8) return { name: 'pawl', pos: V3(52.98, DECK + 0.55, 0.95), look: V3(52.74, DECK + 0.2, -0.5), focal: 48, ease: 2.4 };
+    // Looking back at the depot from the tunnel mouth: from inside the tunnel, low, past him.
+    if (a && a.kind === 'lookback') return { name: 'lookback', pos: V3(X + 1.6, Y + 0.5, 1.15), look: V3(X - 4.0, Y + 0.7, -0.5), focal: 34, ease: 1.2 };
+    // The chalk squares: up and over him, so the hopscotch reads.
+    if (a && a.kind === 'hopscotch') return { name: 'hopscotch', pos: V3(X + 0.9, Y + 1.55, 1.75), look: V3(X + 0.45, Y, -0.05), focal: 36, ease: 1.4 };
+    // The refuge: from his shoulder out over the atrium, craning up and back to a high, wide view.
+    if ((a && a.kind === 'awe') || (game.dl4.awed && X > VISTA_X0 - 0.4)) {
+      const k = smooth((game.clock - game.aweStart - 1.0) / 7.0);
+      const pos = V3(X + 0.45, Y + 0.95, 1.35).lerp(V3(X + 2.4, Y + 5.4, 7.2), k);
+      const look = V3(X - 0.4, Y + 0.4, -12).lerp(ATRIUM4, k);
+      return { name: 'vista', pos, look, focal: 32 - 8 * k, ease: 0.8 };
+    }
   }
   if (game.region === 3) {
     // The scanner: close and low beside the arch, the screen in frame.
@@ -2148,13 +2634,14 @@ function updateQuirk(a) {
   const act = actions[a.clip], dur = act.getClip().duration;
   const moving = input.axis || input.left || input.right || input.jumpPressed;
   if (a.cancel && moving && act.time > 0.3) { game.act = null; return; }
-  if (act.time >= dur - 0.05) { game.act = null; setClip('Idle', 0.35); }
+  if (act.time >= dur - 0.05) { game.act = null; setClip('Idle', 0.35); if (a.then) a.then(); }
 }
-// Edges he peers over if left there a moment: the DL-01 trench, the crate's far edge, the pit rail.
+// Edges he peers over if left there a moment: the DL-01 trench, the crate's far edge, the pit rail, Lift 2's shaft.
 const PEEK_SPOTS = [
   { id: 'trench', region: 1, when: () => game.x > PIT.x0 - 0.3 && game.x < PIT.x0 && game.y < 0.05 && game.facing > 0 },
   { id: 'crate', region: 1, when: () => game.x > CRATE.x1 - 0.25 && game.y > CRATE.h - 0.05 && game.facing > 0 },
   { id: 'rail', region: 3, when: () => !game.upper && game.x > FLOOR3_X1 - 0.5 && game.scan.phase === 'done' && game.facing > 0 },
+  { id: 'shaft', region: 4, when: () => game.x > SHAFT.x0 - HALF - 0.08 && game.x < SHAFT.x0 && game.plat.h < 0.9 && game.facing > 0 },
 ];
 function updateQuirkTriggers() {
   if (game.mode !== 'play' || game.act) return;
@@ -2171,6 +2658,15 @@ function updateQuirkTriggers() {
 // Character polish after the mixer: turning, antenna under ceilings, curious look
 // ---------------------------------------------------------------------------
 const HINTS = [
+  // DL-04
+  { region: 4, when: () => !game.plat.latched && game.hold !== 'trolley4' && panTrolleyK() < 1 && game.x < game.trolley4.x,
+    at: () => new THREE.Vector3(game.trolley4.x - T4_HALF - 0.02, DECK + 0.46, 0), key: 'use' },
+  { region: 4, when: () => game.hold === 'trolley4' && panTrolleyK() < 1, at: new THREE.Vector3((PAN.x0 + PAN.x1) / 2, DECK + 0.02, 0), key: 'move' },
+  { region: 4, when: () => !game.plat.latched && game.plat.h >= 0.985 && !game.hold, at: new THREE.Vector3(PAWL_X, DECK + 0.62, PAWL_Z), key: 'use' },
+  { region: 4, when: () => !game.plat.latched && game.x > PAN.x1 && game.x < SHAFT.x0, at: () => new THREE.Vector3(54.05, platTop() + 0.2, 0), key: 'move' },
+  { region: 4, when: () => game.plat.latched && game.x < SHAFT.x1 + 0.3, at: new THREE.Vector3(56.4, DECK + 0.4, 0), key: 'move' },
+  { region: 4, when: () => game.x > BELT4.x0 - 0.6 && game.x < BELT4.x1 && !!crateAhead(), at: () => { const c = crateAhead(); return new THREE.Vector3(c.x, DECK + c.h + 0.05, 0); }, key: 'jump' },
+  { region: 4, when: () => game.x > VISTA_X0 - 0.5 && !game.dl4.awed, at: ATRIUM4, key: 'move' },
   // DL-03
   { region: 3, when: () => game.scan.phase === 'done' && !game.upper && !game.triedBoard && refs.carriers.some((c) => c.state === 'dock'),
     at: () => new THREE.Vector3(DOCK_X, 0.35, RAIL_Z), key: 'use' },
@@ -2233,8 +2729,9 @@ function updateCharacter(dt, playing) {
   // Curiosity as the hint system: after a few idle seconds near something useful he looks at it.
   // When the rack lights come on, he looks before anything else.
   const rk = game.clock - game.revealTime;
-  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap';
-  const hint = looking ? { at: game.lookAt === 'heap' ? HEAP_LOOK : REVEAL_LOOK, key: 'move' } : hintTarget();
+  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform';
+  const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(54.05, platTop() + 0.3, -0.2) : REVEAL_LOOK;
+  const hint = looking ? { at: lookAt, key: 'move' } : hintTarget();
   const idle = looking ? 99 : game.clock - input.lastActivity;
   const want = hint && idle > HINT_LOOK && game.grounded && !game.act && !game.mantle && !game.exit && !game.transit && !game.riding ? 1 : 0;
   game.hintWeight += (want - game.hintWeight) * Math.min(1, dt * 2.5);
@@ -2281,7 +2778,7 @@ const VOL = { alcove: [5.2, 1.0, 0.8], hall: [9.2, 2.35, 1.95], bulk: [6.0, 1.15
 const lerp3 = (a, b, k) => a.map((v, i) => v + (b[i] - v) * k);
 const fit = (vol, width) => [Math.max(vol[0], widthFit(35, width)), vol[1], vol[2]];
 function frameFor(x) {
-  const lead = game.exit || game.transit || game.hold === 'trolley' ? 0 : game.facing * (0.6 + 0.35 * Math.abs(game.vx));
+  const lead = game.exit || game.transit || game.hold === 'trolley' || game.hold === 'trolley4' ? 0 : game.facing * (0.6 + 0.35 * Math.abs(game.vx));
   const inHall = smooth((x - 6.9) / 0.9) * (1 - smooth((x - 8.9) / 0.8));
   let v = lerp3(lerp3(VOL.alcove, VOL.hall, smooth((x - 6.9) / 0.9)), VOL.bulk, smooth((x - 8.9) / 0.8));
   let cx = THREE.MathUtils.clamp(x + lead * (1 - 0.6 * inHall), 1.2, 10.6), fog = 0.075 - 0.032 * inHall;
@@ -2314,6 +2811,21 @@ function frameFor(x) {
     const st = game.scan.t, ph = game.scan.phase;
     const kp = ph === 'reveal' || ph === 'check' ? smooth((st - SCAN.REVEAL) / 3.0) * (1 - smooth((st - SCAN.CHECK - 0.8) / 2.5)) : 0;
     if (kp > 0) { cx += (37.9 - cx) * kp; v = lerp3(v, fit([11.5, 2.5, -0.7], 12.2), kp); fog += (0.028 - fog) * kp; }
+  }
+  // DL-04: the goods hall and its shaft, the far landing and the belt, the tunnel, the balcony.
+  const k4 = game.upper ? smooth((x - 46.6) / 1.6) : 0;
+  if (k4 > 0) {
+    const kb = smooth((x - 55.6) / 1.2), kt = smooth((x - 64.2) / 1.0), kv = smooth((x - 69.4) / 1.2);
+    let tx = THREE.MathUtils.clamp(x + lead * 0.4, 51.3, 54.4);
+    tx += (THREE.MathUtils.clamp(x + lead * 0.6, 57.6, 61.8) - tx) * kb;
+    tx += (THREE.MathUtils.clamp(x + lead, 65.6, 68.8) - tx) * kt;
+    tx += (THREE.MathUtils.clamp(x + lead * 0.4, 71.2, 74.0) - tx) * kv;
+    let v4 = fit([9.4, 1.75, 0.65], 9.6);
+    v4 = lerp3(v4, fit([7.4, 1.55, 0.95], 7.8), kb);
+    v4 = lerp3(v4, fit([5.8, 1.3, 0.9], 5.6), kt);
+    v4 = lerp3(v4, fit([7.6, 2.2, 1.0], 7.2), kv);
+    cx += (tx - cx) * k4; v = lerp3(v, v4, k4);
+    fog += (0.05 + 0.012 * kt - 0.0435 * kv - fog) * k4;
   }
   return { cx, v, fog };
 }
@@ -2479,6 +2991,9 @@ const CHECKPOINTS = {
   solved: { x: 16.95, released: true, door: 1, region: 2, solved: true },
   scanned: { x: 30.3, released: true, door: 1, region: 3, solved: true, scanned: true },
   landing: { x: 40.0, released: true, door: 1, region: 3, solved: true, scanned: true, upper: true },
+  goods: { x: 48.9, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true },
+  latched: { x: 56.2, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true },
+  tunnel: { x: 65.7, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true },
 };
 function resetWorld(name = 'start') {
   const c = CHECKPOINTS[name];
@@ -2489,7 +3004,7 @@ function resetWorld(name = 'start') {
   game.doorOpen = c.door; game.wheelAngle = c.door ? 300 : 0;
   game.checkpoint = name;
   // DL-02: the weight by its stand, the trolley in the middle of the room, or both parked on the plate.
-  game.region = c.region || 1; game.transit = null; game.hold = null; game.endMusic = false; game.nudged = false;
+  game.region = c.region || 1; game.transit = null; game.hold = null; game.nudged = false;
   Object.assign(game.weight, c.solved ? { x: 16.0, state: 'trolley', off: -0.12 } : { x: WEIGHT_X, state: 'floor', off: 0 }, { blend: 0, drop: null });
   Object.assign(game.trolley, { x: c.solved ? (PLATE.x0 + PLATE.x1) / 2 : TROLLEY_X, v: 0 });
   game.revealed = !!c.solved; game.revealTime = -100; game.gateEverOpen = !!c.solved;
@@ -2504,6 +3019,14 @@ function resetWorld(name = 'start') {
   game.stopLever = game.belt.running ? LEVER_AWAY : LEVER_NEAR; game.pointsLever = game.route === 'exit' ? LEVER_NEAR : LEVER_AWAY;
   if (c.upper) game.y = GALLERY.h;
   if (refs.ScanBar) refs.ScanBar.position.y = 1.5;
+  // DL-04: the trolley by the door and the platform at the bottom, or the pawl set and the belt running.
+  Object.assign(game.trolley4, { x: c.latched ? T4_MAX : T4_X, v: 0, lastX: undefined });
+  Object.assign(game.plat, { h: c.latched ? 1 : 0, v: 0, latched: !!c.latched, lurch: false, riseStart: -100, riseSeen: !!c.latched, ticked: 0 });
+  Object.assign(game, { pawlLever: c.latched ? LEVER_NEAR : LEVER_AWAY, pawlHold: null, pawlDip: 0, pawlDrop: -100, pawlClickAt: -100, aweStart: -100 });
+  game.belt4 = { state: c.belt4 ? 'run' : 'idle', t: 0, next: 0.5 };
+  if (refs.crates) { refs.crates.forEach((k) => scene.remove(k.m)); refs.crates.length = 0; }
+  game.dl4 = { entered: game.region === 4, patted: !!c.latched, lookedBack: !!c.tunnel, hopped: false, refuge: false, awed: false, triedPawl: false };
+  camera.far = 60; camera.updateProjectionMatrix(); refs.humLevel = undefined; refs.chainKey = null;
   setRegionLights(game.region === 3 && !c.scanned ? 2 : game.region);
 }
 function startOpening() {
@@ -2526,8 +3049,8 @@ function startPlay(checkpoint = 'start') {
   resetWorld(checkpoint);
   // The wake plays on into the first steps; any other cue gives way to the bed.
   if (!fromOpening && Music.playing() !== 'wake') Music.stop(2);
-  game.heardHall = ['hall', 'door', 'room', 'solved', 'scanned', 'landing'].includes(checkpoint);
-  Music.setPaused(false); Music.bed(true);
+  game.heardHall = ['hall', 'door', 'room', 'solved', 'scanned', 'landing', 'goods', 'latched', 'tunnel'].includes(checkpoint);
+  Music.setPaused(false); Music.bed(checkpoint !== 'tunnel');
   if (!naturalEnd && game.frame < 380) refs.grit.forEach((g) => (g.m.visible = false));
   game.mode = 'play';
   game.sceneTime = Math.max(game.sceneTime, OPENING_FRAMES / FPS);
@@ -2550,7 +3073,7 @@ function loadCheckpoint() {
 function togglePause() {
   if (game.mode === 'play' || game.mode === 'opening') {
     prevMode = game.mode; game.mode = 'paused'; pauseEl.hidden = false; syncOpts(); Music.setPaused(true);
-    document.getElementById('pause-scene').textContent = ['DL-01 The Wake', 'DL-02 The Weight of the Job', 'DL-03 Return to Sender'][game.region - 1];
+    document.getElementById('pause-scene').textContent = ['DL-01 The Wake', 'DL-02 The Weight of the Job', 'DL-03 Return to Sender', 'DL-04 The Handbrake'][game.region - 1];
     document.getElementById('pause-time').textContent = game.playStart ? fmt(Math.max(0, game.clock - game.playStart)) : '0:00';
     document.getElementById('resume').focus();
   } else if (game.mode === 'paused') { game.mode = prevMode; pauseEl.hidden = true; Music.setPaused(false); }
@@ -2561,6 +3084,7 @@ function finish() {
   game.endTime = game.clock - game.playStart;
   fadeEl.style.opacity = 1;
   Sound.distant();
+  Music.queue('end');
   setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; endEl.hidden = false; document.getElementById('again').focus(); }, 1300);
 }
 
@@ -2605,9 +3129,11 @@ function buildCulling(setRoot) {
   const box = new THREE.Box3();
   setRoot.updateMatrixWorld(true);
   setRoot.traverse((o) => {
-    if (!o.isMesh || refs.carrierParts.includes(o)) return;
+    if (!o.isMesh || refs.carrierParts.includes(o) || o.userData.noCull) return;
     box.setFromObject(o);
-    refs.cull.push({ o, x0: box.min.x, x1: box.max.x });
+    // The atrium is only there once he is out on the balcony; DL-04 only once he is up on the gallery.
+    const atrium = /^Atrium/.test(o.name) || /^Atrium/.test(o.parent?.name || '');
+    refs.cull.push({ o, x0: box.min.x, x1: box.max.x, when: atrium ? () => game.region === 4 && cam.x > 62 : box.min.x > 47.3 ? () => game.upper : null });
   });
   // The couriers stay hidden until the rack lights come on or he is at the gate: before that they are dark.
   refs.couriers.forEach((o) => refs.cull.push({ o, x0: 17.5, x1: 27.0, when: () => game.revealed || game.x > GATE_X - 0.8 }));
@@ -2653,9 +3179,14 @@ function frame(now) {
     if (game.mode === 'play') {
       if (game.act && game.act.kind === 'cord') game.cordUsed = true;
       updatePlayer(dt);
-      if (f >= game.nextRelay) { game.nextRelay += 144; [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, Math.max(0.25, 0.8 - Math.abs(game.x - 2) / 8)), i * 500)); }
+      if (f >= game.nextRelay) {
+        // The depot's three-lamp pulse, heard since the first second; it falls away once he leaves the depot.
+        game.nextRelay += 144;
+        const k = game.region === 4 ? 1 - smooth((game.x - 57) / 7) : 1;
+        if (k > 0.02) [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, k * Math.max(0.25, 0.8 - Math.abs(game.x - 2) / 8)), i * 500));
+      }
     }
-    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') updateDL03(dt); }
+    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); } }
     updateCharacter(dt, game.mode === 'play');
     placeWeight(dt);
     updateQuirkTriggers();
@@ -2671,7 +3202,8 @@ function frame(now) {
 
 // Test hook for automated traversal checks.
 window.__dl01 = { game, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
-  clip: () => current, renderer, carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })) };
+  clip: () => current, renderer, carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
+  crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })) };
 
 function boot() {
   resize();

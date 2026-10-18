@@ -41,7 +41,7 @@ DL-02 now has the same treatment. When D-17 first walks in among the couriers:
 x: 26.9 corridor  28.9 SCANNER  30.5 hatch  31.0 DOCK   32.9 STOP   34.25 POINTS   34.6 junction   36.4 pit edge
                                  |rail behind the lane (z -0.55): hatch -> dock -> junction -> tip (36.5) -> chute
                                                                      \-> points lift -> ramp -> gallery (1.6 m)
-   gallery 38.85 ... landing 39.7 ... desk 42.6 ... day board 44.6 ... residential access 47.0 (end card)
+   gallery 38.85 ... landing 39.7 ... desk 42.6 ... day board 44.6 ... residential access doorway 47.5 (on into DL-04)
 ```
 
 - **Carriers:**

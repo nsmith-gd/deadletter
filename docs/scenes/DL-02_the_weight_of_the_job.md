@@ -94,7 +94,7 @@ The optional key glyph follows the same targets.
 
 - **`threshold`** plays as the bulkhead opens and carries him through the passage.
 - **`racks`** plays at the solution. A low piano note sounds as each row of lights comes on, then a slow chorale on phrase B. The music box ends it with the parcel's three notes.
-- **`end`** begins near the hall's far end and plays over the end card.
+- **`end`** plays over the end card at the end of the last built scene.
 
 See `art/music/README.md`.
 

@@ -1,6 +1,6 @@
-# Chapter 1 (DL-01 to DL-03): score
+# Chapter 1 (DL-01 to DL-04): score
 
-The music for the first two scenes is written as a score in `compose_dl01.py`. The script renders it with small synthesized
+The music for chapter 1 is written as a score in `compose_dl01.py`. The script renders it with small synthesized
 instruments, so the music can be rebuilt and changed like any other asset.
 
 ```sh
@@ -31,14 +31,17 @@ parcel's voice. It is old, slightly out of tune, and it wobbles like tape.
 | `racks` | 26 s | The DL-02 plate holds the gate up without him | A low piano note for each row of rack lights as it comes on (1.0 s to 7.0 s; the game lights the rows at these times), then a held D minor, waiting. |
 | `kin` | 70 s | D-17 first walks in among the couriers | He stops and looks: a low pedal and single high notes. Phrase A broadens to a bar every 3.5 s and builds over about 25 s: cello, then violins in octaves, the piano, a timpani roll and a cymbal swell into the peak on bar 8. Then it lets go, and the music box plays the parcel's three notes. |
 | `dead` | 76 s | DL-03's scanner refuses room 114 | A close dissonance at the refusal. A swell over the pit on phrase B's last bars (E-flat to A), with a timpani roll. Near silence and the music box while he checks his label. Then the theme at a walking tempo, turning to F major for the first time. |
-| `end` | 100 s | Near the end of DL-03's gallery, into the end card | High string light. Phrase A on piano, with the music box in bars 5 and 6, then phrase B on violins and cello. The motif slows, then a Picardy D major. Over it, the music box plays *Happy Birthday*, slowing as its spring runs down, and stops one phrase short. |
+| `latch` | 11 s | DL-04's safety pawl drops home | A warm F major rolled on the piano, a soft string pad, and the music box's parcel notes (F, E, D, then C). It settles. |
+| `refuge` | 40 s | D-17 steps out of the tunnel onto the balcony over the atrium | Awe, not grief. Near silence (a high string light over a low F pedal), then phrase B broadens toward F major, with the cello, then the violins in octaves. A timpani roll on C and a cymbal swell lead into the peak on F major, held at about 11.4 s, timed to the camera's widest. Then B-flat, D minor, the parcel's three notes on the music box, and an open fifth. `end` follows it over the end card. |
+| `end` | 100 s | Over the end card, after `refuge` | High string light. Phrase A on piano, with the music box in bars 5 and 6, then phrase B on violins and cello. The motif slows, then a Picardy D major. Over it, the music box plays *Happy Birthday*, slowing as its spring runs down, and stops one phrase short. |
 
 The GDD asks for sparse music at transitions and the ending, not continuous emotional instruction. So
 the bed sits low, around 18 dB under the cues, and gives way to each cue. Puzzles keep their room tone
 and mechanisms.
 
-All cues share one gain so their balance is as written, so render them together for the game. Use `--only`
-only to audition one.
+All cues share one gain so their balance is as written. `--only` renders just the named cues, but it always renders the
+reference cues (`wake`, `hall`, `end`) to set that gain, so a cue rendered alone still matches the rest. DL-04's cues
+are written as `dl04_latch` and `dl04_refuge`.
 
 ## Emotional moments
 

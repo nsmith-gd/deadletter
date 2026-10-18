@@ -32,7 +32,7 @@ service"), the moment must be felt, not just seen.
 The side-on framing is the default, not a rule. For a moment that matters, the camera leaves it for an
 authored shot with its own position, aim and lens, eased in and back out (`currentShot()` in the game):
 - **Low and close for intimacy.** Use a 45 to 55 mm lens: his face as he touches his chest among the couriers, the label check.
-- **Wide and high for scale.** Use a 26 to 32 mm lens: the crane up and out over the pit, the ride up the ramp with the heap below.
+- **Wide and high for scale.** Use a 24 to 32 mm lens: the crane up and out over the pit, the ride up the ramp with the heap below, the crane out over the refuge's atrium.
 - **Beside him for effort.** At the crank, low behind his shoulder, the door rising ahead.
 - **Shake for impacts.** A short, damped shake when something heavy lands (the shutter, the gate, a carrier tipping), never for footsteps. Calm mode turns it off.
 
@@ -46,6 +46,11 @@ Small reactions for particular moments make him a character rather than a cursor
 - **PeekDown:** he leans out over an edge he is left at, one claw on the rail: the trench, the crate, the pit rail.
 - **BrushOff:** a shake and a brush-down after climbing out of a tub of old post.
 - **Startle:** a jolt at a slam or clang close by.
+- **Teeter:** knees buckle and claws wheel when something gives under him, then a hop back to safety (the unlatched lift platform).
+- **Pat:** a goodbye pat for something that helped and has to stay behind (the goods trolley).
+- **LookBack:** at a threshold he won't recross, he turns and looks back at where he came from.
+- **Hopscotch:** chalk squares on the floor; he hops them, one foot, one foot, both feet.
+- **Awe:** at a view of something vast, he looks up and along it, then down, and holds his parcel.
 
 They are short, and any input cancels them, except where they carry a story beat (the peek over the pit).
 Add new ones for new moments rather than reusing an old one for something it doesn't fit.
@@ -54,10 +59,16 @@ Add new ones for new moments rather than reusing an old one for something it doe
 
 The browser build must run smoothly on an ordinary laptop. Keep within these limits:
 - **Lights:** at most about a dozen per region. Lights for scenes out of view are switched off while D-17 is hidden (the passage, the scanner corridor).
-- **Shadows:** only three lamps cast shadows, all spot lights (never a point light: that is six passes). Only small props near them cast; walls and floors never do.
+- **Shadows:** only a few lamps cast shadows, never more than two lit at once, all spot lights (never a point light: that is six passes). Only small props near them cast; walls and floors never do.
 - **Materials:** all worn surfaces share one shader program. Background crowds (the couriers) use plain materials.
-- **Culling:** set pieces more than about 18 m from the camera are hidden, shadows included. The couriers appear only when they can be seen.
+- **Culling:** set pieces more than about 18 m from the camera are hidden, shadows included. The couriers appear only when they can be seen, and the atrium only from the balcony.
+- **Far detail:** distant set pieces (the atrium) are flat and plain: quads for windows and doors, no worn-paint shader, no shadows. The camera's far plane opens up only where the view needs it.
 - **Resolution:** it adapts to hold 55 to 60 fps. MSAA is off because the post chain doesn't use it, and the bloom runs at half size.
+
+## Scene length
+
+From DL-04 on, scenes run a touch longer than the overview's targets. That room goes to the beats between puzzles: a
+quirk, a look back, a moment of scale. The puzzles themselves keep their size.
 
 ## Tone
 
