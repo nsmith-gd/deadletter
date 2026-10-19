@@ -19,6 +19,8 @@ for c in cols:
     print('%-13s %7s %7s %7s %7s %6.0fs' % (c, f(st.mean(v)), f(st.median(v)), f(min(v)), f(max(v)), st.pstdev(v)))
 deaths = sum(1 for r in ok if 'DL-05 respawn' in r['marks'])
 print('carrier deaths in DL-05:', deaths, 'of', len(ok))
+if any('deaths' in r for r in ok): print('deaths per run: mean %.1f, max %d' % (sum(r.get('deaths', 0) for r in ok) / len(ok), max(r.get('deaths', 0) for r in ok)))
+if any('found' in r for r in ok): print('curiosities found per run: mean %.1f' % (sum(r.get('found', 0) for r in ok) / len(ok)))
 print()
 for r, d in zip(ok, sp):
     print(r['seed'], r['player'], ' '.join(f"{c}={f(d[c])}" for c in S + ['total']))

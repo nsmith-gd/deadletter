@@ -79,6 +79,13 @@ window.__startBot = function (seed, opts = {}) {
     note('picks up the ' + id + ' letter');
     try { yield* useAt(['pickLetter:' + id], x, actIs('pickLetter'), 'letter ' + id); yield* settle(); } catch (e) { note('letter missed: ' + e.message); }
   }
+  // A curiosity: the early ones draw most players (they're lit, and he looks at them); later ones only the curious.
+  function* curio(id, p) {
+    const c = D.curioList().find((q) => q.id === id);
+    if (opts.mechanical || !c || D.curios[id] || !chance(p) || c.region !== G.region || c.upper !== !!G.upper) return;
+    note('uses the ' + id);
+    try { yield* useAt(['curio:' + id], c.x, actIs('curio'), 'curio ' + id); yield* until(() => !G.act, 15, 'curio done'); yield* wait(look(1.5)); } catch (e) { note('curio missed: ' + e.message); }
+  }
   function* post(slot, x, p) {
     if (!(D.letters.held > 0) || !chance(p)) return;
     note('posts a letter at slot ' + slot);
@@ -99,7 +106,8 @@ window.__startBot = function (seed, opts = {}) {
       note('pulls the cord'); yield* useAt(['cord'], 0.59, actIs('cord'), 'cord');
       yield* until(() => !G.act, 20, 'cord done'); yield* wait(look(1.5));
     }
-    if (chance(0.2 + 0.5 * P.curious)) { note('weighs himself'); yield* goTo(2.2, 'scale'); yield* wait(look(2.0)); }
+    yield* curio('dispatch', 0.2 + 0.5 * P.curious);
+    yield* curio('scale', 0.6 + 0.35 * P.curious);            // the first curiosity shows its prompt at once
     yield* walk(1, () => G.x >= 2.98, 'to the shutter', { stall: 1.2 });
     if (mistakes && chance(0.7 - 0.45 * P.skill)) {
       note('pushes at the shutter');
@@ -141,11 +149,13 @@ window.__startBot = function (seed, opts = {}) {
   function* sortingHall() {
     yield* until(() => !G.transit, 60, 'passage');
     yield* wait(look(2.5));
+    yield* curio('franker', 0.35 + 0.5 * P.curious);
     yield* walk(1, () => G.x > K.SH.tubeX + 0.1, 'past the tube');
     yield* until(() => D.letters.tube !== 'falling' && D.letters.tube !== 'cup', 3, 'tube letter');
     yield* wait(look(1.2));
     yield* letter('tube', K.SH.tubeX, 0.55 + 0.4 * P.curious);
     yield* post(2, K.SH.slotX, 0.75);
+    yield* curio('mug', 0.25 + 0.5 * P.curious);
     yield* wait(look(1.5));
     // The table is too high; the floor is closed. Try the jump, then the box.
     if (mistakes && chance(0.8 - 0.35 * P.skill)) {
@@ -218,11 +228,13 @@ window.__startBot = function (seed, opts = {}) {
     note('courier on the bay');
     yield* until(() => C().courier.state === 'seated' && free(), 30, 'the cradle');
     yield* settle(); yield* wait(look(3.5));
+    yield* curio('rack', 0.1 + 0.4 * P.curious);
     yield* walk(1, () => G.region === 3, 'through the bay door', { max: 60 });
   }
 
   // DL-05 Return to Sender: the scanner, the pit, the levers (with a ride into the pile for many).
   function* returnToSender() {
+    yield* curio('chair', 0.1 + 0.35 * P.curious);
     yield* walk(1, () => G.scan.phase !== 'idle', 'to the scanner');
     yield* until(() => G.scan.phase === 'reveal', 60, 'refusal');
     yield* wait(look(2.5));
@@ -281,7 +293,7 @@ window.__startBot = function (seed, opts = {}) {
       yield* walk(-1, () => G.act && G.act.kind === 'slide', 'to the slide', { hop: false, max: 20 });
       yield* until(() => !G.act && !G.upper, 10, 'slid'); yield* wait(look(1.5) + think(6));
     }
-    for (let attempt = 0; attempt < 4 && C().bucket < 1; attempt++) {
+    for (let attempt = 0; attempt < 7 && C().bucket < 2; attempt++) {
       const w = C().weights.find((q) => q.state === 'floor');
       if (!w) { yield* wait(2); continue; }
       yield* useAt(['liftItem:w' + C().weights.indexOf(w)], w.x, actIs('liftItem'), 'weight');
@@ -290,7 +302,9 @@ window.__startBot = function (seed, opts = {}) {
       yield* until(() => D.carriers().some((c) => c.state === 'dock'), 40, 'docked');
       use(); yield* until(() => G.act && G.act.kind === 'loadCarrier', 3, 'load');
       yield* settle(); note('weight in a carrier');
-      yield* until(() => C().bucket >= 1 || !D.carriers().some((c) => c.load), 40, 'the delivery');
+      const had = C().bucket;
+      yield* until(() => C().bucket > had || !D.carriers().some((c) => c.load), 40, 'the delivery');
+      if (C().bucket === 1) { note('the gate stalls half way'); yield* wait(think(6)); }
       yield* wait(look(2.0));
     }
     yield* wait(think(2));
@@ -370,8 +384,8 @@ window.__startBot = function (seed, opts = {}) {
       }
       yield* until(() => cg().phase === 'caught' || cg().phase === 'crash', 10, 'bite or crash');
       if (cg().phase === 'caught') { note('pawl bites at the landing'); break; }
-      note('missed: the cage drops to the buffers');
-      yield* until(() => cg().phase === 'top', 30, 'hauled back');
+      note('missed: the cage drops into the sump');
+      yield* until(() => G.mode === 'play' && !G.act && cg().phase === 'top', 30, 'back at the top');
       yield* wait(think(3));
       yield* walk(1, () => G.act && G.act.kind === 'cage', 'back into the cage', { max: 20 });
     }
@@ -436,7 +450,7 @@ window.__startBot = function (seed, opts = {}) {
       if (G.mode === 'play' && out.marks.play !== undefined) mark(D.scene().slice(0, 5));
       try {
         const r = script.next();
-        if (r.done) out.done = true;
+        if (r.done) { out.deaths = G.deaths; out.found = Object.keys(D.curios || {}).length; out.done = true; }
       } catch (e) { out.error = e.message; out.done = true; move(0); }
     },
   };
