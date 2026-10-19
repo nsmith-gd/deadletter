@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl04'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl05'))
-for _d in ('sorting_hall', 'racks', 'cage'):
+for _d in ('sorting_hall', 'racks', 'cage', 'pass2'):
     sys.path.insert(0, os.path.join(HERE, '..', _d))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
@@ -43,6 +43,7 @@ import build_dl05 as dl05  # noqa: E402
 import build_sorting_hall as sorting_hall  # noqa: E402
 import build_racks as racks  # noqa: E402
 import build_cage as cage  # noqa: E402
+import build_pass2 as pass2  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
                        SIDES, CLAW_REST_OPEN, _key)
@@ -1342,6 +1343,7 @@ def main():
     sorting_hall.build_set(sys.modules[__name__], m, set_coll)
     racks.build_set(sys.modules[__name__], m, set_coll)
     cage.build_set(sys.modules[__name__], m, set_coll)
+    pass2.build_set(sys.modules[__name__], m, set_coll)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
@@ -1374,6 +1376,7 @@ def main():
     sorting_hall.add_clips(sys.modules[__name__], arm)
     racks.add_clips(sys.modules[__name__], arm)
     cage.add_clips(sys.modules[__name__], arm)
+    pass2.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False

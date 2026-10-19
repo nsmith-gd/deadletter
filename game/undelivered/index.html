@@ -71,6 +71,8 @@
     font: 500 0.85rem var(--mono); color: var(--ink); background: var(--paper); padding: 3px 9px;
     box-shadow: 0 0 0 4px rgba(217, 209, 184, 0.18); transition: opacity 0.4s;
   }
+  #found { position: absolute; right: calc(16px + env(safe-area-inset-right, 0px)); top: calc(14px + env(safe-area-inset-top, 0px));
+    font: 500 0.85rem var(--mono); letter-spacing: 0.08em; color: var(--amber); opacity: 0; transition: opacity 0.8s; pointer-events: none; }
   #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
   #debug {
     position: absolute; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px));
@@ -97,6 +99,7 @@
   <canvas id="view" aria-label="Dead Letter, chapter 1, scenes DL-01 to DL-09, playable"></canvas>
   <div id="fade"></div>
   <div id="keycap" hidden></div>
+  <div id="found" aria-live="polite"></div>
   <div id="debug" hidden></div>
   <button id="skip" type="button" hidden>Skip intro</button>
   <div id="touch" hidden>
@@ -139,6 +142,7 @@
     <div class="card">
       <div class="eyebrow"><span id="pause-scene">DL-01 The Wake</span><span id="pause-time">0:00</span></div>
       <h2>Paused</h2>
+      <p class="note" id="pause-found"></p>
       <div class="opts">
         <label><input type="checkbox" id="opt-autorun-p" checked><span>Auto-run (hold Shift or B to walk)</span></label>
         <label><input type="checkbox" id="opt-sound-p" checked><span>Sound</span></label>
@@ -159,6 +163,7 @@
       <div class="eyebrow"><span>End of chapter 1 &middot; DL-09</span><span id="end-time"></span></div>
       <h2>Room 114</h2>
       <p>Behind a fallen desk, pencil marks climb the wall, one a year, and a crooked tree is carved beside them. The terminal says nobody is home, and forwards the parcel to a school on ring B. D-17 sat the rabbit up and left the room as he found it. Next: <strong>DL-10 Coats Without Children</strong>.</p>
+      <p class="note" id="end-found"></p>
       <div class="row">
         <button class="act" id="again" type="button">Play again</button>
         <button class="act secondary" id="again-skip" type="button">Play again, skip intro</button>
@@ -595,6 +600,36 @@ const Sound = (() => {
       }
       dragNode.gain.setTargetAtTime(level * 0.12, ctx.currentTime, 0.06);
     },
+    // Pass 2: curiosities.
+    found() { tone(1318, 0.18, 'sine', 0.035, 0.8); setTimeout(() => tone(1661, 0.3, 'sine', 0.03, 0.8), 110); },
+    curio(kind) {
+      if (kind === 'scale') { Sound.ratchet(); setTimeout(() => { for (let k = 0; k < 10; k++) setTimeout(() => tone(2200, 0.015, 'square', 0.015, 0.2), k * 40); }, 900); }
+      else if (kind === 'stamp') { setTimeout(() => { Sound.clunk(); noise(0.03, 900, 1, 0.2, 'lowpass', 0.4); }, 700); }
+      else if (kind === 'mug') { setTimeout(() => tone(2600, 0.25, 'sine', 0.03, 0.6, 2500), 600); setTimeout(() => tone(2400, 0.2, 'sine', 0.025, 0.6), 2400); }
+      else if (kind === 'sit') { setTimeout(() => { noise(0.2, 500, 0.8, 0.08, 'lowpass', 0.5); tone(140, 0.2, 'sine', 0.03, 0.4, 110); }, 900); }
+      else if (kind === 'wind') { for (let k = 0; k < 9; k++) setTimeout(() => noise(0.01, 3600, 3, 0.1, 'bandpass', 0.4), 400 + k * 160); setTimeout(() => { for (let k = 0; k < 12; k++) setTimeout(() => tone(3000, 0.01, 'square', 0.02, 0.6), k * 500); }, 2000); }
+      else if (kind === 'coin') { tone(2900, 0.05, 'triangle', 0.04, 0.4); setTimeout(() => { noise(0.05, 1800, 2, 0.1, 'bandpass', 0.4); tone(600, 0.12, 'square', 0.02, 0.3); }, 350); }
+      else if (kind === 'radio') { Sound.radio(); }
+      else if (kind === 'switch') { setTimeout(() => { noise(0.012, 3500, 2, 0.3, 'bandpass', 0.4); Sound.buzzShort(); }, 600); }
+      else if (kind === 'paper') { noise(0.18, 3800, 1.2, 0.05, 'highpass', 0.3, 0.02); }
+    },
+    // A wireless finding a station: static, then a few bars of a children's song, thin and far away.
+    radio() {
+      noise(1.2, 2500, 0.6, 0.05, 'bandpass', 0.3, 0.2);
+      const tune = [523, 523, 784, 784, 880, 880, 784, 0, 698, 698, 659, 659, 587, 587, 523];
+      tune.forEach((f, k) => { if (f) setTimeout(() => { tone(f, 0.28, 'triangle', 0.022, 0.8); tone(f * 2, 0.2, 'sine', 0.006, 0.8); }, 1300 + k * 300); });
+      setTimeout(() => noise(0.8, 2500, 0.6, 0.04, 'bandpass', 0.3, 0.1), 1300 + tune.length * 300);
+    },
+    // Pass 2: danger.
+    splash(v = 1) { noise(0.5, 500, 0.6, 0.3 * v, 'lowpass', 0.9, 0.01); noise(0.25, 2200, 1, 0.08 * v, 'bandpass', 0.6, 0.02); },
+    zap(v = 1) { for (let k = 0; k < 8; k++) setTimeout(() => { noise(0.02, 3000 + Math.random() * 4000, 2, 0.22 * v, 'bandpass', 0.5); tone(90 + Math.random() * 40, 0.04, 'sawtooth', 0.05 * v, 0.3); }, k * 30 + Math.random() * 20); },
+    death(how) {
+      if (how === 'crush') { Sound.thud(); Sound.clank(); Sound.crackle(1); }
+      else if (how === 'shock') { Sound.zap(1.2); tone(120, 0.9, 'sawtooth', 0.05, 0.4, 40); }
+      else if (how === 'grabbed') { Sound.splash(1.2); setTimeout(() => Sound.crackle(0.8), 250); tone(220, 0.6, 'sine', 0.04, 0.6, 70); }
+      else { Sound.land(1.4); Sound.crackle(0.7); }
+      setTimeout(() => tone(880, 0.5, 'sine', 0.03, 0.6, 110), 120);          // his voice running down
+    },
     context: () => ctx, output: () => master,
   };
 })();
@@ -757,6 +792,8 @@ const game = {
   pawlLever: -18, pawlHold: null, pawlDip: 0, pawlDrop: -100, pawlClickAt: -100, belt4: { state: 'idle', t: 0, next: 0 }, dl4: {}, aweStart: -100,
   // DL-05
   desk5: { x: OFF4 + 94.7, v: 0 }, dl5: {}, marksShotAt: -100,
+  // Pass 2: danger and curiosities
+  deaths: 0, eyeLevel: 1,
 };
 const refs = {};
 // Authored moments the player has already sat through: replaying a checkpoint skips them. (Shots that
@@ -871,6 +908,8 @@ async function load() {
   buildDL04(setG.scene);
   buildDL05(setG.scene);
   buildCh1(setG.scene);
+  buildSparks();
+  buildCurioPools();
   buildCulling(setG.scene);
   resize();
 }
@@ -994,8 +1033,8 @@ function applyLights(f) {
   refs.kick.intensity = 0.55 * Math.max(bulb, opening ? 0 : 1);
   Sound.buzz(opening && f >= 226 && f < 252 ? bulb : bulb * 0.25);
   const eyes = flicker(f, 225, [[0, .8], [2, 0], [6, 1], [9, .2], [14, 1]], 1);
-  emissive.EyeGlint.emissiveIntensity = 2.5 * eyes;
-  emissive.Glow.emissiveIntensity = 7 * eyes;
+  emissive.EyeGlint.emissiveIntensity = 2.5 * eyes * game.eyeLevel;
+  emissive.Glow.emissiveIntensity = 7 * eyes * game.eyeLevel;
 }
 
 // Sound cues on the opening timeline, fired once when the frame passes them.
@@ -1026,7 +1065,7 @@ function setClip(name, fade = 0.2, timeScale = 1) {
 }
 
 const tq1 = new THREE.Quaternion(), tq2 = new THREE.Quaternion(), tq3 = new THREE.Quaternion();
-const tv1 = new THREE.Vector3(), tv2 = new THREE.Vector3(), tv3 = new THREE.Vector3(), tv4 = new THREE.Vector3();
+const tv1 = new THREE.Vector3(), tv2 = new THREE.Vector3(), tv3 = new THREE.Vector3(), tv4 = new THREE.Vector3(), tv5 = new THREE.Vector3();
 function rotateBoneWorld(bone, q) {
   bone.parent.getWorldQuaternion(tq1);
   bone.getWorldQuaternion(tq2);
@@ -1231,7 +1270,7 @@ function updateAct(dt) {
     if (dz) game.z += Math.sign(dz) * Math.min(Math.abs(dz), 0.45 * dt);
     if (Math.abs(dx) < 0.012 && Math.abs(dz) < 0.004) {
       game.x = a.standX; a.phase = 'act'; a.t = 0;
-      if (a.kind === 'cord') { setClip('Tug', 0.15); Sound.servo(0.2, 500, 900, 0.025); }
+      if (a.kind === 'cord') { setClip('Tug', 0.15); Sound.servo(0.2, 500, 900, 0.025); findCurio('cord'); }
       if (a.kind === 'latch') { setClip('Pull', 0.15); Sound.creak(0.6); }
       if (a.kind === 'crank') { game.yawOverride = Math.PI; a.phase = 'turn'; }
       if (a.kind === 'lift') { setClip('Lift', 0.15); }
@@ -2670,6 +2709,8 @@ function updateAct4(a, dt) {
 }
 
 // Moments that start by themselves as he gets to them.
+// The chalk court in the tunnel: he plays it once on his own, and again whenever the player asks (a curiosity).
+function startHopscotch(x = game.x) { game.vx = 0; game.facing = 1; game.act = { kind: 'hopscotch', phase: 'act', t: 0, x0: x }; setClip('Hopscotch', 0.2); }
 function updateTriggers4() {
   const d = game.dl4, x = game.x;
   if (game.act || game.hold || game.mantle) return false;
@@ -2685,7 +2726,7 @@ function updateTriggers4() {
   }
   if (x > HOP4_X && x < HOP4_X + 0.5 && !d.hopped && game.facing > 0) {
     d.hopped = true;
-    if (once('hopscotch')) { game.vx = 0; game.act = { kind: 'hopscotch', phase: 'act', t: 0, x0: x }; setClip('Hopscotch', 0.2); return true; }
+    if (once('hopscotch')) { startHopscotch(x); return true; }
   }
   if (x > VISTA_X0 - 0.6 && !d.refuge) { d.refuge = true; Music.bed(false); Music.play('refuge'); }
   if (x > AWE_X && !d.awed) {
@@ -2920,6 +2961,8 @@ function currentShot() {
     if (a && a.kind === 'toy' && a.phase === 'act') return { name: 'toy', pos: V3(X + 1.15, Y + 1.15, -0.1), look: V3(TOY5_X - 0.02, 0.44, -0.36), focal: 34, ease: 1.6 };
   }
   if (game.region === 4) {
+    // The hopscotch: whimsy is a beat too. Up and over him so the chalk reads, then back to the side.
+    if (a && a.kind === 'hopscotch') return { name: 'hopscotch', pos: V3(X + 0.9, Y + 1.55, 1.75), look: V3(X + 0.45, Y, -0.05), focal: 36, ease: 1.4 };
     // Looking back at the depot from the tunnel mouth: from inside the tunnel, low, past him.
     if (a && a.kind === 'lookback') return { name: 'lookback', pos: V3(X + 1.6, Y + 0.5, 1.15), look: V3(X - 4.0, Y + 0.7, -0.5), focal: 34, ease: 1.2 };
     // The refuge: from his shoulder out over the city, craning up and back to a high, wide view; it lets go of
@@ -3123,7 +3166,7 @@ function resetCh1(cp) {
     if (c110.obj && c110.rest) { c110.obj.position.copy(c110.rest); c110.obj.quaternion.copy(c110.restQ); }
   }
 }
-function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; }
+function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; }
 
 // Collision ---------------------------------------------------------------------------------
 function floorCh1(x) {
@@ -3183,6 +3226,8 @@ function nearCh1() {
     return 'setdownItem';
   }
   if (game.hold) return null;
+  const cu = curioHere();
+  if (cu) return 'curio:' + cu.id;
   // Letters: pick one up, or post what he carries.
   for (const L of LETTERS) {
     const st = letterState[L.id];
@@ -3218,11 +3263,16 @@ function pushHere() {
   }
   return out;
 }
-const ACT_CH1 = new Set(['liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
+const ACT_CH1 = new Set(['death', 'curio', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
 function beginCh1(kind) {
   const [k, arg] = kind.split(':');
   game.vx = 0;
   if (k === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
+  if (k === 'curio') {
+    const c = CURIOS.find((q) => q.id === arg);
+    game.act = { kind: 'curio', c, phase: 'approach', t: 0, standX: c.standX ?? c.x, face: c.face || game.facing };
+    return;
+  }
   if (k === 'liftItem') {
     const it = itemsHere().find((i) => i.key === arg), side = Math.sign(it.x - game.x) || game.facing;
     game.act = { kind: 'liftItem', phase: 'approach', t: 0, it, standX: it.x - side * GRIP_FWD, face: side };
@@ -3269,6 +3319,8 @@ function approachCh1(a, dt, z = 0) {
 function updateActCh1(a, dt) {
   a.t += dt;
   const s = game.ch1;
+  if (a.kind === 'death') { updateDeath(a, dt); return; }
+  if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
   if (a.kind === 'liftItem') {
     if (a.phase === 'approach') { if (approachCh1(a, dt)) setClip('Lift', 0.15); return; }
     const f = actions.Lift.time * FPS, it = a.it;
@@ -3531,8 +3583,8 @@ function carrierLoadTip(c, into) {
 
 // DL-08 The Slipping Cage -----------------------------------------------------------------------
 // It lets down gently, shudders, slips, catches once just above the lit landing, then slips again. Throw the
-// pawl from the catch to the landing and it bites; too late and the cage drops to the buffers, and the
-// counterweight hauls it back up to try again.
+// pawl from the catch to the landing and it bites; too late and the cage drops to the buffers in the sump, which
+// kills him, and he is back in the cage at the top.
 function updateCage(dt) {
   const c = game.ch1.cage, k = refs.ch1;
   c.t += dt;
@@ -3547,7 +3599,11 @@ function updateCage(dt) {
   else if (c.phase === 'slip') {
     c.v = Math.min(1.6, c.v + 2.6 * dt); c.y -= c.v * dt;
     if (c.y <= catchY && !c.caughtOnce) { c.y = catchY; c.caughtOnce = true; c.phase = 'stall'; c.t = 0; Sound.lurch(); shake(0.45); }
-    if (c.y <= CG.bottom) { c.y = CG.bottom; c.phase = 'crash'; c.t = 0; Sound.liftCrash(1); shake(0.9); }
+    if (c.y <= CG.bottom) {
+      c.y = CG.bottom; c.phase = 'crash'; c.t = 0; Sound.liftCrash(1); shake(0.9);
+      // Riding it down is a death now: the cage hits the buffers in the sump (pass 2).
+      if (game.act && game.act.kind === 'cage') die('fall', { follow: () => { game.y = c.y; } });
+    }
   } else if (c.phase === 'stall') { if (c.t > 0.75) { c.phase = 'slip'; c.t = 0; c.v = 0.3; } }
   else if (c.phase === 'bite') { c.y += (L - c.y) * Math.min(1, dt * 9); if (c.t > 0.5) { c.y = L; c.phase = 'caught'; c.t = 0; Sound.clunk(); } }
   else if (c.phase === 'crash') { if (c.t > 1.4) { c.phase = 'haul'; c.t = 0; Sound.chain(2.5); } }
@@ -3577,6 +3633,178 @@ function updateCageAct(a, dt) {
     else { Sound.pawlClatter(); setTimeout(() => { if (c.phase !== 'bite' && c.phase !== 'caught') c.thrown = false; }, 600); }
   }
   if (c.phase === 'caught' && c.t > 0.4) { game.act = null; setClip('Idle', 0.3); playQuirk('Proud'); }
+}
+
+
+// Curiosities (pass 2): props he can Use for a small payoff, never needed. The early ones are obvious: a pool of
+// warm light, a red tag, and the first time he passes one he turns his head to it. The first of all (the parcel
+// scale) shows the Use prompt at once, so the player learns that the depot's things can be used. Later ones are
+// easter eggs. A soft chime and the count mark each find; the pause card and the end card keep the tally.
+const CURIOS = [
+  { id: 'scale', region: 1, x: SCALE1_X, early: true, first: true, clip: ['WeighSelf', 'PeekDown'], dur: 2.6, sound: 'scale' },
+  { id: 'cord', region: 1, x: 0.59, early: true, builtIn: true },             // the cord lamp: its own interaction
+  { id: 'dispatch', region: 1, x: 1.05, early: true, clip: ['ReadRoute', 'CheckLabel'], dur: 3.0, sound: 'paper', face: 1 },
+  { id: 'franker', region: 2, x: SH.x0 + 1.15, early: true, clip: ['FrankHand', 'Present'], dur: 2.8, sound: 'stamp' },
+  { id: 'mug', region: 2, x: 15.55, early: true, clip: ['HoldMug', 'Pat'], dur: 3.2, sound: 'mug' },
+  { id: 'rack', region: 2, x: 41.05, cond: () => game.ch1.courier.state === 'seated', clip: ['SitRack', 'Straighten'], dur: 4.5, sound: 'sit' },
+  { id: 'clock', region: 3, x: OFF3 + 40.7, upper: true, clip: ['WindClock', 'Crank'], dur: 3.0, sound: 'wind' },
+  { id: 'chair', region: 3, x: OFF3 + 33.6, cond: () => !game.upper, clip: ['SitChair', 'Straighten'], dur: 4.0, sound: 'sit' },
+  { id: 'hopscotch', region: 4, x: HOP4_X - 0.15, cond: () => game.dl4.hopped, clip: ['HopscotchLong', 'Hopscotch'], builtIn: true },
+  { id: 'viewer', region: 4, x: OFF4 + 72.6, clip: ['LookViewer', 'Awe'], dur: 6.0, sound: 'coin' },
+  { id: 'radio', region: 5, x: OFF4 + 99.0, clip: ['TuneRadio', 'Pat'], dur: 4.0, sound: 'radio' },
+  { id: 'switch', region: 5, x: OFF4 + 97.0, clip: ['FlickSwitch', 'Pat'], dur: 2.2, sound: 'switch' },
+];
+const curioFound = {};
+const curioCount = () => CURIOS.filter((c) => curioFound[c.id]).length;
+function curioHere() {
+  if (game.mode !== 'play') return null;
+  for (const c of CURIOS) {
+    if (c.builtIn && c.id !== 'hopscotch') continue;
+    if (c.region !== game.region || !!c.upper !== !!game.upper || (c.cond && !c.cond())) continue;
+    if (Math.abs(game.x - c.x) < (c.r || 0.24)) return c;
+  }
+  return null;
+}
+function findCurio(id) {
+  if (curioFound[id]) return;
+  curioFound[id] = true;
+  // A small chime, a rising third, and the tally in the corner for a moment.
+  Sound.found();
+  const el = document.getElementById('found');
+  if (el) { el.textContent = `◆ ${curioCount()} / ${CURIOS.length}`; el.style.opacity = 1; clearTimeout(el._t); el._t = setTimeout(() => (el.style.opacity = 0), 2600); }
+}
+function updateCurioAct(a, dt) {
+  const c = a.c;
+  if (a.phase === 'approach') {
+    if (!approachCh1(a, dt)) return;
+    a.phase = 'act'; a.t = 0;
+    if (c.id === 'hopscotch') { game.act = null; startHopscotch(); findCurio(c.id); return; }
+    a.clip = c.clip.find((n) => actions[n]) || 'Idle';
+    setClip(a.clip, 0.2);
+    findCurio(c.id);
+    Sound.curio(c.sound);
+    if (c.id === 'viewer') game.viewerAt = game.clock;
+    if (c.id === 'switch') game.hallLitAt = game.clock;
+    if (c.id === 'radio') game.radioAt = game.clock;
+    return;
+  }
+  const len = actions[a.clip] ? actions[a.clip].getClip().duration : c.dur;
+  if (a.t >= Math.max(c.dur || 0, Math.min(len, 8))) { game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+}
+// The early ones he glances at, the first time: the nearest unfound one within reach of a look.
+function curioPoint(c) { return tv4.set(c.x, (c.upper ? DECK : 0) + (c.lookY ?? 0.45), -0.3); }
+function glanceCurio() {
+  if (game.act || game.hold) return null;
+  let best = null;
+  for (const c of CURIOS) {
+    if (!c.early || curioFound[c.id] || c.region !== game.region || !!c.upper !== !!game.upper || (c.cond && !c.cond())) continue;
+    const d = Math.abs(game.x - c.x);
+    if (d < 1.8 && d > 0.15 && (!best || d < best.d)) best = { c, d };
+  }
+  return best && best.c;
+}
+// A pool of warm light on the floor and a faint glow behind each early one.
+function buildCurioPools() {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const g = cv.getContext('2d'), grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grd.addColorStop(0, 'rgba(255,190,120,0.55)'); grd.addColorStop(0.5, 'rgba(255,160,90,0.18)'); grd.addColorStop(1, 'rgba(255,140,80,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, 64, 64);
+  const tex = new THREE.CanvasTexture(cv);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xffffff });
+  refs.curioPools = [];
+  for (const c of CURIOS) {
+    if (!c.early || c.id === 'cord') continue;
+    const y = c.upper ? DECK : 0;
+    const pool = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.8), mat.clone());
+    pool.rotation.x = -Math.PI / 2; pool.position.set(c.x, y + 0.006, -0.15);
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.3), mat.clone());
+    back.position.set(c.x, y + 0.75, -0.95); back.material.opacity = 0.5;
+    pool.userData.curio = back.userData.curio = c;
+    scene.add(pool, back); refs.curioPools.push(pool, back);
+  }
+}
+function updateCurios(dt) {
+  for (const m of refs.curioPools || []) {
+    const c = m.userData.curio, on = curioFound[c.id] ? 0.25 : 1;
+    m.visible = c.region === game.region;
+    m.material.opacity += ((on * (0.85 + 0.15 * Math.sin(game.clock * 2.2))) - m.material.opacity) * Math.min(1, dt * 2);
+  }
+}
+
+
+// Danger (docs/chapter1_pass2_plan.md): deaths are shown, then cut. He is a machine, so there are sparks and his
+// eye goes out, then black, and he is back at the checkpoint within two or three seconds. The music keeps playing.
+const DEATH = {
+  crush: { clip: 'DeathCrush', hold: 0.7, sparks: 26 }, shock: { clip: 'DeathShock', hold: 1.0, sparks: 44 },
+  grabbed: { clip: 'DeathGrabbed', hold: 1.15, sparks: 18 }, fall: { clip: 'DeathFall', hold: 0.9, sparks: 20 },
+};
+function releaseHolds() {
+  const it = game.carry;
+  if (it && it.state === 'carried') Object.assign(it, { state: 'floor', x: game.x, base: Math.max(0, game.y), drop: null });
+  game.carry = null; game.hold = null; game.pushKey = null; game.riding = null; game.mantle = null;
+  holdLetter(false);
+}
+// how: crush, shock, grabbed or fall. o.follow(a, dt) can move him while the moment plays (dragged under, falling).
+function die(how, o = {}) {
+  if (game.mode !== 'play' || (game.act && game.act.kind === 'death')) return;
+  const d = DEATH[how] || DEATH.fall;
+  releaseHolds();
+  game.act = { kind: 'death', how, t: 0, hold: o.hold ?? d.hold, follow: o.follow || null, at: o.at || null };
+  game.vx = 0; game.vy = 0; game.deaths += 1; game.yawOverride = null;
+  setClip(actions[d.clip] ? d.clip : 'Flinch', 0.05);
+  if (!game.calm) burstSparks(d17Point(0.45), d.sparks, how === 'shock' ? 1.6 : 1.0);
+  Sound.death(how);
+  shake(how === 'crush' ? 0.9 : how === 'fall' ? 0.7 : 0.45);
+}
+function updateDeath(a, dt) {
+  if (a.follow) a.follow(a, dt);
+  // The eye goes out: a stutter, then dark.
+  game.eyeLevel = a.t < 0.45 ? (Math.sin(a.t * 70) > 0 ? 1 - a.t / 0.45 : 0.1) : 0;
+  if (a.how === 'shock' && a.t < a.hold && Math.random() < dt * 14 && !game.calm) burstSparks(d17Point(0.3 + Math.random() * 0.4), 4, 1.4);
+  if (a.t >= a.hold && !a.cut) {
+    a.cut = true;
+    fadeEl.style.transition = 'none'; fadeEl.style.opacity = 1;        // a cut, not a fade
+    game.respawnAt = game.clock + 0.6;
+  }
+}
+function d17Point(up) { return tv5.set(game.x, game.y + up, game.z); }
+// Sparks: a small pool of additive points with gravity.
+const SPARK_N = 96;
+const sparkFx = { pos: new Float32Array(SPARK_N * 3), vel: new Float32Array(SPARK_N * 3), life: new Float32Array(SPARK_N), next: 0, points: null };
+function buildSparks() {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(sparkFx.pos, 3));
+  g.setAttribute('alpha', new THREE.BufferAttribute(sparkFx.life, 1));
+  const m = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: 'attribute float alpha; varying float vA; void main(){ vA = alpha; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = (2.0 + 5.0 * alpha) * (6.0 / -mv.z); gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'varying float vA; void main(){ if (vA <= 0.0) discard; vec2 q = gl_PointCoord - 0.5; float r = 1.0 - smoothstep(0.1, 0.5, length(q)); gl_FragColor = vec4(mix(vec3(1.0, 0.35, 0.08), vec3(1.0, 0.92, 0.7), vA) * 3.0 * r * vA, 1.0); }',
+  });
+  sparkFx.points = new THREE.Points(g, m); sparkFx.points.frustumCulled = false; sparkFx.points.renderOrder = 5;
+  scene.add(sparkFx.points);
+}
+function burstSparks(at, n, speed = 1) {
+  if (!sparkFx.points) return;
+  for (let k = 0; k < n; k++) {
+    const i = sparkFx.next; sparkFx.next = (sparkFx.next + 1) % SPARK_N;
+    sparkFx.pos.set([at.x, at.y, at.z], i * 3);
+    const a = Math.random() * Math.PI * 2, up = 0.6 + Math.random() * 1.6;
+    sparkFx.vel.set([Math.cos(a) * (0.4 + Math.random()) * speed, up * speed, Math.sin(a) * 0.6 * speed], i * 3);
+    sparkFx.life[i] = 0.6 + Math.random() * 0.4;
+  }
+}
+function updateSparks(dt) {
+  if (!sparkFx.points) return;
+  const p = sparkFx.pos, v = sparkFx.vel, l = sparkFx.life;
+  let live = false;
+  for (let i = 0; i < SPARK_N; i++) {
+    if (l[i] <= 0) continue;
+    live = true; l[i] = Math.max(0, l[i] - dt * 1.6);
+    v[i * 3 + 1] -= GRAVITY * 0.6 * dt;
+    p[i * 3] += v[i * 3] * dt; p[i * 3 + 1] += v[i * 3 + 1] * dt; p[i * 3 + 2] += v[i * 3 + 2] * dt;
+  }
+  sparkFx.points.visible = live;
+  if (live) { sparkFx.points.geometry.attributes.position.needsUpdate = true; sparkFx.points.geometry.attributes.alpha.needsUpdate = true; }
 }
 
 const HINTS = [
@@ -3664,8 +3892,10 @@ function updateCharacter(dt, playing) {
   const rk = game.clock - game.revealTime;
   const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform';
   const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2) : REVEAL_LOOK;
-  const hint = looking ? { at: lookAt, key: 'move' } : hintTarget();
-  const idle = looking ? 99 : game.clock - input.lastActivity;
+  // The early curiosities: he turns his head to each as he passes, the first time.
+  const glance = !looking && glanceCurio();
+  let hint = looking ? { at: lookAt, key: 'move' } : glance ? { at: curioPoint(glance), key: 'use', glance: true } : hintTarget();
+  const idle = looking || glance ? 99 : game.clock - input.lastActivity;
   // Riding the cage counts as standing: the catch's hint must show while the ride runs.
   const free = (game.grounded && !game.act) || (game.act && game.act.kind === 'cage');
   const want = hint && idle > HINT_LOOK && free && !game.mantle && !game.exit && !game.transit && !game.riding ? 1 : 0;
@@ -3677,10 +3907,13 @@ function updateCharacter(dt, playing) {
     const q = new THREE.Quaternion().setFromUnitVectors(fwd, dir);
     q.premultiply(new THREE.Quaternion().setFromAxisAngle(dir, THREE.MathUtils.degToRad(10)));
     rotateBoneWorld(refs.head, new THREE.Quaternion().slerp(q, game.hintWeight * 0.85));
-    if (idle > HINT_LEAN && !looking && !game.hold) rotateBoneWorld(refs.body, new THREE.Quaternion().slerp(q, game.hintWeight * 0.15));
+    if (idle > HINT_LEAN && !looking && !hint.glance && !game.hold) rotateBoneWorld(refs.body, new THREE.Quaternion().slerp(q, game.hintWeight * 0.15));
   }
   const cap = document.getElementById('keycap');
-  if (game.assist && hint && hint.key !== 'move' && !looking && idle > HINT_GLYPH && free) {
+  // The very first curiosity shows its prompt at once: that is how the player learns props can be used.
+  const firstCue = CURIOS[0].region === game.region && !curioFound[CURIOS[0].id] && Math.abs(game.x - CURIOS[0].x) < 0.9 && free;
+  if (firstCue) { hint = { at: curioPoint(CURIOS[0]), key: 'use' }; }
+  if ((firstCue || (game.assist && hint && hint.key !== 'move' && !looking && idle > HINT_GLYPH)) && free) {
     const s = hint.at.clone().project(camera);
     cap.style.left = `${(s.x * 0.5 + 0.5) * canvas.clientWidth}px`;
     cap.style.top = `${(-s.y * 0.5 + 0.5) * canvas.clientHeight}px`;
@@ -4078,7 +4311,8 @@ function startPlay(checkpoint = 'start') {
   input.lastActivity = game.clock;
   skipBtn.hidden = true;
   touchEl.hidden = !touchDevice;
-  fadeEl.style.opacity = 0;
+  fadeEl.style.transition = ''; fadeEl.style.opacity = 0;
+  game.eyeLevel = 1;
   Object.values(actions).forEach((a) => { if (a.getClip().name !== current) a.stop(); });
   setClip('Idle', naturalEnd ? 0.5 : 0.25);
   Sound.hum(1);
@@ -4095,6 +4329,7 @@ function togglePause() {
     prevMode = game.mode; game.mode = 'paused'; pauseEl.hidden = false; syncOpts(); Music.setPaused(true);
     document.getElementById('pause-scene').textContent = sceneName();
     document.getElementById('pause-time').textContent = game.playStart ? fmt(Math.max(0, game.clock - game.playStart)) : '0:00';
+    document.getElementById('pause-found').textContent = tally();
     document.getElementById('resume').focus();
   } else if (game.mode === 'paused') { game.mode = prevMode; pauseEl.hidden = true; Music.setPaused(false); }
 }
@@ -4110,12 +4345,13 @@ function sceneName() {
 }
 const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
+const tally = () => `Curiosities ${curioCount()} of ${CURIOS.length} \u00B7 letters posted ${letterState.posted || 0} of ${LETTERS.length}`;
 function finish() {
   game.endTime = game.clock - game.playStart;
   fadeEl.style.opacity = 1;
   Sound.distant();
   Music.queue('end');
-  setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; endEl.hidden = false; document.getElementById('again').focus(); }, 1300);
+  setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; document.getElementById('end-found').textContent = tally(); endEl.hidden = false; document.getElementById('again').focus(); }, 1300);
 }
 
 // Options shared between the title and pause cards.
@@ -4234,7 +4470,7 @@ function step(dt) {
         if (k > 0.02) [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, k * Math.max(0.25, 0.8 - Math.abs(game.x - 2) / 8)), i * 500));
       }
     }
-    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); } }
+    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); } updateSparks(dt); updateCurios(dt); }
     updateCharacter(dt, game.mode === 'play');
     placeWeight(dt);
     updateQuirkTriggers();
