@@ -1685,6 +1685,372 @@ def _skyline(b, rnd):
         f.normal_flip()
 
 
+# --------------------------------------------------------------------------
+# The city's dressing: small modules repeated along the walls (windows, balconies, awnings, roofs, lamps,
+# stairs, signs), all merged by material in build_atrium. Detail falls off with distance from the vista,
+# and faces no camera can ever face are not built at all.
+# --------------------------------------------------------------------------
+
+# Where the city is seen from: the tunnel mouth, the balcony and the vista shot's crane up and back, and ring
+# C's ledge as far as the atrium shows (the game's camera x from 62 to 84 here, up to 13 m out, up to 12 m up).
+VIEW_BOX = ((62.0, 84.0), (-13.0, -0.5), (-0.5, 12.0))
+VIEW_EYE = Vector((74.5, -8.5, 9.5))           # the vista's wide end: detail is graded by distance from it
+_VIEW = [Vector((x, y, z)) for x in VIEW_BOX[0] for y in VIEW_BOX[1] for z in VIEW_BOX[2]]
+UP = Vector((0, 0, 1))
+
+
+def _seen(c, n):
+    """Can a face at c, its front toward n, ever face a camera that sees the city? The atrium's materials
+    are double-sided in the game, so only faces hidden behind their own solid are left out."""
+    return any(n.dot(p - c) > 0.0 for p in _VIEW)
+
+
+def _lod(p):
+    """2 near (everything), 1 middle (recesses, slabs, lamps), 0 far (flat, silhouette and lights only)."""
+    d = (Vector(p) - VIEW_EYE).length
+    return 2 if d < 75.0 else 1 if d < 150.0 else 0
+
+
+def _drnd(p, salt=0):
+    """A random stream for the dressing, seeded by place, so the city's layout (drawn from the scene's own
+    stream) never moves when the dressing changes."""
+    return random.Random(int(p.x * 7919.0) * 31 + int(p.y * 104729.0) * 17 + int(p.z * 1299.0) + salt)
+
+
+def _quad(bm, pts, n=None, cull=True):
+    """A face through pts on its own verts (its edges stay crisp in smoothed meshes), wound toward n;
+    left out when no camera could face it."""
+    if n is not None and cull and not _seen(sum(pts, Vector()) / len(pts), n):
+        return None
+    f = bm.faces.new([bm.verts.new(p) for p in pts])
+    if n is not None:
+        f.normal_update()
+        if f.normal.dot(n) < 0:
+            f.normal_flip()
+    return f
+
+
+def _abox(bm, center, size, rot=None):
+    """add_box for the city: only the faces some camera can see (most backs and undersides go)."""
+    R = rot or Matrix.Identity(4)
+    M = Matrix.Translation(Vector(center)) @ R
+    R3 = R.to_3x3()
+    h = (size[0] / 2, size[1] / 2, size[2] / 2)
+    for a, i, j in ((0, 1, 2), (1, 2, 0), (2, 0, 1)):
+        for s in (-1, 1):
+            n = Vector((0.0, 0.0, 0.0))
+            n[a] = s
+            pts = []
+            for si, sj in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+                v = Vector((0.0, 0.0, 0.0))
+                v[a], v[i], v[j] = s * h[a], si * h[i], sj * h[j]
+                pts.append(M @ v)
+            _quad(bm, pts, (R3 @ n).normalized())
+
+
+def _cbox(bm, c, T, F, w, d, h, ch, top=True, front=True):
+    """A block with its four upright edges chamfered, c at the middle of its foot: the corners catch the
+    light. front=False leaves the face toward F open for a _facade."""
+    hw, hd = w / 2, d / 2
+    ch = max(0.0, min(ch, hw * 0.4, hd * 0.4))
+    loc = ((-hw + ch, -hd), (hw - ch, -hd), (hw, -hd + ch), (hw, hd - ch), (hw - ch, hd), (-hw + ch, hd), (-hw, hd - ch), (-hw, -hd + ch))
+    P = [c + T * a + F * b for a, b in loc]
+    up = UP * h
+    for i in range(8):
+        a, e = P[i], P[(i + 1) % 8]
+        if (e - a).length < 1e-4 or (i == 4 and not front):
+            continue
+        _quad(bm, [a, e, e + up, a + up], (e - a).cross(UP).normalized())
+    if top:
+        _quad(bm, [p + up for p in P], UP)
+
+
+def _octa(bm, c, r):
+    """A bulb: a small octahedron, bright enough to bloom."""
+    ring = [bm.verts.new(c + Vector(d) * r) for d in ((1, 0, 0), (0, 1, 0), (-1, 0, 0), (0, -1, 0))]
+    top, bot = bm.verts.new(c + UP * (r * 1.3)), bm.verts.new(c - UP * (r * 1.3))
+    for i in range(4):
+        a, e = ring[i], ring[(i + 1) % 4]
+        bm.faces.new((a, e, top))
+        bm.faces.new((e, a, bot))
+
+
+def _hang_lamp(b, top, drop, warm=True, shade=0.22):
+    """A lamp hung on a drop wire: a six-sided shade open below (left whole, seen from under) and its bulb."""
+    p = top - UP * drop
+    _wire(b['cable'], [top, p + UP * 0.2], 0.012)
+    if shade:
+        rt, rb = shade * 0.3, shade
+        ring = [(Vector((math.cos(a), math.sin(a), 0))) for a in [math.pi * k / 3 for k in range(6)]]
+        for k in range(6):
+            a, e = ring[k], ring[(k + 1) % 6]
+            _quad(b['sheet'], [p + UP * 0.2 + a * rt, p + UP * 0.2 + e * rt, p + e * rb, p + a * rb], (a + e).normalized(), cull=False)
+    _octa(b['lamp'] if warm else b['haze'], p - UP * 0.05, 0.09)
+
+
+def _gable(roof, wall, c, T, F, w, d, rise, over=0.3):
+    """A pitched roof over a w by d plan (ridge along T), c at the middle of its eaves; gable ends in wall."""
+    hw, hd = w / 2 + over, d / 2 + over
+    ridge = [c + T * (-hw) + UP * rise, c + T * hw + UP * rise]
+    for s in (-1, 1):
+        eave = [c + T * (-hw) + F * (s * hd), c + T * hw + F * (s * hd)]
+        n = (F * s * rise + UP * hd).normalized()
+        _quad(roof, [eave[0], eave[1], ridge[1], ridge[0]], n)
+    for s in (-1, 1):
+        _quad(wall, [c + T * (s * w / 2) + F * (-d / 2), c + T * (s * w / 2) + F * (d / 2), c + T * (s * w / 2) + UP * rise], T * s)
+
+
+def _tank(b, p, r, h, dr, lod):
+    """A water tank on legs, with a conical lid."""
+    mat = b['rust'] if dr.random() < 0.5 else b['sheet']
+    leg = 0.8 if lod else 0.0
+    add_cyl(mat, p + UP * leg, p + UP * (leg + h), r, seg=8 if lod else 6)
+    add_cyl(mat, p + UP * (leg + h), p + UP * (leg + h + r * 0.45), r * 1.05, 0.06, seg=8 if lod else 6)
+    if lod:
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                _abox(b['sheet'], p + Vector((sx * r * 0.6, sy * r * 0.6, leg / 2)), (0.08, 0.08, leg))
+
+
+def _chimney(b, p, T, F, h, dr):
+    """A chimney stack: chamfered brick, a cap, now and then a cowl."""
+    _cbox(b['masonry'], p, T, F, 0.6, 0.6, h, 0.08)
+    _abox(b['cut'], p + UP * (h + 0.06), (0.78, 0.78, 0.12), rot=_rot(T, F))
+    if dr.random() < 0.4:
+        add_cyl(b['sheet'], p + UP * (h + 0.12), p + UP * (h + 0.6), 0.12, seg=6)
+        _abox(b['sheet'], p + UP * (h + 0.66), (0.42, 0.42, 0.06), rot=_rot(T, F))
+
+
+def _silhouette(dk, base, T, F, ww, wh, kind):
+    """Something seen against a lit room: a plant, a standard lamp, a drawn curtain, a hung coat."""
+    def P(u, z):
+        return base + T * u + UP * z
+    if kind == 'plant':
+        u = ww * 0.22
+        _quad(dk, [P(u - 0.13, 0), P(u + 0.13, 0), P(u + 0.16, 0.24), P(u - 0.16, 0.24)], F, cull=False)
+        for a, l in ((-0.6, 0.45), (0.0, 0.6), (0.55, 0.42), (-0.2, 0.5), (0.3, 0.55)):
+            tip = P(u + l * math.sin(a), 0.24 + l * math.cos(a))
+            _quad(dk, [P(u - 0.03, 0.22), P(u + 0.03, 0.22), tip], F, cull=False)
+    elif kind == 'lamp':
+        u = -ww * 0.25
+        _quad(dk, [P(u - 0.015, 0), P(u + 0.015, 0), P(u + 0.015, wh * 0.62), P(u - 0.015, wh * 0.62)], F, cull=False)
+        _quad(dk, [P(u - 0.16, wh * 0.6), P(u + 0.16, wh * 0.6), P(u + 0.08, wh * 0.82), P(u - 0.08, wh * 0.82)], F, cull=False)
+    elif kind == 'curtain':
+        s = 1 if kind else -1
+        _quad(dk, [P(s * ww / 2, 0), P(s * ww * 0.12, 0), P(s * ww * 0.22, wh), P(s * ww / 2, wh)], F, cull=False)
+    else:                                   # a coat on a peg
+        u = ww * 0.3
+        _quad(dk, [P(u - 0.14, wh * 0.25), P(u + 0.14, wh * 0.25), P(u + 0.09, wh * 0.78), P(u - 0.09, wh * 0.78)], F, cull=False)
+
+
+def _facade(b, wall, c, T, F, w, h, holes, depth=0.22):
+    """A wall face cut with openings, c at the middle of its foot, facing F. holes: (u, z, width, height,
+    fill) with fill a bucket for the back of the opening; the reveals are in the wall's material, so each
+    opening reads as a real recess. Spans between openings are merged into strips."""
+    if not holes or not _seen(c + UP * (h / 2), F):
+        _quad(wall, [c - T * (w / 2), c + T * (w / 2), c + T * (w / 2) + UP * h, c - T * (w / 2) + UP * h], F)
+        return
+    zs = sorted({0.0, h} | {z for _, z, _, _, _ in holes} | {z + hh for _, z, _, hh, _ in holes})
+    for za, zb in zip(zs, zs[1:]):
+        zm = (za + zb) / 2
+        cuts = sorted((u - ww / 2, u + ww / 2) for u, z, ww, hh, _ in holes if z < zm < z + hh)
+        x = -w / 2
+        for a, e in cuts + [(w / 2, w / 2)]:
+            if a - x > 1e-4:
+                _quad(wall, [c + T * x + UP * za, c + T * a + UP * za, c + T * a + UP * zb, c + T * x + UP * zb], F)
+            x = max(x, e)
+    back = -F * depth
+    for u, z, ww, hh, fill in holes:
+        o = c + T * u + UP * z
+        l, r, t = o - T * (ww / 2), o + T * (ww / 2), UP * hh
+        _quad(wall, [l, l + t, l + t + back, l + back], T)
+        _quad(wall, [r, r + back, r + t + back, r + t], -T)
+        _quad(wall, [l, l + back, r + back, r], UP)
+        _quad(wall, [l + t, r + t, r + t + back, l + t + back], -UP)
+        _quad(fill, [l + back, r + back, r + t + back, l + t + back], F)
+
+
+def _dress_opening(b, c, T, F, ww, wh, kind, lod, dr, depth=0.22):
+    """What a window or door cut by _facade gets: c at the middle of its sill in the wall's face. Stone sill
+    and lintel; a lit room shows its glazing bars and something against the light; shutters closed in the
+    opening or folded back beside it."""
+    rot = _rot(T, F)
+    if lod >= 1:
+        if kind != 'door':
+            _abox(b['cut'], c + F * 0.07 - UP * 0.04, (ww + 0.22, 0.18, 0.08), rot=rot)
+        _abox(b['cut'], c + UP * (wh + 0.09) + F * 0.03, (ww + 0.3, 0.08, 0.18), rot=rot)
+    back = c - F * (depth - 0.03)
+    if kind == 'glow':
+        if lod >= 1:
+            _quad(b['dark'], [back + T * -0.025, back + T * 0.025, back + T * 0.025 + UP * wh, back + T * -0.025 + UP * wh], F)
+            _quad(b['dark'], [back - T * (ww / 2) + UP * (wh * 0.62), back + T * (ww / 2) + UP * (wh * 0.62),
+                              back + T * (ww / 2) + UP * (wh * 0.62 + 0.05), back - T * (ww / 2) + UP * (wh * 0.62 + 0.05)], F)
+        if lod >= 2 and dr.random() < 0.7:
+            _silhouette(b['dark'], c - F * (depth - 0.09), T, F, ww, wh, dr.choice(('plant', 'lamp', 'curtain', 'coat', 'plant')))
+    elif kind == 'shut':
+        p = c - F * 0.06
+        _quad(b['wood'], [p - T * (ww / 2), p + T * (ww / 2), p + T * (ww / 2) + UP * wh, p - T * (ww / 2) + UP * wh], F)
+        if lod >= 2:
+            p = p + F * 0.01
+            _quad(b['dark'], [p - T * 0.02, p + T * 0.02, p + T * 0.02 + UP * wh, p - T * 0.02 + UP * wh], F)
+    elif kind == 'open' and lod >= 1:
+        for s in (-1, 1):
+            q = c + F * 0.04 + T * (s * (ww * 0.75 + 0.03))
+            _quad(b['wood'], [q - T * (ww / 4), q + T * (ww / 4), q + T * (ww / 4) + UP * wh, q - T * (ww / 4) + UP * wh], F)
+
+
+def _balcony(b, c, T, F, bw, lod, dr, out=0.95):
+    """A balcony off a floor, c at the middle of its threshold in the wall's face: a slab on corbels, rails
+    and balusters or a sheet parapet; washing on a line, a pot or two."""
+    rot = _rot(T, F)
+    _abox(b['cut'], c + F * (out / 2) - UP * 0.07, (bw, out, 0.14), rot=rot)
+    if lod < 1:
+        return
+    edge = c + F * (out - 0.05)
+    if lod >= 2:
+        for s in (-1, 1):
+            _abox(b['cut'], c + F * 0.22 + T * (s * (bw / 2 - 0.18)) - UP * 0.32, (0.12, 0.42, 0.36), rot=rot)
+    if lod >= 2 and dr.random() < 0.6:
+        _abox(b['sheet'], edge + UP * 0.98, (bw, 0.05, 0.05), rot=rot)
+        _abox(b['sheet'], edge + UP * 0.12, (bw, 0.04, 0.04), rot=rot)
+        k = max(3, int(bw / 0.22))
+        for i in range(k + 1):
+            q = edge + T * (-bw / 2 + bw * i / k)
+            _quad(b['sheet'], [q - T * 0.015, q + T * 0.015, q + T * 0.015 + UP * 0.98, q - T * 0.015 + UP * 0.98], F)
+        for s in (-1, 1):
+            q = c + T * (s * bw / 2)
+            _quad(b['sheet'], [q + UP * 0.95, q + F * out + UP * 0.95, q + F * out + UP * 1.0, q + UP * 1.0], T * s)
+    else:
+        mat = b['sheet'] if dr.random() < 0.5 else b['rust']
+        _quad(mat, [edge - T * (bw / 2), edge + T * (bw / 2), edge + T * (bw / 2) + UP * 0.9, edge - T * (bw / 2) + UP * 0.9], F)
+        _abox(b['cut'], edge + UP * 0.93, (bw + 0.06, 0.12, 0.07), rot=rot)
+    if lod >= 2 and dr.random() < 0.35:                 # washing on a line across the front
+        a, e = edge - T * (bw / 2 - 0.05) + UP * 1.6, edge + T * (bw / 2 - 0.05) + UP * 1.6
+        _wire(b['cable'], [a, (a + e) / 2 - UP * 0.08, e], 0.008)
+        x = -bw / 2 + 0.2
+        while x < bw / 2 - 0.3:
+            cw, chh = dr.uniform(0.25, 0.5), dr.uniform(0.3, 0.6)
+            q = edge + T * (x + cw / 2) + UP * 1.55 + F * 0.02
+            mat = b['cloth'] if dr.random() < 0.5 else b['plaster']
+            _quad(mat, [q - T * (cw / 2), q + T * (cw / 2), q + T * (cw / 2) - UP * chh, q - T * (cw / 2) - UP * chh], F, cull=False)
+            x += cw + dr.uniform(0.08, 0.3)
+    elif lod >= 2 and dr.random() < 0.5:                # a pot plant
+        q = c + F * (out * 0.7) + T * dr.uniform(-bw / 3, bw / 3)
+        _abox(b['rust'], q + UP * 0.15, (0.3, 0.3, 0.3), rot=rot)
+        for a in (-0.5, 0.1, 0.6):
+            _quad(b['dark'], [q + UP * 0.28 - T * 0.04, q + UP * 0.28 + T * 0.04, q + UP * (0.28 + 0.5 * math.cos(a)) + T * (0.5 * math.sin(a))], F, cull=False)
+
+
+def _awning(b, c, T, F, aw, dr, z=2.35):
+    """A canvas or tin awning over a door, c at the middle of the door's foot in the wall's face."""
+    rot = _rot(T, F) @ Matrix.Rotation(-0.38, 4, 'X')
+    mat = b['cloth'] if dr.random() < 0.6 else b['rust']
+    _abox(mat, c + F * 0.52 + UP * (z - 0.2), (aw, 1.12, 0.04), rot=rot)
+    if mat is b['cloth']:                               # its valance
+        q = c + F * 1.04 + UP * (z - 0.4)
+        _quad(mat, [q - T * (aw / 2), q + T * (aw / 2), q + T * (aw / 2) - UP * 0.18, q - T * (aw / 2) - UP * 0.18], F)
+    for s in (-1, 1):
+        q = c + T * (s * (aw / 2 - 0.08))
+        _wire(b['cable'], [q + UP * (z + 0.25), q + F * 0.95 + UP * (z - 0.38)], 0.012)
+
+
+def _wall_lamp(b, p, F, lit):
+    """A bracket lamp on a wall, p on the wall's face."""
+    T = Vector((F.y, -F.x, 0))
+    _abox(b['sheet'], p + F * 0.2, (0.05, 0.4, 0.05), rot=_rot(T, F))
+    if lit:
+        _octa(b['lamp'], p + F * 0.38 - UP * 0.12, 0.09)
+    _abox(b['sheet'], p + F * 0.38 - UP * 0.02, (0.22, 0.22, 0.06), rot=_rot(T, F))
+
+
+def _street_lamp(b, base, T, F, h, lit, warm=True):
+    """A lamp standard: post, an arm out over the void, a lantern; a bulb in it when lit."""
+    rot = _rot(T, F)
+    _abox(b['sheet'], base + UP * (h / 2), (0.09, 0.09, h), rot=rot)
+    _abox(b['sheet'], base + UP * (h - 0.05) + F * 0.3, (0.05, 0.6, 0.05), rot=rot)
+    q = base + F * 0.55 + UP * (h - 0.25)
+    _abox(b['sheet'], q + UP * 0.2, (0.3, 0.3, 0.06), rot=rot)
+    if lit:
+        _octa(b['lamp'] if warm else b['haze'], q, 0.11)
+
+
+def _festoon(b, a, e, sag, n, rnd_lit, warm=True):
+    """A string of bulbs slung between two points; rnd_lit() says whether each still lights."""
+    pts = _sag(a, e, sag, max(4, n * 2))
+    _wire(b['cable'], pts, 0.012)
+    for i in range(1, len(pts) - 1, 2):
+        if rnd_lit():
+            _octa(b['lamp'] if warm else b['haze'], pts[i] - UP * 0.12, 0.07)
+
+
+def _sign(bs, c, T, F, size, cell, cols=4, rows=2):
+    """A painted pictogram (a cell of the sign sheet) on a quad facing F, c at its middle."""
+    uv = bs.loops.layers.uv.active
+    hw, hh = T * (size[0] / 2), UP * (size[1] / 2)
+    pts = [c - hw - hh, c + hw - hh, c + hw + hh, c - hw + hh]
+    f = bs.faces.new([bs.verts.new(p) for p in pts])
+    f.normal_update()
+    col, row = cell % cols, cell // cols
+    u0, v0 = col / cols, 1.0 - (row + 1) / rows
+    for lp, (du, dv) in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+        lp[uv].uv = (u0 + (du * 0.98 + 0.01) / cols, v0 + (dv * 0.98 + 0.01) / rows)
+    if f.normal.dot(F) < 0:
+        f.normal_flip()
+        for lp in f.loops:                            # keep the picture the right way round
+            pass
+
+
+def _signboard(b, c, T, F, size, cell, lit=False):
+    """A board on the wall with a pictogram on it: painted on plate, or a lamp box with the sign dark on it."""
+    w, h = size
+    if lit:
+        _abox(b['sheet'], c - F * 0.08, (w + 0.12, 0.12, h + 0.12), rot=_rot(T, F))
+        _quad(b['glow'], [c - T * (w / 2) - UP * (h / 2) - F * 0.015, c + T * (w / 2) - UP * (h / 2) - F * 0.015,
+                          c + T * (w / 2) + UP * (h / 2) - F * 0.015, c - T * (w / 2) + UP * (h / 2) - F * 0.015], F)
+    else:
+        _abox(b['sheet'], c - F * 0.04, (w + 0.1, 0.05, h + 0.1), rot=_rot(T, F))
+    _sign(b['signs'], c + F * 0.01, T, F, (w, h), cell)
+
+
+def _stair_run(b, a, e, F, width=1.1, rise=0.36):
+    """A steel stair from a up to e (feet of its first and last steps), its open side toward F: treads and
+    risers, a stringer each side, a handrail on posts."""
+    d = e - a
+    run = Vector((d.x, d.y, 0.0))
+    L = run.length
+    T = run.normalized()
+    S = Vector((-T.y, T.x, 0.0))
+    if S.dot(F) < 0:
+        S = -S
+    n = max(2, int(abs(d.z) / rise))
+    tr, ri = L / n, d.z / n
+    for s in (-1, 1):                                   # stringers
+        side = S * (s * width / 2)
+        _quad(b['sheet'], [a + side - UP * 0.25, e + side - UP * 0.25, e + side + UP * 0.05, a + side + UP * 0.05], S * s)
+    for k in range(n):
+        p = a + T * (tr * k) + UP * (ri * k)
+        l, r = p - S * (width / 2), p + S * (width / 2)
+        _quad(b['sheet'], [l, r, r + UP * ri, l + UP * ri], -T)
+        _quad(b['sheet'], [l + UP * ri, r + UP * ri, r + UP * ri + T * tr, l + UP * ri + T * tr], UP)
+    rail = [a + S * (width / 2) + UP * 1.0, e + S * (width / 2) + UP * 1.0]
+    _wire(b['sheet'], rail, 0.03)
+    for k in range(0, n + 1, max(1, n // 4)):
+        p = a + T * (tr * k) + UP * (ri * k) + S * (width / 2)
+        _abox(b['sheet'], p + UP * 0.5, (0.05, 0.05, 1.0))
+
+
+def _haze_curtain(b, WL, WR, y, z0, z1):
+    """A layer of haze across the chasm at a depth: a sheet from wall to wall (its ends buried in the rock),
+    its top along the edge of the tier behind it so the line it draws is the tier's own."""
+    pl = _wpos(WL, _wat_y(WL, y)) if y < WL['pts'][-1].y else WL['pts'][-1]
+    pr = _wpos(WR, _wat_y(WR, y)) if y < WR['pts'][-1].y else WR['pts'][-1]
+    vs = [Vector((pl.x - 12.0, y, z0)), Vector((pr.x + 12.0, y, z0)), Vector((pr.x + 12.0, y, z1)), Vector((pl.x - 12.0, y, z1))]
+    f = b['mist'].faces.new([b['mist'].verts.new(v) for v in vs])
+    f.normal_update()
+    if f.normal.y > 0:
+        f.normal_flip()
+
+
 def _fan(blades, frame, hub, axis, radius, n_blades):
     """A ventilation fan: its ring goes in frame (world), its blades in their own mesh around their local
     Z (the spin axis), to be placed at hub."""
