@@ -102,7 +102,7 @@ STEP = (0.17, 0.43, 0.27)                   # CoinViewerStep: y0, y1, height
 COIN_BOX = (0.52, DECK + 0.72)              # the coin box's front face y (less 0.02), its centre height; the red plunger is 0.035 above
 
 # Ring C generic: the prop straight behind him (Blender +y) at his x.
-RADIO_KNOB = (0.25, 0.8)                    # y, height
+RADIO_KNOB = (0.24, 0.72)                   # y, height (his reach on tiptoe: no higher)
 SWITCH = (0.25, 0.62)
 
 TAG = (0.042, 0.058)                        # CurioTag plate: width, height
@@ -888,7 +888,8 @@ class Act:
         self.pb['root'].location = (0, 0, 0)
         self.c.done()
         worst = sorted(self.over, reverse=True)[:3]
-        print(f'curios: {self.name} {self.frames} f, reach clamps', [(round(e, 3), fr, sd) for e, fr, sd in worst])
+        frs = sorted({fr for _, fr, _ in self.over})
+        print(f'curios: {self.name} {self.frames} f, reach clamps', worst, 'frames', frs[:1], frs[-1:], len(frs))
 
 
 class HandPose(tuple):
@@ -971,8 +972,8 @@ def clip_weigh_self(dl01, arm):
         startle = spr(f, TICKET_POP + 1, 1.0, decay=4, freq=1.3)
         lean = tr([(36, 0), (44, 1), (60, 1), (66, 0.3), (72, 0)], f)
         bob = -0.012 * (pulse(f, 2, 8) + pulse(f, 6, 12) + pulse(f, N - 13, N - 7) + pulse(f, N - 9, N - 3))
-        body = (0.012 * lean, 0.006 * lean, -0.005 + bounce + 0.006 * max(0, startle) + bob - 0.006 * lean)
-        body_rot = (2 + 6 * lean - 7 * max(0, startle), 4 * lean, 16 * lean)
+        body = (0.012 * lean, -0.012 * lean, -0.005 + bounce + 0.006 * max(0, startle) + bob - 0.008 * lean)
+        body_rot = (2 + 8 * lean - 7 * max(0, startle), 4 * lean, -12 * lean)
         look_dial = a.look(f, dial, body, body_rot)
         look_card = a.look(f, card, body, body_rot)
         w_dial = tr([(6, 0), (12, 1), (TICKET_POP, 1), (TICKET_POP + 3, 0)], f)
@@ -989,7 +990,7 @@ def clip_weigh_self(dl01, arm):
         reach = tr([(37, 0), (44, 1), (64, 1), (70, 0)], f)
         if reach > 0:
             g = a.grip(f, 1, pinch + Vector((0, 0, 0.03 * (1 - tr([(37, 0), (43, 1)], f)))), body, body_rot,
-                       d=(0.1, -0.2, -1.0), x_axis=(1, 0, 0))
+                       d=(0.1, -0.55, -1.0), x_axis=(1, 0, 0))
             hands[1], rot['L'] = mix_hand((hands[1], rot['L']), g, reach)
         claw_l = tr([(37, 20), (41, 34), (43, 30), (45, 3), (63, 3), (65, 30), (72, CLAW_REST_OPEN['L'])], f)
         claw_r = CLAW_REST_OPEN['R'] + 14 * bal + 20 * max(0, startle)
@@ -1054,7 +1055,7 @@ def clip_read_route(dl01, arm):
         card_c = to_stand(stand, (x + 0.045, y - 0.03, ctop - ch / 2 + lift))
         pinch = to_stand(stand, (x + 0.045 + 0.02, y - 0.03, ctop - 0.022 + lift))
         toe = tr([(8, 0), (16, 1), (60, 1), (70, 0)], f)
-        reach = tr([(10, 0), (18, 1), (60, 1), (68, 0)], f)
+        reach = tr([(10, 0), (18, 1), (33, 1), (37, 0), (53, 0), (57, 1), (62, 1), (68, 0)], f)
         tap = sum(pulse(f, t0, t0 + 5) for t0 in (38, 45))
         chest = tr([(32, 0), (38, 1), (50, 1), (55, 0)], f)
         happy = sum(pulse(f, t0, t0 + 6) for t0 in (51, 57))
@@ -1081,7 +1082,8 @@ def clip_read_route(dl01, arm):
         a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=feet, hands=hands,
                hand_rot=rot, elbows={'R': reach, 'L': chest},
                claws={'L': tr([(0, CLAW_REST_OPEN['L']), (36, 6), (50, 6), (56, CLAW_REST_OPEN['L'])], f),
-                      'R': tr([(10, 1), (16, 26), (19, 2), (60, 2), (63, 24), (70, CLAW_REST_OPEN['R'])], f)})
+                      'R': tr([(10, 1), (16, 26), (19, 2), (33, 2), (35, 20), (53, 20), (56, 24), (58, 2), (61, 2),
+                               (63, 24), (70, CLAW_REST_OPEN['R'])], f)})
     a.done()
 
 
@@ -1141,7 +1143,7 @@ def clip_frank_hand(dl01, arm):
         look_pt = r + fw * 0.25 - left * 0.03 + Vector((0, 0, 0.43))
         eye = r + fw * 0.1 + Vector((0, 0, 0.6))
         g_look = a.grip(f, -1, look_pt, body, body_rot, d=(fw * 0.5 + up).normalized(), x_axis=-(eye - look_pt).normalized())
-        show_pt = r + fw * 0.27 + left * 0.04 + Vector((0, 0, 0.47))
+        show_pt = r + fw * 0.23 - left * 0.06 + Vector((0, 0, 0.45))
         g_show = a.grip(f, -1, show_pt, body, body_rot, d=(fw * 0.4 + up).normalized(), x_axis=-cam)
         k_on = tr([(14, 0), (22, 1), (34, 1), (40, 0)], f)
         k_look = tr([(34, 0), (42, 1), (56, 1), (60, 0), (68, 0), (71, 1), (76, 0)], f)
@@ -1178,12 +1180,12 @@ def clip_frank_hand(dl01, arm):
 
 
 # DL-02 HoldMug -------------------------------------------------------------------------------------------
-MUG_GRAB, MUG_SET, MUG_WRONG = 26, 76, -70.0
+MUG_GRAB, MUG_SET, MUG_WRONG = 26, 76, -150.0
 
 
 def mug_yaw(f):
     """MugD17's turn about its own axis on the shelf after he sets it down (degrees about +z; game: about +y)."""
-    return tr([(0, 0.0), (MUG_SET, MUG_WRONG), (82, MUG_WRONG), (88, -20.0), (90, -20.0), (94, 0.0)], f)
+    return tr([(0, 0.0), (MUG_SET - 1, 0.0), (MUG_SET, MUG_WRONG), (82, MUG_WRONG), (87, -80.0), (89, -80.0), (94, 0.0)], f)
 
 
 def mug_matrix(pos, yaw=0.0, tilt=0.0, axis=(1, 0, 0)):
@@ -1423,7 +1425,7 @@ def clip_sit_chair(dl01, arm):
     front = to_stand(stand, (cx, cy - dpt / 2, 0)).x                          # the seat's front edge (stand x)
     sit_y, sit_z = CHAIR_SIT
     top = seat + CUSHION - 0.01
-    a.root_keys = [(0, (0, 0, 0)), (8, (0, 0, 0)), (18, (front - 0.2, 0, 0)), (24, (front - 0.2, 0, -0.03)),
+    a.root_keys = [(0, (0, 0, 0)), (8, (0, 0, 0)), (18, (front - 0.13, 0, 0)), (24, (front - 0.13, 0, -0.03)),
                    (30, (front - 0.08, 0, 0.18)), (36, (front + 0.06, 0, 0.3)), (44, (front + 0.16, 0, top)),
                    (56, (front + 0.16, 0, top)), (64, (sit_y, 0, sit_z)), (100, (sit_y, 0, sit_z)),
                    (104, (sit_y - 0.06, 0, sit_z + 0.1)), (110, (0.02, 0, 0.0)), (114, (0, 0, -0.03)), (118, (0, 0, 0))]
