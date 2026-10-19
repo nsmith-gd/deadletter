@@ -405,9 +405,9 @@ def make_growth_marks():
         lab = Image.new('RGBA', (200, 52), (34, 32, 38, 0))
         ld = ImageDraw.Draw(lab)
         ld.text((4, 44), f'M {age}', font=_font(38, 'serif'), fill=graphite, anchor='ls')
-        ld.text((72, 44), f'R.Y. {year}', font=_font(27, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
+        ld.text((88, 44), f'R.Y. {year}', font=_font(27, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
         lab = lab.rotate(rnd.uniform(-4, 4), resample=Image.BICUBIC)
-        pencil.alpha_composite(lab, (int(a[0] - 168), int(a[1] - 40)))
+        pencil.alpha_composite(lab, (int(a[0] - 182), int(a[1] - 40)))
     sx, sy = px(94.47, MARK_Z[-1])                                          # a child's star by the last one
     d.line((sx + 12, sy - 22, sx + 26, sy + 6, sx + 2, sy - 12, sx + 30, sy - 12, sx + 6, sy + 6, sx + 12, sy - 22),
            fill=(70, 90, 170, 220), width=4)

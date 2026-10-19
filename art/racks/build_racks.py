@@ -48,7 +48,7 @@ PLATE_TOP = 0.004
 CRADLE_X = 44.5
 ARM_DX = 0.275                       # cradle arms either side of the courier's pod
 PIVOT_Y = 0.72                       # the arms' shoulders on the bay's back frame
-SEATED_Y = 0.5                       # the seated courier's root, in the cradle
+SEATED_Y = 0.44                      # the seated courier's root, in the cradle
 SEATED_BODY = (0.0, 0.0, -0.14)      # its pose: sitting low on its folded legs
 SEATED_ROT = (9.0, 0.0, 0.0)
 LYING_HOLD = (0.35, 0.45)            # (y, z) where the cups close on the lying courier, on the plate
@@ -266,6 +266,7 @@ def racks_materials(m):
     m['baylight'] = emission_material('BayLight', (0.72, 0.88, 1.0), 2.0)       # always on: the bay is lit
     m['baylamp'] = [emission_material(f'BayLamp{i}', (0.72, 0.92, 1.0), 0.0) for i in range(3)]
     m['fallenlamp'] = emission_material('FallenLamp', (0.85, 0.30, 0.08), 0.0)
+    m['seatedlamp'] = emission_material('SeatedLamp', (0.85, 0.30, 0.08), 0.0)   # the same lamps, once seated
     # The fallen courier: D-17's own paint, under years of dust.
     m['dustycream'] = worn_material('DustyCream', base=(0.5, 0.46, 0.35), dirt=(0.3, 0.26, 0.18),
                                     chip=(0.03, 0.027, 0.022), rough=0.85, chip_rough=0.55, metallic=0.0,
@@ -489,11 +490,11 @@ def _courier_object(name, bm, mats, m, coll, xform, ratio=0.09):
     return ob
 
 
-def _lamps_object(name, bm, m, coll, xform, parent):
+def _lamps_object(name, bm, mat, coll, xform, parent):
     bmesh.ops.transform(bm, matrix=xform, verts=bm.verts)
     for f in bm.faces:
         f.material_index = 0
-    ob = _obj(name, bm, [m['fallenlamp']], coll)
+    ob = _obj(name, bm, [mat], coll)
     ob.parent = parent
     ob.matrix_parent_inverse = Matrix.Identity(4)
     return ob
@@ -552,7 +553,7 @@ def build_couriers(dl01, m, coll):
     shift = Vector((-(min(xs) + max(xs)) / 2, 0.0, -min(zs)))
     xform = Matrix.Translation(shift) @ rot
     fallen = _courier_object('FallenCourier', body, mats, m, coll, xform)
-    _lamps_object('FallenLamps', lamps, m, coll, xform, fallen)
+    _lamps_object('FallenLamps', lamps, m['fallenlamp'], coll, xform, fallen)
     fallen.location = (FALLEN[0], FALLEN[1], 0.0)
     out['fallen'] = fallen
     out['lying_xform'] = xform
@@ -564,7 +565,7 @@ def build_couriers(dl01, m, coll):
     origin = Vector((CRADLE_X, py, pz))
     xform = Matrix.Translation(Vector((CRADLE_X, SEATED_Y, PLATE_TOP)) - origin)
     seated = _courier_object('SeatedCourier', body, mats, m, coll, xform)
-    _lamps_object('SeatedLamps', lamps, m, coll, xform, seated)
+    _lamps_object('SeatedLamps', lamps, m['seatedlamp'], coll, xform, seated)
     seated.location = origin
     seated.hide_render = False
     out['seated'] = seated
@@ -810,14 +811,14 @@ def build_set(dl01, m, coll):
 TOUCH_FRAMES = 52
 # Rig space (D-17 facing -y; in the game he faces -x, back toward the bay he dragged it from, so the seated
 # courier is at his front right). The claw tip lands here, on top of its head, near its left side:
-TOUCH_TIP = Vector((-0.3, -0.34, 0.558))
-TOUCH_DIR = Vector((-0.05, -0.9, -0.42)).normalized()       # the claw laid along its head, pointing on
+TOUCH_TIP = Vector((-0.34, -0.36, 0.558))
+TOUCH_DIR = Vector((-0.45, -0.8, -0.35)).normalized()      # the claw laid along its head, pointing on
 TOUCH_REACH = 0.104                                          # wrist to claw tip, along the claw
 TOUCH_TRIM = Vector((0.0, 0.0, 0.014))                       # measured: the solved claw tip falls this short
-TOUCH_YAW = 20.0                                             # he opens toward the camera as he reaches (root, degrees)
+TOUCH_YAW = 28.0                                             # he opens toward the camera as he reaches (root, degrees)
 TOUCH_HOVER = Vector((0.01, 0.045, 0.022))                   # off its head, before and after
 # Where to stand him (world, facing -x) for that, with SeatedCourier as built: root at
-TOUCH_ROOT = (44.9, 0.1)                                     # the tip then lands at (44.56, 0.40, 0.558)
+TOUCH_ROOT = (44.92, 0.0)                                    # the tip then lands at (44.56, 0.34, 0.558)
 
 
 def clip_touch_head(dl01, arm):
@@ -836,7 +837,7 @@ def clip_touch_head(dl01, arm):
         laid = aim(along)
         on = tip - along * TOUCH_REACH + TOUCH_TRIM             # the wrist with the claw on its head
         lean = track([(0, 0), (16, 1), (38, 1), (48, 0)], f)
-        body = (-0.01 * lean, -0.03 * lean, -0.008 * lean)
+        body = (-0.012 * lean, -0.04 * lean, -0.01 * lean)
         rot = (track([(0, 0), (16, 5), (30, 6), (40, 5), (50, 0)], f), -3.0 * lean, 0.0)
         # The right claw: up from his side and out, round the front corner of the pod, onto its head.
         out = track([(4, 0), (18, 1), (40, 1), (48, 0)], f)
