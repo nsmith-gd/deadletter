@@ -457,7 +457,7 @@ def make_growth_marks():
         x, y = tx + rnd.uniform(-110, 120), ty - rnd.uniform(0.05, 0.9) * ts
         d.line((x, y, x + rnd.uniform(-14, 14), y + rnd.uniform(-10, 10)), fill=(232, 222, 200, 160), width=2)
     img.alpha_composite(grooves)
-    _save(img.filter(ImageFilter.GaussianBlur(0.7)), 'growth_marks.png', 64)
+    _save(img.filter(ImageFilter.GaussianBlur(0.7)), 'growth_marks.png', 32)
 
 
 def _tile_noise(w, h, cells, seed, octaves=3):

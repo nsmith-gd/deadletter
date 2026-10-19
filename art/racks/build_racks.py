@@ -795,6 +795,8 @@ def build_bay(m, coll):
 
 
 def build_set(dl01, m, coll):
+    if 'rowlight' not in m:                         # art/dl02's set normally runs first and makes these
+        dl01.dl02.dl02_materials(m)
     racks_materials(m)
     open_old_end(dl01)
     build_hall(m, coll)
