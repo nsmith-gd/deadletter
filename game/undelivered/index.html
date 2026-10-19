@@ -2682,6 +2682,24 @@ function updateAct4(a, dt) {
     if (f >= 47) { game.act = null; game.dl4.patted = true; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; }
     return;
   }
+  if (a.kind === 'hopscotch' && a.long) {
+    // The whole court (art/dl04/hopscotch_long.json): the clip turns him; the game moves his root, hop by hop.
+    const f = actions.HopscotchLong.time * FPS, H = HOPSCOTCH_LONG;
+    if (f < H.cancelUntil && (input.left || input.jumpPressed)) { game.act = null; game.y = DECK; setClip('Idle', 0.2); return; }
+    if (f < H.hops[0][0]) game.x += (H.startX - game.x) * Math.min(1, dt * 4);     // settle onto the mark
+    else {
+      let x = H.startX, dy = 0;
+      for (const [s0, e0, dx, peak] of H.hops) {
+        const k = THREE.MathUtils.clamp((f - s0) / (e0 - s0), 0, 1);
+        x += dx * smooth(k); if (k > 0 && k < 1) dy += peak * Math.sin(Math.PI * k);
+        if (k >= 1 && !a['l' + s0]) { a['l' + s0] = true; Sound.step(0.9); }
+      }
+      game.x = x; game.y = DECK + dy;
+    }
+    for (const [t, fn] of H.beats) if (f >= t && !a['b' + t]) { a['b' + t] = true; fn(); }
+    if (f >= H.end) { game.act = null; game.y = DECK; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+    return;
+  }
   if (a.kind === 'hopscotch') {
     const f = actions.Hopscotch.time * FPS;
     if (f < 17 && (input.left || input.jumpPressed)) { game.act = null; setClip('Idle', 0.2); return; }
@@ -2712,7 +2730,18 @@ function updateAct4(a, dt) {
 
 // Moments that start by themselves as he gets to them.
 // The chalk court in the tunnel: he plays it once on his own, and again whenever the player asks (a curiosity).
-function startHopscotch(x = game.x) { game.vx = 0; game.facing = 1; game.act = { kind: 'hopscotch', phase: 'act', t: 0, x0: x }; setClip('Hopscotch', 0.2); }
+const HOPSCOTCH_LONG = {
+  startX: OFF4 + 66.3, end: 287, cancelUntil: 76,
+  // [start frame, land frame, dx, peak]: 1, 2, 3, 4|5, 6, 7|8, HOME, the hop-turn, the bounce, back to 7|8, back to 6
+  hops: [[80, 88, 0.2333, 0.07], [91, 99, 0.2, 0.07], [102, 110, 0.2, 0.07], [113, 122, 0.2, 0.08], [126, 135, 0.2, 0.075],
+    [166, 175, 0.2, 0.08], [179, 190, 0.225, 0.11], [196, 207, 0, 0.08], [218, 225, 0, 0.05], [240, 249, -0.225, 0.07], [252, 261, -0.2, 0.07]],
+  beats: [[42, () => Sound.tap()], [48, () => Sound.tap()], [135, () => Sound.worried()], [160, () => Sound.strain()], [208, () => Sound.chirp()]],
+};
+function startHopscotch(x = game.x) {
+  game.vx = 0; game.facing = 1;
+  const long = !!actions.HopscotchLong;
+  game.act = { kind: 'hopscotch', phase: 'act', t: 0, x0: x, long }; setClip(long ? 'HopscotchLong' : 'Hopscotch', 0.2);
+}
 function updateTriggers4() {
   const d = game.dl4, x = game.x;
   if (game.act || game.hold || game.mantle) return false;
@@ -2964,6 +2993,15 @@ function currentShot() {
   }
   if (game.region === 4) {
     // The hopscotch: whimsy is a beat too. Up and over him so the chalk reads, then back to the side.
+    // The long version: close and low while he checks nobody is watching (he glances into this lens), a slow crane
+    // up to 45 degrees over the whole court for the hops and the wobble, then down and in for the cheer.
+    if (a && a.kind === 'hopscotch' && a.long) {
+      const t = actions.HopscotchLong.time, CX = OFF4 + 67.3;
+      const k1 = smooth((t - 3.0) / 3.2), k2 = smooth((t - 7.6) / 2.4);
+      const pos = V3(OFF4 + 67.05, 2.35, 2.45).lerp(V3(CX + 0.15, 3.30, 1.75), k1).lerp(V3(X + 0.1, 2.15, 3.2), k2);
+      const look = V3(OFF4 + 66.55, 1.95, 0).lerp(V3(CX - 0.05, 1.70, -0.05), k1).lerp(V3(X, 1.85, 0), k2);
+      return { name: 'hopscotch', pos, look, focal: 40 - 8 * k1 + 8 * k2, ease: 1.0 };
+    }
     if (a && a.kind === 'hopscotch') return { name: 'hopscotch', pos: V3(X + 0.9, Y + 1.55, 1.75), look: V3(X + 0.45, Y, -0.05), focal: 36, ease: 1.4 };
     // Looking back at the depot from the tunnel mouth: from inside the tunnel, low, past him.
     if (a && a.kind === 'lookback') return { name: 'lookback', pos: V3(X + 1.6, Y + 0.5, 1.15), look: V3(X - 4.0, Y + 0.7, -0.5), focal: 34, ease: 1.2 };
