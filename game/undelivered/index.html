@@ -322,7 +322,7 @@ const WORN = {
   ToyFabric: { base: [.36, .33, .30], dirt: [.18, .15, .12], chip: [.42, .40, .36], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
   ToyPatch: { base: [.42, .30, .08], dirt: [.20, .14, .05], chip: [.30, .32, .40], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
 };
-const PLAIN = { EyeDark: [[.003, .003, .003], .3, 0], Shaft: [[.004, .004, .004], .9, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
+const PLAIN = { TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .003], .3, 0], Shaft: [[.004, .004, .004], .9, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
   Water: [[.01, .012, .012], .04, .3],
   Copper: [[.55, .3, .18], .35, 1], ReflectTag: [[.8, .78, .7], .15, .6], BeltRubber: [[.02, .02, .019], .8, 0],
   AtriumPlaster: [[.2, .185, .15], .9, 0], AtriumDark: [[.006, .006, .006], .8, 0], AtriumStone: [[.058, .052, .045], .95, 0],
@@ -342,7 +342,7 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   RampLamp0: [.55, 1, .65, 0], RampLamp1: [.55, 1, .65, 0], RampLamp2: [.55, 1, .65, 0], RampLamp3: [.55, 1, .65, 0], RampLamp4: [.55, 1, .65, 0], RampLamp5: [.55, 1, .65, 0],
   WindowSun: [1, .72, .38, 0], HomeLampBulb: [1, .76, .46, 0], LaneBulb: [.78, .88, 1, 0], TermLamp0: [.75, 1, .82, 0], TermLamp1: [.75, 1, .82, 0], TermLamp2: [.75, 1, .82, 0],
   AtriumWindowGlow: [1, .6, .28, 2.5], AtriumHazeLights: [.62, .76, .95, 1.5],
-  C108Lamp: [1, .7, .42, 1.2], SlotLamp9: [1, .62, .22, 0], SlotLamp2: [1, .62, .22, 0], SlotLamp6: [1, .62, .22, 0],
+  C108Lamp: [1, .7, .42, 1.2], SortLampBulb: [1, .85, .6, 6], TubeLamp: [.8, .9, 1, 2.5], GantryLamp: [1, .78, .5, 8], SlotLamp9: [1, .62, .22, 0], SlotLamp2: [1, .62, .22, 0], SlotLamp6: [1, .62, .22, 0],
   LandingAmber: [1, .62, .18, 0], StopStripe: [1, .55, .15, 0], CageBulb: [1, .86, .62, 0],
   RingLamp: [1, .78, .5, 0], RingLampRed: [1, .18, .1, 0], HomeLight: [1, .72, .4, 0], SkyPanel: [.7, .8, .9, 0] };
 
@@ -3004,7 +3004,7 @@ function updateQuirkTriggers() {
 // things he carries, things he pushes or drags, and the letters.
 // ---------------------------------------------------------------------------
 // DL-01: the trench is too wide and too deep now; the depot cart is the bridge.
-const CART1 = { x: 5.9, half: 0.65, h: 0.55, gap: 0.97 };          // its push bar is 0.65 left of its centre, at 0.44
+const CART1 = { x: 5.9, half: 0.65, h: 0.55, gap: 0.97 }, SCALE1_X = 1.45;          // its push bar is 0.65 left of its centre, at 0.44
 // DL-02 The Sorting Hall.
 const SH = { x0: 12.0, x1: 25.0, tubeX: 14.6, tubeY: 0.9, tubeZ: -0.85, slotX: 16.0, boxX: 17.4,
   table: { x0: 18.6, x1: 22.6, h: 0.75 }, gantry: { x0: 22.4, x1: 25.0, h: 1.35 }, sill: { x0: 25.0, x1: OFF2 + 12.32, h: 1.35 } };
@@ -3031,7 +3031,8 @@ const SLOTS = [
   { id: 6, name: 'MailSlot6', lamp: 'SlotLamp6', region: 3, x: OFF3 + 44.2, upper: true },
   { id: 9, name: 'MailSlot9', lamp: 'SlotLamp9', region: 5, x: OFF4 + 87.4 },
 ];
-const letterState = {};                                   // kept through respawns and checkpoints; a new game clears it
+const letterState = {};
+const FLAT_LETTER = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);   // flat on the floor, across the lane                                   // kept through respawns and checkpoints; a new game clears it
 const CP_ORDER = ['start', 'shutter', 'hall', 'door', 'room', 'weighroom', 'solved', 'bay', 'scanned', 'landing', 'gallery',
   'goods', 'latched', 'cage', 'tunnel', 'ringc', 'bedroom', 'forwarded'];
 const past = (cp, name) => CP_ORDER.indexOf(cp) >= CP_ORDER.indexOf(name);
@@ -3061,8 +3062,11 @@ function buildCh1(setRoot) {
   if (c.seated) c.seated.visible = false;
   if (c.seatedLamps) c.seatedLamps.visible = false;
   for (const o of [c.armL, c.armR, c.bayDoor, c.gate6, c.bucket, c.cage, c.counterweight, c.cageLever, c.cagePawl, c.sheave, c.scaleNeedle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
-  if (c.held) { scene.attach(c.held); c.held.visible = false; c.held.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
-  for (const L of LETTERS) { const o = R(L.name); L.obj = o; if (o) { L.rest = o.position.clone(); o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); } }
+  if (c.held) {
+    refs.wrists[1].add(c.held); c.held.position.set(0.0137, 0, -0.1426); c.held.quaternion.set(0.6964, 0.6964, 0.1228, 0.1228);
+    c.held.visible = false; c.held.traverse((m) => { if (m.isMesh) m.userData.noCull = true; });
+  }
+  for (const L of LETTERS) { const o = R(L.name); L.obj = o; if (o) { L.rest = o.position.clone(); L.restQ = o.quaternion.clone(); o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); } }
   for (const s of SLOTS) s.obj = R(s.name);
   // Lights: the hall's work lamp and its lit gantry door; the bay, cold; the cage's landing.
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
@@ -3115,7 +3119,7 @@ function surfaceCh1(x, h) {
     if (x > SH.x0) {
       if (x >= SH.table.x0 && x <= SH.table.x1) h = Math.max(h, SH.table.h);
       if (x >= SH.gantry.x0 && x <= SH.sill.x1) h = Math.max(h, SH.gantry.h);
-      if (s.box.state === 'floor' && Math.abs(x - s.box.x) <= 0.2) h = Math.max(h, s.box.base + 0.32);
+      if (s.box.state === 'floor' && Math.abs(x - s.box.x) <= 0.2) h = Math.max(h, s.box.base + 0.2);
     }
   }
   if (game.region === 3) for (const w of s.weights) if (w.state === 'floor' && Math.abs(x - w.x) <= WEIGHT_R && !game.upper) h = Math.max(h, WEIGHT_H);
@@ -3177,7 +3181,7 @@ function nearCh1() {
 }
 function itemsHere() {
   const s = game.ch1, out = [];
-  if (game.region === 2) out.push(Object.assign(s.box, { key: 'box', h: 0.32, r: 0.2, below: 0.36, g: refs.ch1.box }));
+  if (game.region === 2) out.push(Object.assign(s.box, { key: 'box', h: 0.2, r: 0.2, below: BAIL_BELOW_WRIST, g: refs.ch1.box }));
   if (game.region === 3) s.weights.forEach((w, i) => out.push(Object.assign(w, { key: 'w' + i, h: WEIGHT_H, r: WEIGHT_R, below: BAIL_BELOW_WRIST, g: refs.ch1.weights[i] })));
   return out;
 }
@@ -3229,7 +3233,7 @@ function beginCh1(kind) {
   }
   if (k === 'postLetter') {
     const sl = SLOTS.find((q) => q.id === +arg);
-    game.act = { kind: 'postLetter', phase: 'approach', t: 0, sl, standX: sl.x, face: 1 };
+    game.act = { kind: 'postLetter', phase: 'approach', t: 0, sl, standX: sl.x - 0.22, face: 1 };
   }
 }
 // Walk to the standing spot (and step in, for the courier), then the action.
@@ -3327,7 +3331,6 @@ function holdLetter(on) {
   const h = refs.ch1 && refs.ch1.held;
   if (!h) return;
   h.visible = on;
-  if (on) { refs.wrists[1].getWorldPosition(h.position); h.position.y -= 0.03; h.quaternion.copy(d17.quaternion); }
 }
 
 // Pushing the cart, the duct; dragging the courier -------------------------------------------
@@ -3370,21 +3373,23 @@ function updateCh1(dt) {
     k.cart.position.x = cart.x;
     k.cart.position.y = cart.state === 'bridge' ? PIT.y : cart.state === 'falling' ? PIT.y * cart.drop * cart.drop : 0;
     k.cart.rotation.z = cart.state === 'falling' ? -0.25 * Math.sin(cart.drop * Math.PI) : 0;
+    const roll = cart.x - (cart.lastX ?? cart.x); cart.lastX = cart.x;
+    if (roll) (k.cartWheels ||= [0, 1, 2, 3].map((i) => k.cart.getObjectByName('DepotCartWheel' + i)).filter(Boolean)).forEach((w) => w.rotateZ(-roll / 0.065));
   }
   if (game.region === 1 && cart.state !== 'bridge' && game.grounded && game.x > PIT.x0 + 0.1 && game.x < PIT.x1 - 0.1 && game.y < PIT.y + 0.05 && !game.act) {
     game.act = { kind: 'trenchStuck', phase: 'act', t: 0 }; game.vx = 0;          // too deep to climb out of
   }
-  const onScale = game.region === 1 && Math.abs(game.x - 2.2) < 0.3 && game.y < 0.1 ? 1 : 0;
+  const onScale = game.region === 1 && Math.abs(game.x - SCALE1_X) < 0.22 && game.y < 0.1 ? 1 : 0;
   s.scale += (onScale - s.scale) * Math.min(1, dt * 3);
-  if (k.scaleNeedle) k.scaleNeedle.rotation.y = -2.2 * s.scale + (game.calm ? 0 : Math.sin(game.clock * 19) * 0.03 * s.scale);
+  if (k.scaleNeedle) { k.scaleNeedle.quaternion.copy(k.scaleNeedle.userData.rest.q); k.scaleNeedle.rotateZ(-THREE.MathUtils.degToRad(95) * s.scale + (game.calm ? 0 : Math.sin(game.clock * 19) * 0.03 * s.scale)); }
   // DL-02: the tube coughs out its letter the first time he passes.
   const tube = LETTERS[0];
   if (letterState.tube === 'cup' && game.region === 2 && game.x > SH.tubeX - 0.3) { letterState.tube = 'falling'; s.tubeT = 0; Sound.chain(0.3); setTimeout(() => Sound.tap(), 200); }
   if (letterState.tube === 'falling') {
     s.tubeT += dt; const t = Math.min(1, s.tubeT / 0.55);
     if (tube.obj) {
-      tube.obj.position.set(tube.rest.x, tube.rest.y - (tube.rest.y - 0.012) * t * t, tube.rest.z + (0.05 - tube.rest.z) * t);
-      tube.obj.rotation.z = t * 2.4;
+      tube.obj.position.set(tube.rest.x, tube.rest.y - (tube.rest.y - 0.004) * t * t, tube.rest.z + (0.12 - tube.rest.z) * t);
+      tube.obj.quaternion.copy(tube.restQ).slerp(FLAT_LETTER, smooth(t));
     }
     if (t >= 1) { letterState.tube = 'floor'; Sound.setDown(false); }
   }
@@ -3427,8 +3432,8 @@ function updateCh1(dt) {
   if (letterState.heap === 'fallingRail') {
     s.heapT += dt; const t = Math.min(1, s.heapT / 0.6);
     if (hl.obj) {
-      hl.obj.position.set(hl.rest.x, hl.rest.y - (hl.rest.y - (GALLERY.h + 0.012)) * t * t, hl.rest.z + (0.1 - hl.rest.z) * t);
-      hl.obj.rotation.z = t * 3.1;
+      hl.obj.position.set(hl.rest.x, hl.rest.y - (hl.rest.y - (GALLERY.h + 0.004)) * t * t, hl.rest.z + (0.12 - hl.rest.z) * t);
+      hl.obj.quaternion.copy(hl.restQ).slerp(FLAT_LETTER, smooth(t));
     }
     if (t >= 1) letterState.heap = 'floor';
   }
@@ -3447,7 +3452,7 @@ function updateCh1(dt) {
   if (letterState.c110 === 'slot' && du.state === 'bridge' && game.region === 5 && game.x > DIP9.x0 - 0.3) { letterState.c110 = 'slipping'; s.c110T = 0; Sound.tap(); }
   if (letterState.c110 === 'slipping') {
     s.c110T += dt; const t = Math.min(1, s.c110T / 0.7);
-    if (cl.obj) { cl.obj.position.set(cl.rest.x, cl.rest.y - (cl.rest.y - (DIP9.floor + DUCT9.h + 0.012)) * t * t, cl.rest.z + (-0.05 - cl.rest.z) * t); cl.obj.rotation.x = -t * 0.9; }
+    if (cl.obj) { cl.obj.position.set(cl.rest.x, cl.rest.y - (cl.rest.y - (DIP9.floor + DUCT9.h + 0.004)) * t * t, cl.rest.z + (0.05 - cl.rest.z) * t); cl.obj.quaternion.copy(cl.restQ).slerp(FLAT_LETTER, smooth(t)); }
     if (t >= 1) letterState.c110 = 'floor';
   }
   if (cl.obj) cl.obj.visible = !/held|posted/.test(letterState.c110);
@@ -3583,7 +3588,7 @@ const HINTS = [
   { when: () => game.ch1.cart.state === 'free' && !game.hold && game.y < 0.05 && game.x > STEP.x1 && game.x < game.ch1.cart.x, at: () => new THREE.Vector3(game.ch1.cart.x - CART1.half, 0.46, 0), key: 'use' },
   { when: () => game.hold === 'push' && game.pushKey === 'cart', at: new THREE.Vector3((PIT.x0 + PIT.x1) / 2, 0.02, 0), key: 'move' },
   // The Chapter 1 rework
-  { region: 2, when: () => game.ch1.box.state === 'floor' && !game.hold && game.x > SH.slotX && game.x < SH.table.x0 && game.y < 0.05, at: () => new THREE.Vector3(game.ch1.box.x, 0.4, 0), key: 'use' },
+  { region: 2, when: () => game.ch1.box.state === 'floor' && !game.hold && game.x > SH.slotX && game.x < SH.table.x0 && game.y < 0.05, at: () => new THREE.Vector3(game.ch1.box.x, 0.3, 0), key: 'use' },
   { region: 2, when: () => game.ch1.courier.state === 'free' && !game.hold && game.x > RK.courierX && game.x < RK.door.x0, at: () => new THREE.Vector3(game.ch1.courier.x + RK.loopOff, 0.46, RK.courierZ), key: 'use' },
   { region: 3, when: () => !game.upper && game.ch1.bucket < 1 && !game.hold && game.route === 'exit' && game.belt.running, at: new THREE.Vector3(HP.weights[0], 0.3, 0), key: 'use' },
   { region: 4, when: () => game.act && game.act.kind === 'cage' && game.ch1.cage.phase === 'stall', at: () => new THREE.Vector3(CG.shaft.x0 + 0.2, game.ch1.cage.y + 0.5, -0.2), key: 'use' },

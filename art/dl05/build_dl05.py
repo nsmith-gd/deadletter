@@ -5,7 +5,7 @@ DL-05 runs straight on from the DL-04 balcony stair, on a floor at 0:
   - ring C's ledge, open to the cave behind a low lip of rock;
   - the barricade that seals ring C, with a gap under it to crouch through;
   - ring C's lane: a low rock tunnel of shuttered homes (C-108 to C-112), dead bulbs on a cable and
-    a few still burning. The flood of R.Y. 42 is still told on it: a dried tideline at 1.2 m along the
+    a few still burning. The flood of R.Y. 42 is still told on it: a dried tideline at 1.0 m along the
     wall and the facades (and inside C-114), mud below it, and halfway along, a stretch of lane sunk
     into standing water (FloodDip, FloodWater). A length of ventilation duct fell on the lane before it
     (PushDuct, with a red strap): pushed into the water, it is the bridge. Beside the path: C-108's
@@ -47,7 +47,7 @@ DUCT = (81.6, 83.1, 0.26, 0.4)        # PushDuct, lying along the lane at y 0: x
 DUCT_GRIP = (-0.775, 0.44)            # its red strap's grip bar: x from the duct's origin, height
 DIP = (83.4, 84.9, -0.25)             # FloodDip, across the lane: x0, x1, floor. The duct, pushed in, is the bridge
 WATER_Z = -0.1                        # FloodWater's surface
-TIDE_Z = 1.2                          # the flood's line: on the lane's wall, the facades and inside C-114
+TIDE_Z = 1.0                          # the flood's line, one water level: the lane's wall, the facades, C-108, inside C-114
 C108_WIN = (82.6, 0.78, 0.62, 1.58)   # C-108's window, dimly lit: x, width, sill, head (lower than its neighbours')
 C110_SLOT = (83.8, 0.98)              # C-110's door slot: x, height
 MAILSLOT9 = (87.4, 0.45, 0.55)        # ring C's mail slot on its post: x, post centre y, slot height
@@ -67,9 +67,9 @@ SCREEN_Y = 1.0                        # the screen recess (the game draws the sc
 READER_Z = 0.72
 TERM_FRONT = 0.955                    # the terminal's front face (y); D-17 presents 0.26 m off it
 TERM_HOUSING = (94.48, 94.92, 0.62, 1.26)
-MARKS = (94.15, 95.25, 1.1, 1.85)       # the growth marks and the tree: x0, x1, z0, z1 (decal on the wall)
-MARK_Z = (1.25, 1.325, 1.4, 1.475, 1.55)   # the five marks, M 2 to M 6, all above the flood's line
-TREE_Z = (1.21, 1.70)                   # the carved tree: foot, crown
+MARKS = (94.15, 95.25, 0.25, 1.25)      # the growth marks and the tree: x0, x1, z0, z1 (decal on the wall, stain included)
+MARK_Z = (0.862, 0.928, 0.991, 1.064, 1.138)   # the five marks, M 2 to M 6: the first three at or under the flood's line
+TREE_Z = (0.33, 0.85)                   # the carved tree, under the line: foot, crown
 PAINTED_WINDOW = (91.72, 1.36, 0.8, 0.7)   # the window painted over the bed: x, z, width, height
 DESK_X, DESK_HALF, DESK_TOP = 94.7, 0.55, 0.55
 DESK_Y = 0.62                         # the desk's origin y (centre of its footprint, which runs 0.29 to 0.95)
@@ -221,46 +221,7 @@ def make_textures():
     d.line((mx, my + 8 * k, mx, my + 70 * k), fill=(34, 58, 44), width=5)
     _save(_age(img, 511, 0.7), 'school_sign.png', 32)
 
-    # The growth marks and the tree, on the wall behind the desk, both above the flood's line (TIDE_Z): the
-    # water took the lower part of the room and left these. 1 px is about 1.07 mm. The terminal hides the
-    # middle (x 94.48 to 94.92), so the marks climb on its left and the tree is scratched on its right.
-    x0, z1 = MARKS[0], MARKS[3]
-    W = 1024
-    H = int(round(W * (MARKS[3] - MARKS[2]) / (MARKS[1] - MARKS[0])))
-    ppm = W / (MARKS[1] - MARKS[0])
-    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-
-    def px(x, z):
-        return ((x - x0) * ppm, (z1 - z) * ppm)
-    rnd = random.Random(520)
-    graphite = (34, 32, 38, 240)
-    for k, (age, year, z) in enumerate(zip((2, 3, 4, 5, 6), (38, 39, 40, 41, 42), MARK_Z)):
-        a, b = px(94.35, z), px(94.47, z + rnd.uniform(-0.004, 0.004))
-        _line(d, [a, b], graphite, 6, rnd, 1.0, passes=2)
-        # The label, in a grown-up's pencil, each written a little askew.
-        lab = Image.new('RGBA', (200, 52), (0, 0, 0, 0))
-        ld = ImageDraw.Draw(lab)
-        ld.text((4, 44), f'M {age}', font=_font(38, 'serif'), fill=graphite, anchor='ls')
-        ld.text((72, 44), f'R.Y. {year}', font=_font(27, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
-        lab = lab.rotate(rnd.uniform(-4, 4), resample=Image.BICUBIC)
-        img.alpha_composite(lab, (int(a[0] - 168), int(a[1] - 40)))
-    sx, sy = px(94.47, MARK_Z[-1])                                          # a child's star by the last one
-    d.line((sx + 12, sy - 22, sx + 26, sy + 6, sx + 2, sy - 12, sx + 30, sy - 12, sx + 6, sy + 6, sx + 12, sy - 22),
-           fill=(70, 90, 170, 220), width=4)
-    tx, ty = px(95.05, TREE_Z[0])
-    ts = (TREE_Z[1] - TREE_Z[0]) / 0.93 * ppm                              # the unit tree is 0.93 tall, roots to crown
-
-    def scratch(pts, weight):
-        r = random.Random(int(pts[0][0] * 7 + pts[-1][1]))
-        w = max(3, int(8 * weight))
-        _line(d, [(x + 3, y + 3) for x, y in pts], (48, 38, 28, 170), w, r, 0.8, passes=2)   # the groove's shadow
-        _line(d, pts, (240, 232, 212, 245), max(2, w - 2), r, 1.0, passes=3)              # the scratch itself
-    _crooked_tree(scratch, tx, ty, ts, sx=ts * 0.74)
-    for k in range(9):                                                      # false starts and stray marks
-        x, y = tx + rnd.uniform(-110, 120), ty - rnd.uniform(0.05, 0.9) * ts
-        d.line((x, y, x + rnd.uniform(-14, 14), y + rnd.uniform(-10, 10)), fill=(236, 226, 204, 150), width=2)
-    _save(img.filter(ImageFilter.GaussianBlur(0.7)), 'growth_marks.png', 48)
+    make_growth_marks()
 
     # The photograph: a parent kneeling beside a small child, the crooked tree chalked on the wall behind.
     w, h = 300, 380
@@ -350,11 +311,11 @@ def make_textures():
         d.line(((x0_ + x1_) / 2 - 20, 236, (x0_ + x1_) / 2 + 20, 226), fill=(240, 200, 80, 255), width=8)
     for xa, ya, xb, yb in ((0, 0, w, 0), (0, h, w, h), (0, 0, 0, h), (w, 0, w, h), (w / 2, 0, w / 2 + 4, h), (0, 196, w, 190)):
         _line(d, [(xa, ya), (xb, yb)], (60, 96, 170, 255), 22, rnd, 3, passes=2)  # the painted frame and bars
-    # The water stood over the bed too: below the line the painting is faded and silted, the flowers
-    # nearly gone; the sun, high up, is untouched.
+    # Where the water reached the painting, below the line it is faded and silted (the sun, high up, never).
     _, pz, _, ph = PAINTED_WINDOW
     line = int(round((pz + ph / 2 - TIDE_Z) / ph * h))
-    _water_stain(img, line, rnd, scale=h / ph)
+    if line < h:                                                              # (with the line at 1.0 it is all above it)
+        _water_stain(img, line, rnd, scale=h / ph)
     _save(img.filter(ImageFilter.GaussianBlur(1.0)), 'window_paint.png', 64)
 
     # A crayon drawing pinned over the bed: the two of them and the rabbit, under the sun.
@@ -415,6 +376,90 @@ def make_textures():
     make_drop_mark()
 
 
+def make_growth_marks():
+    """The growth marks and the tree, on the wall behind the desk (D5Marks), with the flood's stain painted in
+    under them so they layer in the right order. The water took the early years: M 2 and M 3 are under the
+    line, blurred, stained and half lifted but still legible; M 4 sits on the line, the stain's edge across it;
+    M 5 and M 6 are crisp above it, with the child's star. The tree, scratched into the plaster below the line,
+    survived as a carving does: the stain darkens the wall round it and the grooves read pale through it.
+    1 px is about 1.07 mm. The terminal hides the middle (x 94.48 to 94.92), so the marks climb on its left and
+    the tree is scratched on its right."""
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFilter
+    x0, x1, z0, z1 = MARKS
+    W = 1024
+    H = int(round(W * (z1 - z0) / (x1 - x0)))
+    ppm = W / (x1 - x0)
+
+    def px(x, z):
+        return ((x - x0) * ppm, (z1 - z) * ppm)
+    rnd = random.Random(520)
+    graphite = (34, 32, 38, 240)
+    # The pencil: ticks and labels, on a graphite-coloured transparent ground (so blurring cannot darken it).
+    pencil = Image.new('RGBA', (W, H), (34, 32, 38, 0))
+    d = ImageDraw.Draw(pencil)
+    for k, (age, year, z) in enumerate(zip((2, 3, 4, 5, 6), (38, 39, 40, 41, 42), MARK_Z)):
+        a, b = px(94.35, z), px(94.47, z + rnd.uniform(-0.004, 0.004))
+        _line(d, [a, b], graphite, 6, rnd, 1.0, passes=2)
+        # The label, in a grown-up's pencil, each written a little askew.
+        lab = Image.new('RGBA', (200, 52), (34, 32, 38, 0))
+        ld = ImageDraw.Draw(lab)
+        ld.text((4, 44), f'M {age}', font=_font(38, 'serif'), fill=graphite, anchor='ls')
+        ld.text((72, 44), f'R.Y. {year}', font=_font(27, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
+        lab = lab.rotate(rnd.uniform(-4, 4), resample=Image.BICUBIC)
+        pencil.alpha_composite(lab, (int(a[0] - 168), int(a[1] - 40)))
+    sx, sy = px(94.47, MARK_Z[-1])                                          # a child's star by the last one
+    d.line((sx + 12, sy - 22, sx + 26, sy + 6, sx + 2, sy - 12, sx + 30, sy - 12, sx + 6, sy + 6, sx + 12, sy - 22),
+           fill=(70, 90, 170, 220), width=4)
+    # Under the line the pencil is softened, faded and in places lifted with the paint.
+    zc = z1 - (np.arange(H)[:, None] + 0.5) / ppm
+    xc = x0 + (np.arange(W)[None, :] + 0.5) / ppm
+    edge = TIDE_Z + 0.004 * np.sin(xc * 37.0) + 0.003 * np.sin(xc * 91.0 + 1.0)
+    under = np.clip((edge - zc) / 0.008, 0, 1)                               # 1 well under the line, 0 above it
+    noise = _tile_noise(W, H, 14, 5210)
+    keep = np.clip(0.62 + 0.4 * (noise - 0.5), 0.4, 0.85)
+    for _ in range(40):                                                      # flakes where the paint lifted
+        cx_, cy_ = rnd.uniform(0, W * 0.4), rnd.uniform(*sorted(px(94.3, TIDE_Z)[1:] + px(94.3, 0.8)[1:]))
+        r_ = rnd.uniform(3, 9)
+        yy, xx = np.ogrid[:H, :W]
+        keep = np.where((xx - cx_) ** 2 + (yy - cy_) ** 2 < r_ * r_, keep * 0.35, keep)
+    p_sharp = np.asarray(pencil).astype(float)
+    p_soft = np.asarray(pencil.filter(ImageFilter.GaussianBlur(2.0))).astype(float)
+    p = p_sharp * (1 - under[..., None]) + p_soft * under[..., None]
+    p[..., 3] *= 1 - under * (1 - keep)
+    pencil = Image.fromarray(np.clip(p, 0, 255).astype('uint8'), 'RGBA')
+    # The flood's stain, the same as the wall decal's either side (u = x / 1.6, v = z / 1.28).
+    tide = _tide_rgba()
+    th_, tw_ = tide.shape[:2]
+    tiled = np.concatenate([tide, tide, tide], axis=1)
+    c0 = (x0 / TIDE_TEX[0]) % 1.0 * tw_
+    c1 = c0 + (x1 - x0) / TIDE_TEX[0] * tw_
+    r0, r1 = (1 - z1 / TIDE_TEX[1]) * th_, (1 - z0 / TIDE_TEX[1]) * th_
+    stain = Image.fromarray(tiled, 'RGBA').resize((W, H), Image.BICUBIC, box=(c0, r0, c1, r1))
+    img = stain.copy()
+    img.alpha_composite(pencil)
+    veil = np.asarray(stain).astype(float)                                   # the water's film over the pencil it covered
+    veil[..., 3] *= 0.35 * under
+    img.alpha_composite(Image.fromarray(veil.astype('uint8'), 'RGBA'))
+    # The tree: grooves cut into the plaster, pale through the stain.
+    grooves = Image.new('RGBA', (W, H), (240, 232, 212, 0))
+    d = ImageDraw.Draw(grooves)
+    tx, ty = px(95.05, TREE_Z[0])
+    ts = (TREE_Z[1] - TREE_Z[0]) / 0.93 * ppm                              # the unit tree is 0.93 tall, roots to crown
+
+    def scratch(pts, weight):
+        r = random.Random(int(pts[0][0] * 7 + pts[-1][1]))
+        w = max(3, int(8 * weight))
+        _line(d, [(x + 3, y + 3) for x, y in pts], (40, 32, 24, 190), w, r, 0.8, passes=2)   # the groove's shadow
+        _line(d, pts, (236, 228, 206, 250), max(2, w - 2), r, 1.0, passes=3)              # the scratch itself
+    _crooked_tree(scratch, tx, ty, ts, sx=ts * 0.74)
+    for k in range(9):                                                      # false starts and stray marks
+        x, y = tx + rnd.uniform(-110, 120), ty - rnd.uniform(0.05, 0.9) * ts
+        d.line((x, y, x + rnd.uniform(-14, 14), y + rnd.uniform(-10, 10)), fill=(232, 222, 200, 160), width=2)
+    img.alpha_composite(grooves)
+    _save(img.filter(ImageFilter.GaussianBlur(0.7)), 'growth_marks.png', 64)
+
+
 def _tile_noise(w, h, cells, seed, octaves=3):
     """Value noise in [0, 1] that tiles along x (cells: lattice cells across the width)."""
     import numpy as np
@@ -463,14 +508,19 @@ def _water_stain(img, line, rnd, scale):
 TIDE_TEX = (1.6, 1.28)                # the tideline decal's texture tiles 1.6 m along x and covers z 0 to 1.28
 
 
-def make_tideline():
-    """The flood's mark, a decal for walls (u = x / 1.6, v = z / 1.28): a dark ragged line at TIDE_Z where the
-    water stood longest, a fainter one below where it paused going down, mottled silt and drips under it and
-    caked mud at the foot. Darker and browner than the wall, never lighter: it is read as a change in the wall,
-    not as a stripe of light."""
+_TIDE_CACHE = []
+
+
+def _tide_rgba():
+    """The flood's mark as an RGBA array (512 x 320, u = x / 1.6, v = z / 1.28): a dark ragged line at TIDE_Z
+    where the water stood longest, fainter ones below where it paused going down, mottled silt and drips under
+    it and caked mud at the foot. Darker and browner than the wall, never lighter: it is read as a change in
+    the wall, not as a stripe of light. Shared by the wall decal and the growth marks' texture."""
+    if _TIDE_CACHE:
+        return _TIDE_CACHE[0]
     import numpy as np
-    from PIL import Image, ImageFilter
     W, H = 512, 320
+    k_z = TIDE_Z / 1.2                                                        # heights below were set for a line at 1.2
     tw, th = TIDE_TEX
     rnd = random.Random(5600)
     zc = (1.0 - (np.arange(H)[:, None] + 0.5) / H) * th                      # each row's height
@@ -489,8 +539,8 @@ def make_tideline():
     a_body = np.clip(0.2 + 0.3 * (n1 - 0.45) + 0.1 * np.clip((TIDE_Z - zc) / TIDE_Z, 0, 1) + 0.08 * (n2 - 0.5), 0.06, 0.5)
     alpha = np.where(body, a_body, alpha)
     col[:] = silt
-    # Where the water paused on its way down: fainter lines at 1.06 and 0.74.
-    for zl, a_l, wl in ((1.06, 0.18, 0.006), (0.74, 0.14, 0.007)):
+    # Where the water paused on its way down: fainter lines at 0.88 and 0.62 of the line's height.
+    for zl, a_l, wl in ((0.883 * TIDE_Z, 0.18, 0.006), (0.617 * TIDE_Z, 0.14, 0.007)):
         d_l = np.abs(zc - zl - 0.6 * ragged)
         m_l = np.clip(1 - d_l / wl, 0, 1) * a_l
         alpha = np.where(body, np.clip(alpha + m_l, 0, 1), alpha)
@@ -498,7 +548,7 @@ def make_tideline():
     drip = np.zeros((H, W))
     for _ in range(70):
         x = rnd.randrange(W)
-        ln = rnd.uniform(0.04, 0.5)
+        ln = rnd.uniform(0.04, 0.5) * k_z
         wd = rnd.choice((1, 1, 2, 2, 3))
         strength = rnd.uniform(0.12, 0.3)
         for dx in range(wd):
@@ -513,12 +563,18 @@ def make_tideline():
     alpha = np.maximum(alpha, band * 0.9)
     col = col * (1 - band[..., None]) + dark * band[..., None]
     # Caked mud at the foot, with a ragged top.
-    foot = 0.2 + 0.06 * (n1[0:1, :] - 0.5) * 2 + 0.03 * (n2 - 0.5)
+    foot = 0.2 * k_z + 0.06 * (n1[0:1, :] - 0.5) * 2 + 0.03 * (n2 - 0.5)
     m_f = np.clip((foot - zc) / 0.05, 0, 1)
     alpha = np.maximum(alpha, m_f * np.clip(0.62 + 0.3 * (n2 - 0.5), 0.4, 0.8))
     col = col * (1 - m_f[..., None]) + mud * m_f[..., None]
     rgba = np.dstack([np.clip(col, 0, 255), np.clip(alpha * 255, 0, 255)]).astype('uint8')
-    img = Image.fromarray(rgba, 'RGBA').filter(ImageFilter.GaussianBlur(0.5))
+    _TIDE_CACHE.append(rgba)
+    return rgba
+
+
+def make_tideline():
+    from PIL import Image, ImageFilter
+    img = Image.fromarray(_tide_rgba(), 'RGBA').filter(ImageFilter.GaussianBlur(0.5))
     _save(img, 'tideline.png', 24)
 
 
