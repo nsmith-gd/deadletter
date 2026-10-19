@@ -41,6 +41,7 @@ window.__startBot = function (seed, opts = {}) {
         if (!moved && G.grounded && !G.mantle && !G.act && !G.riding) still += 1 / 60; else still = 0;
         if (o.stall && still > o.stall) return 'stalled';
         if (o.hop !== false && still > r) { jump(); still = 0; r = react(); }
+        if (opts.trace && label.includes(opts.trace) && Math.round(G.clock * 60) % 6 === 0) (out.trace = out.trace || []).push(`${label} x${G.x.toFixed(2)} y${G.y.toFixed(2)} g${+G.grounded} n=${D.near()} a=${G.act && G.act.kind} u${+!!G.upper} s=${G.scan.phase}`);
         yield;
       }
     } finally { move(0); }

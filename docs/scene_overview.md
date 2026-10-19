@@ -86,7 +86,8 @@ Revised 18 October 2026: nine scenes, not five. See `docs/chapter1_plan.md` for 
 #### 02 The Sorting Hall
 
 **DL-02 · Applied challenge · 2 minutes**  
-**Sequence:** DL-01 → DL-02 → DL-03
+**Sequence:** DL-01 → DL-02 → DL-03  
+**Production plan:** `docs/scenes/DL-02_the_sorting_hall.md`
 
 **Play:** A sorting table stands too high to climb, and a fallen pigeonhole wall closes the floor. Carry a parcel box to the table's foot and climb box, table and gantry to the lit doorway. A pneumatic tube coughs out one ancient letter; posting it at a red mail slot stamps it RETURN.
 
@@ -116,7 +117,8 @@ Revised 18 October 2026: nine scenes, not five. See `docs/chapter1_plan.md` for 
 #### 04 The Racks
 
 **DL-04 · Developed puzzle · 2 minutes**  
-**Sequence:** DL-03 → DL-04 → DL-05
+**Sequence:** DL-03 → DL-04 → DL-05  
+**Production plan:** `docs/scenes/DL-04_the_racks.md`
 
 **Play:** The racks end at a charging bay door whose plate carries a courier pictogram. Standing on it opens the door; stepping off closes it, as in scene 3, and the trolley can't follow him past the gate. D-17 drags a fallen courier onto the plate. The cradle lifts it, its lamps flicker weakly and hold, and the door opens.
 
@@ -146,7 +148,8 @@ Revised 18 October 2026: nine scenes, not five. See `docs/chapter1_plan.md` for 
 #### 06 The Heap
 
 **DL-06 · Developed puzzle · 2 minutes**  
-**Sequence:** DL-05 → DL-06 → DL-07
+**Sequence:** DL-05 → DL-06 → DL-07  
+**Production plan:** `docs/scenes/DL-06_the_heap.md`
 
 **Play:** The ride up the ramp now ends at a gallery gate held shut by a counterweight bucket. Load a sorting weight into an empty carrier at the dock, route it up the ramp and watch it tip into the bucket; the gate rises. Ride the next carrier up. A parcel slide returns him to the floor if he goes up too soon. A letter caught on the gallery rail is the chapter's secret.
 
@@ -176,7 +179,8 @@ Revised 18 October 2026: nine scenes, not five. See `docs/chapter1_plan.md` for 
 #### 08 The Slipping Cage
 
 **DL-08 · Applied challenge (set piece) · 2 minutes**  
-**Sequence:** DL-07 → DL-08 → DL-09
+**Sequence:** DL-07 → DL-08 → DL-09  
+**Production plan:** `docs/scenes/DL-08_the_slipping_cage.md`
 
 **Play:** Beyond the returns belt, climb to an old freight cage and ride it down toward the residential tunnel. Its brake gives: it shudders, then slips. Throw the cage's pawl as it passes the lit landing. Too early or late, it rattles down to the buffers and the counterweight hauls it back up to try again. Then the tunnel, the look back, the hopscotch, and the city reveal.
 
