@@ -289,13 +289,13 @@ def make_textures():
         rr = rnd.uniform(0, 0.33) ** 0.8
         cx, cy = W * (0.5 + rr * math.cos(a) * 0.95), H * (0.52 + rr * math.sin(a) * 0.8)
         r = rnd.uniform(40, 95)
-        d.ellipse((cx - r, cy - r * 0.8, cx + r, cy + r * 0.8), fill=(9, 11, 12, 46))
+        d.ellipse((cx - r, cy - r * 0.8, cx + r, cy + r * 0.8), fill=(5, 6, 7, 80))
     img = img.filter(ImageFilter.GaussianBlur(6))
     d = ImageDraw.Draw(img, 'RGBA')
     for k in range(28):                                          # splashes off the edge
         cx, cy = rnd.uniform(40, W - 40), rnd.uniform(40, H - 40)
         r = rnd.uniform(3, 10)
-        d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(9, 11, 12, 90))
+        d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(5, 6, 7, 140))
     img.filter(ImageFilter.GaussianBlur(1.2)).save(os.path.join(TEX, 'tunnel_wet.png'))
 
 
@@ -814,7 +814,7 @@ def build_counterweight(m, coll):
     # 0 steel, 1 yellow, 2 iron
     for y in (-cwd / 2, cwd / 2):
         bx(bm, (-cwx / 2 + 0.02, cwx / 2 - 0.02), (y - 0.006, y + 0.006), (z0 - 0.01, z0 + 0.07), 0)    # lips
-        bx(bm, (-cwx / 2 + 0.02, cwx / 2 - 0.02), (y - 0.009, y + 0.009), (z0 + 0.07, z0 + 0.085), 1)
+        bx(bm, (-cwx / 2 + 0.02, cwx / 2 - 0.02), (y - 0.009, y + 0.009), (z0 + 0.07, z0 + 0.085), 3)   # red: put them here
     bx(bm, (-cwx / 2 + 0.02, cwx / 2 - 0.02), (-cwd / 2, cwd / 2), (z0 - 0.01, z0), 0)                # its floor plate
     for s in (-1, 1):                                                      # the bail: a strap from each side up to the hook
         a = Vector((s * (cwx / 2), 0, -0.02))
@@ -823,7 +823,7 @@ def build_counterweight(m, coll):
         ang = math.atan2(b.z - a.z, b.x - a.x)
         add_box(bm, mid, (ln, 0.05, 0.012), mat=1, rot=_ry(-ang))
     add_cyl(bm, (0, -0.03, -0.004), (0, 0.03, -0.004), 0.016, mat=2, seg=10)   # the eye
-    tray = _obj('CwTray', bm, [m['steel'], m['yellow'], m['iron']], coll)
+    tray = _obj('CwTray', bm, [m['steel'], m['yellow'], m['iron'], m['red']], coll)
     tray.parent = cw
     tray.matrix_parent_inverse = Matrix.Identity(4)
     tray.location = (0, 0, 0)

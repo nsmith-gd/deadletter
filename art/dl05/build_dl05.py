@@ -1230,9 +1230,9 @@ def build_ledge(m, coll):
     # The portal: rock over the seal and up out of frame, its pillars; ring C's cavern opens beyond it.
     _rock(bm, (80.3, 1.45, 1.6), (0.7, 0.7, 3.4), 7.0, cuts=3, p=3.0, amp=0.07)
     _rock(bm, (81.0, 1.7, 1.8), (0.5, 1.2, 3.8), 8.0, cuts=3, p=3.0, amp=0.08)
-    _rock_sheet(bm, (79.95, -0.75, 3.0), (1.35, 0, 0), (0, 0, 2.6), 4, 4, 0.08, 3.0)
+    _rock_sheet(bm, (79.95, -0.75, 3.0), (1.35, 0, 0), (0, 0, 2.2), 4, 4, 0.08, 3.0)
     _rock_sheet(bm, (BARRICADE[0] - 0.15, -0.75, 3.0), (1.2, 0, 0), (0, 1.95, 0), 3, 4, -0.05, 12.0)
-    _rock(bm, (80.6, 0.6, 4.4), (1.6, 2.6, 2.4), 9.0, cuts=3, p=3.0, amp=0.15)
+    _rock(bm, (80.6, 0.6, 4.1), (1.6, 2.6, 1.9), 9.0, cuts=3, p=3.0, amp=0.15)
     _obj('D5Rock', bm, [m['rock']], coll, sharp=75)
 
 
