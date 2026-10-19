@@ -1342,7 +1342,9 @@ function updatePlayer(dt) {
 
   const use = input.usePressed ? nearUse() : null;
   if (use) { beginUse(use); return; }
-  if (game.region === 3 && input.jumpPressed && game.grounded && !game.hold && boardable()) { beginUse3('board'); return; }
+  // A standing jump beside a carrier hops on; a running jump is just a jump, so hopping over the sorting weights by the dock
+  // never boards one by accident.
+  if (game.region === 3 && input.jumpPressed && move === 0 && game.grounded && !game.hold && boardable()) { beginUse3('board'); return; }
   if (game.hold) { updateHold(dt, move); return; }
 
   if (move !== 0) game.facing = Math.sign(move);

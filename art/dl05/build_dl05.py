@@ -74,7 +74,8 @@ PAINTED_WINDOW = (91.72, 1.36, 0.8, 0.7)   # the window painted over the bed: x,
 DESK_X, DESK_HALF, DESK_TOP = 94.7, 0.55, 0.55
 DESK_Y = 0.62                         # the desk's origin y (centre of its footprint, which runs 0.29 to 0.95)
 DESK_TILT = -9.0                      # it leans back against the terminal (degrees about x)
-DESK_SIDE_TILT = 6.0                  # and is down on its broken right side (degrees about y)
+DESK_SIDE_TILT = 2.0                  # and is down on its broken right side (degrees about y; more swings the
+                                      # hutch's top right, off the marks' labels)
 DESK_HUTCH = 1.22                     # its hutch's top (left end); it hides the marks and the tree
 DESK_HANDLE = (-0.585, 0.44)          # its red grip bar, on its left end: x from the origin, height
 DESK_DRAG = 93.6                      # where it ends up (left end 93.05, right end 94.15)
@@ -160,7 +161,10 @@ def _save(img, name, colors):
     from PIL import Image
     q = img.quantize(colors, method=Image.Quantize.FASTOCTREE if img.mode == 'RGBA' else Image.Quantize.MEDIANCUT)
     if img.mode == 'RGBA':
-        q = q.convert('RGBA')             # decals stay true RGBA: some loaders ignore a palette's transparency
+        import numpy as np
+        q = np.array(q.convert('RGBA'))   # decals stay true RGBA: some loaders ignore a palette's transparency
+        q[..., 3] = np.where(np.asarray(img)[..., 3] < 3, 0, q[..., 3])   # and what was clear stays clear
+        q = Image.fromarray(q, 'RGBA')
     q.save(_tex(name), optimize=True)
 
 
@@ -402,12 +406,12 @@ def make_growth_marks():
         a, b = px(94.35, z), px(94.47, z + rnd.uniform(-0.004, 0.004))
         _line(d, [a, b], graphite, 6, rnd, 1.0, passes=2)
         # The label, in a grown-up's pencil, each written a little askew.
-        lab = Image.new('RGBA', (200, 52), (34, 32, 38, 0))
-        ld = ImageDraw.Draw(lab)
-        ld.text((4, 44), f'M {age}', font=_font(38, 'serif'), fill=graphite, anchor='ls')
-        ld.text((88, 44), f'R.Y. {year}', font=_font(27, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
+        lab = Image.new('RGBA', (110, 54), (34, 32, 38, 0))                  # the name over the year, kept narrow so the
+        ld = ImageDraw.Draw(lab)                                             # fallen hutch's left side covers it
+        ld.text((4, 26), f'M {age}', font=_font(32, 'serif'), fill=graphite, anchor='ls')
+        ld.text((6, 48), f'R.Y. {year}', font=_font(20, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
         lab = lab.rotate(rnd.uniform(-4, 4), resample=Image.BICUBIC)
-        pencil.alpha_composite(lab, (int(a[0] - 182), int(a[1] - 40)))
+        pencil.alpha_composite(lab, (int(a[0] - 98), int(a[1] - 44)))
     sx, sy = px(94.47, MARK_Z[-1])                                          # a child's star by the last one
     d.line((sx + 12, sy - 22, sx + 26, sy + 6, sx + 2, sy - 12, sx + 30, sy - 12, sx + 6, sy + 6, sx + 12, sy - 22),
            fill=(70, 90, 170, 220), width=4)
@@ -417,14 +421,14 @@ def make_growth_marks():
     edge = TIDE_Z + 0.004 * np.sin(xc * 37.0) + 0.003 * np.sin(xc * 91.0 + 1.0)
     under = np.clip((edge - zc) / 0.008, 0, 1)                               # 1 well under the line, 0 above it
     noise = _tile_noise(W, H, 14, 5210)
-    keep = np.clip(0.62 + 0.4 * (noise - 0.5), 0.4, 0.85)
+    keep = np.clip(0.76 + 0.35 * (noise - 0.5), 0.58, 0.92)
     for _ in range(40):                                                      # flakes where the paint lifted
         cx_, cy_ = rnd.uniform(0, W * 0.4), rnd.uniform(*sorted(px(94.3, TIDE_Z)[1:] + px(94.3, 0.8)[1:]))
         r_ = rnd.uniform(3, 9)
         yy, xx = np.ogrid[:H, :W]
-        keep = np.where((xx - cx_) ** 2 + (yy - cy_) ** 2 < r_ * r_, keep * 0.35, keep)
+        keep = np.where((xx - cx_) ** 2 + (yy - cy_) ** 2 < r_ * r_, keep * 0.45, keep)
     p_sharp = np.asarray(pencil).astype(float)
-    p_soft = np.asarray(pencil.filter(ImageFilter.GaussianBlur(2.0))).astype(float)
+    p_soft = np.asarray(pencil.filter(ImageFilter.GaussianBlur(1.4))).astype(float)
     p = p_sharp * (1 - under[..., None]) + p_soft * under[..., None]
     p[..., 3] *= 1 - under * (1 - keep)
     pencil = Image.fromarray(np.clip(p, 0, 255).astype('uint8'), 'RGBA')
@@ -439,7 +443,7 @@ def make_growth_marks():
     img = stain.copy()
     img.alpha_composite(pencil)
     veil = np.asarray(stain).astype(float)                                   # the water's film over the pencil it covered
-    veil[..., 3] *= 0.35 * under
+    veil[..., 3] *= 0.25 * under
     img.alpha_composite(Image.fromarray(veil.astype('uint8'), 'RGBA'))
     # The tree: grooves cut into the plaster, pale through the stain.
     grooves = Image.new('RGBA', (W, H), (240, 232, 212, 0))
