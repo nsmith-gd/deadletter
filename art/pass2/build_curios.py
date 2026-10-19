@@ -53,27 +53,27 @@ TICKET_PEEK = 0.006                         # how much of it shows above the slo
 TICKET_OUT = 0.055                          # how far the game raises it (along game +y) when he pulls it up
 
 # DL-01 dispatch rack (under the dispatch board, x 0.69 to 1.41).
-DISPATCH_STAND = (1.13, -1)
-RACK = (0.93, 0.36)                         # the rack post's x, y
-RACK_TOP = 0.745                            # the rack box's top
-CARD = (0.075, 0.105, 0.80)                 # RouteCardD17: width, height, its top edge at rest
+DISPATCH_STAND = (1.18, -1)
+RACK = (0.93, 0.30)                         # the rack post's x, y (its front kept clear of his head as he walks)
+RACK_TOP = 0.665                            # the rack box's top
+CARD = (0.075, 0.105, 0.72)                 # RouteCardD17: width, height, its top edge at rest
 CARD_LIFT = 0.035                           # the game slides it up this much
 
 # DL-02 hand franker, on a courier-height counter left of the passage doorway (Door2Frame 12.77 to 13.63).
-FRANKER_STAND = (12.70, -1)
-COUNTER = (12.22, 12.62, 0.29, 0.6, 0.27)   # x0, x1, y0, y1, top (at a courier's height)
-PLATEN = (12.47, 0.345, 0.27 + 0.035)       # the platen's centre (top face)
+FRANKER_STAND = (12.80, -1)
+COUNTER = (12.22, 12.62, 0.27, 0.6, 0.27)   # x0, x1, y0, y1, top (at a courier's height)
+PLATEN = (12.47, 0.325, 0.27 + 0.035)       # the platen's centre (top face)
 HEAD_GAP = 0.055                            # the die face above the platen at rest
 FRANK_DROP = 0.035                          # the game drops HandFrankerHead this much at the thunk
-LEVER_PIVOT = (12.545, 0.44, 0.27 + 0.19)   # HandFrankerLever's pivot (axis along x)
+LEVER_PIVOT = (12.395, 0.42, 0.27 + 0.19)   # HandFrankerLever's pivot on the frame's left cheek (axis along x)
 LEVER_LEN = 0.15
 LEVER_REST = 35.0                           # degrees up from pointing at the lane (toward -y)
 LEVER_PULL = 50.0                           # degrees the pull swings it down
 
 # DL-02 the couriers' low shelf by the tea corner, MugD17 on it.
-MUG_STAND = (15.18, 1)
+MUG_STAND = (15.20, 1)
 SHELF = (15.29, 15.65, 0.26, 0.5, 0.5)      # x0, x1, y0, y1, top
-MUG = (15.40, 0.34, 0.035, 0.088)           # MugD17: x, y (its base centre on the shelf top), radius, height
+MUG = (15.50, 0.31, 0.035, 0.088)           # MugD17: x, y (its base centre on the shelf top), radius, height
 
 # DL-04 the empty slot on the column (art/racks MEMORIAL_X 41.1; column face y 1.07; plinth top 0.06).
 RACK_STAND = (41.08, 1)
@@ -503,7 +503,7 @@ def build_franker(c, coll):
     add_box(bm, (px, py + 0.115, (top + 0.02 + ftop) / 2), (0.06, 0.04, ftop - top - 0.02), mat=0)   # the C-frame
     add_box(bm, (px, py + 0.055, ftop - 0.025), (0.06, 0.16, 0.05), mat=0)             # its arm over the platen
     add_cyl(bm, (px, py, ftop - 0.05), (px, py, ftop + 0.01), 0.02, seg=14, mat=0)     # the guide boss
-    add_cyl(bm, LEVER_PIVOT, Vector(LEVER_PIVOT) + Vector((-0.045, 0, 0)), 0.018, seg=14, mat=2)   # the lever's hub
+    add_cyl(bm, LEVER_PIVOT, Vector(LEVER_PIVOT) + Vector((0.045, 0, 0)), 0.018, seg=14, mat=2)   # the lever's hub
     add_box(bm, (px - 0.0305, py + 0.13, top + 0.1), (0.002, 0.03, 0.05), mat=2)       # a maker's plate
     _obj('HandFranker', bm, [c['iron'], c['rubber'], c['brass']], coll)
     # The head: a guide rod and the die, its origin at the die face's centre; the game drops it FRANK_DROP.
@@ -518,12 +518,12 @@ def build_franker(c, coll):
     bm = bmesh.new()
     a = math.radians(LEVER_REST)
     d = Vector((0, -math.cos(a), math.sin(a)))
-    add_cyl(bm, (0.012, 0, 0), Vector((0.012, 0, 0)) + d * LEVER_LEN, 0.007, seg=10, mat=0)
-    add_sphere(bm, Vector((0.012, 0, 0)) + d * (LEVER_LEN + 0.012), 0.016, seg=14, mat=0)
-    add_cyl(bm, (0.0, 0, 0), (0.02, 0, 0), 0.012, seg=12, mat=1)
+    add_cyl(bm, (-0.012, 0, 0), Vector((-0.012, 0, 0)) + d * LEVER_LEN, 0.007, seg=10, mat=0)
+    add_sphere(bm, Vector((-0.012, 0, 0)) + d * (LEVER_LEN + 0.012), 0.016, seg=14, mat=0)
+    add_cyl(bm, (0.0, 0, 0), (-0.02, 0, 0), 0.012, seg=12, mat=1)
     lever = _obj('HandFrankerLever', bm, [c['red'], c['iron']], coll)
     lever.location = LEVER_PIVOT
-    curio_tag('CurioTag_franker', Vector((px - 0.06, y0 + 0.012, top - 0.035)), c, coll, swing=0.05)
+    curio_tag('CurioTag_franker', Vector((px - 0.11, y0 + 0.012, top - 0.035)), c, coll, swing=0.05)
 
 
 def build_mug_curio(c, coll):
@@ -541,8 +541,8 @@ def build_mug_curio(c, coll):
     _obj('CourierShelf', bm, [c['wood'], c['steel']], coll)
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new('UVMap')
-    _mug_mesh(bm, uv, Vector((x0 + 0.24, y0 + 0.13, top)), 0.034, 0.085, (1, 0.3), 0, 0, 1, label=False)
-    _mug_mesh(bm, uv, Vector((x0 + 0.31, y0 + 0.17, top)), 0.033, 0.082, (1, -0.2), 0, 0, 1, label=False)
+    _mug_mesh(bm, uv, Vector((x0 + 0.045, y0 + 0.13, top)), 0.034, 0.085, (1, 0.3), 0, 0, 1, label=False)
+    _mug_mesh(bm, uv, Vector((x0 + 0.125, y0 + 0.16, top)), 0.033, 0.082, (1, -0.2), 0, 0, 1, label=False)
     _obj('CourierShelfMugs', bm, [c['enamel'], c['dark']], coll)
     mx, my, r, h = MUG
     bm = bmesh.new()
@@ -550,7 +550,7 @@ def build_mug_curio(c, coll):
     _mug_mesh(bm, uv, Vector((0, 0, 0)), r, h, (1, 0), 0, 1, 2)
     mug = _obj('MugD17', bm, [c['enamel'], c['mug'], c['dark']], coll)
     mug.location = (mx, my, top)
-    curio_tag('CurioTag_mug', Vector((x0 + 0.05, y0 - 0.002, top - 0.02)), c, coll, swing=-0.05)
+    curio_tag('CurioTag_mug', Vector((MUG[0] + 0.05, y0 - 0.002, top - 0.02)), c, coll, swing=-0.05)
 
 
 def build_rack_seat(c, coll):
@@ -780,6 +780,8 @@ class Act:
         self.root_keys = [(0, (0, 0, 0))]
         self.yaw_keys = [(0, 0.0)]
         self.steps = {'L': [], 'R': []}       # (lift, land, pos or None, yaw or None, height)
+        self.over = []                        # reach clamps: (excess, frame, side), for the build log
+        self.name = name
 
     # The root: where he is and which way he faces, by frame.
     def root(self, f):
@@ -839,7 +841,8 @@ class Act:
         bm = body_matrix(body, body_rot)
         sh = bm @ SHOULDER[s]
         v = w - sh
-        if v.length > ARM_LEN:
+        excess = max(0.0, v.length - ARM_LEN)
+        if excess:
             w = sh + v.normalized() * ARM_LEN
         off = bm.inverted() @ w - self.dl01.REST_WRIST[s]
         rot = None
@@ -857,7 +860,9 @@ class Act:
             if twist:
                 m = Matrix.Rotation(math.radians(twist), 3, dz) @ m
             rot = tuple(math.degrees(a) for a in m.to_euler('XYZ'))
-        return off, rot
+        hp = HandPose((off, rot))
+        hp.excess, hp.frame, hp.side, hp.act = excess, f, s, self
+        return hp
 
     def grip(self, f, s, point, body, body_rot, d, x_axis=None, twist=0.0, depth=GRIP):
         """The claw's grip point on a stand-space point, pointing along d."""
@@ -882,10 +887,19 @@ class Act:
     def done(self):
         self.pb['root'].location = (0, 0, 0)
         self.c.done()
+        worst = sorted(self.over, reverse=True)[:3]
+        print(f'curios: {self.name} {self.frames} f, reach clamps', [(round(e, 3), fr, sd) for e, fr, sd in worst])
+
+
+class HandPose(tuple):
+    """(offset, rot) for a hand, remembering whether the target was out of his reach."""
+    excess = 0.0
 
 
 def mix_hand(a, b, k):
-    """Blend two (offset, rot) hand poses."""
+    """Blend two (offset, rot) hand poses. A target out of his reach that is used is noted for the build log."""
+    if getattr(b, 'excess', 0.0) > 0.005 and k > 0.3:
+        b.act.over.append((round(b.excess, 3), b.frame, b.side))
     (oa, ra), (ob, rb) = a, b
     ra = ra or (-24, 0, 0)
     rb = rb or (-24, 0, 0)
@@ -952,13 +966,13 @@ def clip_weigh_self(dl01, arm):
         f = frame - 1
         out = ticket_out(f)
         pinch = to_stand(stand, (bx - 0.014, by - 0.004, slot_top + out - 0.009))
-        card = to_stand(stand, (bx, by - 0.004, slot_top + out - 0.02))
+        card = to_stand(stand, (bx, by - 0.004, slot_top + out + 0.05))
         bounce = tr([(18, 0), (21, -0.028), (24, 0.01), (27, -0.024), (30, 0.006), (33, 0)], f)
         startle = spr(f, TICKET_POP + 1, 1.0, decay=4, freq=1.3)
         lean = tr([(36, 0), (44, 1), (60, 1), (66, 0.3), (72, 0)], f)
         bob = -0.012 * (pulse(f, 2, 8) + pulse(f, 6, 12) + pulse(f, N - 13, N - 7) + pulse(f, N - 9, N - 3))
-        body = (0.012 * lean, -0.025 * lean, -0.005 + bounce + 0.006 * max(0, startle) + bob - 0.01 * lean)
-        body_rot = (2 + 11 * lean - 7 * max(0, startle), 5 * lean, 16 * lean)
+        body = (0.012 * lean, 0.006 * lean, -0.005 + bounce + 0.006 * max(0, startle) + bob - 0.006 * lean)
+        body_rot = (2 + 6 * lean - 7 * max(0, startle), 4 * lean, 16 * lean)
         look_dial = a.look(f, dial, body, body_rot)
         look_card = a.look(f, card, body, body_rot)
         w_dial = tr([(6, 0), (12, 1), (TICKET_POP, 1), (TICKET_POP + 3, 0)], f)
@@ -1030,7 +1044,7 @@ def clip_read_route(dl01, arm):
     N = 84
     a = Act(dl01, arm, 'ReadRoute', N)
     stand = DISPATCH_STAND
-    a.yaw_keys = [(0, 0.0), (6, 0.0), (14, -24.0), (66, -24.0), (76, 0.0)]
+    a.yaw_keys = [(0, 0.0), (6, 0.0), (14, -32.0), (66, -32.0), (76, 0.0)]
     st = steps_over(a, 6, 14, 2, first='R', height=0.02) + steps_over(a, 66, 76, 2, first='L', height=0.02)
     x, y = RACK
     cw, ch, ctop = CARD
@@ -1086,74 +1100,80 @@ def frank_drop(f):
 
 def lever_ball(a_deg):
     a = math.radians(LEVER_REST - a_deg)
-    return Vector(LEVER_PIVOT) + Vector((0.012, -math.cos(a) * (LEVER_LEN + 0.012), math.sin(a) * (LEVER_LEN + 0.012)))
+    return Vector(LEVER_PIVOT) + Vector((-0.012, -math.cos(a) * (LEVER_LEN + 0.012), math.sin(a) * (LEVER_LEN + 0.012)))
 
 
 def clip_frank_hand(dl01, arm):
-    """At the franker: he turns in and steps up to it, lays his left claw flat on the platen under the head and
-    hauls the lever down with his right: thunk. He jumps; slides the claw out, lifts it to his face and turns it
-    over: RECEIVED. Two pleased bobs; he holds it out toward nobody in particular, looks round (anyone?), and
-    back at it, pleased, then steps back."""
+    """At the franker: he turns in and steps up to it, lays his right claw flat on the platen under the head and
+    hauls the lever down with his left: thunk. He jumps; slides the claw out, turns back toward the lane and
+    looks at it: RECEIVED. Two pleased bobs; he holds it out to show nobody in particular, looks round (anyone?),
+    back at it, pleased, and steps back."""
     N = 80
     a = Act(dl01, arm, 'FrankHand', N)
     stand = FRANKER_STAND
     platen = to_stand(stand, PLATEN)
-    fwd = rz(-50) @ Vector((0, -1, 0))
+    d = platen.xy.normalized()
+    yaw_in = math.degrees(math.atan2(d.x, -d.y))
+    fwd = rz(yaw_in) @ Vector((0, -1, 0))
     at = platen - fwd * 0.27
     at.z = 0
-    a.root_keys = [(0, (0, 0, 0)), (4, (0, 0, 0)), (16, tuple(at)), (36, tuple(at)), (46, (0.02, 0.0, 0)),
-                   (N - 16, (0.02, 0.0, 0)), (N - 6, (0, 0, 0))]
-    a.yaw_keys = [(0, 0.0), (4, 0.0), (16, -50.0), (36, -50.0), (46, -12.0), (N - 16, -12.0), (N - 6, 0.0)]
+    a.root_keys = [(0, (0, 0, 0)), (4, (0, 0, 0)), (16, tuple(at)), (36, tuple(at)), (46, (0.0, -0.02, 0)),
+                   (N - 16, (0.0, -0.02, 0)), (N - 6, (0, 0, 0))]
+    a.yaw_keys = [(0, 0.0), (4, 0.0), (16, yaw_in), (36, yaw_in), (46, 28.0), (N - 16, 28.0), (N - 6, 0.0)]
     st = steps_over(a, 4, 16, 2, first='R') + steps_over(a, 36, 46, 2, first='L') + \
         steps_over(a, N - 16, N - 6, 2, first='R', height=0.02)
+    cam = Vector((1, 0, 0))                     # toward the camera, in stand space (he faces -x)
     for frame in range(1, N + 1):
         f = frame - 1
         thunk = spr(f, FRANK_THUNK, 1.0, decay=4, freq=1.4)
         pull = tr([(20, 0), (FRANK_THUNK, 1), (34, 1), (38, 0)], f)
         bob = sum(pulse(f, t0, t0 + 6) for t0 in (50, 57))
         body = (0, -0.02 * pull, -0.005 - 0.02 * pull + 0.012 * max(0.0, thunk) + 0.014 * bob + step_bob(f, st))
-        body_rot = (2 + 10 * tr([(14, 0), (20, 1), (36, 1), (42, 0)], f) - 6 * max(0, thunk) - 4 * bob, 0, -6 * pull)
+        body_rot = (2 + 10 * tr([(14, 0), (20, 1), (36, 1), (42, 0)], f) - 6 * max(0, thunk) - 4 * bob, 0, 0)
         r, ry = a.root(f)
         fw = rz(ry) @ Vector((0, -1, 0))
         left = rz(ry) @ Vector((1, 0, 0))
-        # Left claw: flat on the platen under the head (its upper blade's outer face up, where the die lands);
-        # then out from under, up before his face, turned to him; then held out toward the lane.
-        on = platen + Vector((0, 0, 0.011))
-        d_on = (rz(18) @ fw).normalized()
-        g_on = a.grip(f, 1, on - d_on * 0.012, body, body_rot, d=d_on, x_axis=(0, 0, 1))
-        face = r + fw * 0.21 + left * 0.07 + Vector((0, 0, 0.55))
-        g_face = a.grip(f, 1, face, body, body_rot, d=(fw * 0.4 + Vector((0, 0, 1))).normalized(), x_axis=-fw + left * 0.3)
-        out = r + fw * 0.12 + left * 0.3 + Vector((0, 0, 0.5))
-        g_out = a.grip(f, 1, out, body, body_rot, d=(left + Vector((0, 0, 0.9))).normalized(), x_axis=to_stand_dir(stand, (0, -1, 0)))
+        up = Vector((0, 0, 1))
+        # Right claw: flat on the platen under the head, the stamped blade's outer face up (where the die lands);
+        # then out from under and up before his chest, turned to him; then held out, turned to the lane.
+        d_on = (rz(12) @ fw).normalized()
+        g_on = a.grip(f, -1, platen + Vector((0, 0, 0.011)) - d_on * 0.012, body, body_rot, d=d_on, x_axis=(0, 0, -1))
+        look_pt = r + fw * 0.25 - left * 0.03 + Vector((0, 0, 0.43))
+        eye = r + fw * 0.1 + Vector((0, 0, 0.6))
+        g_look = a.grip(f, -1, look_pt, body, body_rot, d=(fw * 0.5 + up).normalized(), x_axis=-(eye - look_pt).normalized())
+        show_pt = r + fw * 0.27 + left * 0.04 + Vector((0, 0, 0.47))
+        g_show = a.grip(f, -1, show_pt, body, body_rot, d=(fw * 0.4 + up).normalized(), x_axis=-cam)
         k_on = tr([(14, 0), (22, 1), (34, 1), (40, 0)], f)
-        k_face = tr([(34, 0), (42, 1), (58, 1), (63, 0), (68, 0.6), (72, 0)], f)
-        k_out = tr([(56, 0), (62, 1), (66, 1), (70, 0)], f)
-        hl = rest_hand(dl01, 1)
-        hl = mix_hand(hl, g_on, k_on)
-        hl = mix_hand(hl, g_face, k_face)
-        hl = mix_hand(hl, g_out, k_out)
-        # Right claw: on the lever's ball, with it as it swings down and back.
-        ball = to_stand(stand, lever_ball(lever_deg(f)))
-        g_lev = a.grip(f, -1, ball, body, body_rot, d=(fw + Vector((0, 0, -0.6))).normalized(), x_axis=(0, 0, 1))
+        k_look = tr([(34, 0), (42, 1), (56, 1), (60, 0), (68, 0), (71, 1), (76, 0)], f)
+        k_show = tr([(56, 0), (60, 1), (66, 1), (69, 0)], f)
+        hr = rest_hand(dl01, -1)
+        hr = mix_hand(hr, g_on, k_on)
+        hr = mix_hand(hr, g_look, k_look)
+        hr = mix_hand(hr, g_show, k_show)
+        # Left claw: on the lever's arm, near its ball, with it as it swings down and back.
+        pv = Vector(LEVER_PIVOT)
+        hold_pt = pv.lerp(lever_ball(lever_deg(f)), 0.8)
+        g_lev = a.grip(f, 1, to_stand(stand, hold_pt), body, body_rot, d=(fw + Vector((0, 0, -0.5))).normalized(),
+                       x_axis=(0, 0, 1))
         k_lev = tr([(16, 0), (22, 1), (34, 1), (38, 0)], f)
-        hr = mix_hand(rest_hand(dl01, -1), g_lev, k_lev)
-        hands = {1: hl[0] + Vector((0, 0, 0.02 * max(0, thunk))), -1: hr[0]}
+        hl = mix_hand(rest_hand(dl01, 1), g_lev, k_lev)
+        hands = {-1: hr[0] + Vector((0, 0, 0.02 * max(0, thunk) * (1 - k_on))), 1: hl[0]}
         look_platen = a.look(f, platen + Vector((0, 0, 0.03)), body, body_rot)
-        look_claw = a.look(f, face, body, body_rot)
+        look_claw = a.look(f, look_pt, body, body_rot)
         w_p = tr([(2, 0), (8, 1), (32, 1), (36, 0)], f)
         w_c = tr([(36, 0), (42, 1), (56, 1), (60, 0), (66, 0), (70, 1), (76, 0)], f)
         head = head_mix((w_p, look_platen), (w_c, look_claw))
         head[0] += -16 * max(0, thunk) - 8 * bob
         head[1] += tr([(44, 0), (48, 12), (54, 10), (58, 0)], f)
-        head[2] += tr([(58, 0), (61, 40), (64, 40), (66, -20), (68, -20), (70, 0)], f)   # anyone?
+        head[2] += tr([(58, 0), (61, 34), (64, 34), (66, -16), (68, -16), (70, 0)], f)   # anyone?
         ant = tr([(0, 0), (8, 6), (20, 8), (FRANK_THUNK, 8), (FRANK_THUNK + 2, -30), (40, -10), (50, -16), (62, -8),
                   (N - 1, 0)], f)
         antenna = [(ant * (0.8 + 0.2 * i) + 10 * math.sin(f * 1.3 - i) * bob, 0) for i in range(3)]
-        claw_l = tr([(14, 20), (18, 10), (22, 2), (36, 2), (40, 6), (N - 8, 6), (N - 2, CLAW_REST_OPEN['L'])], f)
-        claw_r = tr([(16, 1), (20, 24), (23, 3), (34, 3), (37, 22), (44, CLAW_REST_OPEN['R'])], f)
+        claw_r = tr([(14, 1), (18, 8), (22, 1), (36, 1), (40, 4), (N - 8, 4), (N - 2, CLAW_REST_OPEN['R'])], f)
+        claw_l = tr([(16, 20), (20, 30), (23, 4), (34, 4), (37, 28), (44, CLAW_REST_OPEN['L'])], f)
         a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=a.feet(f), hands=hands,
                hand_rot={'L': hl[1], 'R': hr[1]}, claws={'L': claw_l, 'R': claw_r},
-               elbows={'L': max(k_on, k_face, k_out), 'R': k_lev})
+               elbows={'R': max(k_on, k_look, k_show), 'L': k_lev})
     a.done()
 
 
@@ -1203,8 +1223,8 @@ def clip_hold_mug(dl01, arm):
         rr, ry = a.root(f)
         fw = rz(ry) @ Vector((0, -1, 0))
         lf = rz(ry) @ Vector((1, 0, 0))
-        held = rr + fw * 0.25 + lf * 0.07 + Vector((0, 0, 0.47))
-        drink = rr + fw * 0.22 + lf * 0.04 + Vector((0, 0, 0.56))
+        held = rr + fw * 0.27 + lf * 0.05 + Vector((0, 0, 0.42))
+        drink = rr + fw * 0.25 + lf * 0.03 + Vector((0, 0, 0.53))
         k_lift = tr([(MUG_GRAB, 0), (31, 1), (70, 1), (MUG_SET, 0)], f)
         p = base + Vector((0, 0, 0.04 * k_lift))
         p = p.lerp(held, tr([(30, 0), (38, 1), (66, 1), (72, 0)], f))
@@ -1379,8 +1399,8 @@ def clip_wind_clock(dl01, arm):
         look_clock = a.look(f, clock, body, body_rot)
         w_key = tr([(0, 0), (6, 1), (56, 1), (62, 0)], f)
         w_clock = tr([(62, 0), (68, 1), (82, 1), (86, 0)], f)
-        head = head_mix((w_key, look_key), (w_clock, (max(-34, look_clock[0]), 0, min(40, look_clock[2]))))
-        head[1] += tr([(66, 0), (70, 16), (76, 14), (80, -8), (84, 0)], f) + 3 * effort
+        head = head_mix((w_key, look_key), (w_clock, (max(-28, look_clock[0]), 0, min(24, look_clock[2]))))
+        head[1] += tr([(66, 0), (70, 12), (76, 10), (80, -6), (84, 0)], f) + 3 * effort
         ant = tr([(0, 0), (8, 4), (54, 6), (62, -6), (68, -20), (80, -16), (N - 1, 0)], f)
         antenna = [(ant * (0.8 + 0.2 * i) + 5 * effort * math.sin(f * 1.1 - i) + spr(f, 70, -6 * (1 + 0.3 * i), 6), 0)
                    for i in range(3)]
@@ -1642,21 +1662,22 @@ def clip_flick_switch(dl01, arm):
 # ---------------------------------------------------------------------------------------------------------
 
 def attach_claw_stamp(arm, coll):
-    """ClawStamp: the RECEIVED mark on the outer blade of his left claw (finger_b.L). Hidden until he franks it."""
+    """ClawStamp: the RECEIVED mark on the outer blade of his right claw (finger_a.R, the blade on his right).
+    Hidden until he franks it."""
     mat = bpy.data.materials.get('ClawStampMat') or _image_material('ClawStampMat', texture('stamp'), rough=0.6, alpha=True)
-    b = arm.data.bones['finger_b.L']
+    b = arm.data.bones['finger_a.R']
     h, t = b.head_local, b.tail_local
-    c = h.lerp(t, 0.42) + Vector((0.0098, 0, 0))
+    c = h.lerp(t, 0.42) + Vector((-0.0112, 0, 0))
     up = (t - h).normalized()
-    side = Vector((0, 1, 0))
+    y = Vector((0, 1, 0))
     r = 0.0105
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new('UVMap')
-    # Seen from his left (+x, where its normal faces), it reads with its top toward his wrist.
-    corners = [c - side * r - up * r, c - side * r + up * r, c + side * r + up * r, c + side * r - up * r]
+    # Its normal faces his right (-x); seen from there it reads with its top toward his wrist.
+    corners = [c + y * r - up * r, c + y * r + up * r, c - y * r + up * r, c - y * r - up * r]
     _quad(bm, uv, corners, uvs=((0, 1), (0, 0), (1, 0), (1, 1)))
     ob = _flat_obj('ClawStamp', bm, [mat], coll)
-    d17.parent_to_bone(ob, arm, 'finger_b.L')
+    d17.parent_to_bone(ob, arm, 'finger_a.R')
     return ob
 
 

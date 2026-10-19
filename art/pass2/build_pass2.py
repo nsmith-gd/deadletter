@@ -49,9 +49,9 @@ DRAG = (25.7, 28.0, -0.9, 0.52)       # the decal: x0, x1, y0, y1
 HEAP_WEIGHT1_X = 57.05                # was 52.85; the slide drops him at 56.6, the guard rail is at 57.32
 SUMP6 = (57.5, 60.05, -1.7, 0.0)      # the cistern: x0, x1, y0, y1 (outside faces)
 SUMP6_WALL, SUMP6_TOP, SUMP6_WATER, SUMP6_FLOOR = 0.12, -0.62, -0.75, -2.4
-COLLAPSE = (63.05, 64.2)              # the panel that gives way, world x (gallery deck at 1.6)
-COLLAPSE_Y = (-0.52, 0.45)            # the walkway strip it takes; the back strip (desk) stays
-COLLAPSE_HINGE = (63.05, 0.0, 1.57)   # its origin: the hinge line along y, mid-thickness of the deck
+COLLAPSE = (66.95, 68.05)             # the panel that gives way, world x (gallery deck at 1.6)
+COLLAPSE_Y = (-0.52, 0.86)            # the full width of the deck (the residential wall stays, at 0.87)
+COLLAPSE_HINGE = (66.95, 0.0, 1.57)   # its origin: the hinge line along y, mid-thickness of the deck
 GALLERY_OFF = 21.0                    # art/dl03's gallery is built in its own x and moved by OFF3
 # DL-07 Lift 2's shaft (art/dl04 52.8..55.3, moved by OFF3).
 SHAFT7 = (73.8, 76.3)
@@ -256,11 +256,11 @@ def make_textures():
     for i, (x, y) in enumerate(smooth):                         # the body's smear: soft, wide, uneven
         px, py = to_px(x, y)
         r = 34 + 10 * math.sin(i * 0.37) + rnd.uniform(-4, 4)
-        d.ellipse((px - r, py - r * 0.75, px + r, py + r * 0.75), fill=(14, 13, 11, 34))
+        d.ellipse((px - r, py - r * 0.75, px + r, py + r * 0.75), fill=(12, 11, 9, 62))
     for i, (x, y) in enumerate(smooth):                         # a darker, wetter core
         px, py = to_px(x, y)
         r = 15 + 6 * math.sin(i * 0.53 + 1)
-        d.ellipse((px - r, py - r * 0.7, px + r, py + r * 0.7), fill=(8, 8, 7, 40))
+        d.ellipse((px - r, py - r * 0.7, px + r, py + r * 0.7), fill=(6, 6, 5, 95))
     for i in range(6, len(smooth) - 6, 7):                     # toe scrapes: three short claws, both sides
         (ax, ay), (bxx, byy) = smooth[i - 2], smooth[i + 2]
         tx, ty = bxx - ax, byy - ay
@@ -272,7 +272,7 @@ def make_textures():
             for toe in (-1, 0, 1):
                 sx, sy = cx + toe * 0.018 * tx, cy + toe * 0.018 * ty
                 ex, ey = sx - tx * 0.07 + side * nx * 0.025 * toe, sy - ty * 0.07 + side * ny * 0.025 * toe
-                d.line((*to_px(sx, sy), *to_px(ex, ey)), fill=(6, 6, 5, 170), width=4)
+                d.line((*to_px(sx, sy), *to_px(ex, ey)), fill=(5, 5, 4, 210), width=5)
     for k in range(40):                                          # drips and dabs along the way
         x, y = smooth[rnd.randrange(len(smooth))]
         px, py = to_px(x + rnd.uniform(-0.2, 0.2), y + rnd.uniform(-0.2, 0.2))
@@ -660,9 +660,10 @@ def _recentre(ob, origin):
 
 
 def build_gallery_collapse(m, coll):
+    """A full-width section of the gallery walkway between the day board and the residential door: the deck,
+    both rails and the hanger over it are cut out of art/dl03's objects, and rebuilt as one panel that falls."""
     c0, c1 = COLLAPSE[0] - GALLERY_OFF, COLLAPSE[1] - GALLERY_OFF          # in art/dl03's own x
     cy0, cy1 = COLLAPSE_Y
-    gz = 1.6
     deck = bpy.data.objects.get('GalleryDeck')
     rails = bpy.data.objects.get('GalleryRails')
     if deck is not None:
@@ -670,36 +671,33 @@ def build_gallery_collapse(m, coll):
 
         def cut_deck(bm):
             for isl, lo, hi in _islands(bm):
-                if lo.x < c0 < hi.x and lo.x < c1 < hi.x and lo.y < -0.45 and hi.y > 0.85:
-                    yl, yh, zl, zh = lo.y, hi.y, lo.z, hi.z
-                    xl, xh = lo.x, hi.x
+                if lo.x < c0 and hi.x > c1:
+                    yl, yh, zl, zh, xl, xh = lo.y, hi.y, lo.z, hi.z, lo.x, hi.x
                     bmesh.ops.delete(bm, geom=isl, context='VERTS')
                     bx(bm, (xl, c0), (yl, yh), (zl, zh))
                     bx(bm, (c1, xh), (yl, yh), (zl, zh))
-                    bx(bm, (c0, c1), (cy1, yh), (zl, zh))
-                    break
         _edit_mesh(deck, cut_deck)
-    post_x = None
+    posts, hanger = [], None
     if rails is not None:
         assert abs(rails.location.x - GALLERY_OFF) < 1e-6
 
         def cut_rails(bm):
-            nonlocal post_x
+            nonlocal hanger
             for isl, lo, hi in _islands(bm):
-                if hi.y < cy1:                                          # the front rail and the hanger rods
-                    if lo.x < c0 and hi.x > c1:                          # a long rail: split it round the gap
-                        yl, yh, zl, zh = lo.y, hi.y, lo.z, hi.z
-                        xl, xh = lo.x, hi.x
-                        bmesh.ops.delete(bm, geom=isl, context='VERTS')
-                        bx(bm, (xl, c0), (yl, yh), (zl, zh))
-                        bx(bm, (c1, xh), (yl, yh), (zl, zh))
-                    elif lo.x > c0 and hi.x < c1:                        # a post or a hanger in the gap
-                        mid = (lo + hi) / 2
-                        bmesh.ops.delete(bm, geom=isl, context='VERTS')
-                        if hi.z > 4.0:                                   # the hanger: snapped, its top left hanging
-                            post_x = mid.x
-                            add_cyl(bm, (mid.x, mid.y, 3.15), (mid.x, mid.y, hi.z), 0.012, seg=6)
-                            add_cyl(bm, (mid.x, mid.y, 3.15), (mid.x + 0.05, mid.y - 0.03, 3.02), 0.012, seg=6)
+                if lo.x < c0 and hi.x > c1:                              # a long rail: split it round the gap
+                    yl, yh, zl, zh, xl, xh = lo.y, hi.y, lo.z, hi.z, lo.x, hi.x
+                    bmesh.ops.delete(bm, geom=isl, context='VERTS')
+                    bx(bm, (xl, c0), (yl, yh), (zl, zh))
+                    bx(bm, (c1, xh), (yl, yh), (zl, zh))
+                elif lo.x > c0 and hi.x < c1:                            # a post or a hanger in the gap
+                    mid = (lo + hi) / 2
+                    bmesh.ops.delete(bm, geom=isl, context='VERTS')
+                    if hi.z > 4.0:                                       # the hanger: snapped, its top left hanging
+                        hanger = mid.copy()
+                        add_cyl(bm, (mid.x, mid.y, 3.15), (mid.x, mid.y, hi.z), 0.012, seg=6)
+                        add_cyl(bm, (mid.x, mid.y, 3.15), (mid.x + 0.05, mid.y - 0.03, 3.02), 0.012, seg=6)
+                    else:
+                        posts.append(mid.copy())
         _edit_mesh(rails, cut_rails)
 
     # GalleryCollapse: origin on the hinge line (along y) at its left end, deck mid-thickness. Swung about the
@@ -707,24 +705,42 @@ def build_gallery_collapse(m, coll):
     hx, hy, hz = COLLAPSE_HINGE
     L = COLLAPSE[1] - COLLAPSE[0]
     bm = bmesh.new()
-    # 0 steel (the grating), 1 yellow (its rail), 2 rust
+    # 0 steel (the grating), 1 yellow (its rails), 2 rust
     bx(bm, (0.004, L - 0.004), (cy0 + 0.02, cy1), (-0.03, 0.03), 0)
     for k in range(int(L / 0.06)):                                         # the grating's bars, so it reads as a panel
         x = 0.03 + k * 0.06
         bx(bm, (x - 0.006, x + 0.006), (cy0 + 0.04, cy1 - 0.02), (0.03, 0.034), 0)
-    for y in (cy0 + 0.06, cy1 - 0.06):                                     # stringers underneath
+    for y in (cy0 + 0.06, 0.2, cy1 - 0.06):                                # stringers underneath
         bx(bm, (0.0, L), (y - 0.03, y + 0.03), (-0.12, -0.03), 0)
     for x in (0.02, L - 0.02):                                             # its end bars, rusted through at the bolts
         bx(bm, (x - 0.02, x + 0.02), (cy0 + 0.02, cy1), (-0.1, -0.03), 2)
-    py = -0.52                                                             # its run of the front rail
-    px = (post_x + GALLERY_OFF - hx) if post_x is not None else 0.4
-    bx(bm, (px - 0.02, px + 0.02), (py - 0.02, py + 0.02), (0.03, 1.03), 1)
-    for z in (0.53, 1.01):
-        bx(bm, (0.005, L - 0.005), (py - 0.02, py + 0.02), (z - 0.02, z + 0.02), 1)
-    add_cyl(bm, (px, 0.2, 0.03), (px, 0.2, 0.75), 0.012, mat=0, seg=6)    # the hanger's lower end, snapped
-    add_cyl(bm, (px, 0.2, 0.75), (px - 0.04, 0.22, 0.86), 0.012, mat=0, seg=6)
+    for p in posts:                                                        # its posts and its runs of both rails
+        bx(bm, (p.x + GALLERY_OFF - hx - 0.02, p.x + GALLERY_OFF - hx + 0.02), (p.y - 0.02, p.y + 0.02), (0.03, 1.03), 1)
+    for y, zs in ((-0.52, (0.53, 1.01)), (0.88, (1.01,))):
+        for z in zs:
+            bx(bm, (0.005, L - 0.005), (y - 0.02, y + 0.02), (z - 0.02, z + 0.02), 1)
+    if hanger is not None:                                                 # the hanger's lower end, snapped
+        px = hanger.x + GALLERY_OFF - hx
+        add_cyl(bm, (px, hanger.y, 0.03), (px, hanger.y, 0.75), 0.012, mat=0, seg=6)
+        add_cyl(bm, (px, hanger.y, 0.75), (px - 0.04, hanger.y + 0.02, 0.86), 0.012, mat=0, seg=6)
     ob = _obj('GalleryCollapse', bm, [m['steel'], m['yellow'], m['rust'] if 'rust' in m else m['steel']], coll)
     ob.location = (hx, hy, hz)
+
+    # GalleryCollapseEdges: what it leaves, torn grating bent down at both ends of the gap (static; the game shows
+    # it when the panel goes).
+    rnd = random.Random(612)
+    bm = bmesh.new()
+    for xe, sgn in ((COLLAPSE[0], 1), (COLLAPSE[1], -1)):
+        y = cy0 + 0.05
+        while y < cy1 - 0.05:
+            w = rnd.uniform(0.06, 0.14)
+            ln = rnd.uniform(0.06, 0.2)
+            ang = math.radians(rnd.uniform(40, 80))
+            a = Vector((xe, y + w / 2, 1.585))
+            dvec = Vector((sgn * math.cos(ang), 0, -math.sin(ang))) * ln
+            add_box(bm, a + dvec / 2, (ln, w * 0.9, 0.012), mat=0, rot=_ry(sgn * ang))
+            y += w + rnd.uniform(0.0, 0.05)
+    _obj('GalleryCollapseEdges', bm, [m['steel']], coll)
 
 
 # ---------------------------------------------------------------------------------------------------------

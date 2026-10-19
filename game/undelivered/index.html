@@ -3801,23 +3801,32 @@ function buildWhite(gltf) {
   scene.add(white.g);
   white.mixer = new THREE.AnimationMixer(white.g);
   for (const c of gltf.animations) {
+    c.tracks.forEach((t) => t.shift(-1 / 24)); c.resetDuration();      // strips start at frame 1
     const a = white.mixer.clipAction(c);
     if (!/Swim|Glide|Nose/.test(c.name)) { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; }
     white.acts[c.name] = a;
   }
   white.jaw = white.g.getObjectByName('JawTip') || white.g.getObjectByName('Jaw');
 }
-// Pale and a little translucent: wrap lighting and a pink rim where the light comes through.
+// Pale and a little translucent (art/white): the mottling map carries the tint; wrapped light with a pink band where
+// light comes through, a back-light glow and a wet rim. The gills are thin, so they glow a little on their own.
 function whiteMaterial(src) {
   const name = (src && src.name || '').replace(/\.\d+$/, '');
-  const base = { WhiteSkin: [0.62, 0.55, 0.52], WhiteGill: [0.55, 0.12, 0.14], WhiteMouth: [0.35, 0.08, 0.1] }[name] || [0.6, 0.55, 0.52];
-  const m = new THREE.MeshStandardMaterial({ color: lin(base), roughness: name === 'WhiteSkin' ? 0.45 : 0.6, metalness: 0, map: src && src.map || null });
-  m.onBeforeCompile = (sh) => {
-    sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', `
-      float rim = pow(1.0 - clamp(dot(normalize(vViewPosition), -normal) * -1.0, 0.0, 1.0), 2.5);
-      outgoingLight += vec3(0.55, 0.22, 0.22) * rim * 0.35 + diffuseColor.rgb * 0.06;
-      #include <opaque_fragment>`);
-  };
+  const map = src && src.map || null;
+  const look = { WhiteSkin: [map ? [1, 1, 1] : [0.8, 0.64, 0.59], 0.42], WhiteGill: [[0.66, 0.12, 0.15], 0.5], WhiteMouth: [[0.2, 0.03, 0.035], 0.3] }[name] || [[0.8, 0.64, 0.59], 0.45];
+  const m = new THREE.MeshStandardMaterial({ color: lin(look[0]), roughness: look[1], metalness: 0, map: name === 'WhiteSkin' ? map : null });
+  if (name === 'WhiteGill') { m.emissive = lin(look[0]).multiplyScalar(0.15); }
+  if (name !== 'WhiteMouth') {
+    m.onBeforeCompile = (sh) => {
+      sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', `
+        vec3 vDir = normalize(vViewPosition);
+        float rim = pow(1.0 - abs(dot(vDir, normal)), 3.0);
+        outgoingLight += vec3(0.85, 0.55, 0.52) * rim * ${name === 'WhiteGill' ? '0.5' : '0.25'} * diffuseColor.rgb;
+        outgoingLight += vec3(0.9, 0.32, 0.28) * 0.08 * diffuseColor.rgb;   // light through the skin
+        #include <opaque_fragment>`);
+    };
+    m.customProgramCacheKey = () => 'white-' + name;
+  }
   m.name = name || 'WhiteSkin';
   return m;
 }
@@ -3838,7 +3847,7 @@ function makeNoise(x, loud = 1, region = game.region) {
   white.lastNoise = game.clock;
 }
 // A bell or a lure: it goes there and noses at it until it stops.
-function lureWhite(x, sec) { if (!white.w) return; white.lure = { x: THREE.MathUtils.clamp(x, white.w.x0 + 0.3, white.w.x1 - 0.3), until: game.clock + sec }; }
+function lureWhite(x, sec, dir = 0) { if (!white.w) return; white.lure = { x, dir, until: game.clock + sec }; }
 function scareWhite(sec) { white.fleeUntil = game.clock + sec; if (white.state !== 'away') { setWhite('flee'); } }
 function setWhite(state) { white.state = state; white.t = 0; }
 function whiteWater() { return WATERS.find((w) => w.region === game.region && (!w.active || w.active())) || null; }
@@ -3860,7 +3869,8 @@ function updateWhite(dt) {
   const st = white.state;
   if (st === 'flee') { ty = surf - 1.2; speed = 2; white.tx = white.x; if (game.clock > white.fleeUntil) setWhite('patrol'); }
   else if (white.lure && game.clock < white.lure.until && st !== 'strike') {
-    white.tx = white.lure.x; speed = WHITE_SPEED.approach;
+    const ldir = white.lure.dir || (white.lure.x >= white.x ? 1 : -1);
+    white.tx = white.lure.x - 0.5 * ldir; speed = WHITE_SPEED.approach;      // its nose, 0.5 ahead, at the bell
     if (Math.abs(white.x - white.tx) < 0.15) { ty = surf - 0.12; whiteClip('WhiteNose'); } else whiteClip('WhiteSwim');
     // Running nearby still turns it: the bell holds it, it doesn't deafen it.
     if (white.heard && white.heard.him && white.heard.loud >= 1 && game.clock - white.heard.at < 0.1 && Math.abs(game.x - white.x) < 2.2) { white.lure = null; setWhite('approach'); }
@@ -3882,20 +3892,23 @@ function updateWhite(dt) {
     if (w.part !== 'glimpse' && exposed) { white.yaw = d >= 0 ? 0 : Math.PI; setWhite(w.part === 'scare' ? 'slap' : 'strike'); }
     else if (white.t > (w.part === 'glimpse' ? 1.6 : 2.2)) setWhite('sink');
   } else if (st === 'slap') {
-    ty = surf; speed = 0; whiteClip('WhiteSlap', 0.1);
+    ty = surf + (w.ledgeH ?? 0.25) - 0.25; speed = 0; whiteClip('WhiteSlap', 0.1);     // clips are authored to a ledge 0.25 up
     if (white.t > 0.35 && !white.hit) { white.hit = true; Sound.splash(1.2); shake(0.6); knockBack(Math.sign(game.x - white.x) || -1); if (w.onScare) w.onScare(); }
     if (white.t > 1.3) { white.hit = false; setWhite('sink'); }
   } else if (st === 'strike') {
-    ty = surf; speed = 0; whiteClip('WhiteLunge', 0.08);
-    if (white.t > 0.42 && !white.hit) {
+    ty = surf + (w.ledgeH ?? 0.25) - 0.25; speed = 0; whiteClip('WhiteLunge', 0.08);
+    if (white.t > 0.56 && !white.hit) {                                   // the jaws close at frame 14
       white.hit = true;
       const from = tv5.set(game.x, game.y, game.z).clone();
-      die('grabbed', { hold: 1.25, follow: (a) => {
-        // Pulled to the jaw, then under.
-        const k = smooth(a.t / 0.35), under = smooth((a.t - 0.45) / 0.6);
-        const jx = white.x + Math.cos(white.yaw) * 1.0, jy = surf + 0.15 - 0.9 * under;
-        game.x = THREE.MathUtils.lerp(from.x, jx, k); game.y = THREE.MathUtils.lerp(from.y, jy, k); game.z = THREE.MathUtils.lerp(from.z, w.z * 0.5, k);
-        if (a.t > 0.5 && !a.drag) { a.drag = true; whiteClip('WhiteDrag', 0.1); Sound.splash(1.5); for (let i = 0; i < 4; i++) spawnRipple(jx + (Math.random() - 0.5) * 0.6, surf, w.z, 0.4); }
+      die('grabbed', { hold: 1.6, follow: (a) => {
+        // Held in the jaw (JawTip), dragged back and under; without the model, an approximation.
+        if (a.t > 0.25 && !a.drag) { a.drag = true; whiteClip('WhiteDrag', 0.1); Sound.splash(1.5); }
+        const k = smooth(a.t / 0.15);
+        let jx, jy, jz = w.z * 0.5;
+        if (white.jaw) { white.g.updateMatrixWorld(true); const p = white.jaw.getWorldPosition(tv3); jx = p.x; jy = p.y - 0.3; jz = p.z; }
+        else { const under = smooth((a.t - 0.45) / 0.6); jx = white.x + Math.cos(white.yaw) * 1.0; jy = surf + 0.15 - 0.9 * under; }
+        game.x = THREE.MathUtils.lerp(from.x, jx, k); game.y = THREE.MathUtils.lerp(from.y, jy, k); game.z = THREE.MathUtils.lerp(from.z, jz, k);
+        if (a.drag && game.y < surf && !a.under) { a.under = true; for (let i = 0; i < 4; i++) spawnRipple(game.x + (Math.random() - 0.5) * 0.6, surf, w.z, 0.4); Sound.splash(1); }
       } });
     }
     if (white.t > 2.4) { white.hit = false; setWhite('sink'); }
@@ -3939,7 +3952,7 @@ function updateRipples(dt) {
   for (let i = white.ripples.length - 1; i >= 0; i--) {
     const m = white.ripples[i]; m.userData.t += dt;
     const k = m.userData.t / 1.4, r = m.userData.size + k * 0.9;
-    m.scale.set(r, r, 1); m.material.opacity = 0.35 * (1 - k);
+    m.scale.set(r, r, 1); m.material.opacity = 0.2 * (1 - k);
     if (k >= 1) { scene.remove(m); m.material.dispose(); white.ripples.splice(i, 1); }
   }
 }
@@ -4696,7 +4709,7 @@ function step(dt) {
 // Test hook for automated traversal checks.
 window.__dl01 = { game, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
   clip: () => current, renderer, carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
-  crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), offsets: { OFF2, OFF3, OFF4 }, scene: () => sceneName(), letters: letterState, curios: curioFound, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
+  crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), offsets: { OFF2, OFF3, OFF4 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
   k: { CART1, PIT, SH, RK, HP, RAIL7, CG, DIP9, DUCT9, GATE_X, DOCK_X, PAWL_X, GALLERY, T4_HALF, PUSH_GAP4, GRIP_FWD, SLOTS, LETTERS: LETTERS.map((l) => ({ id: l.id, x: l.x })) } };
 
 function boot() {
