@@ -491,15 +491,14 @@ def _lamps_object(name, bm, m, coll, xform, parent):
 
 
 # Poses (dl01.Clip.pose keywords; rig space, the rig standing at its origin facing -y).
-# Lying face down where it fell, head toward the bay and turned to the camera, cheek on the floor; its
-# right arm (the camera side) stretched out ahead past its head, claw open; the other tucked under it;
-# one knee drawn up. The antennas lie back along its head.
+# Lying on its left side where it fell, facing the camera, head toward the bay and bowed to the floor;
+# legs drawn up a little, the top one forward; the arm underneath stretched out along the floor past
+# its face, claw open; the top arm fallen limp across its front.
 LYING_POSE = dict(
-    body=(0.0, 0.0, 0.0), body_rot=(18.0, 0.0, -4.0), head=(10.0, 8.0, -38.0),
-    antenna=[(-40.0, 0.0), (-44.0, 0.0), (-40.0, 0.0)],
-    feet={'L': ((0.0, -0.06, 0.03), (40.0, 0.0, 0.0)), 'R': ((-0.01, -0.17, 0.14), (60.0, 0.0, 0.0))},
-    hand_rot={'L': (-30.0, 0.0, 20.0), 'R': (-150.0, 0.0, -10.0)},
-    claws={'L': 4.0, 'R': 38.0}, elbows={'L': 0.2, 'R': 0.6})
+    body=(0.0, 0.0, -0.02), body_rot=(8.0, 0.0, 0.0), head=(12.0, -10.0, 0.0),
+    antenna=[(-34.0, 8.0), (-40.0, 10.0), (-44.0, 10.0)],
+    feet={'L': ((0.02, -0.05, 0.05), (20.0, 0.0, 0.0)), 'R': ((-0.03, -0.14, 0.13), (45.0, 0.0, 0.0))},
+    claws={'L': 36.0, 'R': 6.0}, elbows={'L': 0.4, 'R': 0.0})
 # Seated in the cradle: low on its folded legs, head bowed, claws in its lap.
 SEATED_POSE = dict(
     body=SEATED_BODY, body_rot=SEATED_ROT, head=(22.0, 5.0, 0.0),
@@ -507,14 +506,20 @@ SEATED_POSE = dict(
     feet={'L': ((0.01, -0.05, 0.0), (0.0, 0.0, 0.0)), 'R': ((-0.01, -0.03, 0.0), (0.0, 0.0, 4.0))},
     hand_rot={'L': (-40.0, 10.0, 30.0), 'R': (-40.0, -10.0, -30.0)},
     claws={'L': 10.0, 'R': 2.0}, elbows={'L': 0.5, 'R': 0.5})
-LYING_TILT = 0.0                     # degrees the head end dips (about y)
-# Rig to prone: its up (+z) along +x, its front (-y) down, its left side (+x) away from the camera.
-PRONE = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+LYING_TILT = 4.0                     # degrees the head end dips, so the head rests on the floor too
 
 
 def lying_hands(dl01):
-    return {1: Vector((-0.07, -0.06, 0.12)),                                      # left: tucked under it
-            -1: Vector((-0.24, -0.12, 0.62)) - dl01.REST_WRIST[-1]}               # right: out past its head
+    return {1: Vector((0.25, -0.19, 0.6)) - dl01.REST_WRIST[1],                   # under it: out past its face
+            -1: Vector((-0.03, -0.27, 0.26)) - dl01.REST_WRIST[-1]}               # on top: limp across its front
+
+
+def aim(d):
+    """hand_rot (degrees) that points the claws along d (body space): pitch about x, then turn about z."""
+    d = Vector(d).normalized()
+    a = -math.acos(max(-1.0, min(1.0, -d.z)))
+    sa = math.sin(a)
+    return (math.degrees(a), 0.0, math.degrees(math.atan2(-d.x / sa, d.y / sa)))
 
 
 def seated_hands(dl01):
@@ -527,9 +532,9 @@ def build_couriers(dl01, m, coll):
     out = {}
 
     # Lying.
-    pose = dict(LYING_POSE, hands=lying_hands(dl01))
+    pose = dict(LYING_POSE, hands=lying_hands(dl01), hand_rot={'L': aim((0.1, -0.3, 0.95)), 'R': aim((0.8, -0.4, -0.45))})
     body, mats, lamps = bake_pose(dl01, arm, rcoll, 'RacksLying', pose)
-    rot = Matrix.Rotation(math.radians(LYING_TILT), 4, 'Y') @ PRONE
+    rot = Matrix.Rotation(math.radians(90.0 + LYING_TILT), 4, 'Y')   # up along +x, left side down
     xs, zs = [], []
     for v in body.verts:
         p = rot @ v.co
@@ -572,28 +577,34 @@ def build_tow_loop(m, fallen):
     me = fallen.data
     bm = bmesh.new()
     bm.from_mesh(me)
-    head_end = max(v.co.x for v in bm.verts if 0.1 < v.co.z < 0.4 and abs(v.co.y) < 0.15)   # the crown
-    back = max((v.co.z for v in bm.verts if head_end - 0.2 < v.co.x < head_end - 0.02 and abs(v.co.y) < 0.12),
-               default=0.38)                                                  # the back of its head
-    gx = head_end - 0.06
-    grip = Vector((gx, -0.01, LOOP_Z))
+    head_end = max(v.co.x for v in bm.verts if v.co.z > 0.25 and abs(v.co.y) < 0.17)   # the crown
+    back = LOOP_Z
+    gx = head_end + 0.03                                                      # just past its crown
+    grip = Vector((gx, 0.0, LOOP_Z))
     strap_i = len(me.materials)
     red_i = strap_i + 1
-    # The harness band round its shoulders (behind the head), the strap from it up the back of the head.
-    sx = head_end - 0.27
+    # The harness: a band over its shoulders (the top flank, on its side), and the strap from it along
+    # the back of its head to the crown.
+    sx = head_end - 0.33
     top = max((v.co.z for v in bm.verts if abs(v.co.x - sx) < 0.03 and abs(v.co.y) < 0.2), default=0.45)
-    add_box(bm, (sx, 0.0, top / 2), (0.04, 0.47, top + 0.012), mat=strap_i)
-    add_box(bm, (sx, 0.0, top + 0.004), (0.04, 0.44, 0.008), mat=strap_i)
-    p0, p1 = Vector((sx + 0.01, -0.01, top + 0.006)), Vector((gx - 0.02, -0.01, back + 0.01))
-    d = p1 - p0
-    add_box(bm, (p0 + p1) / 2, (d.length, 0.05, 0.006), mat=strap_i,
-            rot=Vector((1, 0, 0)).rotation_difference(d.normalized()).to_matrix().to_4x4())
-    # The loop: two red tabs up from the strap to a padded red grip across (along y).
+    ys = [v.co.y for v in bm.verts if abs(v.co.x - sx) < 0.03 and v.co.z > top - 0.06]
+    add_box(bm, (sx, (min(ys) + max(ys)) / 2, top + 0.004), (0.04, max(ys) - min(ys) + 0.016, 0.008), mat=strap_i)
+    back_y = max(v.co.y for v in bm.verts if head_end - 0.2 < v.co.x < head_end and v.co.z > 0.2)
+    pts = [Vector((sx, max(ys) - 0.02, top + 0.006)), Vector((sx + 0.06, back_y + 0.006, top - 0.04)),
+           Vector((head_end - 0.03, back_y + 0.006, LOOP_Z - 0.02))]
+    for a, b in zip(pts, pts[1:]):
+        d = b - a
+        add_box(bm, (a + b) / 2, (d.length + 0.01, 0.006, 0.045), mat=strap_i,
+                rot=Vector((1, 0, 0)).rotation_difference(d.normalized()).to_matrix().to_4x4())
+    # The loop: the strap's red end wraps round the crown's back corner; two red tabs from it to a padded
+    # red grip across (along y), just past the crown.
     y0, y1 = grip.y - 0.1, grip.y + 0.1
+    base = Vector((head_end - 0.005, (back_y + y1) / 2, LOOP_Z - 0.02))
+    add_box(bm, base, (0.03, back_y - y1 + 0.04, 0.045), mat=red_i)
     for y in (y0, y1):
-        h = LOOP_Z - back
-        add_box(bm, (gx, y, back + h / 2), (0.03, 0.012, h + 0.02), mat=red_i)
-    add_box(bm, (gx, grip.y, back + 0.008), (0.05, y1 - y0 + 0.012, 0.012), mat=red_i)
+        a, b = Vector((head_end - 0.02, y, LOOP_Z)), Vector((gx, y, LOOP_Z))
+        add_box(bm, (a + b) / 2, (b.x - a.x + 0.02, 0.012, 0.03), mat=red_i)
+    add_box(bm, (head_end - 0.01, grip.y, LOOP_Z), (0.012, y1 - y0 + 0.012, 0.03), mat=red_i)
     add_cyl(bm, (gx, y0 - 0.012, LOOP_Z), (gx, y1 + 0.012, LOOP_Z), 0.016, seg=12, mat=red_i)
     bm.to_mesh(me)
     bm.free()

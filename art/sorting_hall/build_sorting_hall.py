@@ -22,7 +22,7 @@ import random
 
 import bpy
 import bmesh
-from mathutils import Euler, Matrix, Quaternion, Vector
+from mathutils import Euler, Matrix, Vector
 
 import build_d17 as d17
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, emission_material,
@@ -88,10 +88,6 @@ def _plane(name, size, center, mat, coll, rot=None):
 
 def _rx(deg):
     return Matrix.Rotation(math.radians(deg), 4, 'X')
-
-
-def _rz(deg):
-    return Matrix.Rotation(math.radians(deg), 4, 'Z')
 
 
 # --------------------------------------------------------------------------
@@ -339,7 +335,6 @@ def build_tea_corner(m, coll):
     add_cyl(bm, (16.55, 1.25, 0.0), (16.55, 1.25, 0.42), 0.13, 0.12, seg=16)          # an upturned crate for a stool
     _obj('TeaTable', bm, [m['wood']], coll)
     bm = bmesh.new()
-    rnd = random.Random(150)
     for i, (x, y) in enumerate(((15.6, 1.32), (15.72, 1.48), (15.93, 1.36))):
         add_cyl(bm, (x, y, 0.72), (x, y, 0.81), 0.035, seg=14)
         add_torus(bm, (x + 0.04, y, 0.765), (0, 1, 0), 0.022, 0.006, seg=10, rseg=4)
@@ -501,7 +496,6 @@ def _slab_frame():
     up = Vector((0, math.cos(a), math.sin(a)))
     nrm = Vector((0, -math.sin(a), math.cos(a)))
     top_y, top_z = 0.2, 1.30                          # its top face passes just under the gantry's deck here
-    k = 1.0 / math.tan(a) if a else 0
     z_at = lambda y: top_z + (y - top_y) * math.tan(a)     # noqa: E731
     return up, nrm, z_at, a
 
@@ -537,6 +531,16 @@ def build_collapse(m, coll):
         add_box(bm, at(s, t / 2), (w - 0.04, 0.016, t - 0.04), rot=rot)
     add_box(bm, at(length - 0.02, t / 2), (w + 0.04, 0.06, t + 0.04), rot=rot)          # its cornice, against the wall
     add_box(bm, at(0.03, t / 2), (w + 0.02, 0.06, t), rot=rot)                          # its foot
+    # A second, shorter unit thrown down on its back across the lane, its open cubbies to the ceiling, in front
+    # of the first one's foot and under it: the floor route is plainly shut.
+    lx0, lx1, ly0, ly1, lh = x0 - 0.12, x1 + 0.1, -0.75, 0.05, 0.42
+    tilt = Matrix.Rotation(0.12, 4, 'X') @ Matrix.Rotation(-0.06, 4, 'Z')
+    lc = Vector(((lx0 + lx1) / 2, (ly0 + ly1) / 2, lh / 2))
+    add_box(bm, lc + Vector((0, 0, -lh / 2 + 0.02)), (lx1 - lx0, ly1 - ly0, 0.04), rot=tilt)
+    for x in (lx0, lx1, (lx0 + lx1) / 2):
+        add_box(bm, Vector((x, lc.y, lc.z)), (0.03, ly1 - ly0, lh), rot=tilt)
+    for k in range(5):
+        add_box(bm, Vector((lc.x, ly0 + (ly1 - ly0) * k / 4, lc.z)), (lx1 - lx0, 0.025, lh), rot=tilt)
     _obj('Collapse', bm, [m['pigeon']], coll)
 
     rnd = random.Random(226)
@@ -552,6 +556,10 @@ def build_collapse(m, coll):
         sz = (rnd.uniform(0.16, 0.3), rnd.uniform(0.14, 0.26), rnd.uniform(0.08, 0.18))
         add_box(heap, (rnd.uniform(x0 - 0.1, x1 + 0.15), rnd.uniform(y_lo - 0.35, y_lo + 0.25), sz[2] / 2), sz,
                 rot=Matrix.Rotation(rnd.uniform(-1, 1), 4, 'Z'))
+    for k in range(9):                                                                    # tumbled onto the lying unit
+        sz = (rnd.uniform(0.16, 0.3), rnd.uniform(0.14, 0.26), rnd.uniform(0.1, 0.2))
+        add_box(heap, (rnd.uniform(x0, x1), rnd.uniform(-0.65, 0.0), 0.45 + sz[2] / 2 + 0.1 * (k % 2)), sz,
+                rot=Matrix.Rotation(rnd.uniform(-1, 1), 4, 'Z') @ Matrix.Rotation(rnd.uniform(-0.4, 0.4), 4, 'Y'))
     for k in range(60):                                                                   # letters, everywhere in it
         y = rnd.uniform(y_lo - 0.4, 0.9)
         zmax = max(0.02, z_at(y) - 0.36) if y > y_lo else 0.02

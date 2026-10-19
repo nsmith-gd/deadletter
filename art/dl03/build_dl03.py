@@ -1295,6 +1295,43 @@ def clip_startle(dl01, arm):
     c.done()
 
 
+SLIDE_SIT = -0.29          # body drop when seated: the pod's base on the root (the slide's surface)
+
+
+def clip_slide(dl01, arm):
+    """DL-06, down the return slide (loops): sitting on the pod's base, legs out in front with the
+    knees up, leaning back a little; claws out wide for balance, wobbling, the head steady and looking
+    ahead, the antenna streaming back. Rig space with the root on the sliding surface: the game moves
+    the root along ReturnSlide (and may pitch it with the slope)."""
+    Clip = dl01.Clip
+    frames = 24
+    c = Clip(arm, 'Slide', frames)
+    tau = 2 * math.pi
+    pb = arm.pose.bones
+    for frame in range(1, frames + 2):                  # the last key repeats the first: a seamless loop
+        t = (frame - 1) / frames
+        wob = math.sin(tau * t)
+        jit = math.sin(2 * tau * t + 0.6)
+        body = (0.006 * wob, 0.03, SLIDE_SIT + 0.004 * math.sin(2 * tau * t))
+        rot = (-12 + 1.5 * jit, 4 * wob, 2 * math.sin(tau * t + 0.8))
+        # Claws out to the sides at shoulder height, see-sawing against the roll.
+        hands = {s: Vector((s * 0.19, -0.05, 0.37 + s * 0.04 * wob + 0.01 * jit)) for _, s in SIDES}
+        feet = {side: ((s * 0.015, -0.265 + 0.008 * math.sin(tau * t + (0 if s > 0 else 1.7)), 0.0),
+                       (-24 + 5 * math.sin(tau * t + s), 0, s * 5)) for side, s in SIDES}
+        head = (14 - rot[0] * 0.6 + 2 * jit, -rot[1] * 0.8, 2 * math.sin(tau * t - 0.4))
+        antenna = [(-34 + 7 * math.sin(2 * tau * t * (1 + 0.5 * i) - i), 4 * math.sin(tau * t + i)) for i in range(3)]
+        c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands, feet=feet,
+               hand_rot={side: (-10 + 6 * wob * s, -s * (55 + 6 * jit), s * 20) for side, s in SIDES},
+               claws={'L': 34 + 8 * math.sin(2 * tau * t + 1), 'R': 30 + 8 * math.sin(2 * tau * t + 2.5)},
+               elbows={'L': 0.6, 'R': 0.6})
+        for side, _ in SIDES:                           # knees up, not down through the slide
+            pb[f'pole_knee.{side}'].location = (0, 0.3, 0.6)
+            d17._key(pb[f'pole_knee.{side}'], 'location', frame=frame)
+    c.done()
+    for side, _ in SIDES:
+        pb[f'pole_knee.{side}'].location = (0, 0, 0)
+
+
 def add_clips(dl01, arm):
     clip_attention(dl01, arm)
     clip_proud(dl01, arm)
@@ -1308,6 +1345,7 @@ def add_clips(dl01, arm):
     clip_ride(dl01, arm)
     clip_refuse(dl01, arm)
     clip_realise(dl01, arm)
+    clip_slide(dl01, arm)
     # A slow, heavy walk for the moments that need to be taken slowly.
     dl01.gait(arm, 'SadWalk', 16, half=0.08, stance=0.62, lift=0.02, crouch=-0.03, lean=1.0, head_pitch=14,
               antenna_back=22, arm_swing=0.006, bob=0.003, roll=1.5)

@@ -48,6 +48,7 @@ PIT_Z = -0.6                         # the pit floor, the buffers' base
 CAGE_HALF, CAGE_Y, CAGE_H = 0.75, (-0.6, 0.6), 2.1
 CAGE_TOP, CAGE_LAND, CAGE_BOTTOM = 3.4, 1.6, -0.1   # floor-top z: start, the lit landing, on the buffers
 RAIL_Y, RAIL_Z, RAIL_X = 0.34, 0.11, (-0.3, 0.62)   # the side rails he grips (cage-local), either side of the lane
+MESH_GAP = (0.08, 0.46)              # the back mesh's torn corner over the pawl: from this x to the right post, up to z
 BACK_Y = 0.88                        # the plane of the rack, the pawl, the chains and the counterweight
 SHAFT_BACK = 1.05                    # the shaft's back wall face
 RACK_Z = (-0.6, 3.6)                 # CageRack, world z
@@ -56,7 +57,7 @@ RACK_X, RACK_ROOT, RACK_TIP, RACK_PITCH = 0.52, 0.48, 0.40, 0.08      # cage-loc
 # the counterweight hangs in the back left. The pawl rides behind the cage's back mesh just above the floor,
 # where the side view sees it through the mesh. It is modelled lifted (dog 55 degrees above horizontal,
 # pointing +x); thrown, it turns PAWL_THROW about +Y and its tip rests on a tooth, 20 degrees below horizontal.
-PAWL_PIN, PAWL_LEN, PAWL_UP, PAWL_SET = (0.2, BACK_Y, 0.15), 0.25, 55.0, -20.0
+PAWL_PIN, PAWL_LEN, PAWL_UP, PAWL_SET = (0.2, BACK_Y, 0.24), 0.25, 55.0, -20.0
 PAWL_THROW = PAWL_UP - PAWL_SET      # +75 degrees about Blender +Y
 PAWL_TIP_SET = PAWL_PIN[2] + PAWL_LEN * math.sin(math.radians(PAWL_SET))   # cage-local z of the biting tip
 # The lever, red, inside the cage on its left post: pivot at its base, modelled at rest (leaning 10 degrees
@@ -65,7 +66,7 @@ LEVER_PIVOT, LEVER_LEN, LEVER_REST, LEVER_THROW = (-0.6, 0.3, 0.0), 0.6, -10.0, 
 # The chains: from the cage's hitch (cage-local) over the sheave (world) down to the counterweight, 1:1.
 HITCH = (0.05, BACK_Y, 2.27)
 SHEAVE_X, SHEAVE_Z, SHEAVE_R = -0.25, 9.6, 0.3         # cage-local x of its axle, world z, pitch radius
-CW_X, CW_SIZE = -0.55, (0.22, 0.16, 1.1)               # counterweight: local x, size; origin at its hook (top)
+CW_X, CW_SIZE = -0.55, (0.24, 0.16, 1.1)               # counterweight: local x, size; origin at its hook (top)
 CW_SUM = 7.2                         # cage floor z + counterweight hook z, always (cage at 3.4 -> hook at 3.8)
 
 
@@ -208,6 +209,8 @@ def cage_materials(m):
     m['landingamber'] = emission_material('LandingAmber', (1.0, 0.55, 0.12), 0.0)
     m['stopstripe'] = emission_material('StopStripe', (0.95, 0.6, 0.14), 0.0)
     m['cagebulb'] = emission_material('CageBulb', (1.0, 0.86, 0.66), 0.0)
+    m['pawlsteel'] = worn_material('PawlSteel', base=(0.3, 0.29, 0.27), dirt=(0.08, 0.06, 0.04),
+                                   chip=(0.55, 0.53, 0.5), rough=0.4, chip_rough=0.3, metallic=0.85)
     # Shared materials the other chapters define; made here only when this scene is built on its own.
     fallback = {
         'iron': lambda: worn_material('CastIron', base=(0.035, 0.034, 0.032), dirt=(0.05, 0.03, 0.018),
@@ -266,6 +269,8 @@ def build_climbs(m, coll):
     for k in range(7):                                                       # rivets along the top edge
         add_sphere(bm, W(u0 + 0.05 + k * 0.083, -0.558, top - 0.06), 0.008, mat=2, seg=6)
     bx(bm, (u0 + 0.02, u1 - 0.02), (-0.565, -0.55), (top - 0.12, top - 0.07), 3)    # hazard band
+    for u in (u0 + 0.015, u1 - 0.015):                                       # corner angles
+        bx(bm, (u - 0.02, u + 0.02), (-0.58, -0.54), (DECK, top - 0.02), 2)
     bx(bm, (u0 + 0.05, u1 - 0.05), (1.25, 1.75), (top, 6.0), 0)                     # the duct
     for z in (2.9, 3.7, 4.5, 5.3):
         bx(bm, (u0 + 0.03, u1 - 0.03), (1.23, 1.77), (z, z + 0.05), 2)
@@ -302,8 +307,14 @@ def build_climbs(m, coll):
     u0, u1, top = CLIMBS[2]
     bm = bmesh.new()
     bx(bm, (u0, u1), (-0.8, 1.85), (DECK, top - 0.1), 0)
-    bx(bm, (u0 + 0.1, u0 + 0.5), (-0.82, -0.8), (DECK + 0.4, DECK + 0.9), 3)        # concrete patch
-    _obj('C8LandingPier', bm, [m['masonry'], m['plate'], m['yellow'], m['concrete']], coll)
+    for row in range(6):                                                     # a bricked-up hole in it
+        z = DECK + 0.32 + row * 0.085
+        off = 0.06 if row % 2 else 0.0
+        for k in range(3):
+            ub = u0 + 0.14 + off + k * 0.13
+            bx(bm, (ub, ub + 0.12), (-0.83, -0.8), (z, z + 0.075), 1)
+    bx(bm, (u1 - 0.3, u1 - 0.05), (-0.82, -0.8), (top - 0.75, top - 0.35), 2)       # rust bleeding from the deck
+    _obj('C8LandingPier', bm, [m['concrete'], m['masonry'], m['rust']], coll)
     bm = bmesh.new()
     bx(bm, (u0 - 0.02, u1), (-0.82, 1.85), (top - 0.1, top), 0)
     for k in range(int((u1 - u0) / 0.1)):
@@ -485,7 +496,14 @@ def build_cage(m, coll):
                 lbx(bm, xs, ys, (z - 0.04, z + 0.04), 5)
     # Mesh: the back to 1.05 (above it open, so the rack and the counterweight read), the sides behind the
     # lane full height, and transoms over the doorways.
-    _mesh_panel(bm, 'x', cy1 - 0.03, -h + 0.06, h - 0.06, (0.03, 1.05), 0.08, 0.08, 0, 1)
+    # The back mesh is torn out of its lower right corner, over the pawl: the pawl and the teeth it bites
+    # read through the gap, framed by a post and a rail.
+    _mesh_panel(bm, 'x', cy1 - 0.03, -h + 0.06, MESH_GAP[0], (0.03, 1.05), 0.08, 0.08, 0, 1)
+    _mesh_panel(bm, 'x', cy1 - 0.03, MESH_GAP[0], h - 0.06, (MESH_GAP[1], 1.05), 0.08, 0.08, 0, 1)
+    lbx(bm, (MESH_GAP[0] - 0.02, MESH_GAP[0] + 0.02), (cy1 - 0.05, cy1 - 0.01), (0.0, 1.05), 0)
+    for k in range(4):                                                               # torn wire ends
+        x = MESH_GAP[0] + 0.1 + k * 0.12
+        add_cyl(bm, (x, cy1 - 0.03, MESH_GAP[1]), (x + 0.02 * (k % 2) - 0.01, cy1 - 0.05, MESH_GAP[1] - 0.05 - 0.02 * (k % 3)), 0.003, mat=1, seg=4)
     for s in (-1, 1):
         x = s * (h - 0.03)
         _mesh_panel(bm, 'y', x, 0.33, cy1 - 0.06, (0.03, H - 0.06), 0.09, 0.09, 0, 1)
@@ -542,7 +560,7 @@ def build_cage(m, coll):
     add_box(bm, d * PAWL_LEN * 0.5, (PAWL_LEN, 0.05, 0.04), rot=_ry(-up))
     add_box(bm, d * (PAWL_LEN - 0.02), (0.05, 0.05, 0.05), rot=_ry(-up))
     add_box(bm, -d * 0.05, (0.1, 0.04, 0.03), rot=_ry(-up))
-    ob = _obj('CagePawl', bm, [m['iron']], coll)
+    ob = _obj('CagePawl', bm, [m['pawlsteel']], coll)
     ob.parent = cage
     ob.location = PAWL_PIN
 
@@ -569,18 +587,22 @@ def build_cage(m, coll):
     # CageCounterweight: a frame of cast slabs in the back right corner, origin at its hook (top centre).
     cw, cwd, cwh = CW_SIZE
     bm = bmesh.new()
+    # 0 iron slabs, 1 its frame (painted yellow, so it reads passing the cage in the dark), 2 hazard band.
     for s in (-1, 1):
-        lbx(bm, (s * cw / 2 - 0.015, s * cw / 2 + 0.015), (-cwd / 2, cwd / 2), (-cwh, -0.02), 0)
+        lbx(bm, (s * cw / 2 - 0.018, s * cw / 2 + 0.018), (-cwd / 2, cwd / 2), (-cwh, -0.02), 1)
         for z in (-cwh + 0.08, -0.12):                                            # shoes on the guide rods
             lbx(bm, (s * 0.14 - 0.02, s * 0.14 + 0.02), (-0.03, 0.03), (z - 0.04, z + 0.04), 0)
-    lbx(bm, (-cw / 2, cw / 2), (-cwd / 2, cwd / 2), (-0.08, -0.02), 0)
-    lbx(bm, (-cw / 2, cw / 2), (-cwd / 2, cwd / 2), (-cwh, -cwh + 0.06), 1)
-    n = 8
+    lbx(bm, (-cw / 2, cw / 2), (-cwd / 2, cwd / 2), (-0.09, -0.02), 1)
+    lbx(bm, (-cw / 2, cw / 2), (-cwd / 2, cwd / 2), (-cwh, -cwh + 0.08), 1)
+    for k in range(3):                                                             # chevrons on its foot
+        x = -cw / 2 + 0.04 + k * 0.07
+        add_box(bm, (x, -cwd / 2 - 0.002, -cwh + 0.04), (0.03, 0.004, 0.09), mat=2, rot=_ry(0.6))
+    n = 7
     for k in range(n):
-        z = -cwh + 0.07 + k * (cwh - 0.16) / n
-        lbx(bm, (-cw / 2 + 0.02, cw / 2 - 0.02), (-cwd / 2 + 0.01, cwd / 2 - 0.01), (z, z + (cwh - 0.16) / n - 0.012), 0)
+        z = -cwh + 0.09 + k * (cwh - 0.19) / n
+        lbx(bm, (-cw / 2 + 0.02, cw / 2 - 0.02), (-cwd / 2 + 0.01, cwd / 2 - 0.01), (z, z + (cwh - 0.19) / n - 0.015), 0)
     add_torus(bm, (0, 0, 0.0), (1, 0, 0), 0.03, 0.011, mat=0, seg=12, rseg=5)
-    ob = _obj('CageCounterweight', bm, [m['iron'], m['yellow']], coll)
+    ob = _obj('CageCounterweight', bm, [m['iron'], m['yellow'], m['rubber']], coll)
     cwo = ob
     cwo.location = (X0 + SHAFT_U + CW_X, BACK_Y, CW_SUM - CAGE_TOP)
     bm = bmesh.new()
@@ -615,7 +637,7 @@ def build_landing(m, coll):
     bx(bm, (LANDING[0] + 0.12, LANDING[0] + 0.36), (0.78, 1.0), (ANTE_CEIL - 0.3, ANTE_CEIL - 0.14), 0)   # lamp box
     for k in range(4):                                                        # the guard's wires
         a = k * math.pi / 4
-        add_torus(bm, W(LANDING[0] + 0.24, 0.89, ANTE_CEIL - 0.36), (math.cos(a), math.sin(a), 0), 0.07, 0.004, mat=0, seg=12, rseg=3)
+        add_torus(bm, W(LANDING[0] + 0.24, 0.89, ANTE_CEIL - 0.37), (math.cos(a), math.sin(a), 0), 0.09, 0.005, mat=0, seg=12, rseg=3)
     add_cyl(bm, W(LANDING[0] + 0.24, 1.0, ANTE_CEIL - 0.22), W(LANDING[0] + 0.24, 1.5, ANTE_CEIL - 0.05), 0.01, mat=2, seg=5)
     # The marker lamp beside the rack at the stop level, and its conduit up the wall.
     mk = SHAFT[1] - 0.1                                                       # beside the rack, right of its stop tooth
@@ -623,7 +645,7 @@ def build_landing(m, coll):
     add_cyl(bm, W(mk, SHAFT_BACK - 0.03, CAGE_LAND + 0.22), W(mk, SHAFT_BACK - 0.03, ANTE_CEIL + 0.4), 0.01, mat=2, seg=5)
     _obj('C8LandingEdge', bm, [m['steel'], m['yellow'], m['rubber']], coll)
     bm = bmesh.new()
-    add_sphere(bm, W(LANDING[0] + 0.24, 0.89, ANTE_CEIL - 0.36), 0.05, seg=12)
+    add_sphere(bm, W(LANDING[0] + 0.24, 0.89, ANTE_CEIL - 0.37), 0.065, seg=14)
     add_sphere(bm, W(SHAFT[1] - 0.1, SHAFT_BACK - 0.07, CAGE_LAND + 0.16), 0.03, seg=10, scale=(1, 0.6, 1))
     _obj('LandingLamp', bm, [m['landingamber']], coll)
 
@@ -664,7 +686,7 @@ def build_set(dl01, m, coll):
 # --------------------------------------------------------------------------
 
 BRACE_BODY, BRACE_ROT = -0.15, 7.0       # crouched low, leaning in
-BRACE_GRIP = {s: Vector((s * RAIL_Y, -0.04, RAIL_Z + 0.075)) for _, s in SIDES}   # wrists over the side rails (armature space)
+BRACE_GRIP = {s: Vector((s * (RAIL_Y - 0.015), -0.04, RAIL_Z + 0.063)) for _, s in SIDES}   # wrists just inboard of the rails: claw tips on them
 BRACE_JOLTS = ((2, 1.0), (19, 0.45), (25, 0.7))   # (frame, strength): the cage shudders; loops every 48 frames
 
 

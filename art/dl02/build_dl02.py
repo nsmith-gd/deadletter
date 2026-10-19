@@ -37,7 +37,7 @@ ROWS_Y = (1.65, 2.95, 4.25, 5.55, 6.85)
 NEAR_ROW_Y = 0.9                     # the row right behind the lane
 NUDGE_SLOT = 2                       # near-row slot of the courier D-17 can try to wake
 LEFT_WALL = (12.0, 12.32)             # the weighing room's left wall (the Sorting Hall's right): x0, x1
-GANTRY_DOOR = (-0.42, 0.42, 1.35, 2.4)  # the gantry doorway in it: y0, y1, sill, head (art/sorting_hall's gantry deck is at 1.35)
+GANTRY_DOOR = (-0.42, 0.42, 1.35, 2.4)  # the gantry doorway: y0, y1 (cut open to the front of the wall), sill, head (the deck is at 1.35)
 GRIP = (0.29, 0.21)                  # the weight's bail: forward of D-17 when lifting, height on the weight
 WRIST_ABOVE_GRIP = 0.07
 
@@ -172,7 +172,7 @@ def build_room_walls(m, coll):
     its left wall, shared with the Sorting Hall, with the gantry doorway D-17 comes in by: x 12.0 to 12.32,
     1.35 to 2.4 high, and a warm lamp over it on the hall's side (GantryLamp, the hall's brightest point)."""
     lx0, lx1 = LEFT_WALL
-    gy0, gy1, sill, head = GANTRY_DOOR
+    _, gy1, sill, head = GANTRY_DOOR
     by = 0.62
     bm = bmesh.new()
     a0, a1 = lx1, GATE_X - 0.05
@@ -182,25 +182,27 @@ def build_room_walls(m, coll):
         rounded_box((w - 0.03, 0.3, 2.58), (a0 + w * (k + 0.5), by + 0.15, 1.3), p=12, cuts=8,
                     dents=((0.008, 3.0),), seed=71 + k, bm=bm, mat=0)
     _obj('WeighRoomWall', bm, [m['wall']], coll)
-    # The left wall runs from the open front to behind the Sorting Hall's back wall, and up to its ceiling.
-    y_front, y_back, top = -1.6, 1.25, 4.65
+    # The left wall runs from in front of the lane (cut away there, like the gate's partition, so the side view
+    # sees through the doorway) to behind the Sorting Hall's back wall, and up to its ceiling.
+    y_front, y_back, top = -0.6, 1.25, 4.65
     cx, t = (lx0 + lx1) / 2, lx1 - lx0
     bm = bmesh.new()
-    add_box(bm, (cx, (y_front + gy0) / 2, top / 2), (t, gy0 - y_front, top))
-    add_box(bm, (cx, (gy1 + y_back) / 2, top / 2), (t, y_back - gy1, top))
-    add_box(bm, (cx, (gy0 + gy1) / 2, sill / 2), (t, gy1 - gy0, sill))
-    add_box(bm, (cx, (gy0 + gy1) / 2, (head + top) / 2), (t, gy1 - gy0, top - head))
+    add_box(bm, (cx, (y_front + y_back) / 2, sill / 2), (t, y_back - y_front, sill))
+    add_box(bm, (cx, (y_front + y_back) / 2, (head + top) / 2), (t, y_back - y_front, top - head))
+    add_box(bm, (cx, (gy1 + y_back) / 2, (sill + head) / 2), (t, y_back - gy1, head - sill))     # the back jamb
     _obj('WeighRoomLeftWall', bm, [m['wall']], coll)
     bm = bmesh.new()                                    # a steel frame round the opening, both faces
     for x in (lx0 - 0.015, lx1 + 0.015):
-        for y in (gy0 - 0.03, gy1 + 0.03):
-            add_box(bm, (x, y, (sill + head) / 2 + 0.03), (0.03, 0.06, head - sill + 0.06))
-        add_box(bm, (x, (gy0 + gy1) / 2, head + 0.03), (0.03, gy1 - gy0 + 0.12, 0.06))
-    add_box(bm, (cx, (gy0 + gy1) / 2, sill - 0.01), (t + 0.06, gy1 - gy0, 0.02))              # the sill plate
+        add_box(bm, (x, gy1 + 0.03, (sill + head) / 2), (0.03, 0.06, head - sill))
+        add_box(bm, (x, (y_front + gy1) / 2 + 0.03, head + 0.03), (0.03, gy1 - y_front + 0.06, 0.06))
+    add_box(bm, (cx, (y_front + y_back) / 2, head + 0.03), (t + 0.06, y_back - y_front, 0.06))    # the lintel
+    add_box(bm, (cx, (y_front + gy1) / 2, sill - 0.01), (t + 0.06, gy1 - y_front, 0.02))          # the sill plate
+    add_box(bm, (cx, y_front - 0.015, (head + top) / 2), (t + 0.04, 0.03, top - head))             # edge trims on the cut
+    add_box(bm, (cx, y_front - 0.015, sill / 2), (t + 0.04, 0.03, sill))
     _obj('GantryDoorFrame', bm, [m['steel']], coll)
-    bm = bmesh.new()                                    # hazard stripes on the sill's edge, hall side
-    for k in range(6):
-        add_box(bm, (lx0 - 0.032, gy0 + 0.07 + k * (gy1 - gy0 - 0.14) / 5, sill - 0.05), (0.004, 0.05, 0.07),
+    bm = bmesh.new()                                    # hazard stripes along the sill's cut edge and its hall side
+    for k in range(9):
+        add_box(bm, (lx0 - 0.032, y_front + 0.06 + k * (gy1 - y_front - 0.12) / 8, sill - 0.05), (0.004, 0.05, 0.07),
                 rot=Matrix.Rotation(0.6, 4, 'X'))
     _obj('GantryDoorStripes', bm, [m['yellow']], coll)
     # The lamp over the doorway, on the hall's side of the wall: a caged bulkhead light.
