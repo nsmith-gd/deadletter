@@ -989,6 +989,654 @@ def clip_weigh_self(dl01, arm):
     a.done()
 
 
+def to_stand_dir(stand, d):
+    return to_stand((stand[0], stand[1]), (stand[0] + d[0], d[1], d[2]))
+
+
+def steps_over(a, f0, f1, n=2, first='L', height=0.03):
+    """n alternating steps spread over [f0, f1], each landing under the root as it is then."""
+    if n <= 0:
+        return []
+    span = (f1 - f0) / (n + 1) * 2
+    sides = []
+    for i in range(n):
+        side = first if i % 2 == 0 else ('R' if first == 'L' else 'L')
+        lift = f0 + i * (f1 - f0) / (n + 1)
+        a.step(side, round(lift), round(lift + span), height=height)
+        sides.append((side, lift, lift + span))
+    return sides
+
+
+def step_bob(f, steps, depth=0.008):
+    return -depth * sum(pulse(f, l0, l1) for _, l0, l1 in steps)
+
+
+def head_mix(*pairs):
+    """Weighted sum of head poses: pairs of (weight, pose); the rest of the weight goes to the idle head."""
+    rest = 1.0 - sum(w for w, _ in pairs)
+    return [IDLE_HEAD[i] * rest + sum(w * p[i] for w, p in pairs) for i in range(3)]
+
+
+# DL-01 ReadRoute -----------------------------------------------------------------------------------------
+
+def card_lift(f):
+    return tr([(0, 0), (19, 0), (25, CARD_LIFT), (56, CARD_LIFT), (62, 0.0)], f)
+
+
+def clip_read_route(dl01, arm):
+    """Facing the little rack (left of him, facing -x): his own card in it. He goes up on tiptoe, pinches it and
+    draws it up a little; reads it, head on one side; taps his own chest label twice with the other claw (that's
+    me); a happy bob; slides it back down neatly, a pat on its top, and down off his toes."""
+    N = 84
+    a = Act(dl01, arm, 'ReadRoute', N)
+    stand = DISPATCH_STAND
+    a.yaw_keys = [(0, 0.0), (6, 0.0), (14, -24.0), (66, -24.0), (76, 0.0)]
+    st = steps_over(a, 6, 14, 2, first='R', height=0.02) + steps_over(a, 66, 76, 2, first='L', height=0.02)
+    x, y = RACK
+    cw, ch, ctop = CARD
+    for frame in range(1, N + 1):
+        f = frame - 1
+        lift = card_lift(f)
+        card_c = to_stand(stand, (x + 0.045, y - 0.03, ctop - ch / 2 + lift))
+        pinch = to_stand(stand, (x + 0.045 + 0.02, y - 0.03, ctop - 0.022 + lift))
+        toe = tr([(8, 0), (16, 1), (60, 1), (70, 0)], f)
+        reach = tr([(10, 0), (18, 1), (60, 1), (68, 0)], f)
+        tap = sum(pulse(f, t0, t0 + 5) for t0 in (38, 45))
+        chest = tr([(32, 0), (38, 1), (50, 1), (55, 0)], f)
+        happy = sum(pulse(f, t0, t0 + 6) for t0 in (51, 57))
+        body = (0, 0.01 * toe, -0.005 + 0.03 * toe + 0.012 * happy + step_bob(f, st))
+        body_rot = (2 - 6 * toe + 4 * chest, 2 * toe, -6 * toe)
+        look_card = a.look(f, card_c, body, body_rot)
+        w_card = tr([(2, 0), (8, 1), (34, 1), (38, 0), (50, 0), (53, 1), (64, 1), (70, 0)], f)
+        w_chest = tr([(34, 0), (38, 1), (48, 1), (51, 0)], f)
+        head = head_mix((w_card, look_card), (w_chest, (32, 0, 6)))
+        head[1] += tr([(26, 0), (30, 14), (34, 10), (37, 0), (52, 0), (55, -10), (60, -8), (64, 0)], f)
+        head[0] += -6 * happy + 9 * pulse(f, 70, 78)
+        hands = {s: dl01.CARRY[s].copy() for _, s in SIDES}
+        rot = {'L': (-24, 6, 10), 'R': (-24, -6, -10)}
+        g = a.grip(f, -1, pinch, body, body_rot, d=to_stand_dir(stand, (-0.45, 0.2, 0.85)),
+                   x_axis=to_stand_dir(stand, (0, 1, 0)))
+        hands[-1], rot['R'] = mix_hand((hands[-1], rot['R']), g, reach)
+        hands[-1] = hands[-1] + Vector((0, 0, -0.01 * pulse(f, 62, 65)))           # the pat on its top
+        hands[1] = dl01.window_reach(1, dl01.CARRY[1], chest, tap)
+        rot['L'] = dl01.window_claw(1, chest, (-24, 6, 10))
+        ant = tr([(0, 0), (6, -14), (16, -10), (28, 4), (36, 6), (48, -18), (60, -10), (70, -4), (N - 1, 0)], f)
+        antenna = [(ant * (0.8 + 0.2 * i) + 9 * math.sin(f * 1.4 - i) * happy - spr(f, 64, 6 * (1 + 0.3 * i), 5), 0)
+                   for i in range(3)]
+        feet = a.feet(f, pitch={'L': 30 * toe, 'R': 30 * toe}, extra={'L': (0, 0, 0.012 * toe), 'R': (0, 0, 0.012 * toe)})
+        a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=feet, hands=hands,
+               hand_rot=rot, elbows={'R': reach, 'L': chest},
+               claws={'L': tr([(0, CLAW_REST_OPEN['L']), (36, 6), (50, 6), (56, CLAW_REST_OPEN['L'])], f),
+                      'R': tr([(10, 1), (16, 26), (19, 2), (60, 2), (63, 24), (70, CLAW_REST_OPEN['R'])], f)})
+    a.done()
+
+
+# DL-02 FrankHand -----------------------------------------------------------------------------------------
+FRANK_THUNK = 30
+
+
+def lever_deg(f):
+    """HandFrankerLever's swing (degrees about +x, Blender and game alike) by clip frame."""
+    return tr([(0, 0), (22, 0), (27, 22), (FRANK_THUNK, LEVER_PULL), (34, LEVER_PULL), (40, 0)], f)
+
+
+def frank_drop(f):
+    return tr([(0, 0), (27, 0.004), (FRANK_THUNK, FRANK_DROP), (33, FRANK_DROP), (39, 0)], f)
+
+
+def lever_ball(a_deg):
+    a = math.radians(LEVER_REST - a_deg)
+    return Vector(LEVER_PIVOT) + Vector((0.012, -math.cos(a) * (LEVER_LEN + 0.012), math.sin(a) * (LEVER_LEN + 0.012)))
+
+
+def clip_frank_hand(dl01, arm):
+    """At the franker: he turns in and steps up to it, lays his left claw flat on the platen under the head and
+    hauls the lever down with his right: thunk. He jumps; slides the claw out, lifts it to his face and turns it
+    over: RECEIVED. Two pleased bobs; he holds it out toward nobody in particular, looks round (anyone?), and
+    back at it, pleased, then steps back."""
+    N = 80
+    a = Act(dl01, arm, 'FrankHand', N)
+    stand = FRANKER_STAND
+    platen = to_stand(stand, PLATEN)
+    fwd = rz(-50) @ Vector((0, -1, 0))
+    at = platen - fwd * 0.27
+    at.z = 0
+    a.root_keys = [(0, (0, 0, 0)), (4, (0, 0, 0)), (16, tuple(at)), (36, tuple(at)), (46, (0.02, 0.0, 0)),
+                   (N - 16, (0.02, 0.0, 0)), (N - 6, (0, 0, 0))]
+    a.yaw_keys = [(0, 0.0), (4, 0.0), (16, -50.0), (36, -50.0), (46, -12.0), (N - 16, -12.0), (N - 6, 0.0)]
+    st = steps_over(a, 4, 16, 2, first='R') + steps_over(a, 36, 46, 2, first='L') + \
+        steps_over(a, N - 16, N - 6, 2, first='R', height=0.02)
+    for frame in range(1, N + 1):
+        f = frame - 1
+        thunk = spr(f, FRANK_THUNK, 1.0, decay=4, freq=1.4)
+        pull = tr([(20, 0), (FRANK_THUNK, 1), (34, 1), (38, 0)], f)
+        bob = sum(pulse(f, t0, t0 + 6) for t0 in (50, 57))
+        body = (0, -0.02 * pull, -0.005 - 0.02 * pull + 0.012 * max(0.0, thunk) + 0.014 * bob + step_bob(f, st))
+        body_rot = (2 + 10 * tr([(14, 0), (20, 1), (36, 1), (42, 0)], f) - 6 * max(0, thunk) - 4 * bob, 0, -6 * pull)
+        r, ry = a.root(f)
+        fw = rz(ry) @ Vector((0, -1, 0))
+        left = rz(ry) @ Vector((1, 0, 0))
+        # Left claw: flat on the platen under the head (its upper blade's outer face up, where the die lands);
+        # then out from under, up before his face, turned to him; then held out toward the lane.
+        on = platen + Vector((0, 0, 0.011))
+        d_on = (rz(18) @ fw).normalized()
+        g_on = a.grip(f, 1, on - d_on * 0.012, body, body_rot, d=d_on, x_axis=(0, 0, 1))
+        face = r + fw * 0.21 + left * 0.07 + Vector((0, 0, 0.55))
+        g_face = a.grip(f, 1, face, body, body_rot, d=(fw * 0.4 + Vector((0, 0, 1))).normalized(), x_axis=-fw + left * 0.3)
+        out = r + fw * 0.12 + left * 0.3 + Vector((0, 0, 0.5))
+        g_out = a.grip(f, 1, out, body, body_rot, d=(left + Vector((0, 0, 0.9))).normalized(), x_axis=to_stand_dir(stand, (0, -1, 0)))
+        k_on = tr([(14, 0), (22, 1), (34, 1), (40, 0)], f)
+        k_face = tr([(34, 0), (42, 1), (58, 1), (63, 0), (68, 0.6), (72, 0)], f)
+        k_out = tr([(56, 0), (62, 1), (66, 1), (70, 0)], f)
+        hl = rest_hand(dl01, 1)
+        hl = mix_hand(hl, g_on, k_on)
+        hl = mix_hand(hl, g_face, k_face)
+        hl = mix_hand(hl, g_out, k_out)
+        # Right claw: on the lever's ball, with it as it swings down and back.
+        ball = to_stand(stand, lever_ball(lever_deg(f)))
+        g_lev = a.grip(f, -1, ball, body, body_rot, d=(fw + Vector((0, 0, -0.6))).normalized(), x_axis=(0, 0, 1))
+        k_lev = tr([(16, 0), (22, 1), (34, 1), (38, 0)], f)
+        hr = mix_hand(rest_hand(dl01, -1), g_lev, k_lev)
+        hands = {1: hl[0] + Vector((0, 0, 0.02 * max(0, thunk))), -1: hr[0]}
+        look_platen = a.look(f, platen + Vector((0, 0, 0.03)), body, body_rot)
+        look_claw = a.look(f, face, body, body_rot)
+        w_p = tr([(2, 0), (8, 1), (32, 1), (36, 0)], f)
+        w_c = tr([(36, 0), (42, 1), (56, 1), (60, 0), (66, 0), (70, 1), (76, 0)], f)
+        head = head_mix((w_p, look_platen), (w_c, look_claw))
+        head[0] += -16 * max(0, thunk) - 8 * bob
+        head[1] += tr([(44, 0), (48, 12), (54, 10), (58, 0)], f)
+        head[2] += tr([(58, 0), (61, 40), (64, 40), (66, -20), (68, -20), (70, 0)], f)   # anyone?
+        ant = tr([(0, 0), (8, 6), (20, 8), (FRANK_THUNK, 8), (FRANK_THUNK + 2, -30), (40, -10), (50, -16), (62, -8),
+                  (N - 1, 0)], f)
+        antenna = [(ant * (0.8 + 0.2 * i) + 10 * math.sin(f * 1.3 - i) * bob, 0) for i in range(3)]
+        claw_l = tr([(14, 20), (18, 10), (22, 2), (36, 2), (40, 6), (N - 8, 6), (N - 2, CLAW_REST_OPEN['L'])], f)
+        claw_r = tr([(16, 1), (20, 24), (23, 3), (34, 3), (37, 22), (44, CLAW_REST_OPEN['R'])], f)
+        a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=a.feet(f), hands=hands,
+               hand_rot={'L': hl[1], 'R': hr[1]}, claws={'L': claw_l, 'R': claw_r},
+               elbows={'L': max(k_on, k_face, k_out), 'R': k_lev})
+    a.done()
+
+
+# DL-02 HoldMug -------------------------------------------------------------------------------------------
+MUG_GRAB, MUG_SET, MUG_WRONG = 26, 76, -70.0
+
+
+def mug_yaw(f):
+    """MugD17's turn about its own axis on the shelf after he sets it down (degrees about +z; game: about +y)."""
+    return tr([(0, 0.0), (MUG_SET, MUG_WRONG), (82, MUG_WRONG), (88, -20.0), (90, -20.0), (94, 0.0)], f)
+
+
+def mug_matrix(pos, yaw=0.0, tilt=0.0, axis=(1, 0, 0)):
+    m = Matrix.Translation(pos) @ Matrix.Rotation(math.radians(tilt), 4, Vector(axis)) @ \
+        Matrix.Rotation(math.radians(yaw), 4, 'Z') @ Matrix.Rotation(math.radians(-90), 4, 'Z')
+    return m
+
+
+def clip_hold_mug(dl01, arm):
+    """His mug, on the couriers' low shelf. He steps in and takes it in his claw, lifts it to himself and looks
+    into it; raises it to his face as if to drink (he can't), a beat; lowers it, a small droop. He sets it back
+    with great care, the handle the wrong way round: notices, and nudges the handle round to where it belongs."""
+    N = 102
+    a = Act(dl01, arm, 'HoldMug', N)
+    stand = MUG_STAND
+    mx, my, r, h = MUG
+    top = SHELF[4]
+    base = to_stand(stand, (mx, my, top))
+    fwd45 = rz(45) @ Vector((0, -1, 0))
+    at = base - fwd45 * 0.27
+    at.z = 0
+    hold_at = Vector((0.06, -0.02, 0))
+    a.root_keys = [(0, (0, 0, 0)), (6, (0, 0, 0)), (16, tuple(at)), (30, tuple(at)), (38, tuple(hold_at)),
+                   (66, tuple(hold_at)), (74, tuple(at)), (90, tuple(at)), (98, (0, 0, 0))]
+    a.yaw_keys = [(0, 0.0), (6, 0.0), (16, 45.0), (30, 45.0), (38, 10.0), (66, 10.0), (74, 45.0), (90, 45.0), (98, 0.0)]
+    st = steps_over(a, 6, 16, 2, first='L') + steps_over(a, 30, 38, 2, first='R') + \
+        steps_over(a, 66, 74, 2, first='L') + steps_over(a, 90, 98, 2, first='R', height=0.02)
+    # The grip, in the mug's own frame: the claw round its body from his side, blades either side.
+    m_grab = mug_matrix(base)
+    d_world = (rz(-14) @ fwd45).normalized()
+    inv = m_grab.to_3x3().inverted()
+    d_loc = inv @ d_world
+    x_loc = inv @ Vector((0, 0, 1)).cross(d_world).normalized()
+    p_loc = Vector((0, 0, 0.045)) - d_loc * 0.012
+
+    def mug_pose(f):
+        rr, ry = a.root(f)
+        fw = rz(ry) @ Vector((0, -1, 0))
+        lf = rz(ry) @ Vector((1, 0, 0))
+        held = rr + fw * 0.25 + lf * 0.07 + Vector((0, 0, 0.47))
+        drink = rr + fw * 0.22 + lf * 0.04 + Vector((0, 0, 0.56))
+        k_lift = tr([(MUG_GRAB, 0), (31, 1), (70, 1), (MUG_SET, 0)], f)
+        p = base + Vector((0, 0, 0.04 * k_lift))
+        p = p.lerp(held, tr([(30, 0), (38, 1), (66, 1), (72, 0)], f))
+        p = p.lerp(drink, tr([(46, 0), (52, 1), (58, 1), (63, 0)], f))
+        p = p + Vector((0, 0, 0.03 * pulse(f, 66, 76)))
+        yaw = (ry - 45.0) * tr([(26, 0), (34, 1), (66, 1), (72, 0)], f) + MUG_WRONG * tr([(66, 0), (MUG_SET, 1)], f)
+        tilt = -14 * tr([(38, 0), (42, 1), (46, 1), (48, 0)], f) - 58 * tr([(46, 0), (52, 1), (58, 1), (63, 0)], f)
+        return mug_matrix(p, yaw, tilt, lf)
+
+    a.mug_pose = mug_pose
+    for frame in range(1, N + 1):
+        f = frame - 1
+        rr, ry = a.root(f)
+        fw = rz(ry) @ Vector((0, -1, 0))
+        drink = tr([(46, 0), (52, 1), (58, 1), (63, 0)], f)
+        sigh = tr([(60, 0), (66, 1), (72, 0.3), (80, 0)], f)
+        body = (0, 0.01 * drink, -0.005 + 0.012 * drink - 0.012 * sigh + step_bob(f, st))
+        body_rot = (2 + 6 * tr([(16, 0), (24, 1), (30, 0), (68, 0), (76, 1), (86, 1), (92, 0)], f) - 9 * drink + 5 * sigh, 0, 0)
+        m = mug_pose(f)
+        rim = m @ Vector((0, 0, h))
+        hold = tr([(16, 0), (MUG_GRAB, 1), (MUG_SET, 1), (MUG_SET + 3, 0)], f)
+        g = a.grip(f, 1, m @ p_loc, body, body_rot, d=m.to_3x3() @ d_loc, x_axis=m.to_3x3() @ x_loc)
+        hl = mix_hand(rest_hand(dl01, 1), g, hold)
+        # After he lets go: his claw tip nudges the handle round.
+        hd = Matrix.Rotation(math.radians(mug_yaw(f)), 3, 'Z') @ (rz(-90) @ Vector((r + 0.03, 0, 0)))
+        handle = base + hd + Vector((0, 0, 0.045))
+        g_n = a.grip(f, 1, handle + Vector((0, 0, 0.004)), body, body_rot, d=(fw + Vector((0, 0, -0.5))).normalized(),
+                     x_axis=(0, 0, 1), depth=0.1)
+        k_n = tr([(MUG_SET + 2, 0), (82, 1), (94, 1), (98, 0)], f)
+        hl = mix_hand(hl, g_n, k_n)
+        # The right claw comes up to steady it, as far as it reaches, while it is up by his face.
+        steady = tr([(30, 0), (38, 1), (62, 1), (68, 0)], f)
+        gr = a.grip(f, -1, m @ Vector((0, 0, 0.02)), body, body_rot, d=(fw * 0.6 + Vector((0, 0, 0.5)) + rz(ry) @ Vector((0.6, 0, 0))).normalized(), x_axis=(0, 0, 1))
+        hr = mix_hand(rest_hand(dl01, -1), gr, steady * 0.85)
+        look_mug = a.look(f, rim + Vector((0, 0, -0.03)), body, body_rot)
+        w_mug = tr([(2, 0), (8, 1), (44, 1), (47, 0), (60, 0), (64, 1), (96, 1), (100, 0)], f)
+        head = head_mix((w_mug, look_mug), (drink, (-12, 0, 0)))
+        head[1] += tr([(36, 0), (40, 12), (44, 8), (47, 0), (82, 0), (85, 10), (92, 6), (96, 0)], f)
+        head[0] += 8 * sigh + 9 * pulse(f, 94, 101)
+        ant = tr([(0, 0), (6, -12), (16, -8), (40, 0), (48, -10), (56, -6), (62, 20), (72, 14), (82, 6), (94, -8), (N - 1, 0)], f)
+        antenna = [(ant * (0.8 + 0.2 * i) + spr(f, MUG_GRAB, 5) - spr(f, 94, 8 * (1 + 0.3 * i), 5), 0) for i in range(3)]
+        claw_l = tr([(14, 20), (22, 32), (MUG_GRAB - 1, 28), (MUG_GRAB + 1, 21), (MUG_SET, 21), (MUG_SET + 2, 30),
+                     (80, 4), (95, 4), (100, CLAW_REST_OPEN['L'])], f)
+        a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=a.feet(f),
+               hands={1: hl[0], -1: hr[0]}, hand_rot={'L': hl[1], 'R': hr[1]},
+               claws={'L': claw_l, 'R': CLAW_REST_OPEN['R'] + 18 * steady}, elbows={'L': max(hold, k_n), 'R': steady})
+    a.done()
+    return a
+
+
+# DL-04 SitRack -------------------------------------------------------------------------------------------
+
+def clip_sit_rack(dl01, arm):
+    """The empty slot under the chalk flowers. He turns to face the lane and backs into it, small careful steps,
+    a look over his shoulder; claws back on the seat's edges, a little hop, and he sits back into it, his back to
+    the contacts, legs dangling. He looks up, and round. The antenna droops, slowly. A stillness. Then a breath,
+    and he hops down and walks out, and turns back the way he was going."""
+    N = 150
+    a = Act(dl01, arm, 'SitRack', N)
+    stand = RACK_STAND
+    seat_x = to_stand(stand, (RACK_SEAT[0], RACK_SIT_Y, 0))
+    sx, sy = seat_x.x, seat_x.y
+    a.root_keys = [(0, (0, 0, 0)), (14, (0, 0, 0)), (44, (0.56, sy, 0)), (50, (0.6, sy, 0)), (58, (sx, sy, 0)),
+                   (108, (sx, sy, 0)), (116, (0.55, sy, 0)), (136, (0, 0, 0))]
+    a.yaw_keys = [(0, 0.0), (4, 0.0), (14, -90.0), (136, -90.0), (148, 0.0)]
+    st = steps_over(a, 4, 14, 2, first='R') + steps_over(a, 14, 46, 3, first='L', height=0.03) + \
+        steps_over(a, 116, 136, 3, first='R', height=0.035) + steps_over(a, 136, 148, 2, first='L', height=0.02)
+    seat_top = RACK_SEAT[3]
+    for frame in range(1, N + 1):
+        f = frame - 1
+        rr, ry = a.root(f)
+        sit = tr([(48, 0), (52, -0.25), (58, 1), (106, 1), (112, -0.2), (116, 0)], f)   # a hop up, then down into it
+        land = spr(f, 58, 1.0, decay=4, freq=1.2)
+        breathe = 0.003 * math.sin(f * 0.16) * tr([(60, 0), (64, 1), (104, 1), (106, 0)], f)
+        droop = tr([(80, 0), (102, 1), (104, 1), (110, 0.3), (118, 0)], f, ease=lambda x: x * x * (3 - 2 * x))
+        body_z = -0.005 + (seat_top - 0.3 + 0.005) * max(0.0, sit) + 0.03 * pulse(f, 48, 58) + 0.01 * max(0, land) * 0 + breathe
+        body_z += 0.03 * pulse(f, 106, 116) + step_bob(f, st)
+        body = (0, 0.0, body_z)
+        body_rot = (2 - 4 * max(0.0, sit) + 6 * droop - 4 * max(0, land), 0, 0)
+        # Over his shoulder as he backs in (to the right, toward the slot), then the look up and round.
+        over = tr([(16, 0), (22, 1), (34, 1), (40, 0)], f)
+        look_round = (tr([(60, 0), (66, -24), (72, -20), (78, -10), (86, 6), (102, 18), (106, 10), (112, 0)], f), 0,
+                      tr([(64, 0), (70, 28), (76, 26), (82, -26), (88, -24), (94, 0)], f))
+        head = [IDLE_HEAD[0] + look_round[0], tr([(84, 0), (96, 7), (104, 9), (110, 0)], f), look_round[2] - 70 * over]
+        head[0] += 6 * over
+        # Claws back on the seat's front corners for the hop; in his lap while he sits.
+        edge = {s: Vector((rr.x + 0.1, rr.y + s * 0.2 * (1 if True else 1), seat_top + 0.02)) for _, s in SIDES}
+        hands, rot = {}, {}
+        k_edge = tr([(42, 0), (48, 1), (58, 1), (62, 0), (102, 0), (106, 1), (112, 1), (116, 0)], f)
+        lap = tr([(58, 0), (64, 1), (102, 1), (106, 0)], f)
+        for side, s in SIDES:
+            corner = rr + rz(ry) @ Vector((s * 0.24, 0.06, 0)) + Vector((0, 0, seat_top + 0.015))
+            g = a.grip(f, s, corner, body, (body_rot[0], 0, 0), d=(0, 0, -1), x_axis=rz(ry) @ Vector((0, 1, 0)), depth=0.09)
+            hh = mix_hand(rest_hand(dl01, s), g, k_edge)
+            lap_pose = (dl01.CARRY[s] + Vector((s * 0.02, -0.02, 0.02)), (-40, s * 6, s * 18))
+            hh = mix_hand(hh, lap_pose, lap)
+            hands[s], rot[side] = hh
+        # Legs: down from the seat's edge, dangling and swinging, toes up now and then.
+        feet = a.feet(f)
+        dang = tr([(52, 0), (58, 1), (106, 1), (112, 0)], f)
+        if dang > 0:
+            for side, s in SIDES:
+                ph = 0 if side == 'L' else math.pi
+                swing = math.sin(f * 0.2 + ph) * tr([(60, 0), (66, 1), (84, 1), (100, 0.25), (104, 0)], f)
+                foot = rr + rz(ry) @ Vector((s * 0.1, -0.16 - 0.05 * swing, 0)) + Vector((0, 0, 0.05 + 0.04 * max(0, swing)))
+                loc = rz(-ry) @ (foot - rr) - ANKLE[s]
+                lf, rf = feet[side]
+                feet[side] = (tuple(Vector(lf).lerp(loc, dang)), (rf[0] - 30 * dang * swing, rf[1], rf[2]))
+        ant = tr([(0, 0), (6, -8), (40, -4), (58, -14), (70, -12), (80, -8), (102, 38), (106, 40), (112, 10), (120, 0)], f)
+        antenna = [(ant * (0.7 + 0.25 * i) + spr(f, 58, 8 * (1 + 0.3 * i), 5) + spr(f, 112, -10 * (1 + 0.3 * i), 5), 0)
+                   for i in range(3)]
+        a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=feet, hands=hands,
+               hand_rot=rot, elbows={'L': k_edge, 'R': k_edge})
+    a.done()
+
+
+# DL-06 WindClock -----------------------------------------------------------------------------------------
+WIND_STROKES = ((10, 22), (26, 38), (42, 54))        # each turns the key half a turn
+
+
+def winder_deg(f):
+    """ClockWinder's turn (degrees about Blender +y, clockwise seen from the lane; game: rotation.z = -this)."""
+    total = 0.0
+    for f0, f1 in WIND_STROKES:
+        g0, g1 = f0 + 2, f1 - 2
+        total += 180.0 * smoothstep((f - g0) / (g1 - g0)) if f > g0 else 0.0
+    return total
+
+
+def clip_wind_clock(dl01, arm):
+    """The wind-up key by the stopped clock: he leans in and turns it, half a turn at a time, his claw pushing
+    a wing over the top, letting go, taking the next one, three times; then steps back and listens, his head on
+    one side, looking up at the clock as it starts to tick."""
+    N = 88
+    a = Act(dl01, arm, 'WindClock', N)
+    stand = CLOCK_STAND
+    key = to_stand(stand, WINDER, floor=DECK)
+    a.root_keys = [(0, (0, 0, 0)), (56, (0, 0, 0)), (64, (0.0, 0.07, 0)), (78, (0.0, 0.07, 0)), (86, (0, 0, 0))]
+    st = steps_over(a, 56, 64, 2, first='R', height=0.02) + steps_over(a, 78, 86, 2, first='L', height=0.02)
+    clock = to_stand(stand, (CLOCK_C[0], CLOCK_C[1], CLOCK_C[2]), floor=DECK)
+    r = 0.052
+    for frame in range(1, N + 1):
+        f = frame - 1
+        lean = tr([(2, 0), (10, 1), (54, 1), (58, 0)], f)
+        body = (0.006 * lean, -0.02 * lean, -0.005 - 0.015 * lean + step_bob(f, st))
+        body_rot = (2 + 10 * lean, 4 * lean, 10 * lean)
+        # The claw on the wing tip at nine o'clock, round over the top to three; off, and back for the next.
+        phi = 0.0
+        off = 1.0
+        for f0, f1 in WIND_STROKES:
+            if f0 <= f <= f1 + 3:
+                phi = math.pi * smoothstep((f - f0 - 2) / (f1 - f0 - 4))
+                off = tr([(f0, 1), (f0 + 2, 0), (f1 - 2, 0), (f1, 1)], f) if f <= f1 else 1.0
+        if f > WIND_STROKES[-1][1] + 3:
+            phi = math.pi
+        tip_w = Vector((WINDER[0] - r * math.cos(phi), WINDER[1] - 0.008, WINDER[2] + r * math.sin(phi)))
+        if off > 0:          # between strokes the claw comes back round under, a little off the bow
+            back = Vector((WINDER[0] - r * math.cos(phi * (1 - off)), WINDER[1] - 0.008 - 0.04 * off,
+                           WINDER[2] + r * math.sin(phi * (1 - off)) - 0.02 * off))
+            tip_w = back
+        tip = to_stand(stand, tip_w, floor=DECK)
+        g = a.grip(f, 1, tip, body, body_rot, d=to_stand_dir(stand, (0.6, 0.35, -0.25 + 0.5 * math.sin(phi))),
+                   x_axis=to_stand_dir(stand, (0, 1, 0)))
+        k = tr([(4, 0), (10, 1), (54, 1), (60, 0)], f)
+        hl = mix_hand(rest_hand(dl01, 1), g, k)
+        # The other claw braces on the box's top.
+        brace = to_stand(stand, (WINDER[0] - 0.03, 0.31, WINDER[2] + 0.085), floor=DECK)
+        gb = a.grip(f, -1, brace, body, body_rot, d=(0, 0, -1), x_axis=(1, 0, 0), depth=0.09)
+        hr = mix_hand(rest_hand(dl01, -1), gb, tr([(6, 0), (12, 0.0), (54, 0.0)], f))
+        effort = sum(pulse(f, f0 + 2, f1 - 2) for f0, f1 in WIND_STROKES)
+        look_key = a.look(f, key, body, body_rot)
+        look_clock = a.look(f, clock, body, body_rot)
+        w_key = tr([(0, 0), (6, 1), (56, 1), (62, 0)], f)
+        w_clock = tr([(62, 0), (68, 1), (82, 1), (86, 0)], f)
+        head = head_mix((w_key, look_key), (w_clock, (max(-34, look_clock[0]), 0, min(40, look_clock[2]))))
+        head[1] += tr([(66, 0), (70, 16), (76, 14), (80, -8), (84, 0)], f) + 3 * effort
+        ant = tr([(0, 0), (8, 4), (54, 6), (62, -6), (68, -20), (80, -16), (N - 1, 0)], f)
+        antenna = [(ant * (0.8 + 0.2 * i) + 5 * effort * math.sin(f * 1.1 - i) + spr(f, 70, -6 * (1 + 0.3 * i), 6), 0)
+                   for i in range(3)]
+        a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=a.feet(f),
+               hands={1: hl[0], -1: hr[0]}, hand_rot={'L': hl[1], 'R': hr[1]}, elbows={'L': k},
+               claws={'L': 2 + 22 * off * k + CLAW_REST_OPEN['L'] * (1 - k), 'R': CLAW_REST_OPEN['R']})
+    a.done()
+
+
+# DL-05 SitChair ------------------------------------------------------------------------------------------
+
+def clip_sit_chair(dl01, arm):
+    """The sorter's chair. He turns to it, claws on the seat's edge, and climbs: a hop, a knee up, a scramble, up.
+    He turns round on the cushion and sits down into it: it fits. A small satisfied wiggle. He sits, feet
+    swinging, looking about. Then he hops down to the lane and turns back on his way."""
+    N = 128
+    a = Act(dl01, arm, 'SitChair', N)
+    stand = CHAIR_STAND
+    cx, cy, w, dpt, seat = CHAIR
+    front = to_stand(stand, (cx, cy - dpt / 2, 0)).x                          # the seat's front edge (stand x)
+    sit_y, sit_z = CHAIR_SIT
+    top = seat + CUSHION - 0.01
+    a.root_keys = [(0, (0, 0, 0)), (8, (0, 0, 0)), (18, (front - 0.2, 0, 0)), (24, (front - 0.2, 0, -0.03)),
+                   (30, (front - 0.08, 0, 0.18)), (36, (front + 0.06, 0, 0.3)), (44, (front + 0.16, 0, top)),
+                   (56, (front + 0.16, 0, top)), (64, (sit_y, 0, sit_z)), (100, (sit_y, 0, sit_z)),
+                   (104, (sit_y - 0.06, 0, sit_z + 0.1)), (110, (0.02, 0, 0.0)), (114, (0, 0, -0.03)), (118, (0, 0, 0))]
+    a.yaw_keys = [(0, 0.0), (8, 0.0), (18, 90.0), (44, 90.0), (56, -90.0), (114, -90.0), (126, 0.0)]
+    st = steps_over(a, 8, 18, 2, first='L')
+    a.step('L', 26, 33, Vector((front + 0.1, 0.097, top + 0.034)), height=0.08)
+    a.step('R', 33, 42, Vector((front + 0.165, -0.097, top + 0.034)), height=0.08)
+    st += steps_over(a, 44, 56, 3, first='R', height=0.03)
+    a.step('L', 101, 110, height=0.05)
+    a.step('R', 101, 110, height=0.05)
+    st += steps_over(a, 116, 126, 2, first='L', height=0.02)
+    for frame in range(1, N + 1):
+        f = frame - 1
+        rr, ry = a.root(f)
+        fw = rz(ry) @ Vector((0, -1, 0))
+        sit = tr([(56, 0), (64, 1), (100, 1), (104, 0)], f)
+        wig = math.sin((f - 66) * 0.9) * tr([(64, 0), (67, 1), (74, 1), (78, 0)], f)
+        climb = tr([(18, 0), (22, 1), (40, 1), (46, 0)], f)
+        body = (0, 0.03 * climb, -0.005 - 0.03 * climb * pulse(f, 20, 30) + 0.006 * abs(wig) + step_bob(f, st)
+                + 0.01 * pulse(f, 64, 70) * -1)
+        body_rot = (2 + 18 * climb - 4 * sit, 5 * wig, 7 * wig)
+        hands, rot = {}, {}
+        for side, s in SIDES:
+            edge = to_stand(stand, (cx - s * 0.15, cy - dpt / 2 + 0.05, top + 0.01))
+            g = a.grip(f, s, edge, body, body_rot, d=(0.4, 0, -1), x_axis=(0, 1, 0), depth=0.085)
+            hh = mix_hand(rest_hand(dl01, s), g, climb)
+            hands[s], rot[side] = hh
+            # Sitting: claws on the cushion beside him (where its two small dents are).
+            side_pt = rr + rz(ry) @ Vector((s * 0.2, -0.02, 0)) + Vector((0, 0, top - sit_z + sit_z + 0.0))
+            gs = a.grip(f, s, Vector((side_pt.x, side_pt.y, seat + CUSHION - 0.012)), body, body_rot, d=(0, 0, -1),
+                        x_axis=fw, depth=0.08)
+            hands[s], rot[side] = mix_hand((hands[s], rot[side]), gs, tr([(60, 0), (66, 1), (98, 1), (102, 0)], f) * 0.9)
+        feet = a.feet(f)
+        dang = tr([(60, 0), (64, 1), (100, 1), (104, 0)], f)
+        if dang > 0:
+            for side, s in SIDES:
+                ph = 0 if side == 'L' else 2.0
+                swing = math.sin(f * 0.22 + ph) * tr([(76, 0), (80, 1), (96, 1), (100, 0)], f)
+                foot = rr + rz(ry) @ Vector((s * 0.1, -0.15 - 0.05 * swing, 0)) + Vector((0, 0, sit_z + 0.07 + 0.04 * max(0, swing)))
+                loc = rz(-ry) @ (foot - rr) - ANKLE[s]
+                lf, rf = feet[side]
+                feet[side] = (tuple(Vector(lf).lerp(loc, dang)), (rf[0] - 25 * dang * swing, rf[1], rf[2]))
+        hop = tr([(100, 0), (104, 1), (110, 1), (114, 0)], f)
+        look_round = (tr([(66, 0), (70, 10), (78, 4), (84, -12), (92, -8), (98, 0)], f), 0,
+                      tr([(78, 0), (84, 30), (90, 28), (95, -18), (99, 0)], f))
+        head = [IDLE_HEAD[0] + 20 * climb * pulse(f, 18, 46) - 14 * climb + look_round[0] + 8 * pulse(f, 62, 70),
+                tr([(64, 0), (68, 10), (74, 8), (78, 0)], f), look_round[2] + 30 * pulse(f, 0, 12)]
+        ant = tr([(0, 0), (6, -10), (18, -6), (30, -20), (44, -8), (64, 10), (70, -12), (80, -6), (100, -4), (106, -24),
+                  (116, -6), (N - 1, 0)], f)
+        antenna = [(ant * (0.8 + 0.2 * i) + 10 * wig * (1 + 0.3 * i) + spr(f, 64, 10 * (1 + 0.3 * i), 5)
+                    + spr(f, 114, 12 * (1 + 0.3 * i), 4), 0) for i in range(3)]
+        a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=feet, hands=hands,
+               hand_rot=rot, elbows={'L': max(climb, sit), 'R': max(climb, sit)},
+               claws={'L': CLAW_REST_OPEN['L'] + 10 * climb, 'R': CLAW_REST_OPEN['R'] + 16 * climb})
+    a.done()
+
+
+# DL-08 LookViewer ----------------------------------------------------------------------------------------
+
+def viewer_deg(f):
+    """CoinViewerHead's swing (degrees about Blender +z = game +y; positive turns its lenses to the left)."""
+    return tr([(0, 0), (76, 0), (96, 26), (100, 26), (124, -22), (128, -14), (130, -16), (148, -16), (156, 0)], f)
+
+
+VIEWER_PRESS = 58
+
+
+def clip_look_viewer(dl01, arm):
+    """The coin viewer on the balcony. He turns to it and climbs the little step; pats his compartment for a
+    coin (there isn't one), looks at the slot, and gives the red plunger a hopeful press: clunk, it opens. Up on
+    his toes to the eyepieces; he swings it slowly left, then right, and stops dead on something. An antenna
+    wiggle. He comes off his toes, steps down and turns back."""
+    N = 170
+    a = Act(dl01, arm, 'LookViewer', N)
+    stand = VIEWER_STAND
+    vx, vy = VIEWER
+    pivot = to_stand(stand, (vx, vy, 0), floor=DECK)
+    y0, y1, hstep = STEP
+    on = to_stand(stand, (vx, (y0 + y1) / 2 + 0.0, 0), floor=DECK)
+    on.z = hstep
+
+    def root_at(f):
+        base = ktrack([(0, (0, 0, 0)), (22, (0.0, 0, 0)), (34, tuple(on)), (152, tuple(on)), (162, (0, 0, 0))], f)
+        ang = viewer_deg(f) * tr([(70, 0), (76, 1), (150, 1), (156, 0)], f)
+        p = pivot + rz(ang) @ (base - pivot)
+        p.z = base.z
+        return p, tr([(0, 0.0), (10, 0.0), (20, 90.0), (162, 90.0), (169, 0.0)], f) + ang
+
+    a.root = root_at
+    st = steps_over(a, 10, 20, 2, first='L')
+    a.step('L', 22, 28, on + rz(90) @ ANKLE[1] + Vector((0, 0, 0)), height=0.07)
+    a.step('R', 27, 34, on + rz(90) @ ANKLE[-1], height=0.07)
+    st += steps_over(a, 84, 98, 2, first='L', height=0.015) + steps_over(a, 104, 124, 3, first='R', height=0.015)
+    a.step('R', 152, 158, height=0.05)
+    a.step('L', 156, 162, height=0.05)
+    st += steps_over(a, 162, 169, 2, first='R', height=0.015)
+    plunger = to_stand(stand, (vx - 0.025, COIN_BOX[0] - 0.006, COIN_BOX[1] + 0.035), floor=DECK)
+    viewer = to_stand(stand, (vx, VIEWER_EYE[0] + 0.1, VIEWER_EYE[1]), floor=DECK)
+    for frame in range(1, N + 1):
+        f = frame - 1
+        rr, ry = a.root(f)
+        fw = rz(ry) @ Vector((0, -1, 0))
+        peer = tr([(62, 0), (72, 1), (146, 1), (152, 0)], f)
+        freeze = tr([(124, 0), (126, 1), (140, 1), (146, 0)], f)
+        pat = tr([(36, 0), (40, 1), (48, 1), (52, 0)], f)
+        tap = sum(pulse(f, t0, t0 + 4) for t0 in (41, 46))
+        press = tr([(50, 0), (55, 1), (VIEWER_PRESS, 1.25), (61, 1), (64, 0)], f)
+        jolt = spr(f, VIEWER_PRESS, 1.0, decay=4, freq=1.4)
+        body = (0, -0.02 * peer - 0.01 * freeze, -0.005 + 0.035 * peer + 0.01 * freeze + 0.008 * max(0, jolt) + step_bob(f, st))
+        body_rot = (2 + 4 * pat - 6 * peer, 0, 0)
+        hands = {s: dl01.CARRY[s].copy() for _, s in SIDES}
+        rot = {'L': (-24, 6, 10), 'R': (-24, -6, -10)}
+        hands[-1] = dl01.window_reach(-1, dl01.CARRY[-1], pat, tap)
+        rot['R'] = dl01.window_claw(-1, pat)
+        g = a.grip(f, 1, plunger + fw * 0.012 * max(0.0, press - 1.0) * 4, body, body_rot, d=(fw + Vector((0, 0, 0.1))).normalized(),
+                   x_axis=(0, 0, 1), depth=0.1)
+        hl = mix_hand(rest_hand(dl01, 1), g, min(1.0, press))
+        # Peering: both claws up on the viewer's head either side, as if holding binoculars.
+        for side, s in SIDES:
+            lf = rz(ry) @ Vector((s, 0, 0))
+            grip_pt = rr + fw * 0.2 + lf * 0.15 + Vector((0, 0, 0.6))
+            gp = a.grip(f, s, grip_pt, body, body_rot, d=(fw + Vector((0, 0, 0.8))).normalized(), x_axis=fw, depth=0.08)
+            if side == 'L':
+                hl = mix_hand(hl, gp, peer)
+            else:
+                hands[-1], rot['R'] = mix_hand((hands[-1], rot['R']), gp, peer)
+        hands[1], rot['L'] = hl
+        look_slot = a.look(f, plunger, body, body_rot)
+        look_view = a.look(f, rr + fw * 0.4 + Vector((0, 0, 0.62)), body, body_rot)
+        w_slot = tr([(48, 0), (52, 1), (60, 1), (64, 0)], f)
+        head = head_mix((w_slot, look_slot), (peer, look_view), (pat, (28, 0, -6)))
+        head[0] += -10 * tr([(0, 0), (6, 1), (20, 1), (24, 0)], f) - 8 * max(0, jolt)
+        head[2] += 40 * tr([(0, 0), (6, 1), (10, 0)], f) + 3 * freeze * math.sin(f * 0.5)
+        head[1] += tr([(52, 0), (55, 10), (60, 0)], f) + tr([(126, 0), (130, -6), (140, -6), (146, 0)], f)
+        wiggle = tr([(132, 0), (134, 1), (142, 1), (146, 0)], f)
+        ant = tr([(0, 0), (8, -14), (20, -8), (36, -4), (50, 14), (56, 10), (VIEWER_PRESS + 2, -26), (72, -12),
+                  (124, -12), (126, -30), (146, -24), (156, -6), (N - 1, 0)], f)
+        antenna = [(ant * (0.8 + 0.2 * i) + 14 * wiggle * math.sin(f * 1.6 - 0.9 * i) * (1 + 0.3 * i), 0) for i in range(3)]
+        toe = peer
+        feet = a.feet(f, pitch={'L': 26 * toe, 'R': 26 * toe}, extra={'L': (0, 0, 0.012 * toe), 'R': (0, 0, 0.012 * toe)})
+        a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=feet, hands=hands,
+               hand_rot=rot, elbows={'L': max(peer, min(1, press)), 'R': max(peer, pat)},
+               claws={'L': CLAW_REST_OPEN['L'] - 14 * min(1, press) + 8 * peer, 'R': 2 + 10 * peer})
+    a.done()
+
+
+# Ring C (generic): TuneRadio and FlickSwitch ---------------------------------------------------------------
+# Both assume he faces +x (face 1) with the prop straight behind the lane at his x (Blender +y): the radio's
+# tuning knob 0.25 back at 0.8 high, the switch 0.25 back at 0.62 high.
+
+def clip_tune_radio(dl01, arm):
+    """He turns to the radio and, up on his toes, turns the knob in little jerks, listening; the song comes in
+    and he jumps. He leans in to it; then turns half round to the room and sways, gently, in time, and does a
+    little two-step; and back to how he was."""
+    N = 112
+    a = Act(dl01, arm, 'TuneRadio', N)
+    knob = Vector((RADIO_KNOB[0], 0.0, RADIO_KNOB[1]))
+    a.yaw_keys = [(0, 0.0), (2, 0.0), (12, 90.0), (50, 90.0), (62, -30.0), (98, -30.0), (110, 0.0)]
+    right = rz(-30) @ Vector((-0.07, 0, 0))
+    a.root_keys = [(0, (0, 0, 0)), (82, (0, 0, 0)), (89, tuple(right)), (91, tuple(right)), (98, (0, 0, 0))]
+    st = steps_over(a, 2, 12, 2, first='L') + steps_over(a, 50, 62, 3, first='R', height=0.025)
+    a.step('R', 82, 88, height=0.035)          # the two-step: right, together, left, together
+    a.step('L', 85, 90, height=0.035)
+    a.step('L', 90, 95, height=0.035)
+    a.step('R', 93, 98, height=0.035)
+    st += steps_over(a, 99, 110, 2, first='L', height=0.02)
+    for frame in range(1, N + 1):
+        f = frame - 1
+        rr, ry = a.root(f)
+        fw = rz(ry) @ Vector((0, -1, 0))
+        toe = tr([(10, 0), (16, 1), (36, 1), (42, 0)], f)
+        reach = tr([(10, 0), (17, 1), (36, 1), (42, 0)], f)
+        twist = tr([(18, 0), (21, 35), (25, 35), (27, 55), (31, 55), (33, 80), (40, 80)], f)
+        found = spr(f, 34, 1.0, decay=4, freq=1.4)
+        sway = math.sin((f - 62) * 2 * math.pi / 20) * tr([(60, 0), (66, 1), (100, 1), (104, 0)], f)
+        lean_in = tr([(40, 0), (44, 1), (50, 1), (54, 0)], f)
+        body = (0.01 * sway, -0.015 * lean_in, -0.005 + 0.03 * toe + 0.01 * max(0, found) + 0.006 * abs(sway) + step_bob(f, st))
+        body_rot = (2 - 5 * toe + 8 * lean_in, 5 * sway, 4 * sway)
+        g = a.grip(f, -1, knob, body, body_rot, d=(fw * 0.7 + Vector((0, 0, 0.75))).normalized(), x_axis=(0, 0, 1),
+                   twist=twist, depth=0.085)
+        hr = mix_hand(rest_hand(dl01, -1), g, reach)
+        hands = {1: dl01.CARRY[1] + Vector((0.03 * sway, 0, 0.03 * abs(sway) + 0.03 * max(0, found))), -1: hr[0]}
+        hands[-1] = hands[-1] + Vector((-0.03 * sway, 0, 0.03 * abs(sway))) * (1 - reach)
+        look_knob = a.look(f, knob, body, body_rot)
+        head = head_mix((tr([(4, 0), (10, 1), (40, 1), (54, 0)], f), look_knob))
+        head[1] += tr([(20, 0), (24, 12), (30, 14), (33, 0)], f) + 8 * sway + tr([(42, 0), (46, 14), (50, 14), (54, 0)], f)
+        head[0] += -12 * max(0, found) + 4 * math.sin((f - 62) * 2 * math.pi / 10) * tr([(60, 0), (66, 1), (100, 1), (104, 0)], f)
+        ant = tr([(0, 0), (8, -6), (30, -4), (34, -30), (44, -14), (60, -10), (100, -10), (N - 1, 0)], f)
+        antenna = [(ant * (0.8 + 0.2 * i) + 10 * sway * (1 + 0.4 * i), 0) for i in range(3)]
+        feet = a.feet(f, pitch={'L': 26 * toe, 'R': 26 * toe}, extra={'L': (0, 0, 0.012 * toe), 'R': (0, 0, 0.012 * toe)})
+        a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=feet, hands=hands,
+               hand_rot={'L': (-24 - 20 * abs(sway), 6, 10), 'R': hr[1]}, elbows={'R': reach},
+               claws={'L': CLAW_REST_OPEN['L'] + 12 * abs(sway), 'R': tr([(10, 1), (15, 22), (18, 4), (36, 4), (40, 20), (48, CLAW_REST_OPEN['R'])], f)})
+    a.done()
+
+
+SWITCH_FLICK = 16
+
+
+def clip_flick_switch(dl01, arm):
+    """He turns to the switch, reaches up and flicks it: click. He looks straight up at the ceiling, startled,
+    then pleased: a jolt, the antenna up, and two little bounces."""
+    N = 52
+    a = Act(dl01, arm, 'FlickSwitch', N)
+    sw = Vector((SWITCH[0], 0.0, SWITCH[1]))
+    a.yaw_keys = [(0, 0.0), (2, 0.0), (10, 70.0), (18, 70.0), (26, 20.0), (40, 20.0), (50, 0.0)]
+    st = steps_over(a, 2, 10, 2, first='L', height=0.02) + steps_over(a, 18, 26, 2, first='R', height=0.02) + \
+        steps_over(a, 40, 50, 2, first='L', height=0.02)
+    for frame in range(1, N + 1):
+        f = frame - 1
+        reach = tr([(6, 0), (12, 1), (SWITCH_FLICK + 2, 1), (22, 0)], f)
+        flick = tr([(SWITCH_FLICK - 1, 0), (SWITCH_FLICK, 1)], f)
+        jolt = spr(f, SWITCH_FLICK + 4, 1.0, decay=4, freq=1.3)
+        bounce = sum(pulse(f, t0, t0 + 6) for t0 in (30, 37))
+        body = (0, 0, -0.005 + 0.02 * reach + 0.015 * max(0, jolt) + 0.016 * bounce + step_bob(f, st))
+        body_rot = (2 - 4 * reach - 8 * tr([(18, 0), (22, 1), (34, 1), (40, 0)], f), 0, 0)
+        g = a.grip(f, 1, sw + Vector((0, 0, 0.012 - 0.024 * flick)), body, body_rot,
+                   d=(rz(a.root(f)[1]) @ Vector((0, -0.8, 0)) + Vector((0, 0, 0.6))).normalized(), x_axis=(0, 0, 1), depth=0.1)
+        hl = mix_hand(rest_hand(dl01, 1), g, reach)
+        hands = {1: hl[0], -1: dl01.CARRY[-1] + Vector((0, 0, 0.04 * max(0, jolt) + 0.03 * bounce))}
+        hands[1] = hands[1] + Vector((0, 0, 0.03 * bounce))
+        look_sw = a.look(f, sw, body, body_rot)
+        up = tr([(SWITCH_FLICK + 1, 0), (SWITCH_FLICK + 5, 1), (34, 1), (40, 0)], f, ease=lambda x: ease_back(x, 0.8))
+        head = head_mix((tr([(2, 0), (8, 1), (SWITCH_FLICK + 1, 1), (SWITCH_FLICK + 4, 0)], f), look_sw), (up, (-46, 0, 8)))
+        head[1] += tr([(26, 0), (30, 10), (36, 8), (42, 0)], f)
+        ant = tr([(0, 0), (8, -6), (SWITCH_FLICK, -6), (SWITCH_FLICK + 3, -40), (30, -30), (44, -6), (N - 1, 0)], f)
+        antenna = [(ant * (0.8 + 0.2 * i) + 8 * bounce * math.sin(f * 1.5 - i), 0) for i in range(3)]
+        a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=a.feet(f), hands=hands,
+               hand_rot={'L': hl[1], 'R': (-24 - 30 * max(0, jolt), -6, -10)}, elbows={'L': reach},
+               claws={'L': tr([(6, 20), (12, 4), (SWITCH_FLICK + 2, 4), (24, 20)], f), 'R': CLAW_REST_OPEN['R'] + 20 * max(0, jolt)})
+    a.done()
+
+
 # ---------------------------------------------------------------------------------------------------------
 # Things he holds (in d17.glb, parented to his bones; the game shows them only while used)
 # ---------------------------------------------------------------------------------------------------------
@@ -1041,17 +1689,57 @@ def game_moves(name, f):
         wob = 6 * math.sin(f * 1.4) * tr([(18, 0), (21, 1), (34, 1), (40, 0)], f)
         return {'ScaleTicket': ((0, 0, ticket_out(f)), (0, 0, 0), True),
                 'ScaleNeedle': ((0, 0, 0), (0, 95 + wob, 0), True)}
+    if name == 'ReadRoute':
+        return {'RouteCardD17': ((0, 0, card_lift(f)), (0, 0, 0), True)}
+    if name == 'FrankHand':
+        return {'HandFrankerLever': ((0, 0, 0), (lever_deg(f), 0, 0), True),
+                'HandFrankerHead': ((0, 0, -frank_drop(f)), (0, 0, 0), True)}
+    if name == 'HoldMug':
+        held = MUG_GRAB <= f < MUG_SET
+        return {'MugD17': ((0, 0, 0), (0, 0, mug_yaw(f)), not held), 'MugD17Held': ((0, 0, 0), (0, 0, 0), held)}
+    if name == 'WindClock':
+        tick = max(0.0, f - 60) * 6.0 / 24.0
+        return {'ClockWinder': ((0, 0, 0), (0, winder_deg(f), 0), True),
+                'ClockHandMin': ((0, 0, 0), (0, tick, 0), True)}
+    if name == 'LookViewer':
+        return {'CoinViewerHead': ((0, 0, 0), (0, 0, viewer_deg(f) * tr([(70, 0), (76, 1), (150, 1), (156, 0)], f)), True)}
     return {}
 
 
 PREVIEW = {
-    'WeighSelf': dict(stand=SCALE_STAND, key=52, cx=0.15, look_z=0.45, frames=[1, 9, 15, 22, 28, 32, 37, 43, 49, 55, 64, 80]),
+    'WeighSelf': dict(stand=SCALE_STAND, key=50, cx=0.15, look_z=0.45, frames=[1, 9, 15, 22, 28, 32, 37, 43, 49, 55, 64, 80]),
+    'ReadRoute': dict(stand=DISPATCH_STAND, key=30, cx=-0.1, look_z=0.5),
+    'FrankHand': dict(stand=FRANKER_STAND, key=44, cx=-0.1, look_z=0.45),
+    'HoldMug': dict(stand=MUG_STAND, key=54, cx=0.1, look_z=0.5),
+    'SitRack': dict(stand=RACK_STAND, key=90, look_z=0.5),
+    'WindClock': dict(stand=CLOCK_STAND, floor=DECK, key=30, cx=0.15, look_z=0.5),
+    'SitChair': dict(stand=CHAIR_STAND, key=82, look_z=0.55),
+    'LookViewer': dict(stand=VIEWER_STAND, floor=DECK, key=110, look_z=0.6, atrium=True),
+    'TuneRadio': dict(stand=MUG_STAND, key=70, look_z=0.5),
+    'FlickSwitch': dict(stand=MUG_STAND, key=26, look_z=0.5),
 }
+
+def _held_mug_mesh(bm):
+    uv = bm.loops.layers.uv.new('UVMap')
+    c = {'enamel': bpy.data.materials.get('TeaEnamel'), 'mug': bpy.data.materials.get('MugD17Label'),
+         'dark': bpy.data.materials.get('EyeDark')}
+    _mug_mesh(bm, uv, Vector((0, 0, 0)), MUG[2], MUG[3], (1, 0), 0, 1, 2)
+    return [c['enamel'], c['mug'], c['dark']]
 
 
 def add_clips(dl01, arm):
     global T
     T = dl01
     clip_weigh_self(dl01, arm)
+    clip_read_route(dl01, arm)
+    clip_frank_hand(dl01, arm)
+    mug = clip_hold_mug(dl01, arm)
+    clip_sit_rack(dl01, arm)
+    clip_wind_clock(dl01, arm)
+    clip_sit_chair(dl01, arm)
+    clip_look_viewer(dl01, arm)
+    clip_tune_radio(dl01, arm)
+    clip_flick_switch(dl01, arm)
     coll = bpy.data.collections.get('D17')
     attach_claw_stamp(arm, coll)
+    attach_held(arm, coll, 'MugD17Held', _held_mug_mesh, 'ik_hand.L', MUG_GRAB + 1, 'HoldMug', mug.mug_pose(MUG_GRAB))
