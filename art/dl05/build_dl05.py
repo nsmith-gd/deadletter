@@ -61,7 +61,7 @@ HOME_CEIL = 2.3
 BED = (91.0, 92.5, 0.42, 0.29)        # x0, x1, top, front edge (y)
 TOY = (92.2, 0.35, 0.42)              # the rabbit's origin (its base)
 TOY_SLUMP = (14.0, 42.0, -24.0)       # its node rotation, slumped (Blender XYZ degrees); upright is identity
-SHELF = (93.4, 1.36)                  # the shelf and photograph: x, shelf top
+SHELF = (92.76, 1.36)                 # the shelf and photograph: x, shelf top (clear of the desk's tall hutch once dragged)
 TERM_X, SCREEN_Z, SCREEN = 94.7, 0.95, (0.32, 0.24)
 SCREEN_Y = 1.0                        # the screen recess (the game draws the screen) sits in the wall face
 READER_Z = 0.72
@@ -1402,10 +1402,10 @@ def build_bedroom(m, coll):
     add_box(bm, (wx, BACK_Y - 0.004, wz), (ww + 0.02, 0.004, wh + 0.02))
     _obj('WindowSun', bm, [m['windowsun']], coll)
     # A drawing pinned over the foot of the bed, above the flood's line.
-    _plane('D5Drawing', (0.3, 0.225), (92.42, BACK_Y - 0.008, 1.42), _image_material('D5DrawingMat', _tex('child_drawing.png'), rough=0.85), coll,
+    _plane('D5Drawing', (0.3, 0.225), (92.36, BACK_Y - 0.008, 1.42), _image_material('D5DrawingMat', _tex('child_drawing.png'), rough=0.85), coll,
            rot=_ry(math.radians(4)) @ _rx(math.radians(90)))
     bm = bmesh.new()
-    add_sphere(bm, (92.42, BACK_Y - 0.016, 1.515), 0.008, seg=8)
+    add_sphere(bm, (92.36, BACK_Y - 0.016, 1.515), 0.008, seg=8)
     _obj('D5DrawingPin', bm, [m['steel']], coll)
     # A paper mobile from the ceiling over the bed: stars and a bird.
     bm, card = bmesh.new(), bmesh.new()
@@ -1428,29 +1428,29 @@ def build_bedroom(m, coll):
     # The shelf, with the photograph, two books, a cup of pencils and a little wooden bird.
     sx, sz = SHELF
     bm = bmesh.new()
-    add_box(bm, (sx, BACK_Y - 0.09, sz - 0.012), (0.66, 0.18, 0.024))
-    for d_ in (-0.24, 0.24):
+    add_box(bm, (sx, BACK_Y - 0.09, sz - 0.012), (0.46, 0.18, 0.024))
+    for d_ in (-0.17, 0.17):
         add_box(bm, (sx + d_, BACK_Y - 0.05, sz - 0.08), (0.02, 0.1, 0.12), rot=None)
-    add_box(bm, (sx + 0.17, BACK_Y - 0.08, sz + 0.075), (0.035, 0.13, 0.15))
-    add_box(bm, (sx + 0.205, BACK_Y - 0.08, sz + 0.065), (0.03, 0.12, 0.13), rot=_ry(-0.25))
+    add_box(bm, (sx + 0.115, BACK_Y - 0.08, sz + 0.075), (0.035, 0.13, 0.15))
+    add_box(bm, (sx + 0.15, BACK_Y - 0.08, sz + 0.065), (0.03, 0.12, 0.13), rot=_ry(-0.25))
     _obj('D5Shelf', bm, [m['wood']], coll)
     bm = bmesh.new()
-    add_cyl(bm, (sx + 0.28, BACK_Y - 0.07, sz), (sx + 0.28, BACK_Y - 0.07, sz + 0.08), 0.03, seg=12)
+    add_cyl(bm, (sx + 0.195, BACK_Y - 0.07, sz), (sx + 0.195, BACK_Y - 0.07, sz + 0.08), 0.028, seg=12)
     _obj('D5Cup', bm, [m['childpaint']], coll)
     bm = bmesh.new()
     for k in range(4):
         a = k * 0.5
-        add_cyl(bm, (sx + 0.28, BACK_Y - 0.07, sz + 0.02), (sx + 0.28 + 0.03 * math.cos(a), BACK_Y - 0.07 + 0.02 * math.sin(a), sz + 0.14), 0.004, seg=5)
+        add_cyl(bm, (sx + 0.195, BACK_Y - 0.07, sz + 0.02), (sx + 0.195 + 0.03 * math.cos(a), BACK_Y - 0.07 + 0.02 * math.sin(a), sz + 0.14), 0.004, seg=5)
     _obj('D5Pencils', bm, [m['yellow']], coll)
     bm = bmesh.new()
-    add_sphere(bm, (sx - 0.22, BACK_Y - 0.08, sz + 0.03), 0.03, seg=10, scale=(1.4, 0.9, 0.9))
-    add_sphere(bm, (sx - 0.18, BACK_Y - 0.08, sz + 0.06), 0.018, seg=8)
-    add_cyl(bm, (sx - 0.165, BACK_Y - 0.08, sz + 0.06), (sx - 0.145, BACK_Y - 0.08, sz + 0.055), 0.006, 0.001, seg=6)
+    add_sphere(bm, (sx - 0.185, BACK_Y - 0.08, sz + 0.03), 0.026, seg=10, scale=(1.4, 0.9, 0.9))
+    add_sphere(bm, (sx - 0.15, BACK_Y - 0.08, sz + 0.058), 0.016, seg=8)
+    add_cyl(bm, (sx - 0.137, BACK_Y - 0.08, sz + 0.058), (sx - 0.12, BACK_Y - 0.08, sz + 0.054), 0.005, 0.001, seg=6)
     _obj('D5WoodenBird', bm, [m['pigeon']], coll)
     # The photograph in a standing frame, leaning back a little.
     lean = _rx(math.radians(-10))
     bm = bmesh.new()
-    pc = Vector((sx - 0.04, BACK_Y - 0.1, sz + 0.108))
+    pc = Vector((sx - 0.02, BACK_Y - 0.1, sz + 0.108))
     for dx, dz, w_, h_ in ((-0.072, 0, 0.016, 0.22), (0.072, 0, 0.016, 0.22), (0, -0.102, 0.16, 0.016), (0, 0.102, 0.16, 0.016)):
         add_box(bm, pc + lean @ Vector((dx, 0.0, dz)), (w_, 0.014, h_), rot=lean)
     add_box(bm, pc + Vector((0, 0.05, -0.035)), (0.02, 0.012, 0.15), rot=_rx(math.radians(30)))

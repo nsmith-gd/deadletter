@@ -534,11 +534,11 @@ def make_scale_dial(path):
     stamp with a plus sign marks postage due."""
     from PIL import Image, ImageDraw, ImageFilter
     s = 256
-    img = Image.new('RGB', (s, s), (214, 206, 180))
+    img = Image.new('RGB', (s, s), (14, 22, 17))           # the case's colour round the face
     d = ImageDraw.Draw(img)
     ink, amber = (30, 28, 24), (196, 140, 40)
     c = s / 2
-    d.ellipse((6, 6, s - 6, s - 6), outline=ink, width=8)
+    d.ellipse((2, 2, s - 2, s - 2), fill=(214, 206, 180), outline=ink, width=8)
 
     def at(k, r):
         a = math.radians(-120 + 240 * k)                  # clockwise from straight up
@@ -614,15 +614,15 @@ def build_scale(m, coll):
         add_box(bm, (sx - 0.18 + k * 0.06, 0.0, top + 0.001), (0.012, 0.36, 0.003), mat=1)
     add_box(bm, (sx, 0.3, 0.27), (0.07, 0.07, 0.5), mat=0)                    # the column
     add_cyl(bm, (sx, 0.31, 0.52), (sx, 0.245, 0.52), 0.11, seg=28, mat=0)     # the dial's case
-    add_torus(bm, (sx, 0.243, 0.52), (0, 1, 0), 0.1, 0.008, seg=28, rseg=6, mat=2)
+    add_torus(bm, (sx, 0.243, 0.52), (0, 1, 0), 0.08, 0.009, seg=28, rseg=6, mat=2)
     obj('ParcelScale', bm, [m['depot_green'], m['steel'], m['copper']], coll)
     dial = os.path.join(TEX, 'scale_dial.png')
     if not os.path.exists(dial):
         make_scale_dial(dial)
-    textured_plane('ScaleDial', (0.19, 0.19), (sx, 0.243, 0.52), 90, image_material('ScaleDialMat', dial), coll)
+    textured_plane('ScaleDial', (0.15, 0.15), (sx, 0.243, 0.52), 90, image_material('ScaleDialMat', dial), coll)
     bm = bmesh.new()
     a = math.radians(-120)                                # pointing at 0
-    tip = Vector((0.075 * math.sin(a), 0, 0.075 * math.cos(a)))
+    tip = Vector((0.06 * math.sin(a), 0, 0.06 * math.cos(a)))
     add_cyl(bm, (0, 0, 0), tip, 0.004, 0.002, seg=6)
     add_cyl(bm, (0, -0.004, 0), (0, 0.004, 0), 0.011, seg=12)
     needle = obj('ScaleNeedle', bm, [m['rubber']], coll)
