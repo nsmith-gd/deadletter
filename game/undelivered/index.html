@@ -357,7 +357,7 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   RampLamp0: [.55, 1, .65, 0], RampLamp1: [.55, 1, .65, 0], RampLamp2: [.55, 1, .65, 0], RampLamp3: [.55, 1, .65, 0], RampLamp4: [.55, 1, .65, 0], RampLamp5: [.55, 1, .65, 0],
   WindowSun: [1, .72, .38, 0], HomeLampBulb: [1, .76, .46, 0], LaneBulb: [.78, .88, 1, 0], TermLamp0: [.75, 1, .82, 0], TermLamp1: [.75, 1, .82, 0], TermLamp2: [.75, 1, .82, 0],
   AtriumWindowGlow: [1, .6, .28, 2.5], AtriumHazeLights: [.62, .76, .95, 1.5],
-  HallBulbGlow: [1, .82, .55, 0], C108BellLamp: [1, .16, .08, 3], PressLamp: [1, .16, .08, 0],
+  HallBulbGlow: [1, .82, .55, 0], C108BellLamp: [1, .62, .22, 3], PressLamp: [1, .16, .08, 0],
   C108Lamp: [1, .7, .42, 1.2], BayLight: [.72, .88, 1, 2], BayLamp0: [.72, .92, 1, 0], BayLamp1: [.72, .92, 1, 0], BayLamp2: [.72, .92, 1, 0],
   FallenLamp: [.85, .3, .08, 0], SeatedLamp: [.85, .3, .08, 0], SortLampBulb: [1, .85, .6, 6], TubeLamp: [.8, .9, 1, 2.5], GantryLamp: [1, .78, .5, 8], SlotLamp9: [1, .62, .22, 0], SlotLamp2: [1, .62, .22, 0], SlotLamp6: [1, .62, .22, 0],
   LandingAmber: [1, .62, .18, 0], StopStripe: [1, .55, .15, 0], CageBulb: [1, .86, .62, 0],
@@ -930,7 +930,7 @@ async function load() {
   buildCurios(setG.scene);
   buildSparks();
   buildHazards();
-  loadModel('assets/white.json').then(buildWhite).catch(() => { /* no creature model yet */ });
+  await loadModel('assets/white.json').then(buildWhite).catch(() => { /* no creature model yet */ });   // before Begin, so it never loads mid-play
   buildCurioPools();
   buildCulling(setG.scene);
   resize();
@@ -1462,7 +1462,7 @@ function updatePlayer(dt) {
       game.y = support; game.vy = 0; game.grounded = true;
       game.landTimer = fall > 0.25 ? 0.3 : 0.18; setClip('Land', 0.06); Sound.land(Math.min(1, 0.5 + fall));
       if (fall > 0.3) shake(0.25);
-      makeNoise(game.x, 1.1);                          // a landing is loud, to anything listening in the water
+      if (fall > 0.25) makeNoise(game.x, 1.1);         // a real drop is loud, to anything listening in the water; a hop isn't
     }
     game.peakY = Math.max(game.peakY, game.y);
   } else if (game.y > support + 0.001 && game.y - support < 0.09 && game.vy <= 0) {
@@ -2774,7 +2774,7 @@ function updateTriggers4() {
   if (x > TUNNEL_X0 + 0.25 && ['goods', 'latched', 'cage', 'landing8'].includes(game.checkpoint)) game.checkpoint = 'tunnel';
   if (x > TUNNEL_X0 + 0.6 && !d.lookedBack) {
     d.lookedBack = true; Music.bed(false);
-    if (once('lookback')) { game.vx = 0; game.act = { kind: 'lookback', phase: 'turn', t: 0 }; return true; }
+    // Pass 3: the look back is cut. With the cage and the cable behind him it no longer read as the depot.
   }
   if (x > HOP4_X && x < HOP4_X + 0.5 && !d.hopped && game.facing > 0) {
     d.hopped = true;
@@ -3018,8 +3018,8 @@ function currentShot() {
     if (a && a.kind === 'curio' && a.c.id === 'viewer' && a.phase === 'act' && actions.LookViewer) {
       const f = actions.LookViewer.time * FPS;
       if (f > 64 && f < 150) {
-        const yaw = refs.curio && refs.curio.viewerHead ? refs.curio.viewerHead.rotation.y : 0;
-        return { name: 'viewer', pos: V3(X + 0.1, Y + 1.1, 0.25), look: V3(ATRIUM4.x - Math.tan(yaw) * 150, ATRIUM4.y + 4, ATRIUM4.z), focal: 110, ease: 2.5 };
+        const yaw = a.view ? a.view.yaw : refs.curio && refs.curio.viewerHead ? refs.curio.viewerHead.rotation.y : 0;
+        return { name: 'viewer', pos: V3(X + 0.1, Y + 1.1, 0.25), look: V3(ATRIUM4.x - Math.tan(yaw) * 150, ATRIUM4.y + 4, ATRIUM4.z), focal: 110, ease: a.view ? 4 : 1.2 };
       }
     }
     // The long version: close and low while he checks nobody is watching (he glances into this lens), a slow crane
@@ -3205,7 +3205,7 @@ function buildCh1(setRoot) {
   refs.shLights = [P(0xffd6a6, 4.0, 5.5, 20.6, 2.6, 0.3), P(0xffc890, 5.0, 4.0, 24.7, 2.7, 0.1), P(0xd9e6ff, 1.2, 3.0, SH.tubeX, 1.6, -0.3)];
   refs.bayLights = [P(0xcfe4ff, 3.2, 4.5, RK.bayX, 2.4, -0.2)];
   refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF5 + 81.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF5 + 93.75, 0.9, 0.1),
-    P(0xcfdcf0, 2.6, 5.0, OFF5 + 90.75, 2.1, -0.62), P(0xff3020, 0.2, 1.0, OFF5 + 82.72, 0.6, -0.2)];   // the square's lamp; the bell's red
+    P(0xcfdcf0, 2.6, 5.0, OFF5 + 90.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 82.72, 0.6, -0.2)];   // the square's lamp; the bell's small amber lamp
   refs.cageLights = [P(0xffb050, 3.5, 4.5, CG.shaft.x1 + 0.4, DECK + 0.9, -0.3), P(0xd6dde8, 2.0, 5.0, CG.shaft.x0 - 0.6, CG.top + 1.6, -0.4)];
   [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights].forEach((l) => (l.intensity = l.userData.base));
 }
@@ -3246,7 +3246,7 @@ function resetCh1(cp) {
     if (c110.obj && c110.rest) { c110.obj.position.copy(c110.rest); c110.obj.quaternion.copy(c110.restQ); }
   }
 }
-function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; persist.cw = 0; persist.shockedOnce = false; }
+function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; persist.cw = 0; persist.shockedOnce = false; persist.warned = false; }
 
 // Collision ---------------------------------------------------------------------------------
 function floorCh1(x) {
@@ -3304,8 +3304,8 @@ function nearCh1() {
   const s = game.ch1, x = game.x;
   if (game.hold === 'push') return 'release';
   if (game.hold === 'item') {
-    if (game.region === 3 && !game.upper && Math.abs(x - DOCK_X) < 0.7 && refs.carriers.some((c) => c.state === 'dock')) return 'loadCarrier';
-    if (game.region === 4 && game.carry && game.carry.key && game.carry.key[0] === 'p' && Math.abs(x - CW8.trayX) < 0.7 && game.ch1.cage.phase === 'top') return 'loadTray';
+    if (game.region === 3 && !game.upper && loadableCarrier()) return 'loadCarrier';
+    if (game.region === 4 && game.carry && game.carry.key && game.carry.key[0] === 'p' && x > CW8.trayX - 0.8 && x < CG.shaft.x1 && game.ch1.cage.phase === 'top') return 'loadTray';
     return 'setdownItem';
   }
   if (game.hold) return null;
@@ -3368,10 +3368,15 @@ function beginCh1(kind) {
     return;
   }
   if (k === 'setdownItem') {
-    const it = game.carry, tx = game.x + game.facing * GRIP_FWD;
-    const flat = Math.abs(surfaceAt(tx - it.r) - game.y) < 0.02 && Math.abs(surfaceAt(tx + it.r) - game.y) < 0.02 && Math.abs(surfaceAt(tx) - game.y) < 0.02;
-    if (!flat) { Sound.worried(); return; }
-    game.act = { kind: 'setdownItem', phase: 'act', t: 0, it, tx };
+    // Never refuse (pass 3): the spot in front, a little further or nearer, then behind him; failing all, in front anyway.
+    const it = game.carry, flatAt = (x) => { const c = surfaceAt(x); return Math.abs(surfaceAt(x - it.r) - c) < 0.02 && Math.abs(surfaceAt(x + it.r) - c) < 0.02 && c <= game.y + 0.02 ? c : null; };
+    let tx = null, base = game.y;
+    for (const side of [game.facing, -game.facing]) {
+      for (const d of [GRIP_FWD, GRIP_FWD + 0.08, GRIP_FWD + 0.16, GRIP_FWD - 0.05]) { const x = game.x + side * d, h = flatAt(x); if (h !== null) { tx = x; base = h; break; } }
+      if (tx !== null) { game.facing = side; break; }
+    }
+    if (tx === null) { tx = game.x + game.facing * GRIP_FWD; base = Math.min(game.y, surfaceAt(tx)); }
+    game.act = { kind: 'setdownItem', phase: 'act', t: 0, it, tx, base };
     setClip('SetDown', 0.15);
     return;
   }
@@ -3380,8 +3385,8 @@ function beginCh1(kind) {
     return;
   }
   if (k === 'loadCarrier') {
-    const c = refs.carriers.find((q) => q.state === 'dock');
-    game.act = { kind: 'loadCarrier', phase: 'approach', t: 0, it: game.carry, c, standX: DOCK_X, face: 1 };
+    const c = loadableCarrier();
+    game.act = { kind: 'loadCarrier', phase: 'approach', t: 0, it: game.carry, c, standX: c.state === 'dock' ? DOCK_X : c.root.position.x, face: 1 };
     return;
   }
   if (k === 'grabPush') {
@@ -3415,7 +3420,10 @@ function updateActCh1(a, dt) {
   if (a.kind === 'death') { updateDeath(a, dt); return; }
   if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
   if (a.kind === 'bell9' || a.kind === 'junction9') {
-    if (a.phase === 'approach') { if (approachCh1(a, dt)) setClip(a.kind === 'bell9' ? (actions.Knock ? 'Knock' : 'Present') : 'LeverPull', 0.15); return; }
+    // He turns to the wall to press the bell (or pull the lever), then back to the lane.
+    if (a.phase === 'approach') { if (approachCh1(a, dt)) { game.yawOverride = Math.PI; a.phase = 'turn'; } return; }
+    if (a.phase === 'turn') { if (Math.abs(game.yaw - Math.PI) < 0.08) { a.phase = 'act'; a.t = 0; setClip(a.kind === 'bell9' ? (actions.Knock ? 'Knock' : 'Present') : 'LeverPull', 0.15); } else setClip('Walk', 0.2, 0.6); return; }
+    if (a.t > 1.4) { game.yawOverride = null; }
     if (a.t > 0.45 && !a.done) {
       a.done = true;
       if (a.kind === 'bell9') ringBell9(); else throwJunction9();
@@ -3438,7 +3446,7 @@ function updateActCh1(a, dt) {
   }
   if (a.kind === 'setdownItem') {
     const f = actions.SetDown.time * FPS, it = a.it;
-    if (f >= 14 && it.state === 'carried') { it.drop = { from: it.g.position.clone(), t: 0 }; it.state = 'floor'; it.x = a.tx; it.base = game.y; Sound.setDown(false); }
+    if (f >= 14 && it.state === 'carried') { it.drop = { from: it.g.position.clone(), t: 0 }; it.state = 'floor'; it.x = a.tx; it.base = a.base ?? game.y; Sound.setDown(false); }
     if (f >= 35) { game.act = null; game.hold = null; game.carry = null; setClip('Idle', 0.3); }
     return;
   }
@@ -3598,6 +3606,18 @@ function updateCh1(dt) {
   const cr = s.courier;
   if (k.courier) { k.courier.position.x = cr.x; k.courier.visible = cr.state !== 'seated'; }
   const dOnPlate = game.region === 2 && game.x > RK.plate.x0 && game.x < RK.plate.x1 && game.y < 0.1;
+  // Pass 3: once the courier is near, the cradle reaches out and draws it in; no need to land it exactly.
+  if (cr.state === 'free' && cr.x > RK.bayX - 0.6) {
+    cr.state = 'drawn'; cr.t = 0; Sound.drag(0); Sound.servo(0.5, 260, 520, 0.03);
+    if (game.hold === 'push' && game.pushKey === 'courier') { game.hold = null; game.pushKey = null; game.vx = 0; setClip('Idle', 0.3); }
+  }
+  if (cr.state === 'drawn') {
+    cr.t += dt;
+    const reach = Math.sin(Math.PI * Math.min(1, cr.t / 1.2));
+    for (const arm of [k.armL, k.armR]) if (arm) arm.rotation.x = 0.3 * reach;
+    if (cr.t > 0.3) cr.x += (RK.bayX - cr.x) * Math.min(1, dt * 3);
+    if (cr.t > 1.2) { cr.x = RK.bayX; cr.state = 'cradle'; cr.t = 0; }
+  }
   if (cr.state === 'cradle') {
     cr.t += dt;
     // The cradle's arms close on it where it lies, then lift it into the bay's seat; its lamps try, and hold.
@@ -3684,6 +3704,14 @@ function updateCh1(dt) {
 }
 // A carried thing: on the floor, in his hands, or riding a carrier (where the carrier's body holds it).
 function placeItem(it, g, dt) {
+  if (g && it.state === 'tumble') {
+    const T = it.tumble; T.t += dt / 0.7;
+    const k = Math.min(1, T.t);
+    g.position.lerpVectors(T.from, T.to, k); g.position.y += Math.sin(Math.PI * k) * 0.45 - 0.1 * k;
+    g.rotation.set(k * 4.2, 0, k * 2.6);
+    if (k >= 1) { g.rotation.set(0, 0, 0); carrierLoadTip({ load: it }, 'bucketLanded'); }
+    return;
+  }
   if (!g || it.state === 'carrier' || it.state === 'gone' || it.state === 'bucket') return;
   const rest = tv3.set(it.x, it.base, 0);
   if (it.state === 'carried') {
@@ -3697,12 +3725,30 @@ function placeItem(it, g, dt) {
 }
 // DL-06: a carrier with a weight in it. Up the ramp it tips the weight into the bucket; down the chute it is lost,
 // and another is taken from the crate by the dock.
+// Pass 3: the docked carrier, or, while the belt is stopped, any empty carrier standing on the floor line beside him.
+function loadableCarrier() {
+  if (!refs.carriers) return null;
+  let best = null;
+  for (const c of refs.carriers) {
+    if (c.load || c.ridden || c.root.position.y > 0.2) continue;
+    const ok = c.state === 'dock' ? Math.abs(game.x - DOCK_X) < 0.7 : (!game.belt.running && c.state === 'move' && Math.abs(game.x - c.root.position.x) < 0.6);
+    const d = Math.abs(game.x - c.root.position.x);
+    if (ok && (!best || d < best.d)) best = { c, d };
+  }
+  return best && best.c;
+}
 function carrierLoadTip(c, into) {
   const it = c.load; if (!it) return;
   c.load = null;
   it.g.getWorldPosition(tv1); scene.attach(it.g);
   if (into === 'bucket' && !game.ch1.heapShown && white.w && white.w.id === 'heap') { game.ch1.heapShown = true; white.x = OFF3 + 37.8; white.tx = white.x; setWhite('surface'); }
-  if (into === 'bucket') { it.state = 'bucket'; it.g.visible = false; game.ch1.bucket += 1; Sound.clank(); setTimeout(() => Sound.thud(), 250); shake(0.2); }
+  if (into === 'bucket') {
+    // Pass 3: the weight is seen to tumble out of the carrier and into the bucket; the bucket takes it when it lands.
+    const to = refs.ch1.bucket ? refs.ch1.bucket.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(HP.bucketX, 1.4, -0.9);
+    it.state = 'tumble'; it.tumble = { from: tv1.clone(), to, t: 0 }; game.ch1.tumbledAt = game.clock; Sound.scrape();
+    return;
+  }
+  if (into === 'bucketLanded') { it.state = 'bucket'; it.g.visible = false; game.ch1.bucket += 1; Sound.clank(); setTimeout(() => Sound.thud(), 250); shake(0.2); }
   else { it.state = 'gone'; it.g.visible = false; setTimeout(() => { Object.assign(it, { state: 'floor', x: it.home, base: 0, drop: null }); it.g.rotation.set(0, 0, 0); it.g.visible = true; }, 4000); }
 }
 
@@ -3718,7 +3764,7 @@ function updateCage(dt) {
   // hand's breadth, the brake squeals and holds, and it hauls itself back up; he has to step out and try again.
   const loaded = game.ch1.plates.filter((p) => p.state === 'tray').length;
   if (!inside) c.needExit = false;
-  if (c.phase === 'top' && inside && game.grounded && !game.act && game.clock > c.readyAt && !c.needExit && loaded < 2) {
+  if (c.phase === 'top' && inside && game.grounded && !game.act && !game.hold && game.clock > c.readyAt && !c.needExit && loaded < 2) {
     c.phase = 'dip'; c.t = 0; game.act = { kind: 'cage', phase: 'act', t: 0 }; game.vx = 0; Sound.lurch(); Sound.groan(); shake(0.5);
   }
   if (c.phase === 'dip') {
@@ -3729,7 +3775,7 @@ function updateCage(dt) {
     c.y = Math.min(CG.top, c.y + 0.4 * dt);
     if (c.y >= CG.top) { c.phase = 'top'; c.needExit = true; c.readyAt = game.clock + 0.8; if (game.act && game.act.kind === 'cage') { game.act = null; setClip('Idle', 0.3); playQuirk('Startle'); } }
   }
-  if (c.phase === 'top' && inside && game.grounded && !game.act && game.clock > c.readyAt && !c.needExit && loaded >= 2) {
+  if (c.phase === 'top' && inside && game.grounded && !game.act && !game.hold && game.clock > c.readyAt && !c.needExit && loaded >= 2) {
     c.phase = 'settle'; c.t = 0; c.thrown = false; game.act = { kind: 'cage', phase: 'act', t: 0 }; game.vx = 0; Sound.creak(0.8);
   }
   const L = CG.landing, catchY = L + 0.35;
@@ -3833,10 +3879,25 @@ function updateCurioAct(a, dt) {
     return;
   }
   const f = actions[a.clip] ? actions[a.clip].time * FPS : a.t * FPS;
+  // Pass 3: at the coin viewer's eyepieces the view is the player's: left and right swing it, slowly; Use or Jump
+  // steps away (or after half a minute).
+  if (c.id === 'viewer' && a.clip === 'LookViewer') {
+    const act = actions.LookViewer;
+    if (!a.view && !a.viewed && f >= 74) { a.view = { yaw: 0, t: 0 }; act.paused = true; input.usePressed = false; input.jumpPressed = false; }
+    if (a.view) {
+      a.view.t += dt;
+      const m = (input.right ? 1 : 0) - (input.left ? 1 : 0) || -(input.axis || 0);
+      a.view.yaw = THREE.MathUtils.clamp(a.view.yaw - m * 0.32 * dt, -0.55, 0.55);
+      if (refs.curio && refs.curio.viewerHead) { const h = refs.curio.viewerHead; h.quaternion.copy(h.userData.rest.q); h.rotateY(a.view.yaw); }
+      if ((a.view.t > 0.6 && (input.usePressed || input.jumpPressed)) || a.view.t > 30) { a.view = null; a.viewed = true; act.paused = false; act.time = 150 / FPS; }
+      input.lastActivity = game.clock;
+      return;
+    }
+  }
   for (const [cf, snd] of c.cues || []) if (f >= cf && !a['c' + cf]) { a['c' + cf] = true; Sound.curio(snd); }
   curioProps(c.id, a.clip === c.clip[0] ? f : -1);
   const len = actions[a.clip] ? actions[a.clip].getClip().duration : c.dur;
-  if (a.t >= Math.min(8, Math.max(len, a.clip === c.clip[0] ? 0 : c.dur || 0))) {
+  if ((a.viewed ? f >= len * FPS - 1 : a.t >= Math.min(8, Math.max(len, a.clip === c.clip[0] ? 0 : c.dur || 0)))) {
     curioProps(c.id, -1);
     if (game.z) { a.phase = 'out'; return; }
     game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock;
@@ -4002,7 +4063,7 @@ function updateWhite(dt) {
   white.t += dt;
   // His own noise: running near the water, or landing from a jump.
   if (game.mode === 'play' && !(game.act && game.act.kind === 'death')) {
-    const near = game.x > w.x0 - 2.2 && game.x < w.x1 + 2.2;
+    const near = game.x > w.x0 - 1.4 && game.x < w.x1 + 1.4;      // pass 3: running is heard from 1.4 m, not 2.2
     if (near && game.grounded && Math.abs(game.vx) > (WALK + RUN) / 2 && game.clock - white.lastNoise > 0.35) makeNoise(game.x, 1);
   }
   const surf = w.y, deep = surf - WHITE_DEPTH;
@@ -4033,7 +4094,10 @@ function updateWhite(dt) {
     ty = surf - 0.02; speed = 0.1; whiteClip(w.part === 'glimpse' ? 'WhiteRoll' : 'WhiteSurface');
     const reach = w.reach || 1.2, d = game.x - white.x;
     const exposed = heroNearWater(w) && Math.abs(d) < reach && game.mode === 'play' && !(game.act && game.act.kind === 'death');
-    if (w.part !== 'glimpse' && exposed) { white.yaw = d >= 0 ? 0 : Math.PI; setWhite(w.part === 'scare' ? 'slap' : 'strike'); }
+    if (w.part === 'hunt' && exposed && !persist.warned) {
+      // Pass 3: the first time it finds him it rears and hisses and goes, a warning; only after that does it strike.
+      persist.warned = true; Sound.hiss(1); setTimeout(() => Sound.hiss(0), 900); Sound.splash(1); shake(0.4); playQuirk('Startle'); setWhite('sink');
+    } else if (w.part !== 'glimpse' && exposed) { white.yaw = d >= 0 ? 0 : Math.PI; setWhite(w.part === 'scare' ? 'slap' : 'strike'); }
     else if (white.t > (w.part === 'glimpse' ? 1.6 : 2.2)) setWhite('sink');
   } else if (st === 'slap') {
     ty = surf + (w.ledgeH ?? 0.25) - 0.25; speed = 0; whiteClip('WhiteSlap', 0.1);     // clips are authored to a ledge 0.25 up
@@ -4061,15 +4125,19 @@ function updateWhite(dt) {
     if (white.t > 1.2) { white.heard = null; setWhite('patrol'); }
   }
   white.x += THREE.MathUtils.clamp(white.tx - white.x, -speed * dt, speed * dt);
-  white.x = THREE.MathUtils.clamp(white.x, w.x0 + 0.2, w.x1 - 0.2);
+  // Pass 3: its whole body stays in the water. Each water scales it to fit; the snout leads, the tail trails behind it.
+  const sc = w.scale || 1, body = 2.5 * sc, facing = Math.cos(white.yaw) >= 0 ? 1 : -1;
+  const lo = facing > 0 ? w.x0 + body : w.x0 + 0.15, hi = facing > 0 ? w.x1 - 0.15 : w.x1 - body;
+  white.x = lo <= hi ? THREE.MathUtils.clamp(white.x, lo, hi) : (w.x0 + w.x1) / 2 + facing * body / 2;
   white.y += (ty - white.y) * Math.min(1, dt * 2.5);
   if (['patrol', 'approach', 'flee'].includes(white.state) || (white.lure && game.clock < white.lure.until && Math.abs(white.x - white.tx) >= 0.15)) {
     const dir = Math.sign(white.tx - white.x); if (dir) white.yaw = dir > 0 ? 0 : Math.PI;
   }
   if (white.g) {
     white.g.visible = white.state !== 'away';
-    white.g.position.set(white.x, white.y, w.z);
-    white.g.rotation.y += ((white.yaw) - white.g.rotation.y) * Math.min(1, dt * 3);
+    white.g.position.set(white.x, white.y, w.z); white.g.scale.setScalar(w.scale || 1);
+    // It turns only while deep, and at once: a body in a narrow channel can't swing round in view.
+    if (white.y < w.y - 0.2 || white.state === 'away') white.g.rotation.y = white.yaw;
   }
 }
 // The safe scare: knocked back off his feet, unhurt.
@@ -4106,7 +4174,7 @@ function updateRipples(dt) {
 // crosses its narrow point. C-108's doorbell rings for a while and draws it to C-108's sunken step; the junction box's
 // lever drops the live cable into the water, and it flees for longer.
 const BELL9 = { x: OFF5 + 82.72, nose: OFF5 + 83.4, ring: 12 }, JUNCTION9 = { x: OFF5 + 85.92, tip: [OFF5 + 87.4, -0.1, -0.76] };
-WATERS.push({ id: 'lane9', region: 5, x0: OFF5 + 82.95, x1: OFF5 + 87.6, y: -0.1, z: -0.64, part: 'hunt', ledgeH: 0.1, reach: 1.35,
+WATERS.push({ id: 'lane9', region: 5, x0: OFF5 + 82.95, x1: OFF5 + 87.6, y: -0.1, z: -0.64, part: 'hunt', scale: 0.8, ledgeH: 0.1, reach: 1.35,
   edges: [[OFF5 + 82.7, OFF5 + 87.6]], active: () => game.x < OFF5 + 90.5 });
 function ringBell9() {
   const s = game.ch1;
@@ -4179,8 +4247,8 @@ const ARCS8 = [
 ];
 const ARC_PERIOD = 2.4;
 WATERS.push(
-  { id: 'heap', region: 3, x0: OFF3 + 36.62, x1: OFF3 + 38.93, y: -0.75, z: 0.85, part: 'glimpse', edges: [], active: () => !game.upper },
-  { id: 'sump7', region: 4, x0: SHAFT.x0, x1: SHAFT.x1, y: -0.15, z: 1.2, part: 'scare', reach: 1.7, edges: [[SHAFT.x0, SHAFT.x1 + 0.3]],
+  { id: 'heap', region: 3, x0: OFF3 + 36.62, x1: OFF3 + 38.93, y: -0.75, z: 0.85, part: 'glimpse', scale: 0.5, edges: [], active: () => !game.upper },
+  { id: 'sump7', region: 4, x0: SHAFT.x0, x1: SHAFT.x1, y: -0.15, z: 1.2, part: 'scare', scale: 0.55, reach: 1.7, edges: [[SHAFT.x0, SHAFT.x1 + 0.3]],
     active: () => game.x < SHAFT.x1 + 3, onScare: () => { game.ch1.scared = true; } },
 );
 function buildHazards() {
@@ -4520,9 +4588,11 @@ function frameFor(x) {
     tx += (THREE.MathUtils.clamp(x + lead, OFF3 + 40.2, OFF3 + 45.4) - tx) * ku;
     let v3 = lerp3(fit([5.4, 1.15, 0.85], 5.0), fit([6.6, 1.35, 0.85], 6.6), kf);
     v3 = lerp3(v3, fit([7.0, 1.4, 0.9], 7.0), ku);
-    const kw = !game.upper && refs.carriers && refs.carriers.some((c) => c.load && c.route === 'exit') ? 1 : 0;
+    // A loaded carrier's climb, the weight tipping into the bucket and the gate rising: all held in one wide frame.
+    const ch = game.ch1, gateMoving = ch && ch.gate6 < 0.7 * Math.min(2, ch.bucket) - 0.01, tumbling = ch && game.clock - (ch.tumbledAt ?? -99) < 2.5;
+    const kw = !game.upper && ((refs.carriers && refs.carriers.some((c) => c.load && c.route === 'exit')) || gateMoving || tumbling) ? 1 : 0;
     game.watchLoad = (game.watchLoad || 0) + (kw - (game.watchLoad || 0)) * Math.min(1, 1 / 60 * 1.2);
-    if (game.watchLoad > 0.01) { tx += (OFF3 + 36.4 - tx) * smooth(game.watchLoad); v3 = lerp3(v3, fit([8.6, 1.9, 1.1], 8.8), smooth(game.watchLoad)); }
+    if (game.watchLoad > 0.01) { tx += (OFF3 + 38.4 - tx) * smooth(game.watchLoad); v3 = lerp3(v3, fit([10.6, 2.5, 1.45], 10.8), smooth(game.watchLoad)); }
     cx += (tx - cx) * k3; v = lerp3(v, v3, k3); fog += (0.05 - 0.012 * ku - fog) * k3;
     // The pit, after the refusal: wide, high, looking down at the heap, held while he takes it in.
     const st = game.scan.t, ph = game.scan.phase;
@@ -5029,9 +5099,23 @@ window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.p
   crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), offsets: { OFF2, OFF3, OFF4, OFF5 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
   k: { CART1, PIT, SH, RK, HP, RAIL7, CG, DIP9, DUCT9, GATE_X, DOCK_X, PAWL_X, GALLERY, T4_HALF, PUSH_GAP4, GRIP_FWD, SLOTS, LETTERS: LETTERS.map((l) => ({ id: l.id, x: l.x })) } };
 
+// Compile every shader variant the regions' lights will ask for, and upload every texture, before play. A region's
+// lights switching on changes the light count, and three.js answers that by recompiling shaders: mid-game, a stall.
+function warmUp() {
+  const shown = [];
+  scene.traverse((o) => { if ((o.isMesh || o.isPoints || o.isLine) && !o.visible) { o.visible = true; shown.push(o); } });
+  const keys = ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'aoMap'];
+  scene.traverse((o) => { for (const m of [].concat(o.material || [])) for (const k of keys) if (m[k]) renderer.initTexture(m[k]); });
+  const up = game.upper;
+  for (const [r, u] of [[1, false], [2, false], [3, false], [3, true], [4, true], [5, true]]) { game.upper = u; setRegionLights(r); renderer.compile(scene, camera); }
+  game.upper = up; setRegionLights(1);
+  shown.forEach((o) => (o.visible = false));
+}
 function boot() {
   resize();
   load().then(() => {
+    loadStatus.textContent = 'Preparing\u2026';
+    warmUp();
     loadStatus.textContent = 'Ready'; loadStatus.classList.add('ok');
     beginBtn.disabled = false; beginBtn.focus();
     captureChest(); camera.position.copy(cam.start); camera.lookAt(cam.chest); camera.setFocalLength(50); applyLights(0);

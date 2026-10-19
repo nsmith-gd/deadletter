@@ -4,7 +4,7 @@
 // thing first. Each run draws its own player (skill, curiosity) from a seed.
 window.__startBot = function (seed, opts = {}) {
   const D = window.__dl01, G = D.game, I = D.input;
-  const { OFF2, OFF3, OFF4 } = D.offsets;                              // where each stretch of the level now starts
+  const { OFF2, OFF3, OFF4, OFF5 } = D.offsets;                              // where each stretch of the level now starts
   // --- random numbers ---------------------------------------------------------------------------------------------
   let a = seed >>> 0;
   const R = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -454,7 +454,7 @@ window.__startBot = function (seed, opts = {}) {
     if (chance(0.3 + 0.5 * P.curious)) { note('looks along ring C'); yield* wait(look(2.5)); }
     // Some run along the bank and the White takes them; they learn to walk, and to use the bell.
     let quiet = !mistakes || chance(0.35 + 0.4 * P.skill), ringFirst = !mistakes || chance(0.25 + 0.4 * P.skill);
-    for (let tries = 0; tries < 8 && G.x < OFF4 + 87.9; tries++) {
+    for (let tries = 0; tries < 8 && G.x < OFF5 + 87.9; tries++) {
       try {
         if (!quiet) note('runs along the flooded lane');
         if (ringFirst && C().duct.state === 'free') {
@@ -471,22 +471,22 @@ window.__startBot = function (seed, opts = {}) {
         }
         if (!dying()) {
           yield* letter('c110', K.LETTERS[2].x, 0.4 + 0.45 * P.curious, { quiet, hop: false });
-          if (!dying() && C().duct.state === 'bridge') yield* walk(1, () => G.x > OFF4 + 88.0 || dying() || C().duct.state !== 'bridge', 'across', { quiet, hop: false, max: 30 });
-          if (!dying() && C().duct.state !== 'bridge' && G.x < OFF4 + 87.9) { note('the White took him'); quiet = true; ringFirst = true; yield* wait(think(8)); continue; }
+          if (!dying() && C().duct.state === 'bridge') yield* walk(1, () => G.x > OFF5 + 88.0 || dying() || C().duct.state !== 'bridge', 'across', { quiet, hop: false, max: 30 });
+          if (!dying() && C().duct.state !== 'bridge' && G.x < OFF5 + 87.9) { note('the White took him'); quiet = true; ringFirst = true; yield* wait(think(8)); continue; }
         }
       } catch (e) { if (!dying()) { note('fumbles: ' + e.message.slice(0, 40)); yield* until(() => G.mode === 'play' && !G.act, 10, 'recover'); continue; } }
       if (dying()) { note('the White takes him'); yield* respawned('after the White'); quiet = true; ringFirst = true; yield* wait(think(8)); }
     }
     yield* post(9, K.SLOTS[2].x, 0.75);
-    yield* walk(1, () => G.dl5.knocked && !G.act && G.x > OFF4 + 94.4, 'to C-114', { max: 120 });
+    yield* walk(1, () => G.dl5.knocked && !G.act && G.x > OFF5 + 94.4, 'to C-114', { max: 120 });
     yield* curio('switch', 0.25 + 0.5 * P.curious);
     yield* curio('radio', 0.25 + 0.55 * P.curious);
     yield* wait(look(2.0));
     yield* walk(1, () => G.dl5.toyUp && !G.act, 'past the bed', { max: 120 });
-    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the photograph'); yield* walk(1, () => G.x > OFF4 + 103.1, 'photo'); yield* wait(look(3.5)); }
+    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the photograph'); yield* walk(1, () => G.x > OFF5 + 103.1, 'photo'); yield* wait(look(3.5)); }
     if (mistakes && chance(0.6 - 0.35 * P.skill)) {
       note('walks past the desk to the back door');
-      try { yield* walk(1, () => G.x > OFF4 + 105.2, 'to the back door', { hop: false, max: 8 }); } catch (e) { /* blocked */ }
+      try { yield* walk(1, () => G.x > OFF5 + 105.2, 'to the back door', { hop: false, max: 8 }); } catch (e) { /* blocked */ }
       yield* wait(think(8));
     }
     yield* wait(think(12));
@@ -496,7 +496,7 @@ window.__startBot = function (seed, opts = {}) {
     yield* wait(0.8); use(); yield* until(() => !G.hold, 10, 'release');
     yield* wait(look(3.5));
     yield* wait(think(5));
-    yield* useAt(['present'], OFF4 + 104.6, actIs('present'), 'terminal');
+    yield* useAt(['present'], OFF5 + 104.6, actIs('present'), 'terminal');
     yield* until(() => G.dl5.forwarded && !G.act, 30, 'forwarded'); note('forwarded');
     yield* wait(look(2.5));
     yield* walk(1, () => G.ended, 'out the back', { max: 120 });
