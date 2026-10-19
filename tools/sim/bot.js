@@ -116,7 +116,7 @@ window.__startBot = function (seed, opts = {}) {
       yield* walk(1, () => G.y > K.CART1.h - 0.05 && G.x > C().cart.x + K.CART1.half - 0.3, 'onto the cart', { max: 30 });
       jump(); move(1); yield* wait(0.6); move(0);
       yield* until(() => (G.act && G.act.kind === 'trenchStuck') || G.x > K.PIT.x1 + 0.1, 10, 'the jump');
-      if (G.act && G.act.kind === 'trenchStuck') { yield* until(() => G.mode === 'play' && !G.act && G.x < 3.5, 20, 'respawned'); note('back at the shutter'); yield* wait(think(8)); }
+      if (G.act && G.act.kind === 'trenchStuck') { yield* until(() => G.mode === 'play' && !G.act && G.x < 3.5, 20, 'respawned'); note('back at the shutter'); yield* wait(think(8)); yield* walk(1, () => G.x > 4.5, 'over the step again'); }
     } else yield* wait(think(6));
     if (C().cart.state === 'free') {
       yield* useAt(['grabPush:cart'], C().cart.x - K.CART1.gap, actIs('grabPush'), 'cart', { hop: false });
@@ -337,7 +337,7 @@ window.__startBot = function (seed, opts = {}) {
     const t0 = G.clock; let hops = 0, trigger = 0, stuck = 0, stuckAt = react(), lastStep = G.x;
     move(1);
     try {
-      while (G.x < K.CG.x0 - 0.1) {
+      while (G.x < K.CG.x0 + 0.3) {
         if (G.clock - t0 > 400) throw new Error('stuck on the belt x=' + G.x.toFixed(2));
         move(G.act ? 0 : 1);
         const c = D.crates().filter((k) => k.state === 'belt' && k.x > G.x).sort((p, q) => p.x - q.x)[0];

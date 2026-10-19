@@ -94,7 +94,7 @@
 </script>
 
 <div id="app">
-  <canvas id="view" aria-label="Dead Letter, scenes DL-01 to DL-05, playable"></canvas>
+  <canvas id="view" aria-label="Dead Letter, chapter 1, scenes DL-01 to DL-09, playable"></canvas>
   <div id="fade"></div>
   <div id="keycap" hidden></div>
   <div id="debug" hidden></div>
@@ -131,7 +131,7 @@
         <button class="act" id="begin" type="button" disabled>Begin</button>
         <span class="status" id="load-status" role="status">Loading the depot&hellip;</span>
       </div>
-      <p class="note">DL-01 The Wake, DL-02 The Weight of the Job, DL-03 Return to Sender, DL-04 The Handbrake and DL-05 The Child at the Address run as one, with no cut between them. Headphones recommended.</p>
+      <p class="note">The nine scenes of chapter 1, from The Wake to The Child at the Address, run as one, with no cut between them. Headphones recommended.</p>
     </div>
   </section>
 
@@ -2594,6 +2594,7 @@ function updateAct4(a, dt) {
         if (a.phase === 'out') {
           game.act = null; game.yawOverride = null; game.pawlHold = null; game.pawlDip = 0; setClip('Idle', 0.3);
           if (game.plat.latched && !game.dl4.patted) { game.act = { kind: 'quirk', clip: 'Proud', phase: 'act', t: 0, cancel: false, then: startPat }; setClip('Proud', 0.15); }
+          else if (game.plat.latched) playQuirk('Proud');
           return;
         }
         a.stuck = game.plat.h < 0.985; a.phase = 'act'; a.from = game.pawlLever; a.to = LEVER_NEAR;
@@ -2746,10 +2747,12 @@ function drawTerminal(state, t) {
   }
   if (state === 'forward') {
     g.fillStyle = amber; g.font = 'bold 18px monospace'; g.fillText('FORWARD TO', 20, 96);
-    // The school's mark: a little house with a bell over the door.
-    g.strokeStyle = amber; g.lineWidth = 5; g.strokeRect(150, 120, 60, 46);
-    g.beginPath(); g.moveTo(144, 122); g.lineTo(180, 96); g.lineTo(216, 122); g.stroke();
-    g.beginPath(); g.arc(180, 112, 6, 0, Math.PI * 2); g.fill();
+    // The school's mark, as on its sign in ring B: a sun over an open book.
+    g.strokeStyle = amber; g.lineWidth = 4;
+    g.beginPath(); g.arc(180, 114, 9, 0, Math.PI * 2); g.fill();
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; g.beginPath(); g.moveTo(180 + Math.cos(a) * 14, 114 + Math.sin(a) * 14); g.lineTo(180 + Math.cos(a) * 21, 114 + Math.sin(a) * 21); g.stroke(); }
+    g.beginPath(); g.moveTo(180, 168); g.lineTo(148, 158); g.lineTo(148, 138); g.lineTo(180, 146); g.lineTo(212, 138); g.lineTo(212, 158); g.closePath(); g.stroke();
+    g.beginPath(); g.moveTo(180, 146); g.lineTo(180, 168); g.stroke();
     g.font = 'bold 22px monospace'; g.fillText('SCHOOL', 20, 124); g.font = '16px monospace'; g.fillText('RING B', 20, 154); g.fillText('CLASS R.Y.42', 20, 172);
   }
   p.tex.needsUpdate = true;
@@ -3113,6 +3116,12 @@ function resetCh1(cp) {
   if (c.latched) game.trolley4.x = RAIL7.x0 - T4_HALF - 0.02;
   game.dl4.patted = true;                                  // he takes the trolley with him now; no goodbye at the pan
   for (const L of LETTERS) if (!letterState[L.id]) letterState[L.id] = L.start;
+  // C-110's letter slips onto the duct once it bridges the flood; back before that, it is back in its door slot.
+  const c110 = LETTERS[2];
+  if (/floor|slipping/.test(letterState.c110) && game.ch1.duct.state !== 'bridge') {
+    letterState.c110 = 'slot';
+    if (c110.obj && c110.rest) { c110.obj.position.copy(c110.rest); c110.obj.quaternion.copy(c110.restQ); }
+  }
 }
 function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; }
 
@@ -3657,7 +3666,9 @@ function updateCharacter(dt, playing) {
   const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2) : REVEAL_LOOK;
   const hint = looking ? { at: lookAt, key: 'move' } : hintTarget();
   const idle = looking ? 99 : game.clock - input.lastActivity;
-  const want = hint && idle > HINT_LOOK && game.grounded && !game.act && !game.mantle && !game.exit && !game.transit && !game.riding ? 1 : 0;
+  // Riding the cage counts as standing: the catch's hint must show while the ride runs.
+  const free = (game.grounded && !game.act) || (game.act && game.act.kind === 'cage');
+  const want = hint && idle > HINT_LOOK && free && !game.mantle && !game.exit && !game.transit && !game.riding ? 1 : 0;
   game.hintWeight += (want - game.hintWeight) * Math.min(1, dt * 2.5);
   if (game.hintWeight > 0.01 && hint) {
     const headPos = refs.head.getWorldPosition(tv1);
@@ -3669,7 +3680,7 @@ function updateCharacter(dt, playing) {
     if (idle > HINT_LEAN && !looking && !game.hold) rotateBoneWorld(refs.body, new THREE.Quaternion().slerp(q, game.hintWeight * 0.15));
   }
   const cap = document.getElementById('keycap');
-  if (game.assist && hint && hint.key !== 'move' && !looking && idle > HINT_GLYPH && game.grounded && !game.act) {
+  if (game.assist && hint && hint.key !== 'move' && !looking && idle > HINT_GLYPH && free) {
     const s = hint.at.clone().project(camera);
     cap.style.left = `${(s.x * 0.5 + 0.5) * canvas.clientWidth}px`;
     cap.style.top = `${(-s.y * 0.5 + 0.5) * canvas.clientHeight}px`;
