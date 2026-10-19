@@ -12,6 +12,7 @@ Writes:
                 JumpAir, Land, Mantle, Pull, Flinch, Tug, Crank, Lift, SetDown, SetDownHigh,
                 CarryIdle, CarryWalk, Grab, PushIdle, PushWalk, Nudge
   couriers.glb  three baked poses of a dormant courier and the rack slots to instance them at
+  white.glb     the White (art/white/build_white.py), skinned, with its clips
 
 Coordinates: metres, Blender Z up. The playable plane is y = 0 and D-17 travels along +x.
 glTF converts to Y up, so Blender (x, y, z) becomes (x, z, -y) in the game.
@@ -28,7 +29,7 @@ sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl04'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl05'))
-for _d in ('sorting_hall', 'racks', 'cage', 'pass2'):
+for _d in ('sorting_hall', 'racks', 'cage', 'pass2', 'white'):
     sys.path.insert(0, os.path.join(HERE, '..', _d))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
@@ -45,6 +46,7 @@ import build_racks as racks  # noqa: E402
 import build_cage as cage  # noqa: E402
 import build_pass2 as pass2  # noqa: E402
 import build_curios as curios  # noqa: E402
+import build_white as white  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
                        SIDES, CLAW_REST_OPEN, _key)
@@ -1393,7 +1395,11 @@ def main():
     scene.collection.children.link(courier_coll)
     dl02.build_couriers(sys.modules[__name__], slots, courier_coll)
     export(os.path.join(out, 'couriers.glb'), list(courier_coll.all_objects))
-    pack_for_web(out, ('d17', 'set', 'couriers'))
+    white_coll = bpy.data.collections.new('White')
+    scene.collection.children.link(white_coll)
+    white.build_white(sys.modules[__name__], white_coll)
+    export(os.path.join(out, 'white.glb'), [o for o in white_coll.all_objects if o.type in ('MESH', 'ARMATURE')])
+    pack_for_web(out, ('d17', 'set', 'couriers', 'white'))
     if args.blend:
         bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(args.blend))
     print('exported', out)

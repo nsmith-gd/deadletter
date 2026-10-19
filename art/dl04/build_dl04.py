@@ -1126,42 +1126,160 @@ def _stalactite(bm, x, y, r0, length, seed):
 
 
 def _container(b, c, T, F, size, rnd, front=True):
-    """A shipping-box home: w along T, d along F, h up, its front toward F: a door, maybe a window, dark."""
+    """A shipping-box home: w along T, d along F, h up, its front toward F: a door, maybe a window, dark.
+    Nearer, its corner posts and rails, a framed door, the odd lamp still on, a mail-slot sign, and what
+    is kept on its roof."""
     w, d, h = size
-    add_box(b['rust'] if rnd.random() < 0.55 else b['sheet'], c + Vector((0, 0, h / 2)), size, rot=_rot(T, F))
+    mat = b['rust'] if rnd.random() < 0.55 else b['sheet']
+    rot = _rot(T, F)
+    _abox(mat, c + Vector((0, 0, h / 2)), size, rot=rot)
+    lod, dr = _lod(c), _drnd(c, 3)
+    if lod >= 1:
+        for s in (-1, 1):
+            _abox(mat, c + T * (s * (w / 2 - 0.05)) + F * (d / 2 - 0.05) + UP * (h / 2), (0.16, 0.16, h + 0.04), rot=rot)
+        _abox(mat, c + F * (d / 2 - 0.05) + UP * (h - 0.07), (w + 0.04, 0.16, 0.14), rot=rot)
+        _abox(mat, c + F * (d / 2 - 0.05) + UP * 0.07, (w + 0.04, 0.16, 0.14), rot=rot)
+        if dr.random() < 0.45:                       # on the roof: a tarp over something, or crates
+            if dr.random() < 0.5:
+                _abox(b['cloth'], c + UP * (h + 0.35) + T * dr.uniform(-w / 4, w / 4), (min(w * 0.6, 2.6), d * 0.7, 0.7), rot=rot)
+            else:
+                for i in range(dr.randint(1, 3)):
+                    s = dr.uniform(0.5, 0.9)
+                    _abox(b['wood'], c + UP * (h + s / 2) + T * dr.uniform(-w / 3, w / 3) + F * dr.uniform(-d / 4, d / 4), (s, s, s), rot=rot @ _rz(dr.uniform(-0.3, 0.3)))
     if not front:
         return
     fc = c + F * (d / 2 + 0.02)
     u = rnd.uniform(-0.3, 0.3) * w
     _face(b['dark'], fc + T * u + Vector((0, 0, 0.95)), T, F, 0.85, 1.9)
+    if lod >= 1:                                     # its frame
+        q = fc + T * u + F * 0.03
+        for s in (-1, 1):
+            _abox(b['sheet'], q + T * (s * 0.47) + UP * 0.97, (0.09, 0.06, 1.94), rot=rot)
+        _abox(b['sheet'], q + UP * 1.95, (1.03, 0.06, 0.09), rot=rot)
+        if lod >= 2 and dr.random() < 0.5:          # the door leaf, ajar
+            hinge = q + T * 0.42
+            leaf = _rot(T, F) @ Matrix.Rotation(dr.uniform(0.25, 0.9), 4, 'Z')
+            _abox(b['wood'] if dr.random() < 0.5 else b['sheet'], hinge + (leaf @ Vector((-0.4, 0.03, 0.0))) + UP * 0.95, (0.8, 0.04, 1.86), rot=leaf)
+        if dr.random() < 0.12:                       # a lamp left on over the door
+            _wall_lamp(b, fc + T * u + UP * 2.2, F, True)
+        elif lod >= 2 and dr.random() < 0.3:          # the mail slot's sign
+            _sign(b['signs'], fc + T * (u + (0.75 if u < 0 else -0.75)) + UP * 1.35 + F * 0.01, T, F, (0.42, 0.42), 6)
     if w > 3 and rnd.random() < 0.6:
         side = -1 if u > 0 else 1
-        _face(b['dark'], fc + T * (side * w * 0.28) + Vector((0, 0, 1.45)), T, F, 1.1, 0.7)
+        q = fc + T * (side * w * 0.28) + Vector((0, 0, 1.45))
+        _face(b['dark'], q, T, F, 1.1, 0.7)
+        if lod >= 1:
+            _abox(b['cut'], q + F * 0.05 - UP * 0.4, (1.3, 0.14, 0.08), rot=rot)
+            for i in (-1, 0, 1):
+                _quad(b['sheet'], [q + F * 0.03 + T * (i * 0.3 - 0.02) - UP * 0.35, q + F * 0.03 + T * (i * 0.3 + 0.02) - UP * 0.35,
+                                   q + F * 0.03 + T * (i * 0.3 + 0.02) + UP * 0.35, q + F * 0.03 + T * (i * 0.3 - 0.02) + UP * 0.35], F)
 
 
-def _house(b, c, T, F, w, d, floors, rnd, mat, lit=0.0):
+def _house(b, c, T, F, w, d, floors, rnd, mat, lit=0.0, home=False):
     """A built home: plaster or sheet walls, a slab roof (now and then a tank or a flue on it), windows in
-    a row on each floor, dark."""
+    a row on each floor, dark. Near and middling, the windows are cut in with stone sills and lintels,
+    shuttered or lit with something against the light, balconies off the upper floors, an awning and a
+    lamp over the door, chimneys and attics on the roof; far, flat quads. With home, the one lit window's
+    opening (its light is AtriumLitWindow), on the first floor a quarter along."""
     h = 3.0 * floors + 0.3
-    add_box(mat, c + Vector((0, 0, h / 2)), (w, d, h), rot=_rot(T, F))
-    add_box(b['cut'] if rnd.random() < 0.6 else b['rust'], c + Vector((0, 0, h + 0.1)) + F * 0.2, (w + 0.3, d + 0.5, 0.2), rot=_rot(T, F))
+    rot = _rot(T, F)
+    lod, dr = _lod(c + F * (d / 2)), _drnd(c, 1)
+    roof_mat = b['cut'] if rnd.random() < 0.6 else b['rust']
     r = rnd.random()
+    tank = flue = None
     if r < 0.3:
-        q = c + T * rnd.uniform(-w / 3, w / 3) - F * (d / 4) + Vector((0, 0, h + 0.2))
-        add_cyl(b['rust'] if r < 0.15 else b['sheet'], q, q + Vector((0, 0, 1.3)), 0.6, seg=8)
+        tank = (c + T * rnd.uniform(-w / 3, w / 3) - F * (d / 4) + Vector((0, 0, h + 0.2)), b['rust'] if r < 0.15 else b['sheet'])
     elif r < 0.5:
-        q = c + T * rnd.uniform(-w / 3, w / 3) - F * (d / 3) + Vector((0, 0, h))
-        add_cyl(b['sheet'], q, q + Vector((0, 0, 2.2)), 0.12, seg=6)
-    fc = c + F * (d / 2 + 0.02)
+        flue = c + T * rnd.uniform(-w / 3, w / 3) - F * (d / 3) + Vector((0, 0, h))
     n = max(1, int(w / 1.9))
     door = rnd.randrange(n)
+    ops = []
     for f in range(floors):
         for i in range(n):
             u = (i - (n - 1) / 2) * (w / n)
             if f == 0 and i == door:
-                _face(b['dark'], fc + T * u + Vector((0, 0, 1.0)), T, F, 0.9, 2.0)
+                ops.append((f, u, 'door'))
             elif rnd.random() < 0.85:
-                _face(b['glow'] if rnd.random() < lit else b['dark'], fc + T * u + Vector((0, 0, 3.0 * f + 1.6)), T, F, 0.95, 1.0)
+                ops.append((f, u, 'glow' if rnd.random() < lit else 'dark'))
+    # The roof: its slab, and what stands on it.
+    _abox(roof_mat, c + Vector((0, 0, h + 0.1)) + F * 0.2, (w + 0.3, d + 0.5, 0.2), rot=rot)
+    if tank:
+        _tank(b, tank[0], 0.6, 1.3, dr, lod, mat=tank[1])
+    elif flue:
+        add_cyl(b['sheet'], flue, flue + Vector((0, 0, 2.2)), 0.12, seg=6)
+        _abox(b['sheet'], flue + UP * 2.25, (0.36, 0.36, 0.08), rot=rot)
+    if lod >= 1:
+        top = c + UP * (h + 0.2)
+        k = dr.random()
+        if k < 0.35 and floors == 2:                 # an attic under a pitched roof
+            aw = w * dr.uniform(0.45, 0.7)
+            ac = top - F * (d * 0.12) + T * dr.uniform(-(w - aw) / 2, (w - aw) / 2)
+            _cbox(mat, ac, T, F, aw, d * 0.55, 1.2, 0.0)
+            _gable(b['rust'] if dr.random() < 0.6 else b['sheet'], mat, ac + UP * 1.2, T, F, aw, d * 0.55, 1.3, over=0.25)
+            if lod >= 2:
+                q = ac + F * (d * 0.275 + 0.01) + UP * 0.25
+                _quad(b['glow'] if dr.random() < lit else b['dark'], [q - T * 0.35, q + T * 0.35, q + T * 0.35 + UP * 0.7, q - T * 0.35 + UP * 0.7], F)
+        elif k < 0.6:                                 # a shed on the roof
+            sw = dr.uniform(1.6, 2.6)
+            sc = top - F * (d * 0.25) + T * dr.uniform(-w / 3, w / 3)
+            _abox(b['sheet'] if dr.random() < 0.5 else b['rust'], sc + UP * 1.0, (sw, 1.8, 2.0), rot=rot)
+            _abox(b['rust'], sc + UP * 2.05 + F * 0.1, (sw + 0.3, 2.2, 0.08), rot=rot @ Matrix.Rotation(0.12, 4, 'X'))
+        for i in range(dr.randint(0, 2)):
+            _chimney(b, top - F * (d * 0.3) + T * dr.uniform(-w / 2.4, w / 2.4), T, F, dr.uniform(1.0, 2.0), dr)
+        if lod >= 2 and dr.random() < 0.3:            # an aerial
+            q = top + T * dr.uniform(-w / 3, w / 3) - F * (d * 0.2)
+            _wire(b['cable'], [q, q + UP * 3.2], 0.03)
+            _abox(b['sheet'], q + UP * 2.8, (1.2, 0.04, 0.04), rot=rot)
+            _abox(b['sheet'], q + UP * 2.3, (0.8, 0.04, 0.04), rot=rot)
+    fc = c + F * (d / 2 + 0.02)
+    if lod == 0:                                       # far: a plain block, its windows flat
+        _abox(mat, c + Vector((0, 0, h / 2)), (w, d, h), rot=rot)
+        for f, u, kind in ops:
+            if kind == 'door':
+                _face(b['dark'], fc + T * u + Vector((0, 0, 1.0)), T, F, 0.9, 2.0)
+            else:
+                _face(b['glow'] if kind == 'glow' else b['dark'], fc + T * u + Vector((0, 0, 3.0 * f + 1.6)), T, F, 0.95, 1.0)
+        return
+    # Near and middling: a chamfered block, its front cut with the openings.
+    ch = 0.22
+    _cbox(mat, c, T, F, w, d, h, ch, front=False)
+    fc = c + F * (d / 2)
+    holes, dress, balconies = [], [], []
+    for f, u, kind in ops:
+        if home and f == 1 and abs(u - w * 0.25) < 1.25:
+            continue
+        if kind == 'door':
+            holes.append((u, 0.1, 0.9, 2.0, b['dark']))
+            dress.append((u, 0.1, 0.9, 2.0, 'door'))
+            continue
+        if f >= 1 and dr.random() < 0.3:              # a french window onto a balcony
+            z = 3.0 * f + 0.25
+            k = 'glow' if kind == 'glow' else 'dark'
+            holes.append((u, z, 0.95, 2.0, b[k]))
+            dress.append((u, z, 0.95, 2.0, k))
+            balconies.append((u, z, min(1.9, w / n - 0.25)))
+            continue
+        k = kind if kind == 'glow' else dr.choice(('shut', 'open', 'dark', 'shut', 'open', 'dark', 'dark'))
+        holes.append((u, 3.0 * f + 1.1, 0.95, 1.0, b['glow'] if k == 'glow' else b['dark']))
+        dress.append((u, 3.0 * f + 1.1, 0.95, 1.0, k))
+    if home:
+        holes.append((w * 0.25, 4.05, 0.95, 1.05, b['dark']))
+        dress.append((w * 0.25, 4.05, 0.95, 1.05, 'dark'))
+    _facade(b, mat, fc, T, F, w - 2 * ch, h, holes)
+    for u, z, ww, wh, kind in dress:
+        _dress_opening(b, fc + T * u + UP * z, T, F, ww, wh, kind, lod, dr)
+        if kind == 'door':
+            if dr.random() < 0.5:
+                _awning(b, fc + T * u, T, F, 1.5, dr)
+            if dr.random() < 1.6 * _litp(c.z):
+                _wall_lamp(b, fc + T * (u + 0.75) + UP * 2.3, F, True)
+            elif lod >= 2 and dr.random() < 0.3:
+                _sign(b['signs'], fc + T * (u - 0.8) + UP * 1.5 + F * 0.01, T, F, (0.45, 0.45), 1)
+    for u, z, bw in balconies:
+        _balcony(b, fc + T * u + UP * z, T, F, bw, lod, dr)
+    for f in range(1, floors):                         # string courses between the floors
+        _abox(b['cut'], fc + UP * (3.0 * f + 0.02) + F * 0.04, (w - 2 * ch + 0.02, 0.1, 0.14), rot=rot)
+    _abox(b['cut'], fc + UP * (h - 0.12) + F * 0.06, (w + 0.1, 0.14, 0.24), rot=rot)     # the cornice
 
 
 def _barricade(b, c, T, F, span, rnd):
@@ -1169,42 +1287,91 @@ def _barricade(b, c, T, F, span, rnd):
     k = max(2, int(span / 1.1))
     for i in range(k):
         u = (i + 0.5) / k - 0.5
-        add_box(b['rust'] if rnd.random() < 0.6 else b['sheet'], c + F * (u * span) + T * (0.05 * (i % 2)) + Vector((0, 0, 1.3 + rnd.uniform(-0.1, 0.15))),
-                (0.04, span / k + 0.15, 2.6), rot=_rot(T, F) @ Matrix.Rotation(rnd.uniform(-0.04, 0.04), 4, 'X'))
+        _abox(b['rust'] if rnd.random() < 0.6 else b['sheet'], c + F * (u * span) + T * (0.05 * (i % 2)) + Vector((0, 0, 1.3 + rnd.uniform(-0.1, 0.15))),
+              (0.04, span / k + 0.15, 2.6), rot=_rot(T, F) @ Matrix.Rotation(rnd.uniform(-0.04, 0.04), 4, 'X'))
     for s in (-1, 1):
-        add_box(b['barricade'], c - T * 0.08 + Vector((0, 0, 1.4 + 0.3 * s)), (0.03, span * 0.95, 0.16),
-                rot=_rot(T, F) @ Matrix.Rotation(s * 0.18, 4, 'X'))
+        _abox(b['barricade'], c - T * 0.08 + Vector((0, 0, 1.4 + 0.3 * s)), (0.03, span * 0.95, 0.16),
+              rot=_rot(T, F) @ Matrix.Rotation(s * 0.18, 4, 'X'))
+    if _lod(c) >= 1:                                   # its posts
+        for u in (-0.5, 0.0, 0.5):
+            _abox(b['sheet'], c + F * (u * span * 0.95) - T * 0.1 + UP * 1.4, (0.1, 0.1, 2.8), rot=_rot(T, F))
 
 
 def _hall(b, c, T, F, w, h, lit, rnd):
     """A workshop hall cut into the rock: a dressed-stone frame round an arched mouth, warm-lit inside
-    behind its window bars when the works still run, dark and shuttered when not."""
+    behind its window bars when the works still run, dark and shuttered when not. Nearer, the arch's
+    voussoirs and keystone, a lamp hung in the mouth and the machines against the light, a sign over
+    it, a pipe up the rock."""
+    rot = _rot(T, F)
     for s in (-1, 1):
-        add_box(b['cut'], c + T * (s * (w / 2 + 0.3)) + Vector((0, 0, h / 2)), (0.6, 0.7, h), rot=_rot(T, F))
-    add_box(b['cut'], c + Vector((0, 0, h + 0.35)), (w + 1.2, 0.7, 0.7), rot=_rot(T, F))
+        _abox(b['cut'], c + T * (s * (w / 2 + 0.3)) + Vector((0, 0, h / 2)), (0.6, 0.7, h), rot=rot)
+    _abox(b['cut'], c + Vector((0, 0, h + 0.35)), (w + 1.2, 0.7, 0.7), rot=rot)
+    lod, dr = _lod(c), _drnd(c, 2)
+    r = w / 2
+    if lod >= 1:                                      # the voussoirs: a ring of dressed stone, its keystone
+        spring = max(0.0, h - r)
+        q = c + F * 0.12
+        prev = None
+        for k in range(9):
+            a = math.pi * k / 8
+            d = T * math.cos(a) + UP * math.sin(a)
+            cur = (q + UP * spring + d * r, q + UP * spring + d * (r + 0.45))
+            if prev:
+                _quad(b['cut'], [prev[0], cur[0], cur[1], prev[1]], F)
+            prev = cur
+        _abox(b['cut'], c + UP * (h + 0.12) + F * 0.2, (0.5, 0.3, 0.6), rot=rot)
     if lit:
         _arch(b['glow'], c, T, F, w, h)
         fc = c + F * 0.12
+        if lod >= 2:                                   # machines against the light: a flywheel, a column
+            m = c + F * 0.06 + T * dr.uniform(-w / 4, w / 4)
+            rr = dr.uniform(0.6, 1.0)
+            _quad(b['dark'], [m + UP * (rr + 0.1) + (T * math.cos(a) + UP * math.sin(a)) * rr for a in [2 * math.pi * k / 10 for k in range(10)]], F, cull=False)
+            _quad(b['dark'], [m - T * 0.15, m + T * 0.15, m + T * 0.15 + UP * (rr + 0.1), m - T * 0.15 + UP * (rr + 0.1)], F, cull=False)
         for i in range(1, 4):
             _face(b['dark'], fc + T * ((i / 4 - 0.5) * w) + Vector((0, 0, h * 0.45)), T, F, 0.14, h * 0.9)
         _face(b['dark'], fc + Vector((0, 0, h * 0.42)), T, F, w * 0.98, 0.14)
         if rnd.random() < 0.5:                       # something parked in the mouth, against the light
-            add_box(b['rust'] if rnd.random() < 0.5 else b['sheet'], c + F * 0.9 + T * rnd.uniform(-w / 4, w / 4) + Vector((0, 0, 0.6)), (1.6, 1.2, 1.2), rot=_rot(T, F))
+            _abox(b['rust'] if rnd.random() < 0.5 else b['sheet'], c + F * 0.9 + T * rnd.uniform(-w / 4, w / 4) + Vector((0, 0, 0.6)), (1.6, 1.2, 1.2), rot=rot)
+        if lod >= 1:
+            _hang_lamp(b, c + F * 0.7 + UP * (h + 0.0), 0.9)
     else:
         _arch(b['dark'], c, T, F, w, h)
         _face(b['rust'] if rnd.random() < 0.5 else b['sheet'], c + F * 0.06 + Vector((0, 0, h * 0.35)), T, F, w * 0.95, h * 0.7)
+        if lod >= 2:                                   # the shutter's ribs
+            for i in range(1, 6):
+                q = c + F * 0.08 + T * ((i / 6 - 0.5) * w * 0.95)
+                _quad(b['dark'], [q - T * 0.03, q + T * 0.03, q + T * 0.03 + UP * (h * 0.7), q - T * 0.03 + UP * (h * 0.7)], F)
+    if lod >= 1 and dr.random() < 0.55:               # its sign over the lintel
+        _signboard(b, c + UP * (h + 1.25) + F * 0.42, T, F, (1.5, 0.75), dr.choice((7, 5)) if lit else dr.choice((2, 0, 4)), lit=lit and dr.random() < 0.6)
+    if lod >= 1 and dr.random() < 0.4:                # a pipe out of the works, up the rock
+        q = c + T * (r + 0.9) + F * 0.25
+        _pipe(b['rust'], [q + UP * 0.3, q + UP * (h + 2.6), q + UP * (h + 3.2) - F * 0.6], 0.14, seg=6)
 
 
 def _gallery(b, lip, T, F, length, lamp, rnd, out=1.6):
-    """A steel gallery cantilevered off a terrace's lip: deck, rail, a post, maybe a lamp."""
+    """A steel gallery cantilevered off a terrace's lip: deck, rail, a post, maybe a lamp. Near, its
+    balusters and the deck's edge."""
+    rot = _rot(T, F)
     c = lip + F * (out / 2 - 0.2)
-    add_box(b['sheet'], c - Vector((0, 0, 0.08)), (length + 0.05, out + 0.4, 0.14), rot=_rot(T, F))
-    add_box(b['sheet'], lip + F * (out - 0.2) + Vector((0, 0, 1.05)), (length + 0.05, 0.06, 0.06), rot=_rot(T, F))
+    _abox(b['sheet'], c - Vector((0, 0, 0.08)), (length + 0.05, out + 0.4, 0.14), rot=rot)
+    _abox(b['sheet'], lip + F * (out - 0.2) + Vector((0, 0, 1.05)), (length + 0.05, 0.06, 0.06), rot=rot)
     post = lip + F * (out - 0.2) - T * (length / 2)
-    add_box(b['sheet'], post + Vector((0, 0, 0.55 + (0.7 if lamp else 0))), (0.07, 0.07, 1.1 + (1.4 if lamp else 0)), rot=_rot(T, F))
+    _abox(b['sheet'], post + Vector((0, 0, 0.55 + (0.7 if lamp else 0))), (0.07, 0.07, 1.1 + (1.4 if lamp else 0)), rot=rot)
     if lamp:
-        add_box(b['lamp'], post + F * 0.25 + Vector((0, 0, 2.45)), (0.3, 0.3, 0.3), rot=_rot(T, F))
-    add_box(b['sheet'], c + F * (out / 2) - T * (length / 2) - Vector((0, 0, 0.8)), (0.1, 0.1, 1.9), rot=_rot(T, F) @ Matrix.Rotation(0.7, 4, 'X'))
+        _abox(b['sheet'], post + F * 0.12 + Vector((0, 0, 2.5)), (0.05, 0.3, 0.05), rot=rot)
+        _abox(b['sheet'], post + F * 0.25 + Vector((0, 0, 2.62)), (0.3, 0.3, 0.06), rot=rot)
+        _octa(b['lamp'], post + F * 0.25 + Vector((0, 0, 2.45)), 0.12)
+    _abox(b['sheet'], c + F * (out / 2) - T * (length / 2) - Vector((0, 0, 0.8)), (0.1, 0.1, 1.9), rot=rot @ Matrix.Rotation(0.7, 4, 'X'))
+    lod = _lod(c)
+    if lod >= 1:
+        e = lip + F * (out - 0.2)
+        _abox(b['sheet'], e + UP * 0.5, (length + 0.05, 0.04, 0.04), rot=rot)
+        if lod >= 2:
+            k = max(2, int(length / 0.45))
+            for i in range(k):
+                q = e - T * (length / 2) + T * (length * (i + 0.5) / k)
+                _quad(b['sheet'], [q - T * 0.015, q + T * 0.015, q + T * 0.015 + UP * 1.05, q - T * 0.015 + UP * 1.05], F)
 
 
 def _ring_c(b, W, rnd, blocked):
@@ -1222,7 +1389,7 @@ def _ring_c(b, W, rnd, blocked):
         near = u < 80
         if k % 7 == 0:
             _barricade(b, (lip + back) / 2, T, F, depth + 0.6, rnd)
-            add_box(b['red'], lip + F * 0.1 + Vector((0, 0, 2.8)), (0.3, 0.3, 0.3))
+            _abox(b['red'], lip + F * 0.1 + Vector((0, 0, 2.8)), (0.3, 0.3, 0.3))
             u += 3.0
             continue
         r = rnd.random()
@@ -1235,7 +1402,7 @@ def _ring_c(b, W, rnd, blocked):
                 _container(b, c + T * rnd.uniform(-0.6, 0.6) + Vector((0, 0, 2.62)) - F * 0.3, T, F, (min(w, 2.45 + 3.6 * rnd.random()), 2.45, 2.5), rnd)
             if rnd.random() < 0.4:
                 rp = c + F * (d / 2 + 0.75) + Vector((0, 0, 2.35))
-                add_box(b['rust'], rp, (w + 0.4, 1.6, 0.05), rot=_rot(T, F) @ Matrix.Rotation(-0.2, 4, 'X'))
+                _abox(b['rust'], rp, (w + 0.4, 1.6, 0.05), rot=_rot(T, F) @ Matrix.Rotation(-0.2, 4, 'X'))
             step = w + rnd.uniform(0.4, 2.0)
         elif near and r < 0.62:                       # a works still running, among the sealed homes
             w = rnd.uniform(4.5, 7.0)
@@ -1246,14 +1413,19 @@ def _ring_c(b, W, rnd, blocked):
             _arch(b['dark'], c, T, F, 2.2, 2.8, seg=4)
             _face(b['rust'] if rnd.random() < 0.5 else b['sheet'], c + F * 0.04 + T * 2.1 + Vector((0, 0, 1.6)), T, F, 1.2, 0.9)
             if rnd.random() < 0.3:
-                add_box(b['sheet'], c + F * 1.4 + T * rnd.uniform(-1, 1) + Vector((0, 0, 0.45)), (1.0, 0.8, 0.9), rot=_rot(T, F))
+                _abox(b['sheet'], c + F * 1.4 + T * rnd.uniform(-1, 1) + Vector((0, 0, 0.45)), (1.0, 0.8, 0.9), rot=_rot(T, F))
             step = rnd.uniform(4.5, 7.0)
         if near:
             ml, _, mT, mF = _wledge(W, u + step / 2, 'C')
-            add_box(b['sheet'], ml - mF * 0.2 + Vector((0, 0, 1.0)), (step, 0.05, 0.05), rot=_rot(mT, mF))
-            add_box(b['sheet'], lip - F * 0.2 + Vector((0, 0, 0.5)), (0.06, 0.06, 1.0), rot=_rot(T, F))
+            _abox(b['sheet'], ml - mF * 0.2 + Vector((0, 0, 1.0)), (step, 0.05, 0.05), rot=_rot(mT, mF))
+            _abox(b['sheet'], lip - F * 0.2 + Vector((0, 0, 0.5)), (0.06, 0.06, 1.0), rot=_rot(T, F))
+        if near and _lod(back) >= 2:                  # a cable along the back wall, its bulbs mostly dead
+            dr = _drnd(back, 5)
+            if dr.random() < 0.5:
+                a, e = back + F * 0.4 + UP * 3.3, _wledge(W, u + step, 'C')[1] + F * 0.4 + UP * 3.3
+                _festoon(b, a, e, 0.35, 2, lambda: dr.random() < 0.15)
         if rnd.random() < 0.08:                      # a failing lamp, mostly the red ones
-            add_box(b['lamp'] if rnd.random() < 0.25 else b['red'], lip - F * 0.3 + Vector((0, 0, 2.4)), (0.28, 0.28, 0.3))
+            _abox(b['lamp'] if rnd.random() < 0.25 else b['red'], lip - F * 0.3 + Vector((0, 0, 2.4)), (0.28, 0.28, 0.3))
         u += step
 
 
@@ -1273,14 +1445,14 @@ def _ring_b(b, W, rnd, blocked):
             _hall(b, back + F * 0.3, T, F, w, h, rnd.random() < _litp(back.z), rnd)
             if rnd.random() < 0.4:                   # a gallery above the hall, and its own row of lit windows
                 g = back + F * 1.0 + Vector((0, 0, h + 1.0))
-                add_box(b['sheet'], g, (w + 1.5, 2.0, 0.14), rot=_rot(T, F))
-                add_box(b['sheet'], g + F * 0.95 + Vector((0, 0, 1.0)), (w + 1.5, 0.05, 0.05), rot=_rot(T, F))
+                _abox(b['sheet'], g, (w + 1.5, 2.0, 0.14), rot=_rot(T, F))
+                _abox(b['sheet'], g + F * 0.95 + Vector((0, 0, 1.0)), (w + 1.5, 0.05, 0.05), rot=_rot(T, F))
                 for i in range(3):
                     _face(b['glow'] if rnd.random() < _litp(back.z + h + 2.4) else b['dark'], back + F * 0.32 + T * ((i - 1) * w / 3) + Vector((0, 0, h + 2.4)), T, F, 1.1, 1.2)
             if rnd.random() < 0.5:
                 for i in range(rnd.randint(1, 3)):
                     s = rnd.uniform(0.8, 1.5)
-                    add_box(b['rust' if rnd.random() < 0.5 else 'sheet'], lip - F * rnd.uniform(1.0, 2.5) + T * rnd.uniform(-w / 2, w / 2) + Vector((0, 0, s / 2)), (s, s, s), rot=_rot(T, F))
+                    _abox(b['rust' if rnd.random() < 0.5 else 'sheet'], lip - F * rnd.uniform(1.0, 2.5) + T * rnd.uniform(-w / 2, w / 2) + Vector((0, 0, s / 2)), (s, s, s), rot=_rot(T, F))
             step = w + rnd.uniform(1.2, 3.0)
             gl, _, gT, gF = _wledge(W, u + step / 2 - w / 2, 'B')
             _gallery(b, gl, gT, gF, step, rnd.random() < 2 * _litp(gl.z), rnd)
@@ -1299,6 +1471,7 @@ def _ring_a(b, W, rnd, blocked, home=None):
     u = 6.0
     k = 0
     lit = None
+    last_lamp = None
     while u < 240.0:
         if _blocked(u, blocked):
             u += 1.5
@@ -1308,13 +1481,21 @@ def _ring_a(b, W, rnd, blocked, home=None):
         if u < 170:
             w, d = rnd.uniform(6.0, 8.5), rnd.uniform(4.5, 5.5)
             c = back + F * (d / 2 + 0.1) - Vector((0, 0, 0.1))
-            _house(b, c, T, F, w, d, 2 if rnd.random() < 0.75 else 3, rnd, b['plaster'] if rnd.random() < 0.8 else b['sheet'], 0.5 * _litp(c.z))
-            if home is not None and lit is None and u > home:
-                lit = (c + F * (d / 2 + 0.05) + T * (w * 0.25) + Vector((0, 0, 4.6)), T, F)
-            add_box(b['cut'], lip - F * 0.3 + Vector((0, 0, 0.5)), (w + 0.8, 0.25, 1.0), rot=_rot(T, F))
+            is_home = home is not None and lit is None and u > home
+            _house(b, c, T, F, w, d, 2 if rnd.random() < 0.75 else 3, rnd, b['plaster'] if rnd.random() < 0.8 else b['sheet'], 0.5 * _litp(c.z),
+                   home=is_home)
+            if is_home:                                # its light sits in the window's recess
+                lit = (c + F * (d / 2 - 0.17) + T * (w * 0.25) + Vector((0, 0, 4.6)), T, F)
+            _abox(b['cut'], lip - F * 0.3 + Vector((0, 0, 0.5)), (w + 0.8, 0.25, 1.0), rot=_rot(T, F))
+            if _lod(lip) >= 1:
+                _abox(b['cut'], lip - F * 0.3 + Vector((0, 0, 1.04)), (w + 0.85, 0.36, 0.08), rot=_rot(T, F))
             if rnd.random() < 1.6 * _litp(lip.z):
-                add_box(b['lamp'], lip - F * 0.1 + Vector((0, 0, 2.6)), (0.35, 0.35, 0.35), rot=_rot(T, F))
-                add_box(b['sheet'], lip - F * 0.3 + Vector((0, 0, 1.3)), (0.08, 0.08, 2.6), rot=_rot(T, F))
+                head = lip - F * 0.3 + F * 0.55 + Vector((0, 0, 2.55))
+                _street_lamp(b, lip - F * 0.3, T, F, 2.8, True)
+                if last_lamp is not None and (head - last_lamp).length < 16.0 and _lod(lip) >= 1:
+                    dr = _drnd(head, 7)
+                    _festoon(b, last_lamp + Vector((0, 0, 0.3)), head + Vector((0, 0, 0.3)), 0.5, 3, lambda: dr.random() < 0.7)
+                last_lamp = head
             step = w + rnd.uniform(0.3, 1.5)
         else:
             for i in range(3):
@@ -1361,12 +1542,12 @@ def _low_galleries(b, W, u0, u1, rnd):
                 F = -_wframe(W, va)[2]
                 if T.cross(F).z < 0:
                     T = -T
-                add_box(b['sheet'], (a + c) / 2 + F * 0.9, (d.length + 0.05, 1.8, 0.12), rot=_rot(T, F))
-                add_box(b['sheet'], (a + c) / 2 + F * 1.75 + Vector((0, 0, 1.0)), (d.length + 0.05, 0.05, 0.05), rot=_rot(T, F))
+                _abox(b['sheet'], (a + c) / 2 + F * 0.9, (d.length + 0.05, 1.8, 0.12), rot=_rot(T, F))
+                _abox(b['sheet'], (a + c) / 2 + F * 1.75 + Vector((0, 0, 1.0)), (d.length + 0.05, 0.05, 0.05), rot=_rot(T, F))
                 if rnd.random() < 0.45:
                     _arch(b['glow'] if rnd.random() < _litp(z) else b['dark'], a + F * 0.05, T, F, 1.6, 2.4, seg=3)
                 if rnd.random() < 0.04:                # a failing lamp
-                    add_box(b['red'] if rnd.random() < 0.5 else b['lamp'], a + F * 1.7 + Vector((0, 0, 2.2)), (0.26, 0.26, 0.26), rot=_rot(T, F))
+                    _abox(b['red'] if rnd.random() < 0.5 else b['lamp'], a + F * 1.7 + Vector((0, 0, 2.2)), (0.26, 0.26, 0.26), rot=_rot(T, F))
             if len(pts) > 2 and z > -21:
                 q = pts[len(pts) // 2][1]
                 F = -_wframe(W, pts[len(pts) // 2][0])[2]
@@ -1382,55 +1563,85 @@ def _lift_tower(b, base, top_z, T, F, rnd):
     for sx in (-1, 1):
         for sy in (-1, 1):
             q = base + T * (sx * 1.6) + F * (sy * 1.6)
-            add_box(b['sheet'], Vector((q.x, q.y, (zb + top_z) / 2)), (0.3, 0.3, top_z - zb), rot=_rot(T, F))
+            _abox(b['sheet'], Vector((q.x, q.y, (zb + top_z) / 2)), (0.3, 0.3, top_z - zb), rot=_rot(T, F))
+    z = zb
+    while z + 4.0 < top_z + 0.1:                      # x-bracing, on the faces the camera sees
+        for fs, fa in ((F, T), (-F, T), (T, F), (-T, F)):
+            mid = base + fs * 1.6 + Vector((0, 0, z + 2.0))
+            if not _seen(mid, fs):
+                continue
+            for s in (-1, 1):
+                p0 = base + fs * 1.6 + fa * (s * 1.6) + Vector((0, 0, z))
+                p1 = base + fs * 1.6 + fa * (-s * 1.6) + Vector((0, 0, z + 4.0))
+                _wire(b['sheet'], [p0, p1], 0.05)
+        z += 4.0
     z = zb + 4.0
     while z < top_z:
         for s in (-1, 1):
-            add_box(b['sheet'], base + F * (s * 1.6) + Vector((0, 0, z)), (3.4, 0.12, 0.12), rot=_rot(T, F))
-            add_box(b['sheet'], base + T * (s * 1.6) + Vector((0, 0, z)), (0.12, 3.4, 0.12), rot=_rot(T, F))
+            _abox(b['sheet'], base + F * (s * 1.6) + Vector((0, 0, z)), (3.4, 0.12, 0.12), rot=_rot(T, F))
+            _abox(b['sheet'], base + T * (s * 1.6) + Vector((0, 0, z)), (0.12, 3.4, 0.12), rot=_rot(T, F))
         z += 4.0
-    add_box(b['sheet'], base + Vector((0, 0, top_z + 0.4)), (4.0, 4.0, 0.4), rot=_rot(T, F))
+    _abox(b['sheet'], base + Vector((0, 0, top_z + 0.4)), (4.0, 4.0, 0.4), rot=_rot(T, F))
     add_torus(b['sheet'], base + Vector((0, 0, top_z + 2.2)), T, 1.6, 0.12, seg=16, rseg=4)
     cz = top_z - 9.0
-    add_box(b['rust'], base + Vector((0, 0, cz + 0.05)), (2.2, 2.2, 0.1), rot=_rot(T, F))
-    add_box(b['red'], base + F * 2.1 + Vector((0, 0, top_z + 0.9)), (0.3, 0.3, 0.3), rot=_rot(T, F))
+    _abox(b['rust'], base + Vector((0, 0, cz + 0.05)), (2.2, 2.2, 0.1), rot=_rot(T, F))
+    _abox(b['red'], base + F * 2.1 + Vector((0, 0, top_z + 0.9)), (0.3, 0.3, 0.3), rot=_rot(T, F))
     for sx in (-1, 1):
         for sy in (-1, 1):
-            add_box(b['sheet'], base + T * (sx * 1.15) + F * (sy * 1.15) + Vector((0, 0, cz + 1.4)), (0.12, 0.12, 2.9), rot=_rot(T, F))
-    add_box(b['sheet'], base + Vector((0, 0, cz + 2.95)), (2.5, 2.5, 0.2), rot=_rot(T, F))
+            _abox(b['sheet'], base + T * (sx * 1.15) + F * (sy * 1.15) + Vector((0, 0, cz + 1.4)), (0.12, 0.12, 2.9), rot=_rot(T, F))
+    _abox(b['sheet'], base + Vector((0, 0, cz + 2.95)), (2.5, 2.5, 0.2), rot=_rot(T, F))
     _wire(b['cable'], [base + Vector((0, 0, cz + 3.0)), base + Vector((0, 0, top_z + 2.2))], 0.04)
+    _octa(b['lamp'], base + Vector((0, 0, cz + 2.6)), 0.12)
+    for s in (-1, 1):                                  # the cage's mesh sides
+        _quad(b['sheet'], [base + T * (s * 1.15) + F * -1.15 + Vector((0, 0, cz + 0.1)), base + T * (s * 1.15) + F * 1.15 + Vector((0, 0, cz + 0.1)),
+                           base + T * (s * 1.15) + F * 1.15 + Vector((0, 0, cz + 1.1)), base + T * (s * 1.15) + F * -1.15 + Vector((0, 0, cz + 1.1))], T * s)
+    _signboard(b, base + F * 1.75 + Vector((0, 0, top_z - 2.0)), T, F, (1.0, 1.0), 3, lit=True)
 
 
 def _crane(b, base, T, F, rnd):
     """A jib crane on a cantilevered platform: mast, jib out over the chasm, a load on its hook."""
-    add_box(b['sheet'], base + Vector((0, 0, 6.0)), (0.9, 0.9, 12.0), rot=_rot(T, F))
-    add_box(b['rust'], base + F * 6.0 + Vector((0, 0, 11.6)), (0.7, 16.0, 0.9), rot=_rot(T, F))
-    add_box(b['sheet'], base - F * 3.0 + Vector((0, 0, 11.3)), (1.8, 3.0, 1.4), rot=_rot(T, F))
+    _abox(b['sheet'], base + Vector((0, 0, 6.0)), (0.9, 0.9, 12.0), rot=_rot(T, F))
+    _abox(b['rust'], base + F * 6.0 + Vector((0, 0, 11.6)), (0.7, 16.0, 0.9), rot=_rot(T, F))
+    _abox(b['sheet'], base - F * 3.0 + Vector((0, 0, 11.3)), (1.8, 3.0, 1.4), rot=_rot(T, F))
     for s in (-1, 1):
         _wire(b['cable'], [base + Vector((0, 0, 14.5)), base + F * (6 + 7.5 * s) + Vector((0, 0, 12.0))], 0.03)
     hook = base + F * 11.5
     _wire(b['cable'], [hook + Vector((0, 0, 11.2)), hook + Vector((0, 0, 4.0))], 0.03)
-    add_box(b['rust'], hook + Vector((0, 0, 3.0)), (2.2, 1.6, 1.6), rot=_rot(T, F))
-    add_box(b['lamp'], base + F * 13.5 + Vector((0, 0, 11.0)), (0.35, 0.35, 0.35), rot=_rot(T, F))
+    _abox(b['rust'], hook + Vector((0, 0, 3.0)), (2.2, 1.6, 1.6), rot=_rot(T, F))
+    _abox(b['lamp'], base + F * 13.5 + Vector((0, 0, 11.0)), (0.35, 0.35, 0.35), rot=_rot(T, F))
+    if _lod(base) >= 1:
+        for k in range(15):                            # the jib's lattice, zig-zag under it
+            p0 = base + F * (-2.0 + k) + Vector((0, 0, 11.15))
+            p1 = base + F * (-1.5 + k) + Vector((0, 0, 10.2))
+            _wire(b['sheet'], [p0, p1, p0 + F * 1.0], 0.04)
+        _abox(b['sheet'], base + F * 5.5 + Vector((0, 0, 10.2)), (0.12, 15.0, 0.12), rot=_rot(T, F))
+        cab = base + F * 0.9 + Vector((0, 0, 10.0))
+        _abox(b['sheet'], cab, (1.4, 1.2, 1.4), rot=_rot(T, F))
+        _quad(b['glow'], [cab + F * 0.61 + T * -0.5 + Vector((0, 0, -0.1)), cab + F * 0.61 + T * 0.5 + Vector((0, 0, -0.1)),
+                          cab + F * 0.61 + T * 0.5 + Vector((0, 0, 0.5)), cab + F * 0.61 + T * -0.5 + Vector((0, 0, 0.5))], F)
 
 
 def _platform(b, lip, T, F, w, out, rnd, crane=False):
     """A steel platform cantilevered out over the chasm on struts, crates and a lamp on it."""
     c = lip + F * (out / 2 - 0.5)
-    add_box(b['sheet'], c - Vector((0, 0, 0.12)), (w, out + 1.0, 0.25), rot=_rot(T, F))
+    _abox(b['sheet'], c - Vector((0, 0, 0.12)), (w, out + 1.0, 0.25), rot=_rot(T, F))
     for s in (-1, 1):
         a = lip + T * (s * (w / 2 - 0.4)) - Vector((0, 0, 4.5)) + F * 0.3
         e = lip + T * (s * (w / 2 - 0.4)) + F * (out - 0.6) - Vector((0, 0, 0.2))
         add_cyl(b['sheet'], a, e, 0.14, seg=4)
-        add_box(b['sheet'], lip + T * (s * w / 2) + F * (out / 2 - 0.5) + Vector((0, 0, 1.05)), (0.05, out + 1.0, 0.05), rot=_rot(T, F))
-    add_box(b['sheet'], lip + F * (out - 0.05) + Vector((0, 0, 1.05)), (w, 0.05, 0.05), rot=_rot(T, F))
+        _abox(b['sheet'], lip + T * (s * w / 2) + F * (out / 2 - 0.5) + Vector((0, 0, 1.05)), (0.05, out + 1.0, 0.05), rot=_rot(T, F))
+    _abox(b['sheet'], lip + F * (out - 0.05) + Vector((0, 0, 1.05)), (w, 0.05, 0.05), rot=_rot(T, F))
     for i in range(rnd.randint(2, 4)):
         s = rnd.uniform(0.9, 1.6)
-        add_box(b['rust' if rnd.random() < 0.5 else 'sheet'], c + T * rnd.uniform(-w / 3, w / 3) + F * rnd.uniform(-out / 4, out / 4) + Vector((0, 0, s / 2)), (s, s * 1.2, s), rot=_rot(T, F))
+        _abox(b['rust' if rnd.random() < 0.5 else 'sheet'], c + T * rnd.uniform(-w / 3, w / 3) + F * rnd.uniform(-out / 4, out / 4) + Vector((0, 0, s / 2)), (s, s * 1.2, s), rot=_rot(T, F))
     if rnd.random() < 2.5 * _litp(lip.z):
-        add_box(b['lamp'], lip + F * (out - 0.1) + T * (w / 2) + Vector((0, 0, 2.2)), (0.32, 0.32, 0.32), rot=_rot(T, F))
+        _abox(b['lamp'], lip + F * (out - 0.1) + T * (w / 2) + Vector((0, 0, 2.2)), (0.32, 0.32, 0.32), rot=_rot(T, F))
     if crane:
         _crane(b, c - T * (w / 3), T, F, rnd)
+    if _lod(c) >= 2:
+        for i in range(int(w / 0.5)):
+            q = lip + F * (out - 0.05) + T * (-w / 2 + 0.25 + 0.5 * i)
+            _quad(b['sheet'], [q - T * 0.015, q + T * 0.015, q + T * 0.015 + UP * 1.05, q - T * 0.015 + UP * 1.05], F)
 
 
 def _viaduct(b, WL, WR, y, z, width, spans, rnd):
@@ -1451,9 +1662,23 @@ def _viaduct(b, WL, WR, y, z, width, spans, rnd):
     piers = [a + T * (L * i / spans) for i in range(spans + 1)]
     top = z + 1.4
     zb = CHASM_FLOOR + 4.0
+    rot = _rot(T, F)
+    lod = _lod(a + T * (L / 2) + Vector((0, 0, z)))
     for i, p in enumerate(piers):
         if 0 < i < spans:
-            add_box(stone, p + Vector((0, 0, (zb + top) / 2)), (pw, width + 1.0, top - zb), rot=_rot(T, F))
+            q = Vector((p.x, p.y, zb))
+            _cbox(stone, q, T, F, pw, width + 1.0, top - zb, 0.18 * pw, top=False)
+            for s in (-1, 1):                          # cutwaters, up to the imposts
+                f0 = q + F * (s * (width / 2 + 0.5))
+                tip = f0 + F * (s * pw * 0.45)
+                hgt = z - 1.0 - (L / spans * 0.84) / 2 - zb
+                cap = pw * 0.45
+                for side in (-1, 1):
+                    e = f0 + T * (side * pw / 2)
+                    _quad(stone, [e, tip, tip + UP * hgt, e + UP * (hgt + cap)], (F * s * (pw / 2) + T * side * cap).normalized())
+                _quad(stone, [f0 + T * (-pw / 2) + UP * (hgt + cap), f0 + T * (pw / 2) + UP * (hgt + cap), tip + UP * hgt], (F * s + UP).normalized())
+                if lod >= 1:                           # the impost: a cap where the arches spring
+                    _abox(b['cut'], q + F * (s * (width / 2 + 0.2)) + UP * (hgt + 0.1), (pw + 0.5, 0.6, 0.35), rot=rot)
     # Each span: the spandrel above its arch, extruded through the bridge's width.
     for p0, p1 in zip(piers, piers[1:]):
         u0, u1 = p0 + T * (pw / 2), p1 - T * (pw / 2)
@@ -1474,14 +1699,59 @@ def _viaduct(b, WL, WR, y, z, width, spans, rnd):
         for i in range(n):
             j = (i + 1) % n
             stone.faces.new((sides[0][i], sides[0][j], sides[1][j], sides[1][i]))
+        if lod >= 1:                                   # the voussoirs, proud of each face, and the keystone
+            for s in (-1, 1):
+                fo = F * (s * (width / 2 + 0.12))
+                prev = None
+                for k in range(9):
+                    ang = math.pi * k / 8
+                    d = T * math.cos(ang) + UP * math.sin(ang)
+                    cur = (mid + fo + UP * spring + d * r, mid + fo + UP * spring + d * (r + 0.9))
+                    if prev:
+                        _quad(b['cut'], [prev[0], cur[0], cur[1], prev[1]], F * s)
+                        _quad(b['cut'], [prev[0] - fo * 0.08, cur[0] - fo * 0.08, cur[0], prev[0]], -d)
+                    prev = cur
+                _abox(b['cut'], mid + fo + UP * (spring + r + 0.5), (0.8, 0.3, 1.1), rot=rot)
     for s in (-1, 1):
-        add_box(stone, a + T * (L / 2) + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 0.5)), (L, 0.4, 1.0), rot=_rot(T, F))
+        _abox(stone, a + T * (L / 2) + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 0.5)), (L, 0.4, 1.0), rot=_rot(T, F))
+        if lod >= 1:                                   # the parapet's coping, the string course under it
+            _abox(b['cut'], a + T * (L / 2) + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 1.06)), (L, 0.62, 0.14), rot=rot)
+            _abox(b['cut'], a + T * (L / 2) + F * (s * (width / 2 + 0.1)) + Vector((0, 0, top - 0.25)), (L, 0.5, 0.4), rot=rot)
         x = 4.0
         while x < L - 2:
             if rnd.random() < 1.5 * _litp(z):
-                add_box(b['glow'], a + T * x + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 2.6)), (0.5, 0.5, 0.5), rot=_rot(T, F))
-                add_box(b['sheet'], a + T * x + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 1.8)), (0.1, 0.1, 1.6), rot=_rot(T, F))
+                q = a + T * x + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 1.0))
+                _abox(b['sheet'], q + Vector((0, 0, 1.0)), (0.1, 0.1, 2.0), rot=rot)
+                _abox(b['sheet'], q + Vector((0, 0, 1.98)) + F * (s * 0.3), (0.06, 0.6, 0.06), rot=rot)
+                _abox(b['glow'], q + Vector((0, 0, 1.75)) + F * (s * 0.55), (0.36, 0.36, 0.42), rot=rot)
+                _abox(b['sheet'], q + Vector((0, 0, 2.0)) + F * (s * 0.55), (0.48, 0.48, 0.08), rot=rot)
             x += 9.0 + rnd.uniform(-1, 2)
+    if z > 10.0 and lod >= 1:                          # high up, homes built out over the parapet on corbels
+        dr = _drnd(a, 11)
+        for k in range(spans):
+            for s in (-1, 1):
+                if dr.random() < 0.55:
+                    continue
+                hw = dr.uniform(3.0, 5.0)
+                hc = a + T * (L * (k + dr.uniform(0.3, 0.7)) / spans) + F * (s * (width / 2 - 0.6)) + Vector((0, 0, top + 1.0))
+                hF = F * s
+                hT = Vector((hF.y, -hF.x, 0.0))
+                hd, hh = 2.6, dr.choice((2.8, 3.2, 5.8))
+                hb = hc + hF * (hd / 2 - 0.3)
+                _cbox(b['plaster'] if dr.random() < 0.7 else b['sheet'], hb, hT, hF, hw, hd, hh, 0.12)
+                _abox(b['rust'], hb + UP * (hh + 0.1), (hw + 0.4, hd + 0.4, 0.16), rot=_rot(hT, hF))
+                for c2 in (-1, 1):
+                    _abox(b['cut'], hb + hF * (hd / 2 - 0.3) + hT * (c2 * (hw / 2 - 0.3)) - UP * 0.55, (0.3, 0.9, 1.0), rot=_rot(hT, hF) @ Matrix.Rotation(0.5, 4, 'X'))
+                fw = hb + hF * (hd / 2 + 0.01)
+                for j in range(int(hh / 2.8)):
+                    for i in range(max(1, int(hw / 1.6))):
+                        uu = (i - (int(hw / 1.6) - 1) / 2) * 1.6
+                        lit = dr.random() < 0.5
+                        _quad(b['glow'] if lit else b['dark'], [fw + hT * (uu - 0.4) + UP * (2.8 * j + 1.0), fw + hT * (uu + 0.4) + UP * (2.8 * j + 1.0),
+                                                                 fw + hT * (uu + 0.4) + UP * (2.8 * j + 2.0), fw + hT * (uu - 0.4) + UP * (2.8 * j + 2.0)], hF)
+                        _abox(b['cut'], fw + hT * uu + UP * (2.8 * j + 0.96), (1.0, 0.16, 0.08), rot=_rot(hT, hF))
+                if dr.random() < 0.5:
+                    _chimney(b, hb - hF * 0.5 + hT * dr.uniform(-hw / 3, hw / 3) + UP * (hh + 0.18), hT, hF, 1.4, dr)
 
 
 def _catwalk(b, WL, WR, y, z, rnd):
@@ -1492,16 +1762,34 @@ def _catwalk(b, WL, WR, y, z, rnd):
     d = e - a
     T = Vector((d.x, d.y, 0)).normalized()
     F = Vector((-T.y, T.x, 0.0))
-    add_box(b['sheet'], (a + e) / 2, (d.length, 1.4, 0.12), rot=_rot(T, F))
+    _abox(b['sheet'], (a + e) / 2, (d.length, 1.4, 0.12), rot=_rot(T, F))
     for s in (-1, 1):
-        add_box(b['sheet'], (a + e) / 2 + F * (s * 0.68) + Vector((0, 0, 1.0)), (d.length, 0.05, 0.05), rot=_rot(T, F))
-    add_box(b['rust'], (a + e) / 2 - Vector((0, 0, 0.8)), (d.length, 0.5, 1.4), rot=_rot(T, F))     # its girder
+        _abox(b['sheet'], (a + e) / 2 + F * (s * 0.68) + Vector((0, 0, 1.0)), (d.length, 0.05, 0.05), rot=_rot(T, F))
+    _abox(b['rust'], (a + e) / 2 - Vector((0, 0, 0.8)), (d.length, 0.5, 1.4), rot=_rot(T, F))     # its girder
     x = 6.0
     while x < d.length - 3:
         p = a.lerp(e, x / d.length)
         if rnd.random() < 2 * _litp(z):
-            add_box(b['glow'], p + F * 0.7 + Vector((0, 0, 1.4)), (0.35, 0.35, 0.35), rot=_rot(T, F))
+            _abox(b['glow'], p + F * 0.7 + Vector((0, 0, 1.4)), (0.35, 0.35, 0.35), rot=_rot(T, F))
         x += 10.0
+    lod = _lod((a + e) / 2)
+    x = 3.0
+    while x < d.length - 2:                            # hangers up into the dark, a lamp under every other
+        p = a.lerp(e, x / d.length)
+        for s in (-1, 1):
+            q = p + F * (s * 0.72)
+            _wire(b['cable'], [q, Vector((q.x, q.y, _ceil_z(q.x, q.y) + 1.0))], 0.035)
+        if lod >= 1 and int(x / 7.0) % 2 == 0:
+            _hang_lamp(b, p - Vector((0, 0, 1.5)), 0.5, warm=_drnd(p).random() < 0.5)
+        x += 7.0
+    if lod >= 1:
+        for s in (-1, 1):
+            _abox(b['sheet'], (a + e) / 2 + F * (s * 0.68) + Vector((0, 0, 0.5)), (d.length, 0.04, 0.04), rot=_rot(T, F))
+        if lod >= 2:
+            k = int(d.length / 1.2)
+            for i in range(k):
+                q = a.lerp(e, (i + 0.5) / k) - F * 0.68
+                _quad(b['sheet'], [q - T * 0.02, q + T * 0.02, q + T * 0.02 + Vector((0, 0, 1.0)), q - T * 0.02 + Vector((0, 0, 1.0))], -F)
 
 
 def _falls(b, top, F, width, rnd):
@@ -1554,6 +1842,56 @@ def _mesa(rock, b, WL, WR, y0, top, depth, tier, rnd, avoid=None):
         for zz in (top - 7.0, top - 15.0):
             if zz > -18 and rnd.random() < 0.6:
                 _arch(b['glow'] if rnd.random() < 0.15 + _litp(zz) else b['dark'], Vector((x, y0 - 3.6, zz)), T, F, 3.0, 4.0, seg=4)
+    dr = _drnd(Vector((xl, y0, top)), 17)
+    for zz in (top - 7.0, top - 15.0):
+        if zz <= -18:
+            continue
+        g = Vector(((xl + xr) / 2, y0 - 4.3, zz - 0.15))
+        _abox(b['cut'], g, (xr - xl - 6.0, 1.6, 0.3))
+        _abox(b['sheet'], g + Vector((0, -0.75, 1.1)), (xr - xl - 6.0, 0.06, 0.06))
+        x = xl + 5.0
+        while x < xr - 5.0:                              # its lamps, and homes cut in the face between the arches
+            if dr.random() < 0.55 + _litp(zz):
+                _octa(b['lamp'], Vector((x, y0 - 4.9, zz + 2.3)), 0.2)
+            if dr.random() < 0.35:
+                q = Vector((x + 3.5, y0 - 3.65, zz))
+                _quad(b['plaster'], [q + Vector((-1.8, 0, 0)), q + Vector((1.8, 0, 0)), q + Vector((1.8, 0, 3.2)), q + Vector((-1.8, 0, 3.2))], F)
+                for k in (-0.8, 0.8):
+                    w0 = q + Vector((k, -0.03, 1.4))
+                    _quad(b['glow'] if dr.random() < 0.35 + _litp(zz) else b['dark'],
+                          [w0 + Vector((-0.4, 0, 0)), w0 + Vector((0.4, 0, 0)), w0 + Vector((0.4, 0, 1.1)), w0 + Vector((-0.4, 0, 1.1))], F)
+            x += dr.uniform(4.0, 7.0)
+    if tier < 2:                                         # a switchback stair up the face, flights of 4 m
+        sx = dr.uniform(xl + 14.0, xr - 22.0)
+        z = max(-18.0, top - 15.0) - 4.0
+        k = 0
+        while z < top - 0.5:
+            rise = min(4.0, top - z)
+            x0, x1 = (sx, sx + 9.0) if k % 2 == 0 else (sx + 9.0, sx)
+            a, e = Vector((x0, y0 - 5.4, z)), Vector((x1, y0 - 5.4, z + rise))
+            dd = e - a
+            rot = Vector((1, 0, 0)).rotation_difference(dd.normalized()).to_matrix().to_4x4()
+            _abox(b['sheet'], (a + e) / 2, (dd.length, 1.3, 0.22), rot=rot)
+            _abox(b['sheet'], (a + e) / 2 + Vector((0, -0.62, 1.0)), (dd.length, 0.05, 0.05), rot=rot)
+            _abox(b['sheet'], Vector((x1, y0 - 5.4, z + rise - 0.1)), (1.6, 1.4, 0.2))
+            z += rise
+            k += 1
+    # The top's edge: a balustrade, lamp standards along it.
+    pts = [Vector((x, y, 0)) for x, y in lip]
+    edge = []
+    for i, q in enumerate(pts):
+        d = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+        nrm = Vector((-d.y, d.x, 0.0))
+        edge.append(q + nrm * (0.5 * _cave_d(q, top, False) + 0.6) + Vector((0, 0, top)))
+    for i, (q0, q1) in enumerate(zip(edge, edge[1:])):
+        d = q1 - q0
+        dT = Vector((d.x, d.y, 0)).normalized()
+        rot = _rot(dT, Vector((-dT.y, dT.x, 0)))
+        _abox(b['cut'], (q0 + q1) / 2 + Vector((0, 0, 0.5)), (d.length + 0.3, 0.35, 1.0), rot=rot)
+        if dr.random() < 0.5 + _litp(top):
+            m = (q0 + q1) / 2 + Vector((0, 0, 1.0))
+            _abox(b['sheet'], m + Vector((0, 0, 1.5)), (0.12, 0.12, 3.0))
+            _octa(b['lamp'], m + Vector((0, 0, 3.2)), 0.22)
     # The city on top: rows of lots back from the edge.
     yy = y0 + 6.0
     dpt = 8.0
@@ -1574,7 +1912,7 @@ def _mesa(rock, b, WL, WR, y0, top, depth, tier, rnd, avoid=None):
                 _tower(b, c, rnd.uniform(2.2, 3.5), h * rnd.uniform(1.8, 2.6), rnd)
             elif r < 0.33:
                 add_cyl(b['masonry'], c, c + Vector((0, 0, h * 2.4 + 8)), 0.9 + 0.2 * tier, seg=8)      # a chimney
-                add_box(b['lamp'], c + Vector((0, 0, h * 2.4 + 8.4)), (0.7, 0.7, 0.4))
+                _abox(b['lamp'], c + Vector((0, 0, h * 2.4 + 8.4)), (0.7, 0.7, 0.4))
             else:
                 _block(b, c, w, dpt, h, tier, rnd)
             x += w + rnd.uniform(1.0, 4.0)
@@ -1582,19 +1920,47 @@ def _mesa(rock, b, WL, WR, y0, top, depth, tier, rnd, avoid=None):
 
 
 def _block(b, c, w, d, h, tier, rnd):
-    """An ordered city block: plaster below, masonry above; its front windows lit in rows."""
-    add_box(b['plaster'] if tier < 2 else b['masonry'], c + Vector((0, 0, h / 2)), (w, d, h))
-    add_box(b['cut'], c + Vector((0, 0, h + 0.3)), (w + 0.6, d + 0.6, 0.6))
-    if tier >= 1 and rnd.random() < 0.4:            # a set-back storey
-        add_box(b['masonry'], c + Vector((0, 0, h + 0.6 + h * 0.2)), (w * 0.6, d * 0.6, h * 0.4))
-    fy = c.y - d / 2 - 0.05
+    """An ordered city block: plaster below, masonry above; its front windows lit in rows. Pilasters at its
+    corners, a string course or a balcony band at each floor, its dark windows as well as its lit ones, and
+    on its roof tanks, chimneys, a mansard or an aerial with a lamp."""
     F, T = Vector((0, -1.0, 0)), Vector((-1.0, 0, 0))
+    mat = b['plaster'] if tier < 2 else b['masonry']
+    _abox(mat, c + Vector((0, 0, h / 2)), (w, d, h))
+    _abox(b['cut'], c + Vector((0, 0, h + 0.3)), (w + 0.6, d + 0.6, 0.6))
+    setback = tier >= 1 and rnd.random() < 0.4
+    if setback:                                        # a set-back storey
+        _abox(b['masonry'], c + Vector((0, 0, h + 0.6 + h * 0.2)), (w * 0.6, d * 0.6, h * 0.4))
+    fy = c.y - d / 2 - 0.05
     lit = 0.38 + 0.14 * tier
     nx, nz = max(1, int(w / 2.6)), max(1, int(h / 3.4))
     for i in range(nx):
         for j in range(nz):
-            if rnd.random() < lit:
-                _face(b['glow'], Vector((c.x - w / 2 + (i + 0.5) * w / nx, fy, c.z + (j + 0.6) * h / nz)), T, F, 1.1, 1.5)
+            q = Vector((c.x - w / 2 + (i + 0.5) * w / nx, fy, c.z + (j + 0.6) * h / nz))
+            _face(b['glow'] if rnd.random() < lit else b['dark'], q, T, F, 1.1, 1.5)
+    dr = _drnd(c, 13)
+    for j in range(1, nz):
+        z = c.z + j * h / nz - 0.05
+        if dr.random() < 0.3:
+            _abox(b['cut'], Vector((c.x, fy - 0.5, z)), (w - 0.8, 1.1, 0.22))
+            _abox(b['sheet'], Vector((c.x, fy - 1.0, z + 1.0)), (w - 0.8, 0.05, 0.05))
+        else:
+            _abox(b['cut'], Vector((c.x, fy - 0.1, z)), (w + 0.2, 0.3, 0.25))
+    for s in (-1, 1):
+        _abox(b['cut'], Vector((c.x + s * (w / 2 - 0.3), fy - 0.15, c.z + h / 2)), (0.6, 0.4, h))
+    rt = c + Vector((0, 0, h + 0.6))
+    k = dr.random()
+    if k < 0.3 and not setback:
+        _gable(b['sheet'], mat, rt, T, F, w * 0.92, d * 0.92, min(w, d) * 0.3, over=0.2)
+    elif k < 0.65:
+        for i in range(dr.randint(1, 2)):
+            _tank(b, rt + Vector((dr.uniform(-w / 3, w / 3), dr.uniform(0, d / 3), 0)), dr.uniform(0.9, 1.4), dr.uniform(1.4, 2.4), dr, 0)
+    for i in range(dr.randint(1, 3)):
+        _chimney(b, rt + Vector((dr.uniform(-w / 2.5, w / 2.5), d / 4, 0)), T, F, dr.uniform(2.0, 4.5), dr)
+    if dr.random() < 0.35:                             # an aerial, its lamp at the top
+        q = rt + Vector((dr.uniform(-w / 3, w / 3), d / 6, 0))
+        hh = dr.uniform(4.0, 8.0)
+        _wire(b['cable'], [q, q + Vector((0, 0, hh))], 0.08)
+        _octa(b['lamp'], q + Vector((0, 0, hh + 0.2)), 0.22)
 
 
 def _tower(b, c, r, h, rnd):
@@ -1608,6 +1974,13 @@ def _tower(b, c, r, h, rnd):
     for k in range(int(h / 6)):
         if rnd.random() < 0.7:
             _face(b['glow'], c + Vector((0, -r - 0.05, 3.0 + 6.0 * k)), Vector((-1, 0, 0)), Vector((0, -1, 0)), 0.9, 1.6)
+    add_cyl(b['cut'], c + Vector((0, 0, h - 4.6)), c + Vector((0, 0, h - 4.25)), r + 0.7, seg=10)     # its gallery
+    add_cyl(b['cut'], c + Vector((0, 0, h - 0.4)), c + Vector((0, 0, h)), r + 0.25, seg=10)           # and cornice
+    for k in range(1, int(h / 10)):
+        add_cyl(b['cut'], c + Vector((0, 0, 10.0 * k)), c + Vector((0, 0, 10.0 * k + 0.35)), r + 0.12, seg=10)
+    tip = c + Vector((0, 0, h + r * 2.6))
+    _wire(b['cable'], [tip - Vector((0, 0, 0.5)), tip + Vector((0, 0, 2.6))], 0.06)
+    _octa(b['lamp'], tip + Vector((0, 0, 2.8)), 0.24)
 
 
 def _dome(bm, c, r, seg=16, rings=5):
@@ -1622,6 +1995,14 @@ def _dome(bm, c, r, seg=16, rings=5):
     for i in range(seg):
         bm.faces.new((rows[-1][i], rows[-1][(i + 1) % seg], apex))
 
+def _ribs(bm, c, r, n, rings=5, t=0.12, a0=0.0):
+    """Ribs over a dome (rim at c): stone or lead seams that catch the light."""
+    for i in range(n):
+        th = a0 + 2 * math.pi * i / n
+        pts = [c + Vector(((r + t) * math.cos(a) * math.cos(th), (r + t) * math.cos(a) * math.sin(th), (r + t) * math.sin(a)))
+               for a in [math.pi / 2 * k / rings for k in range(rings)]]
+        _wire(bm, pts, t)
+
 
 def _dome_house(b, c, r, h, rnd):
     """A domed hall: a drum ringed with lit windows, a dome, a lantern."""
@@ -1629,13 +2010,16 @@ def _dome_house(b, c, r, h, rnd):
     add_cyl(b['glow'], c + Vector((0, 0, h * 0.55)), c + Vector((0, 0, h * 0.75)), r + 0.05, seg=16)
     _dome(b['sheet'], c + Vector((0, 0, h)), r, 16)
     add_cyl(b['glow'], c + Vector((0, 0, h + r)), c + Vector((0, 0, h + r + 1.5)), r * 0.15, seg=8)
+    add_cyl(b['cut'], c + Vector((0, 0, h - 0.5)), c + Vector((0, 0, h + 0.1)), r + 0.35, seg=16)
+    _ribs(b['cut'], c + Vector((0, 0, h)), r, 8)
+    _dome(b['sheet'], c + Vector((0, 0, h + r + 1.5)), r * 0.2, 8, 3)
 
 
 def _civic(b, c, rnd):
     """The great domed hall at the top of the city: a podium, a colonnaded drum lit from within, the
     dome and its lantern, towers either side."""
-    add_box(b['masonry'], c + Vector((0, 0, 4.0)), (56.0, 34.0, 8.0))
-    add_box(b['cut'], c + Vector((0, 0, 8.3)), (58.0, 36.0, 0.6))
+    _abox(b['masonry'], c + Vector((0, 0, 4.0)), (56.0, 34.0, 8.0))
+    _abox(b['cut'], c + Vector((0, 0, 8.3)), (58.0, 36.0, 0.6))
     for i in range(14):
         _face(b['glow'] if i % 3 else b['dark'], c + Vector((-26.0 + 4.0 * i, -17.05, 3.4)), Vector((-1, 0, 0)), Vector((0, -1, 0)), 2.0, 4.2)
     base = c + Vector((0, 0, 8.6))
@@ -1644,9 +2028,13 @@ def _civic(b, c, rnd):
     for i in range(24):
         t = 2 * math.pi * i / 24
         q = base + Vector((18.0 * math.cos(t), 18.0 * math.sin(t), 0))
-        add_box(b['masonry'], q + Vector((0, 0, 6.5)), (1.0, 1.0, 13.0))
+        _abox(b['masonry'], q + Vector((0, 0, 6.5)), (1.0, 1.0, 13.0))
     add_cyl(b['cut'], base + Vector((0, 0, 13.0)), base + Vector((0, 0, 15.6)), 19.0, seg=28)
     _dome(b['sheet'], base + Vector((0, 0, 15.6)), 16.5, 24, 7)
+    _ribs(b['cut'], base + Vector((0, 0, 15.6)), 16.5, 24, rings=7, t=0.3)
+    for i in range(12):                                # lamps round the lantern's gallery
+        t = 2 * math.pi * i / 12
+        _octa(b['lamp'], base + Vector((4.0 * math.cos(t), 4.0 * math.sin(t), 32.6)), 0.3)
     lan = base + Vector((0, 0, 32.1))
     add_cyl(b['glow'], lan, lan + Vector((0, 0, 4.0)), 2.6, seg=10)
     _dome(b['sheet'], lan + Vector((0, 0, 4.0)), 2.8, 10)
@@ -1800,9 +2188,9 @@ def _gable(roof, wall, c, T, F, w, d, rise, over=0.3):
         _quad(wall, [c + T * (s * w / 2) + F * (-d / 2), c + T * (s * w / 2) + F * (d / 2), c + T * (s * w / 2) + UP * rise], T * s)
 
 
-def _tank(b, p, r, h, dr, lod):
+def _tank(b, p, r, h, dr, lod, mat=None):
     """A water tank on legs, with a conical lid."""
-    mat = b['rust'] if dr.random() < 0.5 else b['sheet']
+    mat = mat or (b['rust'] if dr.random() < 0.5 else b['sheet'])
     leg = 0.8 if lod else 0.0
     add_cyl(mat, p + UP * leg, p + UP * (leg + h), r, seg=8 if lod else 6)
     add_cyl(mat, p + UP * (leg + h), p + UP * (leg + h + r * 0.45), r * 1.05, 0.06, seg=8 if lod else 6)
@@ -1836,8 +2224,7 @@ def _silhouette(dk, base, T, F, ww, wh, kind):
         _quad(dk, [P(u - 0.015, 0), P(u + 0.015, 0), P(u + 0.015, wh * 0.62), P(u - 0.015, wh * 0.62)], F, cull=False)
         _quad(dk, [P(u - 0.16, wh * 0.6), P(u + 0.16, wh * 0.6), P(u + 0.08, wh * 0.82), P(u - 0.08, wh * 0.82)], F, cull=False)
     elif kind == 'curtain':
-        s = 1 if kind else -1
-        _quad(dk, [P(s * ww / 2, 0), P(s * ww * 0.12, 0), P(s * ww * 0.22, wh), P(s * ww / 2, wh)], F, cull=False)
+        _quad(dk, [P(ww / 2, 0), P(ww * 0.12, 0), P(ww * 0.22, wh), P(ww / 2, wh)], F, cull=False)
     else:                                   # a coat on a peg
         u = ww * 0.3
         _quad(dk, [P(u - 0.14, wh * 0.25), P(u + 0.14, wh * 0.25), P(u + 0.09, wh * 0.78), P(u - 0.09, wh * 0.78)], F, cull=False)
@@ -1986,18 +2373,15 @@ def _festoon(b, a, e, sag, n, rnd_lit, warm=True):
 def _sign(bs, c, T, F, size, cell, cols=4, rows=2):
     """A painted pictogram (a cell of the sign sheet) on a quad facing F, c at its middle."""
     uv = bs.loops.layers.uv.active
-    hw, hh = T * (size[0] / 2), UP * (size[1] / 2)
-    pts = [c - hw - hh, c + hw - hh, c + hw + hh, c - hw + hh]
-    f = bs.faces.new([bs.verts.new(p) for p in pts])
-    f.normal_update()
+    R, hh = -T * (size[0] / 2), UP * (size[1] / 2)      # -T is to the right, seen from the F side
+    f = bs.faces.new([bs.verts.new(p) for p in (c - R - hh, c + R - hh, c + R + hh, c - R + hh)])
     col, row = cell % cols, cell // cols
     u0, v0 = col / cols, 1.0 - (row + 1) / rows
     for lp, (du, dv) in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
         lp[uv].uv = (u0 + (du * 0.98 + 0.01) / cols, v0 + (dv * 0.98 + 0.01) / rows)
+    f.normal_update()
     if f.normal.dot(F) < 0:
-        f.normal_flip()
-        for lp in f.loops:                            # keep the picture the right way round
-            pass
+        f.normal_flip()                                  # the UVs stay with their corners
 
 
 def _signboard(b, c, T, F, size, cell, lit=False):

@@ -62,9 +62,9 @@ GILLS = [
 #        lower reach, lengths, toe angles)
 LEGS = [
     ('FrontLeg', 0.47, 'Spine02', (0.10, 0.75, -0.65), (0.35, 0.20, -0.90), (-0.85, 0.42, -0.30),
-     (-0.95, 0.15, -0.05), (0.60, 0.55, -0.55), (0.75, 0.10, -0.60), (0.08, 0.075), (-20, 15, 50)),
+     (-0.95, 0.15, -0.05), (0.60, 0.55, -0.55), (0.75, 0.10, -0.60), (0.068, 0.062), (-20, 15, 50)),
     ('HindLeg', 1.50, 'Spine07', (-0.05, 0.75, -0.65), (0.20, 0.20, -0.95), (-0.90, 0.38, -0.20),
-     (-0.98, 0.12, 0.0), (0.40, 0.60, -0.65), (0.60, 0.15, -0.75), (0.085, 0.08), (-10, 35)),
+     (-0.98, 0.12, 0.0), (0.40, 0.60, -0.65), (0.60, 0.15, -0.75), (0.072, 0.066), (-10, 35)),
 ]
 
 
@@ -115,14 +115,15 @@ def mirror(v, s):
 # --------------------------------------------------------------------------
 
 HW = [(0.0, 0.036), (0.005, 0.042), (0.014, 0.052), (0.03, 0.062), (0.06, 0.07), (0.14, 0.077), (0.22, 0.083),
-      (0.28, 0.079), (0.34, 0.074), (0.45, 0.084), (0.7, 0.094), (1.1, 0.097), (1.4, 0.091), (1.6, 0.078),
-      (1.8, 0.058), (2.1, 0.038), (2.35, 0.021), (2.5, 0.004)]
+      (0.28, 0.079), (0.34, 0.074), (0.45, 0.084), (0.7, 0.094), (1.1, 0.097), (1.4, 0.091), (1.6, 0.074),
+      (1.8, 0.05), (2.1, 0.028), (2.35, 0.016), (2.5, 0.004)]
 TOP = [(0.0, 0.006), (0.005, 0.012), (0.014, 0.02), (0.03, 0.028), (0.08, 0.038), (0.2, 0.05), (0.3, 0.058),
-       (0.5, 0.074), (1.0, 0.08), (1.5, 0.078), (1.7, 0.075), (2.0, 0.062), (2.3, 0.038), (2.5, 0.004)]
-BOT = [(0.0, 0.004), (0.2, 0.004), (0.34, 0.075), (0.5, 0.086), (1.0, 0.09), (1.5, 0.085), (1.7, 0.075),
-       (2.0, 0.056), (2.3, 0.032), (2.5, 0.004)]
-FIN_TOP = [(1.2, 0.0), (1.6, 0.02), (1.9, 0.032), (2.2, 0.026), (2.45, 0.01), (2.5, 0.0)]
-FIN_BOT = [(1.55, 0.0), (1.75, 0.018), (2.1, 0.024), (2.45, 0.008), (2.5, 0.0)]
+       (0.5, 0.074), (1.0, 0.08), (1.5, 0.078), (1.7, 0.072), (2.0, 0.062), (2.3, 0.05), (2.45, 0.035),
+       (2.5, 0.01)]
+BOT = [(0.0, 0.004), (0.2, 0.004), (0.34, 0.075), (0.5, 0.086), (1.0, 0.09), (1.5, 0.085), (1.7, 0.072),
+       (2.0, 0.058), (2.3, 0.045), (2.45, 0.03), (2.5, 0.008)]
+FIN_TOP = [(1.2, 0.0), (1.6, 0.02), (1.9, 0.035), (2.2, 0.04), (2.4, 0.03), (2.5, 0.005)]
+FIN_BOT = [(1.55, 0.0), (1.75, 0.02), (2.1, 0.032), (2.4, 0.026), (2.5, 0.004)]
 JAW_HW = [(0.008, 0.026), (0.02, 0.046), (0.035, 0.055), (0.1, 0.066), (0.2, 0.075), (0.26, 0.072),
           (0.325, 0.048)]
 JAW_BOT = [(0.008, 0.012), (0.04, 0.03), (0.12, 0.045), (0.2, 0.058), (0.26, 0.064), (0.325, 0.05)]
@@ -134,7 +135,7 @@ def sup(c, n):
 
 
 def section_n(s):
-    return interp(s, [(0.0, 2.9), (0.25, 2.8), (0.4, 2.35), (1.6, 2.3), (2.5, 2.2)])
+    return interp(s, [(0.0, 2.9), (0.25, 2.8), (0.4, 2.35), (1.5, 2.3), (2.0, 2.0), (2.5, 1.9)])
 
 
 def body_point(s, phi):
@@ -422,19 +423,19 @@ def build_gills(mb):
             sw = skin_weights(s)
             root_w = {k: 0.5 * v for k, v in sw.items()}
             root_w[name] = root_w.get(name, 0) + 0.5
-            tube(mb, pts, [0.011, 0.0085, 0.006, 0.0035], [root_w, {name: 1}, {name: 1}, {name: 1}], 4, GILL,
+            tube(mb, pts, [0.012, 0.0095, 0.007, 0.0045], [root_w, {name: 1}, {name: 1}, {name: 1}], 4, GILL,
                  [(0, 0)] * 4, tip=tipp + d * 0.012, tip_weights={name: 1})
-            # Feathery filaments, three to a station, swept toward the tip.
+            # Feathery filaments, four to a station, swept toward the tip: a bushy tuft.
             a = d.cross(Vector((0, 0, 1))).normalized()
             b = d.cross(a).normalized()
-            for k, t in enumerate((0.22, 0.36, 0.5, 0.63, 0.76, 0.88)):
+            for k, t in enumerate((0.18, 0.31, 0.44, 0.57, 0.7, 0.82, 0.93)):
                 p = base + (tipp - base) * t
-                flen = 0.034 * (1.0 - 0.55 * t)
-                for m in range(3):
-                    ang = 2 * math.pi * m / 3 + k * 1.05 + rnd.uniform(-0.25, 0.25)
+                flen = 0.044 * (1.0 - 0.5 * t)
+                for m in range(4):
+                    ang = 2 * math.pi * m / 4 + k * 0.8 + rnd.uniform(-0.3, 0.3)
                     radial = a * math.cos(ang) + b * math.sin(ang)
-                    fd = (radial + d * 0.75).normalized()
-                    cone(mb, p, p + fd * flen, 0.0045, 3, {name: 1}, GILL, (0, 0), up=d)
+                    fd = (radial + d * rnd.uniform(0.45, 0.8)).normalized()
+                    cone(mb, p, p + fd * flen * rnd.uniform(0.8, 1.1), 0.0065, 3, {name: 1}, GILL, (0, 0), up=d)
 
 
 def build_legs(mb):
@@ -447,13 +448,13 @@ def build_legs(mb):
             mid = (hip + knee) / 2
             v = 0.32 if sg > 0 else 0.68
             sw = skin_weights(s)
-            tube(mb, [inside, mid, knee, ankle], [0.017, 0.013, 0.011, 0.008],
+            tube(mb, [inside, mid, knee, ankle], [0.016, 0.012, 0.0095, 0.007],
                  [sw, {up_n: 1}, {up_n: 0.5, lo_n: 0.5}, {lo_n: 1}], 6, SKIN,
                  [(s / L, v), (s / L, v + 0.02), (s / L, v + 0.04), (s / L, v + 0.06)])
             for a in toes:
                 r = math.radians(a)
                 td = Vector((math.cos(r), sg * math.sin(r), -0.35)).normalized()
-                cone(mb, ankle - Vector((0, 0, 0.002)), ankle + td * 0.03, 0.0055, 4, {lo_n: 1}, SKIN,
+                cone(mb, ankle - Vector((0, 0, 0.002)), ankle + td * 0.026, 0.0048, 4, {lo_n: 1}, SKIN,
                      (s / L, v + 0.06))
 
 
@@ -498,10 +499,14 @@ def make_skin_texture(path):
     # Mottling: soft greyish-lilac blotches, more on the back, and a finer grain.
     m1 = noise(64, 10, 6)
     m2 = noise(180, 28, 2.2)
-    blot = np.clip((m1 - 0.52) * 4.0, 0, 1) * (0.75 - 0.5 * belly)
+    blot = np.clip((m1 - 0.5) * 4.5, 0, 1) * (0.85 - 0.55 * belly)
     grain = (m2 - 0.5) * 0.06
     dark = np.array([0.72, 0.64, 0.66])
-    col = col * (1 - 0.45 * blot[..., None]) + dark[None, None, :] * 0.45 * blot[..., None]
+    col = col * (1 - 0.55 * blot[..., None]) + dark[None, None, :] * 0.55 * blot[..., None]
+    # Faint costal grooves down the trunk's flanks, every 5 cm.
+    groove = (np.cos(2 * np.pi * s / 0.05) ** 16) * np.clip((s - 0.4) / 0.1, 0, 1) * np.clip((1.55 - s) / 0.1, 0, 1)
+    groove = groove * np.exp(-((belly - 0.5) / 0.28) ** 2)
+    col = col * (1 - 0.07 * groove[..., None])
     col += grain[..., None]
     # Faint veins: a few thin, wandering pink lines on the flanks.
     vr = np.random.default_rng(3)
@@ -558,7 +563,7 @@ def build_materials():
     bsdf.inputs['Subsurface Radius'].default_value = (1.0, 0.35, 0.25)
     bsdf.inputs['Subsurface Scale'].default_value = 0.02
     gill, _nt, bsdf = _material('WhiteGill')
-    bsdf.inputs['Base Color'].default_value = (0.60, 0.10, 0.12, 1)
+    bsdf.inputs['Base Color'].default_value = (0.66, 0.12, 0.15, 1)
     bsdf.inputs['Roughness'].default_value = 0.5
     bsdf.inputs['Subsurface Weight'].default_value = 0.4
     bsdf.inputs['Subsurface Radius'].default_value = (1.0, 0.2, 0.2)
@@ -911,7 +916,7 @@ def clip_roll(f):
     Drifts 0.25 m along +x."""
     p = swim_pose(f / 48, amp=0.4)
     p.bend('pitch', 1.6, R(keys(f, [(0, 12), (14, 4), (24, 0), (36, -14), (48, -22)])), 1.0)
-    p.bend('yaw', 1.25, R(keys(f, [(0, 0), (24, 22), (48, 34)])), 1.2)
+    p.bend('yaw', 1.25, R(keys(f, [(0, 0), (24, 14), (48, 20)])), 1.2)
     for k in range(NS + 1):
         s = k * DS
         p.roll[k] += TAU * smooth((f - 6 - 16 * s / L) / 26)
@@ -925,8 +930,8 @@ def clip_roll(f):
     return p
 
 
-def strike_shape(rise=40.0, rise_s=1.25, level_s=0.45, neck=10.0, tail=-10.0, amp=0.3, t=0.0):
-    """A body reared out of the water: rising from rise_s, level again from level_s, the tail driving down."""
+def strike_shape(rise=40.0, rise_s=1.5, level_s=0.45, neck=10.0, tail=0.0, amp=0.3, t=0.0):
+    """A body reared out of the water: rising from rise_s, level again from level_s (tail > 0 drops the tail)."""
     p = swim_pose(t, amp=amp)
     p.bend('pitch', rise_s, R(rise), 0.35)
     p.bend('pitch', level_s, R(-rise), 0.3)
@@ -943,9 +948,9 @@ def clip_slap(f):
     rear.bend('pitch', 0.95, R(14), 0.45)
     rear.bend('pitch', 0.32, R(18), 0.16)
     rear.anchor.x -= 0.06
-    hit = strike_shape(rise=32, rise_s=1.15, level_s=0.55, neck=-6, tail=-8, amp=0.2)
+    hit = strike_shape(rise=38, rise_s=1.4, level_s=0.5, neck=-6, amp=0.2)
     hit.place(0, SLAP_SNOUT)
-    recoil = strike_shape(rise=26, rise_s=1.15, level_s=0.5, neck=18, tail=-6, amp=0.3)
+    recoil = strike_shape(rise=32, rise_s=1.4, level_s=0.5, neck=18, amp=0.3)
     recoil.place(0, SLAP_SNOUT + Vector((-0.45, 0, 0.12)))
     end = swim_pose(0.0)
     if f <= 4:
@@ -978,9 +983,9 @@ def lunge_poses():
     coil.bend('pitch', 0.95, R(8), 0.45)
     coil.bend('pitch', 0.32, R(-10), 0.14)
     coil.anchor.x -= 0.12
-    reach = strike_shape(rise=42, rise_s=1.25, level_s=0.45, neck=14, tail=-10, amp=0.25)
+    reach = strike_shape(rise=44, rise_s=1.5, level_s=0.45, neck=14, amp=0.25)
     reach.place(0, LUNGE_SNOUT + Vector((-0.06, 0, 0.08)))
-    bite = strike_shape(rise=40, rise_s=1.25, level_s=0.45, neck=-4, tail=-10, amp=0.25)
+    bite = strike_shape(rise=40, rise_s=1.5, level_s=0.45, neck=-4, amp=0.25)
     bite.place(0, LUNGE_SNOUT)
     return start, coil, reach, bite
 
@@ -1012,21 +1017,22 @@ def clip_lunge(f):
 
 
 def clip_drag(f):
-    """From the end of the lunge: pulls back and down under the water, twisting (a full roll). The jaws stay shut
-    on whatever JawTip holds."""
+    """From the end of the lunge: hauls back along the ledge, over the edge and down under the water, twisting
+    through a full roll. The jaws stay shut on whatever JawTip holds."""
     _s, _c, _r, bite = lunge_poses()
     p = bite.copy()
-    pull = keys(f, [(0, 0), (4, -0.04), (22, 1.0), (36, 1.35)])
-    # The reared front comes down as it pulls back: the rise flattens and the head goes in nose first.
-    p.bend('pitch', 1.25, R(-40 * min(1, max(0, pull))), 0.35)
-    p.bend('pitch', 0.45, R(40 * min(1, max(0, pull))), 0.3)
-    p.bend('pitch', 0.6, R(keys(f, [(4, 0), (20, -32), (36, -20)])), 0.4)
+    # The reared front comes down once the head is back over the water, and the head goes in nose first.
+    flat = keys(f, [(10, 0), (24, 1)])
+    p.bend('pitch', 1.5, R(-40 * flat), 0.35)
+    p.bend('pitch', 0.45, R(40 * flat), 0.3)
+    p.bend('pitch', 0.6, R(keys(f, [(10, 0), (22, -34), (36, -22)])), 0.4)
+    p.bend('pitch', 0.3, R(keys(f, [(0, 0), (4, -4), (12, 6), (20, 0)])), 0.12)
     p.wave('yaw', lambda s: keys(f, [(8, 0), (20, 1.6), (36, 1.2)]) * swim_amp(s), 1.3, TAU * f / 18)
     for k in range(NS + 1):
         s = k * DS
-        p.roll[k] += TAU * smooth((f - 6 - 10 * s / L) / 22)
-    p.anchor = bite.anchor + Vector((keys(f, [(0, 0), (4, 0.02), (22, -1.05), (36, -1.4)]), 0,
-                                     keys(f, [(0, 0), (4, 0.01), (22, -0.5), (36, -0.85)])))
+        p.roll[k] += TAU * smooth((f - 11 - 10 * s / L) / 22)
+    p.anchor = bite.anchor + Vector((keys(f, [(0, 0), (4, 0.025), (13, -0.62), (22, -1.1), (36, -1.45)]), 0,
+                                     keys(f, [(0, 0), (4, 0.01), (12, 0.02), (22, -0.45), (36, -0.85)])))
     p.jaw = -1.5
     p.set_gills(lambda i, sg: keys(f, [(0, 1.0), (14, -0.8), (36, -0.9)]))
     for k in p.legs:
@@ -1038,7 +1044,7 @@ def nose_base():
     p = Pose()
     p.bend('pitch', 0.5, R(12), 0.35)
     p.bend('pitch', 0.3, R(-6), 0.12)
-    p.place(0, Vector((NOSE_X - 0.04, 0, -0.06)))
+    p.place(0, Vector((NOSE_X - 0.015, 0, -0.06)))
     return p
 
 
