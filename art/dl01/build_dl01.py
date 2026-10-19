@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl04'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl05'))
-for _d in ('sorting_hall', 'racks', 'cage', 'pass2', 'white'):
+for _d in ('sorting_hall', 'racks', 'cage', 'pass2', 'pass3', 'white'):
     sys.path.insert(0, os.path.join(HERE, '..', _d))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
@@ -46,6 +46,9 @@ import build_racks as racks  # noqa: E402
 import build_cage as cage  # noqa: E402
 import build_pass2 as pass2  # noqa: E402
 import build_curios as curios  # noqa: E402
+import build_ration_hall as ration_hall  # noqa: E402
+import build_up_only as up_only  # noqa: E402
+import build_lore as lore  # noqa: E402
 import build_white as white  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
@@ -1307,6 +1310,12 @@ OFF2 = 13.0  # the weight room and the racks, after the Sorting Hall
 OFF3 = 21.0  # the return line to Lift 2's belt, after the Racks
 OFF4 = 30.0  # the tunnel, the city and ring C, after the Slipping Cage
 SPLIT4 = 64.55   # in DL-04's set, what starts at or beyond this is the tunnel side
+# Pass 3 (docs/chapter1_pass3_plan.md) inserts two scenes. Everything above is built where it always was, then moved:
+# what starts at or beyond INSERT1 moves by WIDTH1 (room for DL-05 The Ration Hall, after the Racks), and what starts at
+# or beyond INSERT2 moves by WIDTH2 more (room for DL-10 Up Only, after the city reveal). The game's offsets are the
+# results: OFF3 = 21 + 12 = 33, OFF4 = 30 + 12 = 42, and ring C's OFF5 = 30 + 24 = 54. The new scenes are built in final x.
+INSERT1, WIDTH1 = 47.3, 12.0
+INSERT2, WIDTH2 = 104.6, 12.0
 
 
 def world_min_x(o):
@@ -1318,6 +1327,20 @@ def shift_new(before, dx_for):
     bpy.context.view_layer.update()
     for o in [o for o in bpy.data.objects if o not in before and o.parent is None]:
         dx = dx_for(o)
+        if dx:
+            o.location.x += dx
+
+
+def insert_scenes(coll):
+    """Open the two gaps for the inserted scenes (see INSERT1/INSERT2). The atrium and the vista portal go with the
+    balcony; everything else moves by where it starts."""
+    bpy.context.view_layer.update()
+    for o in [o for o in coll.all_objects if o.parent is None]:
+        x0 = world_min_x(o)
+        if o.name.startswith(('Atrium', 'G4Portal')):
+            dx = WIDTH1
+        else:
+            dx = (WIDTH1 if x0 >= INSERT1 else 0) + (WIDTH2 if x0 >= INSERT2 else 0)
         if dx:
             o.location.x += dx
 
@@ -1353,6 +1376,10 @@ def main():
     cage.build_set(sys.modules[__name__], m, set_coll)
     pass2.build_set(sys.modules[__name__], m, set_coll)
     curios.build_set(sys.modules[__name__], m, set_coll)
+    insert_scenes(set_coll)
+    ration_hall.build_set(sys.modules[__name__], m, set_coll)
+    up_only.build_set(sys.modules[__name__], m, set_coll)
+    lore.build_set(sys.modules[__name__], m, set_coll)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
@@ -1387,6 +1414,8 @@ def main():
     cage.add_clips(sys.modules[__name__], arm)
     pass2.add_clips(sys.modules[__name__], arm)
     curios.add_clips(sys.modules[__name__], arm)
+    ration_hall.add_clips(sys.modules[__name__], arm)
+    up_only.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False
