@@ -55,8 +55,8 @@ TICKET_OUT = 0.055                          # how far the game raises it (along 
 # DL-01 dispatch rack (under the dispatch board, x 0.69 to 1.41).
 DISPATCH_STAND = (1.18, -1)
 RACK = (0.93, 0.30)                         # the rack post's x, y (its front kept clear of his head as he walks)
-RACK_TOP = 0.665                            # the rack box's top
-CARD = (0.075, 0.105, 0.72)                 # RouteCardD17: width, height, its top edge at rest
+RACK_TOP = 0.645                            # the rack box's top
+CARD = (0.075, 0.105, 0.70)                 # RouteCardD17: width, height, its top edge at rest
 CARD_LIFT = 0.035                           # the game slides it up this much
 
 # DL-02 hand franker, on a courier-height counter left of the passage doorway (Door2Frame 12.77 to 13.63).
@@ -1045,7 +1045,7 @@ def clip_read_route(dl01, arm):
     N = 84
     a = Act(dl01, arm, 'ReadRoute', N)
     stand = DISPATCH_STAND
-    a.yaw_keys = [(0, 0.0), (6, 0.0), (14, -32.0), (66, -32.0), (76, 0.0)]
+    a.yaw_keys = [(0, 0.0), (6, 0.0), (14, -15.0), (66, -15.0), (76, 0.0)]
     st = steps_over(a, 6, 14, 2, first='R', height=0.02) + steps_over(a, 66, 76, 2, first='L', height=0.02)
     x, y = RACK
     cw, ch, ctop = CARD
@@ -1060,7 +1060,7 @@ def clip_read_route(dl01, arm):
         chest = tr([(32, 0), (38, 1), (50, 1), (55, 0)], f)
         happy = sum(pulse(f, t0, t0 + 6) for t0 in (51, 57))
         body = (0, 0.01 * toe, -0.005 + 0.03 * toe + 0.012 * happy + step_bob(f, st))
-        body_rot = (2 - 6 * toe + 4 * chest, 2 * toe, -6 * toe)
+        body_rot = (2 + 3 * toe + 4 * chest, -3 * toe, -8 * toe)
         look_card = a.look(f, card_c, body, body_rot)
         w_card = tr([(2, 0), (8, 1), (34, 1), (38, 0), (50, 0), (53, 1), (64, 1), (70, 0)], f)
         w_chest = tr([(34, 0), (38, 1), (48, 1), (51, 0)], f)
@@ -1117,7 +1117,7 @@ def clip_frank_hand(dl01, arm):
     d = platen.xy.normalized()
     yaw_in = math.degrees(math.atan2(d.x, -d.y))
     fwd = rz(yaw_in) @ Vector((0, -1, 0))
-    at = platen - fwd * 0.27
+    at = platen - fwd * 0.23
     at.z = 0
     a.root_keys = [(0, (0, 0, 0)), (4, (0, 0, 0)), (16, tuple(at)), (36, tuple(at)), (46, (0.0, -0.02, 0)),
                    (N - 16, (0.0, -0.02, 0)), (N - 6, (0, 0, 0))]
@@ -1154,7 +1154,7 @@ def clip_frank_hand(dl01, arm):
         hr = mix_hand(hr, g_show, k_show)
         # Left claw: on the lever's arm, near its ball, with it as it swings down and back.
         pv = Vector(LEVER_PIVOT)
-        hold_pt = pv.lerp(lever_ball(lever_deg(f)), 0.8)
+        hold_pt = pv.lerp(lever_ball(lever_deg(f)), 0.62)
         g_lev = a.grip(f, 1, to_stand(stand, hold_pt), body, body_rot, d=(fw + Vector((0, 0, -0.5))).normalized(),
                        x_axis=(0, 0, 1))
         k_lev = tr([(16, 0), (22, 1), (34, 1), (38, 0)], f)
@@ -1204,18 +1204,18 @@ def clip_hold_mug(dl01, arm):
     mx, my, r, h = MUG
     top = SHELF[4]
     base = to_stand(stand, (mx, my, top))
-    fwd45 = rz(45) @ Vector((0, -1, 0))
-    at = base - fwd45 * 0.27
+    fwd45 = rz(30) @ Vector((0, -1, 0))
+    at = base - fwd45 * 0.24 - rz(30) @ Vector((0.12, 0, 0))
     at.z = 0
     hold_at = Vector((0.06, -0.02, 0))
     a.root_keys = [(0, (0, 0, 0)), (6, (0, 0, 0)), (16, tuple(at)), (30, tuple(at)), (38, tuple(hold_at)),
                    (66, tuple(hold_at)), (74, tuple(at)), (90, tuple(at)), (98, (0, 0, 0))]
-    a.yaw_keys = [(0, 0.0), (6, 0.0), (16, 45.0), (30, 45.0), (38, 10.0), (66, 10.0), (74, 45.0), (90, 45.0), (98, 0.0)]
+    a.yaw_keys = [(0, 0.0), (6, 0.0), (16, 30.0), (30, 30.0), (38, 10.0), (66, 10.0), (74, 30.0), (90, 30.0), (98, 0.0)]
     st = steps_over(a, 6, 16, 2, first='L') + steps_over(a, 30, 38, 2, first='R') + \
         steps_over(a, 66, 74, 2, first='L') + steps_over(a, 90, 98, 2, first='R', height=0.02)
     # The grip, in the mug's own frame: the claw round its body from his side, blades either side.
     m_grab = mug_matrix(base)
-    d_world = (rz(-14) @ fwd45).normalized()
+    d_world = (rz(-24) @ fwd45).normalized()
     inv = m_grab.to_3x3().inverted()
     d_loc = inv @ d_world
     x_loc = inv @ Vector((0, 0, 1)).cross(d_world).normalized()
@@ -1225,14 +1225,14 @@ def clip_hold_mug(dl01, arm):
         rr, ry = a.root(f)
         fw = rz(ry) @ Vector((0, -1, 0))
         lf = rz(ry) @ Vector((1, 0, 0))
-        held = rr + fw * 0.27 + lf * 0.05 + Vector((0, 0, 0.42))
-        drink = rr + fw * 0.25 + lf * 0.03 + Vector((0, 0, 0.53))
+        held = rr + fw * 0.26 + lf * 0.11 + Vector((0, 0, 0.42))
+        drink = rr + fw * 0.25 + lf * 0.07 + Vector((0, 0, 0.52))
         k_lift = tr([(MUG_GRAB, 0), (31, 1), (70, 1), (MUG_SET, 0)], f)
         p = base + Vector((0, 0, 0.04 * k_lift))
         p = p.lerp(held, tr([(30, 0), (38, 1), (66, 1), (72, 0)], f))
         p = p.lerp(drink, tr([(46, 0), (52, 1), (58, 1), (63, 0)], f))
         p = p + Vector((0, 0, 0.03 * pulse(f, 66, 76)))
-        yaw = (ry - 45.0) * tr([(26, 0), (34, 1), (66, 1), (72, 0)], f) + MUG_WRONG * tr([(66, 0), (MUG_SET, 1)], f)
+        yaw = (ry - 30.0) * tr([(26, 0), (34, 1), (66, 1), (72, 0)], f) + MUG_WRONG * tr([(66, 0), (MUG_SET, 1)], f)
         tilt = -14 * tr([(38, 0), (42, 1), (46, 1), (48, 0)], f) - 58 * tr([(46, 0), (52, 1), (58, 1), (63, 0)], f)
         return mug_matrix(p, yaw, tilt, lf)
 
@@ -1583,7 +1583,7 @@ def clip_tune_radio(dl01, arm):
     N = 112
     a = Act(dl01, arm, 'TuneRadio', N)
     knob = Vector((RADIO_KNOB[0], 0.0, RADIO_KNOB[1]))
-    a.yaw_keys = [(0, 0.0), (2, 0.0), (12, 90.0), (50, 90.0), (62, -30.0), (98, -30.0), (110, 0.0)]
+    a.yaw_keys = [(0, 0.0), (2, 0.0), (12, 55.0), (50, 55.0), (62, -30.0), (98, -30.0), (110, 0.0)]
     right = rz(-30) @ Vector((-0.07, 0, 0))
     a.root_keys = [(0, (0, 0, 0)), (82, (0, 0, 0)), (89, tuple(right)), (91, tuple(right)), (98, (0, 0, 0))]
     st = steps_over(a, 2, 12, 2, first='L') + steps_over(a, 50, 62, 3, first='R', height=0.025)
@@ -1604,11 +1604,11 @@ def clip_tune_radio(dl01, arm):
         lean_in = tr([(40, 0), (44, 1), (50, 1), (54, 0)], f)
         body = (0.01 * sway, -0.015 * lean_in, -0.005 + 0.03 * toe + 0.01 * max(0, found) + 0.006 * abs(sway) + step_bob(f, st))
         body_rot = (2 - 5 * toe + 8 * lean_in, 5 * sway, 4 * sway)
-        g = a.grip(f, -1, knob, body, body_rot, d=(fw * 0.7 + Vector((0, 0, 0.75))).normalized(), x_axis=(0, 0, 1),
+        g = a.grip(f, 1, knob, body, body_rot, d=(fw * 0.7 + Vector((0, 0, 0.75))).normalized(), x_axis=(0, 0, 1),
                    twist=twist, depth=0.085)
-        hr = mix_hand(rest_hand(dl01, -1), g, reach)
-        hands = {1: dl01.CARRY[1] + Vector((0.03 * sway, 0, 0.03 * abs(sway) + 0.03 * max(0, found))), -1: hr[0]}
-        hands[-1] = hands[-1] + Vector((-0.03 * sway, 0, 0.03 * abs(sway))) * (1 - reach)
+        hr = mix_hand(rest_hand(dl01, 1), g, reach)
+        hands = {-1: dl01.CARRY[-1] + Vector((-0.03 * sway, 0, 0.03 * abs(sway) + 0.03 * max(0, found))), 1: hr[0]}
+        hands[1] = hands[1] + Vector((0.03 * sway, 0, 0.03 * abs(sway))) * (1 - reach)
         look_knob = a.look(f, knob, body, body_rot)
         head = head_mix((tr([(4, 0), (10, 1), (40, 1), (54, 0)], f), look_knob))
         head[1] += tr([(20, 0), (24, 12), (30, 14), (33, 0)], f) + 8 * sway + tr([(42, 0), (46, 14), (50, 14), (54, 0)], f)
@@ -1617,8 +1617,8 @@ def clip_tune_radio(dl01, arm):
         antenna = [(ant * (0.8 + 0.2 * i) + 10 * sway * (1 + 0.4 * i), 0) for i in range(3)]
         feet = a.feet(f, pitch={'L': 26 * toe, 'R': 26 * toe}, extra={'L': (0, 0, 0.012 * toe), 'R': (0, 0, 0.012 * toe)})
         a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=feet, hands=hands,
-               hand_rot={'L': (-24 - 20 * abs(sway), 6, 10), 'R': hr[1]}, elbows={'R': reach},
-               claws={'L': CLAW_REST_OPEN['L'] + 12 * abs(sway), 'R': tr([(10, 1), (15, 22), (18, 4), (36, 4), (40, 20), (48, CLAW_REST_OPEN['R'])], f)})
+               hand_rot={'R': (-24 - 20 * abs(sway), -6, -10), 'L': hr[1]}, elbows={'L': reach},
+               claws={'R': CLAW_REST_OPEN['R'] + 12 * abs(sway), 'L': tr([(10, 20), (15, 30), (18, 4), (36, 4), (40, 26), (48, CLAW_REST_OPEN['L'])], f)})
     a.done()
 
 
