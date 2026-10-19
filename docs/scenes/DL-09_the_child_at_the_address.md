@@ -39,6 +39,8 @@
 
 ## 3. Layout (metres along the lane; this scene's floor is at 0)
 
+> Before pass 2. Most of this has moved: see *Pass 2* at the end.
+
 ```
 x: 74.65-76.8 stair down from the DL-07 balcony (1.6 -> 0)   76.8 ledge   80.2-81.0 BARRICADE (gap 0.62 high)
    81.0-88.5 ring C lane (duct 84.2-84.6, 0.26 high)   88.2 knock   88.6 C-114 door (lintel 1.3)
@@ -106,3 +108,87 @@ lullaby over a soft piano and strings. It is warm, then it thins to a single not
 - **ringc**: through the barricade.
 - **bedroom**: just inside the bedroom.
 - **forwarded**: after the terminal.
+
+## Pass 2 (built 19 October 2026)
+
+From `docs/chapter1_pass2_plan.md`: ring C becomes a street with a square, C-114 becomes a whole home, and the flood is
+the White's. This supersedes section 3's layout, the light in section 3, and the checkpoint positions. x is this
+scene's own, as in section 3; game x is 30 more (`OFF4`).
+
+**Layout:**
+
+```
+x: 74.75-76.75 stair down   76.8-80.0 ledge   80.2-81.0 BARRICADE (gap 0.62)   81.0-94.5 the street
+   behind the lane: C-108 81.1-84.05 (window 81.85, BELL 82.72, door 83.4, its steps down into the water)
+                    alley 84.05-84.95   C-110 84.95-87.95 (JUNCTION 85.92, door and letter slot 86.85)
+                    C-112 88.05-90.5 (boarded, taped)
+   the water: 82.95-87.6 along the back of the lane (surface -0.1, bed -0.9); the narrow point 86.1-87.6 across the
+              whole lane (a slab 0.25 down); LaneCable hangs into the water at 87.4
+   DUCT 84.25-85.75 on the lane (0.26 high, grip 84.23), pushed to 86.1-87.6 as the bridge
+   SQUARE 90.5-94.5: square lamp 90.75, noticeboard 91.0, bench, dry fountain, swing, MAILSLOT9 93.75
+C-114: front step 94.12   knock 94.2   front door 94.6
+       HALL 94.7-96.9 (switch 95.72, bulb 95.85)   KITCHEN AND LIVING ROOM 97.0-100.4 (radio 100.0, lamp 100.28)
+       inner door 100.5   BEDROOM 100.6-105.4   back door 105.5   end 107.1   stair up toward ring B 107.5
+bedroom: bed 100.9-102.4   toy 102.1   painted window 101.62   shelf and photograph 102.66
+         terminal 104.38-104.82 (screen at 104.6)   growth marks 104.05-105.15
+         the desk: x 104.6, dragged left to a centre of 103.45
+```
+
+| Moved | Before | Pass 2 |
+|---|---|---|
+| The duct, and the narrow point it bridges | 81.6-83.1, into 83.4-84.9 | 84.25-85.75, into 86.1-87.6 |
+| C-110's letter; `MailSlot9` | 83.85; 87.4 | 86.9; 93.75 (in the square) |
+| The knock; C-114's door | 88.2; 88.6 | 94.2; 94.6 |
+| The toy; the terminal and the desk | 92.2; 94.7 | 102.1; 104.6 |
+| The back door; the end | 95.6; 97.2 | 105.5; 107.1 |
+
+**The street** (`art/dl05/build_dl05.py`): the back row behind the lane (C-108's dim window onto a table still set,
+the stepped alley up toward ring B, C-110 with letters jammed in its slot, C-112 boarded and taped); in front, a low
+kerb wall and steps down to the lower row, its roofs a storey below. Over it, a cable of bulbs (two still burn: 81.65,
+failing, and 86.3) and washing long dry on its lines. Ring B's tier, its stairs, a few lit windows and the lift going
+up, in the haze behind. The flood line runs at 1.0 across everything.
+
+**The square:** the noticeboard with the evacuation notice and the children's drawings of the White, a bench, a dry
+fountain, a swing frame with one swing (it sways), and ring C's red mail slot.
+
+**C-114, a dollhouse section:** the front step and door with its number, a letter plate, a boot scraper and a name
+card; the hall (coat hooks with a small yellow raincoat, a shoe rack, the light switch); the kitchen and living room
+(a table with three chairs, one a child's, the range and its kettle, the radio, the lamp left on); the bedroom as
+before; the back door. Its street wall (`C114Facade`) fades out once he is through the front door (past 94.3), and the
+cut edges behind it are capped near-black (`C114Section`), so it reads as a cut, not a hole.
+
+**The White** (the water is its home while he is short of the square, 90.5):
+- **First sight:** as he comes along the lane (past 82.3), it surfaces far off (86.9) and sinks.
+- **It hears running and landings** within about 2.5 m of the water, never walking. It listens, swims to the sound,
+  and surfaces. If he is beside the water and within 1.35 m, it lunges (`WhiteLunge`), the jaws close, and he is
+  dragged under (`WhiteDrag`, `DeathGrabbed`). Back at `ringc`.
+- **The duct's splash** as it drops into the narrow point is loud, and brings it there, right beside him.
+
+**The sequence:**
+1. **The doorbell** (`C108Bell`, red and lit, on C-108's gate pillar at the water's near end). Use rings it for 12 s:
+   a trill every half second, its lamp blinking, the gong over the door shaking. The White swims to C-108's sunken
+   step and noses at it (`WhiteNose`). While it rings, walking and the duct's splash don't turn it; running within
+   2.2 m of it does. When the bell stops, it sinks and patrols again. It can be rung again.
+2. **The duct:** push it in at the narrow point while the White is at the bell.
+3. **Walk across** the duct, and on to the square.
+
+**The junction box** (optional, instead of the bell): `JunctionLever`, on the bank by C-110 (85.92). Thrown
+(`LeverPull`), the live cable shorts into the water at its far end: a clunk, a zap, 3.5 s of sparks and fizzing
+ripples. The White flees deep for 20 s and hears nothing. Once per attempt.
+
+**Curiosities** (both later ones: no light pool or glance):
+
+| Curiosity | Where D-17 stands | What happens |
+|---|---|---|
+| The hall light switch (`CurioSwitch`, `HallBulb`) | 95.72, stepped in to the hall's back wall | Click (`FlickSwitch`): he looks up, startled, then pleased, with two little bounces. The hall bulb lights, and stays lit. |
+| The radio (`CurioRadio`) | 100.0, stepped in to the living room's back wall | He turns the knob in little jerks (`TuneRadio`); static, then half a verse of a children's song, thin and far away. He jumps, then sways and does a little two-step. |
+
+**Camera:** the lane's framing is raised (camera 2.15 high, looking down to 0.4; it was 1.15 and 0.75) so the water
+and the White read. Then C-114 room by room: the hall (from 94.2), the kitchen and living room (97.0), the bedroom
+(100.3), the back door (105.3). The `marks` shot is now at 104.55.
+
+**Checkpoints:**
+- **ringc**: through the barricade (81.25), unchanged. The duct is back on the lane, the bell and the junction box
+  reset.
+- **bedroom**: just inside the bedroom (101.1, was 91.2). The duct is already the bridge.
+- **forwarded**: after the terminal (104.1, was 94.2).

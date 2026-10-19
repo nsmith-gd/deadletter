@@ -474,7 +474,7 @@ window.__startBot = function (seed, opts = {}) {
           if (!dying() && C().duct.state === 'bridge') yield* walk(1, () => G.x > OFF4 + 88.0 || dying() || C().duct.state !== 'bridge', 'across', { quiet, hop: false, max: 30 });
           if (!dying() && C().duct.state !== 'bridge' && G.x < OFF4 + 87.9) { note('the White took him'); quiet = true; ringFirst = true; yield* wait(think(8)); continue; }
         }
-      } catch (e) { if (!dying()) throw e; }
+      } catch (e) { if (!dying()) { note('fumbles: ' + e.message.slice(0, 40)); yield* until(() => G.mode === 'play' && !G.act, 10, 'recover'); continue; } }
       if (dying()) { note('the White takes him'); yield* respawned('after the White'); quiet = true; ringFirst = true; yield* wait(think(8)); }
     }
     yield* post(9, K.SLOTS[2].x, 0.75);

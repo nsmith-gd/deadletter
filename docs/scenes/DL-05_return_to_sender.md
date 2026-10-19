@@ -115,3 +115,13 @@ The dates are proposals that fit the GDD:
 - **The ring C seal.** Does it need a physical seal in DL-07 or DL-09, or is the notice enough?
 - **The day board.** Is it too explicit? It is optional to read, and the GDD's three essential conclusions don't depend on it.
 - **The ride up.** It is about 7 s with no control. Allow hopping out partway, or keep it as a short breather after the beat?
+
+## Pass 2 (built 19 October 2026)
+
+From `docs/chapter1_pass2_plan.md`. Game x is section 3's x + 21 (`OFF3`).
+
+- **Curiosity, the sorter's chair** (`SorterChair`, `SorterCushion`): in the scanner corridor, before the arch.
+  D-17 stands at game 48.8 (section 3's 27.8) and Use plays `SitChair`: he climbs up, turns round and sits down into
+  the cushion (it fits), feet swinging, and hops down. The plan put the chair in DL-06 and the stopped clock here;
+  the build swaps them. A later curiosity: no light pool or glance.
+- **No hazards, signs of the White or checkpoint changes.**

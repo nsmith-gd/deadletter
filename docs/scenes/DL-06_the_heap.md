@@ -145,3 +145,37 @@ jump on the move is just a jump (a running jump), so hopping over the weights ne
 - **Two weights.** One is enough, and a lost one comes back. Is the second one needed?
 - **The letter's sender.** C-114 in R.Y. 43, with a courier drawn on the back: who sent it is left open. Is that the
   right amount of mystery for the chapter's major secret?
+
+## Pass 2 (built 19 October 2026)
+
+From `docs/chapter1_pass2_plan.md`: the scene becomes a two-step sequence. Positions are game x. This supersedes the
+one-weight table in section 3 and the "two weights" question in section 12.
+
+**Two weights:**
+1. **One weight** in the bucket lifts the gate 0.7, half way, where it stalls with a strain and a creak. It still
+   blocks him (under 0.8).
+2. **The second weight** (`HeapWeight1`) has moved from beside the dock (52.85) to the far end of the sorting floor,
+   by the pit edge (57.05), where the slide puts him down (56.6). With both in the bucket, the gate rises to 1.4.
+
+The weights can go up in two carriers, or he can ride a loaded carrier up himself. A weight sent to the chute is back
+where it first stood 4 s later.
+
+**The White's glimpse** (`HeapSump`): a cistern of dark water in the pit under the chute's head (57.5 to 60.05,
+surface −0.75). The first time a weight drops into the bucket while he is down on the sorting floor, something pale
+rolls once in it and sinks (`WhiteRoll`). Running, or landing from a jump, near it on the floor draws another roll.
+It never strikes here.
+
+**The gallery collapse** (`GalleryCollapse`): the walkway panel between the day board (66.3) and the residential
+access doorway (68.5), from 66.95 to 68.05. The plan had it just past the gate.
+- It sags and creaks under him.
+- Once he is past it (68.35), it swings down on its hinge and falls, with a clank, a chain and a shake, about 1.6 s.
+  Torn grating is left at both ends (`GalleryCollapseEdges`), and there is no way back.
+- Not lethal. From the `goods` checkpoint on, it is already gone.
+
+**Curiosity, the stopped clock** (`ClockWinder`, `ClockHandHour`, `ClockHandMin`): on the gallery, by the clock's
+post. D-17 stands at 61.38 and Use plays `WindClock`: three half-turns of the key, then he listens, head on one side.
+The hands tick for about 75 s (heard within 4 m), then stop again. The plan put the clock in DL-05 and the sorter's
+chair here; the build swaps them (section 11: the chair is now built, in DL-05). A later curiosity: no light pool or
+glance.
+
+**Checkpoints:** unchanged. `gallery` now starts with both weights in the bucket.

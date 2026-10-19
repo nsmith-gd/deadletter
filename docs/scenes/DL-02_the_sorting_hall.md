@@ -110,7 +110,8 @@ later slot.
 
 ## 9. Checkpoints
 
-- **room**: just out of the passage (x 13.2). Nothing in the hall can fail.
+- **room**: just out of the passage (x 13.2). Before pass 2, nothing in the hall could fail; now the franking press
+  can (see *Pass 2*).
 - **weighroom**: on the weight room's floor, after the drop (x 25.9).
 
 ## 10. Scene card (`docs/puzzle_principles.md`)
@@ -141,3 +142,27 @@ later slot.
 - **The stamp.** Show a RETURN stamp landing on the letter, or keep it to the lamp?
 - **The jump.** The table is 3 cm above a jump's reach. Playtests should show whether players read that as "nearly"
   or as a bug.
+
+## Pass 2 (built 19 October 2026)
+
+From `docs/chapter1_pass2_plan.md`. Positions are game x.
+
+**The franking press** (`FrankingPress`, `art/pass2/build_pass2.py`): a C-frame stamping press, its column against
+the passage wall behind the lane, still stamping its routine. It stands on the lane between where he steps out (13.2)
+and the tube (14.6), so every route passes under it. The plan had it guarding only the tube letter. It is the
+hall's only way to fail.
+- **Its cycle, 2.6 s:** the lamp (`PressLamp`) blinks for 0.5 s (the tell; steady in calm mode), the ram drops in
+  0.12 s, stays down 0.35 s, rises over 0.6 s, and stays up about 1 s. Each stroke thuds and clanks, with a small
+  shake close by. The flywheel turns once per stroke.
+- **Deadly:** under the ram (13.62 to 14.28) while its face is below 0.74, about 0.85 s of each cycle. That leaves
+  about 1.75 s, enough to walk under it (about a second). Its bed is 0.045 high, a step.
+- **A death:** crushed (`DeathCrush`), sparks, the cut, and back at `room` (13.2), just before it.
+
+**Curiosities** (both early: a light pool, a red tag, and a glance as he passes until used):
+
+| Curiosity | Where D-17 stands | What happens |
+|---|---|---|
+| Franking machine (`FrankerCounter`, `HandFranker`) | 12.8, facing left, left of the passage doorway | He lays his right claw under the head and hauls the lever: thunk. RECEIVED (`FrankHand`). He shows it to nobody in particular, pleased. The stamp stays on his claw (`ClawStamp`) from then on. |
+| Named mugs (`CourierShelf`, `MugD17`) | 15.2, facing right, by the tea corner | He lifts the mug marked D-17, raises it as if to drink (he can't), a small droop, and sets it back with great care, nudging the handle round (`HoldMug`). |
+
+**Checkpoints:** unchanged (`room`, `weighroom`).

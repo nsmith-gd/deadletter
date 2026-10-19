@@ -129,3 +129,15 @@ x: 30.6 DL-03's gate   32.1 Realise   36.6 slow walk ends   40.1 art/dl02's hall
   open question about the nudge)?
 - **The drag.** At 0.22 m/s, 3.3 m takes about 15 s. Right for the weight of the moment, or too long to repeat?
 - **The touch.** `TouchHead` plays by itself, once. Should it be the player's choice, as the nudge is in DL-03?
+
+## Pass 2 (built 19 October 2026)
+
+From `docs/chapter1_pass2_plan.md`. Positions are game x.
+
+- **The White's second sign:** the fallen courier (`FallenCourier`, and `SeatedCourier` once it is in the cradle) has
+  lost its right leg below the knee: a bitten stump with torn cable ends, not a cut.
+- **Curiosity, the empty rack** (`RackSeat`, a low seat in the empty slot under the chalk flowers): D-17 stands at
+  41.08 and Use plays `SitRack` (about 6 s). He backs into the slot, sits with his legs dangling, looks round, his
+  antenna droops; a stillness, then he hops down. It is offered only once the courier is seated in the cradle, so it
+  is found by walking back from the bay. A later curiosity: no light pool or glance.
+- **No hazards or checkpoint changes.**

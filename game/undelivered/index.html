@@ -836,7 +836,7 @@ async function loadModel(url) {
   const bin = atob(data), bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   const gltf = await loader.parseAsync(bytes.buffer, '');
-  loaded++; loadStatus.textContent = `Loading the depot\u2026 ${loaded} of 3`;
+  if (++loaded <= 3) loadStatus.textContent = `Loading the depot\u2026 ${loaded} of 3`;   // the White loads after, quietly
   return gltf;
 }
 
@@ -3882,7 +3882,7 @@ function updateClockHands(dt) {
   k.minHand.quaternion.copy(k.minHand.userData.rest.q); k.minHand.rotateZ(-THREE.MathUtils.degToRad(tick * 6));
   if (k.hourHand) { k.hourHand.quaternion.copy(k.hourHand.userData.rest.q); k.hourHand.rotateZ(-THREE.MathUtils.degToRad(tick * 0.5)); }
 }
-// The early ones he glances at, the first time: the nearest unfound one within reach of a look.
+// The early ones he glances at as he passes, until he has used them: the nearest one within reach of a look.
 function curioPoint(c) { return tv4.set(c.x, (c.upper ? DECK : 0) + (c.lookY ?? 0.45), -0.3); }
 function glanceCurio() {
   if (game.act || game.hold) return null;
@@ -3927,8 +3927,8 @@ function updateCurios(dt) {
 // loud and walking is quiet; a bell, a splash or a dropped weight elsewhere draws it there and holds it. It never
 // leaves the water, but it strikes a body length onto an edge. Each body of water it uses has its own part:
 //   glimpse: it rolls once, when something calls it (DL-06);
-//   scare: it slaps the edge and knocks him back, unhurt (DL-07, the safe first meeting);
-//   hunt: it kills (DL-07's sump below the edge, DL-08's cage sump, DL-09's flooded lane).
+//   scare: it rears and splashes and knocks him back, unhurt (DL-07's shaft sump, the safe first meeting);
+//   hunt: it kills (DL-09's flooded lane). Falling into DL-07's sump or crashing the cage are deaths of their own.
 // WATERS entries: { id, region, x0, x1, y (surface), z (lane-relative centre), part, edges: [[x0, x1]] where he
 // stands beside the water, reach, active() }.
 const WATERS = [];

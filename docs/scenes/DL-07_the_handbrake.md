@@ -137,3 +137,24 @@ he crosses the belt, and the refuge's air (a low, slow wind with a long reverb) 
 - **The chalk tree.** The chalk on the tunnel walls avoids the crooked tree that DL-09 has to establish.
 - **The pawl insert.** The click is mostly sound and a small shake. Is the 1.8 s close-up enough, or should the dog be larger, or lit?
 - **The belt.** It has no failure state. If playtests find it too gentle, a faster second half or a pair of crates close together would add bite without adding death.
+
+## Pass 2 (built 19 October 2026)
+
+From `docs/chapter1_pass2_plan.md`: the White's first meeting, which teaches that running is loud. Game x is
+section 3's x + 21 (`OFF3`).
+
+**The sump** (`Sump7Water`): Lift 2's shaft (section 3's 52.8 to 55.3, game 73.8 to 76.3) is flooded to 1.75 below the
+landing (surface −0.15), and the platform rests under the water.
+- **First sight:** the first time the platform rises, the White surfaces in the shaft (game 75.05) and sinks again.
+- **The scare:** running, or landing from a jump, near the shaft is loud. The White listens, comes, surfaces and
+  slaps the water (`WhiteSlap`): a splash, a shake, and D-17 is knocked back off his feet (`Knockback`), unhurt. It
+  never leaves the water and can't reach the platform, so this happens while he is over the latched platform or on
+  the first 0.3 of the far landing, not on a walkway as the plan had it. It stops listening once he is 3 m past the
+  shaft (game 79.3).
+- **Walking** (Shift, B, or a half-pushed stick) is quiet. Pushing the trolley is slow enough to be quiet.
+- **Falling in** (below −0.2 in the shaft) is a death: he sinks with a splash, then the cut. The shaft's edges
+  normally keep him out.
+
+**Checkpoints:** unchanged (`goods`, `latched`, `tunnel`; `tunnel` now also moves on from DL-08's `landing8`).
+No curiosities in this scene; the tunnel's hopscotch and the balcony's coin viewer count as DL-08 (see
+`DL-08_the_slipping_cage.md`).

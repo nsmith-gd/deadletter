@@ -226,3 +226,24 @@ Then compare them at handheld size.
 | The latch isn't found | It's the only lit interactable, the chain makes its function visible, and D-17's look-at hint follows |
 | The mantle doesn't read as possible | The handhold strap on the crate edge, a parcel at its foot as a visual step, and a mantle height kept well under the limit |
 | Timid performance reads as weak | The timidity is in reactions (flinch, peek, shield). He still acts decisively when the player commits |
+
+## Pass 2 (built 19 October 2026)
+
+`docs/chapter1_pass2_plan.md` adds the chapter's first curiosities here. There are no hazards and no sign of the
+White. Positions are game x.
+
+| Curiosity | Where D-17 stands | What happens |
+|---|---|---|
+| Parcel scale (the first) | 1.27, facing right (the scale at 1.45) | He steps up (`WeighSelf`); the needle swings, he bounces to test it, and a ticket pops up from the dial column. He startles, pinches it up and reads it (POSTAGE DUE), pushes it back, and steps down. |
+| Cord lamp | 0.59 | The pull-cord lamp, as before (`Tug`). Tugging it counts as a find. |
+| Dispatch board | 1.18, facing left (the board at 1.0) | In a small card rack under the board, his own route card (a house pictogram, C-114). He draws it up, reads it, taps his chest label twice (that's me), and slides it back (`ReadRoute`). |
+
+- **Made obvious:** the scale and the board sit in pools of warm light, with a faint glow behind and a small red
+  enamel tag. As he passes each (within 1.8 m), D-17 turns his head to it, until he has used it. The cord lamp gets
+  the glance but no pool or tag.
+- **The first one teaches the rest:** the scale shows the Use glyph as soon as he is within 0.9 m, without waiting
+  for a hint.
+- **The scale (art):** its dial column moves to the platform's right end (1.64) so the dial reads past him, and the
+  platform drops to 0.028. Stepping on it without Use still swings the needle.
+- **A find:** a soft chime, and "◆ n / 12" in the corner for a moment.
+- **Checkpoints:** unchanged.

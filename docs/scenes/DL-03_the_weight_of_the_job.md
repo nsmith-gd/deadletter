@@ -113,3 +113,12 @@ See `art/music/README.md`.
   - The intended one: the weight on the trolley, then the trolley on the plate.
   - The weight left on the plate, then the trolley pushed up against it. This works if both centres sit on the plate, but the plate is too small for both, so it rarely happens.
 - **Courier count and density** are set for the browser. The Unity build can afford more rows and some variety in wear and parts.
+
+## Pass 2 (built 19 October 2026)
+
+From `docs/chapter1_pass2_plan.md`. Game x is section 3's x + 13 (`OFF2`).
+
+- **The White's first sign:** `WeightRoomDrain`, a floor drain at the back of the lane (game 26.35, section 3's
+  13.35), and `DragMarks`, wet drag marks from it across the weight room and back (game 25.7 to 28.0). Set dressing
+  only: the plan's sound behind the wall is not built.
+- **No hazards, curiosities or checkpoint changes.**

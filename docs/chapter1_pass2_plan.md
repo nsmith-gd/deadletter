@@ -1,8 +1,65 @@
 # Chapter 1, pass 2: whimsy, curiosity, danger, depth
 
-**Status:** in build, 19 October 2026. Director's notes on the nine-scene build (Version 10).
+**Status:** built, 19 October 2026 (see below). Director's notes on the nine-scene build (Version 10).
 **Decisions:** danger is **the failing place itself plus something living**; deaths are **shown, then cut** (he is a
 machine: sparks and a dead eye, no gore; back in control in 1.5 to 3 s).
+
+## Status: built
+
+Pass 2 is in the game (`game/undelivered/index.html`) and the art builders (`art/pass2/build_pass2.py`,
+`art/pass2/build_curios.py`, `art/white/build_white.py`, `art/dl05/build_dl05.py`, `art/dl04/hopscotch_clip.py`,
+and the atrium in `art/dl04/build_dl04.py`). The scene docs in `docs/scenes/` each have a *Pass 2* section, and
+`game/undelivered/README.md` describes the build. Positions below are game x.
+
+| Plan item | As built |
+|---|---|
+| Hopscotch clip and shot (§1) | `HopscotchLong`, 288 frames (12 s): all eight squares and HOME, a wobble on 6, a cheer, two hops back. He plays it once on his own; after that, Use on the chalk plays it again. A crane from low over the chalk up to about 45° over the court, then down for the cheer. |
+| Curiosities (§1, §6) | All twelve, with D-17's clips and moving props. The five early ones (cord lamp, scale, dispatch board, franker, mug) have warm light pools (not the cord lamp), red tags (not the cord lamp) and a glance as he passes, until each is used. The scale shows the Use glyph at once. A chime and "◆ n / 12" mark each find; the pause and end cards show "Curiosities n of 12 · letters posted n of 3". |
+| Atrium art pass (§1, §7) | Recessed windows, balconies, stairs, cables and lamps, cliff homes and haze layers, at three levels of detail by distance from the balcony. |
+| If-then sequences (§1, §4) | DL-06: two weights. DL-07: three steps plus the sump scare. DL-08: two plates into the counterweight, then the pawl. DL-09: the bell (or the junction box), the duct, then walk across. |
+| Ring C as a street, the square (§1, §5) | Built: the back row (C-108, the alley, C-110, C-112), the kerb and the lower row's roofs, the cable of bulbs, washing lines, ring B's tier and the lift behind, and the square (noticeboard with the drawings of the White, bench, dry fountain, swing, MailSlot9). |
+| C-114 as a home (§1, §5) | Front step and door, hall (switch, coat hooks, raincoat, shoe rack), kitchen and living room (table and three chairs, range and kettle, radio, lamp), the bedroom, the back door. The street wall (`C114Facade`) fades once he is through the front door; the cut edges are capped near-black. |
+| The White (§2) | Model and ten clips (`art/white`); hears running (and landings), not walking; lured by a bell, scared off by the shorted cable; strikes about a body length onto an edge. |
+| Arc beats (§2) | DL-03 drag marks and drain; DL-04 the bitten leg; DL-06 the roll in the heap's sump; DL-07 the sump; DL-09 the lane. |
+| Deaths (§2) | Crush, shock, grabbed and fall, each with its own clip: sparks, the eye stutters out, a hard cut to black, back at the checkpoint 0.6 s later (1.3 to 2.2 s in all). |
+| Hazards (§3) | The franking press (DL-02), the gallery collapse (DL-06), the shaft sump (DL-07), the cage crash and the tunnel cable (DL-08), the lane (DL-09). |
+| New checkpoint | `landing8`: on the lit landing once the cage is held there, so the tunnel cable doesn't send him back up to the cage. |
+
+**Where the build differs from the plan:**
+- **The franking press** stands on the lane between the passage and the tube (13.62 to 14.28), so it is on the only
+  route, not just guarding the letter.
+- **The gallery collapse** is the panel between the day board and the residential access door (66.95 to 68.05), not
+  just past the gate. It gives way once he is past it.
+- **The tunnel cable** is in the antechamber, between the lit landing and the tunnel mouth (arcs at 93.04 to 93.44 and
+  93.77 to 94.17), with a raised, dry hatch cover between the arcs to wait on.
+- **The cage's step 1** has no call button. He steps in and it dips (0.38 m, or 0.22 with one plate), the brake squeals
+  and holds, and it hauls itself back up; he has to step out and in again. It keeps doing this until both plates are
+  in the counterweight's tray.
+- **The cage ride** is unchanged from pass 1: the same speeds and pawl window. The heavier counterweight doesn't make it
+  run faster.
+- **The cage crash** is a fall death with a splash, and he is back on the upper landing beside the cage. The White
+  isn't there: the cage's sump is its own water, not DL-07's, and no White lives in it.
+- **The doorbell** lures the White for 12 s, not about 8.
+- **The junction lever** scares the White away for 20 s (the cable sparks for 3.5 s). It can be thrown once per
+  attempt; the bell can be rung again once it stops.
+- **The White never leaves the water.** At DL-07's shaft sump it can't reach the platform, 1.75 m above it: it slaps
+  the water with a splash and he is knocked back, unhurt. This happens over the latched platform and the first 0.3 m
+  of the far landing, not on a walkway.
+- **Falling into DL-07's sump** is a death (he sinks with a splash), but the White isn't shown taking him.
+- **DL-03** has the drain and the drag marks, but no sound behind the wall.
+- **The tunnel cable's grace** (the first touch only knocks him back) is once per game, not once per attempt.
+- **The clock and the chair** swapped scenes: the stopped clock is on DL-06's gallery (61.38), and the sorter's chair
+  is in DL-05's scanner corridor (48.8).
+- **The coin viewer** shows the lit upper city. The cargo lift isn't built.
+- **The hall light** stays on after he flicks the switch, rather than lighting the hall for a second.
+- **The glance** at an early curiosity comes each time he passes it until he has used it, not only the first time.
+- **The ring C lane's camera** is raised (2.15 m, looking down to 0.4 m, was 1.15 and 0.75) so the water and the White
+  read.
+- **Music:** the bed plays on through a death, but a cue that is playing (`refuge` on ring C's lane, for example)
+  fades out on the respawn.
+- **Large models** come in parts: `set.json`, `set.1.json`, `set.2.json` (10 MB of base64 each, under the host's
+  16 MB limit). The game reads `parts` from the first file and fetches the rest.
+- **Timings** for pass 2 are not yet measured: `tools/sim/`'s result files predate it.
 
 ## 1. The notes, and what we do about each
 

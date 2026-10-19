@@ -6,7 +6,8 @@
 **Duration target:** about 2:00 first time, 1:00 floor (`docs/chapter1_plan.md`)
 
 New in the Chapter 1 rework: the chapter's set piece and finale. Where this plan and the build spec differ, this
-describes the game; section 11 lists the differences.
+describes the game; section 11 lists the differences. Pass 2 made the crash a death and added the counterweight's
+plates and the tunnel cable: see *Pass 2* at the end.
 
 ## 1. What the scene must do
 
@@ -150,3 +151,60 @@ x: 85.6 belt top end (deck 1.6)   86.8-87.4 climb 1 (2.2)   87.4-88.2 climb 2 (2
   or should the catch hang longer?
 - **The retry.** About 12 s from a crash to the next window, all watched. Shorten the haul and the wait at the top?
 - **The cargo lift.** Build it for the balcony, or let the lit window carry the "moving up" idea alone?
+
+## Pass 2 (built 19 October 2026)
+
+From `docs/chapter1_pass2_plan.md`: the cage becomes a two-step sequence, a crash kills, and the antechamber gets a
+hazard. Positions are game x. This supersedes section 1's "No death" row, section 11's "No respawn on failure" and
+the crash-to-retry time in section 10.
+
+**Step 1, the counterweight is too light** (`art/pass2/build_pass2.py`): `CageCounterweight` has lost its top slab;
+a tray (`CwTray`) takes its place, and the two plates (`CwPlate0`, `CwPlate1`) lie on the upper landing at 88.55 and
+88.95.
+- **Short of two plates in the tray,** the cage won't take him. He steps in and it drops a hand's breadth (0.38, or
+  0.22 with one plate), the brake squeals and holds, and the alarm bell rings. After about 1.6 s the chain hauls it
+  back up, and he startles. He has to step out and in again to try. There is no call button.
+- **The plates:** lift one (Use), carry it (slowly, no jumping), and Use within 0.7 of the tray (89.45) while the
+  cage is at the top. He turns to the counterweight behind the lane and sets it in (`SetDownHigh`). The plates ride
+  with the counterweight from then on.
+- Once both are in, they stay in through a respawn at `cage`.
+
+**Step 2, the ride down:** as in sections 1 to 3, with the same speeds and pawl window. The plan's faster ride with
+the heavier counterweight is not built.
+
+**The crash is a death:** the cage hits the buffers in its own sump (`CageSump`, water at 0.05) with a splash.
+`DeathFall`, the cut, and he is back at `cage` on the upper landing, about 1.5 s after the crash. The White is not in
+this water (the plan had the cage over DL-07's sump, and the White taking him).
+
+**The tunnel cable** (`TunnelCable` over `TunnelWet`): in the antechamber at the lit landing's level (1.6), before
+the tunnel mouth (94.6), not in the tunnel. A downed cable over a wet patch (92.85 to 94.3) arcs in two places in
+turn, every 2.4 s:
+
+| Arc | Deadly between | Tell (a crackle, a flicker) | Live |
+|---|---|---|---|
+| A, from the split insulation | 93.04 and 93.44 | 0 to 0.3 s | 0.3 to 0.75 s |
+| B, from the frayed end | 93.77 and 94.17 | 1.2 to 1.5 s | 1.5 to 1.95 s |
+
+- Between them, a raised hatch cover (`TunnelHatch`, 93.42 to 93.72) stays dry: cross A once it dies, wait on the
+  hatch, cross B once it dies.
+- The first touch in a game throws him back with sparks (`Knockback`). After that, any touch shorts him out
+  (`DeathShock`), and he is back at `landing8`.
+
+**Checkpoints:**
+- **cage**: unchanged.
+- **landing8** (new): on the lit landing (91.3, height 1.6), set once the cage is held there and he has stepped off it.
+  The cage stays at the landing and the plates in the tray, so a shock in the antechamber doesn't send him back up.
+- **tunnel**: also reached from `landing8`.
+
+**The long hopscotch** (`HopscotchLong`, 288 frames, 12 s; `art/dl04/hopscotch_clip.py`): he taps square 1,
+checks over each shoulder that nobody is watching, then plays all eight squares and HOME, wobbling on 6; a hop-turn,
+a cheer and a bounce, two hops back, a shrug, and on. It starts by itself at 96.3 the first time. Moving left or
+jumping in its first 76 frames (about 3 s) cancels it. The `hopscotch` shot is close and low while he checks (he
+glances into the lens), cranes up to about 45° over the whole court for the hops, then comes down and in for the cheer.
+
+**Curiosities** (both later ones: no light pool or glance):
+
+| Curiosity | Where D-17 stands | What happens |
+|---|---|---|
+| Hopscotch | The chalk, 96.15, once he has played it | Use plays the long hopscotch again, with its shot. |
+| Coin viewer (`CoinViewer`, `CoinViewerHead`, `CoinViewerStep`) | 102.6 on the balcony, facing right | `LookViewer`, about 7 s. He climbs the step, pats his compartment for a coin (there isn't one), presses the plunger anyway: clunk. Up to the eyepieces, and the `viewer` shot looks through them: a 110 mm lens across the chasm to the lit upper city, swinging as he swings the viewer. He stops dead on something, and his antenna wiggles. The plan's cargo lift is not built. |
