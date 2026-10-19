@@ -22,4 +22,11 @@ bounds move.
   - It needs the game served at `http://127.0.0.1:8765` (or set `GAME`).
 - **`summarise.py`:** turns the results into per-scene mean, median, min and max times.
   - Usage: `python3 summarise.py results.jsonl`.
-- **`results_first_playthrough.jsonl`:** the first batch of 20 runs (seeds 201 to 220).
+- **`results_first_playthrough.jsonl`:** the five-scene build's batch of 20 runs (seeds 201 to 220).
+- **`results_chapter1_first_playthrough.jsonl`:** the nine-scene Chapter 1, 20 runs (seeds 101 to 120), all completed.
+  Mean 13:42 and median 13:34 of play (range 10:13 to 16:52), plus the 20 s opening. Half the players rode a carrier
+  into the chute in DL-05.
+- **`results_chapter1_mechanical.jsonl`:** the nine-scene floor with the player model off: 5:28 of play (it was 3:54
+  for the five-scene build).
+- **Calibration:** the five-scene build's simulated mean was 9:13, against the director's own run of 5:43. If that
+  ratio holds, an experienced player would take about 8:30 here. Real first-time playtests are still needed.

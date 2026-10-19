@@ -8,7 +8,7 @@ def split(m):
     d = {k: (m[keys[i + 1]] - m[k]) if k in m and keys[i + 1] in m else float('nan') for i, k in enumerate(S)}
     d['opening'] = m['play'] - m['opening']; d['total'] = m['end'] - m['play']; d['with opening'] = m['end'] - m['opening']
     return d
-f = lambda s: f"{int(s // 60)}:{int(round(s % 60)):02d}" if s >= 0 else '-'
+f = lambda s: (lambda r: f"{r // 60}:{r % 60:02d}")(int(round(s))) if s >= 0 else '-'
 cols = ['opening'] + S + ['total', 'with opening']
 print('runs', len(rows), 'completed', len(ok), 'failed', len(bad))
 for r in bad: print('  FAIL', r['seed'], r['error'])
