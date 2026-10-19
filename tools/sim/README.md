@@ -30,3 +30,7 @@ bounds move.
   for the five-scene build).
 - **Calibration:** the five-scene build's simulated mean was 9:13, against the director's own run of 5:43. If that
   ratio holds, an experienced player would take about 8:30 here. Real first-time playtests are still needed.
+- **`results_pass2_first_playthrough.jsonl`:** Chapter 1 after pass 2 (curiosities, the White, hazards, the if-then sequences), 20 runs
+  (seeds 101 to 120), all completed. Mean 14:55 and median 15:08 of play (range 11:27 to 19:09), plus the 20 s opening.
+  The simulated players died 1.2 times a run on average (at most 4) and found 6 of the 12 curiosities on average.
+- **`results_pass2_mechanical.jsonl`:** the pass 2 floor with the player model off: 6:14 of play.
