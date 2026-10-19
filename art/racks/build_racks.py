@@ -247,7 +247,8 @@ def make_dust_outline(path, tris, bounds):
             edge = max(0.0, min(1.0, ex)) * max(0.0, min(1.0, ey))
             a = (0.35 + px[x, y] / 255 * 0.6) * edge * (1 - pc[x, y] / 255)
             pa[x, y] = int(255 * min(1.0, a)) & 0xFC              # a few levels fewer: smaller PNG
-    out = Image.merge('LA', (Image.new('L', (w, h), 118), alpha))
+    grey = Image.new('L', (w, h), 118)
+    out = Image.merge('RGBA', (grey, grey, Image.new('L', (w, h), 108), alpha))
     os.makedirs(os.path.dirname(path), exist_ok=True)
     out.save(path)
 
@@ -286,6 +287,7 @@ def open_old_end(dl01):
     ob = bpy.data.objects.get('RechargeHall')
     if ob is None or ob.type != 'MESH':
         return 0
+    bpy.context.view_layer.update()                 # art/dl02 has just moved it by OFF2
     bm = bmesh.new()
     bm.from_mesh(ob.data)
     mw = ob.matrix_world
