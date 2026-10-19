@@ -804,7 +804,8 @@ TOUCH_FRAMES = 52
 TOUCH_TIP = Vector((-0.3, -0.34, 0.558))
 TOUCH_DIR = Vector((-0.05, -0.9, -0.42)).normalized()       # the claw laid along its head, pointing on
 TOUCH_REACH = 0.104                                          # wrist to claw tip, along the claw
-TOUCH_TRIM = Vector((0.007, 0.001, 0.012))                  # measured: the solved claw tip falls this short
+TOUCH_TRIM = Vector((0.0, 0.0, 0.014))                       # measured: the solved claw tip falls this short
+TOUCH_YAW = 20.0                                             # he opens toward the camera as he reaches (root, degrees)
 TOUCH_HOVER = Vector((0.01, 0.045, 0.022))                   # off its head, before and after
 # Where to stand him (world, facing -x) for that, with SeatedCourier as built: root at
 TOUCH_ROOT = (44.9, 0.1)                                     # the tip then lands at (44.56, 0.40, 0.558)
@@ -817,13 +818,17 @@ def clip_touch_head(dl01, arm):
     reach = dl01.dl02.reach
     c = Clip(arm, 'TouchHead', TOUCH_FRAMES)
     rest_rot = (-24.0, -6.0, -10.0)
-    laid = aim(TOUCH_DIR)
-    on = TOUCH_TIP - TOUCH_DIR * TOUCH_REACH + TOUCH_TRIM       # the wrist with the claw on its head
     for frame in range(1, TOUCH_FRAMES + 1):
         f = frame - 1
+        # The root turns; the courier's head stays where it is in the game's frame.
+        yaw = track([(0, 0), (16, TOUCH_YAW), (40, TOUCH_YAW), (50, 0)], f)
+        unturn = Matrix.Rotation(math.radians(-yaw), 3, 'Z')
+        tip, along = unturn @ TOUCH_TIP, unturn @ TOUCH_DIR
+        laid = aim(along)
+        on = tip - along * TOUCH_REACH + TOUCH_TRIM             # the wrist with the claw on its head
         lean = track([(0, 0), (16, 1), (38, 1), (48, 0)], f)
-        body = (-0.01 * lean, -0.045 * lean, -0.008 * lean)
-        rot = (track([(0, 0), (16, 6), (30, 7), (40, 6), (50, 0)], f), -3.0 * lean, track([(0, 0), (16, -8), (40, -8), (50, 0)], f))
+        body = (-0.01 * lean, -0.03 * lean, -0.008 * lean)
+        rot = (track([(0, 0), (16, 5), (30, 6), (40, 5), (50, 0)], f), -3.0 * lean, 0.0)
         # The right claw: up from his side and out, round the front corner of the pod, onto its head.
         out = track([(4, 0), (18, 1), (40, 1), (48, 0)], f)
         down = track([(16, 0), (21, 1), (38, 1), (42, 0)], f)                # from the hover onto the head
@@ -839,11 +844,11 @@ def clip_touch_head(dl01, arm):
         # Head: turns to it and looks down at it, tilts while his claw is there, comes back up after.
         head = (track([(0, 0), (8, 6), (18, 6), (24, 10), (38, 12), (44, 4), (52, -2)], f),
                 track([(18, 0), (26, 6), (38, 6), (46, 0)], f),
-                track([(0, 0), (8, -8), (40, -8), (48, -2), (52, 0)], f))
+                track([(0, 0), (8, -10), (16, -24), (40, -24), (48, -4), (52, 0)], f))
         antenna = [(track([(0, 0), (10, 8), (24, 18), (38, 18), (44, 4)], f) * (0.7 + 0.2 * i)
                     - spring(f, 44, 6 * (1 + 0.3 * i), decay=6), 0) for i in range(3)]
         c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands, hand_rot=hand_rot,
-               claws={'L': CLAW_REST_OPEN['L'], 'R': claw}, elbows={'R': min(1.0, 2 * out)})
+               claws={'L': CLAW_REST_OPEN['L'], 'R': claw}, elbows={'R': min(1.0, 2 * out)}, yaw=yaw)
     c.done()
 
 
