@@ -764,7 +764,7 @@ def build_belt(m, coll):
     add_box(bm, ((fx0 + fx1) / 2, (fy0 + fy1) / 2, DECK + 0.78), (fx1 - fx0, fy1 - fy0, 0.04), mat=1)   # the cap
     _obj('G4FarRail', bm, [m['steel'], m['yellow'], m['rust']], coll)
     _plane('G4BeltWarning', (0.42, 0.52), (57.0, 1.78, DECK + 1.25), _image_material('BeltWarningMat', os.path.join(TEX, 'belt_warning.png')), coll)
-    _plane('G4ReturnsSign', (2.1, 0.36), (61.2, 1.78, DECK + 2.4), _image_material('ReturnsSignMat', os.path.join(TEX, 'returns_sign.png')), coll)
+    _plane('G4ReturnsSign', (2.1, 0.36), (62.6, 1.78, DECK + 2.4), _image_material('ReturnsSignMat', os.path.join(TEX, 'returns_sign.png')), coll)
 
     # Crate templates, parked out of sight: a low tote, a deeper one, and two stacked. Origin at the base.
     sizes = [(0.36, 0.4, 0.18), (0.42, 0.4, 0.24), (0.4, 0.4, 0.42)]
