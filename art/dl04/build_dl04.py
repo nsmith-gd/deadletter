@@ -2052,5 +2052,6 @@ def add_clips(dl01, arm):
     clip_teeter(dl01, arm)
     clip_pat(dl01, arm)
     clip_hopscotch(dl01, arm)
+    __import__('hopscotch_clip').clip_hopscotch_long(dl01, arm)   # DL-08's long version (hopscotch_clip.py)
     clip_look_back(dl01, arm)
     clip_awe(dl01, arm)

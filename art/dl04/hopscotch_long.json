@@ -1,0 +1,184 @@
+{
+  "clip": "HopscotchLong",
+  "fps": 24,
+  "frames": 288,
+  "end_frame": 287,
+  "coords": "game: x = DL-04 x + OFF4, y up, z toward the camera; frames are clip time * 24",
+  "start_x": 96.3,
+  "deck_y": 1.6,
+  "lane_z": 0.0,
+  "chalk": {
+    "x0": 96.4,
+    "x1": 98.2,
+    "centre_z": -0.02,
+    "square_centres_x": {
+      "1": 96.5333,
+      "2": 96.7333,
+      "3": 96.9333,
+      "4|5": 97.1333,
+      "6": 97.3333,
+      "7|8": 97.5333,
+      "HOME": 97.7583
+    },
+    "pairs_z": {
+      "4, 7 (far, his left foot)": -0.153,
+      "5, 8 (near, his right foot)": 0.113
+    }
+  },
+  "hops": [
+    {
+      "label": "1",
+      "start": 80,
+      "land": 88,
+      "dx": 0.2333,
+      "to_x": 96.5333,
+      "peak": 0.07,
+      "landing": "left foot"
+    },
+    {
+      "label": "2",
+      "start": 91,
+      "land": 99,
+      "dx": 0.2,
+      "to_x": 96.7333,
+      "peak": 0.07,
+      "landing": "left foot"
+    },
+    {
+      "label": "3",
+      "start": 102,
+      "land": 110,
+      "dx": 0.2,
+      "to_x": 96.9333,
+      "peak": 0.07,
+      "landing": "left foot"
+    },
+    {
+      "label": "4|5",
+      "start": 113,
+      "land": 122,
+      "dx": 0.2,
+      "to_x": 97.1333,
+      "peak": 0.08,
+      "landing": "split, both feet"
+    },
+    {
+      "label": "6",
+      "start": 126,
+      "land": 135,
+      "dx": 0.2,
+      "to_x": 97.3333,
+      "peak": 0.075,
+      "landing": "left foot"
+    },
+    {
+      "label": "7|8",
+      "start": 166,
+      "land": 175,
+      "dx": 0.2,
+      "to_x": 97.5333,
+      "peak": 0.08,
+      "landing": "split, both feet"
+    },
+    {
+      "label": "HOME",
+      "start": 179,
+      "land": 190,
+      "dx": 0.225,
+      "to_x": 97.7583,
+      "peak": 0.11,
+      "landing": "both feet together"
+    },
+    {
+      "label": "hop-turn",
+      "start": 196,
+      "land": 207,
+      "dx": 0.0,
+      "to_x": 97.7583,
+      "peak": 0.08,
+      "landing": "both feet together"
+    },
+    {
+      "label": "bounce",
+      "start": 218,
+      "land": 225,
+      "dx": 0.0,
+      "to_x": 97.7583,
+      "peak": 0.05,
+      "landing": "both feet together"
+    },
+    {
+      "label": "back to 7|8",
+      "start": 240,
+      "land": 249,
+      "dx": -0.225,
+      "to_x": 97.5333,
+      "peak": 0.07,
+      "landing": "split, both feet"
+    },
+    {
+      "label": "back to 6",
+      "start": 252,
+      "land": 261,
+      "dx": -0.2,
+      "to_x": 97.3333,
+      "peak": 0.07,
+      "landing": "right foot"
+    }
+  ],
+  "turns": [
+    {
+      "start": 196,
+      "end": 207,
+      "yaw_from_deg": 0.0,
+      "yaw_to_deg": -180.0,
+      "baked_in_clip": true,
+      "note": "root-bone yaw keyed in the clip; both turns pass through -90 deg, his face to the camera; the game keeps facing +x"
+    },
+    {
+      "start": 274,
+      "end": 286,
+      "yaw_from_deg": -180.0,
+      "yaw_to_deg": 0.0,
+      "baked_in_clip": true,
+      "note": "root-bone yaw keyed in the clip; both turns pass through -90 deg, his face to the camera; the game keeps facing +x"
+    }
+  ],
+  "facing_during": [
+    {
+      "from": 207,
+      "to": 286,
+      "facing": -1
+    }
+  ],
+  "end_x": 97.3333,
+  "facing_after": 1,
+  "cancel_until": 76,
+  "sounds": {
+    "toe_taps": [
+      42,
+      48
+    ],
+    "landings": [
+      88,
+      99,
+      110,
+      122,
+      135,
+      175,
+      190,
+      207,
+      225,
+      249,
+      261
+    ],
+    "wobble": [
+      135,
+      160
+    ],
+    "cheer": [
+      208,
+      234
+    ]
+  }
+}
