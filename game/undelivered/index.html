@@ -909,6 +909,7 @@ async function load() {
   buildDL05(setG.scene);
   buildCh1(setG.scene);
   buildSparks();
+  loadModel('assets/white.json').then(buildWhite).catch(() => { /* no creature model yet */ });
   buildCurioPools();
   buildCulling(setG.scene);
   resize();
@@ -1440,6 +1441,7 @@ function updatePlayer(dt) {
       game.y = support; game.vy = 0; game.grounded = true;
       game.landTimer = fall > 0.25 ? 0.3 : 0.18; setClip('Land', 0.06); Sound.land(Math.min(1, 0.5 + fall));
       if (fall > 0.3) shake(0.25);
+      makeNoise(game.x, 1.1);                          // a landing is loud, to anything listening in the water
     }
     game.peakY = Math.max(game.peakY, game.y);
   } else if (game.y > support + 0.001 && game.y - support < 0.09 && game.vy <= 0) {
@@ -3141,7 +3143,7 @@ function resetCh1(cp) {
     courier: { x: past(cp, 'bay') ? RK.bayX : RK.courierX, v: 0, state: past(cp, 'bay') ? 'seated' : 'free', t: past(cp, 'bay') ? 99 : 0 },
     bayDoor: past(cp, 'bay') ? 1 : 0, bayLoad: 0,
     weights: HP.weights.map((x) => ({ x, home: x, base: 0, state: 'floor', blend: 0, drop: null })),
-    bucket: past(cp, 'gallery') ? 1 : 0, gate6: past(cp, 'gallery') ? 1.4 : 0,
+    bucket: past(cp, 'gallery') ? 2 : 0, gate6: past(cp, 'gallery') ? 1.4 : 0,
     cage: { y: past(cp, 'tunnel') ? CG.landing : CG.top, v: 0, phase: past(cp, 'tunnel') ? 'caught' : 'top', t: 0, thrown: false, readyAt: 0, lever: 0 },
     duct: { x: past(cp, 'bedroom') ? DIP9.x0 + DUCT9.half : DUCT9.x, v: 0, state: past(cp, 'bedroom') ? 'bridge' : 'free', drop: 0 },
     tubeT: -1, heapT: -1, stuckT: 0, scale: 0,
@@ -3263,7 +3265,7 @@ function pushHere() {
   }
   return out;
 }
-const ACT_CH1 = new Set(['death', 'curio', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
+const ACT_CH1 = new Set(['death', 'knockback', 'curio', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
 function beginCh1(kind) {
   const [k, arg] = kind.split(':');
   game.vx = 0;
@@ -3321,6 +3323,11 @@ function updateActCh1(a, dt) {
   const s = game.ch1;
   if (a.kind === 'death') { updateDeath(a, dt); return; }
   if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
+  if (a.kind === 'knockback') {
+    game.x += a.dir * 0.9 * Math.max(0, 0.4 - a.t) * dt * 2.5;
+    if (a.t >= (actions.Knockback ? actions.Knockback.getClip().duration : 1.2)) { game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+    return;
+  }
   if (a.kind === 'liftItem') {
     if (a.phase === 'approach') { if (approachCh1(a, dt)) setClip('Lift', 0.15); return; }
     const f = actions.Lift.time * FPS, it = a.it;
@@ -3506,8 +3513,12 @@ function updateCh1(dt) {
   for (let i = 0; i < 3; i++) glow('BayLamp' + i, want ? 5 : 0.4);
   // DL-06: weights on the floor or riding a carrier; the bucket fills, the gate rises.
   s.weights.forEach((w, i) => placeItem(w, k.weights[i], dt));
-  const gTarget = s.bucket >= 1 ? 1.4 : 0;
-  if (s.gate6 < gTarget) { s.gate6 = Math.min(gTarget, s.gate6 + 0.45 * dt); if (Math.random() < dt * 6) Sound.gateTick(); }
+  // Pass 2: the gate wants both weights. One lifts it half way, where it stalls with a strain, too low to pass.
+  const gTarget = 0.7 * Math.min(2, s.bucket);
+  if (s.gate6 < gTarget) {
+    s.gate6 = Math.min(gTarget, s.gate6 + 0.45 * dt); if (Math.random() < dt * 6) Sound.gateTick();
+    if (s.gate6 >= gTarget && gTarget < 1.4) { Sound.strain(); Sound.creak(0.6); shake(0.15); }
+  }
   if (k.gate6) k.gate6.position.y = k.gate6.userData.rest.p.y + s.gate6;
   s.bucketDrop = (s.bucketDrop ?? 0) + ((s.gate6 / 1.4) * 0.4 - (s.bucketDrop ?? 0)) * Math.min(1, dt * 6);
   if (k.bucket) k.bucket.position.y = k.bucket.userData.rest.p.y - s.bucketDrop;
@@ -3648,7 +3659,7 @@ const CURIOS = [
   { id: 'mug', region: 2, x: 15.55, early: true, clip: ['HoldMug', 'Pat'], dur: 3.2, sound: 'mug' },
   { id: 'rack', region: 2, x: 41.05, cond: () => game.ch1.courier.state === 'seated', clip: ['SitRack', 'Straighten'], dur: 4.5, sound: 'sit' },
   { id: 'clock', region: 3, x: OFF3 + 40.7, upper: true, clip: ['WindClock', 'Crank'], dur: 3.0, sound: 'wind' },
-  { id: 'chair', region: 3, x: OFF3 + 33.6, cond: () => !game.upper, clip: ['SitChair', 'Straighten'], dur: 4.0, sound: 'sit' },
+  { id: 'chair', region: 3, x: OFF3 + 27.9, cond: () => !game.upper, clip: ['SitChair', 'Straighten'], dur: 4.0, sound: 'sit' },
   { id: 'hopscotch', region: 4, x: HOP4_X - 0.15, cond: () => game.dl4.hopped, clip: ['HopscotchLong', 'Hopscotch'], builtIn: true },
   { id: 'viewer', region: 4, x: OFF4 + 72.6, clip: ['LookViewer', 'Awe'], dur: 6.0, sound: 'coin' },
   { id: 'radio', region: 5, x: OFF4 + 99.0, clip: ['TuneRadio', 'Pat'], dur: 4.0, sound: 'radio' },
@@ -3728,6 +3739,169 @@ function updateCurios(dt) {
     const c = m.userData.curio, on = curioFound[c.id] ? 0.25 : 1;
     m.visible = c.region === game.region;
     m.material.opacity += ((on * (0.85 + 0.15 * Math.sin(game.clock * 2.2))) - m.material.opacity) * Math.min(1, dt * 2);
+  }
+}
+
+
+// The White (pass 2): something living in the flood water, blind, hunting by sound. Running near its water is
+// loud and walking is quiet; a bell, a splash or a dropped weight elsewhere draws it there and holds it. It never
+// leaves the water, but it strikes a body length onto an edge. Each body of water it uses has its own part:
+//   glimpse: it rolls once, when something calls it (DL-06);
+//   scare: it slaps the edge and knocks him back, unhurt (DL-07, the safe first meeting);
+//   hunt: it kills (DL-07's sump below the edge, DL-08's cage sump, DL-09's flooded lane).
+// WATERS entries: { id, region, x0, x1, y (surface), z (lane-relative centre), part, edges: [[x0, x1]] where he
+// stands beside the water, reach, active() }.
+const WATERS = [];
+const white = { g: null, mixer: null, acts: {}, clip: null, w: null, x: 0, y: -1, z: -0.4, yaw: 0, tx: 0,
+  state: 'away', t: 0, heard: null, lure: null, fleeUntil: 0, lastNoise: -9, ripples: [] };
+const WHITE_SPEED = { glide: 0.25, approach: 1.25 }, WHITE_DEPTH = 0.32;
+function buildWhite(gltf) {
+  if (!gltf) return;
+  white.g = gltf.scene; white.g.visible = false;
+  white.g.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.frustumCulled = false; o.material = whiteMaterial(o.material); } });
+  scene.add(white.g);
+  white.mixer = new THREE.AnimationMixer(white.g);
+  for (const c of gltf.animations) {
+    const a = white.mixer.clipAction(c);
+    if (!/Swim|Glide|Nose/.test(c.name)) { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; }
+    white.acts[c.name] = a;
+  }
+  white.jaw = white.g.getObjectByName('JawTip') || white.g.getObjectByName('Jaw');
+}
+// Pale and a little translucent: wrap lighting and a pink rim where the light comes through.
+function whiteMaterial(src) {
+  const name = (src && src.name || '').replace(/\.\d+$/, '');
+  const base = { WhiteSkin: [0.62, 0.55, 0.52], WhiteGill: [0.55, 0.12, 0.14], WhiteMouth: [0.35, 0.08, 0.1] }[name] || [0.6, 0.55, 0.52];
+  const m = new THREE.MeshStandardMaterial({ color: lin(base), roughness: name === 'WhiteSkin' ? 0.45 : 0.6, metalness: 0, map: src && src.map || null });
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', `
+      float rim = pow(1.0 - clamp(dot(normalize(vViewPosition), -normal) * -1.0, 0.0, 1.0), 2.5);
+      outgoingLight += vec3(0.55, 0.22, 0.22) * rim * 0.35 + diffuseColor.rgb * 0.06;
+      #include <opaque_fragment>`);
+  };
+  m.name = name || 'WhiteSkin';
+  return m;
+}
+function whiteClip(name, fade = 0.3) {
+  if (white.clip === name || !white.acts[name]) return;
+  const next = white.acts[name];
+  next.reset().play();
+  if (white.clip && white.acts[white.clip]) next.crossFadeFrom(white.acts[white.clip], fade, false);
+  white.clip = name;
+}
+// Something made a sound. loud: 1 for running, 1.5 for a splash or a slam. The White hears it if it is in that water.
+function makeNoise(x, loud = 1, region = game.region) {
+  const w = white.w;
+  if (!w || w.region !== region || white.state === 'flee' || game.clock < white.fleeUntil) return;
+  if (x < w.x0 - 2.5 * loud || x > w.x1 + 2.5 * loud) return;
+  if (white.lure && game.clock < white.lure.until && loud < 1) return;      // a bell drowns out a footstep
+  white.heard = { x: THREE.MathUtils.clamp(x, w.x0 + 0.3, w.x1 - 0.3), loud, at: game.clock, him: x === game.x };
+  white.lastNoise = game.clock;
+}
+// A bell or a lure: it goes there and noses at it until it stops.
+function lureWhite(x, sec) { if (!white.w) return; white.lure = { x: THREE.MathUtils.clamp(x, white.w.x0 + 0.3, white.w.x1 - 0.3), until: game.clock + sec }; }
+function scareWhite(sec) { white.fleeUntil = game.clock + sec; if (white.state !== 'away') { setWhite('flee'); } }
+function setWhite(state) { white.state = state; white.t = 0; }
+function whiteWater() { return WATERS.find((w) => w.region === game.region && (!w.active || w.active())) || null; }
+function heroNearWater(w) { return w.edges.some(([a, b]) => game.x > a && game.x < b) || (game.x > w.x0 && game.x < w.x1 && game.y < w.y + 0.05); }
+function updateWhite(dt) {
+  const w = whiteWater();
+  if (w !== white.w) { white.w = w; white.heard = null; white.lure = null; setWhite(w ? 'patrol' : 'away'); white.x = w ? (w.x0 + w.x1) / 2 : 0; }
+  if (white.mixer) white.mixer.update(dt);
+  updateRipples(dt);
+  if (!w) { if (white.g) white.g.visible = false; return; }
+  white.t += dt;
+  // His own noise: running near the water, or landing from a jump.
+  if (game.mode === 'play' && !(game.act && game.act.kind === 'death')) {
+    const near = game.x > w.x0 - 2.2 && game.x < w.x1 + 2.2;
+    if (near && game.grounded && Math.abs(game.vx) > (WALK + RUN) / 2 && game.clock - white.lastNoise > 0.35) makeNoise(game.x, 1);
+  }
+  const surf = w.y, deep = surf - WHITE_DEPTH;
+  let ty = deep, speed = WHITE_SPEED.glide;
+  const st = white.state;
+  if (st === 'flee') { ty = surf - 1.2; speed = 2; white.tx = white.x; if (game.clock > white.fleeUntil) setWhite('patrol'); }
+  else if (white.lure && game.clock < white.lure.until && st !== 'strike') {
+    white.tx = white.lure.x; speed = WHITE_SPEED.approach;
+    if (Math.abs(white.x - white.tx) < 0.15) { ty = surf - 0.12; whiteClip('WhiteNose'); } else whiteClip('WhiteSwim');
+    // Running nearby still turns it: the bell holds it, it doesn't deafen it.
+    if (white.heard && white.heard.him && white.heard.loud >= 1 && game.clock - white.heard.at < 0.1 && Math.abs(game.x - white.x) < 2.2) { white.lure = null; setWhite('approach'); }
+  } else if (st === 'patrol') {
+    if (white.t > 6 || Math.abs(white.x - white.tx) < 0.1) { white.tx = THREE.MathUtils.lerp(w.x0 + 0.4, w.x1 - 0.4, Math.random()); white.t = 0; }
+    whiteClip('WhiteGlide');
+    if (white.heard && game.clock - white.heard.at < 0.2) setWhite('listen');
+  } else if (st === 'listen') {
+    whiteClip('WhiteListen'); speed = 0.05;
+    if (white.t > (w.part === 'glimpse' ? 0.3 : 0.7)) setWhite('approach');
+  } else if (st === 'approach') {
+    const h = white.heard; white.tx = h ? h.x : white.x; speed = WHITE_SPEED.approach; ty = surf - 0.14;
+    whiteClip('WhiteSwim'); spawnRipple(white.x + 0.4 * Math.sign(white.tx - white.x || 1), surf, w.z, 0.12);
+    if (Math.abs(white.x - white.tx) < 0.2) setWhite('surface');
+  } else if (st === 'surface') {
+    ty = surf - 0.02; speed = 0.1; whiteClip(w.part === 'glimpse' ? 'WhiteRoll' : 'WhiteSurface');
+    const reach = w.reach || 1.2, d = game.x - white.x;
+    const exposed = heroNearWater(w) && Math.abs(d) < reach && game.mode === 'play' && !(game.act && game.act.kind === 'death');
+    if (w.part !== 'glimpse' && exposed) { white.yaw = d >= 0 ? 0 : Math.PI; setWhite(w.part === 'scare' ? 'slap' : 'strike'); }
+    else if (white.t > (w.part === 'glimpse' ? 1.6 : 2.2)) setWhite('sink');
+  } else if (st === 'slap') {
+    ty = surf; speed = 0; whiteClip('WhiteSlap', 0.1);
+    if (white.t > 0.35 && !white.hit) { white.hit = true; Sound.splash(1.2); shake(0.6); knockBack(Math.sign(game.x - white.x) || -1); if (w.onScare) w.onScare(); }
+    if (white.t > 1.3) { white.hit = false; setWhite('sink'); }
+  } else if (st === 'strike') {
+    ty = surf; speed = 0; whiteClip('WhiteLunge', 0.08);
+    if (white.t > 0.42 && !white.hit) {
+      white.hit = true;
+      const from = tv5.set(game.x, game.y, game.z).clone();
+      die('grabbed', { hold: 1.25, follow: (a) => {
+        // Pulled to the jaw, then under.
+        const k = smooth(a.t / 0.35), under = smooth((a.t - 0.45) / 0.6);
+        const jx = white.x + Math.cos(white.yaw) * 1.0, jy = surf + 0.15 - 0.9 * under;
+        game.x = THREE.MathUtils.lerp(from.x, jx, k); game.y = THREE.MathUtils.lerp(from.y, jy, k); game.z = THREE.MathUtils.lerp(from.z, w.z * 0.5, k);
+        if (a.t > 0.5 && !a.drag) { a.drag = true; whiteClip('WhiteDrag', 0.1); Sound.splash(1.5); for (let i = 0; i < 4; i++) spawnRipple(jx + (Math.random() - 0.5) * 0.6, surf, w.z, 0.4); }
+      } });
+    }
+    if (white.t > 2.4) { white.hit = false; setWhite('sink'); }
+  } else if (st === 'sink') {
+    whiteClip('WhiteSink'); speed = 0.1;
+    if (white.t > 1.2) { white.heard = null; setWhite('patrol'); }
+  }
+  white.x += THREE.MathUtils.clamp(white.tx - white.x, -speed * dt, speed * dt);
+  white.x = THREE.MathUtils.clamp(white.x, w.x0 + 0.2, w.x1 - 0.2);
+  white.y += (ty - white.y) * Math.min(1, dt * 2.5);
+  if (['patrol', 'approach', 'flee'].includes(white.state) || (white.lure && game.clock < white.lure.until)) {
+    const dir = Math.sign(white.tx - white.x); if (dir) white.yaw = dir > 0 ? 0 : Math.PI;
+  }
+  if (white.g) {
+    white.g.visible = white.state !== 'away';
+    white.g.position.set(white.x, white.y, w.z);
+    white.g.rotation.y += ((white.yaw) - white.g.rotation.y) * Math.min(1, dt * 3);
+  }
+}
+// The safe scare: knocked back off his feet, unhurt.
+function knockBack(dir) {
+  if (game.act || game.mode !== 'play') return;
+  releaseHolds();
+  game.act = { kind: 'knockback', t: 0, dir }; game.vx = 0;
+  setClip(actions.Knockback ? 'Knockback' : 'Startle', 0.06); Sound.worried();
+}
+// Rings on the water where it moves near the surface: the tell that it is coming.
+function spawnRipple(x, y, z, size) {
+  if (!refs.rippleMat) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d');
+    g.strokeStyle = 'rgba(200,215,220,0.9)'; g.lineWidth = 3; g.beginPath(); g.arc(32, 32, 28, 0, Math.PI * 2); g.stroke();
+    refs.rippleMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  }
+  if (white.ripples.length > 24 || (white.lastRipple && game.clock - white.lastRipple < 0.18)) return;
+  white.lastRipple = game.clock;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), refs.rippleMat.clone());
+  m.rotation.x = -Math.PI / 2; m.position.set(x, y + 0.01, z); m.userData.t = 0; m.userData.size = size;
+  scene.add(m); white.ripples.push(m);
+}
+function updateRipples(dt) {
+  for (let i = white.ripples.length - 1; i >= 0; i--) {
+    const m = white.ripples[i]; m.userData.t += dt;
+    const k = m.userData.t / 1.4, r = m.userData.size + k * 0.9;
+    m.scale.set(r, r, 1); m.material.opacity = 0.35 * (1 - k);
+    if (k >= 1) { scene.remove(m); m.material.dispose(); white.ripples.splice(i, 1); }
   }
 }
 
@@ -3853,7 +4027,7 @@ const HINTS = [
   // The Chapter 1 rework
   { region: 2, when: () => game.ch1.box.state === 'floor' && !game.hold && game.x > SH.slotX && game.x < SH.table.x0 && game.y < 0.05, at: () => new THREE.Vector3(game.ch1.box.x, 0.3, 0), key: 'use' },
   { region: 2, when: () => game.ch1.courier.state === 'free' && !game.hold && game.x > RK.courierX && game.x < RK.door.x0, at: () => new THREE.Vector3(game.ch1.courier.x + RK.loopOff, 0.46, RK.courierZ), key: 'use' },
-  { region: 3, when: () => !game.upper && game.ch1.bucket < 1 && !game.hold && game.route === 'exit' && game.belt.running, at: new THREE.Vector3(HP.weights[0], 0.3, 0), key: 'use' },
+  { region: 3, when: () => !game.upper && game.ch1.bucket < 2 && !game.hold && game.route === 'exit' && game.belt.running, at: () => { const w = game.ch1.weights.find((q) => q.state === 'floor'); return new THREE.Vector3(w ? w.x : HP.weights[0], 0.3, 0); }, key: 'use' },
   { region: 4, when: () => game.act && game.act.kind === 'cage' && game.ch1.cage.phase === 'stall', at: () => new THREE.Vector3(CG.shaft.x0 + 0.2, game.ch1.cage.y + 0.5, -0.2), key: 'use' },
   { region: 5, when: () => game.ch1.duct.state === 'free' && !game.hold && game.x < game.ch1.duct.x, at: () => new THREE.Vector3(game.ch1.duct.x - DUCT9.half, 0.46, 0), key: 'use' },
   { when: () => game.doorOpen < 1 && game.x > 8.6 && game.x < 10.0, at: new THREE.Vector3(CRANK_X, 0.45, -0.2), key: 'use' },
@@ -4470,7 +4644,7 @@ function step(dt) {
         if (k > 0.02) [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, k * Math.max(0.25, 0.8 - Math.abs(game.x - 2) / 8)), i * 500));
       }
     }
-    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); } updateSparks(dt); updateCurios(dt); }
+    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); } updateSparks(dt); updateCurios(dt); updateWhite(dt); }
     updateCharacter(dt, game.mode === 'play');
     placeWeight(dt);
     updateQuirkTriggers();
