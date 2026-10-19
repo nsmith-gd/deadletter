@@ -2,7 +2,7 @@ import json, sys, statistics as st
 rows = [json.loads(l) for f in sys.argv[1:] for l in open(f)]
 ok = [r for r in rows if not r['error']]
 bad = [r for r in rows if r['error']]
-S = ['DL-01', 'DL-02', 'DL-03', 'DL-04', 'DL-05', 'DL-06', 'DL-07', 'DL-08', 'DL-09']
+S = [f'DL-{i:02d}' for i in range(1, 12)]
 def split(m):
     keys = S + ['end']
     d = {k: (m[keys[i + 1]] - m[k]) if k in m and keys[i + 1] in m else float('nan') for i, k in enumerate(S)}

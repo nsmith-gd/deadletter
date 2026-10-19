@@ -115,8 +115,8 @@
 
   <section id="title" class="layer">
     <div class="card">
-      <div class="eyebrow"><span>Dead Letter &middot; chapter 1 &middot; prototype</span><span>Scenes 01&ndash;09 of 49 &middot; ~15&ndash;20 min</span></div>
-      <h1><span class="code">DL-01&ndash;09</span> Undelivered</h1>
+      <div class="eyebrow"><span>Dead Letter &middot; chapter 1 &middot; prototype</span><span>Scenes 01&ndash;11 of 51 &middot; ~20 min</span></div>
+      <h1><span class="code">DL-01&ndash;11</span> Undelivered</h1>
       <p class="lede">A courier wakes beneath the refuge with a parcel still undelivered, and finds out what he is.</p>
       <dl class="controls">
         <dt>Keyboard</dt><dd><kbd>A</kbd> <kbd>D</kbd> or arrows to move &middot; <kbd>Shift</kbd> walk &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> use &middot; <kbd>Esc</kbd> pause</dd>
@@ -160,9 +160,9 @@
 
   <section id="end" class="layer" hidden>
     <div class="card">
-      <div class="eyebrow"><span>End of chapter 1 &middot; DL-09</span><span id="end-time"></span></div>
+      <div class="eyebrow"><span>End of chapter 1 &middot; DL-11</span><span id="end-time"></span></div>
       <h2>Room 114</h2>
-      <p>Behind a fallen desk, pencil marks climb the wall, one a year, and a crooked tree is carved beside them. The terminal says nobody is home, and forwards the parcel to a school on ring B. D-17 sat the rabbit up and left the room as he found it. Next: <strong>DL-10 Coats Without Children</strong>.</p>
+      <p>Behind a fallen desk, pencil marks climb the wall, one a year, and a crooked tree is carved beside them. The terminal says nobody is home, and forwards the parcel to a school on ring B. D-17 sat the rabbit up and left the room as he found it. Next: <strong>DL-12 Coats Without Children</strong>.</p>
       <p class="note" id="end-found"></p>
       <div class="row">
         <button class="act" id="again" type="button">Play again</button>
@@ -2797,6 +2797,8 @@ const beltCarry4 = () => (game.region === 4 && game.grounded && beltRunning4() &
 // and a carved tree; presenting the parcel at the terminal gives the next address, her school.
 // ---------------------------------------------------------------------------
 const STAIR_X0 = OFF5 + 74.75, STAIR_SLOPE = 0.833, REGION5_X = OFF5 + 76.75;
+const RATION5 = { x0: OFF2 + 34.9, x1: OFF3 + 26.8 };                // DL-05 The Ration Hall (pass 3): world x 47.9 to 59.8
+const UPONLY = { x0: OFF4 + 76.8, x1: OFF5 + 76.75 };               // DL-10 Up Only (pass 3): from the balcony's end to ring C's lane
 const BARRICADE5 = { x0: OFF5 + 80.2, x1: OFF5 + 81.0, gap: 0.62 };
 const KNOCK5_X = OFF5 + 94.2, INNER5_X = OFF5 + 100.5, TOY5_X = OFF5 + 102.1, TERM5_X = OFF5 + 104.6, END5_X = OFF5 + 107.1;
 const DESK5 = { x: OFF5 + 104.6, half: 0.55, z: -0.62, min: OFF5 + 103.45, clear: OFF5 + 103.55 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
@@ -4950,11 +4952,11 @@ function togglePause() {
 function sceneName() {
   const x = game.x, r = game.region;
   if (r === 1) return 'DL-01 The Wake';
-  if (r === 2) return x < SH.x1 ? 'DL-02 The Sorting Hall' : x < GATE_X ? 'DL-03 The Weight of the Job' : 'DL-04 The Racks';
-  // The heap begins once the belt runs to the exit: the loading on the sorting floor is DL-06's.
-  if (r === 3) return game.upper || past(game.checkpoint, 'landing') || (game.route === 'exit' && game.belt.running) ? 'DL-06 The Heap' : 'DL-05 Return to Sender';
-  if (r === 4) return x < CG.x0 ? 'DL-07 The Handbrake' : 'DL-08 The Slipping Cage';
-  return 'DL-09 The Child at the Address';
+  if (r === 2) return x < SH.x1 ? 'DL-02 The Sorting Hall' : x < GATE_X ? 'DL-03 The Weight of the Job' : x < RATION5.x0 ? 'DL-04 The Racks' : 'DL-05 The Ration Hall';
+  // The heap begins once the belt runs to the exit: the loading on the sorting floor is DL-07's.
+  if (r === 3) return game.upper || past(game.checkpoint, 'landing') || (game.route === 'exit' && game.belt.running) ? 'DL-07 The Heap' : 'DL-06 Return to Sender';
+  if (r === 4) return x < CG.x0 ? 'DL-08 The Handbrake' : x < UPONLY.x0 ? 'DL-09 The Slipping Cage' : 'DL-10 Up Only';
+  return 'DL-11 The Child at the Address';
 }
 const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
