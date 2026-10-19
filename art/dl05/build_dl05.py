@@ -1527,7 +1527,7 @@ def build_street(m, coll):
     # and at y -3 anything over about 0.6: the kerb wall stays low; the lower row's ridges and chimneys stay under it.
     R = front
     yk0, yk1 = -0.99, -0.85
-    gaps = [(82.0, 82.75), (DIP[0] - 0.08, DIP[1] + 0.08), (88.5, 89.25)]
+    gaps = [(81.25, 81.95), (DIP[0] - 0.08, DIP[1] + 0.08), (88.5, 89.25)]
     xs = l0
     for g0, g1 in gaps + [(l1, l1)]:
         if g0 > xs + 0.01:
@@ -1556,7 +1556,7 @@ def build_street(m, coll):
     for x, h in ((DIP[0] - 0.05, 0.12), (DIP[1] + 0.08, 0.07)):                # the flood's break in the kerb
         cbox(R.bm, (x, (yk0 + yk1) / 2, h / 2), (0.16, yk1 - yk0, h), 0.02, R('concrete'), rot=_ry(0.1 if x < 87 else -0.15))
     # The lower row: slate roofs a storey down, their ridges along the street, chimney stacks, a roof light or two.
-    for k, (x0, x1) in enumerate(((79.6, 82.0), (82.75, 85.4), (85.5, 88.5), (89.25, 91.7), (91.8, 94.6), (94.7, 97.9), (98.0, 101.2),
+    for k, (x0, x1) in enumerate(((79.6, 81.2), (82.0, 85.4), (85.5, 88.5), (89.25, 91.7), (91.8, 94.6), (94.7, 97.9), (98.0, 101.2),
                                   (101.3, 104.1), (104.2, 107.6), (107.7, 111.9))):
         ye, ze, yr, zr, yb = -2.0, -0.25, -3.1, 0.32, -4.2
         ang = math.atan2(zr - ze, ye - yr)
@@ -2055,75 +2055,132 @@ def build_mailslot(m, coll):
     _obj_at('SlotLamp9', bm, [m['slotlamp9']], coll, (x, y + fy - 0.013, sz + 0.13))
 
 
+# The DL-08 balcony's views out over the city look the same way as ring C's background (+y), across the same chasm:
+# whatever stands behind ring C must stay out of them. The vista crane (from his shoulder at the balcony up and back,
+# 32 to 24 mm, wherever along the balcony he stands) and the balcony's side-on framing, in dl05 coordinates.
+def _vista_cams():
+    cams = []
+    for X in (71.3, 72.9, 74.55):
+        for k in (0.0, 0.25, 0.5, 0.75, 1.0):
+            pos = Vector((X + 0.45, -1.35, 1.6 + 0.95)).lerp(Vector((X + 3.2, -8.5, 1.6 + 7.9)), k)
+            look = Vector((95.0, 160.0, 12.0)).lerp(Vector((92.0, 150.0, 22.0)), k)
+            cams.append((pos, look, 32 - 8 * k))
+    for x in (71.2, 72.6, 74.0):
+        cams.append((Vector((x, -7.6, 3.0)), Vector((x, 0.0, 1.7)), 35.0))
+    return cams
+
+
+VISTA_CAMS = []
+
+
+def in_vista(points, margin=1.08):
+    """True if any point falls inside any balcony view (16:9 or narrower: a tall phone sees more above and below)."""
+    if not VISTA_CAMS:
+        VISTA_CAMS.extend(_vista_cams())
+    for pos, look, lens in VISTA_CAMS:
+        f = (look - pos).normalized()
+        r = f.cross(Vector((0, 0, 1))).normalized()
+        u = r.cross(f)
+        hw = 17.5 / lens * margin
+        hh = hw / (16 / 9) * 1.35
+        for p in points:
+            v = Vector(p) - pos
+            d = v.dot(f)
+            if d > 0.1 and abs(v.dot(r) / d) < hw and abs(v.dot(u) / d) < hh:
+                return True
+    return False
+
+
 def build_far(m, coll):
     """The background, flat and plain (cheap, unshadowed, read through the haze): the slope behind the back row up
     to ring B's terrace and its tier of homes, a few windows still lit up there; stairs between the tiers (the alley's
-    and the square's, going on up); the lift's lattice tower going up into the dark, its cage lamp lit; the cavern."""
+    and the square's, going on up); the lift's lattice tower going up into the dark, its cage lamp lit; the cavern.
+    Built piece by piece, and any piece the DL-08 balcony's views would see is left out (in_vista)."""
     rnd = random.Random(5300)
     B = Batch(m)
-    x0, x1 = 79.5, 112.5
-    # The slope from behind the back row (y 3.4) up to ring B's terrace edge (y 7.0, z 4.3).
-    _rock_sheet(B.bm, (x0, 3.5, 0.0), (x1 - x0, 0, 0), (0, 3.6, 4.4), 30, 5, 0.25, 51.0, freq=0.9, thick=0.3, mat=B('stone'))
-    # Ring B's terrace: its parapet, its walkway, the homes along it.
-    cbox(B.bm, ((x0 + x1) / 2, 7.1, 4.5), (x1 - x0, 0.25, 0.45), 0.03, B('masonry'))
-    add_box(B.bm, ((x0 + x1) / 2, 8.2, 4.2), (x1 - x0, 2.2, 0.2), mat=B('masonry'))
-    x = x0
-    lit = 0
+    bm = B.bm
+    dropped = [0, 0]
+
+    def piece(build):
+        bm.verts.ensure_lookup_table()
+        n0 = len(bm.verts)
+        build()
+        bm.verts.ensure_lookup_table()
+        new = bm.verts[n0:]
+        if not new:
+            return
+        xs, ys, zs = zip(*[v.co[:] for v in new])
+        box = [(x, y, z) for x in (min(xs), max(xs)) for y in (min(ys), max(ys)) for z in (min(zs), max(zs))]
+        box.append((sum(xs) / len(xs), sum(ys) / len(ys), sum(zs) / len(zs)))
+        if in_vista(box):
+            bmesh.ops.delete(bm, geom=list(new), context='VERTS')
+            dropped[0] += 1
+        else:
+            dropped[1] += 1
+    x0, x1, step = 79.5, 112.5, 2.2
+    chunks = [(x0 + step * i, min(x1, x0 + step * (i + 1))) for i in range(int(math.ceil((x1 - x0) / step)))]
+    for ca, cb in chunks:
+        # The slope from behind the back row (y 3.4) up to ring B's terrace edge (y 7.0, z 4.3); the terrace's parapet and walk.
+        piece(lambda ca=ca, cb=cb: _rock_sheet(bm, (ca, 3.5, 0.0), (cb - ca, 0, 0), (0, 3.6, 4.4), 3, 5, 0.25, 51.0, freq=0.9, thick=0.3,
+                                                mat=B('stone')))
+        piece(lambda ca=ca, cb=cb: cbox(bm, ((ca + cb) / 2, 7.1, 4.5), (cb - ca, 0.25, 0.45), 0.03, B('masonry')))
+        piece(lambda ca=ca, cb=cb: add_box(bm, ((ca + cb) / 2, 8.2, 4.2), (cb - ca, 2.2, 0.2), mat=B('masonry')))
+        piece(lambda ca=ca, cb=cb: _rock_sheet(bm, (ca, 11.5, 4.4), (cb - ca, 0, 0), (0, 2.4, 5.2), 2, 3, 0.35, 61.0, freq=0.6, thick=0.4,
+                                                mat=B('stone')))
+    # Ring B's homes along its terrace.
+    x, lit = x0, [0]
     while x < x1:
         w = rnd.uniform(2.1, 3.0)
         h = rnd.uniform(2.6, 3.4)
-        yb = 9.2
-        add_box(B.bm, (x + w / 2, yb + 1.0, 4.3 + h / 2), (w - 0.12, 2.0, h), mat=B('plaster'))
-        add_box(B.bm, (x + w / 2, yb + 1.0, 4.3 + h + 0.25), (w + 0.1, 2.2, 0.1), mat=B('dark'))
-        prism(B.bm, [(yb - 0.15, 4.3 + h + 0.3), (yb + 1.0, 4.3 + h + 0.95), (yb + 2.15, 4.3 + h + 0.3)], 'x', x + 0.02, x + w - 0.02, mat=B('cut'))
-        add_box(B.bm, (x + 0.55, yb - 0.01, 4.3 + 0.95), (0.7, 0.02, 1.9), mat=B('dark'))                       # its door
-        for k in range(int((w - 1.2) / 0.9)):
-            wx = x + 1.3 + 0.9 * k
-            on = rnd.random() < 0.18 and lit < 6
-            lit += on
-            add_box(B.bm, (wx, yb - 0.012, 4.3 + 1.55), (0.55, 0.02, 0.7), mat=B('windowglow' if on else 'dark'))
-            add_box(B.bm, (wx, yb - 0.03, 4.3 + 1.17), (0.65, 0.06, 0.05), mat=B('masonry'))
+        wins = [rnd.random() < 0.18 for _ in range(int((w - 1.2) / 0.9))]
+
+        def home(x=x, w=w, h=h, wins=wins):
+            yb = 9.2
+            add_box(bm, (x + w / 2, yb + 1.0, 4.3 + h / 2), (w - 0.12, 2.0, h), mat=B('plaster'))
+            add_box(bm, (x + w / 2, yb + 1.0, 4.3 + h + 0.25), (w + 0.1, 2.2, 0.1), mat=B('dark'))
+            prism(bm, [(yb - 0.15, 4.3 + h + 0.3), (yb + 1.0, 4.3 + h + 0.95), (yb + 2.15, 4.3 + h + 0.3)], 'x', x + 0.02, x + w - 0.02, mat=B('cut'))
+            add_box(bm, (x + 0.55, yb - 0.01, 4.3 + 0.95), (0.7, 0.02, 1.9), mat=B('dark'))
+            for k, on in enumerate(wins):
+                wx = x + 1.3 + 0.9 * k
+                on = on and lit[0] < 6
+                lit[0] += on
+                add_box(bm, (wx, yb - 0.012, 4.3 + 1.55), (0.55, 0.02, 0.7), mat=B('windowglow' if on else 'dark'))
+                add_box(bm, (wx, yb - 0.03, 4.3 + 1.17), (0.65, 0.06, 0.05), mat=B('masonry'))
+        piece(home)
         x += w
-    # Above: ring A, higher and further back, more of its windows lit.
-    x = x0 - 2
-    while x < x1 + 2:
-        w = rnd.uniform(2.6, 3.6)
-        add_box(B.bm, (x + w / 2, 15.5, 9.8 + 1.6), (w - 0.2, 2.0, 3.2), mat=B('plaster'))
-        for k in range(int((w - 0.8) / 0.9)):
-            on = rnd.random() < 0.4
-            add_box(B.bm, (x + 0.7 + 0.9 * k, 14.48, 9.8 + 1.9), (0.5, 0.02, 0.65), mat=B('windowglow' if on else 'dark'))
-        x += w
-    cbox(B.bm, ((x0 + x1) / 2 + 2, 14.0, 9.6), (x1 - x0 + 6, 1.4, 0.4), 0.04, B('masonry'))
-    _rock_sheet(B.bm, (x0 - 4, 11.5, 4.4), (x1 - x0 + 8, 0, 0), (0, 2.4, 5.2), 20, 3, 0.35, 61.0, freq=0.6, thick=0.4, mat=B('stone'))
-    _rock_sheet(B.bm, (x0 - 6, 17.5, 9.6), (x1 - x0 + 12, 0, 0), (0, 0, 12.0), 16, 5, 0.6, 71.0, freq=0.4, thick=0.5, mat=B('stone'))
-    # Stairs between the tiers: the alley's, on up the slope in two flights; the square's, from its landing.
-    for k in range(9):                                                         # the alley's stair goes on up the slope
-        cbox(B.bm, ((ALLEY[0] + ALLEY[1]) / 2, 4.75 + 0.26 * k, 2.6 + 0.19 * k - 0.2), (0.62, 0.28, 0.4), 0.01, B('cut'))
-    for k in range(10):                                                        # and the square's, back across the slope
-        cbox(B.bm, (94.0 - 0.24 * k, 4.4, 3.05 + 0.13 * k - 0.15), (0.26, 0.6, 0.3), 0.01, B('cut'))
-    _wire(B.bm, [Vector((94.0, 4.12, 3.9)), Vector((91.6, 4.12, 5.2))], 0.016, B('rust'))
-    # The lift: a lattice tower behind C-114, from below ring C up out of sight; its cage up at ring B, lamp lit.
+    # Stairs between the tiers: the alley's goes on up the slope; the square's turns back across it.
+    for k in range(9):
+        piece(lambda k=k: cbox(bm, ((ALLEY[0] + ALLEY[1]) / 2, 4.75 + 0.26 * k, 2.6 + 0.19 * k - 0.2), (0.62, 0.28, 0.4), 0.01, B('cut')))
+    for k in range(10):
+        piece(lambda k=k: cbox(bm, (94.0 - 0.24 * k, 4.4, 3.05 + 0.13 * k - 0.15), (0.26, 0.6, 0.3), 0.01, B('cut')))
+    piece(lambda: _wire(bm, [Vector((94.0, 4.12, 3.9)), Vector((91.6, 4.12, 5.2))], 0.016, B('rust')))
+    # The lift: a lattice tower behind C-114, going up out of sight; its cage up at ring B, its lamp lit.
     lx, ly, s = 98.8, 8.6, 1.1
-    for dx in (-s / 2, s / 2):
-        for dy in (-s / 2, s / 2):
-            add_box(B.bm, (lx + dx, ly + dy, 9.0), (0.08, 0.08, 22.0), mat=B('rust'))
     z = -1.5
-    while z < 20:
-        for (a, b) in (((-1, -1), (1, -1)), ((1, -1), (1, 1)), ((1, 1), (-1, 1)), ((-1, 1), (-1, -1))):
-            p, q = Vector((lx + a[0] * s / 2, ly + a[1] * s / 2, z)), Vector((lx + b[0] * s / 2, ly + b[1] * s / 2, z + 1.1))
-            add_cyl(B.bm, p, q, 0.02, seg=4, mat=B('rust'))
-            add_cyl(B.bm, p, Vector((q.x, q.y, z)), 0.025, seg=4, mat=B('rust'))
+    while z < 14:
+        def bay(z=z):
+            for dx in (-s / 2, s / 2):
+                for dy in (-s / 2, s / 2):
+                    add_box(bm, (lx + dx, ly + dy, z + 0.55), (0.08, 0.08, 1.1), mat=B('rust'))
+            for (a_, b_) in (((-1, -1), (1, -1)), ((1, -1), (1, 1)), ((1, 1), (-1, 1)), ((-1, 1), (-1, -1))):
+                p_, q_ = Vector((lx + a_[0] * s / 2, ly + a_[1] * s / 2, z)), Vector((lx + b_[0] * s / 2, ly + b_[1] * s / 2, z + 1.1))
+                add_cyl(bm, p_, q_, 0.02, seg=4, mat=B('rust'))
+                add_cyl(bm, p_, Vector((q_.x, q_.y, z)), 0.025, seg=4, mat=B('rust'))
+        piece(bay)
         z += 1.1
-    cz = 6.4
-    add_box(B.bm, (lx, ly, cz), (0.9, 0.9, 1.9), mat=B('sheet'))
-    add_box(B.bm, (lx, ly - 0.46, cz + 0.2), (0.6, 0.02, 0.9), mat=B('windowglow'))
-    add_box(B.bm, (lx, ly - 0.47, cz + 1.05), (0.12, 0.04, 0.08), mat=B('windowglow'))
-    for dx in (-0.15, 0.15):
-        add_cyl(B.bm, (lx + dx, ly, cz + 0.95), (lx + dx, ly, 21.0), 0.012, seg=4, mat=B('dark'))
-    add_box(B.bm, (lx, ly + 0.2, 13.5), (0.5, 0.3, 1.2), mat=B('dark'))                     # the counterweight, high up
+
+    def cage():
+        cz = 6.4
+        add_box(bm, (lx, ly, cz), (0.9, 0.9, 1.9), mat=B('sheet'))
+        add_box(bm, (lx, ly - 0.46, cz + 0.2), (0.6, 0.02, 0.9), mat=B('windowglow'))
+        add_box(bm, (lx, ly - 0.47, cz + 1.05), (0.12, 0.04, 0.08), mat=B('windowglow'))
+        for dx in (-0.15, 0.15):
+            add_cyl(bm, (lx + dx, ly, cz + 0.95), (lx + dx, ly, 14.0), 0.012, seg=4, mat=B('dark'))
+    piece(cage)
     # Cables sagging across the void from ring B's parapet down to the back row's roofs.
     for xa, xb in ((82.0, 83.4), (86.2, 87.0), (89.2, 90.6), (95.5, 97.0)):
-        _wire(B.bm, _catenary((xa, 7.0, 4.75), (xb, 2.4, 3.6), 0.5, 8), 0.012, B('dark'))
+        piece(lambda xa=xa, xb=xb: _wire(bm, _catenary((xa, 7.0, 4.75), (xb, 2.4, 3.6), 0.5, 8), 0.012, B('dark')))
+    print(f'D5FarTiers: {dropped[1]} pieces kept, {dropped[0]} left out of the balcony views')
     B.done('D5FarTiers', coll)
 
 
