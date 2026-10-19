@@ -47,9 +47,10 @@ DECK = 1.6
 SCALE_STAND = (1.27, 1)                     # on the platform's left half, facing the dial
 SCALE_COL_DX = 0.17                         # the column, dial and needle move right by this (to x 1.62)
 SCALE_TOP = 0.028                           # the platform's top after it is lowered
-TICKET_BOX = (1.545, 0.30, 0.34)            # the ticket box's centre on the column's left face
-TICKET = (0.07, 0.045)                      # length (along x), height
-TICKET_OUT = 0.05                           # how far the game slides it out (along game -x)
+TICKET_BOX = (1.545, 0.30, 0.34)            # the ticket box's centre on the column's left face (0.08 x 0.07 x 0.08)
+TICKET = (0.07, 0.045)                      # width (along x), height
+TICKET_PEEK = 0.006                         # how much of it shows above the slot at rest
+TICKET_OUT = 0.055                          # how far the game raises it (along game +y) when he pulls it up
 
 # DL-01 dispatch rack (under the dispatch board, x 0.69 to 1.41).
 DISPATCH_STAND = (1.13, -1)
@@ -431,21 +432,26 @@ def build_scale_curio(c, coll):
         if o is not None:
             o.location.x += SCALE_COL_DX
     bx, by, bz = TICKET_BOX
+    top = bz + 0.04
     bm = bmesh.new()
-    add_box(bm, (bx, by, bz), (0.08, 0.07, 0.075), mat=0)
-    add_box(bm, (bx, by, bz + 0.04), (0.088, 0.078, 0.008), mat=0)                  # a lip on top
-    add_box(bm, (bx - 0.0405, by - 0.004, bz), (0.004, 0.012, 0.058), mat=1)           # the slot's brass bezel
-    add_box(bm, (bx - 0.0425, by - 0.004, bz), (0.002, 0.004, 0.05), mat=2)            # the slot
-    add_cyl(bm, (bx, by - 0.036, bz + 0.012), (bx, by - 0.04, bz + 0.012), 0.012, seg=14, mat=1)   # a coin-sized boss
+    add_box(bm, (bx, by, bz - 0.004), (0.08, 0.07, 0.072), mat=0)
+    for dy in (-0.022, 0.022):                                                         # the top, either side of the slot
+        add_box(bm, (bx, by - 0.004 + dy, top - 0.004), (0.088, 0.04, 0.008), mat=0)
+    for dx in (-0.041, 0.041):
+        add_box(bm, (bx + dx, by - 0.004, top - 0.004), (0.006, 0.006, 0.008), mat=0)
+    add_box(bm, (bx, by - 0.004, top - 0.012), (0.076, 0.004, 0.006), mat=2)           # the slot's dark throat
+    add_box(bm, (bx, by - 0.0115, top + 0.0005), (0.084, 0.003, 0.003), mat=1)         # its brass lips
+    add_box(bm, (bx, by + 0.0035, top + 0.0005), (0.084, 0.003, 0.003), mat=1)
+    add_cyl(bm, (bx, by - 0.035, bz - 0.01), (bx, by - 0.039, bz - 0.01), 0.012, seg=14, mat=1)   # a coin-sized boss
     _obj('ScaleTicketBox', bm, [c['green'], c['brass'], c['dark']], coll)
-    # The ticket, its origin at its centre: at rest 6 mm of it shows; the game slides it out along -x.
+    # The ticket, its origin at its centre: at rest its top edge shows in the slot; the game raises it.
     tw, th = TICKET
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new('UVMap')
     _card(bm, uv, Vector((0, 0, 0)), tw, th, 0, 1)
     t = _obj('ScaleTicket', bm, [c['ticket'], c['paper']], coll, sharp=20)
-    t.location = (bx - 0.04 + tw / 2 - 0.006, by - 0.004, bz)
-    curio_tag('CurioTag_scale', Vector((bx - 0.022, by - 0.036, bz - 0.038)), c, coll, swing=0.08)
+    t.location = (bx, by - 0.004, top + TICKET_PEEK - th / 2)
+    curio_tag('CurioTag_scale', Vector((bx - 0.03, by - 0.0355, bz - 0.04)), c, coll, swing=0.08)
 
 
 def build_dispatch_curio(c, coll):
@@ -915,8 +921,8 @@ TICKET_POP = 30
 
 
 def ticket_out(f):
-    return tr([(0, 0), (TICKET_POP, 0), (TICKET_POP + 3, 0.035), (40, 0.035), (45, TICKET_OUT), (58, TICKET_OUT),
-               (64, 0.0)], f)
+    return tr([(0, 0), (TICKET_POP, 0), (TICKET_POP + 2, 0.042), (TICKET_POP + 4, 0.036), (42, 0.036), (47, TICKET_OUT),
+               (60, TICKET_OUT), (66, 0.0)], f)
 
 
 def clip_weigh_self(dl01, arm):
@@ -1027,7 +1033,7 @@ def attach_held(arm, coll, name, build, bone, at_frame, clip, prop_matrix):
 def game_moves(name, f):
     if name == 'WeighSelf':
         wob = 6 * math.sin(f * 1.4) * tr([(18, 0), (21, 1), (34, 1), (40, 0)], f)
-        return {'ScaleTicket': ((-ticket_out(f), 0, 0), (0, 0, 0), True),
+        return {'ScaleTicket': ((0, 0, ticket_out(f)), (0, 0, 0), True),
                 'ScaleNeedle': ((0, 0, 0), (0, 95 + wob, 0), True)}
     return {}
 
