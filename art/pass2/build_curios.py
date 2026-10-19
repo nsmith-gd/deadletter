@@ -155,10 +155,10 @@ def make_ticket(path):
     for x in range(0, w, 16):                                   # perforated top edge
         d.ellipse((x + 4, -6, x + 12, 4), fill=(120, 110, 90))
     d.rectangle((12, 22, w - 12, h - 12), outline=ink, width=4)
-    d.text((26, 34), 'POSTAGE', font=_font(44), fill=red)
-    d.text((26, 82), 'DUE', font=_font(58), fill=red)
+    d.text((24, 36), 'POSTAGE', font=_font(38), fill=red)
+    d.text((24, 80), 'DUE', font=_font(58), fill=red)
     d.text((26, 152), '0.71 m  41 kg', font=_font(22, True), fill=ink)
-    sx, sy = 236, 104                                           # the stamp: a perforated square, a question mark
+    sx, sy = 262, 104                                           # the stamp: a perforated square, a question mark
     for k in range(-34, 35, 9):
         for (a, b) in ((sx + k, sy - 40), (sx + k, sy + 40), (sx - 40, sy + k), (sx + 40, sy + k)):
             d.ellipse((a - 3, b - 3, a + 3, b + 3), fill=(214, 202, 170))
@@ -1685,6 +1685,13 @@ def attach_held(arm, coll, name, build, bone, at_frame, clip, prop_matrix):
 # ---------------------------------------------------------------------------------------------------------
 
 def game_moves(name, f):
+    hidden = {'MugD17Held': ((0, 0, 0), (0, 0, 0), False),
+              'ClawStamp': ((0, 0, 0), (0, 0, 0), name == 'FrankHand' and f >= FRANK_THUNK)}
+    moves = _game_moves(name, f)
+    return {**hidden, **moves}
+
+
+def _game_moves(name, f):
     if name == 'WeighSelf':
         wob = 6 * math.sin(f * 1.4) * tr([(18, 0), (21, 1), (34, 1), (40, 0)], f)
         return {'ScaleTicket': ((0, 0, ticket_out(f)), (0, 0, 0), True),

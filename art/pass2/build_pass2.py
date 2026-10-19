@@ -492,10 +492,10 @@ def _bite(ob, to_rig, knee, ankle, m):
     torn shell, a dark hollow, and a few torn cables. Returns the number of faces removed."""
     d = (ankle - knee).normalized()
     L = (ankle - knee).length
-    cut = knee + d * 0.33 * L
+    cut = knee + d * 0.18 * L
     to_obj = to_rig.inverted()
     me = ob.data
-    i_dark = _mat_index(me, bpy.data.materials.get('DustyDark') or m['iron'])
+    i_dark = _mat_index(me, m['plate'])                         # torn shell: bright bare metal at the bite
     i_hole = _mat_index(me, m['shaft'])
     i_cu = _mat_index(me, m['copper'])
     i_rub = _mat_index(me, m['rubber'])
@@ -512,7 +512,7 @@ def _bite(ob, to_rig, knee, ankle, m):
             # within the shin and the foot below it
             t = (c - cut).dot(d)
             radial = (c - (cut + d * t)).length
-            if (t < L * 0.8 and radial < 0.075) or (c - ankle).length < 0.13:
+            if (t < L * 0.95 and radial < 0.08) or (c - ankle).length < 0.14:
                 dead.append(f)
         removed[0] = len(dead)
         bmesh.ops.delete(bm, geom=dead, context='FACES')
@@ -527,25 +527,25 @@ def _bite(ob, to_rig, knee, ankle, m):
         ring = []
         for k in range(n):
             a = 2 * math.pi * k / n
-            ring.append(cut + (u * math.cos(a) + w * math.sin(a)) * 0.03)
+            ring.append(cut + (u * math.cos(a) + w * math.sin(a)) * 0.034)
         for k in range(n):                                       # torn shell: teeth of uneven length
             a0, a1 = ring[k], ring[(k + 1) % n]
             mid = (a0 + a1) / 2
             out = (mid - cut).normalized()
-            tip = mid + d * rnd.uniform(0.004, 0.03) * (1.6 if k % 3 == 0 else 1.0) + out * rnd.uniform(-0.004, 0.006)
+            tip = mid + d * rnd.uniform(0.01, 0.035) * (1.7 if k % 3 == 0 else 1.0) + out * rnd.uniform(-0.002, 0.01)
             vs = [tmp.verts.new(p) for p in (a0 - d * 0.012, a1 - d * 0.012, tip)]
             vs2 = [tmp.verts.new(p + out * 0.004) for p in (a0 - d * 0.012, a1 - d * 0.012, tip)]
             for face in (vs, vs2[::-1], (vs[0], vs[1], vs2[1], vs2[0]), (vs[1], vs[2], vs2[2], vs2[1]), (vs[2], vs[0], vs2[0], vs2[2])):
                 tmp.faces.new(face).material_index = i_dark
-        disc = [tmp.verts.new(cut + d * 0.002 + (u * math.cos(2 * math.pi * k / n) + w * math.sin(2 * math.pi * k / n)) * 0.027)
+        disc = [tmp.verts.new(cut + d * 0.002 + (u * math.cos(2 * math.pi * k / n) + w * math.sin(2 * math.pi * k / n)) * 0.031)
                 for k in range(n)]
         tmp.faces.new(disc).material_index = i_hole
         for k in range(5):                                       # torn cables, splayed, bare copper at their ends
             a = rnd.uniform(0, 2 * math.pi)
             base = cut - d * 0.01 + (u * math.cos(a) + w * math.sin(a)) * rnd.uniform(0.004, 0.016)
-            end = base + d * rnd.uniform(0.035, 0.07) + (u * math.cos(a) + w * math.sin(a)) * rnd.uniform(0.01, 0.03)
-            add_cyl(tmp, base, end, 0.0035, mat=i_rub, seg=6)
-            add_cyl(tmp, end, end + (end - base).normalized() * 0.008, 0.0022, mat=i_cu, seg=5)
+            end = base + d * rnd.uniform(0.05, 0.09) + (u * math.cos(a) + w * math.sin(a)) * rnd.uniform(0.015, 0.04)
+            add_cyl(tmp, base, end, 0.0045, mat=i_rub, seg=6)
+            add_cyl(tmp, end, end + (end - base).normalized() * 0.014, 0.003, mat=i_cu, seg=5)
         bmesh.ops.transform(tmp, matrix=to_obj, verts=tmp.verts)
         me2 = bpy.data.meshes.new('_stump')
         for s in me.materials:                                   # same slots, so the indices survive

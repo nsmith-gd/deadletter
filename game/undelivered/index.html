@@ -335,6 +335,7 @@ const PLAIN = { TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .00
   Copper: [[.55, .3, .18], .35, 1], ReflectTag: [[.8, .78, .7], .15, .6], BeltRubber: [[.02, .02, .019], .8, 0],
   AtriumPlaster: [[.2, .185, .15], .9, 0], AtriumDark: [[.006, .006, .006], .8, 0], AtriumStone: [[.058, .052, .045], .95, 0],
   AtriumCut: [[.085, .078, .066], .95, 0], AtriumSheet: [[.075, .082, .08], .6, .4], AtriumRust: [[.11, .048, .025], .85, 0], AtriumMasonry: [[.15, .135, .115], .85, 0],
+  AtriumCloth: [[.2, .13, .065], .9, 0], AtriumWood: [[.085, .06, .04], .88, 0],
   Barricade: [[.4, .06, .04], .7, 0], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
 const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
@@ -2402,7 +2403,7 @@ function buildDL04(setRoot) {
   const beltMat = new THREE.MeshStandardMaterial({ map: refs.belt4Tex, roughness: 0.85, metalness: 0 });
   refs.ReturnsBelt.traverse((o) => { if (o.isMesh) o.material = beltMat; });
   // The atrium is far detail: plain materials, seen from either side.
-  for (const n of ['AtriumPlaster', 'AtriumDark', 'AtriumStone', 'Barricade', 'AtriumCut', 'AtriumSheet', 'AtriumRust', 'AtriumMasonry']) if (materialCache[n]) materialCache[n].side = THREE.DoubleSide;
+  for (const n of ['AtriumPlaster', 'AtriumDark', 'AtriumStone', 'Barricade', 'AtriumCut', 'AtriumSheet', 'AtriumRust', 'AtriumMasonry', 'AtriumCloth', 'AtriumWood']) if (materialCache[n]) materialCache[n].side = THREE.DoubleSide;
   refs.fans = ['AtriumFanLow', 'AtriumFanHigh'].map((n) => setRoot.getObjectByName(n)).filter(Boolean);
   // Chains: the platform's two from the drum, the pan's over its pulley; rebuilt as they run.
   refs.chain4 = new THREE.InstancedMesh(new THREE.TorusGeometry(0.02, 0.0055, 4, 10), materialFor({ name: 'DepotSteel' }), 440);
