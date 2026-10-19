@@ -23,8 +23,8 @@ import bmesh
 from mathutils import Matrix, Vector
 
 import build_d17 as d17
-from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, emission_material,
-                       worn_material, smoothstep, SIDES, CLAW_REST_OPEN)
+from build_d17 import (add_box, add_cyl, add_sphere, rounded_box, emission_material,
+                       worn_material, SIDES, CLAW_REST_OPEN)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEX = os.path.join(HERE, 'textures')
@@ -314,7 +314,7 @@ def build_hall(m, coll):
     ex = (END_WALL[0] + END_WALL[1]) / 2
     ew = END_WALL[1] - END_WALL[0]
     add_box(bm, (ex, (0.68 + 9.2) / 2, 3.2), (ew, 9.2 - 0.68, 6.4))
-    add_box(bm, (ex, (-0.86 + 0.68) / 2, (DOOR_H + 0.15 + 6.4) / 2), (ew, 1.54, 6.4 - DOOR_H - 0.15))
+    add_box(bm, (ex, (-0.86 + 0.68) / 2, (DOOR_H + 0.15 + 6.4) / 2), (ew, 1.54, 6.4 - DOOR_H - 0.15))   # header
     add_box(bm, (ex, -0.78, (DOOR_H + 0.15) / 2), (ew, 0.16, DOOR_H + 0.15))         # in front of the door
     # The service passage: the scanner corridor's section, its wall running on up into the dark.
     px0, px1 = PASSAGE
@@ -322,8 +322,10 @@ def build_hall(m, coll):
     add_box(bm, ((px0 + px1) / 2, -0.35, PASS_CEIL + 0.05), (px1 - px0, 2.1, 0.1))
     _obj('RacksHall', bm, [m['wall']], coll)
 
-    bm = bmesh.new()                                                                # floor on from DL-01's (ends at 43)
-    add_box(bm, ((43.0 + 48.0) / 2, 4.0, -0.05), (5.0, 16.0, 0.1))
+    # Floor on from DL-01's (which ends at 43), through the passage and under DL-05's scanner corridor to where
+    # art/dl03's sorting floor begins (its x 30, so 51 after OFF3): nothing else covers 47.9 to 51 now.
+    bm = bmesh.new()
+    add_box(bm, ((43.0 + 51.0) / 2, 4.0, -0.05), (8.0, 16.0, 0.1))
     _obj('RacksFloor', bm, [m['concrete']], coll)
 
     # The last bays of the racks. Rows step on as in art/dl02; every slot here is empty.
@@ -542,7 +544,8 @@ def build_couriers(dl01, m, coll):
     out = {}
 
     # Lying.
-    pose = dict(LYING_POSE, hands=lying_hands(dl01), hand_rot={'L': aim((-0.2, -0.3, 0.93)), 'R': aim((0.8, -0.4, -0.45))})
+    pose = dict(LYING_POSE, hands=lying_hands(dl01),
+                hand_rot={'L': aim((-0.2, -0.3, 0.93)), 'R': aim((0.8, -0.4, -0.45))})
     body, mats, lamps = bake_pose(dl01, arm, rcoll, 'RacksLying', pose)
     rot = Matrix.Rotation(math.radians(90.0 + LYING_TILT), 4, 'Y')   # up along +x, left side down
     xs, zs = [], []
@@ -689,7 +692,7 @@ def build_bay(m, coll):
     uv = bm.loops.layers.uv.new('UVMap')
     add_box(bm, (0, 0, -0.015), (x1 - x0 - 0.03, y1 - y0 - 0.03, 0.03))
     for k in range(6):                                          # tread ribs
-        add_box(bm, (-0.3 + k * 0.12, (y1 - y0) / 2 - 0.2 - cy + cy, 0.0008), (0.06, 0.24, 0.0016))
+        add_box(bm, (-0.3 + k * 0.12, (y1 - y0) / 2 - 0.2, 0.0008), (0.06, 0.24, 0.0016))
     h = 0.2
     py0 = y0 + 0.06 + h - cy
     _quad(bm, uv, [(-h, py0 - h, 0.0012), (h, py0 - h, 0.0012), (h, py0 + h, 0.0012), (-h, py0 + h, 0.0012)], mat=1)
@@ -710,8 +713,8 @@ def build_bay(m, coll):
         add_box(bm, (x, PIVOT_Y, 0.02), (0.2, 0.22, 0.04))
     add_box(bm, (CRADLE_X, PIVOT_Y, 1.93), (1.12, 0.12, 0.1))
     for s in (-1, 1):                                           # shoulder housings from the uprights in to the axles
-        ax = CRADLE_X + s * ARM_DX
-        add_box(bm, ((ax + fx[0 if s < 0 else 1]) / 2 + s * 0.04, PIVOT_Y, pz), (abs(fx[0 if s < 0 else 1] - ax) - 0.06, 0.09, 0.12))
+        ax, ux = CRADLE_X + s * ARM_DX, fx[0 if s < 0 else 1]
+        add_box(bm, ((ax + ux) / 2 + s * 0.04, PIVOT_Y, pz), (abs(ux - ax) - 0.06, 0.09, 0.12))
         add_cyl(bm, (ax + s * 0.08, PIVOT_Y, pz), (ax + s * 0.2, PIVOT_Y, pz), 0.07, seg=24)
     for i in range(2):                                          # backboard: two enamel panels
         rounded_box((0.98, 0.05, 0.96), (CRADLE_X, FRAME_Y, 0.5 + i * 0.98), p=10, cuts=3,
@@ -725,8 +728,9 @@ def build_bay(m, coll):
     bm = bmesh.new()
     add_box(bm, (CRADLE_X, PIVOT_Y - 0.09, 1.825), (0.84, 0.05, 0.015))
     _obj('BayLight', bm, [m['baylight']], coll)
-    _plane('BaySign', picmat, [(CRADLE_X - 0.17, FRAME_Y - 0.026, 1.24), (CRADLE_X + 0.17, FRAME_Y - 0.026, 1.24),
-                               (CRADLE_X + 0.17, FRAME_Y - 0.026, 1.58), (CRADLE_X - 0.17, FRAME_Y - 0.026, 1.58)], coll)
+    sy = FRAME_Y - 0.026
+    _plane('BaySign', picmat, [(CRADLE_X - 0.17, sy, 1.24), (CRADLE_X + 0.17, sy, 1.24),
+                               (CRADLE_X + 0.17, sy, 1.58), (CRADLE_X - 0.17, sy, 1.58)], coll)
 
     for side, s in (('L', -1), ('R', 1)):
         _arm_mesh(m, coll, f'CradleArm{side}', CRADLE_X + s * ARM_DX, py, pz)
@@ -747,17 +751,14 @@ def build_bay(m, coll):
     bm = bmesh.new()
     add_box(bm, (DOOR_X - 0.18, 0.5, DOOR_H + 0.26), (0.12, 0.26, 0.22))              # the door motor
     add_cyl(bm, (DOOR_X - 0.18, 0.36, DOOR_H + 0.26), (DOOR_X - 0.18, 0.3, DOOR_H + 0.26), 0.05, seg=16)
-    add_box(bm, (DOOR_X - 0.135, -0.8, DOOR_H + 0.26), (0.03, 0.34, 0.14))           # lamp panel, facing the camera
+    # The lamp panel on the header's front end, facing the camera, its three lamps in a row along the lane.
+    add_box(bm, (DOOR_X, -0.89, DOOR_H + 0.28), (0.42, 0.05, 0.13))
+    add_box(bm, (DOOR_X, -0.9, DOOR_H + 0.36), (0.44, 0.08, 0.02))                    # its hood
     _obj('BayDoorMotor', bm, [m['steel']], coll)
     for i, mat in enumerate(m['baylamp']):
         bm = bmesh.new()
-        add_sphere(bm, (DOOR_X - 0.155, -0.9 + i * 0.1, DOOR_H + 0.26), 0.022, seg=12, scale=(0.6, 1, 1))
-        add_sphere(bm, (DOOR_X - 0.135, -0.9 + i * 0.1, DOOR_H + 0.26), 0.022, seg=12, scale=(1, 1, 1))
+        add_sphere(bm, (DOOR_X - 0.13 + i * 0.13, -0.918, DOOR_H + 0.28), 0.03, seg=12, scale=(1, 0.5, 1))
         _obj(f'BayLamp{i}', bm, [mat], coll)
-    # Lamps also face the camera: three small lenses on the panel's front edge.
-    bm = bmesh.new()
-    add_box(bm, (DOOR_X - 0.135, -0.975, DOOR_H + 0.26), (0.05, 0.02, 0.18))
-    _obj('BayLampHood', bm, [m['steel']], coll)
 
     # Linkage: the plate's cable to a junction box at the frame's foot; a conduit up the frame to the
     # shoulder motors, and another along the floor behind the lane to the door post and up to its motor.
@@ -786,10 +787,10 @@ def build_bay(m, coll):
     add_cyl(bm, (fx[1] + 0.06, PIVOT_Y + 0.06, 1.99), (fx[1] + 0.06, PIVOT_Y + 0.06, pz), 0.012, seg=8)
     _obj('BayConduit', bm, [m['steel']], coll)
 
-    # Hazard edge along the lane's back line, the passage threshold, and a service tag on the frame.
+    # A hazard edge along the lane's front, either side of the plate (the bay only).
     bm = bmesh.new()
     add_box(bm, ((x1 + 0.1 + END_WALL[0]) / 2, -0.38, 0.0015), (END_WALL[0] - x1 - 0.1, 0.07, 0.003))
-    add_box(bm, ((HALL_X0 + x0 - 0.1) / 2, -0.38, 0.0015), (x0 - 0.1 - HALL_X0, 0.07, 0.003))
+    add_box(bm, ((43.6 + x0 - 0.1) / 2, -0.38, 0.0015), (x0 - 0.1 - 43.6, 0.07, 0.003))   # the hall has none
     _obj('RacksSafetyLine', bm, [m['yellow']], coll)
 
 
