@@ -312,6 +312,7 @@ const WORN = {
   PigeonWood: { base: [.12, .085, .055], dirt: [.06, .045, .03], chip: [.2, .15, .1], rough: .85, chipRough: .8, metal: 0, grime: 6, chipScale: 30, chipAmt: .75, dust: [.1, .09, .08], dustAmt: .6 },
   PlateSteel: { base: [.11, .115, .11], dirt: [.06, .04, .025], chip: [.2, .19, .17], rough: .55, chipRough: .4, metal: .7, grime: 5, chipScale: 30, chipAmt: .7, dust: [.1, .095, .085], dustAmt: .4 },
   ToteGreen: { base: [.08, .11, .09], dirt: [.05, .05, .04], chip: [.16, .18, .15], rough: .7, chipRough: .6, metal: 0, grime: 12, chipScale: 40, chipAmt: .72, dust: [.1, .1, .09], dustAmt: .5 },
+  FloodMud: { base: [.062, .05, .036], dirt: [.035, .028, .02], chip: [.09, .076, .058], rough: .95, chipRough: .85, metal: 0, grime: 3, chipScale: 20, chipAmt: .6 },
   PawlSteel: { base: [.32, .31, .29], dirt: [.12, .1, .08], chip: [.5, .48, .44], rough: .4, chipRough: .3, metal: .8, grime: 18, chipScale: 50, chipAmt: .7 },
   CaveRock: { base: [.05, .048, .045], dirt: [.028, .026, .024], chip: [.085, .08, .072], rough: .95, chipRough: .9, metal: 0, grime: 1.5, chipScale: 8, chipAmt: .7, streak: .7 },
   HomePlaster: { base: [.34, .29, .21], dirt: [.17, .14, .10], chip: [.24, .20, .15], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, streak: .6 },
@@ -341,6 +342,7 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   RampLamp0: [.55, 1, .65, 0], RampLamp1: [.55, 1, .65, 0], RampLamp2: [.55, 1, .65, 0], RampLamp3: [.55, 1, .65, 0], RampLamp4: [.55, 1, .65, 0], RampLamp5: [.55, 1, .65, 0],
   WindowSun: [1, .72, .38, 0], HomeLampBulb: [1, .76, .46, 0], LaneBulb: [.78, .88, 1, 0], TermLamp0: [.75, 1, .82, 0], TermLamp1: [.75, 1, .82, 0], TermLamp2: [.75, 1, .82, 0],
   AtriumWindowGlow: [1, .6, .28, 2.5], AtriumHazeLights: [.62, .76, .95, 1.5],
+  C108Lamp: [1, .7, .42, 1.2], SlotLamp9: [1, .62, .22, 0], SlotLamp2: [1, .62, .22, 0], SlotLamp6: [1, .62, .22, 0],
   LandingAmber: [1, .62, .18, 0], StopStripe: [1, .55, .15, 0], CageBulb: [1, .86, .62, 0],
   RingLamp: [1, .78, .5, 0], RingLampRed: [1, .18, .1, 0], HomeLight: [1, .72, .4, 0], SkyPanel: [.7, .8, .9, 0] };
 
@@ -1950,6 +1952,7 @@ function setRegionLights(r) {
   (refs.shLights || []).forEach((l) => (l.visible = r === 2));
   (refs.bayLights || []).forEach((l) => (l.visible = r === 2));
   (refs.cageLights || []).forEach((l) => (l.visible = r === 4));
+  (refs.rcLights || []).forEach((l) => (l.visible = r === 5));
   game.lightRegion = r;
 }
 
@@ -2694,7 +2697,7 @@ const beltCarry4 = () => (game.region === 4 && game.grounded && beltRunning4() &
 // and a carved tree; presenting the parcel at the terminal gives the next address, her school.
 // ---------------------------------------------------------------------------
 const STAIR_X0 = OFF4 + 74.75, STAIR_SLOPE = 0.833, REGION5_X = OFF4 + 76.75;
-const BARRICADE5 = { x0: OFF4 + 80.2, x1: OFF4 + 81.0, gap: 0.62 }, DUCT5 = { x0: OFF4 + 84.2, x1: OFF4 + 84.6, h: 0.26 };
+const BARRICADE5 = { x0: OFF4 + 80.2, x1: OFF4 + 81.0, gap: 0.62 };
 const KNOCK5_X = OFF4 + 88.2, INNER5_X = OFF4 + 90.6, TOY5_X = OFF4 + 92.2, TERM5_X = OFF4 + 94.7, END5_X = OFF4 + 97.2;
 const DESK5 = { x: OFF4 + 94.7, half: 0.55, z: -0.62, min: OFF4 + 93.55, clear: OFF4 + 93.65 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
 const KNOCK5_Z = -0.64;                                                                     // stepped in to knock on the door jamb
@@ -3016,12 +3019,12 @@ const CG = { x0: OFF3 + 64.6, climbs: [[OFF3 + 65.8, OFF3 + 66.4, 2.2], [OFF3 + 
   shaft: { x0: OFF3 + 68.2, x1: OFF3 + 69.8 }, top: 3.4, landing: DECK, bottom: -0.1, anteCeil: 3.3, braceX: OFF3 + 69.2 };
 // DL-09: ring C's flood, and the duct that bridges it.
 const DIP9 = { x0: OFF4 + 83.4, x1: OFF4 + 84.9, floor: -0.25 };
-const DUCT9 = { x: OFF4 + 82.35, half: 0.75, h: 0.26, gap: 1.07 };
+const DUCT9 = { x: OFF4 + 82.35, half: 0.75, h: 0.26, gap: 1.10 };          // its red grip bar is 0.775 left of its centre
 // The letters, and the red slots they are posted in.
 const LETTERS = [
   { id: 'tube', name: 'TubeLetter', region: 2, x: SH.tubeX, start: 'cup' },
   { id: 'heap', name: 'HeapLetter', region: 3, x: OFF3 + 43.4, start: 'rail', upper: true },
-  { id: 'c110', name: 'C110Letter', region: 5, x: OFF4 + 84.26, start: 'slot' },
+  { id: 'c110', name: 'C110Letter', region: 5, x: OFF4 + 83.85, start: 'slot' },
 ];
 const SLOTS = [
   { id: 2, name: 'MailSlot2', lamp: 'SlotLamp2', region: 2, x: SH.slotX },
@@ -3065,8 +3068,9 @@ function buildCh1(setRoot) {
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
   refs.shLights = [P(0xffd6a6, 4.0, 5.5, 20.6, 2.6, 0.3), P(0xffc890, 5.0, 4.0, 24.7, 2.7, 0.1), P(0xd9e6ff, 1.2, 3.0, SH.tubeX, 1.6, -0.3)];
   refs.bayLights = [P(0xcfe4ff, 3.2, 4.5, RK.bayX, 2.4, -0.2)];
+  refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF4 + 82.6, 1.45, -1.72), P(0xffc890, 0.9, 1.6, OFF4 + 87.4, 0.9, 0.1)];
   refs.cageLights = [P(0xffb050, 3.5, 4.5, CG.shaft.x1 + 0.4, DECK + 0.9, -0.3), P(0xd6dde8, 2.0, 5.0, CG.shaft.x0 - 0.6, CG.top + 1.6, -0.4)];
-  [...refs.shLights, ...refs.bayLights, ...refs.cageLights].forEach((l) => (l.intensity = l.userData.base));
+  [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights].forEach((l) => (l.intensity = l.userData.base));
 }
 
 // State, set from the checkpoint (resetWorld calls this).
@@ -3158,7 +3162,7 @@ function nearCh1() {
   // Letters: pick one up, or post what he carries.
   for (const L of LETTERS) {
     const st = letterState[L.id];
-    if (L.region === game.region && (st === 'floor' || st === 'slot') && !!L.upper === !!game.upper && Math.abs(x - L.x) < 0.42) return 'pickLetter:' + L.id;
+    if (L.region === game.region && st === 'floor' && !!L.upper === !!game.upper && Math.abs(x - L.x) < 0.42) return 'pickLetter:' + L.id;
   }
   if (letterState.held > 0) for (const sl of SLOTS) if (sl.region === game.region && !!sl.upper === !!game.upper && Math.abs(x - sl.x) < 0.42) return 'postLetter:' + sl.id;
   // Things he carries.
@@ -3440,6 +3444,12 @@ function updateCh1(dt) {
     game.act = { kind: 'waterFlinch', phase: 'act', t: 0, backX: DIP9.x0 - 0.35 }; game.vx = 0; setClip(actions.WaterFlinch ? 'WaterFlinch' : 'Flinch', 0.1);
   }
   const cl = LETTERS[2];
+  if (letterState.c110 === 'slot' && du.state === 'bridge' && game.region === 5 && game.x > DIP9.x0 - 0.3) { letterState.c110 = 'slipping'; s.c110T = 0; Sound.tap(); }
+  if (letterState.c110 === 'slipping') {
+    s.c110T += dt; const t = Math.min(1, s.c110T / 0.7);
+    if (cl.obj) { cl.obj.position.set(cl.rest.x, cl.rest.y - (cl.rest.y - (DIP9.floor + DUCT9.h + 0.012)) * t * t, cl.rest.z + (-0.05 - cl.rest.z) * t); cl.obj.rotation.x = -t * 0.9; }
+    if (t >= 1) letterState.c110 = 'floor';
+  }
   if (cl.obj) cl.obj.visible = !/held|posted/.test(letterState.c110);
   // The slots' stamp lamps blink when a letter goes in.
   for (const sl of SLOTS) glow(sl.lamp, sl.stamped && game.clock - sl.stamped < 1.2 ? (Math.sin((game.clock - sl.stamped) * 20) > 0 ? 6 : 1) : 0.6);
