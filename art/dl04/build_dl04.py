@@ -347,6 +347,48 @@ def make_textures():
             d.polygon([(10, 470), (60, 500), (500, 60), (450, 30)], fill=(170, 40, 34, 240))
             d.polygon([(10, 60), (60, 30), (500, 470), (450, 500)], fill=(170, 40, 34, 240))
         img.filter(ImageFilter.GaussianBlur(1.2)).save(os.path.join(TEX, f'ring_{ring}.png'))
+    atrium_sign_sheet()
+
+
+def atrium_sign_sheet():
+    """The city's painted signs, one sheet of 4 x 2 cells: an UP arrow, ring A and ring B roundels, the lift,
+    the stair, an UP arrow in ink (for lamp boxes), the post's envelope, and WORKS B4 in ink."""
+    from PIL import Image, ImageDraw, ImageFilter
+    S = 256
+    img = Image.new('RGBA', (4 * S, 2 * S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    paint, ink = (214, 204, 176, 235), (24, 20, 16, 245)
+
+    def arrow(ox, oy, col):
+        d.polygon([(ox + 128, oy + 22), (ox + 222, oy + 120), (ox + 160, oy + 120), (ox + 160, oy + 234), (ox + 96, oy + 234),
+                   (ox + 96, oy + 120), (ox + 34, oy + 120)], fill=col)
+
+    def roundel(ox, oy, letter):
+        d.ellipse((ox + 14, oy + 14, ox + 242, oy + 242), outline=paint, width=18)
+        d.text((ox + 128, oy + 132), letter, font=_font(150), fill=paint, anchor='mm')
+        d.polygon([(ox + 128, oy + 2), (ox + 152, oy + 30), (ox + 104, oy + 30)], fill=paint)
+
+    arrow(0, 0, paint)
+    roundel(S, 0, 'A')
+    roundel(2 * S, 0, 'B')
+    ox = 3 * S                                          # the lift: a cage, up and down
+    d.rectangle((ox + 40, 18, ox + 216, 238), outline=paint, width=16)
+    d.polygon([(ox + 128, 42), (ox + 178, 110), (ox + 78, 110)], fill=paint)
+    d.polygon([(ox + 128, 214), (ox + 178, 146), (ox + 78, 146)], fill=paint)
+    oy = S                                              # the stair, climbing
+    pts = [(14, oy + 236)]
+    for k in range(5):
+        pts += [(14 + 46 * k, oy + 196 - 40 * k), (60 + 46 * k, oy + 196 - 40 * k)]
+    d.line(pts, fill=paint, width=22, joint='curve')
+    d.polygon([(200, oy + 16), (244, oy + 16), (244, oy + 60)], fill=paint)
+    arrow(S, S, ink)
+    ox = 2 * S                                          # the post: an envelope
+    d.rectangle((ox + 22, oy + 58, ox + 234, oy + 198), outline=paint, width=16)
+    d.line([(ox + 30, oy + 66), (ox + 128, oy + 140), (ox + 226, oy + 66)], fill=paint, width=16)
+    ox = 3 * S
+    d.text((ox + 128, oy + 84), 'WORKS', font=_font(58), fill=ink, anchor='mm')
+    d.text((ox + 128, oy + 176), 'B 4', font=_font(96), fill=ink, anchor='mm')
+    img.filter(ImageFilter.GaussianBlur(0.8)).save(os.path.join(TEX, 'atrium_signs.png'))
 
 
 # --------------------------------------------------------------------------
@@ -378,6 +420,8 @@ def dl04_materials(m):
     m['windowglow'] = emission_material('AtriumWindowGlow', (1.0, 0.6, 0.28), 2.5)
     m['hazelights'] = emission_material('AtriumHazeLights', (0.62, 0.76, 0.95), 1.5)
     m['mist'] = emission_material('AtriumMist', (0.32, 0.4, 0.48), 0.1)
+    m['atcloth'] = simple_material('AtriumCloth', (0.2, 0.13, 0.065), 0.9)        # awnings, washing, tarps
+    m['atwood'] = simple_material('AtriumWood', (0.085, 0.06, 0.04), 0.88)        # shutters, doors, crates
 
 
 def build_goods_hall(m, coll):
@@ -1518,10 +1562,50 @@ def _wall_lights(b, W, rnd):
         if z < _ceil_z(p.x, p.y) - 12:
             q = p + n * (_cave_d(p, 30.0, False) + 9.0) + Vector((0, 0, z))
             T = Vector((-n.y, n.x, 0.0))
-            for i in range(rnd.randint(1, 4)):
+            k = rnd.randint(1, 4)
+            for i in range(k):
                 if rnd.random() < 0.4 + _litp(z):
                     _face(b['glow'] if rnd.random() < 0.6 + 0.3 * _litp(z) else b['haze'], q + T * (i * 2.2), T, -n, 1.2, 1.5)
+                else:
+                    _face(b['dark'], q + T * (i * 2.2), T, -n, 1.2, 1.5)
+            _cliff_home(b, q, T, -n, k)
         u += rnd.uniform(3.0, 7.0)
+
+
+def _cliff_home(b, q, T, F, k):
+    """The front of a home dug into the rock round a row of k windows (the first at q): its wall standing
+    out of the cliff, a cornice, a ledge to walk along with a rail, a door, sills and a lamp nearer."""
+    lod, dr = _lod(q), _drnd(q, 19)
+    cq = q + T * ((k - 1) * 1.1)
+    w = (k - 1) * 2.2 + 2.6 + dr.uniform(0.0, 1.6)
+    cq = cq + T * dr.uniform(-0.3, 0.3)
+    mat = b['masonry'] if q.z > 50.0 or dr.random() < 0.25 else b['plaster']
+    h = 3.5 if dr.random() < 0.6 else 6.3
+    _cbox(mat, cq - F * 3.53 - UP * 1.6, T, F, w, 7.0, h, 0.2 if lod else 0.0, bottom=True)
+    rot = _rot(T, F)
+    _abox(b['cut'], cq + F * 0.12 + UP * (h - 1.52), (w + 0.4, 0.5, 0.26), rot=rot)
+    if h > 4.0:                                          # an upper floor: a shuttered row, a lamp-lit one now and then
+        for i in range(k):
+            lit = dr.random() < 0.25 + _litp(q.z)
+            _face(b['glow'] if lit else (b['wood'] if lod and dr.random() < 0.5 else b['dark']), q + T * (i * 2.2) + UP * 2.8, T, F, 1.0, 1.2)
+        _abox(b['cut'], cq + F * 0.06 + UP * 1.75, (w + 0.1, 0.22, 0.14), rot=rot)
+    r = dr.random()
+    if r < 0.3 and lod >= 1:                             # a pitched roof, or a tank, on top
+        _gable(b['rust'], mat, cq - F * 2.0 + UP * (h - 1.6), T, F, w, 3.6, 1.2, over=0.2)
+    elif r < 0.5:
+        _tank(b, cq - F * 1.6 + T * dr.uniform(-w / 4, w / 4) + UP * (h - 1.6), 0.6, 1.1, dr, lod)
+    _abox(b['cut'], cq + F * 0.55 - UP * 1.7, (w + 2.0, 1.3, 0.22), rot=rot)
+    if lod >= 1:
+        _abox(b['sheet'], cq + F * 1.15 - UP * 0.65, (w + 2.0, 0.05, 0.05), rot=rot)
+        for sx in (-1, 1):
+            _abox(b['cut'], cq + T * (sx * (w / 2)) + F * 0.4 - UP * 2.2, (0.3, 1.0, 0.8), rot=rot @ Matrix.Rotation(0.6, 4, 'X'))
+        for i in range(k):
+            _abox(b['cut'], q + T * (i * 2.2) + F * 0.08 - UP * 0.8, (1.4, 0.18, 0.1), rot=rot)
+    side = 1 if dr.random() < 0.5 else -1
+    dq = cq + T * (side * (w / 2 - 0.7)) + F * 0.02 - UP * 0.6
+    _face(b['dark'], dq, T, F, 0.9, 1.9)
+    if dr.random() < 0.3 + _litp(q.z):
+        _wall_lamp(b, dq + UP * 1.35 + T * (-side * 0.7), F, True)
 
 
 def _low_galleries(b, W, u0, u1, rnd):
@@ -1706,10 +1790,12 @@ def _viaduct(b, WL, WR, y, z, width, spans, rnd):
                 for k in range(9):
                     ang = math.pi * k / 8
                     d = T * math.cos(ang) + UP * math.sin(ang)
-                    cur = (mid + fo + UP * spring + d * r, mid + fo + UP * spring + d * (r + 0.9))
+                    fo2 = fo + F * (s * 0.18)
+                    cur = (mid + fo2 + UP * spring + d * r, mid + fo2 + UP * spring + d * (r + 1.0))
                     if prev:
                         _quad(b['cut'], [prev[0], cur[0], cur[1], prev[1]], F * s)
-                        _quad(b['cut'], [prev[0] - fo * 0.08, cur[0] - fo * 0.08, cur[0], prev[0]], -d)
+                        _quad(b['cut'], [prev[0] - F * (s * 0.32), cur[0] - F * (s * 0.32), cur[0], prev[0]], -d)
+                        _quad(b['cut'], [prev[1], cur[1], cur[1] - F * (s * 0.32), prev[1] - F * (s * 0.32)], d)
                     prev = cur
                 _abox(b['cut'], mid + fo + UP * (spring + r + 0.5), (0.8, 0.3, 1.1), rot=rot)
     for s in (-1, 1):
@@ -1773,15 +1859,13 @@ def _catwalk(b, WL, WR, y, z, rnd):
             _abox(b['glow'], p + F * 0.7 + Vector((0, 0, 1.4)), (0.35, 0.35, 0.35), rot=_rot(T, F))
         x += 10.0
     lod = _lod((a + e) / 2)
-    x = 3.0
-    while x < d.length - 2:                            # hangers up into the dark, a lamp under every other
+    x = 5.0
+    while x < d.length - 2:                            # work lamps hung under its girder
         p = a.lerp(e, x / d.length)
-        for s in (-1, 1):
-            q = p + F * (s * 0.72)
-            _wire(b['cable'], [q, Vector((q.x, q.y, _ceil_z(q.x, q.y) + 1.0))], 0.035)
-        if lod >= 1 and int(x / 7.0) % 2 == 0:
-            _hang_lamp(b, p - Vector((0, 0, 1.5)), 0.5, warm=_drnd(p).random() < 0.5)
-        x += 7.0
+        if lod >= 1:
+            dr = _drnd(p)
+            _hang_lamp(b, p - Vector((0, 0, 1.5)), 0.5, warm=dr.random() < 0.4, lit=dr.random() < 0.6)
+        x += 14.0
     if lod >= 1:
         for s in (-1, 1):
             _abox(b['sheet'], (a + e) / 2 + F * (s * 0.68) + Vector((0, 0, 0.5)), (d.length, 0.04, 0.04), rot=_rot(T, F))
@@ -2136,7 +2220,7 @@ def _abox(bm, center, size, rot=None):
             _quad(bm, pts, (R3 @ n).normalized())
 
 
-def _cbox(bm, c, T, F, w, d, h, ch, top=True, front=True):
+def _cbox(bm, c, T, F, w, d, h, ch, top=True, front=True, bottom=False):
     """A block with its four upright edges chamfered, c at the middle of its foot: the corners catch the
     light. front=False leaves the face toward F open for a _facade."""
     hw, hd = w / 2, d / 2
@@ -2151,6 +2235,8 @@ def _cbox(bm, c, T, F, w, d, h, ch, top=True, front=True):
         _quad(bm, [a, e, e + up, a + up], (e - a).cross(UP).normalized())
     if top:
         _quad(bm, [p + up for p in P], UP)
+    if bottom:
+        _quad(bm, P[::-1], -UP)
 
 
 def _octa(bm, c, r):
@@ -2163,7 +2249,7 @@ def _octa(bm, c, r):
         bm.faces.new((e, a, bot))
 
 
-def _hang_lamp(b, top, drop, warm=True, shade=0.22):
+def _hang_lamp(b, top, drop, warm=True, shade=0.22, lit=True):
     """A lamp hung on a drop wire: a six-sided shade open below (left whole, seen from under) and its bulb."""
     p = top - UP * drop
     _wire(b['cable'], [top, p + UP * 0.2], 0.012)
@@ -2173,7 +2259,8 @@ def _hang_lamp(b, top, drop, warm=True, shade=0.22):
         for k in range(6):
             a, e = ring[k], ring[(k + 1) % 6]
             _quad(b['sheet'], [p + UP * 0.2 + a * rt, p + UP * 0.2 + e * rt, p + e * rb, p + a * rb], (a + e).normalized(), cull=False)
-    _octa(b['lamp'] if warm else b['haze'], p - UP * 0.05, 0.09)
+    if lit:
+        _octa(b['glow'] if warm else b['haze'], p - UP * 0.05, 0.09)
 
 
 def _gable(roof, wall, c, T, F, w, d, rise, over=0.3):
@@ -2367,7 +2454,7 @@ def _festoon(b, a, e, sag, n, rnd_lit, warm=True):
     _wire(b['cable'], pts, 0.012)
     for i in range(1, len(pts) - 1, 2):
         if rnd_lit():
-            _octa(b['lamp'] if warm else b['haze'], pts[i] - UP * 0.12, 0.07)
+            _octa(b['glow'] if warm else b['haze'], pts[i] - UP * 0.12, 0.07)
 
 
 def _sign(bs, c, T, F, size, cell, cols=4, rows=2):
@@ -2423,6 +2510,22 @@ def _stair_run(b, a, e, F, width=1.1, rise=0.36):
         _abox(b['sheet'], p + UP * 0.5, (0.05, 0.05, 1.0))
 
 
+def _tier_stair(b, W, u, lo, hi, run=17.0):
+    """A steel stair up the rock from one terrace to the next, along the wall: its foot signed with the
+    ring it climbs to, an arrow painted big on the rock above."""
+    la, _, Ta, Fa = _wledge(W, u, lo)
+    le, _, Te, Fe = _wledge(W, u + run, hi)
+    a, e = la - Fa * 1.4, le - Fe * 0.4
+    _stair_run(b, a, e, Fa)
+    d = Vector((e.x - a.x, e.y - a.y, 0)).normalized()
+    _abox(b['sheet'], e + d * 0.8 - UP * 0.06, (1.6, 1.4, 0.12), rot=_rot(d, Vector((-d.y, d.x, 0))))
+    post = a - d * 1.0
+    _abox(b['sheet'], post + UP * 1.2, (0.08, 0.08, 2.4))
+    _signboard(b, post + UP * 2.0 + Fa * 0.06, Ta, Fa, (0.7, 0.7), 1 if hi == 'A' else 2)
+    _signboard(b, post + UP * 1.2 + Fa * 0.06, Ta, Fa, (0.55, 0.55), 4)
+    _sign(b['signs'], _wface(W, u + 4.0, _tier(lo)[1] + 7.5, 0.35), Ta, Fa, (2.6, 2.6), 0)
+
+
 def _haze_curtain(b, WL, WR, y, z0, z1):
     """A layer of haze across the chasm at a depth: a sheet from wall to wall (its ends buried in the rock),
     its top along the edge of the tier behind it so the line it draws is the tier's own."""
@@ -2476,8 +2579,10 @@ def build_atrium(m, coll):
     _obj('G4BalconyWalls', bm, [m['wall']], coll)
 
     rnd = random.Random(470)
-    keys = ('plaster', 'masonry', 'sheet', 'rust', 'dark', 'barricade', 'cut', 'cable', 'lamp', 'red', 'glow', 'haze', 'mist', 'card')
+    keys = ('plaster', 'masonry', 'sheet', 'rust', 'dark', 'barricade', 'cut', 'cable', 'lamp', 'red', 'glow', 'haze', 'mist', 'card',
+            'cloth', 'wood', 'signs')
     b = {k: bmesh.new() for k in keys}
+    b['signs'].loops.layers.uv.new('UVMap')
     WL = _wall(CHASM_LEFT, -1, 0.0)
     WR = _wall(CHASM_RIGHT, 1, 20.0)
 
@@ -2577,6 +2682,39 @@ def build_atrium(m, coll):
     add_box(b['red'], Vector((70.6, 10.4, 2.3)), (0.28, 0.28, 0.3))
     _barricade(b, Vector((69.0, 12.6, 0.0)), Vector((0.25, -0.97, 0)), Vector((0.97, 0.25, 0)), 3.2, rnd)
 
+    # The dressing that ties the levels together (its own random stream: the layout above never moves).
+    xr = random.Random(4711)
+    for W, u, lo, hi in ((WL, 50.0, 'C', 'B'), (WL, 92.0, 'B', 'A'), (WR, 62.0, 'C', 'B'), (WR, 96.0, 'B', 'A')):
+        _tier_stair(b, W, u, lo, hi)
+    # Cables strung across the chasm, lamps hung from them (most still burning), a string of bulbs over the
+    # works, and a pipe bridge slung under its cable.
+    for ua, ub, z, sag, n in ((20.0, 25.0, 5.5, 3.0, 3), (66.0, 74.0, 30.0, 6.0, 4), (130.0, 128.0, 34.0, 6.0, 4)):
+        a, e = _wface(WL, ua, z, 0.3), _wface(WR, ub, z, 0.3)
+        pts = _sag(a, e, sag, 20)
+        _wire(b['cable'], pts, 0.04)
+        for k in range(n):
+            q = pts[int((k + 0.5) / n * 19) + 1]
+            _hang_lamp(b, q, xr.uniform(0.6, 1.6), warm=xr.random() < 0.8, lit=xr.random() < 0.35 + 2.0 * _litp(q.z))
+    a, e = _wface(WL, 36.0, 17.5, 0.3), _wface(WR, 44.0, 17.5, 0.3)
+    _festoon(b, a, e, 3.0, 8, lambda: xr.random() < 0.6)
+    a, e = _wface(WL, _wat_y(WL, 98.0), 4.0, 0.5), _wface(WR, _wat_y(WR, 102.0), 4.0, 0.5)
+    top_a, top_e = a + UP * 7.0, e + UP * 7.0
+    hang = _sag(top_a, top_e, 4.0, 16)
+    _wire(b['cable'], hang, 0.05)
+    for off, rr, mat in ((0.0, 0.32, 'rust'), (0.75, 0.22, 'sheet')):
+        side = Vector((-(e - a).y, (e - a).x, 0)).normalized() * off
+        line = _sag(a + side, e + side, 1.2, 16)
+        _pipe(b[mat], line, rr, seg=8)
+        for k in range(2, 15, 3):
+            add_cyl(b[mat], line[k] - (line[k + 1] - line[k]).normalized() * 0.08, line[k] + (line[k + 1] - line[k]).normalized() * 0.08, rr + 0.08, seg=8)
+    for k in range(2, 15, 2):
+        _wire(b['cable'], [hang[k], _sag(a, e, 1.2, 16)[k] + UP * 0.42], 0.02)
+    # Haze at depth: behind the near viaduct (its top hidden behind the parapet) and before the upper city's
+    # first and last tiers (their tops along the tiers' own edges).
+    _haze_curtain(b, WL, WR, VIADUCTS[0][0] + 6.0, CHASM_FLOOR, VIADUCTS[0][1] + 0.2)
+    for y0, top, _ in (MESAS[0], MESAS[2]):
+        _haze_curtain(b, WL, WR, y0 - 6.0, CHASM_FLOOR, top - 1.0)
+
     # The fans: a big vent in the left cliff below ring B, and one in the roof over the chasm. Their blades
     # are their own meshes, spinning about their local Z (the game's local Y).
     frame, fans = b['sheet'], []
@@ -2605,11 +2743,13 @@ def build_atrium(m, coll):
 
     mats = {'plaster': m['plaster'], 'masonry': m['masonry'], 'sheet': m['sheet'], 'rust': m['rust'], 'dark': m['dark'],
             'barricade': m['barricade'], 'cut': m['cut'], 'cable': m['rubber'], 'lamp': m['ringlamp'], 'red': m['ringred'],
-            'glow': m['windowglow'], 'haze': m['hazelights'], 'mist': m['mist'], 'card': m['stone']}
+            'glow': m['windowglow'], 'haze': m['hazelights'], 'mist': m['mist'], 'card': m['stone'],
+            'cloth': m['atcloth'], 'wood': m['atwood'],
+            'signs': _image_material('RingLetterSigns', os.path.join(TEX, 'atrium_signs.png'), rough=0.85, alpha=True)}
     names = {'plaster': 'AtriumHomes', 'masonry': 'AtriumMasonry', 'sheet': 'AtriumSheet', 'rust': 'AtriumRust',
              'dark': 'AtriumOpenings', 'barricade': 'AtriumBarricades', 'cut': 'AtriumCutStone', 'cable': 'AtriumCables',
              'lamp': 'AtriumLamps', 'red': 'AtriumRedLamps', 'glow': 'AtriumWindowGlow', 'haze': 'AtriumHazeLights',
-             'mist': 'AtriumMist', 'card': 'AtriumSkyline'}
+             'mist': 'AtriumMist', 'card': 'AtriumSkyline', 'cloth': 'AtriumCloth', 'wood': 'AtriumWood', 'signs': 'AtriumSigns'}
     for k in keys:
         if len(b[k].verts):                       # round things share their normals; boxes stay crisp
             _cave_obj(names[k], b[k], [mats[k]], coll, smooth=k in ('sheet', 'rust', 'cable', 'masonry'), sharp=150 if k == 'cable' else 50)
