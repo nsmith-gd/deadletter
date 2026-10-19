@@ -73,9 +73,9 @@ TREE_Z = (0.33, 0.85)                   # the carved tree, under the line: foot,
 PAINTED_WINDOW = (91.72, 1.36, 0.8, 0.7)   # the window painted over the bed: x, z, width, height
 DESK_X, DESK_HALF, DESK_TOP = 94.7, 0.55, 0.55
 DESK_Y = 0.62                         # the desk's origin y (centre of its footprint, which runs 0.29 to 0.95)
-DESK_TILT = -7.0                      # it leans back against the wall over the terminal (degrees about x)
-DESK_SIDE_TILT = 4.0                  # and is down on its broken right side (degrees about y)
-DESK_HUTCH = 1.86                     # its hutch: tall enough to hide the marks and the tree
+DESK_TILT = -9.0                      # it leans back against the terminal (degrees about x)
+DESK_SIDE_TILT = 6.0                  # and is down on its broken right side (degrees about y)
+DESK_HUTCH = 1.22                     # its hutch's top (left end); it hides the marks and the tree
 DESK_HANDLE = (-0.585, 0.44)          # its red grip bar, on its left end: x from the origin, height
 DESK_DRAG = 93.6                      # where it ends up (left end 93.05, right end 94.15)
 BACK_DOOR = (95.6, 1.3, 0.40)
@@ -1256,7 +1256,10 @@ def build_tideline(m, coll):
     n = _project_decal(verts, faces, uvs, bvh_of(['D5Homes', 'D5Facade114']), LANE_C[0], DOOR114[0], 0.0, top)
     cw, cww, cz0, _ = C108_WIN
     n += _project_decal(verts, faces, uvs, bvh_of(['D5Home108Room']), cw - cww / 2, cw + cww / 2, cz0, top)
-    n += _project_decal(verts, faces, uvs, bvh_of(['D5Home114']), DOOR114[0], BACK_DOOR[0] + 0.07, 0.0, top)
+    home = bvh_of(['D5Home114'])                                             # D5Marks carries the stain over its own patch
+    n += _project_decal(verts, faces, uvs, home, DOOR114[0], MARKS[0], 0.0, top)
+    n += _project_decal(verts, faces, uvs, home, MARKS[0], MARKS[1], 0.0, MARKS[2])
+    n += _project_decal(verts, faces, uvs, home, MARKS[1], BACK_DOOR[0] + 0.07, 0.0, top)
     me = bpy.data.meshes.new('Tideline')
     me.from_pydata(verts, [], faces)
     uv = me.uv_layers.new(name='UVMap')
@@ -1592,34 +1595,22 @@ def build_desk(m, coll):
     for sx in (-1, 1):
         add_box(bm, (0.12 + sx * 0.185, -dd / 2 + 0.02, top - 0.095), (0.012, 0.24, 0.06), mat=1)
     add_sphere(bm, (0.12, -dd / 2 - 0.115, top - 0.085), 0.016, seg=10, mat=1)
-    # The hutch: painted sides and a cap, two shelves, a cork board with drawings pinned to it. It stands tall
-    # enough to hide the marks and the tree on the wall behind it until it is dragged clear.
+    # The hutch: painted sides and a cap, a small shelf, a cork board with drawings pinned to it.
     for sx in (-1, 1):
         add_box(bm, (sx * (h - 0.01), dd / 2 - 0.08, (top + hut) / 2), (0.02, 0.16, hut - top))
     add_box(bm, (0, dd / 2 - 0.08, hut - 0.01), (2 * h, 0.17, 0.02))
-    for z in (0.9, 1.4):
-        add_box(bm, (0, dd / 2 - 0.08, z), (2 * h - 0.04, 0.15, 0.018))
+    add_box(bm, (0, dd / 2 - 0.08, 0.9), (2 * h - 0.04, 0.15, 0.018))
     add_box(bm, (0, dd / 2 - 0.006, (top + hut) / 2), (2 * h - 0.02, 0.012, hut - top), mat=4)
     rnd = random.Random(5050)
-    for k, (x, z) in enumerate(((-0.33, 0.74), (-0.05, 0.72), (0.3, 0.76), (-0.2, 1.04), (0.22, 1.06), (-0.3, 1.62), (0.2, 1.66))):
+    for k, (x, z) in enumerate(((-0.33, 0.74), (-0.05, 0.72), (0.3, 0.76), (-0.2, 1.04), (0.22, 1.06))):
         add_box(bm, (x, dd / 2 - 0.014, z), (0.15, 0.003, 0.11), mat=3, rot=_ry(rnd.uniform(-0.2, 0.2)))
-    bx = -h + 0.06                                                            # books on the upper shelf, slid over in the fall
-    for k in range(7):
-        bw, bh = rnd.uniform(0.022, 0.04), rnd.uniform(0.15, 0.22)
-        lean = 0.0 if k < 5 else -0.5
-        add_box(bm, (bx + bw / 2, dd / 2 - 0.085, 1.409 + bh / 2 * math.cos(lean)), (bw, 0.12, bh), mat=k % 2 * 3 + (1 if k % 3 == 0 else 0),
-                rot=_ry(lean))
-        bx += bw + 0.004 + (0.06 if k == 4 else 0)
     # Down on its broken right side, and tipped back until the hutch rests against the terminal.
     foot = Vector((-h + 0.035, 0, 0))
     bmesh.ops.transform(bm, matrix=Matrix.Translation(foot) @ _ry(side) @ Matrix.Translation(-foot), verts=bm.verts)
     pivot = Vector((0, dd / 2, 0))
     bmesh.ops.transform(bm, matrix=Matrix.Translation(pivot) @ _rx(math.radians(DESK_TILT)) @ Matrix.Translation(-pivot), verts=bm.verts)
-    # It rests against the terminal's conduit (front y 0.964) above the terminal.
     ymax = max(v.co.y for v in bm.verts)
-    bmesh.ops.translate(bm, vec=(0, (BACK_Y - 0.02 - 0.016 - 0.004 - DESK_Y) - ymax, -min(v.co.z for v in bm.verts)), verts=bm.verts)
-    clear = min(TERM_FRONT - 0.045 - (DESK_Y + v.co.y) for v in bm.verts if TERM_HOUSING[2] - 0.02 < v.co.z < TERM_HOUSING[3] + 0.03)
-    print(f'ChildDesk: clearance in front of the terminal and its hood {clear:.3f}')
+    bmesh.ops.translate(bm, vec=(0, (TERM_FRONT - 0.004 - DESK_Y) - ymax, -min(v.co.z for v in bm.verts)), verts=bm.verts)
     # The red grip bar on its left end, level, where a claw can take it.
     hx, hz = DESK_HANDLE
     add_cyl(bm, (hx, -0.11, hz), (hx, 0.11, hz), 0.014, seg=10, mat=2)
