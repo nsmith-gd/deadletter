@@ -137,8 +137,9 @@ def make_chalk_flowers(path):
     fallen at its foot, and a small heart. Chalk on transparent."""
     from PIL import Image, ImageDraw, ImageFilter
     rnd = random.Random(44)
-    w, h = 320, 480
-    img = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    w, h = 192, 288
+    W, H = 320, 480                                     # drawn at this size
+    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     chalk = (226, 222, 208, 235)
     pink = (222, 176, 178, 225)
@@ -173,15 +174,16 @@ def make_chalk_flowers(path):
         d.ellipse((x - 9, y - 6, x + 9, y + 6), outline=pink, width=4)
     stroke([(250, 60), (238, 46), (226, 56), (250, 84), (274, 56), (262, 46), (250, 60)], pink, 4, jitter=1.2)
     img = img.filter(ImageFilter.GaussianBlur(0.9))
-    # Chalk grain: break the strokes up.
+    # Chalk grain: break the strokes up (in a few steps, so the PNG stays small), then down to size.
     px = img.load()
-    for y in range(h):
-        for x in range(w):
+    for y in range(H):
+        for x in range(W):
             r, g, b, a = px[x, y]
             if a:
-                px[x, y] = (r, g, b, int(a * (0.55 + 0.45 * rnd.random()) * (0.75 if rnd.random() < 0.18 else 1.0)))
+                px[x, y] = (r, g, b, int(a * (0.6, 0.8, 1.0, 1.0)[rnd.randrange(4)]))
+    img = img.resize((w, h), Image.LANCZOS)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    img.save(path)
+    img.save(path, optimize=True)
 
 
 def make_bay_pictogram(path):
@@ -219,33 +221,33 @@ def make_dust_outline(path, tris, bounds):
     moved. `tris` are its triangles projected to the floor (x, y), `bounds` is (x0, y0, x1, y1)."""
     from PIL import Image, ImageDraw, ImageFilter
     rnd = random.Random(12)
-    w, h = 512, 320
+    w, h = 256, 160
     x0, y0, x1, y1 = bounds
     to_px = lambda x, y: ((x - x0) / (x1 - x0) * w, (1 - (y - y0) / (y1 - y0)) * h)  # noqa: E731
     clean = Image.new('L', (w, h), 0)
     dc = ImageDraw.Draw(clean)
     for t in tris:
         dc.polygon([to_px(*p) for p in t], fill=255)
-    clean = clean.filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.GaussianBlur(4))
+    clean = clean.filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.GaussianBlur(2))
     # Dust: soft-edged patch, mottled, thicker toward the rack.
     dust = Image.new('L', (w, h), 0)
     dd = ImageDraw.Draw(dust)
     for _ in range(260):
         cx, cy = rnd.uniform(0.05, 0.95) * w, rnd.uniform(0.05, 0.95) * h
-        r = rnd.uniform(10, 42)
+        r = rnd.uniform(5, 21)
         dd.ellipse((cx - r, cy - r * 0.7, cx + r, cy + r * 0.7), fill=rnd.randint(60, 150))
-    dust = dust.filter(ImageFilter.GaussianBlur(10))
+    dust = dust.filter(ImageFilter.GaussianBlur(5))
     px, pc = dust.load(), clean.load()
-    out = Image.new('RGBA', (w, h))
-    po = out.load()
+    alpha = Image.new('L', (w, h))
+    pa = alpha.load()
     for y in range(h):
         for x in range(w):
             ex = min(x, w - 1 - x) / (0.18 * w)
             ey = min(y, h - 1 - y) / (0.25 * h)
             edge = max(0.0, min(1.0, ex)) * max(0.0, min(1.0, ey))
-            a = (0.35 + px[x, y] / 255 * 0.6) * edge * (1 - pc[x, y] / 255) * (0.85 + 0.15 * rnd.random())
-            g = 120 + rnd.randint(-10, 10)
-            po[x, y] = (g, g - 4, g - 12, int(255 * min(1.0, a)))
+            a = (0.35 + px[x, y] / 255 * 0.6) * edge * (1 - pc[x, y] / 255)
+            pa[x, y] = int(255 * min(1.0, a)) & 0xFC              # a few levels fewer: smaller PNG
+    out = Image.merge('LA', (Image.new('L', (w, h), 118), alpha))
     os.makedirs(os.path.dirname(path), exist_ok=True)
     out.save(path)
 
@@ -256,10 +258,10 @@ def make_dust_outline(path, tris, bounds):
 
 def racks_materials(m):
     # The bay is the one clean, pale, cold thing down here: enamel on steel.
-    m['bayenamel'] = worn_material('BayEnamel', base=(0.36, 0.39, 0.39), dirt=(0.2, 0.21, 0.2),
-                                   chip=(0.06, 0.062, 0.06), rough=0.42, chip_rough=0.6, metallic=0.1,
-                                   grime_scale=6, chip_scale=40, chip_amount=0.78, streaks=0.25,
-                                   dust=(0.3, 0.31, 0.3), dust_amount=0.15)
+    m['bayenamel'] = worn_material('BayEnamel', base=(0.36, 0.4, 0.41), dirt=(0.29, 0.31, 0.31),
+                                   chip=(0.2, 0.21, 0.2), rough=0.38, chip_rough=0.6, metallic=0.1,
+                                   grime_scale=2.5, chip_scale=60, chip_amount=0.9, edge_wear=False,
+                                   streaks=0.15, dust=(0.33, 0.34, 0.33), dust_amount=0.1)
     m['baylight'] = emission_material('BayLight', (0.72, 0.88, 1.0), 2.0)       # always on: the bay is lit
     m['baylamp'] = [emission_material(f'BayLamp{i}', (0.72, 0.92, 1.0), 0.0) for i in range(3)]
     m['fallenlamp'] = emission_material('FallenLamp', (0.85, 0.30, 0.08), 0.0)
@@ -340,9 +342,11 @@ def build_hall(m, coll):
             post = Vector((x, y + 0.36, 0))
             add_box(racks, post + Vector((0, 0, 0.45)), (0.07, 0.07, 0.84))
             add_box(racks, post + Vector((0, 0, 0.88)), (0.1, 0.1, 0.04))
+            seg = 8 if r == 0 else 5                                                # the far rows are distant
             for z in (0.43, 0.51):
-                add_cyl(racks, post + Vector((0, 0, z)), Vector((x, y + 0.2, z + 0.06)), 0.01, seg=8)
-                add_cyl(contacts, Vector((x, y + 0.2, z + 0.06)), Vector((x, y + 0.17, z + 0.06)), 0.014, 0.011, seg=10)
+                add_cyl(racks, post + Vector((0, 0, z)), Vector((x, y + 0.2, z + 0.06)), 0.01, seg=seg)
+                add_cyl(contacts, Vector((x, y + 0.2, z + 0.06)), Vector((x, y + 0.17, z + 0.06)), 0.014, 0.011,
+                        seg=seg + 2)
             add_box(tags, post + Vector((0, -0.036, 0.72)), (0.05, 0.004, 0.03))
         if r > 0:
             add_box(fixtures, ((xa + RACKS_X1) / 2, y, 2.62), (RACKS_X1 - xa, 0.12, 0.06))
@@ -475,6 +479,9 @@ def _courier_object(name, bm, mats, m, coll, xform, ratio=0.09):
     dec = ob.modifiers.new('lod', 'DECIMATE')
     dec.ratio = ratio
     d17.bake_modifiers(ob)
+    ob.data.name = name
+    while ob.data.uv_layers:                       # its paint is procedural: no UVs, a quarter less to ship
+        ob.data.uv_layers.remove(ob.data.uv_layers[0])
     ob.data.polygons.foreach_set('use_smooth', [True] * len(ob.data.polygons))
     ob.data.set_sharp_from_angle(angle=math.radians(40))
     return ob
@@ -502,7 +509,7 @@ LYING_POSE = dict(
 # Seated in the cradle: low on its folded legs, head bowed, claws in its lap.
 SEATED_POSE = dict(
     body=SEATED_BODY, body_rot=SEATED_ROT, head=(22.0, 5.0, 0.0),
-    antenna=[(-16.0, 0.0), (-20.0, 0.0), (-24.0, 0.0)],
+    antenna=[(-40.0, 6.0), (-46.0, 8.0), (-40.0, 8.0)],
     feet={'L': ((0.01, -0.05, 0.0), (0.0, 0.0, 0.0)), 'R': ((-0.01, -0.03, 0.0), (0.0, 0.0, 4.0))},
     hand_rot={'L': (-40.0, 10.0, 30.0), 'R': (-40.0, -10.0, -30.0)},
     claws={'L': 10.0, 'R': 2.0}, elbows={'L': 0.5, 'R': 0.5})
@@ -704,7 +711,7 @@ def build_bay(m, coll):
         add_box(bm, ((ax + fx[0 if s < 0 else 1]) / 2 + s * 0.04, PIVOT_Y, pz), (abs(fx[0 if s < 0 else 1] - ax) - 0.06, 0.09, 0.12))
         add_cyl(bm, (ax + s * 0.08, PIVOT_Y, pz), (ax + s * 0.2, PIVOT_Y, pz), 0.07, seg=24)
     for i in range(2):                                          # backboard: two enamel panels
-        rounded_box((0.98, 0.05, 0.96), (CRADLE_X, FRAME_Y, 0.5 + i * 0.98), p=10, cuts=6,
+        rounded_box((0.98, 0.05, 0.96), (CRADLE_X, FRAME_Y, 0.5 + i * 0.98), p=10, cuts=3,
                     dents=((0.002, 3.0),), seed=60 + i, bm=bm, mat=0)
     _obj('BayFrame', bm, [m['bayenamel']], coll)
     bm = bmesh.new()
