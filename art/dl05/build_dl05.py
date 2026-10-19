@@ -952,35 +952,34 @@ def cbox(bm, center, size, b=0.012, mat=0, rot=None):
         bm.faces.new(f).material_index = mat
 
 
+def _wall_pieces(a0, a1, z0, z1, holes):
+    """Split a wall's face (a0..a1 along it, z0..z1) round rectangular holes (ha0, ha1, hz0, hz1), which may sit one
+    over another: column by column, the solid runs between the holes. Yields (a0, a1, z0, z1) pieces."""
+    cuts = sorted({a0, a1, *[h[0] for h in holes], *[h[1] for h in holes]})
+    cuts = [c for c in cuts if a0 <= c <= a1]
+    for ca, cb in zip(cuts, cuts[1:]):
+        if cb - ca < 1e-4:
+            continue
+        zs = z0
+        for ha0, ha1, hz0, hz1 in sorted((h for h in holes if h[0] <= ca + 1e-6 and h[1] >= cb - 1e-6), key=lambda h: h[2]):
+            if hz0 > zs + 1e-4:
+                yield (ca, cb, zs, min(hz0, z1))
+            zs = max(zs, hz1)
+        if z1 > zs + 1e-4:
+            yield (ca, cb, zs, z1)
+
+
 def wall_x(bm, x0, x1, y0, y1, z0, z1, holes=(), mat=0, b=0.0):
     """A wall running along x (thickness y0..y1) with rectangular holes (hx0, hx1, hz0, hz1): reveals come free."""
-    put = (lambda c, s: cbox(bm, c, s, b, mat)) if b else (lambda c, s: add_box(bm, c, s, mat=mat))
-    xs = x0
-    for hx0, hx1, hz0, hz1 in sorted(holes):
-        if hx0 > xs + 1e-4:
-            put(((xs + hx0) / 2, (y0 + y1) / 2, (z0 + z1) / 2), (hx0 - xs, y1 - y0, z1 - z0))
-        if hz0 > z0 + 1e-4:
-            put(((hx0 + hx1) / 2, (y0 + y1) / 2, (z0 + hz0) / 2), (hx1 - hx0, y1 - y0, hz0 - z0))
-        if z1 > hz1 + 1e-4:
-            put(((hx0 + hx1) / 2, (y0 + y1) / 2, (hz1 + z1) / 2), (hx1 - hx0, y1 - y0, z1 - hz1))
-        xs = hx1
-    if x1 > xs + 1e-4:
-        put(((xs + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), (x1 - xs, y1 - y0, z1 - z0))
+    for xa, xb, za, zb in _wall_pieces(x0, x1, z0, z1, holes):
+        c, sz = ((xa + xb) / 2, (y0 + y1) / 2, (za + zb) / 2), (xb - xa, y1 - y0, zb - za)
+        cbox(bm, c, sz, b, mat) if b else add_box(bm, c, sz, mat=mat)
 
 
 def wall_y(bm, y0, y1, x0, x1, z0, z1, holes=(), mat=0):
     """A wall across the lane (running along y, thickness x0..x1) with holes (hy0, hy1, hz0, hz1)."""
-    ys = y0
-    for hy0, hy1, hz0, hz1 in sorted(holes):
-        if hy0 > ys + 1e-4:
-            add_box(bm, ((x0 + x1) / 2, (ys + hy0) / 2, (z0 + z1) / 2), (x1 - x0, hy0 - ys, z1 - z0), mat=mat)
-        if hz0 > z0 + 1e-4:
-            add_box(bm, ((x0 + x1) / 2, (hy0 + hy1) / 2, (z0 + hz0) / 2), (x1 - x0, hy1 - hy0, hz0 - z0), mat=mat)
-        if z1 > hz1 + 1e-4:
-            add_box(bm, ((x0 + x1) / 2, (hy0 + hy1) / 2, (hz1 + z1) / 2), (x1 - x0, hy1 - hy0, z1 - hz1), mat=mat)
-        ys = hy1
-    if y1 > ys + 1e-4:
-        add_box(bm, ((x0 + x1) / 2, (ys + y1) / 2, (z0 + z1) / 2), (x1 - x0, y1 - ys, z1 - z0), mat=mat)
+    for ya, yb, za, zb in _wall_pieces(y0, y1, z0, z1, holes):
+        add_box(bm, ((x0 + x1) / 2, (ya + yb) / 2, (za + zb) / 2), (x1 - x0, yb - ya, zb - za), mat=mat)
 
 
 def prism(bm, poly, axis, a0, a1, mat=0):
@@ -1535,9 +1534,11 @@ def build_street(m, coll):
             cbox(R.bm, ((xs + g0) / 2, (yk0 + yk1) / 2, 0.055), (g0 - xs, yk1 - yk0, 0.11), 0.01, R('concrete'))
             cbox(R.bm, ((xs + g0) / 2, (yk0 + yk1) / 2, 0.135), (g0 - xs + 0.02, yk1 - yk0 + 0.04, 0.05), 0.014, R('concrete'))
         xs = g1
-    add_box(R.bm, ((l0 + l1) / 2, -1.08, -1.4), (l1 - l0, 0.18, 2.8), mat=R('concrete'))      # the drop, coursed
+    lf = WORLD_END
+    cbox(R.bm, ((l1 + lf) / 2, (yk0 + yk1) / 2, 0.06), (lf - l1, yk1 - yk0, 0.12), 0.01, R('concrete'))
+    add_box(R.bm, ((l0 + lf) / 2, -1.08, -1.4), (lf - l0, 0.18, 2.8), mat=R('concrete'))      # the drop, coursed
     for k in range(1, 6):
-        add_box(R.bm, ((l0 + l1) / 2, -1.172, -0.46 * k), (l1 - l0, 0.006, 0.018), mat=R('concrete'))
+        add_box(R.bm, ((l0 + lf) / 2, -1.172, -0.46 * k), (lf - l0, 0.006, 0.018), mat=R('concrete'))
     for x in (81.6, 84.2, 85.4, 89.9, 91.5, 93.4):                            # weep holes
         add_cyl(R.bm, (x, -1.16, -0.32), (x, -1.24, -0.34), 0.04, seg=8, mat=R('iron'))
     for g0, g1 in (gaps[0], gaps[2]):                                          # steps down to the lower row's doors
@@ -1554,7 +1555,8 @@ def build_street(m, coll):
     for x, h in ((DIP[0] - 0.05, 0.12), (DIP[1] + 0.08, 0.07)):                # the flood's break in the kerb
         cbox(R.bm, (x, (yk0 + yk1) / 2, h / 2), (0.16, yk1 - yk0, h), 0.02, R('concrete'), rot=_ry(0.1 if x < 87 else -0.15))
     # The lower row: slate roofs a storey down, their ridges along the street, chimney stacks, a roof light or two.
-    for k, (x0, x1) in enumerate(((79.6, 82.0), (82.75, 85.4), (85.5, 88.5), (89.25, 91.7), (91.8, 94.6))):
+    for k, (x0, x1) in enumerate(((79.6, 82.0), (82.75, 85.4), (85.5, 88.5), (89.25, 91.7), (91.8, 94.6), (94.7, 97.9), (98.0, 101.2),
+                                  (101.3, 104.1), (104.2, 107.6), (107.7, 111.9))):
         ye, ze, yr, zr, yb = -2.0, -0.25, -3.1, 0.32, -4.2
         ang = math.atan2(zr - ze, ye - yr)
         for (ya, za, yb_, zb_) in ((ye, ze, yr, zr), (yr, zr, yb, ze)):
@@ -2263,13 +2265,12 @@ def build_home114(m, coll):
     cbox(FA.bm, ((X0 + X1) / 2, fy0 + 0.07, 0.15), (X1 - X0 + 0.04, 0.2, 0.3), 0.015, FA('concrete'))          # plinth
     cbox(FA.bm, ((X0 + XM) / 2, fy0 + 0.06, HOME_CEIL + 0.16), (XM - X0 + 0.06, 0.22, 0.12), 0.02, FA('concrete'))   # string course
     cbox(FA.bm, ((X0 + XM) / 2, fy0 + 0.05, UPPER[1] + 0.04), (XM - X0 + 0.06, 0.2, 0.08), 0.015, FA('concrete'))
-    for x in (X0 + 0.12, XM - 0.12, X1 - 0.12):                                # quoins
-        top = UPPER[1] if x < XM else HOME_CEIL + 0.2
-        z, k = 0.3, 0
-        while z < top - 0.1:
-            w_ = 0.3 if k % 2 == 0 else 0.2
-            cbox(FA.bm, (x + (0.12 - w_ / 2) * (1 if x < X0 + 1 else -1) * 0, fy0 - 0.012, z + 0.11), (w_, 0.04, 0.2), 0.008, FA('concrete'))
-            z += 0.24
+    for corner, sgn, zq0, zq1 in ((X0, 1, 0.3, UPPER[1]), (XM, -1, HOME_CEIL + 0.3, UPPER[1]), (X1, -1, 0.3, HOME_CEIL + 0.15)):   # quoins
+        z, k = zq0, 0
+        while z + 0.2 < zq1:
+            w_ = 0.3 if k % 2 == 0 else 0.18
+            cbox(FA.bm, (corner + sgn * w_ / 2, fy0 - 0.012, z + 0.1), (w_, 0.04, 0.2), 0.008, FA('plasterA'))
+            z += 0.235
             k += 1
     for (rx0, rz0), (rx1, rz1) in (((X0 - 0.26, EAVE + 0.02), RIDGE), (RIDGE, (XM + 0.26, EAVE + 0.02))):   # barge boards
         ln = math.hypot(rx1 - rx0, rz1 - rz0)
@@ -2289,6 +2290,7 @@ def build_home114(m, coll):
         dead_plant(FA, LW[0] + 0.15 + 0.22 * k, fy0 - 0.09, LW[2] - 0.08, rnd, pot='wood', r=0.02, h=0.01)
     drainpipe(FA, XM + 0.12, fy0 - 0.06, EAVE - 0.08, zbot=HOME_CEIL + 0.5)
     drainpipe(FA, X1 - 0.1, WING[0] + 0.03, WING[1] - 0.06)
+    cbox(FA.bm, (X0 + 0.42, fy0 - 0.008, 1.36), (0.15, 0.012, 0.1), 0.003, FA('brass'))
     cbox(FA.bm, (X0 + 0.42, fy0 - 0.02, 2.05), (0.08, 0.04, 0.12), 0.006, FA('iron'))                            # a lamp by the corner, dead
     add_cyl(FA.bm, (X0 + 0.42, fy0 - 0.03, 2.08), (X0 + 0.42, fy0 - 0.16, 2.12), 0.012, seg=6, mat=FA('iron'))
     add_sphere(FA.bm, (X0 + 0.42, fy0 - 0.17, 2.03), 0.05, seg=10, mat=FA('deadbulb'))
@@ -2302,6 +2304,7 @@ def build_home114(m, coll):
     bm = bmesh.new()                                                           # the lamp's warmth through the curtains
     add_box(bm, ((LW[0] + LW[1]) / 2, fy1 + 0.035, (LW[2] + LW[3]) / 2), (LW[1] - LW[0] - 0.12, 0.004, LW[3] - LW[2] - 0.12))
     kids.append(_obj('D5Window114Glow', bm, [m['homelamp']], coll))
+    kids.append(_plane('D5NameCard114Wall', (0.12, 0.075), (X0 + 0.42, fy0 - 0.016, 1.36), _imgmat('D5NameCardMat', 'namecard114.png', rough=0.8), coll))
     kids.append(_plane('D5Plate114', (0.26, 0.114), (X0 + 0.42, fy0 - 0.006, 1.55), _imgmat('D5Plate114Mat', 'plate_c114.png', rough=0.3), coll))
     bpy.context.view_layer.update()
     for ob in kids:

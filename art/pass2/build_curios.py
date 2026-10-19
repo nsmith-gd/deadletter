@@ -927,56 +927,63 @@ def ticket_out(f):
 
 def clip_weigh_self(dl01, arm):
     """He steps up onto the scale and settles; looks down at the dial as the needle swings; a little test
-    bounce, two; the ticket pops out and he startles; he leans, pinches it out, reads it with his head on one
-    side (POSTAGE DUE), pushes it back in neatly, a nod, and steps down."""
-    N = 82
+    bounce, two; the ticket pops up and he startles; a shuffle round to it, he pinches it up out of its slot and
+    reads it with his head on one side (POSTAGE DUE), pushes it back down neatly, a nod, turns back and steps
+    down."""
+    N = 86
     a = Act(dl01, arm, 'WeighSelf', N)
     stand = SCALE_STAND
     top = SCALE_TOP
-    a.root_keys = [(0, (0, 0, 0)), (2, (0, 0, 0)), (10, (0, 0, top)), (N - 12, (0, 0, top)), (N - 3, (0, 0, 0))]
+    TURN = 30.0
+    a.root_keys = [(0, (0, 0, 0)), (2, (0, 0, 0)), (10, (0, 0, top)), (N - 12, (0, 0, top)), (N - 4, (0, 0, 0))]
+    a.yaw_keys = [(0, 0.0), (32, 0.0), (40, TURN), (66, TURN), (74, 0.0)]
     a.step('L', 1, 6, ANKLE[1] + Vector((0, -0.01, top)))
     a.step('R', 5, 10, ANKLE[-1] + Vector((0, -0.01, top)))
-    a.step('R', N - 12, N - 7, ANKLE[-1])
-    a.step('L', N - 8, N - 3, ANKLE[1])
+    a.step('L', 32, 37, height=0.025)
+    a.step('R', 35, 40, height=0.025)
+    a.step('R', 66, 71, height=0.025)
+    a.step('L', 69, 74, height=0.025)
+    a.step('R', N - 13, N - 8, ANKLE[-1])
+    a.step('L', N - 9, N - 4, ANKLE[1])
     dial = to_stand(stand, (1.45 + SCALE_COL_DX, 0.24, 0.52))
     bx, by, bz = TICKET_BOX
-    edge = bx - 0.04 - 0.006                       # the ticket's near end at rest (world x)
+    slot_top = bz + 0.04 + TICKET_PEEK
     for frame in range(1, N + 1):
         f = frame - 1
         out = ticket_out(f)
-        tick = to_stand(stand, (edge - out + 0.011, by - 0.004, bz))
-        bounce = tr([(18, 0), (21, -0.028), (24, 0.01), (27, -0.024), (30, 0.006), (34, 0)], f)
+        pinch = to_stand(stand, (bx - 0.014, by - 0.004, slot_top + out - 0.009))
+        card = to_stand(stand, (bx, by - 0.004, slot_top + out - 0.02))
+        bounce = tr([(18, 0), (21, -0.028), (24, 0.01), (27, -0.024), (30, 0.006), (33, 0)], f)
         startle = spr(f, TICKET_POP + 1, 1.0, decay=4, freq=1.3)
-        lean = tr([(32, 0), (40, 1), (64, 1), (70, 0.2), (76, 0)], f)
-        step_bob = -0.012 * (pulse(f, 2, 8) + pulse(f, 6, 12) + pulse(f, N - 12, N - 6) + pulse(f, N - 8, N - 2))
-        body = (0.01 * lean, -0.02 * lean, -0.005 + bounce + 0.006 * startle + step_bob - 0.008 * lean)
-        body_rot = (2 + 9 * lean - 6 * max(0, startle), -6 * lean, 4 * lean)
-        # The head: the dial, the ticket, a tilt while he reads it.
+        lean = tr([(36, 0), (44, 1), (60, 1), (66, 0.3), (72, 0)], f)
+        bob = -0.012 * (pulse(f, 2, 8) + pulse(f, 6, 12) + pulse(f, N - 13, N - 7) + pulse(f, N - 9, N - 3))
+        bob += -0.006 * (pulse(f, 32, 38) + pulse(f, 35, 41) + pulse(f, 66, 72) + pulse(f, 69, 75))
+        body = (0.0, -0.012 * lean, -0.005 + bounce + 0.006 * max(0, startle) + bob - 0.006 * lean)
+        body_rot = (2 + 8 * lean - 7 * max(0, startle), -4 * lean, 0)
         look_dial = a.look(f, dial, body, body_rot)
-        look_tick = a.look(f, tick, body, body_rot)
+        look_card = a.look(f, card, body, body_rot)
         w_dial = tr([(6, 0), (12, 1), (TICKET_POP, 1), (TICKET_POP + 3, 0)], f)
-        w_tick = tr([(TICKET_POP + 1, 0), (TICKET_POP + 5, 1), (64, 1), (70, 0)], f, ease=lambda x: ease_back(x, 0.8))
-        read_tilt = tr([(46, 0), (50, 16), (56, 14), (59, -10), (63, -8), (66, 0)], f)
-        nod = 10 * pulse(f, 66, 72)
-        head = [IDLE_HEAD[i] * (1 - w_dial - w_tick) + look_dial[i] * w_dial + look_tick[i] * w_tick for i in range(3)]
-        head[0] += -12 * max(0, startle) + nod + 3 * math.sin(f * 1.1) * pulse(f, 18, 34)
+        w_card = tr([(TICKET_POP + 1, 0), (TICKET_POP + 4, 1), (64, 1), (70, 0)], f, ease=lambda x: ease_back(x, 0.8))
+        read_tilt = tr([(47, 0), (51, 17), (55, 15), (58, -9), (61, -7), (64, 0)], f)
+        nod = 11 * pulse(f, 64, 71)
+        head = [IDLE_HEAD[i] * (1 - w_dial - w_card) + look_dial[i] * w_dial + look_card[i] * w_card for i in range(3)]
+        head[0] += -12 * max(0, startle) + nod + 3 * math.sin(f * 1.1) * pulse(f, 18, 33)
         head[1] += read_tilt
-        # Claws: arms out a little for balance on the bounces; the left one pinches the ticket.
-        bal = tr([(16, 0), (20, 1), (32, 1), (36, 0)], f)
-        hands = {s: dl01.CARRY[s] + Vector((s * 0.035 * bal, 0, 0.03 * bal + 0.02 * max(0, startle))) for _, s in SIDES}
+        # Claws: arms out a little for balance on the bounces; the left one pinches the ticket from above.
+        bal = tr([(16, 0), (20, 1), (31, 1), (35, 0)], f)
+        hands = {s: dl01.CARRY[s] + Vector((s * 0.035 * bal, 0, 0.03 * bal + 0.025 * max(0, startle))) for _, s in SIDES}
         rot = {'L': (-24 - 10 * bal, 6, 10), 'R': (-24 - 10 * bal, -6, -10)}
-        reach = tr([(36, 0), (42, 1), (62, 1), (68, 0)], f)
+        reach = tr([(37, 0), (44, 1), (64, 1), (70, 0)], f)
         if reach > 0:
-            g = a.grip(f, 1, tick, body, body_rot, d=(0.25, -1.0, -0.4), x_axis=(1, 0, 0))
-            off, hr = mix_hand((hands[1], rot['L']), g, reach)
-            hands[1], rot['L'] = off, hr
-        claw_l = tr([(36, 20), (40, 34), (42, 30), (44, 3), (60, 3), (63, 30), (70, CLAW_REST_OPEN['L'])], f)
+            g = a.grip(f, 1, pinch + Vector((0, 0, 0.03 * (1 - tr([(37, 0), (43, 1)], f)))), body, body_rot,
+                       d=(0.15, -0.35, -1.0), x_axis=(1, 0, 0))
+            hands[1], rot['L'] = mix_hand((hands[1], rot['L']), g, reach)
+        claw_l = tr([(37, 20), (41, 34), (43, 30), (45, 3), (63, 3), (65, 30), (72, CLAW_REST_OPEN['L'])], f)
         claw_r = CLAW_REST_OPEN['R'] + 14 * bal + 20 * max(0, startle)
-        # The antenna: bobbing on the bounces, up at the pop, a puzzled droop as he reads, a perk at the nod.
         ant = tr([(0, 0), (10, -4), (18, -6), (TICKET_POP, -6), (TICKET_POP + 2, -22), (40, -8), (50, 10), (60, 14),
-                  (66, -6), (74, -2), (N - 1, 0)], f)
+                  (66, -6), (76, -2), (N - 1, 0)], f)
         antenna = [(ant * (0.8 + 0.2 * i) + spr(f, 21, 9 * (1 + 0.3 * i), 4, 1.3) + spr(f, 27, 9 * (1 + 0.3 * i), 4, 1.3)
-                    - spr(f, 66, 8 * (1 + 0.3 * i), 5, 1.2), 0) for i in range(3)]
+                    - spr(f, 64, 8 * (1 + 0.3 * i), 5, 1.2), 0) for i in range(3)]
         feet = a.feet(f, pitch={side: 14 * max(0.0, bounce) / 0.01 for side in 'LR'})
         a.pose(frame, body=body, body_rot=body_rot, head=tuple(head), antenna=antenna, feet=feet, hands=hands,
                hand_rot=rot, claws={'L': claw_l, 'R': claw_r}, elbows={'L': reach})
@@ -1039,7 +1046,7 @@ def game_moves(name, f):
 
 
 PREVIEW = {
-    'WeighSelf': dict(stand=SCALE_STAND, key=50, cx=0.15, look_z=0.45, frames=[1, 9, 15, 22, 28, 32, 37, 43, 51, 57, 64, 79]),
+    'WeighSelf': dict(stand=SCALE_STAND, key=52, cx=0.15, look_z=0.45, frames=[1, 9, 15, 22, 28, 32, 37, 43, 49, 55, 64, 80]),
 }
 
 
