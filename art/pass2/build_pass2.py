@@ -280,24 +280,6 @@ def make_textures():
         d.ellipse((px - r, py - r, px + r, py + r), fill=(10, 10, 9, 70))
     img.filter(ImageFilter.GaussianBlur(2.2)).save(os.path.join(TEX, 'drag_marks.png'))
 
-    # The wet patch in the antechamber: water across the floor from a split pipe, dark and glossy, ragged edged.
-    W = H = 512
-    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img, 'RGBA')
-    for k in range(70):
-        a = rnd.uniform(0, 2 * math.pi)
-        rr = rnd.uniform(0, 0.33) ** 0.8
-        cx, cy = W * (0.5 + rr * math.cos(a) * 0.95), H * (0.52 + rr * math.sin(a) * 0.8)
-        r = rnd.uniform(40, 95)
-        d.ellipse((cx - r, cy - r * 0.8, cx + r, cy + r * 0.8), fill=(5, 6, 7, 80))
-    img = img.filter(ImageFilter.GaussianBlur(6))
-    d = ImageDraw.Draw(img, 'RGBA')
-    for k in range(28):                                          # splashes off the edge
-        cx, cy = rnd.uniform(40, W - 40), rnd.uniform(40, H - 40)
-        r = rnd.uniform(3, 10)
-        d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(5, 6, 7, 140))
-    img.filter(ImageFilter.GaussianBlur(1.2)).save(os.path.join(TEX, 'tunnel_wet.png'))
-
 
 def pass2_materials(m):
     # Shared names the other builders make; made here only if a partial build left them out.
@@ -320,7 +302,6 @@ def pass2_materials(m):
     m['cable'] = cable or simple_material('Cable', (0.014, 0.013, 0.012), 0.55)
     m['presslamp'] = emission_material('PressLamp', (1.0, 0.16, 0.08), 0.0)
     m['dragmarks'] = _image_material('DragMarksMat', os.path.join(TEX, 'drag_marks.png'), rough=0.25, alpha=True)
-    m['wetpatch'] = _image_material('TunnelWetMat', os.path.join(TEX, 'tunnel_wet.png'), rough=0.12, alpha=True)
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -395,8 +376,8 @@ def build_press(m, coll):
     for s in (-1, 1):                                           # shoes in the gibs
         bx(bm, (s * rw / 2 - 0.01, s * rw / 2 + 0.02 * s), (ry1 - 0.06, ry1 + 0.04), (0.06, rh - 0.04), 1)
     add_cyl(bm, (0, yc, rh), (0, yc, rh + 1.5), 0.045, mat=1, seg=14)                             # the screw
-    for k in range(14):
-        add_torus(bm, (0, yc, rh + 0.25 + k * 0.08), (0, 0, 1), 0.046, 0.006, mat=1, seg=12, rseg=4)
+    for k in range(7):                                          # its thread, coarse
+        add_torus(bm, (0, yc, rh + 0.25 + k * 0.16), (0, 0, 1), 0.046, 0.007, mat=1, seg=10, rseg=3)
     _stripes(bm, -rw / 2, rw / 2, 0.05, rh - 0.05, ry0, 0.045, 2)
     ram = _obj('PressRam', bm, [m['iron'], m['steel'], m['red']], coll)
     ram.location = (px, 0.0, PRESS_REST)
@@ -858,7 +839,35 @@ def build_cage_sump(m, coll):
 def build_tunnel_cable(m, coll):
     z = 1.6
     x0, x1, y0, y1 = WET
-    _plane('TunnelWet', m['wetpatch'], (x0, x1), (y0, y1), z + 0.003, coll)
+    # TunnelWet: a shallow puddle (a flat blob, the shared Water material) round the cable, from x0 to x1.
+    cx, cy, ax, ay = (x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2, (y1 - y0) / 2
+    bm = bmesh.new()
+    n = 48
+    rim = []
+    for k in range(n):
+        t = 2 * math.pi * k / n
+        r = 0.86 + 0.08 * math.sin(3 * t + 0.7) + 0.05 * math.sin(7 * t + 2.1) + 0.03 * math.sin(13 * t)
+        rim.append(bm.verts.new((cx + ax * r * math.cos(t), cy + ay * r * math.sin(t), z + 0.003)))
+    mid = bm.verts.new((cx, cy, z + 0.003))
+    for k in range(n):
+        bm.faces.new((mid, rim[k], rim[(k + 1) % n]))
+    rnd = random.Random(819)
+    for k in range(9):                                                     # splashes off its edge
+        t = rnd.uniform(0, 2 * math.pi)
+        c = Vector((cx + ax * 1.02 * math.cos(t), cy + ay * 1.02 * math.sin(t), z + 0.003))
+        rr = rnd.uniform(0.02, 0.05)
+        ring = [bm.verts.new(c + Vector((rr * math.cos(2 * math.pi * j / 8), rr * math.sin(2 * math.pi * j / 8), 0))) for j in range(8)]
+        bm.faces.new(ring)
+    me = bpy.data.meshes.new('TunnelWet')
+    bm.normal_update()
+    for f in bm.faces:
+        if f.normal.z < 0:
+            f.normal_flip()
+    bm.to_mesh(me)
+    bm.free()
+    me.materials.append(m['water'])
+    ob = bpy.data.objects.new('TunnelWet', me)
+    coll.objects.link(ob)
     # The dry hatch cover between the arcs: steel, raised a little out of the wet.
     d0, d1 = DRY_PLATE
     bm = bmesh.new()
@@ -888,13 +897,12 @@ def build_tunnel_cable(m, coll):
     split = Vector(ARC_A[0])
     bm = bmesh.new()
     # 0 cable, 1 copper, 2 steel, 3 yellow
-    for a, b in zip(curve, curve[1:]):
-        mid = (a + b) / 2
+    for a, b in zip(curve, curve[1:]):                                       # overlapping lengths, no joints to fill
+        mid, d = (a + b) / 2, (b - a).normalized() * 0.012
         if (mid - split).length < 0.035:                                   # the split: its copper bared
-            add_cyl(bm, a, b, 0.01, mat=1, seg=8)
+            add_cyl(bm, a - d, b + d, 0.01, mat=1, seg=6)
         else:
-            add_cyl(bm, a, b, 0.018, mat=0, seg=8)
-        add_sphere(bm, b, 0.018 if (b - split).length >= 0.035 else 0.01, mat=0 if (b - split).length >= 0.035 else 1, seg=8)
+            add_cyl(bm, a - d, b + d, 0.018, mat=0, seg=6)
     end = curve[-1]
     dirn = (curve[-1] - curve[-3]).normalized()
     rnd = random.Random(818)
@@ -1074,7 +1082,9 @@ def clip_knockback(dl01, arm):
         # Claws: flung up, then back onto the floor behind him to prop him, then up again as he rises.
         flung = {s: CARRY[s] + Vector((s * 0.1, 0.04, 0.2)) for _, s in SIDES}
         prop = dl02.reach({s: Vector((s * 0.24, 0.16, 0.035)) for _, s in SIDES}, body, rot, REST)
-        hands = {s: CARRY[s].lerp(flung[s], fly).lerp(prop[s], track([(5, 0), (9, 1), (26, 1), (32, 0)], f)) for _, s in SIDES}
+        pk = track([(5, 0), (9, 1), (26, 1), (32, 0)], f)
+        swing = math.sin(math.pi * pk)                                    # out round the pod's sides on the way
+        hands = {s: CARRY[s].lerp(flung[s], fly).lerp(prop[s], pk) + Vector((s * 0.1, 0.03, 0.02)) * swing for _, s in SIDES}
         legs_out = sit * (1 - up)
         feet = {side: ((s * 0.03 * legs_out, -0.2 * legs_out - 0.05 * fly, 0.03 * legs_out + 0.04 * fly),
                        (-20 * legs_out + 10 * fly, 0, s * 8 * legs_out)) for side, s in SIDES}
@@ -1090,7 +1100,7 @@ def clip_knockback(dl01, arm):
         c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands, feet=feet,
                hand_rot={'L': (-24 - 40 * fly, 6, 10), 'R': (-24 - 40 * fly, -6, -10)},
                claws={'L': CLAW_REST_OPEN['L'] + 26 * fly, 'R': CLAW_REST_OPEN['R'] + 24 * fly},
-               elbows={'L': max(fly, sit * (1 - up)), 'R': max(fly, sit * (1 - up))})
+               elbows={'L': max(fly, swing, sit * (1 - up)), 'R': max(fly, swing, sit * (1 - up))})
         for side, _ in SIDES:                                     # knees up while he sits, not down through the floor
             pb[f'pole_knee.{side}'].location = (0, 0.3 * legs_out, 0.6 * legs_out)
             _key(pb[f'pole_knee.{side}'], 'location', frame=frame)

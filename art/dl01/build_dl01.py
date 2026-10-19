@@ -1292,8 +1292,13 @@ def pack_for_web(out, names):
     for n in names:
         with open(os.path.join(out, n + '.glb'), 'rb') as fh:
             data = base64.b64encode(fh.read()).decode('ascii')
-        with open(os.path.join(out, n + '.json'), 'w') as fh:
-            json.dump({'format': 'glb-base64', 'data': data}, fh)
+        # Artifact hosting takes files up to 16 MB: a large model goes in parts (n.json, n.1.json, ...).
+        step = 10_000_000
+        parts = [data[i:i + step] for i in range(0, len(data), step)]
+        for k, part in enumerate(parts):
+            name = n + ('.json' if k == 0 else f'.{k}.json')
+            with open(os.path.join(out, name), 'w') as fh:
+                json.dump({'format': 'glb-base64', 'parts': len(parts), 'data': part} if k == 0 else {'data': part}, fh)
 
 
 # Each later stretch of the level moves along x by its offset, so scenes can be inserted between them

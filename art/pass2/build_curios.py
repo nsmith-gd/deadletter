@@ -5,12 +5,12 @@ changed here, by name. Each curiosity: where D-17 stands (game x, his facing), t
 his clip. Every clip starts and ends on the Idle pose at the stand point; where he steps in to a prop, or climbs
 onto it, the root bone carries him there and back inside the clip.
 
-  DL-01  ParcelScale: the dial column moves to the platform's right end (x 1.62) so the dial reads past him, the
-         platform drops to 0.028; ScaleTicketBox on the column, ScaleTicket in it (the game slides it out along -x).
+  DL-01  ParcelScale: the dial column moves to the platform's right end (x 1.64) so the dial reads past him, the
+         platform drops to 0.028; ScaleTicketBox on the column, ScaleTicket in its top slot (the game pops it up).
          DispatchRack: a little card rack on a post under the dispatch board, RouteCardD17 standing in it.
   DL-02  FrankerCounter, HandFranker (+ HandFrankerHead, HandFrankerLever) left of the passage doorway.
          CourierShelf by the tea corner with MugD17 on it (and two other couriers' mugs).
-         ClawStamp (in d17.glb, on his left claw) and MugD17Held (in d17.glb, in his right claw): hidden until used.
+         ClawStamp (in d17.glb, on his right claw) and MugD17Held (in d17.glb, in his left claw): hidden until used.
   DL-04  RackSeat: a low seat in the empty slot under the chalk flowers.
   DL-05  SorterChair (+ SorterCushion) in the scanner corridor, before the arch.
   DL-06  ClockWinderBox + ClockWinder (a wind-up key) by the stopped clock's post; ClockHandHour, ClockHandMin.
@@ -26,7 +26,7 @@ import random
 
 import bpy
 import bmesh
-from mathutils import Euler, Matrix, Quaternion, Vector
+from mathutils import Euler, Matrix, Vector
 
 import build_d17 as d17
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, simple_material, worn_material,
@@ -55,8 +55,8 @@ TICKET_OUT = 0.055                          # how far the game raises it (along 
 # DL-01 dispatch rack (under the dispatch board, x 0.69 to 1.41).
 DISPATCH_STAND = (1.18, -1)
 RACK = (0.93, 0.30)                         # the rack post's x, y (its front kept clear of his head as he walks)
-RACK_TOP = 0.645                            # the rack box's top
-CARD = (0.075, 0.105, 0.70)                 # RouteCardD17: width, height, its top edge at rest
+RACK_TOP = 0.62                             # the rack box's top
+CARD = (0.075, 0.105, 0.675)                # RouteCardD17: width, height, its top edge at rest
 CARD_LIFT = 0.035                           # the game slides it up this much
 
 # DL-02 hand franker, on a courier-height counter left of the passage doorway (Door2Frame 12.77 to 13.63).
@@ -64,10 +64,10 @@ FRANKER_STAND = (12.80, -1)
 COUNTER = (12.22, 12.62, 0.27, 0.6, 0.27)   # x0, x1, y0, y1, top (at a courier's height)
 PLATEN = (12.47, 0.325, 0.27 + 0.035)       # the platen's centre (top face)
 HEAD_GAP = 0.055                            # the die face above the platen at rest
-FRANK_DROP = 0.035                          # the game drops HandFrankerHead this much at the thunk
+FRANK_DROP = 0.025                          # the game drops HandFrankerHead this much at the thunk
 LEVER_PIVOT = (12.395, 0.42, 0.27 + 0.19)   # HandFrankerLever's pivot on the frame's left cheek (axis along x)
-LEVER_LEN = 0.15
-LEVER_REST = 35.0                           # degrees up from pointing at the lane (toward -y)
+LEVER_LEN = 0.13
+LEVER_REST = 22.0                           # degrees up from pointing at the lane (toward -y)
 LEVER_PULL = 50.0                           # degrees the pull swings it down
 
 # DL-02 the couriers' low shelf by the tea corner, MugD17 on it.
@@ -78,7 +78,7 @@ MUG = (15.50, 0.31, 0.035, 0.088)           # MugD17: x, y (its base centre on t
 # DL-04 the empty slot on the column (art/racks MEMORIAL_X 41.1; column face y 1.07; plinth top 0.06).
 RACK_STAND = (41.08, 1)
 RACK_SEAT = (41.1, 0.71, 0.98, 0.265)       # x, y0, y1, top
-RACK_SIT_Y = 0.80                           # his root's y when seated (back to the contacts)
+RACK_SIT_Y = 0.80                           # his root's y when seated (his back against the slot's contacts)
 
 # DL-05 the sorter's chair in the scanner corridor (back wall face y 0.62; scanner arch from 49.47).
 CHAIR_STAND = (48.80, 1)
@@ -87,10 +87,10 @@ CHAIR_SIT = (0.36, 0.16)                    # his root when seated, facing the l
 DENT_DY = -0.085                            # the dent's centre from the cushion's (where his pod sits)
 CUSHION = 0.045
 
-# DL-06 the stopped clock (art/dl03 CLOCK_X 41.7 + OFF3; face centre at the deck + 2.0, y 0.765).
-CLOCK_X = OFF3 + 41.7
+# DL-06 the stopped clock (art/dl03 CLOCK_X 40.7 + OFF3; face centre at the deck + 2.0, y 0.765).
+CLOCK_X = OFF3 + 40.7
 CLOCK_C = (CLOCK_X, 0.758, DECK + 2.0)
-CLOCK_STAND = (OFF3 + 40.42, 1)
+CLOCK_STAND = (OFF3 + 40.38, 1)
 WINDER = (OFF3 + 40.66, 0.295, DECK + 0.40)  # the key's centre (its shaft along y, the wings face the lane)
 STOP_HOUR, STOP_MIN = 4, 12                 # the flood's time
 
@@ -842,6 +842,7 @@ class Act:
         sh = bm @ SHOULDER[s]
         v = w - sh
         excess = max(0.0, v.length - ARM_LEN)
+        self.last_need = (tuple(round(c, 3) for c in w), tuple(round(c, 3) for c in sh))
         if excess:
             w = sh + v.normalized() * ARM_LEN
         off = bm.inverted() @ w - self.dl01.REST_WRIST[s]
@@ -861,7 +862,7 @@ class Act:
                 m = Matrix.Rotation(math.radians(twist), 3, dz) @ m
             rot = tuple(math.degrees(a) for a in m.to_euler('XYZ'))
         hp = HandPose((off, rot))
-        hp.excess, hp.frame, hp.side, hp.act = excess, f, s, self
+        hp.excess, hp.frame, hp.side, hp.act, hp.need = excess, f, s, self, self.last_need
         return hp
 
     def grip(self, f, s, point, body, body_rot, d, x_axis=None, twist=0.0, depth=GRIP):
@@ -874,8 +875,8 @@ class Act:
         bm = body_matrix(body, body_rot)
         eye = bm @ HEAD_EYE
         d = bm.to_3x3().inverted() @ (self.to_root(f, target) - eye)
-        yaw = math.degrees(math.atan2(d.x, -d.y))
-        pitch = math.degrees(math.atan2(-d.z, math.hypot(d.x, d.y)))
+        yaw = max(-70.0, min(70.0, math.degrees(math.atan2(d.x, -d.y))))
+        pitch = max(-38.0, min(32.0, math.degrees(math.atan2(-d.z, math.hypot(d.x, d.y)))))
         return (pitch, roll, yaw)
 
     def pose(self, frame, **kw):
@@ -888,7 +889,7 @@ class Act:
         self.pb['root'].location = (0, 0, 0)
         self.c.done()
         worst = sorted(self.over, reverse=True)[:3]
-        frs = sorted({fr for _, fr, _ in self.over})
+        frs = sorted({o[1] for o in self.over})
         print(f'curios: {self.name} {self.frames} f, reach clamps', worst, 'frames', frs[:1], frs[-1:], len(frs))
 
 
@@ -900,7 +901,7 @@ class HandPose(tuple):
 def mix_hand(a, b, k):
     """Blend two (offset, rot) hand poses. A target out of his reach that is used is noted for the build log."""
     if getattr(b, 'excess', 0.0) > 0.005 and k > 0.3:
-        b.act.over.append((round(b.excess, 3), b.frame, b.side))
+        b.act.over.append((round(b.excess, 3), b.frame, b.side, b.need))
     (oa, ra), (ob, rb) = a, b
     ra = ra or (-24, 0, 0)
     rb = rb or (-24, 0, 0)
@@ -967,7 +968,7 @@ def clip_weigh_self(dl01, arm):
         f = frame - 1
         out = ticket_out(f)
         pinch = to_stand(stand, (bx - 0.014, by - 0.004, slot_top + out - 0.009))
-        card = to_stand(stand, (bx, by - 0.004, slot_top + out + 0.05))
+        card = to_stand(stand, (bx, by - 0.004, slot_top + out + 0.09))
         bounce = tr([(18, 0), (21, -0.028), (24, 0.01), (27, -0.024), (30, 0.006), (33, 0)], f)
         startle = spr(f, TICKET_POP + 1, 1.0, decay=4, freq=1.3)
         lean = tr([(36, 0), (44, 1), (60, 1), (66, 0.3), (72, 0)], f)
@@ -1060,7 +1061,7 @@ def clip_read_route(dl01, arm):
         chest = tr([(32, 0), (38, 1), (50, 1), (55, 0)], f)
         happy = sum(pulse(f, t0, t0 + 6) for t0 in (51, 57))
         body = (0, 0.01 * toe, -0.005 + 0.03 * toe + 0.012 * happy + step_bob(f, st))
-        body_rot = (2 + 3 * toe + 4 * chest, -3 * toe, -8 * toe)
+        body_rot = (2 + 6 * toe + 4 * chest, -3 * toe, 8 * toe)
         look_card = a.look(f, card_c, body, body_rot)
         w_card = tr([(2, 0), (8, 1), (34, 1), (38, 0), (50, 0), (53, 1), (64, 1), (70, 0)], f)
         w_chest = tr([(34, 0), (38, 1), (48, 1), (51, 0)], f)
@@ -1069,7 +1070,7 @@ def clip_read_route(dl01, arm):
         head[0] += -6 * happy + 9 * pulse(f, 70, 78)
         hands = {s: dl01.CARRY[s].copy() for _, s in SIDES}
         rot = {'L': (-24, 6, 10), 'R': (-24, -6, -10)}
-        g = a.grip(f, -1, pinch, body, body_rot, d=to_stand_dir(stand, (-0.45, 0.2, 0.85)),
+        g = a.grip(f, -1, pinch, body, body_rot, d=to_stand_dir(stand, (-0.8, 0.25, 0.55)),
                    x_axis=to_stand_dir(stand, (0, 1, 0)))
         hands[-1], rot['R'] = mix_hand((hands[-1], rot['R']), g, reach)
         hands[-1] = hands[-1] + Vector((0, 0, -0.01 * pulse(f, 62, 65)))           # the pat on its top
@@ -1121,7 +1122,7 @@ def clip_frank_hand(dl01, arm):
     at.z = 0
     a.root_keys = [(0, (0, 0, 0)), (4, (0, 0, 0)), (16, tuple(at)), (36, tuple(at)), (46, (0.0, -0.02, 0)),
                    (N - 16, (0.0, -0.02, 0)), (N - 6, (0, 0, 0))]
-    a.yaw_keys = [(0, 0.0), (4, 0.0), (16, yaw_in), (36, yaw_in), (46, 28.0), (N - 16, 28.0), (N - 6, 0.0)]
+    a.yaw_keys = [(0, 0.0), (4, 0.0), (16, yaw_in), (36, yaw_in), (46, 36.0), (N - 16, 36.0), (N - 6, 0.0)]
     st = steps_over(a, 4, 16, 2, first='R') + steps_over(a, 36, 46, 2, first='L') + \
         steps_over(a, N - 16, N - 6, 2, first='R', height=0.02)
     cam = Vector((1, 0, 0))                     # toward the camera, in stand space (he faces -x)
@@ -1131,19 +1132,20 @@ def clip_frank_hand(dl01, arm):
         pull = tr([(20, 0), (FRANK_THUNK, 1), (34, 1), (38, 0)], f)
         bob = sum(pulse(f, t0, t0 + 6) for t0 in (50, 57))
         body = (0, -0.02 * pull, -0.005 - 0.02 * pull + 0.012 * max(0.0, thunk) + 0.014 * bob + step_bob(f, st))
-        body_rot = (2 + 10 * tr([(14, 0), (20, 1), (36, 1), (42, 0)], f) - 6 * max(0, thunk) - 4 * bob, 0, 0)
+        inq = tr([(14, 0), (20, 1), (36, 1), (42, 0)], f)
+        body_rot = (2 + 12 * inq - 6 * max(0, thunk) - 4 * bob, 0, -12 * inq)
         r, ry = a.root(f)
         fw = rz(ry) @ Vector((0, -1, 0))
         left = rz(ry) @ Vector((1, 0, 0))
         up = Vector((0, 0, 1))
         # Right claw: flat on the platen under the head, the stamped blade's outer face up (where the die lands);
         # then out from under and up before his chest, turned to him; then held out, turned to the lane.
-        d_on = (rz(12) @ fw).normalized()
+        d_on = (rz(34) @ fw).normalized()
         g_on = a.grip(f, -1, platen + Vector((0, 0, 0.011)) - d_on * 0.012, body, body_rot, d=d_on, x_axis=(0, 0, -1))
-        look_pt = r + fw * 0.25 - left * 0.03 + Vector((0, 0, 0.43))
+        look_pt = r + fw * 0.2 - left * 0.17 + Vector((0, 0, 0.4))
         eye = r + fw * 0.1 + Vector((0, 0, 0.6))
         g_look = a.grip(f, -1, look_pt, body, body_rot, d=(fw * 0.5 + up).normalized(), x_axis=-(eye - look_pt).normalized())
-        show_pt = r + fw * 0.23 - left * 0.06 + Vector((0, 0, 0.45))
+        show_pt = r + fw * 0.24 - left * 0.12 + Vector((0, 0, 0.46))
         g_show = a.grip(f, -1, show_pt, body, body_rot, d=(fw * 0.4 + up).normalized(), x_axis=-cam)
         k_on = tr([(14, 0), (22, 1), (34, 1), (40, 0)], f)
         k_look = tr([(34, 0), (42, 1), (56, 1), (60, 0), (68, 0), (71, 1), (76, 0)], f)
@@ -1154,7 +1156,7 @@ def clip_frank_hand(dl01, arm):
         hr = mix_hand(hr, g_show, k_show)
         # Left claw: on the lever's arm, near its ball, with it as it swings down and back.
         pv = Vector(LEVER_PIVOT)
-        hold_pt = pv.lerp(lever_ball(lever_deg(f)), 0.62)
+        hold_pt = pv.lerp(lever_ball(lever_deg(f)), 0.85)
         g_lev = a.grip(f, 1, to_stand(stand, hold_pt), body, body_rot, d=(fw + Vector((0, 0, -0.5))).normalized(),
                        x_axis=(0, 0, 1))
         k_lev = tr([(16, 0), (22, 1), (34, 1), (38, 0)], f)
@@ -1180,12 +1182,12 @@ def clip_frank_hand(dl01, arm):
 
 
 # DL-02 HoldMug -------------------------------------------------------------------------------------------
-MUG_GRAB, MUG_SET, MUG_WRONG = 26, 76, -150.0
+MUG_GRAB, MUG_SET, MUG_WRONG = 26, 76, -40.0
 
 
 def mug_yaw(f):
     """MugD17's turn about its own axis on the shelf after he sets it down (degrees about +z; game: about +y)."""
-    return tr([(0, 0.0), (MUG_SET - 1, 0.0), (MUG_SET, MUG_WRONG), (82, MUG_WRONG), (87, -80.0), (89, -80.0), (94, 0.0)], f)
+    return tr([(0, 0.0), (MUG_SET - 1, 0.0), (MUG_SET, MUG_WRONG), (82, MUG_WRONG), (87, 12.0), (89, 12.0), (93, 0.0)], f)
 
 
 def mug_matrix(pos, yaw=0.0, tilt=0.0, axis=(1, 0, 0)):
@@ -1255,12 +1257,12 @@ def clip_hold_mug(dl01, arm):
         handle = base + hd + Vector((0, 0, 0.045))
         g_n = a.grip(f, 1, handle + Vector((0, 0, 0.004)), body, body_rot, d=(fw + Vector((0, 0, -0.5))).normalized(),
                      x_axis=(0, 0, 1), depth=0.1)
-        k_n = tr([(MUG_SET + 2, 0), (82, 1), (94, 1), (98, 0)], f)
+        k_n = tr([(MUG_SET + 2, 0), (82, 1), (93, 1), (96, 0)], f)
         hl = mix_hand(hl, g_n, k_n)
         # The right claw comes up to steady it, as far as it reaches, while it is up by his face.
         steady = tr([(30, 0), (38, 1), (62, 1), (68, 0)], f)
-        gr = a.grip(f, -1, m @ Vector((0, 0, 0.02)), body, body_rot, d=(fw * 0.6 + Vector((0, 0, 0.5)) + rz(ry) @ Vector((0.6, 0, 0))).normalized(), x_axis=(0, 0, 1))
-        hr = mix_hand(rest_hand(dl01, -1), gr, steady * 0.85)
+        up_pose = (dl01.CARRY[-1] + Vector((0.05, -0.07, 0.11)), (-70, -10, 30))
+        hr = mix_hand(rest_hand(dl01, -1), up_pose, steady)
         look_mug = a.look(f, rim + Vector((0, 0, -0.03)), body, body_rot)
         w_mug = tr([(2, 0), (8, 1), (44, 1), (47, 0), (60, 0), (64, 1), (96, 1), (100, 0)], f)
         head = head_mix((w_mug, look_mug), (drink, (-12, 0, 0)))
@@ -1731,22 +1733,25 @@ def _game_moves(name, f):
         tick = max(0.0, f - 60) * 6.0 / 24.0
         return {'ClockWinder': ((0, 0, 0), (0, winder_deg(f), 0), True),
                 'ClockHandMin': ((0, 0, 0), (0, tick, 0), True)}
+    if name == 'SitRack':      # by now the fallen courier has been taken to the bay (preview only)
+        return {'FallenCourier': ((0, 0, 0), (0, 0, 0), False), 'FallenLamps': ((0, 0, 0), (0, 0, 0), False)}
     if name == 'LookViewer':
         return {'CoinViewerHead': ((0, 0, 0), (0, 0, viewer_deg(f) * tr([(70, 0), (76, 1), (150, 1), (156, 0)], f)), True)}
     return {}
 
 
 PREVIEW = {
-    'WeighSelf': dict(stand=SCALE_STAND, key=50, cx=0.15, look_z=0.45, frames=[1, 9, 15, 22, 28, 32, 37, 43, 49, 55, 64, 80]),
-    'ReadRoute': dict(stand=DISPATCH_STAND, key=30, cx=-0.1, look_z=0.5),
-    'FrankHand': dict(stand=FRANKER_STAND, key=44, cx=-0.1, look_z=0.45),
-    'HoldMug': dict(stand=MUG_STAND, key=54, cx=0.1, look_z=0.5),
-    'SitRack': dict(stand=RACK_STAND, key=90, look_z=0.5),
-    'WindClock': dict(stand=CLOCK_STAND, floor=DECK, key=30, cx=0.15, look_z=0.5),
-    'SitChair': dict(stand=CHAIR_STAND, key=82, look_z=0.55),
-    'LookViewer': dict(stand=VIEWER_STAND, floor=DECK, key=110, look_z=0.6, atrium=True),
-    'TuneRadio': dict(stand=MUG_STAND, key=70, look_z=0.5),
-    'FlickSwitch': dict(stand=MUG_STAND, key=26, look_z=0.5),
+    'WeighSelf': dict(stand=SCALE_STAND, key=52, cx=0.15, look_z=0.45, frames=[1, 9, 15, 22, 28, 32, 37, 43, 49, 55, 64, 80],
+                      zf=[13, 25, 32, 36, 50, 60]),
+    'ReadRoute': dict(stand=DISPATCH_STAND, key=26, cx=-0.1, look_z=0.5, zf=[8, 18, 26, 42, 58, 64]),
+    'FrankHand': dict(stand=FRANKER_STAND, key=63, cx=-0.1, look_z=0.45, zf=[10, 24, 31, 44, 52, 62]),
+    'HoldMug': dict(stand=MUG_STAND, key=51, cx=0.1, look_z=0.5, zf=[20, 30, 44, 52, 78, 88]),
+    'SitRack': dict(stand=RACK_STAND, key=92, cx=0.03, look_z=0.5, zf=[10, 30, 50, 70, 98, 125]),
+    'WindClock': dict(stand=CLOCK_STAND, floor=DECK, key=30, cx=0.15, look_z=0.5, zf=[12, 18, 30, 46, 70, 78]),
+    'SitChair': dict(stand=CHAIR_STAND, key=72, look_z=0.55, zf=[16, 26, 34, 50, 72, 108]),
+    'LookViewer': dict(stand=VIEWER_STAND, floor=DECK, key=110, look_z=0.6, atrium=True, zf=[16, 30, 44, 58, 96, 128]),
+    'TuneRadio': dict(stand=MUG_STAND, key=70, look_z=0.5, zf=[14, 26, 36, 46, 70, 90]),
+    'FlickSwitch': dict(stand=MUG_STAND, key=26, look_z=0.5, zf=[8, 14, 18, 24, 32, 44]),
 }
 
 def _held_mug_mesh(bm):
@@ -1771,5 +1776,6 @@ def add_clips(dl01, arm):
     clip_tune_radio(dl01, arm)
     clip_flick_switch(dl01, arm)
     coll = bpy.data.collections.get('D17')
+    bpy.context.view_layer.update()          # the rig was just moved back to the origin: refresh its matrix
     attach_claw_stamp(arm, coll)
     attach_held(arm, coll, 'MugD17Held', _held_mug_mesh, 'ik_hand.L', MUG_GRAB + 1, 'HoldMug', mug.mug_pose(MUG_GRAB))

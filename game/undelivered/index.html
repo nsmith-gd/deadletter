@@ -328,6 +328,11 @@ const WORN = {
   BedroomDado: { base: [.20, .30, .26], dirt: [.10, .13, .10], chip: [.34, .29, .21], rough: .8, chipRough: .9, metal: 0, grime: 4, chipScale: 24, chipAmt: .7 },
   ChildPaint: { base: [.12, .24, .42], dirt: [.06, .09, .12], chip: [.20, .14, .08], rough: .6, chipRough: .8, metal: 0, grime: 8, chipScale: 40, chipAmt: .7 },
   ToyFabric: { base: [.36, .33, .30], dirt: [.18, .15, .12], chip: [.42, .40, .36], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
+  SorterCushion: { base: [.16, .045, .035], dirt: [.07, .03, .022], chip: [.24, .17, .12], rough: .62, chipRough: .85, metal: 0, grime: 8, chipScale: 30, chipAmt: .72, dust: [.12, .1, .09], dustAmt: .4 },
+  RingPlasterA: { base: [.20, .22, .22], dirt: [.10, .10, .09], chip: [.13, .12, .10], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, streak: .6 },
+  RingPlasterB: { base: [.30, .20, .17], dirt: [.15, .10, .08], chip: [.20, .16, .13], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, streak: .6 },
+  RoofSlate: { base: [.045, .05, .055], dirt: [.03, .03, .03], chip: [.08, .08, .075], rough: .7, chipRough: .8, metal: 0, grime: 4, chipScale: 24, chipAmt: .72, dust: [.07, .07, .065], dustAmt: .6 },
+  LivingPaint: { base: [.30, .27, .20], dirt: [.16, .13, .09], chip: [.22, .19, .14], rough: .85, chipRough: .9, metal: 0, grime: 3, chipScale: 20, chipAmt: .74, streak: .4 },
   ToyPatch: { base: [.42, .30, .08], dirt: [.20, .14, .05], chip: [.30, .32, .40], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
 };
 const PLAIN = { TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .003], .3, 0], Shaft: [[.004, .004, .004], .9, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
@@ -335,6 +340,7 @@ const PLAIN = { TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .00
   Copper: [[.55, .3, .18], .35, 1], ReflectTag: [[.8, .78, .7], .15, .6], BeltRubber: [[.02, .02, .019], .8, 0],
   AtriumPlaster: [[.2, .185, .15], .9, 0], AtriumDark: [[.006, .006, .006], .8, 0], AtriumStone: [[.058, .052, .045], .95, 0],
   AtriumCut: [[.085, .078, .066], .95, 0], AtriumSheet: [[.075, .082, .08], .6, .4], AtriumRust: [[.11, .048, .025], .85, 0], AtriumMasonry: [[.15, .135, .115], .85, 0],
+  SectionCap: [[.012, .011, .01], .95, 0], FloodScum: [[.09, .095, .075], .9, 0], DirtyGlass: [[.03, .035, .035], .25, .2],
   AtriumCloth: [[.2, .13, .065], .9, 0], AtriumWood: [[.085, .06, .04], .88, 0],
   Barricade: [[.4, .06, .04], .7, 0], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
@@ -351,6 +357,7 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   RampLamp0: [.55, 1, .65, 0], RampLamp1: [.55, 1, .65, 0], RampLamp2: [.55, 1, .65, 0], RampLamp3: [.55, 1, .65, 0], RampLamp4: [.55, 1, .65, 0], RampLamp5: [.55, 1, .65, 0],
   WindowSun: [1, .72, .38, 0], HomeLampBulb: [1, .76, .46, 0], LaneBulb: [.78, .88, 1, 0], TermLamp0: [.75, 1, .82, 0], TermLamp1: [.75, 1, .82, 0], TermLamp2: [.75, 1, .82, 0],
   AtriumWindowGlow: [1, .6, .28, 2.5], AtriumHazeLights: [.62, .76, .95, 1.5],
+  HallBulbGlow: [1, .82, .55, 0], C108BellLamp: [1, .16, .08, 3], PressLamp: [1, .16, .08, 0],
   C108Lamp: [1, .7, .42, 1.2], BayLight: [.72, .88, 1, 2], BayLamp0: [.72, .92, 1, 0], BayLamp1: [.72, .92, 1, 0], BayLamp2: [.72, .92, 1, 0],
   FallenLamp: [.85, .3, .08, 0], SeatedLamp: [.85, .3, .08, 0], SortLampBulb: [1, .85, .6, 6], TubeLamp: [.8, .9, 1, 2.5], GantryLamp: [1, .78, .5, 8], SlotLamp9: [1, .62, .22, 0], SlotLamp2: [1, .62, .22, 0], SlotLamp6: [1, .62, .22, 0],
   LandingAmber: [1, .62, .18, 0], StopStripe: [1, .55, .15, 0], CageBulb: [1, .86, .62, 0],
@@ -396,7 +403,11 @@ function materialFor(src) {
   if (materialCache[name]) return materialCache[name];
   let m;
   if (WORN[name]) m = wornMaterial(name, WORN[name]);
-  else if (PLAIN[name]) { const [c, r, mt] = PLAIN[name]; m = new THREE.MeshStandardMaterial({ color: lin(c), roughness: r, metalness: mt }); }
+  else if (PLAIN[name]) {
+    const [c, r, mt] = PLAIN[name]; m = new THREE.MeshStandardMaterial({ color: lin(c), roughness: r, metalness: mt });
+    // Standing water is a little see-through, so something pale moving under it reads (pass 2: the White).
+    if (name === 'Water') { m.color = lin([0.03, 0.05, 0.052]); m.roughness = 0.06; m.metalness = 0.15; m.transparent = true; m.opacity = 0.66; m.depthWrite = false; }
+  }
   else if (GLASSY[name]) { const [c, o, r] = GLASSY[name]; m = new THREE.MeshStandardMaterial({ color: lin(c), roughness: r, metalness: 0.1, transparent: true, opacity: o, depthWrite: false }); }
   else if (name === 'AtriumMist') {
     m = new THREE.MeshBasicMaterial({ color: lin([.32, .4, .48]), transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
@@ -604,14 +615,15 @@ const Sound = (() => {
     // Pass 2: curiosities.
     found() { tone(1318, 0.18, 'sine', 0.035, 0.8); setTimeout(() => tone(1661, 0.3, 'sine', 0.03, 0.8), 110); },
     curio(kind) {
-      if (kind === 'scale') { Sound.ratchet(); setTimeout(() => { for (let k = 0; k < 10; k++) setTimeout(() => tone(2200, 0.015, 'square', 0.015, 0.2), k * 40); }, 900); }
-      else if (kind === 'stamp') { setTimeout(() => { Sound.clunk(); noise(0.03, 900, 1, 0.2, 'lowpass', 0.4); }, 700); }
-      else if (kind === 'mug') { setTimeout(() => tone(2600, 0.25, 'sine', 0.03, 0.6, 2500), 600); setTimeout(() => tone(2400, 0.2, 'sine', 0.025, 0.6), 2400); }
-      else if (kind === 'sit') { setTimeout(() => { noise(0.2, 500, 0.8, 0.08, 'lowpass', 0.5); tone(140, 0.2, 'sine', 0.03, 0.4, 110); }, 900); }
-      else if (kind === 'wind') { for (let k = 0; k < 9; k++) setTimeout(() => noise(0.01, 3600, 3, 0.1, 'bandpass', 0.4), 400 + k * 160); setTimeout(() => { for (let k = 0; k < 12; k++) setTimeout(() => tone(3000, 0.01, 'square', 0.02, 0.6), k * 500); }, 2000); }
-      else if (kind === 'coin') { tone(2900, 0.05, 'triangle', 0.04, 0.4); setTimeout(() => { noise(0.05, 1800, 2, 0.1, 'bandpass', 0.4); tone(600, 0.12, 'square', 0.02, 0.3); }, 350); }
+      if (kind === 'scale') { tone(1760, 0.25, 'sine', 0.04, 0.6); for (let k = 0; k < 8; k++) setTimeout(() => tone(2200, 0.015, 'square', 0.015, 0.2), 80 + k * 40); }
+      else if (kind === 'stamp') { Sound.clunk(); noise(0.03, 900, 1, 0.2, 'lowpass', 0.4); }
+      else if (kind === 'mug') tone(2600, 0.25, 'sine', 0.03, 0.6, 2500);
+      else if (kind === 'mugDown') tone(2400, 0.2, 'sine', 0.025, 0.6);
+      else if (kind === 'sit') { noise(0.2, 500, 0.8, 0.08, 'lowpass', 0.5); tone(140, 0.2, 'sine', 0.03, 0.4, 110); }
+      else if (kind === 'wind') { for (let k = 0; k < 12; k++) setTimeout(() => noise(0.01, 3600, 3, 0.1, 'bandpass', 0.4), k * 140); }
+      else if (kind === 'coin') { noise(0.05, 1800, 2, 0.1, 'bandpass', 0.4); tone(600, 0.12, 'square', 0.02, 0.3); }
       else if (kind === 'radio') { Sound.radio(); }
-      else if (kind === 'switch') { setTimeout(() => { noise(0.012, 3500, 2, 0.3, 'bandpass', 0.4); Sound.buzzShort(); }, 600); }
+      else if (kind === 'switch') { noise(0.012, 3500, 2, 0.3, 'bandpass', 0.4); Sound.buzzShort(); }
       else if (kind === 'paper') { noise(0.18, 3800, 1.2, 0.05, 'highpass', 0.3, 0.02); }
     },
     // A wireless finding a station: static, then a few bars of a children's song, thin and far away.
@@ -792,7 +804,7 @@ const game = {
   trolley4: { x: OFF3 + 49.5, v: 0 }, plat: { h: 0, v: 0, latched: false, lurch: false, riseStart: -100, riseSeen: false, ticked: 0 },
   pawlLever: -18, pawlHold: null, pawlDip: 0, pawlDrop: -100, pawlClickAt: -100, belt4: { state: 'idle', t: 0, next: 0 }, dl4: {}, aweStart: -100,
   // DL-05
-  desk5: { x: OFF4 + 94.7, v: 0 }, dl5: {}, marksShotAt: -100,
+  desk5: { x: OFF4 + 104.6, v: 0 }, dl5: {}, marksShotAt: -100,
   // Pass 2: danger and curiosities
   deaths: 0, eyeLevel: 1,
 };
@@ -814,7 +826,13 @@ let loaded = 0;
 async function loadModel(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
-  const { data } = await res.json();
+  const head = await res.json();
+  let data = head.data;
+  // A large model comes in parts (art/dl01/build_dl01.py pack_for_web): url, url.1, url.2, ...
+  if (head.parts > 1) {
+    const rest = await Promise.all(Array.from({ length: head.parts - 1 }, (_, k) => fetch(url.replace(/\.json$/, `.${k + 1}.json`)).then((r) => r.json())));
+    data += rest.map((r) => r.data).join('');
+  }
   const bin = atob(data), bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   const gltf = await loader.parseAsync(bytes.buffer, '');
@@ -909,7 +927,9 @@ async function load() {
   buildDL04(setG.scene);
   buildDL05(setG.scene);
   buildCh1(setG.scene);
+  buildCurios(setG.scene);
   buildSparks();
+  buildHazards();
   loadModel('assets/white.json').then(buildWhite).catch(() => { /* no creature model yet */ });
   buildCurioPools();
   buildCulling(setG.scene);
@@ -1243,7 +1263,7 @@ function nearUse() {
   return null;
 }
 function beginUse(kind) {
-  if (kind.includes(':') || kind === 'setdownItem' || kind === 'loadCarrier') { beginCh1(kind); return; }
+  if (kind.includes(':') || ['setdownItem', 'loadCarrier', 'loadTray', 'bell9', 'junction9'].includes(kind)) { beginCh1(kind); return; }
   if (kind === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
   game.vx = 0;
   if (kind === 'setdown') { beginSetDown(); return; }
@@ -2751,7 +2771,7 @@ function updateTriggers4() {
   if (!game.grounded) return false;
   if (game.plat.latched && x > SHAFT.x1 + 0.35 && x < BELT4.x0 && game.checkpoint === 'goods') game.checkpoint = 'latched';
   if (game.plat.latched && x > SHAFT.x1 + 0.6 && game.belt4.state === 'idle') { game.belt4.state = 'warn'; game.belt4.t = 0; }
-  if (x > TUNNEL_X0 + 0.25 && ['goods', 'latched', 'cage'].includes(game.checkpoint)) game.checkpoint = 'tunnel';
+  if (x > TUNNEL_X0 + 0.25 && ['goods', 'latched', 'cage', 'landing8'].includes(game.checkpoint)) game.checkpoint = 'tunnel';
   if (x > TUNNEL_X0 + 0.6 && !d.lookedBack) {
     d.lookedBack = true; Music.bed(false);
     if (once('lookback')) { game.vx = 0; game.act = { kind: 'lookback', phase: 'turn', t: 0 }; return true; }
@@ -2778,9 +2798,9 @@ const beltCarry4 = () => (game.region === 4 && game.grounded && beltRunning4() &
 // ---------------------------------------------------------------------------
 const STAIR_X0 = OFF4 + 74.75, STAIR_SLOPE = 0.833, REGION5_X = OFF4 + 76.75;
 const BARRICADE5 = { x0: OFF4 + 80.2, x1: OFF4 + 81.0, gap: 0.62 };
-const KNOCK5_X = OFF4 + 88.2, INNER5_X = OFF4 + 90.6, TOY5_X = OFF4 + 92.2, TERM5_X = OFF4 + 94.7, END5_X = OFF4 + 97.2;
-const DESK5 = { x: OFF4 + 94.7, half: 0.55, z: -0.62, min: OFF4 + 93.55, clear: OFF4 + 93.65 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
-const KNOCK5_Z = -0.64;                                                                     // stepped in to knock on the door jamb
+const KNOCK5_X = OFF4 + 94.2, INNER5_X = OFF4 + 100.5, TOY5_X = OFF4 + 102.1, TERM5_X = OFF4 + 104.6, END5_X = OFF4 + 107.1;
+const DESK5 = { x: OFF4 + 104.6, half: 0.55, z: -0.62, min: OFF4 + 103.45, clear: OFF4 + 103.55 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
+const KNOCK5_Z = -0.69;                                                                     // stepped in to knock on the door jamb
 const WALL5_Z = -1.0;
 
 function buildDL05(setRoot) {
@@ -2797,9 +2817,9 @@ function buildDL05(setRoot) {
   // C-114's door, the painted window's warmth, a fill, the terminal.
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
   const sun = new THREE.SpotLight(0xffc98a, 0, 4, THREE.MathUtils.degToRad(48), 0.7, 1.6);
-  sun.position.set(OFF4 + 91.75, 1.5, -0.9); sun.target.position.set(OFF4 + 92.0, 0.2, -0.1); sun.userData.base = 9; scene.add(sun, sun.target);
-  refs.dl05Lights = [P(0xdfe6f2, 1.0, 3.6, OFF4 + 81.65, 1.85, -0.5), P(0xdfe6f2, 0.9, 3.4, OFF4 + 86.6, 1.85, -0.5), P(0xffd9b0, 3.0, 4, OFF4 + 89.6, 1.9, -0.4),
-    sun, P(0xffe2c4, 2.4, 4.5, OFF4 + 93.4, 1.8, 0.5), P(0x9fe0c8, 0, 2.5, TERM5_X, 1.0, -0.6)];
+  sun.position.set(OFF4 + 101.65, 1.5, -0.9); sun.target.position.set(OFF4 + 101.9, 0.2, -0.1); sun.userData.base = 9; scene.add(sun, sun.target);
+  refs.dl05Lights = [P(0xdfe6f2, 1.0, 3.6, OFF4 + 81.65, 1.85, -0.5), P(0xdfe6f2, 0.9, 3.4, OFF4 + 86.3, 1.85, -0.5), P(0xffd9b0, 1.5, 3.5, OFF4 + 100.28, 1.0, -0.62),
+    sun, P(0xffe2c4, 2.4, 4.5, OFF4 + 103.3, 1.8, 0.5), P(0x9fe0c8, 0, 2.5, TERM5_X, 1.0, -0.6)];
   refs.termLight = refs.dl05Lights[5];
 }
 
@@ -2988,12 +3008,20 @@ function currentShot() {
   }
   if (game.region === 5) {
     // The marks and the tree, held, the first time.
-    if (game.clock - game.marksShotAt < 3.6) return { name: 'marks', pos: V3(OFF4 + 94.65, 0.72, 0.9), look: V3(OFF4 + 94.65, 0.68, -1.0), focal: 50, ease: 1.2 };
+    if (game.clock - game.marksShotAt < 3.6) return { name: 'marks', pos: V3(OFF4 + 104.55, 0.72, 0.9), look: V3(OFF4 + 104.55, 0.68, -1.0), focal: 50, ease: 1.2 };
     if (a && a.kind === 'present' && a.phase === 'act') return { name: 'terminal', pos: V3(X + 0.55, Y + 1.05, 0.75), look: V3(TERM5_X, 0.9, WALL5_Z), focal: 42, ease: 1.4 };
     if (a && a.kind === 'toy' && a.phase === 'act') return { name: 'toy', pos: V3(X + 1.15, Y + 1.15, -0.1), look: V3(TOY5_X - 0.02, 0.44, -0.36), focal: 34, ease: 1.6 };
   }
   if (game.region === 4) {
     // The hopscotch: whimsy is a beat too. Up and over him so the chalk reads, then back to the side.
+    // The coin viewer: through the eyepieces, long lens across the chasm to the lit upper city, swinging as he swings it.
+    if (a && a.kind === 'curio' && a.c.id === 'viewer' && a.phase === 'act' && actions.LookViewer) {
+      const f = actions.LookViewer.time * FPS;
+      if (f > 64 && f < 150) {
+        const yaw = refs.curio && refs.curio.viewerHead ? refs.curio.viewerHead.rotation.y : 0;
+        return { name: 'viewer', pos: V3(X + 0.1, Y + 1.1, 0.25), look: V3(ATRIUM4.x - Math.tan(yaw) * 150, ATRIUM4.y + 4, ATRIUM4.z), focal: 110, ease: 2.5 };
+      }
+    }
     // The long version: close and low while he checks nobody is watching (he glances into this lens), a slow crane
     // up to 45 degrees over the whole court for the hops and the wobble, then down and in for the cheer.
     if (a && a.kind === 'hopscotch' && a.long) {
@@ -3104,7 +3132,7 @@ const SH = { x0: 12.0, x1: 25.0, tubeX: 14.6, tubeY: 0.9, tubeZ: -0.85, slotX: 1
 // DL-04 The Racks: the charging bay at the end of the hall.
 const RK = { courierX: 41.2, courierZ: -0.35, loopOff: 0.35, gap: 0.67, plate: { x0: 44.0, x1: 45.0 }, bayX: 44.5, door: { x0: 46.3, x1: 46.7 } };
 // DL-06 The Heap: the gallery gate and its counterweight bucket, the sorting weights by the dock, the slide back down.
-const HP = { gateX: OFF3 + 41.9, bucketX: OFF3 + 39.0, weights: [OFF3 + 31.6, OFF3 + 31.85], slideZ: 0.42,
+const HP = { gateX: OFF3 + 41.9, bucketX: OFF3 + 39.0, weights: [OFF3 + 31.6, OFF3 + 36.05], slideZ: 0.42,
   slide: [[38.85, 1.6], [38.762, 1.6], [38.62, 1.575], [38.48, 1.525], [38.376, 1.46], [37.266, 0.528], [36.95, 0.33],
     [36.6, 0.18], [36.25, 0.09], [35.98, 0.06], [35.78, 0.06], [35.72, 0.03], [35.70, 0.0]].map(([x, y]) => [OFF3 + x, y]) };
 // DL-07: a safety rail on the far landing, climbed off the trolley once the pawl holds the platform.
@@ -3113,24 +3141,24 @@ const RAIL7 = { x0: OFF3 + 55.6, x1: OFF3 + 55.75, h: DECK + 0.8 };
 const CG = { x0: OFF3 + 64.6, climbs: [[OFF3 + 65.8, OFF3 + 66.4, 2.2], [OFF3 + 66.4, OFF3 + 67.2, 2.8], [OFF3 + 67.2, OFF3 + 68.2, 3.4]],
   shaft: { x0: OFF3 + 68.2, x1: OFF3 + 69.8 }, top: 3.4, landing: DECK, bottom: -0.1, anteCeil: 3.3, braceX: OFF3 + 69.2 };
 // DL-09: ring C's flood, and the duct that bridges it.
-const DIP9 = { x0: OFF4 + 83.4, x1: OFF4 + 84.9, floor: -0.25 };
-const DUCT9 = { x: OFF4 + 82.35, half: 0.75, h: 0.26, gap: 1.10 };          // its red grip bar is 0.775 left of its centre
+const DIP9 = { x0: OFF4 + 86.1, x1: OFF4 + 87.6, floor: -0.25 };
+const DUCT9 = { x: OFF4 + 85.0, half: 0.75, h: 0.26, gap: 1.10 };          // its red grip bar is 0.775 left of its centre
 // The letters, and the red slots they are posted in.
 const LETTERS = [
   { id: 'tube', name: 'TubeLetter', region: 2, x: SH.tubeX, start: 'cup' },
   { id: 'heap', name: 'HeapLetter', region: 3, x: OFF3 + 43.4, start: 'rail', upper: true },
-  { id: 'c110', name: 'C110Letter', region: 5, x: OFF4 + 83.85, start: 'slot' },
+  { id: 'c110', name: 'C110Letter', region: 5, x: OFF4 + 86.9, start: 'slot' },
 ];
 const SLOTS = [
   { id: 2, name: 'MailSlot2', lamp: 'SlotLamp2', region: 2, x: SH.slotX },
   { id: 6, name: 'MailSlot6', lamp: 'SlotLamp6', region: 3, x: OFF3 + 44.2, upper: true },
-  { id: 9, name: 'MailSlot9', lamp: 'SlotLamp9', region: 5, x: OFF4 + 87.4 },
+  { id: 9, name: 'MailSlot9', lamp: 'SlotLamp9', region: 5, x: OFF4 + 93.75 },
 ];
 const letterState = {};
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const FLAT_LETTER = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);   // flat on the floor, across the lane                                   // kept through respawns and checkpoints; a new game clears it
 const CP_ORDER = ['start', 'shutter', 'hall', 'door', 'room', 'weighroom', 'solved', 'bay', 'scanned', 'landing', 'gallery',
-  'goods', 'latched', 'cage', 'tunnel', 'ringc', 'bedroom', 'forwarded'];
+  'goods', 'latched', 'cage', 'landing8', 'tunnel', 'ringc', 'bedroom', 'forwarded'];
 const past = (cp, name) => CP_ORDER.indexOf(cp) >= CP_ORDER.indexOf(name);
 
 // Build: find the movable pieces and give each a group to move by.
@@ -3152,11 +3180,19 @@ function buildCh1(setRoot) {
     gate6: R('GalleryGate'), bucket: R('GateBucket'), pulley6: R('GatePulley'), sheave6: R('GateSheave'),
     cage: R('Cage'), cageLever: R('CagePawlLever'), cagePawl: R('CagePawl'), counterweight: R('CageCounterweight'), sheave: R('CageSheave'),
     duct: grouped(setRoot, 'PushDuct', DUCT9.x),
+    press: R('PressRam'), pressWheel: R('PressFlywheel'), collapse: R('GalleryCollapse'), collapseEdges: R('GalleryCollapseEdges'),
+    plates: ['CwPlate0', 'CwPlate1'].map((n, i) => grouped(setRoot, n, CW8.plates[i])),
+    facade: R('C114Facade'), switchToggle: R('CurioSwitchToggle'), bell: R('C108Bell'), gong: R('C108Gong'),
+    junction: R('JunctionLever'), laneCable: R('LaneCable'), swing: R('SquareSwing'),
     held: R('HeldLetter'),
   };
   const c = refs.ch1;
   if (c.seated) c.seated.visible = false;
   if (c.seatedLamps) c.seatedLamps.visible = false;
+  if (c.facade) c.facade.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.userData.noCull = true; } });
+  if (c.collapseEdges) c.collapseEdges.visible = false;
+  for (const o of [c.press, c.pressWheel, c.collapse, c.bell, c.gong, c.junction, c.laneCable, c.swing, c.switchToggle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
+  refs.hallLight = new THREE.PointLight(0xffd2a0, 0, 4.5, 2); refs.hallLight.position.set(OFF4 + 95.85, 1.95, -0.25); scene.add(refs.hallLight);
   for (const o of [c.armL, c.armR, c.bayDoor, c.gate6, c.bucket, c.pulley6, c.sheave6, c.cage, c.counterweight, c.cageLever, c.cagePawl, c.sheave, c.scaleNeedle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
   if (c.held) {
     refs.wrists[1].add(c.held); c.held.position.set(0.0137, 0, -0.1426); c.held.quaternion.set(0.6964, 0.6964, 0.1228, 0.1228);
@@ -3168,7 +3204,8 @@ function buildCh1(setRoot) {
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
   refs.shLights = [P(0xffd6a6, 4.0, 5.5, 20.6, 2.6, 0.3), P(0xffc890, 5.0, 4.0, 24.7, 2.7, 0.1), P(0xd9e6ff, 1.2, 3.0, SH.tubeX, 1.6, -0.3)];
   refs.bayLights = [P(0xcfe4ff, 3.2, 4.5, RK.bayX, 2.4, -0.2)];
-  refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF4 + 82.6, 1.45, -1.72), P(0xffc890, 0.9, 1.6, OFF4 + 87.4, 0.9, 0.1)];
+  refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF4 + 81.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF4 + 93.75, 0.9, 0.1),
+    P(0xcfdcf0, 2.6, 5.0, OFF4 + 90.75, 2.1, -0.62), P(0xff3020, 0.2, 1.0, OFF4 + 82.72, 0.6, -0.2)];   // the square's lamp; the bell's red
   refs.cageLights = [P(0xffb050, 3.5, 4.5, CG.shaft.x1 + 0.4, DECK + 0.9, -0.3), P(0xd6dde8, 2.0, 5.0, CG.shaft.x0 - 0.6, CG.top + 1.6, -0.4)];
   [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights].forEach((l) => (l.intensity = l.userData.base));
 }
@@ -3183,9 +3220,11 @@ function resetCh1(cp) {
     bayDoor: past(cp, 'bay') ? 1 : 0, bayLoad: 0,
     weights: HP.weights.map((x) => ({ x, home: x, base: 0, state: 'floor', blend: 0, drop: null })),
     bucket: past(cp, 'gallery') ? 2 : 0, gate6: past(cp, 'gallery') ? 1.4 : 0,
-    cage: { y: past(cp, 'tunnel') ? CG.landing : CG.top, v: 0, phase: past(cp, 'tunnel') ? 'caught' : 'top', t: 0, thrown: false, readyAt: 0, lever: 0 },
+    cage: { y: past(cp, 'landing8') ? CG.landing : CG.top, v: 0, phase: past(cp, 'landing8') ? 'caught' : 'top', t: 0, thrown: false, readyAt: 0, lever: 0 },
     duct: { x: past(cp, 'bedroom') ? DIP9.x0 + DUCT9.half : DUCT9.x, v: 0, state: past(cp, 'bedroom') ? 'bridge' : 'free', drop: 0 },
-    tubeT: -1, heapT: -1, stuckT: 0, scale: 0,
+    plates: CW8.plates.map((x) => ({ x, home: x, base: CG.top, state: (persist.cw >= 2 && past(cp, 'cage')) || past(cp, 'landing8') ? 'tray' : 'floor', seat: undefined, blend: 0, drop: null })),
+    collapse: past(cp, 'goods') ? 2 : 0, collapseT: 0, sumpShown: false, heapShown: false, shocked: 0,
+    tubeT: -1, heapT: -1, stuckT: 0, scale: 0, bellUntil: 0, junction: false, junctionK: 0, shortUntil: 0,
   };
   if (c.y !== undefined) game.y = c.y;
   if (refs.ch1) {
@@ -3207,7 +3246,7 @@ function resetCh1(cp) {
     if (c110.obj && c110.rest) { c110.obj.position.copy(c110.rest); c110.obj.quaternion.copy(c110.restQ); }
   }
 }
-function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; }
+function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; persist.cw = 0; persist.shockedOnce = false; }
 
 // Collision ---------------------------------------------------------------------------------
 function floorCh1(x) {
@@ -3226,6 +3265,7 @@ function surfaceCh1(x, h) {
       if (s.box.state === 'floor' && Math.abs(x - s.box.x) <= 0.2) h = Math.max(h, s.box.base + 0.2);
     }
   }
+  if (game.region === 4) for (const p of s.plates) if (p.state === 'floor' && Math.abs(x - p.x) <= 0.06 && Math.abs(h - p.base) < 0.05) h = Math.max(h, p.base + 0.21);
   if (game.region === 3) for (const w of s.weights) if (w.state === 'floor' && Math.abs(x - w.x) <= WEIGHT_R && !game.upper) h = Math.max(h, WEIGHT_H);
   if (game.region === 4) {
     if (x >= RAIL7.x0 && x <= RAIL7.x1) h = Math.max(h, RAIL7.h);
@@ -3245,6 +3285,7 @@ function limitsCh1(lo, hi) {
   if (game.region === 2 && x < SH.x1 + 0.4) lo = Math.max(lo, SH.x0 + 0.2);
   if (game.region === 3 && game.upper && x < HP.gateX && s.gate6 < 0.8) hi = Math.min(hi, HP.gateX - 0.06 - HALF);
   if (game.region === 3 && game.upper) lo = Math.max(lo, HP.slide[0][0] + 0.1);
+  if (game.region === 3 && game.upper && s.collapse && x > GALLERY6.x1) lo = Math.max(lo, GALLERY6.x1 + 0.19);
   if (game.region === 4) {
     const c = s.cage, inShaft = x > CG.shaft.x0 - 0.05 && x < CG.shaft.x1 + 0.05;
     if (!inShaft && x < CG.shaft.x0 && game.y > CG.top - 0.3 && Math.abs(c.y - CG.top) > 0.05) hi = Math.min(hi, CG.shaft.x0 - HALF + 0.02);
@@ -3264,11 +3305,15 @@ function nearCh1() {
   if (game.hold === 'push') return 'release';
   if (game.hold === 'item') {
     if (game.region === 3 && !game.upper && Math.abs(x - DOCK_X) < 0.7 && refs.carriers.some((c) => c.state === 'dock')) return 'loadCarrier';
+    if (game.region === 4 && game.carry && game.carry.key && game.carry.key[0] === 'p' && Math.abs(x - CW8.trayX) < 0.7 && game.ch1.cage.phase === 'top') return 'loadTray';
     return 'setdownItem';
   }
   if (game.hold) return null;
   const cu = curioHere();
   if (cu) return 'curio:' + cu.id;
+  // DL-09: C-108's doorbell, and the junction box's lever by C-110.
+  if (game.region === 5 && Math.abs(x - BELL9.x) < 0.25 && game.clock > s.bellUntil) return 'bell9';
+  if (game.region === 5 && Math.abs(x - JUNCTION9.x) < 0.25 && !s.junction) return 'junction9';
   // Letters: pick one up, or post what he carries.
   for (const L of LETTERS) {
     const st = letterState[L.id];
@@ -3289,6 +3334,7 @@ function itemsHere() {
   const s = game.ch1, out = [];
   if (game.region === 2) out.push(Object.assign(s.box, { key: 'box', h: 0.2, r: 0.2, below: BAIL_BELOW_WRIST, g: refs.ch1.box }));
   if (game.region === 3) s.weights.forEach((w, i) => out.push(Object.assign(w, { key: 'w' + i, h: WEIGHT_H, r: WEIGHT_R, below: BAIL_BELOW_WRIST, g: refs.ch1.weights[i] })));
+  if (game.region === 4) s.plates.forEach((p, i) => out.push(Object.assign(p, { key: 'p' + i, h: 0.21, r: 0.05, below: BAIL_BELOW_WRIST, g: refs.ch1.plates[i] })));
   return out;
 }
 const PUSHABLES = {
@@ -3304,11 +3350,13 @@ function pushHere() {
   }
   return out;
 }
-const ACT_CH1 = new Set(['death', 'knockback', 'curio', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
+const ACT_CH1 = new Set(['death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
 function beginCh1(kind) {
   const [k, arg] = kind.split(':');
   game.vx = 0;
   if (k === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
+  if (k === 'bell9') { game.act = { kind: 'bell9', phase: 'approach', t: 0, standX: BELL9.x, face: 1 }; return; }
+  if (k === 'junction9') { game.act = { kind: 'junction9', phase: 'approach', t: 0, standX: JUNCTION9.x - 0.25, face: 1 }; return; }
   if (k === 'curio') {
     const c = CURIOS.find((q) => q.id === arg);
     game.act = { kind: 'curio', c, phase: 'approach', t: 0, standX: c.standX ?? c.x, face: c.face || game.facing };
@@ -3325,6 +3373,10 @@ function beginCh1(kind) {
     if (!flat) { Sound.worried(); return; }
     game.act = { kind: 'setdownItem', phase: 'act', t: 0, it, tx };
     setClip('SetDown', 0.15);
+    return;
+  }
+  if (k === 'loadTray') {
+    game.act = { kind: 'loadTray', phase: 'approach', t: 0, it: game.carry, standX: THREE.MathUtils.clamp(game.x, CW8.trayX - 0.7, CW8.trayX - 0.42), face: 1 };
     return;
   }
   if (k === 'loadCarrier') {
@@ -3362,6 +3414,15 @@ function updateActCh1(a, dt) {
   const s = game.ch1;
   if (a.kind === 'death') { updateDeath(a, dt); return; }
   if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
+  if (a.kind === 'bell9' || a.kind === 'junction9') {
+    if (a.phase === 'approach') { if (approachCh1(a, dt)) setClip(a.kind === 'bell9' ? (actions.Knock ? 'Knock' : 'Present') : 'LeverPull', 0.15); return; }
+    if (a.t > 0.45 && !a.done) {
+      a.done = true;
+      if (a.kind === 'bell9') ringBell9(); else throwJunction9();
+    }
+    if (a.t > 1.4) { game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+    return;
+  }
   if (a.kind === 'knockback') {
     game.x += a.dir * 0.9 * Math.max(0, 0.4 - a.t) * dt * 2.5;
     if (a.t >= (actions.Knockback ? actions.Knockback.getClip().duration : 1.2)) { game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
@@ -3379,6 +3440,18 @@ function updateActCh1(a, dt) {
     const f = actions.SetDown.time * FPS, it = a.it;
     if (f >= 14 && it.state === 'carried') { it.drop = { from: it.g.position.clone(), t: 0 }; it.state = 'floor'; it.x = a.tx; it.base = game.y; Sound.setDown(false); }
     if (f >= 35) { game.act = null; game.hold = null; game.carry = null; setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.kind === 'loadTray') {
+    // Turned to the counterweight behind the lane, the plate goes into its tray.
+    if (a.phase === 'approach') { if (approachCh1(a, dt)) { game.yawOverride = Math.PI; a.phase = 'turn'; } return; }
+    if (a.phase === 'turn') { if (Math.abs(game.yaw - Math.PI) < 0.06) { a.phase = 'act'; setClip('SetDownHigh', 0.15); } else setClip('Walk', 0.2, 0.6); return; }
+    const f = actions.SetDownHigh.time * FPS, it = a.it;
+    if (f >= 14 && it.state === 'carried') {
+      it.state = 'tray'; it.seat = game.ch1.plates.filter((q) => q.state === 'tray').length - 1; Sound.setDown(true); Sound.clank();
+      if (game.ch1.plates.every((q) => q.state === 'tray')) persist.cw = 2;
+    }
+    if (f >= 35) { game.act = null; game.hold = null; game.carry = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); }
     return;
   }
   if (a.kind === 'loadCarrier') {
@@ -3580,7 +3653,7 @@ function updateCh1(dt) {
   updateCage(dt);
   // DL-09: the duct drops into the flood and becomes the bridge; the water turns him back.
   const du = s.duct;
-  if (du.state === 'falling') { du.drop = Math.min(1, du.drop + dt / 0.5); if (du.drop >= 1) { du.state = 'bridge'; Sound.thud(); Sound.splash?.(); shake(0.3); } }
+  if (du.state === 'falling') { du.drop = Math.min(1, du.drop + dt / 0.5); if (du.drop >= 1) { du.state = 'bridge'; Sound.thud(); Sound.splash(1.3); shake(0.3); makeNoise((DIP9.x0 + DIP9.x1) / 2, 1.5); } }
   if (k.duct) { k.duct.position.x = du.x; k.duct.position.y = du.state === 'bridge' ? DIP9.floor : du.state === 'falling' ? DIP9.floor * du.drop * du.drop : 0; }
   if (game.region === 5 && du.state !== 'bridge' && !game.act && game.grounded && game.x + HALF * 0.6 > DIP9.x0 && game.x < DIP9.x1 && game.y < 0.02) {
     game.act = { kind: 'waterFlinch', phase: 'act', t: 0, backX: DIP9.x0 - 0.35 }; game.vx = 0; setClip(actions.WaterFlinch ? 'WaterFlinch' : 'Flinch', 0.1);
@@ -3603,6 +3676,7 @@ function updateCh1(dt) {
   if (game.region === 2 && x > RK.door.x1 + 0.2 && !past(cp, 'bay')) game.checkpoint = 'bay';
   if (game.region === 3 && game.upper && x > HP.gateX + 0.3 && !past(cp, 'gallery')) game.checkpoint = 'gallery';
   if (game.region === 4 && x > CG.shaft.x0 - 0.9 && x < CG.shaft.x0 && game.y > CG.top - 0.05 && !past(cp, 'cage')) game.checkpoint = 'cage';
+  if (game.region === 4 && x > CG.shaft.x1 + 0.3 && Math.abs(game.y - CG.landing) < 0.1 && game.ch1.cage.phase === 'caught' && !past(cp, 'landing8')) game.checkpoint = 'landing8';
   // The slide: off the gallery's left end, he sits and slides down to the floor.
   if (game.region === 3 && game.upper && !game.act && game.grounded && x < HP.slide[0][0] + 0.2 && input.left) {
     game.act = { kind: 'slide', phase: 'act', t: 0 }; game.pitch = 0; setClip(actions.Slide ? 'Slide' : 'CrouchIdle', 0.15); Sound.scrape();
@@ -3627,6 +3701,7 @@ function carrierLoadTip(c, into) {
   const it = c.load; if (!it) return;
   c.load = null;
   it.g.getWorldPosition(tv1); scene.attach(it.g);
+  if (into === 'bucket' && !game.ch1.heapShown && white.w && white.w.id === 'heap') { game.ch1.heapShown = true; white.x = OFF3 + 37.8; white.tx = white.x; setWhite('surface'); }
   if (into === 'bucket') { it.state = 'bucket'; it.g.visible = false; game.ch1.bucket += 1; Sound.clank(); setTimeout(() => Sound.thud(), 250); shake(0.2); }
   else { it.state = 'gone'; it.g.visible = false; setTimeout(() => { Object.assign(it, { state: 'floor', x: it.home, base: 0, drop: null }); it.g.rotation.set(0, 0, 0); it.g.visible = true; }, 4000); }
 }
@@ -3639,7 +3714,22 @@ function updateCage(dt) {
   const c = game.ch1.cage, k = refs.ch1;
   c.t += dt;
   const inside = game.region === 4 && game.x > CG.shaft.x0 + 0.1 && game.x < CG.shaft.x1 - 0.1 && Math.abs(game.y - c.y) < 0.05;
-  if (c.phase === 'top' && inside && game.grounded && !game.act && game.clock > c.readyAt) {
+  // Pass 2: the counterweight is too light until both plates are in its tray. Step in and the cage drops a
+  // hand's breadth, the brake squeals and holds, and it hauls itself back up; he has to step out and try again.
+  const loaded = game.ch1.plates.filter((p) => p.state === 'tray').length;
+  if (!inside) c.needExit = false;
+  if (c.phase === 'top' && inside && game.grounded && !game.act && game.clock > c.readyAt && !c.needExit && loaded < 2) {
+    c.phase = 'dip'; c.t = 0; game.act = { kind: 'cage', phase: 'act', t: 0 }; game.vx = 0; Sound.lurch(); Sound.groan(); shake(0.5);
+  }
+  if (c.phase === 'dip') {
+    c.y = CG.top - (loaded ? 0.22 : 0.38) * smooth(c.t / 0.35);
+    if (c.t > 0.35 && c.t - dt <= 0.35) { Sound.liftCrash(0.4); Sound.alarmBell(); shake(0.4); }
+    if (c.t > 1.6) { c.phase = 'haulDip'; c.t = 0; Sound.chain(1.2); }
+  } else if (c.phase === 'haulDip') {
+    c.y = Math.min(CG.top, c.y + 0.4 * dt);
+    if (c.y >= CG.top) { c.phase = 'top'; c.needExit = true; c.readyAt = game.clock + 0.8; if (game.act && game.act.kind === 'cage') { game.act = null; setClip('Idle', 0.3); playQuirk('Startle'); } }
+  }
+  if (c.phase === 'top' && inside && game.grounded && !game.act && game.clock > c.readyAt && !c.needExit && loaded >= 2) {
     c.phase = 'settle'; c.t = 0; c.thrown = false; game.act = { kind: 'cage', phase: 'act', t: 0 }; game.vx = 0; Sound.creak(0.8);
   }
   const L = CG.landing, catchY = L + 0.35;
@@ -3652,7 +3742,7 @@ function updateCage(dt) {
     if (c.y <= CG.bottom) {
       c.y = CG.bottom; c.phase = 'crash'; c.t = 0; Sound.liftCrash(1); shake(0.9);
       // Riding it down is a death now: the cage hits the buffers in the sump (pass 2).
-      if (game.act && game.act.kind === 'cage') die('fall', { follow: () => { game.y = c.y; } });
+      if (game.act && game.act.kind === 'cage') { Sound.splash(1.5); die('fall', { follow: () => { game.y = c.y; } }); }
     }
   } else if (c.phase === 'stall') { if (c.t > 0.75) { c.phase = 'slip'; c.t = 0; c.v = 0.3; } }
   else if (c.phase === 'bite') { c.y += (L - c.y) * Math.min(1, dt * 9); if (c.t > 0.5) { c.y = L; c.phase = 'caught'; c.t = 0; Sound.clunk(); } }
@@ -3691,18 +3781,18 @@ function updateCageAct(a, dt) {
 // scale) shows the Use prompt at once, so the player learns that the depot's things can be used. Later ones are
 // easter eggs. A soft chime and the count mark each find; the pause card and the end card keep the tally.
 const CURIOS = [
-  { id: 'scale', region: 1, x: SCALE1_X, early: true, first: true, clip: ['WeighSelf', 'PeekDown'], dur: 2.6, sound: 'scale' },
+  { id: 'scale', region: 1, x: SCALE1_X, standX: 1.27, face: 1, early: true, first: true, clip: ['WeighSelf', 'PeekDown'], dur: 2.6, cues: [[30, 'scale']] },
   { id: 'cord', region: 1, x: 0.59, early: true, builtIn: true },             // the cord lamp: its own interaction
-  { id: 'dispatch', region: 1, x: 1.05, early: true, clip: ['ReadRoute', 'CheckLabel'], dur: 3.0, sound: 'paper', face: 1 },
-  { id: 'franker', region: 2, x: SH.x0 + 1.15, early: true, clip: ['FrankHand', 'Present'], dur: 2.8, sound: 'stamp' },
-  { id: 'mug', region: 2, x: 15.55, early: true, clip: ['HoldMug', 'Pat'], dur: 3.2, sound: 'mug' },
-  { id: 'rack', region: 2, x: 41.05, cond: () => game.ch1.courier.state === 'seated', clip: ['SitRack', 'Straighten'], dur: 4.5, sound: 'sit' },
-  { id: 'clock', region: 3, x: OFF3 + 40.7, upper: true, clip: ['WindClock', 'Crank'], dur: 3.0, sound: 'wind' },
-  { id: 'chair', region: 3, x: OFF3 + 27.9, cond: () => !game.upper, clip: ['SitChair', 'Straighten'], dur: 4.0, sound: 'sit' },
+  { id: 'dispatch', region: 1, x: 1.0, r: 0.18, standX: 1.18, face: -1, early: true, clip: ['ReadRoute', 'CheckLabel'], dur: 3.0, cues: [[19, 'paper'], [62, 'paper']] },
+  { id: 'franker', region: 2, x: SH.x0 + 0.8, standX: SH.x0 + 0.8, face: -1, early: true, clip: ['FrankHand', 'Present'], dur: 2.8, cues: [[30, 'stamp']] },
+  { id: 'mug', region: 2, x: 15.2, standX: 15.2, face: 1, early: true, clip: ['HoldMug', 'Pat'], dur: 3.2, cues: [[26, 'mug'], [76, 'mugDown']] },
+  { id: 'rack', region: 2, x: 41.08, standX: 41.08, face: 1, cond: () => game.ch1.courier.state === 'seated', clip: ['SitRack', 'Straighten'], dur: 4.5, cues: [[50, 'sit']] },
+  { id: 'clock', region: 3, x: OFF3 + 40.38, standX: OFF3 + 40.38, face: 1, upper: true, clip: ['WindClock', 'Crank'], dur: 3.0, cues: [[12, 'wind']] },
+  { id: 'chair', region: 3, x: OFF3 + 27.8, standX: OFF3 + 27.8, face: 1, cond: () => !game.upper, clip: ['SitChair', 'Straighten'], dur: 4.0, cues: [[58, 'sit']] },
   { id: 'hopscotch', region: 4, x: HOP4_X - 0.15, cond: () => game.dl4.hopped, clip: ['HopscotchLong', 'Hopscotch'], builtIn: true },
-  { id: 'viewer', region: 4, x: OFF4 + 72.6, clip: ['LookViewer', 'Awe'], dur: 6.0, sound: 'coin' },
-  { id: 'radio', region: 5, x: OFF4 + 99.0, clip: ['TuneRadio', 'Pat'], dur: 4.0, sound: 'radio' },
-  { id: 'switch', region: 5, x: OFF4 + 97.0, clip: ['FlickSwitch', 'Pat'], dur: 2.2, sound: 'switch' },
+  { id: 'viewer', region: 4, x: OFF4 + 72.6, standX: OFF4 + 72.6, face: 1, clip: ['LookViewer', 'Awe'], dur: 6.0, cues: [[58, 'coin']] },
+  { id: 'radio', region: 5, x: OFF4 + 100.0, z: -0.55, face: 1, clip: ['TuneRadio', 'Pat'], dur: 4.0, cues: [[34, 'radio']] },
+  { id: 'switch', region: 5, x: OFF4 + 95.72, z: -0.74, face: 1, clip: ['FlickSwitch', 'Pat'], dur: 2.2, cues: [[16, 'switch']] },
 ];
 const curioFound = {};
 const curioCount = () => CURIOS.filter((c) => curioFound[c.id]).length;
@@ -3726,20 +3816,71 @@ function findCurio(id) {
 function updateCurioAct(a, dt) {
   const c = a.c;
   if (a.phase === 'approach') {
-    if (!approachCh1(a, dt)) return;
+    if (!approachCh1(a, dt, c.z || 0)) return;
     a.phase = 'act'; a.t = 0;
     if (c.id === 'hopscotch') { game.act = null; startHopscotch(); findCurio(c.id); return; }
     a.clip = c.clip.find((n) => actions[n]) || 'Idle';
     setClip(a.clip, 0.2);
     findCurio(c.id);
-    Sound.curio(c.sound);
     if (c.id === 'viewer') game.viewerAt = game.clock;
     if (c.id === 'switch') game.hallLitAt = game.clock;
     if (c.id === 'radio') game.radioAt = game.clock;
     return;
   }
+  if (a.phase === 'out') {          // stepping back out to the lane from a wall he reached into
+    game.z += Math.sign(-game.z) * Math.min(Math.abs(game.z), 0.45 * dt); setClip('Walk', 0.15, 0.5);
+    if (Math.abs(game.z) < 0.004) { game.z = 0; game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+    return;
+  }
+  const f = actions[a.clip] ? actions[a.clip].time * FPS : a.t * FPS;
+  for (const [cf, snd] of c.cues || []) if (f >= cf && !a['c' + cf]) { a['c' + cf] = true; Sound.curio(snd); }
+  curioProps(c.id, a.clip === c.clip[0] ? f : -1);
   const len = actions[a.clip] ? actions[a.clip].getClip().duration : c.dur;
-  if (a.t >= Math.max(c.dur || 0, Math.min(len, 8))) { game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+  if (a.t >= Math.min(8, Math.max(len, a.clip === c.clip[0] ? 0 : c.dur || 0))) {
+    curioProps(c.id, -1);
+    if (game.z) { a.phase = 'out'; return; }
+    game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock;
+  }
+}
+// The props move with his clips (art/pass2/build_curios.py gives the frames). f < 0 puts them back at rest.
+const keyed = (f, keys) => { if (f <= keys[0][0]) return keys[0][1]; for (let i = 1; i < keys.length; i++) if (f <= keys[i][0]) { const [f0, v0] = keys[i - 1], [f1, v1] = keys[i]; return v0 + (v1 - v0) * smooth((f - f0) / (f1 - f0)); } return keys[keys.length - 1][1]; };
+function curioProps(id, f) {
+  const k = refs.curio || {}, on = f >= 0, R = THREE.MathUtils.degToRad;
+  const atRest = (o) => { if (o) { o.position.copy(o.userData.rest.p); o.quaternion.copy(o.userData.rest.q); } return o; };
+  if (id === 'scale' && k.ticket) atRest(k.ticket).position.y += on ? keyed(f, [[0, 0], [30, 0], [32, 0.042], [34, 0.036], [42, 0.036], [47, 0.055], [60, 0.055], [66, 0]]) : 0;
+  if (id === 'dispatch' && k.card) atRest(k.card).position.y += on ? keyed(f, [[19, 0], [25, 0.035], [56, 0.035], [62, 0]]) : 0;
+  if (id === 'franker') {
+    if (k.frankHead) atRest(k.frankHead).position.y -= on ? keyed(f, [[22, 0], [27, 0.004], [30, 0.025], [33, 0.025], [39, 0]]) : 0;
+    if (k.frankLever) atRest(k.frankLever).rotateX(on ? R(keyed(f, [[22, 0], [27, 22], [30, 50], [34, 50], [40, 0]])) : 0);
+    if (on && f >= 30 && k.clawStamp) k.clawStamp.visible = true;
+  }
+  if (id === 'mug' && k.mug) {
+    const held = on && f >= 26 && f < 76;
+    k.mug.visible = !held; if (k.mugHeld) k.mugHeld.visible = held;
+    atRest(k.mug).rotateY(on && f >= 76 ? R(keyed(f, [[76, -40], [82, -40], [87, 12], [89, 12], [93, 0]])) : 0);
+  }
+  if (id === 'clock' && k.winder) atRest(k.winder).rotateZ(on ? -R(keyed(f, [[12, 0], [20, 180], [28, 180], [36, 360], [44, 360], [52, 540]])) : 0);
+  if (id === 'clock' && on && f >= 60) game.clockWound = game.clock;
+  if (id === 'viewer' && k.viewerHead) atRest(k.viewerHead).rotateY(on ? R(keyed(f, [[76, 0], [96, 26], [100, 26], [124, -22], [128, -14], [130, -16], [148, -16], [156, 0]])) : 0);
+}
+function buildCurios(setRoot) {
+  const R = (n) => setRoot.getObjectByName(n) || (model && model.getObjectByName(n));
+  refs.curio = { ticket: R('ScaleTicket'), card: R('RouteCardD17'), frankHead: R('HandFrankerHead'), frankLever: R('HandFrankerLever'),
+    clawStamp: model && model.getObjectByName('ClawStamp'), mug: R('MugD17'), mugHeld: model && model.getObjectByName('MugD17Held'),
+    winder: R('ClockWinder'), hourHand: R('ClockHandHour'), minHand: R('ClockHandMin'), viewerHead: R('CoinViewerHead') };
+  for (const o of Object.values(refs.curio)) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
+  if (refs.curio.clawStamp) refs.curio.clawStamp.visible = false;
+  if (refs.curio.mugHeld) refs.curio.mugHeld.visible = false;
+}
+// The stopped clock, once wound, ticks for a minute or so, then stops again.
+function updateClockHands(dt) {
+  const k = refs.curio; if (!k || !k.minHand || game.clockWound === undefined) return;
+  const run = game.clock - game.clockWound;
+  if (run > 75) return;
+  const tick = Math.floor(run);
+  if (tick !== game.clockTick) { game.clockTick = tick; if (game.region === 3 && game.upper && Math.abs(game.x - (OFF3 + 40.38)) < 4) Sound.tick(); }
+  k.minHand.quaternion.copy(k.minHand.userData.rest.q); k.minHand.rotateZ(-THREE.MathUtils.degToRad(tick * 6));
+  if (k.hourHand) { k.hourHand.quaternion.copy(k.hourHand.userData.rest.q); k.hourHand.rotateZ(-THREE.MathUtils.degToRad(tick * 0.5)); }
 }
 // The early ones he glances at, the first time: the nearest unfound one within reach of a look.
 function curioPoint(c) { return tv4.set(c.x, (c.upper ? DECK : 0) + (c.lookY ?? 0.45), -0.3); }
@@ -3868,10 +4009,13 @@ function updateWhite(dt) {
   let ty = deep, speed = WHITE_SPEED.glide;
   const st = white.state;
   if (st === 'flee') { ty = surf - 1.2; speed = 2; white.tx = white.x; if (game.clock > white.fleeUntil) setWhite('patrol'); }
-  else if (white.lure && game.clock < white.lure.until && st !== 'strike') {
+  else if (st === 'lured' && !(white.lure && game.clock < white.lure.until)) {
+    white.lure = null; setWhite('sink');                                   // the bell stopped: it sinks and goes back to patrolling
+  } else if (white.lure && game.clock < white.lure.until && st !== 'strike') {
+    if (st !== 'lured') setWhite('lured');
     const ldir = white.lure.dir || (white.lure.x >= white.x ? 1 : -1);
     white.tx = white.lure.x - 0.5 * ldir; speed = WHITE_SPEED.approach;      // its nose, 0.5 ahead, at the bell
-    if (Math.abs(white.x - white.tx) < 0.15) { ty = surf - 0.12; whiteClip('WhiteNose'); } else whiteClip('WhiteSwim');
+    if (Math.abs(white.x - white.tx) < 0.15) { ty = surf - 0.12; white.yaw = ldir > 0 ? 0 : Math.PI; whiteClip('WhiteNose'); } else whiteClip('WhiteSwim');
     // Running nearby still turns it: the bell holds it, it doesn't deafen it.
     if (white.heard && white.heard.him && white.heard.loud >= 1 && game.clock - white.heard.at < 0.1 && Math.abs(game.x - white.x) < 2.2) { white.lure = null; setWhite('approach'); }
   } else if (st === 'patrol') {
@@ -3919,7 +4063,7 @@ function updateWhite(dt) {
   white.x += THREE.MathUtils.clamp(white.tx - white.x, -speed * dt, speed * dt);
   white.x = THREE.MathUtils.clamp(white.x, w.x0 + 0.2, w.x1 - 0.2);
   white.y += (ty - white.y) * Math.min(1, dt * 2.5);
-  if (['patrol', 'approach', 'flee'].includes(white.state) || (white.lure && game.clock < white.lure.until)) {
+  if (['patrol', 'approach', 'flee'].includes(white.state) || (white.lure && game.clock < white.lure.until && Math.abs(white.x - white.tx) >= 0.15)) {
     const dir = Math.sign(white.tx - white.x); if (dir) white.yaw = dir > 0 ? 0 : Math.PI;
   }
   if (white.g) {
@@ -3955,6 +4099,175 @@ function updateRipples(dt) {
     m.scale.set(r, r, 1); m.material.opacity = 0.2 * (1 - k);
     if (k >= 1) { scene.remove(m); m.material.dispose(); white.ripples.splice(i, 1); }
   }
+}
+
+
+// DL-09's flooded lane (pass 2): the White lives in it. The near bank runs beside its water, and the bridged duct
+// crosses its narrow point. C-108's doorbell rings for a while and draws it to C-108's sunken step; the junction box's
+// lever drops the live cable into the water, and it flees for longer.
+const BELL9 = { x: OFF4 + 82.72, nose: OFF4 + 83.4, ring: 12 }, JUNCTION9 = { x: OFF4 + 85.92, tip: [OFF4 + 87.4, -0.1, -0.76] };
+WATERS.push({ id: 'lane9', region: 5, x0: OFF4 + 82.95, x1: OFF4 + 87.6, y: -0.1, z: -0.64, part: 'hunt', ledgeH: 0.1, reach: 1.35,
+  edges: [[OFF4 + 82.7, OFF4 + 87.6]], active: () => game.x < OFF4 + 90.5 });
+function ringBell9() {
+  const s = game.ch1;
+  s.bellUntil = game.clock + BELL9.ring;
+  lureWhite(BELL9.nose, BELL9.ring, -1);
+  makeNoise(BELL9.nose, 1.5);
+}
+function throwJunction9() {
+  const s = game.ch1;
+  s.junction = true; s.shortUntil = game.clock + 3.5;
+  Sound.clunk(); setTimeout(() => { Sound.zap(1.4); Sound.splash(0.6); }, 250);
+  scareWhite(20);
+}
+function updateRingC(dt) {
+  const s = game.ch1, k = refs.ch1;
+  if (game.region !== 5) return;
+  // The bell: a trill every half second, the red lamp blinking, the gong over the door shaking.
+  const ringing = game.clock < s.bellUntil;
+  if (ringing && (!s.nextTrill || game.clock > s.nextTrill)) { s.nextTrill = game.clock + 0.55; Sound.alarmBell(); }
+  glow('C108BellLamp', ringing ? (Math.sin(game.clock * 18) > 0 ? 6 : 0.5) : 3);
+  if (k.gong) { k.gong.quaternion.copy(k.gong.userData.rest.q); if (ringing) k.gong.rotateZ(Math.sin(game.clock * 60) * 0.05); }
+  if (k.bell) { k.bell.position.copy(k.bell.userData.rest.p); if (game.act && game.act.kind === 'bell9' && game.act.t > 0.4 && game.act.t < 0.9) k.bell.position.z -= 0.004; }
+  // The junction lever, thrown, and the cable shorting into the water.
+  s.junctionK += ((s.junction ? 1 : 0) - s.junctionK) * Math.min(1, dt * 8);
+  if (k.junction) { k.junction.quaternion.copy(k.junction.userData.rest.q); k.junction.rotateZ(THREE.MathUtils.degToRad(-130) * s.junctionK); }
+  if (game.clock < s.shortUntil && Math.random() < dt * 12 && !game.calm) {
+    burstSparks(tv5.set(...JUNCTION9.tip), 6, 1.2);
+    spawnRipple(JUNCTION9.tip[0] + (Math.random() - 0.5) * 1.2, -0.1, -0.64, 0.15);
+  }
+  if (k.laneCable) { k.laneCable.quaternion.copy(k.laneCable.userData.rest.q); k.laneCable.rotateX(Math.sin(game.clock * 0.7) * 0.03 + (game.clock < s.shortUntil ? Math.sin(game.clock * 40) * 0.02 : 0)); }
+  if (k.swing) { k.swing.quaternion.copy(k.swing.userData.rest.q); k.swing.rotateX(Math.sin(game.clock * 0.9) * 0.06); }
+  // The first time he comes along the lane it shows itself, far off, and sinks again.
+  if (!s.whiteShown && game.x > OFF4 + 82.3 && white.w && white.w.id === 'lane9') {
+    s.whiteShown = true; white.x = OFF4 + 86.9; white.tx = white.x; white.heard = null; setWhite('surface'); Sound.splash(0.5);
+  }
+  // C-114: the front wall fades once he's through the door, so the house reads as a dollhouse cut.
+  if (k.facade) {
+    const want = game.x > OFF4 + 94.3 ? 0 : 1;
+    s.facadeK = (s.facadeK ?? 1) + (want - (s.facadeK ?? 1)) * Math.min(1, dt * 3);
+    k.facade.visible = s.facadeK > 0.02;
+    k.facade.traverse((o) => { if (o.isMesh) { o.material.opacity = s.facadeK; o.castShadow = s.facadeK > 0.98; o.material.depthWrite = s.facadeK > 0.98; } });
+  }
+  // The hall light, once he flicks the switch.
+  const lit = curioFound.switch && game.hallLitAt !== undefined;
+  glow('HallBulbGlow', lit ? 8 : 0);
+  if (refs.hallLight) refs.hallLight.intensity = lit ? 2.2 : 0;
+  if (k.switchToggle) { k.switchToggle.quaternion.copy(k.switchToggle.userData.rest.q); if (lit) k.switchToggle.rotateX(THREE.MathUtils.degToRad(50)); }
+}
+
+
+// Pass 2 hazards and the last scenes' extra steps (docs/chapter1_pass2_plan.md; art/pass2/build_pass2.py).
+// Solved states that outlive a respawn, cleared on a new game.
+const persist = { cw: 0 };
+// DL-02: a franking press still stamping its routine, on the way to the Sorting Hall's tube. Its lamp is the tell.
+const PRESS2 = { x0: 13.62, x1: 14.28, rest: 0.98, down: 0.055, period: 2.6, lethal: 0.74 };
+function pressFace(t) {
+  if (t < 0.5) return PRESS2.rest;
+  if (t < 0.62) return THREE.MathUtils.lerp(PRESS2.rest, PRESS2.down, smooth((t - 0.5) / 0.12));
+  if (t < 0.97) return PRESS2.down;
+  if (t < 1.57) return THREE.MathUtils.lerp(PRESS2.down, PRESS2.rest, smooth((t - 0.97) / 0.6));
+  return PRESS2.rest;
+}
+// DL-06: past the gate, a stretch of the gallery gives way behind him. There's no going back.
+const GALLERY6 = { x0: OFF3 + 45.95, x1: OFF3 + 47.05, trigger: OFF3 + 47.35 };
+// DL-07: the shaft's flooded sump. DL-08: the counterweight's plates, the cage sump, the tunnel's live cable.
+const CW8 = { trayX: OFF3 + 68.45, plates: [OFF3 + 67.55, OFF3 + 67.95], seats: [[-0.05, -0.235], [0.05, -0.235]] };
+const ARCS8 = [
+  { x0: OFF4 + 63.04, x1: OFF4 + 63.44, a: [OFF4 + 63.15, 1.635, 0.0], b: [OFF4 + 63.33, 1.602, 0.06], tell: [0, 0.3], live: [0.3, 0.75] },
+  { x0: OFF4 + 63.77, x1: OFF4 + 64.17, a: [OFF4 + 64.07, 1.632, -0.42], b: [OFF4 + 63.87, 1.602, -0.04], tell: [1.2, 1.5], live: [1.5, 1.95] },
+];
+const ARC_PERIOD = 2.4;
+WATERS.push(
+  { id: 'heap', region: 3, x0: OFF3 + 36.62, x1: OFF3 + 38.93, y: -0.75, z: 0.85, part: 'glimpse', edges: [], active: () => !game.upper },
+  { id: 'sump7', region: 4, x0: SHAFT.x0, x1: SHAFT.x1, y: -0.15, z: 1.2, part: 'scare', reach: 1.7, edges: [[SHAFT.x0, SHAFT.x1 + 0.3]],
+    active: () => game.x < SHAFT.x1 + 3, onScare: () => { game.ch1.scared = true; } },
+);
+function buildHazards() {
+  // The arcs: two jagged lines, redrawn while live.
+  refs.arcs = ARCS8.map(() => {
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(9 * 3), 3));
+    const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xcfe6ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    l.frustumCulled = false; l.visible = false; scene.add(l); return l;
+  });
+  refs.arcLight = new THREE.PointLight(0xbcd8ff, 0, 3, 2); scene.add(refs.arcLight);
+}
+function updateHazards(dt) {
+  const s = game.ch1, k = refs.ch1, x = game.x;
+  const alive = game.mode === 'play' && !(game.act && game.act.kind === 'death');
+  // DL-02 the press.
+  if (k.press) {
+    const t = game.clock % PRESS2.period, face = pressFace(t);
+    k.press.position.y = k.press.userData.rest.p.y + (face - PRESS2.rest);
+    glow('PressLamp', t < 0.5 && !game.calm ? (Math.sin(t * 25) > -0.2 ? 6 : 0.4) : t < 0.97 ? 2 : 0);
+    if (k.pressWheel) { k.pressWheel.quaternion.copy(k.pressWheel.userData.rest.q); k.pressWheel.rotateZ(-(game.clock / PRESS2.period) * Math.PI * 2); }
+    const near = game.region === 2 && Math.abs(x - 13.95) < 6;
+    if (near && t >= 0.62 && t - dt < 0.62) { const v = Math.max(0.2, 1 - Math.abs(x - 13.95) / 6); Sound.thud(); Sound.clank(); shake(0.15 * v); }
+    if (game.region === 2 && alive && x > PRESS2.x0 && x < PRESS2.x1 && face < PRESS2.lethal && game.y < 0.3) die('crush');
+  }
+  // DL-06 the gallery gives way behind him.
+  if (k.collapse) {
+    if (s.collapse === 0 && game.region === 3 && game.upper && x > GALLERY6.trigger) { s.collapse = 1; s.collapseT = 0; Sound.creak(0.8); Sound.groan(); }
+    if (s.collapse === 1) {
+      s.collapseT += dt;
+      const t = s.collapseT, swing = THREE.MathUtils.degToRad(-62) * smooth(t / 0.45), drop = t > 0.45 ? 0.5 * GRAVITY * (t - 0.45) ** 2 : 0;
+      k.collapse.quaternion.copy(k.collapse.userData.rest.q); k.collapse.rotateZ(swing);
+      k.collapse.position.y = k.collapse.userData.rest.p.y - drop;
+      if (t > 0.45 && !s.collapseHit) { s.collapseHit = true; Sound.clank(); Sound.chain(0.6); shake(0.6); if (k.collapseEdges) k.collapseEdges.visible = true; }
+      if (t > 1.6) { s.collapse = 2; Sound.thud(); Sound.tumble(); k.collapse.visible = false; }
+    } else if (s.collapse === 0) {
+      k.collapse.visible = true; k.collapse.position.copy(k.collapse.userData.rest.p); k.collapse.quaternion.copy(k.collapse.userData.rest.q);
+      // It sags a little under him.
+      if (game.region === 3 && game.upper && x > GALLERY6.x0 && x < GALLERY6.x1) { k.collapse.rotateZ(THREE.MathUtils.degToRad(-3) * smooth((x - GALLERY6.x0) / 0.8)); if (Math.random() < dt * 1.5) Sound.creak(0.3); }
+      if (k.collapseEdges) k.collapseEdges.visible = false;
+    } else { k.collapse.visible = false; if (k.collapseEdges) k.collapseEdges.visible = true; }
+  }
+  // DL-07: the first rise shows something pale in the sump. Falling into the shaft is a death.
+  if (game.region === 4) {
+    if (!s.sumpShown && game.plat.h > 0.08 && white.w && white.w.id === 'sump7') { s.sumpShown = true; white.x = OFF3 + 54.05; white.tx = white.x; white.heard = null; setWhite('surface'); Sound.splash(0.5); }
+    if (alive && x > SHAFT.x0 + 0.1 && x < SHAFT.x1 - 0.1 && game.y < -0.2) {
+      die('grabbed', { hold: 1.3, follow: (a) => { game.y -= dt * 0.8; if (!a.sp) { a.sp = true; Sound.splash(1.4); for (let i = 0; i < 4; i++) spawnRipple(game.x + (Math.random() - 0.5) * 0.6, -0.15, 1.2, 0.4); } } });
+    }
+  }
+  // DL-08: plates in the tray ride the counterweight.
+  s.plates.forEach((p, i) => {
+    const g = k.plates && k.plates[i];
+    if (!g) return;
+    if (p.state === 'tray' && k.counterweight) {
+      const seat = CW8.seats[p.seat ?? i], cw = k.counterweight.getWorldPosition(tv5);
+      g.position.set(cw.x + seat[0], cw.y + seat[1], cw.z); g.visible = true;
+    } else placeItem(p, g, dt);
+  });
+  // DL-08: the tunnel's live cable, two arcs in turn.
+  const ta = game.clock % ARC_PERIOD;
+  let lit = 0;
+  ARCS8.forEach((arc, i) => {
+    const live = ta >= arc.live[0] && ta < arc.live[1], tell = ta >= arc.tell[0] && ta < arc.tell[1];
+    const l = refs.arcs && refs.arcs[i], near = game.region === 4 && Math.abs(x - arc.x0) < 8;
+    if (l) {
+      l.visible = near && (live || (tell && Math.random() < 0.3));
+      if (l.visible) {
+        const pos = l.geometry.attributes.position.array;
+        for (let j = 0; j < 9; j++) {
+          const u = j / 8, jit = j === 0 || j === 8 ? 0 : (live ? 0.05 : 0.02);
+          pos[j * 3] = THREE.MathUtils.lerp(arc.a[0], arc.b[0], u) + (Math.random() - 0.5) * jit;
+          pos[j * 3 + 1] = THREE.MathUtils.lerp(arc.a[1], arc.b[1], u) + Math.sin(u * Math.PI) * 0.06 + (Math.random() - 0.5) * jit * 2;
+          pos[j * 3 + 2] = THREE.MathUtils.lerp(arc.a[2], arc.b[2], u) + (Math.random() - 0.5) * jit;
+        }
+        l.geometry.attributes.position.needsUpdate = true; l.material.opacity = live ? 1 : 0.5;
+        if (live) { lit = 1; refs.arcLight.position.set(...arc.a); if (Math.random() < dt * 20 && !game.calm) burstSparks(tv5.set(...arc.b), 2, 0.8); }
+      }
+    }
+    if (near && live && ta - dt < arc.live[0]) Sound.zap(0.7);
+    if (near && tell && ta - dt < arc.tell[0]) Sound.crackle(0.4);
+    // The first touch throws him back; the second shorts him out.
+    if (alive && live && game.region === 4 && x > arc.x0 && x < arc.x1 && Math.abs(game.y - DECK) < 0.25 && !(game.act && game.act.kind === 'knockback')) {
+      s.shocked = (s.shocked || 0) + 1;
+      if (s.shocked === 1 && !persist.shockedOnce) { persist.shockedOnce = true; burstSparks(d17Point(0.3), 20, 1.2); Sound.zap(1); knockBack(-1); }
+      else die('shock');
+    }
+  });
+  if (refs.arcLight) refs.arcLight.intensity = lit * (game.calm ? 0.6 : 2.5) * (0.6 + Math.random() * 0.4);
 }
 
 
@@ -4036,9 +4349,9 @@ function updateSparks(dt) {
 const HINTS = [
   // DL-05
   { region: 5, when: () => !game.dl5.revealed && game.hold !== 'desk' && game.x > INNER5_X && game.x < game.desk5.x, at: () => new THREE.Vector3(game.desk5.x - 0.585, 0.62, DESK5.z), key: 'use' },
-  { region: 5, when: () => game.hold === 'desk' && game.desk5.x > DESK5.clear, at: new THREE.Vector3(OFF4 + 93.6, 0.05, 0), key: 'move' },
+  { region: 5, when: () => game.hold === 'desk' && game.desk5.x > DESK5.clear, at: new THREE.Vector3(OFF4 + 103.5, 0.05, 0), key: 'move' },
   { region: 5, when: () => game.dl5.revealed && !game.dl5.forwarded, at: new THREE.Vector3(TERM5_X, 0.95, WALL5_Z), key: 'use' },
-  { region: 5, when: () => game.dl5.forwarded && game.x < END5_X, at: new THREE.Vector3(OFF4 + 96.4, 0.6, 0), key: 'move' },
+  { region: 5, when: () => game.dl5.forwarded && game.x < END5_X, at: new THREE.Vector3(OFF4 + 106.3, 0.6, 0), key: 'move' },
   // DL-04
   { region: 4, when: () => !game.plat.latched && game.hold !== 'trolley4' && panTrolleyK() < 1 && game.x < game.trolley4.x,
     at: () => new THREE.Vector3(game.trolley4.x - T4_HALF - 0.02, DECK + 0.46, 0), key: 'use' },
@@ -4237,14 +4550,17 @@ function frameFor(x) {
   // DL-05: ring C's ledge with the cave behind, the low lane, the home (close), the back passage.
   const k5 = game.upper ? smooth((x - (OFF4 + 75.6)) / 1.4) : 0;
   if (k5 > 0) {
-    const kl = smooth((x - (OFF4 + 79.6)) / 1.2), kh = smooth((x - (OFF4 + 88.2)) / 0.8), kb = smooth((x - (OFF4 + 90.4)) / 0.6), ke = smooth((x - (OFF4 + 95.4)) / 0.6);
+    // The lane, the square, then C-114 room by room: hall, kitchen and living room, the bedroom, the back door.
+    const kl = smooth((x - (OFF4 + 79.6)) / 1.2), kh = smooth((x - (OFF4 + 94.2)) / 0.8), kr = smooth((x - (OFF4 + 97.0)) / 0.6);
+    const kb = smooth((x - (OFF4 + 100.3)) / 0.6), ke = smooth((x - (OFF4 + 105.3)) / 0.6);
     let tx = THREE.MathUtils.clamp(x + lead * 0.6, OFF4 + 77.4, OFF4 + 79.4);
-    tx += (THREE.MathUtils.clamp(x + lead, OFF4 + 82.0, OFF4 + 87.6) - tx) * kl;
-    tx += (THREE.MathUtils.clamp(x, OFF4 + 89.4, OFF4 + 89.9) - tx) * kh;
-    tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF4 + 92.3, OFF4 + 93.7) - tx) * kb;
-    tx += (THREE.MathUtils.clamp(x + lead, OFF4 + 96.2, OFF4 + 97.4) - tx) * ke;
+    tx += (THREE.MathUtils.clamp(x + lead, OFF4 + 82.0, OFF4 + 92.6) - tx) * kl;
+    tx += (THREE.MathUtils.clamp(x, OFF4 + 95.4, OFF4 + 96.3) - tx) * kh;
+    tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF4 + 98.0, OFF4 + 99.6) - tx) * kr;
+    tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF4 + 102.2, OFF4 + 103.6) - tx) * kb;
+    tx += (THREE.MathUtils.clamp(x + lead, OFF4 + 106.1, OFF4 + 107.3) - tx) * ke;
     let v5 = fit([7.6, 1.5, 0.75], 8.0);
-    v5 = lerp3(v5, fit([5.8, 1.15, 0.75], 6.0), kl);
+    v5 = lerp3(v5, fit([5.6, 2.15, 0.4], 6.0), kl);
     v5 = lerp3(v5, fit([4.9, 1.05, 0.72], 4.9), kh);
     v5 = lerp3(v5, fit([5.6, 1.1, 0.75], 5.6), ke);
     cx += (tx - cx) * k5; v = lerp3(v, v5, k5);
@@ -4462,10 +4778,11 @@ const CHECKPOINTS = {
   goods: { x: OFF3 + 48.9, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true },
   latched: { x: OFF3 + 56.2, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true },
   cage: { x: OFF3 + 67.8, y: CG.top, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true },
+  landing8: { x: OFF3 + 70.3, y: CG.landing, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true },
   tunnel: { x: OFF4 + 65.7, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true },
   ringc: { y: 0, x: OFF4 + 81.25, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
-  bedroom: { y: 0, x: OFF4 + 91.2, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
-  forwarded: { y: 0, x: OFF4 + 94.2, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  bedroom: { y: 0, x: OFF4 + 101.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
+  forwarded: { y: 0, x: OFF4 + 104.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
 };
 function resetWorld(name = 'start') {
   const c = CHECKPOINTS[name];
@@ -4696,7 +5013,7 @@ function step(dt) {
         if (k > 0.02) [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, k * Math.max(0.25, 0.8 - Math.abs(game.x - 2) / 8)), i * 500));
       }
     }
-    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); } updateSparks(dt); updateCurios(dt); updateWhite(dt); }
+    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); updateRingC(dt); updateHazards(dt); updateClockHands(dt); } updateSparks(dt); updateCurios(dt); updateWhite(dt); }
     updateCharacter(dt, game.mode === 'play');
     placeWeight(dt);
     updateQuirkTriggers();
@@ -4707,7 +5024,7 @@ function step(dt) {
 }
 
 // Test hook for automated traversal checks.
-window.__dl01 = { game, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
+window.__dl01 = { game, world: scene, THREE, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
   clip: () => current, renderer, carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
   crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), offsets: { OFF2, OFF3, OFF4 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
   k: { CART1, PIT, SH, RK, HP, RAIL7, CG, DIP9, DUCT9, GATE_X, DOCK_X, PAWL_X, GALLERY, T4_HALF, PUSH_GAP4, GRIP_FWD, SLOTS, LETTERS: LETTERS.map((l) => ({ id: l.id, x: l.x })) } };
