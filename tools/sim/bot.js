@@ -60,7 +60,7 @@ window.__startBot = function (seed, opts = {}) {
       const t = G.clock + 1.2; while (G.clock < t && !started()) yield;
       if (started()) return;
     }
-    throw new Error('use failed: ' + label + ' near=' + D.near());
+    throw new Error('use failed: ' + label + ' near=' + D.near() + ' x=' + G.x.toFixed(2) + ' y=' + G.y.toFixed(2) + ' act=' + (G.act && G.act.kind) + ' hold=' + G.hold);
   }
 
   // Walking about a room while working it out: to somewhere else in it and back.
@@ -75,10 +75,10 @@ window.__startBot = function (seed, opts = {}) {
   const free = () => !G.act && !G.mantle;
   function* settle(max = 30) { yield* until(() => !G.act && !G.mantle && G.grounded, max, 'settle'); }
   // An optional letter: pick it up if he's curious, and post it if a slot is near.
-  function* letter(id, x, p) {
+  function* letter(id, x, p, o = {}) {
     if (!chance(p) || !/floor|slot/.test(D.letters[id])) return;
     note('picks up the ' + id + ' letter');
-    try { yield* useAt(['pickLetter:' + id], x, actIs('pickLetter'), 'letter ' + id); yield* settle(); } catch (e) { note('letter missed: ' + e.message); }
+    try { yield* useAt(['pickLetter:' + id], x, actIs('pickLetter'), 'letter ' + id, o); yield* settle(); } catch (e) { note('letter missed: ' + e.message); }
   }
   const dying = () => !!(G.act && G.act.kind === 'death');
   function* respawned(label) { yield* until(() => G.mode === 'play' && !G.act && !G.respawnAt, 15, label); out.deathsSeen = (out.deathsSeen || 0) + 1; }
@@ -452,30 +452,32 @@ window.__startBot = function (seed, opts = {}) {
     yield* wait(look(2.0));
     yield* walk(1, () => G.checkpoint === 'ringc', 'under the seal');
     if (chance(0.3 + 0.5 * P.curious)) { note('looks along ring C'); yield* wait(look(2.5)); }
-    // Some run along the bank and the White takes them; they learn to walk.
-    let quiet = !mistakes || chance(0.35 + 0.4 * P.skill);
-    for (let tries = 0; tries < 6 && C().duct.state === 'free'; tries++) {
-      if (!quiet) note('runs along the flooded lane');
-      // The bell first: most find it after seeing the White, or after a death.
-      const ring = !mistakes || tries > 0 || chance(0.25 + 0.4 * P.skill);
-      if (ring) {
-        yield* useAt(['bell9'], K2.BELL9.x, actIs('bell9'), 'bell', { hop: false, quiet: true });
-        note('rings the bell'); yield* until(() => !G.act, 5, 'rung'); yield* wait(look(1.2));
-        yield* until(() => D.white().lure && D.white().state === 'lured', 6, 'lured');
-      }
+    // Some run along the bank and the White takes them; they learn to walk, and to use the bell.
+    let quiet = !mistakes || chance(0.35 + 0.4 * P.skill), ringFirst = !mistakes || chance(0.25 + 0.4 * P.skill);
+    for (let tries = 0; tries < 8 && G.x < OFF4 + 87.9; tries++) {
       try {
-        yield* useAt(['grabPush:duct'], C().duct.x - K.DUCT9.gap, actIs('grabPush'), 'duct', { hop: false, quiet });
-        yield* until(() => G.hold === 'push' || dying(), 10, 'grip duct');
-        if (!dying()) yield* walk(1, () => C().duct.state !== 'free' || dying(), 'push the duct', { hop: false, keepHolding: true, max: 30 });
+        if (!quiet) note('runs along the flooded lane');
+        if (ringFirst && C().duct.state === 'free') {
+          yield* useAt(['bell9'], K2.BELL9.x, actIs('bell9'), 'bell', { hop: false, quiet: true });
+          note('rings the bell'); yield* until(() => !G.act || dying(), 5, 'rung'); yield* wait(look(1.2));
+          yield* until(() => (D.white().lure && D.white().state === 'lured') || dying(), 6, 'lured');
+        }
+        if (C().duct.state === 'free' && !dying()) {
+          yield* useAt(['grabPush:duct'], C().duct.x - K.DUCT9.gap, actIs('grabPush'), 'duct', { hop: false, quiet });
+          yield* until(() => G.hold === 'push' || dying(), 10, 'grip duct');
+          if (!dying()) yield* walk(1, () => C().duct.state !== 'free' || dying(), 'push the duct', { hop: false, keepHolding: true, max: 30 });
+          if (!dying()) { yield* until(() => C().duct.state === 'bridge' || dying(), 5, 'bridge'); note('duct bridges the flood'); }
+          if (G.hold && !dying()) { use(); yield* until(() => !G.hold, 5, 'let go'); }
+        }
+        if (!dying()) {
+          yield* letter('c110', K.LETTERS[2].x, 0.4 + 0.45 * P.curious, { quiet, hop: false });
+          if (!dying() && C().duct.state === 'bridge') yield* walk(1, () => G.x > OFF4 + 88.0 || dying() || C().duct.state !== 'bridge', 'across', { quiet, hop: false, max: 30 });
+          if (!dying() && C().duct.state !== 'bridge' && G.x < OFF4 + 87.9) { note('the White took him'); quiet = true; ringFirst = true; yield* wait(think(8)); continue; }
+        }
       } catch (e) { if (!dying()) throw e; }
-      if (dying()) { note('the White takes him'); yield* respawned('after the White'); quiet = true; yield* wait(think(8)); continue; }
+      if (dying()) { note('the White takes him'); yield* respawned('after the White'); quiet = true; ringFirst = true; yield* wait(think(8)); }
     }
-    yield* until(() => C().duct.state === 'bridge', 5, 'bridge'); note('duct bridges the flood');
-    if (G.hold) { use(); yield* until(() => !G.hold, 5, 'let go'); }
-    yield* walk(1, () => G.x > OFF4 + 86.6 || dying(), 'onto the duct', { quiet: true, hop: false, max: 20 });
-    yield* letter('c110', K.LETTERS[2].x, 0.4 + 0.45 * P.curious);
     yield* post(9, K.SLOTS[2].x, 0.75);
-    yield* walk(1, () => G.x > OFF4 + 88.0, 'across', { quiet: true, max: 30 });
     yield* walk(1, () => G.dl5.knocked && !G.act && G.x > OFF4 + 94.4, 'to C-114', { max: 120 });
     yield* curio('switch', 0.25 + 0.5 * P.curious);
     yield* curio('radio', 0.25 + 0.55 * P.curious);
