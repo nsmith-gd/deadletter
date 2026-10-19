@@ -45,9 +45,9 @@ DECK = 1.6
 
 # DL-01 parcel scale (art/dl01 SCALE = (1.45, 0.05)).
 SCALE_STAND = (1.27, 1)                     # on the platform's left half, facing the dial
-SCALE_COL_DX = 0.17                         # the column, dial and needle move right by this (to x 1.62)
+SCALE_COL_DX = 0.19                         # the column, dial and needle move right by this (to x 1.64)
 SCALE_TOP = 0.028                           # the platform's top after it is lowered
-TICKET_BOX = (1.545, 0.30, 0.34)            # the ticket box's centre on the column's left face (0.08 x 0.07 x 0.08)
+TICKET_BOX = (1.565, 0.30, 0.34)            # the ticket box's centre on the column's left face (0.08 x 0.07 x 0.08)
 TICKET = (0.07, 0.045)                      # width (along x), height
 TICKET_PEEK = 0.006                         # how much of it shows above the slot at rest
 TICKET_OUT = 0.055                          # how far the game raises it (along game +y) when he pulls it up
@@ -934,15 +934,11 @@ def clip_weigh_self(dl01, arm):
     a = Act(dl01, arm, 'WeighSelf', N)
     stand = SCALE_STAND
     top = SCALE_TOP
-    TURN = 30.0
+    TURN = 0.0
     a.root_keys = [(0, (0, 0, 0)), (2, (0, 0, 0)), (10, (0, 0, top)), (N - 12, (0, 0, top)), (N - 4, (0, 0, 0))]
     a.yaw_keys = [(0, 0.0), (32, 0.0), (40, TURN), (66, TURN), (74, 0.0)]
     a.step('L', 1, 6, ANKLE[1] + Vector((0, -0.01, top)))
     a.step('R', 5, 10, ANKLE[-1] + Vector((0, -0.01, top)))
-    a.step('L', 32, 37, height=0.025)
-    a.step('R', 35, 40, height=0.025)
-    a.step('R', 66, 71, height=0.025)
-    a.step('L', 69, 74, height=0.025)
     a.step('R', N - 13, N - 8, ANKLE[-1])
     a.step('L', N - 9, N - 4, ANKLE[1])
     dial = to_stand(stand, (1.45 + SCALE_COL_DX, 0.24, 0.52))
@@ -957,9 +953,8 @@ def clip_weigh_self(dl01, arm):
         startle = spr(f, TICKET_POP + 1, 1.0, decay=4, freq=1.3)
         lean = tr([(36, 0), (44, 1), (60, 1), (66, 0.3), (72, 0)], f)
         bob = -0.012 * (pulse(f, 2, 8) + pulse(f, 6, 12) + pulse(f, N - 13, N - 7) + pulse(f, N - 9, N - 3))
-        bob += -0.006 * (pulse(f, 32, 38) + pulse(f, 35, 41) + pulse(f, 66, 72) + pulse(f, 69, 75))
-        body = (0.0, -0.012 * lean, -0.005 + bounce + 0.006 * max(0, startle) + bob - 0.006 * lean)
-        body_rot = (2 + 8 * lean - 7 * max(0, startle), -4 * lean, 0)
+        body = (0.012 * lean, -0.025 * lean, -0.005 + bounce + 0.006 * max(0, startle) + bob - 0.01 * lean)
+        body_rot = (2 + 11 * lean - 7 * max(0, startle), 5 * lean, 16 * lean)
         look_dial = a.look(f, dial, body, body_rot)
         look_card = a.look(f, card, body, body_rot)
         w_dial = tr([(6, 0), (12, 1), (TICKET_POP, 1), (TICKET_POP + 3, 0)], f)
@@ -976,7 +971,7 @@ def clip_weigh_self(dl01, arm):
         reach = tr([(37, 0), (44, 1), (64, 1), (70, 0)], f)
         if reach > 0:
             g = a.grip(f, 1, pinch + Vector((0, 0, 0.03 * (1 - tr([(37, 0), (43, 1)], f)))), body, body_rot,
-                       d=(0.15, -0.35, -1.0), x_axis=(1, 0, 0))
+                       d=(0.1, -0.2, -1.0), x_axis=(1, 0, 0))
             hands[1], rot['L'] = mix_hand((hands[1], rot['L']), g, reach)
         claw_l = tr([(37, 20), (41, 34), (43, 30), (45, 3), (63, 3), (65, 30), (72, CLAW_REST_OPEN['L'])], f)
         claw_r = CLAW_REST_OPEN['R'] + 14 * bal + 20 * max(0, startle)

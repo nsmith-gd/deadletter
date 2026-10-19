@@ -1537,6 +1537,7 @@ def build_street(m, coll):
     lf = WORLD_END
     cbox(R.bm, ((l1 + lf) / 2, (yk0 + yk1) / 2, 0.06), (lf - l1, yk1 - yk0, 0.12), 0.01, R('concrete'))
     add_box(R.bm, ((l0 + lf) / 2, -1.08, -1.4), (lf - l0, 0.18, 2.8), mat=R('concrete'))      # the drop, coursed
+    add_box(R.bm, ((l0 - 1.5 + lf) / 2, -3.2, -2.7), (lf - l0 + 1.5, 4.4, 0.2), mat=R('concrete'))   # the lower row's lane
     for k in range(1, 6):
         add_box(R.bm, ((l0 + lf) / 2, -1.172, -0.46 * k), (lf - l0, 0.006, 0.018), mat=R('concrete'))
     for x in (81.6, 84.2, 85.4, 89.9, 91.5, 93.4):                            # weep holes
@@ -1571,6 +1572,9 @@ def build_street(m, coll):
         rx = x0 + (x1 - x0) * (0.7 if k % 2 else 0.3)                      # a roof light on the back slope, dark
         cbox(R.bm, (rx, -3.55, 0.08), (0.5, 0.42, 0.06), 0.01, R('wood'), rot=_rx(ang))
         add_box(R.bm, (rx, -3.55, 0.115), (0.42, 0.34, 0.01), mat=R('glass'), rot=_rx(ang))
+        cbox(R.bm, ((x0 + x1) / 2, (ye + yb) / 2, -1.45), (x1 - x0 - 0.1, ye - yb - 0.1, 2.4), 0.02, R('plasterB' if k % 3 == 1 else 'homeplaster'))
+        for wx in (x0 + 0.6, x1 - 0.6):                                     # its windows under the eaves, dark
+            add_box(R.bm, (wx, ye + 0.04, -0.85), (0.5, 0.02, 0.6), mat=R('glass'))
         if k in (1, 3):                                                     # washing strung across a back yard below
             _wire(R.bm, _catenary((x0 + 0.2, -2.2, -0.4), (x1 - 0.2, -2.2, -0.45), 0.12, 8), 0.003, R('rubber'))
     # ---- over the lane: the cable of bulbs, its brackets, the duct run, the washing ---------------------
@@ -2477,10 +2481,8 @@ def build_home114_rooms(m, coll, rnd, KW):
     lx, ly = bx1 - 0.12, Y - 0.2                                               # the lamp: a base, a stem, a pleated shade
     add_cyl(SB.bm, (lx, ly, btop + 0.03), (lx, ly, btop + 0.06), 0.07, seg=14, mat=SB('brass'))
     add_cyl(SB.bm, (lx, ly, btop + 0.06), (lx, ly, btop + 0.3), 0.012, seg=8, mat=SB('brass'))
-    for k in range(12):
-        a = 2 * math.pi * k / 12
-        cbox(SB.bm, (lx + 0.1 * math.cos(a), ly + 0.1 * math.sin(a), btop + 0.36), (0.055, 0.012, 0.17), 0.003, SB('letters'),
-             rot=_rz(a + math.pi / 2) @ _rx(math.radians(-14)))
+    add_cyl(SB.bm, (lx, ly, btop + 0.27), (lx, ly, btop + 0.45), 0.12, 0.075, seg=16, mat=SB('letters'))     # its shade
+    add_cyl(SB.bm, (lx, ly, btop + 0.44), (lx, ly, btop + 0.455), 0.078, seg=16, mat=SB('brass'))
     cbox(SB.bm, (bx0 + 0.15, Y - 0.012, 1.45), (0.24, 0.006, 0.32), 0.002, SB('letters'))                  # a calendar
     for k in range(4):
         add_box(SB.bm, (bx0 + 0.15, Y - 0.016, 1.38 - 0.04 * k), (0.18, 0.002, 0.008), mat=SB('shaft'))
