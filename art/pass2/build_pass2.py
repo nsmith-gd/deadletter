@@ -548,6 +548,8 @@ def _bite(ob, to_rig, knee, ankle, m):
             add_cyl(tmp, end, end + (end - base).normalized() * 0.008, 0.0022, mat=i_cu, seg=5)
         bmesh.ops.transform(tmp, matrix=to_obj, verts=tmp.verts)
         me2 = bpy.data.meshes.new('_stump')
+        for s in me.materials:                                   # same slots, so the indices survive
+            me2.materials.append(s)
         tmp.to_mesh(me2)
         tmp.free()
         # keep material indices: from_mesh maps them by slot index, and the slots are this mesh's

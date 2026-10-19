@@ -55,16 +55,17 @@ TICKET_OUT = 0.055                          # how far the game raises it (along 
 # DL-01 dispatch rack (under the dispatch board, x 0.69 to 1.41).
 DISPATCH_STAND = (1.13, -1)
 RACK = (0.93, 0.36)                         # the rack post's x, y
-CARD = (0.075, 0.105, 0.86)                 # RouteCardD17: width, height, its top edge at rest
+RACK_TOP = 0.745                            # the rack box's top
+CARD = (0.075, 0.105, 0.80)                 # RouteCardD17: width, height, its top edge at rest
 CARD_LIFT = 0.035                           # the game slides it up this much
 
 # DL-02 hand franker, on a courier-height counter left of the passage doorway (Door2Frame 12.77 to 13.63).
 FRANKER_STAND = (12.70, -1)
-COUNTER = (12.22, 12.62, 0.27, 0.6, 0.34)   # x0, x1, y0, y1, top
-PLATEN = (12.47, 0.335, 0.375)              # the platen's centre (top face)
+COUNTER = (12.22, 12.62, 0.29, 0.6, 0.27)   # x0, x1, y0, y1, top (at a courier's height)
+PLATEN = (12.47, 0.345, 0.27 + 0.035)       # the platen's centre (top face)
 HEAD_GAP = 0.055                            # the die face above the platen at rest
 FRANK_DROP = 0.035                          # the game drops HandFrankerHead this much at the thunk
-LEVER_PIVOT = (12.545, 0.43, 0.53)          # HandFrankerLever's pivot (axis along x)
+LEVER_PIVOT = (12.545, 0.44, 0.27 + 0.19)   # HandFrankerLever's pivot (axis along x)
 LEVER_LEN = 0.15
 LEVER_REST = 35.0                           # degrees up from pointing at the lane (toward -y)
 LEVER_PULL = 50.0                           # degrees the pull swings it down
@@ -81,7 +82,9 @@ RACK_SIT_Y = 0.80                           # his root's y when seated (back to 
 
 # DL-05 the sorter's chair in the scanner corridor (back wall face y 0.62; scanner arch from 49.47).
 CHAIR_STAND = (48.80, 1)
-CHAIR = (48.80, 0.40, 0.46, 0.4, 0.44)      # seat centre x, y, width, depth, seat top (the cushion sits on it)
+CHAIR = (48.80, 0.40, 0.46, 0.44, 0.44)     # seat centre x, y, width, depth, seat top (the cushion sits on it)
+CHAIR_SIT = (0.36, 0.16)                    # his root when seated, facing the lane: y, height (the pod in the dent)
+DENT_DY = -0.085                            # the dent's centre from the cushion's (where his pod sits)
 CUSHION = 0.045
 
 # DL-06 the stopped clock (art/dl03 CLOCK_X 41.7 + OFF3; face centre at the deck + 2.0, y 0.765).
@@ -459,10 +462,10 @@ def build_dispatch_curio(c, coll):
     x, y = RACK
     bm = bmesh.new()
     add_box(bm, (x, y, 0.01), (0.16, 0.14, 0.02), mat=1)                               # the foot
-    add_box(bm, (x, y + 0.01, 0.38), (0.032, 0.032, 0.72), mat=1)                      # the post
-    rounded_box((0.21, 0.075, 0.07), (x, y - 0.005, 0.765), p=6, cuts=4, mat=0, bm=bm)   # the rack
+    add_box(bm, (x, y + 0.01, (RACK_TOP - 0.06) / 2), (0.032, 0.032, RACK_TOP - 0.06), mat=1)   # the post
+    rounded_box((0.21, 0.075, 0.07), (x, y - 0.005, RACK_TOP - 0.035), p=6, cuts=4, mat=0, bm=bm)   # the rack
     for k in range(3):                                                                 # its slots' dividers
-        add_box(bm, (x, y - 0.035 + k * 0.025, 0.801), (0.2, 0.004, 0.004), mat=1)
+        add_box(bm, (x, y - 0.035 + k * 0.025, RACK_TOP + 0.001), (0.2, 0.004, 0.004), mat=1)
     _obj('DispatchRack', bm, [c['wood'], c['green']], coll)
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new('UVMap')
@@ -475,7 +478,7 @@ def build_dispatch_curio(c, coll):
     _card(bm, uv, Vector((0, 0, 0)), cw, ch, 0, 1)
     card = _obj('RouteCardD17', bm, [c['route'], c['paper']], coll, sharp=20)
     card.location = (x + 0.045, y - 0.03, ctop - ch / 2)                                  # origin at its centre
-    curio_tag('CurioTag_dispatch', Vector((x + 0.098, y - 0.044, 0.735)), c, coll, swing=-0.06)
+    curio_tag('CurioTag_dispatch', Vector((x + 0.098, y - 0.044, RACK_TOP - 0.03)), c, coll, swing=-0.06)
 
 
 def build_franker(c, coll):
@@ -496,11 +499,12 @@ def build_franker(c, coll):
     bm = bmesh.new()
     add_box(bm, (px, py + 0.04, top + 0.01), (0.15, 0.2, 0.02), mat=0)                  # the base
     add_box(bm, (px, py, pz - 0.0075), (0.085, 0.085, 0.015), mat=1)                   # the platen
-    add_box(bm, (px, py + 0.115, (top + 0.02 + 0.56) / 2), (0.06, 0.04, 0.56 - top - 0.02), mat=0)   # the C-frame
-    add_box(bm, (px, py + 0.055, 0.535), (0.06, 0.16, 0.05), mat=0)                    # its arm over the platen
-    add_cyl(bm, (px, py, 0.51), (px, py, 0.57), 0.02, seg=14, mat=0)                   # the guide boss
-    add_cyl(bm, LEVER_PIVOT, Vector(LEVER_PIVOT) + Vector((-0.04, 0, 0)), 0.018, seg=14, mat=2)   # the lever's hub
-    add_box(bm, (px - 0.0305, py + 0.13, 0.43), (0.002, 0.03, 0.05), mat=2)            # a maker's plate
+    ftop = top + 0.22
+    add_box(bm, (px, py + 0.115, (top + 0.02 + ftop) / 2), (0.06, 0.04, ftop - top - 0.02), mat=0)   # the C-frame
+    add_box(bm, (px, py + 0.055, ftop - 0.025), (0.06, 0.16, 0.05), mat=0)             # its arm over the platen
+    add_cyl(bm, (px, py, ftop - 0.05), (px, py, ftop + 0.01), 0.02, seg=14, mat=0)     # the guide boss
+    add_cyl(bm, LEVER_PIVOT, Vector(LEVER_PIVOT) + Vector((-0.045, 0, 0)), 0.018, seg=14, mat=2)   # the lever's hub
+    add_box(bm, (px - 0.0305, py + 0.13, top + 0.1), (0.002, 0.03, 0.05), mat=2)       # a maker's plate
     _obj('HandFranker', bm, [c['iron'], c['rubber'], c['brass']], coll)
     # The head: a guide rod and the die, its origin at the die face's centre; the game drops it FRANK_DROP.
     bm = bmesh.new()
@@ -573,10 +577,10 @@ def _cushion(c, coll):
         x, y = u * cw / 2, v * cd / 2
         edge = (1 - abs(u) ** 6) * (1 - abs(v) ** 6)
         z = CUSHION * (0.55 + 0.45 * edge ** 0.5)
-        pod = (abs(x / 0.175) ** 3.5 + abs((y - 0.01) / 0.115) ** 3.5)
+        pod = (abs(x / 0.175) ** 3.5 + abs((y - DENT_DY) / 0.11) ** 3.5)
         z -= 0.024 * math.exp(-pod ** 2)
         for sx in (-1, 1):
-            q = ((x - sx * 0.13) / 0.03) ** 2 + ((y + 0.13) / 0.025) ** 2
+            q = ((x - sx * 0.19) / 0.025) ** 2 + ((y - DENT_DY) / 0.03) ** 2       # beside it: where his claws push off
             z -= 0.008 * math.exp(-q)
         return z
     for i in range(nx + 1):
