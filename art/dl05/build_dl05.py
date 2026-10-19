@@ -1,23 +1,31 @@
-"""DL-05 The Child at the Address: ring C's lane, home C-114 and the child's bedroom, D-17's clips for
-the scene, and its lore. Called from art/dl01/build_dl01.py (chapter 1 is one level).
+"""DL-09 The Child at the Address (built as DL-05): ring C's street, home C-114 and the child's bedroom, D-17's
+clips for the scene, and its lore. Called from art/dl01/build_dl01.py (chapter 1 is one level).
 
-DL-05 runs straight on from the DL-04 balcony stair, on a floor at 0:
-  - ring C's ledge, open to the cave behind a low lip of rock;
-  - the barricade that seals ring C, with a gap under it to crouch through;
-  - ring C's lane: a low rock tunnel of shuttered homes (C-108 to C-112), dead bulbs on a cable and
-    a few still burning. The flood of R.Y. 42 is still told on it: a dried tideline at 1.0 m along the
-    wall and the facades (and inside C-114), mud below it, and halfway along, a stretch of lane sunk
-    into standing water (FloodDip, FloodWater). A length of ventilation duct fell on the lane before it
-    (PushDuct, with a red strap): pushed into the water, it is the bridge. Beside the path: C-108's
-    window, dimly lit, onto a table still set for a meal; letters jammed in C-110's slot, one sticking
-    out (C110Letter); C-112's door taped shut with the water-drop mark; ring C's red mail slot
-    (MailSlot9) by C-114;
-  - home C-114, its door standing open: the hall with two pairs of shoes and a lamp still on, and the
-    child's bedroom: the bed and the patched rabbit, a window painted on the wall and lit from behind,
-    the photograph, the forwarding terminal and, behind the fallen desk, the growth marks and the tree;
+It runs straight on from the DL-08 balcony stair, on a floor at 0:
+  - ring C's ledge, open to the cave behind a low lip of rock, and the barricade that seals ring C, with a gap
+    under it to crouch through;
+  - ring C as a street in its cavern. Behind the lane, the back row: C-108 (its window dimly lit onto a table
+    still set; its door's steps going down into the water; its bell, lit red, on the gate pillar), a stepped
+    alley up toward ring B, C-110 (letters jammed in its slot, one sticking out: C110Letter; the junction box in
+    front, its red lever), C-112 (boarded, taped, the water-drop mark). In front of the lane a low kerb wall,
+    steps down to the lower row, its roofs a storey below. Over it the street cable of bulbs (two still burn),
+    the duct run with the gap where PushDuct fell, washing long dry on its lines. Ring B's tier, its stairs and
+    a few lit windows, and the lift going up, in the haze behind;
+  - the flood (DL-09's puzzle): the lane's back half sank along C-108 and C-110 into deep standing water (the
+    White's), and at the narrow point the lane went down across its width onto a slab 0.25 under: pushed in
+    there, the duct is the bridge. At the far end a cable hangs down into the water from a broken lamp bracket
+    (LaneCable, LaneCableTip), fed from the junction box;
+  - the square before C-114: the noticeboard (the evacuation notice, the children's drawings of the White), a
+    bench, a dry fountain, a swing frame with one swing, ring C's red mail slot (MailSlot9), a stair up;
+  - C-114, a dollhouse section on the play line: the front step and door in its end wall, the hall (the light
+    switch: CurioSwitch, HallBulb), the kitchen and living room (CurioRadio, the lamp left on), the child's
+    bedroom (the bed and the patched rabbit, the painted window, the photograph, the forwarding terminal and,
+    behind the fallen desk, the growth marks and the tree), the back door. Its street wall is C114Facade, which
+    the game fades out when he is inside; the cut edges behind it are capped near-black (C114Section);
   - the back door onto a service passage, with the stair up to ring B and the school.
 
-Coordinates as before: metres, Blender Z up, the lane at y = 0, travel along +x, the camera at -y.
+Coordinates: metres, Blender Z up, the lane at y = 0, travel along +x, the camera at -y. The full build moves
+all of this by OFF4 along x.
 """
 import math
 import os
@@ -1416,6 +1424,9 @@ def build_street(m, coll):
     prism(B.bm, [(Y - 0.32, 2.62), (Y + 1.3, 3.58), (3.4, 2.7), (3.4, 2.62)], 'x', HOMES[2][2] - 0.16, HOMES[2][2], mat=B('plasterB'))   # its gable end
     for x0, x1 in ((HOMES[0][1], HOMES[0][2]), (HOMES[1][1], HOMES[1][2]), (HOMES[2][1], HOMES[2][2])):
         cbox(B.bm, ((x0 + x1) / 2, Y + 1.3 + 0.55, 3.18), (x1 - x0 + 0.06, 1.25, 0.035), 0.006, B('slate'), rot=_rx(-math.atan2(0.88, 1.1)))
+    for x, y, z, r, h in ((C112_DOOR - 0.66, Y - 0.2, 0.0, 0.12, 0.3), (C112_DOOR + 0.64, Y - 0.17, 0.0, 0.09, 0.22),
+                          (C108_WIN[0] - 0.22, Y - 0.01, C108_WIN[2], 0.055, 0.12), (HOMES[0][1] + 0.4, Y - 0.2, 0.0, 0.1, 0.26)):
+        dead_plant(B, x, y, z, rnd, pot='paper', r=r, h=h)                        # pots by the doors, long dead
     # The alley: steps up from the water between C-108 and C-110, toward ring B, under a pipe and an arch.
     for k in range(14):
         y, z = 2.4 + 0.18 * k, -0.1 + 0.2 * (k + 1)
@@ -1512,41 +1523,54 @@ def build_street(m, coll):
     _wire(S.bm, [Vector((90.95, 2.74, 0.9)), Vector((90.9 + 0.22 * 15, 2.74, 0.9 + 0.19 * 15))], 0.018, S('iron'), seg=8)
     for k in range(0, 16, 3):
         add_cyl(S.bm, (90.95 + 0.22 * k, 2.74, 0.19 * k), (90.95 + 0.22 * k, 2.74, 0.19 * k + 0.9), 0.012, seg=6, mat=S('iron'))
-    # ---- the front side ------------------------------------------------------------------------------
+    # ---- the front side: the lane's edge, a storey's drop to the lower row, its roofs below the lane ------------
+    # From the game's camera (1.15 up, 5.8 out) anything at the lane's edge taller than about 0.18 hides his feet,
+    # and at y -3 anything over about 0.6: the kerb wall stays low; the lower row's ridges and chimneys stay under it.
     R = front
-    yw0, yw1 = -1.03, -0.87                                                     # the low wall
+    yk0, yk1 = -0.99, -0.85
     gaps = [(82.0, 82.75), (DIP[0] - 0.08, DIP[1] + 0.08), (88.5, 89.25)]
     xs = l0
     for g0, g1 in gaps + [(l1, l1)]:
         if g0 > xs + 0.01:
-            cbox(R.bm, ((xs + g0) / 2, (yw0 + yw1) / 2, 0.17), (g0 - xs, yw1 - yw0, 0.34), 0.012, R('concrete'))
-            cbox(R.bm, ((xs + g0) / 2, (yw0 + yw1) / 2, 0.37), (g0 - xs + 0.02, yw1 - yw0 + 0.06, 0.06), 0.015, R('concrete'))
+            cbox(R.bm, ((xs + g0) / 2, (yk0 + yk1) / 2, 0.055), (g0 - xs, yk1 - yk0, 0.11), 0.01, R('concrete'))
+            cbox(R.bm, ((xs + g0) / 2, (yk0 + yk1) / 2, 0.135), (g0 - xs + 0.02, yk1 - yk0 + 0.04, 0.05), 0.014, R('concrete'))
         xs = g1
-    add_box(R.bm, ((l0 + l1) / 2, -1.12, -0.9), (l1 - l0, 0.18, 1.8), mat=R('concrete'))        # the retaining wall down to the lower row
-    for k, x in enumerate((81.6, 84.2, 85.4, 89.9, 91.5, 93.4)):                # weep holes, streaked
-        add_cyl(R.bm, (x, -1.2, -0.35), (x, -1.26, -0.37), 0.04, seg=8, mat=R('iron'))
-    for g0, g1 in (gaps[0], gaps[2]):                                           # steps down, and a railing each side
-        for k in range(6):
-            cbox(R.bm, ((g0 + g1) / 2, -1.12 - 0.26 * k, -0.17 * (k + 1) / 2), (g1 - g0 - 0.04, 0.26, 0.17 * (k + 1)), 0.008, R('concrete'))
+    add_box(R.bm, ((l0 + l1) / 2, -1.08, -1.4), (l1 - l0, 0.18, 2.8), mat=R('concrete'))      # the drop, coursed
+    for k in range(1, 6):
+        add_box(R.bm, ((l0 + l1) / 2, -1.172, -0.46 * k), (l1 - l0, 0.006, 0.018), mat=R('concrete'))
+    for x in (81.6, 84.2, 85.4, 89.9, 91.5, 93.4):                            # weep holes
+        add_cyl(R.bm, (x, -1.16, -0.32), (x, -1.24, -0.34), 0.04, seg=8, mat=R('iron'))
+    for g0, g1 in (gaps[0], gaps[2]):                                          # steps down to the lower row's doors
+        for k in range(9):
+            cbox(R.bm, ((g0 + g1) / 2, -0.99 - 0.26 * k - 0.13, -0.2 * (k + 1) + 0.1), (g1 - g0 - 0.04, 0.26, 0.2), 0.008, R('concrete'))
+        cbox(R.bm, ((g0 + g1) / 2, -2.4, -1.4), (g1 - g0 + 0.3, 0.12, 2.8), 0.01, R('concrete'))
         for x in (g0 + 0.03, g1 - 0.03):
-            add_cyl(rails.bm, (x, -0.9, 0.0), (x, -0.9, 0.82), 0.018, seg=8, mat=rails('iron'))
-            add_cyl(rails.bm, (x, -0.9, 0.82), (x, -1.9, 0.1), 0.016, seg=8, mat=rails('iron'))
-            for k in range(1, 4):
-                yy = -0.9 - 0.25 * k
-                add_cyl(rails.bm, (x, yy, -0.17 * k * 0.95), (x, yy, 0.82 - 0.72 * k * 0.25), 0.008, seg=5, mat=rails('iron'))
-            add_sphere(rails.bm, (x, -0.9, 0.85), 0.03, seg=8, mat=rails('iron'))
-    # The flood's break in the wall: stubs and rubble, the retaining wall's top broken down to the water.
-    for x, h in ((DIP[0] - 0.05, 0.22), (DIP[1] + 0.08, 0.12)):
-        cbox(R.bm, (x, (yw0 + yw1) / 2, h / 2), (0.16, yw1 - yw0, h), 0.02, R('concrete'), rot=_ry(0.1 if x < 87 else -0.15))
-    # Planters on the wall, dead; the lower row's roofs below the lane, low and dark.
-    for x in (81.5, 85.0, 90.0, 92.2, 93.9):
-        cbox(R.bm, (x, (yw0 + yw1) / 2, 0.47), (0.56, 0.2, 0.14), 0.01, R('concrete'))
-        for k in range(3):
-            dead_plant(R, x - 0.18 + 0.18 * k, (yw0 + yw1) / 2, 0.47, rnd, pot='concrete', r=0.03, h=0.06)
-    for x0, x1, z in ((80.9, 83.2, -0.32), (83.4, 86.0, -0.3), (87.7, 90.6, -0.34), (90.8, 94.6, -0.3)):
-        add_box(R.bm, ((x0 + x1) / 2, -2.3, z - 0.1), (x1 - x0, 2.2, 0.2), mat=R('slate'))
-        cbox(R.bm, ((x0 + x1) / 2, -1.24, z + 0.06), (x1 - x0, 0.12, 0.16), 0.01, R('concrete'))
-        add_cyl(R.bm, ((x0 + x1) / 2 + 0.3, -2.6, z), ((x0 + x1) / 2 + 0.3, -2.6, z + 0.28), 0.06, seg=8, mat=R('iron'))
+            add_cyl(rails.bm, (x, -0.92, 0.0), (x, -0.92, 0.78), 0.016, seg=8, mat=rails('iron'))
+            add_cyl(rails.bm, (x, -0.92, 0.78), (x, -2.2, -1.06), 0.015, seg=8, mat=rails('iron'))
+            for k in range(1, 5):
+                yy = -0.92 - 0.26 * k
+                add_cyl(rails.bm, (x, yy, -0.2 * k), (x, yy, 0.78 - 1.84 * (0.26 * k / 1.28)), 0.008, seg=5, mat=rails('iron'))
+            add_sphere(rails.bm, (x, -0.92, 0.8), 0.026, seg=8, mat=rails('iron'))
+    for x, h in ((DIP[0] - 0.05, 0.12), (DIP[1] + 0.08, 0.07)):                # the flood's break in the kerb
+        cbox(R.bm, (x, (yk0 + yk1) / 2, h / 2), (0.16, yk1 - yk0, h), 0.02, R('concrete'), rot=_ry(0.1 if x < 87 else -0.15))
+    # The lower row: slate roofs a storey down, their ridges along the street, chimney stacks, a roof light or two.
+    for k, (x0, x1) in enumerate(((79.6, 82.0), (82.75, 85.4), (85.5, 88.5), (89.25, 91.7), (91.8, 94.6))):
+        ye, ze, yr, zr, yb = -2.0, -0.25, -3.1, 0.32, -4.2
+        ang = math.atan2(zr - ze, ye - yr)
+        for (ya, za, yb_, zb_) in ((ye, ze, yr, zr), (yr, zr, yb, ze)):
+            ln = math.hypot(yb_ - ya, zb_ - za)
+            cbox(R.bm, ((x0 + x1) / 2, (ya + yb_) / 2, (za + zb_) / 2), (x1 - x0 - 0.06, ln + 0.06, 0.05), 0.01, R('slate'),
+                 rot=_rx(math.atan2(zb_ - za, yb_ - ya)))
+        add_cyl(R.bm, (x0 + 0.02, yr, zr + 0.03), (x1 - 0.02, yr, zr + 0.03), 0.05, seg=8, mat=R('slate'))
+        cx = x0 + (x1 - x0) * (0.3 if k % 2 else 0.7)
+        cbox(R.bm, (cx, -3.55, 0.12), (0.36, 0.3, 0.7), 0.015, R('plasterB' if k % 2 else 'homeplaster'))
+        cbox(R.bm, (cx, -3.55, 0.48), (0.42, 0.36, 0.05), 0.01, R('concrete'))
+        add_cyl(R.bm, (cx + 0.07, -3.55, 0.5), (cx + 0.07, -3.55, 0.58), 0.045, 0.04, seg=8, mat=R('paper'))
+        rx = x0 + (x1 - x0) * (0.7 if k % 2 else 0.3)                      # a roof light on the back slope, dark
+        cbox(R.bm, (rx, -3.55, 0.08), (0.5, 0.42, 0.06), 0.01, R('wood'), rot=_rx(ang))
+        add_box(R.bm, (rx, -3.55, 0.115), (0.42, 0.34, 0.01), mat=R('glass'), rot=_rx(ang))
+        if k in (1, 3):                                                     # washing strung across a back yard below
+            _wire(R.bm, _catenary((x0 + 0.2, -2.2, -0.4), (x1 - 0.2, -2.2, -0.45), 0.12, 8), 0.003, R('rubber'))
     # ---- over the lane: the cable of bulbs, its brackets, the duct run, the washing ---------------------
     O = over
     brackets = [81.35, HOMES[0][2] - 0.3, 86.3, 88.2, HOMES[2][2] - 0.08]
@@ -2131,14 +2155,14 @@ def build_home114(m, coll):
     add_box(IN.bm, ((X0 + X1) / 2, (CUT_Y + Y + 0.12) / 2, -0.15), (X1 - X0, Y + 0.12 - CUT_Y, 0.3), mat=IN('pigeon'))
     for k in range(int((Y - CUT_Y) / 0.13)):                                   # floorboards
         add_box(IN.bm, ((X0 + X1) / 2, CUT_Y + 0.13 * (k + 1), -0.002), (X1 - X0, 0.008, 0.006), mat=IN('wood'))
-    wall_y(IN.bm, CUT_Y, Y + 0.12, X0, X0 + 0.18, 0.0, UPPER[1], door, IN('homeplaster'))       # the front wall
+    wall_y(IN.bm, CUT_Y, Y + 0.12, X0, X0 + 0.18, 0.0, UPPER[1] + 0.08, door, IN('homeplaster'))       # the front wall
     wall_y(IN.bm, CUT_Y, Y, P1 - 0.06, P1, 0.0, HOME_CEIL, door, IN('homeplaster'))
     wall_y(IN.bm, CUT_Y, Y, P1, P1 + 0.06, 0.0, HOME_CEIL, door, IN('living'))
     xi = INNER[0]
     wall_y(IN.bm, CUT_Y, Y, xi - 0.06, xi, 0.0, HOME_CEIL, door, IN('living'))
     wall_y(IN.bm, CUT_Y, Y, xi, xi + 0.06, 0.0, 0.75, door, IN('dado'))
     wall_y(IN.bm, CUT_Y, Y, xi, xi + 0.06, 0.75, HOME_CEIL, door, IN('bedroom'))
-    wall_y(IN.bm, CUT_Y, Y + 0.12, xi - 0.06, xi + 0.06, HOME_CEIL + 0.22, UPPER[1], (), IN('homeplaster'))
+    wall_y(IN.bm, CUT_Y, Y + 0.12, xi - 0.06, xi + 0.06, HOME_CEIL + 0.22, UPPER[1] + 0.08, (), IN('homeplaster'))
     xb = BACK_DOOR[0]
     wall_y(IN.bm, CUT_Y, Y, xb - 0.06, xb, 0.0, 0.75, door, IN('dado'))
     wall_y(IN.bm, CUT_Y, Y, xb - 0.06, xb, 0.75, HOME_CEIL, door, IN('bedroom'))
@@ -2798,7 +2822,7 @@ def _project_decal(verts, faces, uvs, bvh, x0, x1, z0, z1, step=0.02, ahead=0.00
             hit = bvh.ray_cast(Vector((x0 + (i + 0.5) * step, y_from, z)), Vector((0, 1, 0)), reach)
             row.append(None if hit[0] is None else hit[0].y)
         grid.append(row)
-    key = lambda y: int(math.floor(y / bucket))   # noqa: E731
+    key = lambda y: int(math.floor((y + 0.0073) / bucket))   # noqa: E731  (off the cm grid, where walls stand)
     rects, active = [], {}
     for j in range(nz + 1):
         runs = {}
