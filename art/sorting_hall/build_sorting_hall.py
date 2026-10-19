@@ -271,7 +271,7 @@ def build_tube_station(m, coll):
     _obj('TubeCup', bm, [m['brass']], coll)
 
     # The first letter, standing in the cup and leaning back against it. Origin at its centre.
-    letter_mesh('TubeLetter', letter_material('tube'), coll, loc=(tx + 0.01, ty + 0.01, tz - 0.035), rot=(68, 0, 6))
+    letter_mesh('TubeLetter', letter_material('tube'), coll, loc=(tx + 0.01, ty + 0.01, tz - 0.005), rot=(68, 0, 6))
 
     # Its lamp: lit by the game when the tube coughs.
     bm = bmesh.new()
@@ -734,7 +734,7 @@ def _bez(p0, p1, p2, t):
 PICK_FRAMES, PICK_GRAB, PICK_STOW = 30, 12, 26
 POST_FRAMES, POST_SHOW, POST_IN = 40, 4, 22
 PICK_AT = Vector((-0.12, -0.25, LETTER[2] / 2))       # the letter on the floor: centre (flat, front up, long side across)
-POST_X = -0.15                                         # his right-hand offset from the slot's centre (rig x)
+POST_X = -0.22                                         # his right-hand offset from the slot's centre (rig x)
 SLOT_AHEAD = 0.30                                      # the slot plate's face, ahead of his root
 SLOT_Z = 0.55
 

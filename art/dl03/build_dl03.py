@@ -10,6 +10,10 @@ DL-03 continues straight on from DL-02's recharge hall:
     belt is stopped and the points are thrown; at its far end, the residential access doorway, which
     art/dl04 builds and DL-04 continues through.
 
+The gallery end is now DL-06 The Heap (build_heap): the counterweighted gallery gate with its chain,
+stepped drum and bucket at the ramp's head, two sorting weights by the dock, the return slide back
+down to the sorting floor, the secret letter on the gallery rail and MailSlot6.
+
 Coordinates as before: metres, Blender Z up, the lane at y = 0, travel along +x.
 """
 import math
@@ -57,12 +61,21 @@ BUCKET_HOOK_Z, BUCKET_RIM_Z, BUCKET_DROP = 1.55, 1.2, 0.4
 IDLER_R = 0.08                                   # the sheave over the bucket
 HEAP_WEIGHT_XS = (31.6, 31.85)                   # two sorting weights by the dock, on the lane
 SLIDE_X = (35.7, 38.9)                           # the return slide: its lip on the sorting floor, its head at the gallery
-SLIDE_Y, SLIDE_W = -0.4, 0.48                    # centre line and inner width (front edge of the lane)
-SLIDE_TOP_FLAT, SLIDE_RUNOUT, SLIDE_RUNOUT_Z = 38.65, 35.98, 0.06
+SLIDE_Y, SLIDE_W = -0.42, 0.52                   # centre line and inner width (front edge of the lane)
+SLIDE_LIP_H = 0.07                               # the side lips' height: under his shoulders when he sits
+SLIDE_RUNOUT, SLIDE_RUNOUT_Z = 35.98, 0.06       # the run-out: flat from here down to the lip
 SLIDE_LIP = (35.78, 0.08)                        # where the run-out ends, and the radius of the lip
 HEAP_LETTER = (43.4, -0.47, 2.3)                 # snagged on the gallery's front rail
 MAILSLOT6 = (44.2, 0.3, 2.15)                    # the slot's mouth: 0.3 behind the lane, 0.55 above the deck
 CLOCK_X, DAYBOARD_X = 40.7, 45.3                 # moved along the gallery to make room for the gate and MailSlot6
+# The slide's profile: flat at the head, a tight convex bend into a straight 40-degree run, then a long
+# concave bend into the run-out (long, so a rider pitched to the slope doesn't dig in at the bottom).
+SLIDE_ANGLE, SLIDE_R_TOP, SLIDE_R_BOT = math.radians(40), 0.6, 2.0
+_sa, _ca = math.sin(SLIDE_ANGLE), math.cos(SLIDE_ANGLE)
+SLIDE_B1 = (SLIDE_RUNOUT + SLIDE_R_BOT * _sa, SLIDE_RUNOUT_Z + SLIDE_R_BOT * (1 - _ca))   # bottom bend -> straight
+_t1z = GALLERY[2] - SLIDE_R_TOP * (1 - _ca)
+SLIDE_T1 = (SLIDE_B1[0] + (_t1z - SLIDE_B1[1]) / math.tan(SLIDE_ANGLE), _t1z)              # straight -> top bend
+SLIDE_TOP_FLAT = SLIDE_T1[0] + SLIDE_R_TOP * _sa                                          # top bend -> flat head
 
 
 def slide_surface(x):
@@ -70,9 +83,12 @@ def slide_surface(x):
     gz = GALLERY[2]
     if x >= SLIDE_TOP_FLAT:
         return gz
+    if x >= SLIDE_T1[0]:
+        return gz - SLIDE_R_TOP + math.sqrt(SLIDE_R_TOP ** 2 - (x - SLIDE_TOP_FLAT) ** 2)
+    if x >= SLIDE_B1[0]:
+        return SLIDE_B1[1] + (x - SLIDE_B1[0]) * math.tan(SLIDE_ANGLE)
     if x >= SLIDE_RUNOUT:
-        t = (x - SLIDE_RUNOUT) / (SLIDE_TOP_FLAT - SLIDE_RUNOUT)
-        return SLIDE_RUNOUT_Z + (gz - SLIDE_RUNOUT_Z) * smoothstep(t)
+        return SLIDE_RUNOUT_Z + SLIDE_R_BOT - math.sqrt(SLIDE_R_BOT ** 2 - (x - SLIDE_RUNOUT) ** 2)
     return SLIDE_RUNOUT_Z
 
 
@@ -410,9 +426,10 @@ def build_return_line(m, coll):
         add_box(bm, (mid.x, RAIL_Y + dy, mid.y + 0.12), (length, 0.03, 0.26), rot=rot)
     _obj('Chute', bm, [m['shutter']], coll)
     # Guard rail at the pit edge, and the dock: a lamp, a stop line, the route board's frame.
-    # The rail stops short of the lane's front edge, where the return slide comes down past it (DL-06).
+    # The rail stops short of the lane's front edge, where the return slide comes down past it (DL-06),
+    # and hangs off its back post only, so D-17's arms clear it as he slides by.
     bm = bmesh.new()
-    for y in (-0.08, 0.25):
+    for y in (0.25,):
         add_box(bm, (FLOOR_X1 - 0.08, y, 0.5), (0.05, 0.05, 1.0))
     for z in (0.5, 0.95):
         add_box(bm, (FLOOR_X1 - 0.08, 0.085, z), (0.05, 0.38, 0.04))
@@ -532,11 +549,11 @@ def build_gallery(m, coll):
     add_box(bm, ((r0 + r1) / 2, (-0.5 + RAIL_Y - 0.3) / 2, gz - 0.03), (r1 - r0, RAIL_Y - 0.3 + 0.5, 0.06))
     add_box(bm, ((r0 + r1) / 2, (RAIL_Y + 0.3 + 0.9) / 2, gz - 0.03), (r1 - r0, 0.9 - RAIL_Y - 0.3, 0.06))
     _obj('GalleryDeck', bm, [m['steel']], coll)
-    # DL-06: the front rail starts past the slide's head (open from gx0 to 39.15), the back rail past
+    # DL-06: the front rail starts past the slide's head (open from gx0 to 39.35), the back rail past
     # the bucket (open from gx0 to 39.45, where carriers tip), and the end rail is only a short stub
     # behind the lane, clear of the slide's mouth and of the carriers coming off the ramp.
     bm = bmesh.new()
-    fx0, bx0 = 39.15, 39.45
+    fx0, bx0 = 39.35, 39.45
     x = gx0
     while x <= gx1 + 1e-6:
         add_box(bm, (max(x, fx0), -0.52, gz + 0.5), (0.04, 0.04, 1.0))
@@ -851,8 +868,8 @@ def build_heap(m, coll):
     for k in range(4):
         x = GALLERY[0] - (GALLERY[0] - SLIDE_TOP_FLAT) * k / 3
         pts.append(Vector((x, gz)))
-    for k in range(1, 41):
-        x = SLIDE_TOP_FLAT - (SLIDE_TOP_FLAT - SLIDE_RUNOUT) * k / 40
+    for k in range(1, 49):
+        x = SLIDE_TOP_FLAT - (SLIDE_TOP_FLAT - SLIDE_RUNOUT) * k / 48
         pts.append(Vector((x, slide_surface(x))))
     for k in range(1, 4):
         pts.append(Vector((SLIDE_RUNOUT - (SLIDE_RUNOUT - SLIDE_LIP[0]) * k / 3, SLIDE_RUNOUT_Z)))
@@ -868,8 +885,8 @@ def build_heap(m, coll):
     y0, y1, wt, bed = SLIDE_Y - SLIDE_W / 2, SLIDE_Y + SLIDE_W / 2, 0.025, 0.03
     # The walls are low at the head (so he can get in) and fade out round the lip.
     # Lower near the bottom too, where he walks past it on the sorting floor.
-    wall = [(0.13 * smoothstep((GALLERY[0] - p.x) / 0.3) + 0.05) * (1 - 0.92 * smoothstep((SLIDE_LIP[0] - p.x) / 0.07))
-            * (0.6 + 0.4 * smoothstep((p.x - SLIDE_RUNOUT) / 0.9)) for p in pts]
+    wall = [SLIDE_LIP_H * (0.4 + 0.6 * smoothstep((GALLERY[0] - p.x) / 0.3)) * (1 - 0.9 * smoothstep((SLIDE_LIP[0] - p.x) / 0.07))
+            * (0.7 + 0.3 * smoothstep((p.x - SLIDE_RUNOUT) / 0.9)) for p in pts]
     bm = bmesh.new()
     rings = []
     for (o, u, v), h in zip(frames, wall):
@@ -1295,7 +1312,7 @@ def clip_startle(dl01, arm):
     c.done()
 
 
-SLIDE_SIT = -0.29          # body drop when seated: the pod's base on the root (the slide's surface)
+SLIDE_SIT = -0.245         # body drop when seated: the belly cables just on the root (the slide's surface), the pod above
 
 
 def clip_slide(dl01, arm):
@@ -1316,7 +1333,7 @@ def clip_slide(dl01, arm):
         rot = (-12 + 1.5 * jit, 4 * wob, 2 * math.sin(tau * t + 0.8))
         # Claws out to the sides at shoulder height, see-sawing against the roll.
         hands = {s: Vector((s * 0.19, -0.05, 0.37 + s * 0.04 * wob + 0.01 * jit)) for _, s in SIDES}
-        feet = {side: ((s * 0.015, -0.265 + 0.008 * math.sin(tau * t + (0 if s > 0 else 1.7)), 0.0),
+        feet = {side: ((s * 0.015, -0.25 + 0.008 * math.sin(tau * t + (0 if s > 0 else 1.7)), 0.035),
                        (-24 + 5 * math.sin(tau * t + s), 0, s * 5)) for side, s in SIDES}
         head = (14 - rot[0] * 0.6 + 2 * jit, -rot[1] * 0.8, 2 * math.sin(tau * t - 0.4))
         antenna = [(-34 + 7 * math.sin(2 * tau * t * (1 + 0.5 * i) - i), 4 * math.sin(tau * t + i)) for i in range(3)]

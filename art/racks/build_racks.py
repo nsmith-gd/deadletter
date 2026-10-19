@@ -495,7 +495,7 @@ def _lamps_object(name, bm, m, coll, xform, parent):
 # legs drawn up a little, the top one forward; the arm underneath stretched out along the floor past
 # its face, claw open; the top arm fallen limp across its front.
 LYING_POSE = dict(
-    body=(0.0, 0.0, -0.02), body_rot=(8.0, 0.0, 0.0), head=(12.0, -10.0, 0.0),
+    body=(0.0, 0.0, -0.02), body_rot=(8.0, 0.0, 0.0), head=(12.0, 16.0, 0.0),
     antenna=[(-34.0, 8.0), (-40.0, 10.0), (-44.0, 10.0)],
     feet={'L': ((0.02, -0.05, 0.05), (20.0, 0.0, 0.0)), 'R': ((-0.03, -0.14, 0.13), (45.0, 0.0, 0.0))},
     claws={'L': 36.0, 'R': 6.0}, elbows={'L': 0.4, 'R': 0.0})
@@ -510,7 +510,7 @@ LYING_TILT = 4.0                     # degrees the head end dips, so the head re
 
 
 def lying_hands(dl01):
-    return {1: Vector((0.25, -0.19, 0.6)) - dl01.REST_WRIST[1],                   # under it: out past its face
+    return {1: Vector((0.215, -0.2, 0.6)) - dl01.REST_WRIST[1],                   # under it: out past its face
             -1: Vector((-0.03, -0.27, 0.26)) - dl01.REST_WRIST[-1]}               # on top: limp across its front
 
 
@@ -532,7 +532,7 @@ def build_couriers(dl01, m, coll):
     out = {}
 
     # Lying.
-    pose = dict(LYING_POSE, hands=lying_hands(dl01), hand_rot={'L': aim((0.1, -0.3, 0.95)), 'R': aim((0.8, -0.4, -0.45))})
+    pose = dict(LYING_POSE, hands=lying_hands(dl01), hand_rot={'L': aim((-0.2, -0.3, 0.93)), 'R': aim((0.8, -0.4, -0.45))})
     body, mats, lamps = bake_pose(dl01, arm, rcoll, 'RacksLying', pose)
     rot = Matrix.Rotation(math.radians(90.0 + LYING_TILT), 4, 'Y')   # up along +x, left side down
     xs, zs = [], []
@@ -798,5 +798,54 @@ def build_set(dl01, m, coll):
 # D-17's clip
 # --------------------------------------------------------------------------
 
+TOUCH_FRAMES = 52
+# Rig space (D-17 facing -y; in the game he faces -x, back toward the bay he dragged it from, so the seated
+# courier is at his front right). The claw tip lands here, on top of its head, near its left side:
+TOUCH_TIP = Vector((-0.3, -0.26, 0.54))
+TOUCH_DIR = Vector((-0.05, -0.85, -0.5)).normalized()       # the claw laid along its head, pointing on
+TOUCH_REACH = 0.104                                          # wrist to claw tip, along the claw
+TOUCH_TRIM = Vector((0.007, 0.001, 0.012))                  # measured: the solved claw tip falls this short
+TOUCH_HOVER = Vector((0.01, 0.045, 0.022))                   # off its head, before and after
+# Where to stand him (world, facing -x) for that, with SeatedCourier as built: root at
+TOUCH_ROOT = (44.9, 0.08)                                    # the tip then lands at (44.64, 0.38, 0.54)
+
+
+def clip_touch_head(dl01, arm):
+    """After the cradle takes the courier: he turns his head to it, reaches up slowly, lays his right claw
+    on top of its head and leaves it there a moment, head tilted. Then lets go, and his head comes up."""
+    track, spring, Clip, REST, CARRY = dl01.track, dl01.spring, dl01.Clip, dl01.REST_WRIST, dl01.CARRY
+    reach = dl01.dl02.reach
+    c = Clip(arm, 'TouchHead', TOUCH_FRAMES)
+    rest_rot = (-24.0, -6.0, -10.0)
+    laid = aim(TOUCH_DIR)
+    on = TOUCH_TIP - TOUCH_DIR * TOUCH_REACH + TOUCH_TRIM       # the wrist with the claw on its head
+    for frame in range(1, TOUCH_FRAMES + 1):
+        f = frame - 1
+        lean = track([(0, 0), (16, 1), (38, 1), (48, 0)], f)
+        body = (-0.008 * lean, -0.02 * lean, -0.006 * lean)
+        rot = (track([(0, 0), (16, 4), (30, 5), (40, 4), (50, 0)], f), -2.5 * lean, track([(0, 0), (16, -6), (40, -6), (50, 0)], f))
+        # The right claw: up from his side and out, round the front corner of the pod, onto its head.
+        out = track([(4, 0), (18, 1), (40, 1), (48, 0)], f)
+        down = track([(16, 0), (21, 1), (38, 1), (42, 0)], f)                # from the hover onto the head
+        press = 0.004 * track([(27, 0), (30, 1), (34, 0)], f)                 # the faintest press, once
+        target = on + TOUCH_HOVER * (1 - down) - Vector((0, 0, press))
+        held = reach({1: REST[1] + CARRY[1], -1: target}, body, rot, REST)[-1]
+        bow = Vector((-0.05, 0.0, 0.0)) * math.sin(math.pi * min(1.0, out)) * (1 - down)   # out round his head
+        hands = {1: CARRY[1] + Vector((0.0, -0.004 * lean, 0.004 * lean)),
+                 -1: dl01.reach_around(CARRY[-1], held, out) + bow}
+        k = track([(4, 0), (16, 1), (40, 1), (48, 0)], f)
+        hand_rot = {'L': (-24.0, 6.0, 10.0), 'R': tuple(a + (b - a) * k for a, b in zip(rest_rot, laid))}
+        claw = track([(4, CLAW_REST_OPEN['R']), (14, 14), (20, 4), (38, 4), (42, 12), (50, CLAW_REST_OPEN['R'])], f)
+        # Head: turns to it and looks down at it, tilts while his claw is there, comes back up after.
+        head = (track([(0, 0), (8, 8), (18, 8), (24, 16), (38, 18), (44, 6), (52, -2)], f),
+                track([(18, 0), (26, 9), (38, 9), (46, 0)], f),
+                track([(0, 0), (8, -8), (40, -8), (48, -2), (52, 0)], f))
+        antenna = [(track([(0, 0), (10, 8), (24, 18), (38, 18), (44, 4)], f) * (0.7 + 0.2 * i)
+                    - spring(f, 44, 6 * (1 + 0.3 * i), decay=6), 0) for i in range(3)]
+        c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, hands=hands, hand_rot=hand_rot,
+               claws={'L': CLAW_REST_OPEN['L'], 'R': claw}, elbows={'R': min(1.0, 2 * out)})
+    c.done()
+
+
 def add_clips(dl01, arm):
-    pass
+    clip_touch_head(dl01, arm)

@@ -933,7 +933,7 @@ def build_c108_room(m, coll):
     add_cyl(bm, (tx - 0.02, ty + 0.0, top + 0.006), (tx - 0.02, ty, top + 0.17), 0.055, 0.042, seg=10, mat=1)   # the jug
     add_torus(bm, (tx - 0.085, ty, top + 0.1), (0, 1, 0), 0.035, 0.007, seg=6, rseg=3, mat=1)
     add_cyl(bm, (tx + 0.12, ty + 0.05, top + 0.006), (tx + 0.12, ty + 0.05, top + 0.025), 0.09, seg=10, mat=0)     # a bread board
-    for k, (x, y, ang) in enumerate(((tx - 0.3, ty + 0.46, 0.0), (tx + 0.3, ty + 0.46, 0.1), (tx + 0.02, ty - 0.52, math.pi - 0.25))):
+    for k, (x, y, ang) in enumerate(((tx - 0.3, ty + 0.46, 0.0), (tx + 0.3, ty + 0.46, 0.1), (tx + 0.02, ty - 0.32, math.pi - 0.25))):
         rot = _rz(ang)                                                       # chairs: two at the far side, one pulled out
         c = Vector((x, y, 0))
         add_box(bm, c + rot @ Vector((0, 0, 0.44)), (0.4, 0.38, 0.03), rot=rot)
@@ -953,26 +953,45 @@ def build_c108_room(m, coll):
                  m['mud'], coll, 5081)
 
 
+LETTER_C110_TEX = os.path.join(HERE, '..', 'sorting_hall', 'textures', 'letter_c110.png')   # painted by the Sorting Hall module
+
+
 def build_c110_letter(m, coll):
     """The letter sticking out of C-110's slot, drooping, its face to the lane: an envelope 0.16 x 0.11, its
-    origin at its centre. The game pulls it free."""
+    origin at its centre. The game pulls it free. Built like the Sorting Hall's envelopes (letter_mesh): long
+    side along x, the address on +z, the flap's edge toward +y (here, the end still in the slot); its texture
+    is an atlas, the front on the left half and the back on the right. Without that texture it is plain paper."""
     sx_, sz_ = C110_SLOT
-    mat = bpy.data.materials.get('C110LetterMat') or simple_material('C110LetterMat', (0.62, 0.58, 0.48), 0.85)
+    if os.path.exists(LETTER_C110_TEX):
+        mat = bpy.data.materials.get('LetterC110') or _image_material('LetterC110', LETTER_C110_TEX, rough=0.85)
+    else:
+        mat = bpy.data.materials.get('C110LetterMat') or simple_material('C110LetterMat', (0.62, 0.58, 0.48), 0.85)
+    w, h, t = 0.16, 0.11, 0.003
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new('UVMap')
-    w, h, t = 0.16, 0.11, 0.003
-    # Its long edge across the slot; the face (+z before the droop) carries the address. UVs on the face only.
-    add_box(bm, (0, 0, 0), (w, h, t))
-    for f in bm.faces:
-        if f.normal.z > 0.5:
-            for lp in f.loops:
-                lp[uv].uv = (lp.vert.co.x / w + 0.5, lp.vert.co.y / h + 0.5)
+    v = {(sx, sy, sz): bm.verts.new((sx * w / 2, sy * h / 2, sz * t / 2)) for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)}
+
+    def face(keys, uvs):
+        f = bm.faces.new([v[k] for k in keys])
+        for lp, co in zip(f.loops, uvs):
+            lp[uv].uv = co
+    face([(-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)], [(0, 0), (0.5, 0), (0.5, 1), (0, 1)])
+    face([(-1, 1, -1), (1, 1, -1), (1, -1, -1), (-1, -1, -1)], [(1, 1), (0.5, 1), (0.5, 0), (1, 0)])
+    edge = [(0.52, 0.04), (0.53, 0.04), (0.53, 0.05), (0.52, 0.05)]
+    face([(-1, -1, -1), (1, -1, -1), (1, -1, 1), (-1, -1, 1)], edge)
+    face([(1, 1, -1), (-1, 1, -1), (-1, 1, 1), (1, 1, 1)], edge)
+    face([(1, -1, -1), (1, 1, -1), (1, 1, 1), (1, -1, 1)], edge)
+    face([(-1, 1, -1), (-1, -1, -1), (-1, -1, 1), (-1, 1, 1)], edge)
     rot = _rz(math.radians(-7)) @ _rx(math.radians(52))                      # out of the slot and drooping toward the lane
     bmesh.ops.transform(bm, matrix=rot, verts=bm.verts)
     inner = rot @ Vector((0, h / 2, 0))                                       # the end still in the slot
-    slot = Vector((sx_ + 0.05, BACK_Y - 0.005, sz_))
-    origin = slot - inner
-    ob = _obj('C110Letter', bm, [mat], coll, sharp=60)
+    origin = Vector((sx_ + 0.05, BACK_Y - 0.005, sz_)) - inner
+    me = bpy.data.meshes.new('C110Letter')                                    # no normal recalculation: the faces are wound outward
+    bm.to_mesh(me)
+    bm.free()
+    me.materials.append(mat)
+    ob = bpy.data.objects.new('C110Letter', me)
+    coll.objects.link(ob)
     ob.location = origin
     return ob
 
@@ -1014,19 +1033,20 @@ def build_flood(m, coll):
     ob.location = wo
     coll.objects.link(ob)
     # Mud dried on the lane each side of the dip, kept off the duct's path (|y| < 0.26) on the near side.
-    patches = []
+    patches = []                                                              # (each reaches at most 1.7 r from its centre)
     for k in range(14):
+        r = rnd.uniform(0.09, 0.17)
         if k < 6:
-            x, y = d0 - rnd.uniform(0.15, 0.7), rnd.choice((rnd.uniform(0.38, 0.75), rnd.uniform(-0.62, -0.36)))
+            x, y = d0 - 1.7 * r - rnd.uniform(0.0, 0.5), rnd.choice((rnd.uniform(0.3 + 1.7 * r, 0.82), rnd.uniform(-0.72 + 1.7 * r, -0.3 - 1.7 * r)))
         else:
-            x, y = d1 + rnd.uniform(0.2, 0.95), rnd.uniform(-0.62, 0.75)
-        patches.append((x, y, 0.0, rnd.uniform(0.1, 0.2)))
+            x, y = d1 + 1.7 * r + rnd.uniform(0.0, 0.7), rnd.uniform(-0.72 + 1.7 * r, 0.82)
+        patches.append((x, y, 0.0, r))
     _mud_patches('D5Mud', patches, m['mud'], coll, 5091)
-    # Scum dried and floating at the water's edges, which shows the surface for what it is (kept off the
-    # bridge's line, |y| < 0.22).
+    # Pale scum floating at the water's edges, which shows the surface for what it is even in the dark (kept
+    # off the bridge's line, |y| < 0.22).
     _mud_patches('D5Scum', [(84.78, 0.88, WATER_Z - 0.0015, 0.09), (83.55, 0.86, WATER_Z - 0.0015, 0.11), (84.3, 0.9, WATER_Z - 0.0015, 0.07),
                             (84.75, -0.5, WATER_Z - 0.0015, 0.08), (83.5, -0.56, WATER_Z - 0.0015, 0.06), (84.2, 0.42, WATER_Z - 0.0015, 0.05),
-                            (83.95, -0.58, WATER_Z - 0.0015, 0.05)], m['mud'], coll, 5092)
+                            (83.95, -0.58, WATER_Z - 0.0015, 0.05)], m['plaster'], coll, 5092)
     # A drowned shoe: a grown-up's, on its side at the water's edge, half under.
     def upper(c):
         t = (c.x + 1) / 2                                                      # 0 at the heel, 1 at the toe
@@ -1038,7 +1058,7 @@ def build_flood(m, coll):
     add_box(bm, (-0.095, 0, 0.019), (0.07, 0.084, 0.022), mat=1)
     add_sphere(bm, (-0.05, 0, 0.099), 0.034, seg=10, scale=(1.7, 1.0, 0.22), mat=2)
     bmesh.ops.transform(bm, matrix=Matrix.Translation((84.48, -0.42, WATER_Z - 0.005)) @ _rz(0.5) @ _rx(math.radians(78)), verts=bm.verts)
-    _obj('D5DrownedShoe', bm, [m['pigeon'], m['rubber'], m['shaft']], coll, sharp=60)
+    _obj('D5DrownedShoe', bm, [m['paper'], m['rubber'], m['shaft']], coll, sharp=60)
 
 
 def build_duct(m, coll):
@@ -1059,10 +1079,12 @@ def build_duct(m, coll):
         add_box(bm, (fx, 0, 0.01), (0.03, dep, 0.02))
         for sy in (-1, 1):
             add_box(bm, (fx, sy * (dep / 2 - 0.01), hh / 2), (0.03, 0.02, hh - 0.04))
-    for fx in (-0.37, 0.37):                                                  # stiffening beads
-        add_box(bm, (fx, 0, zb1 + 0.001), (0.012, yb, 0.003))
-        for sy in (-1, 1):
-            add_box(bm, (fx, sy * (yb / 2 + 0.0015), zc), (0.012, 0.003, zb1 - zb0))
+    span, hz = L / 2 - 0.03, zb1 - zb0                                        # cross-breaks: an X pressed into each side panel
+    diag = math.hypot(span, hz)
+    for cxp in (-span / 2 - 0.0075, span / 2 + 0.0075):
+        for sgn in (-1, 1):
+            for sy in (-1, 1):
+                add_box(bm, (cxp, sy * (yb / 2 + 0.001), zc), (diag - 0.02, 0.002, 0.006), rot=_ry(sgn * math.atan2(hz, span)))
     for fx in (-L / 2 + 0.16, L / 2 - 0.16):                                  # dark inside, seen down the open ends
         add_box(bm, (fx, 0, zc), (0.004, yb - 2 * t, zb1 - zb0 - 2 * t), mat=2)
     # The strap, round the duct near its left end, its ratchet on the front.
@@ -1843,7 +1865,52 @@ def clip_straighten(dl01, arm):
     c.done()
 
 
+WATER_SPARK = 9                       # his toe touches the water: the game sparks at his right foot
+WATER_REACH = 0.125                   # how far ahead of where he stands the toe goes (he stops about this short of the water)
+
+
+def clip_water_flinch(dl01, arm):
+    """At the flood's edge, facing the water: he leans in and puts his right foot out to it; the toe touches
+    (WATER_SPARK) and he jerks back, arms flung out, the foot snatched up. He holds it up and shakes it off,
+    looking at it, and sets it down where it started. He ends where he began, at rest."""
+    track, spring, Clip, CARRY = dl01.track, dl01.spring, dl01.Clip, dl01.CARRY
+    frames = 30
+    S = WATER_SPARK
+    c = Clip(arm, 'WaterFlinch', frames)
+    snap = lambda x: d17.ease_back(x, 0.8)   # noqa: E731
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        weight = track([(0, 0), (4, 1), (23, 1), (28, 0)], f)                 # onto the left foot while the right is up
+        jolt = track([(S, 0), (S + 2, 1), (S + 7, 0.55), (22, 0.15), (27, 0)], f, ease=snap)
+        shake = math.sin(2 * math.pi * (f - 13) / 2.6) * track([(12, 0), (14, 1), (20, 1), (22, 0)], f)
+        fy = track([(0, 0), (S - 1, -WATER_REACH + 0.005), (S, -WATER_REACH), (S + 3, 0.025), (14, 0.03), (22, 0.025), (27, 0)], f)
+        fz = track([(0, 0), (4, 0.045), (S - 1, 0.008), (S, -0.006), (S + 3, 0.08), (14, 0.075), (22, 0.065), (27, 0)], f)
+        fz += 0.014 * shake
+        fx = -0.012 * shake
+        pitch = track([(0, 0), (4, 6), (S - 1, -12), (S, -14), (S + 3, 10), (14, 4), (22, 4), (27, 0)], f)   # toe down to the water
+        feet = {'R': ((fx, fy, fz), (pitch, 0, 6 * shake)), 'L': ((0, 0, 0), (0, 0, 0))}
+        body = (0.022 * weight + 0.004 * shake,
+                track([(0, 0), (S - 1, -0.028), (S, -0.032), (S + 3, 0.016), (15, 0.008), (27, 0)], f),
+                track([(0, 0), (S - 1, -0.012), (S, -0.014), (S + 2, 0.002), (S + 7, -0.006), (26, 0)], f))
+        rot = (track([(0, 0), (S - 1, 8), (S, 9), (S + 3, -9), (15, -2), (27, 0)], f),
+               -4 * weight + 1.5 * shake, track([(S, 0), (S + 3, 6), (14, 4), (22, 4), (27, 0)], f))
+        head = (track([(0, 0), (5, 16), (S, 18), (S + 3, -10), (14, 14), (22, 14), (27, 0)], f),
+                track([(S, 0), (S + 3, 10), (12, 6), (22, 6), (27, 0)], f),
+                track([(0, 0), (5, -6), (S, -6), (S + 3, 4), (14, -14), (22, -14), (27, 0)], f))
+        antenna = [(track([(0, 0), (S, -8), (S + 2, -46), (S + 8, -24), (22, -10), (29, 0)], f) * (0.8 + 0.15 * i)
+                    + spring(f, S + 2, -10 * (i + 1), decay=4, freq=1.3), 0) for i in range(3)]
+        flail = Vector((0, 0.03, 0.075))
+        hands = {sg: CARRY[sg] + (flail + Vector((sg * 0.07, 0, 0))) * jolt + Vector((sg * 0.03, 0, 0.02)) * track([(0, 0), (S - 1, 1), (S + 1, 0)], f)
+                 for _, sg in SIDES}
+        c.pose(frame, body=body, body_rot=rot, head=head, antenna=antenna, feet=feet, hands=hands,
+               hand_rot={'L': (-24 - 30 * jolt, 6, 10 + 20 * jolt), 'R': (-24 - 30 * jolt, -6, -10 - 20 * jolt)},
+               claws={'L': CLAW_REST_OPEN['L'] + 22 * jolt, 'R': 1 + 30 * jolt},
+               elbows={'L': 0.6 * jolt, 'R': 0.6 * jolt})
+    c.done()
+
+
 def add_clips(dl01, arm):
     clip_knock(dl01, arm)
     clip_present(dl01, arm)
     clip_straighten(dl01, arm)
+    clip_water_flinch(dl01, arm)
