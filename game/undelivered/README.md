@@ -1,8 +1,8 @@
 # Undelivered (DL-01 to DL-11): playable prototype
 
 A browser-playable build of chapter 1, eleven scenes played as one continuous level with no cut between them. It
-follows the chapter plan in `docs/chapter1_plan.md`, its pass 2 and pass 3 plans (`docs/chapter1_pass2_plan.md`,
-`docs/chapter1_pass3_plan.md`), the scene plans in `docs/scenes/` and the standing direction in `docs/direction.md`.
+follows the chapter plan in `docs/chapter1_plan.md`, its pass 2, 3 and 4 plans (`docs/chapter1_pass2_plan.md`,
+`docs/chapter1_pass3_plan.md`, `docs/chapter1_pass4_plan.md`), the scene plans in `docs/scenes/` and the standing direction in `docs/direction.md`.
 It uses D-17 and the set from Blender, and the gameplay code mirrors the mechanisms planned for the Unity build.
 
 ## Run locally
@@ -21,7 +21,11 @@ three.js 0.169.0 loads from jsDelivr. The models are in `assets/` as `.glb`, and
 - **The White** (`white.json`) loads before the title card's Begin. Without it, the game still plays, with the White
   unseen.
 - **Warm-up:** at load every material is compiled and every texture uploaded (`warmUp`), with each region's lights
-  and light zones switched on in turn, so nothing hitches when it first appears.
+  and light zones switched on in turn, so nothing hitches when it first appears. Pass 4: it compiles into the
+  composer's render target (`composer.renderTarget1`), as every frame is drawn (linear colour, no tone mapping until
+  the output pass). Compiling for the screen built variants play never used, so every material compiled again at
+  first sight: the stutters. With the light pool (see *Lights* below) and the pooled ripples, shader programs went
+  from 247 to 54, and none compile during play except 3 in the opening.
 
 ## Controls
 
@@ -45,7 +49,7 @@ touch devices, on-screen buttons appear once play begins.
 The eleven scenes run left to right along one lane. The pause card shows the scene D-17 is in (`sceneName()` in the
 game).
 
-| Scene | Was (pass 2) | World x | Built by | Plan estimate | Measured |
+| Scene | Was (pass 2) | World x | Built by | Plan estimate | Pass 3 measured |
 |---|---|---|---|---|---|
 | DL-01 The Wake | DL-01 | 0 to 12 | `art/dl01` | 2:00 | 1:39 |
 | DL-02 The Sorting Hall | DL-02 | 12 to 25 | `art/sorting_hall` | 1:45 | 0:52 |
@@ -59,7 +63,9 @@ game).
 | DL-10 Up Only | new in pass 3 | 118.8 to 127.9 (ring C's level) | `art/pass3/build_up_only.py` | 2:30 | 1:11 |
 | DL-11 The Child at the Address | DL-09 | 127.9 to 170.1 | `art/dl05`, moved by OFF5 | 3:30 | 2:08 |
 
-Measured: the median of 20 simulated first playthroughs of pass 3 (`tools/sim`, results in
+Measured: (pending)
+
+Pass 3, measured: the median of 20 simulated first playthroughs (`tools/sim`, results in
 `tools/sim/results_pass3_first_playthrough.jsonl`). The whole chapter: median 17:47 (13:01 to 20:51), plus 0:20 of
 opening; 0.8 deaths a run on average; 6.2 of 12 curiosities found. The floor (the simulated player with no hesitation
 or mistakes, `results_pass3_mechanical.jsonl`) is 7:13. Pass 2's nine scenes measured 15:08 by the same method, and the
@@ -67,8 +73,8 @@ director played them in 16:57.
 
 The lore dressing across scenes 1 to 9, the cage's readability pieces and the interactables' new materials are
 `art/pass3/build_lore.py`'s. The estimates are first-time play from `docs/chapter1_plan.md` and
-`docs/chapter1_pass3_plan.md`, not measurements. Pass 3's simulated timings are pending; the pass 2 runs
-(`tools/sim/README.md`) predate the new scenes.
+`docs/chapter1_pass3_plan.md`, not measurements. Pass 4's set pieces are in the scenes' own builders and
+`art/pass4` (see *What happened here*).
 
 The code keeps its original module names, so they use the old numbers: `art/dl02` and `updateDL02` are DL-03 (and the
 start of DL-04), `updateDL03` is DL-06 and DL-07, `updateDL04` is DL-08 and the tunnel and balcony of DL-09, and
@@ -76,11 +82,23 @@ start of DL-04), `updateDL03` is DL-06 and DL-07, `updateDL04` is DL-08 and the 
 Chapter 1 module before `const HINTS`. Pass 2 (`docs/chapter1_pass2_plan.md`) follows it there: the curiosities
 (`CURIOS`), the White (`WATERS`, `updateWhite`), ring C (`updateRingC`), the hazards (`updateHazards`) and deaths
 (`DEATH`, `die`). Its props, hazards and D-17's clips for them come from `art/pass2`, and the White from `art/white`.
-Pass 3 is in the same module: the Ration Hall (`RATION5`, `RH5`, `updateWinch5`), Up Only (`UPONLY`, `UO`,
+Pass 3 is in the same module: the Ration Hall (`RATION5`, `RH5`; pass 4's weigh-in is `PUSHABLES.drum`,
+`PUSHABLES.body` and the `weigh` state in `updateCh1`), Up Only (`UPONLY`, `UO`,
 `updateAct10`, `updateUpOnly`), the cage's readability (`BalanceNeedle` and the pawl lever in `updateCage`), C-114's
-shut door (`C114DOOR`, `KNOCK5_X`) and the light zones (`lightZoneFor`).
+shut door (`C114DOOR`, `KNOCK5_X`) and the light zones (`lightZoneFor`). Pass 4 adds the light pool
+(`buildLightPool`, `updateLightPool`, at the end of the script), the ripple pool (`ripplePool`), the head look's limits
+(`headLook`), the careful pace by the White's water, the label checks (`labelWake`, `label5`, `label9`, `label11`) and
+the label close-up (the `label` shot), and DL-10's echoes (`uoNeedle`, `CarPlateLamp0` to `2`).
 
-**Light zones.** Each region's lights are switched on only while D-17 is in it. Pass 3 adds two zones inside regions:
+**Lights: a fixed pool (pass 4).** Every light the scenes build is a proxy, moved to layer 31, which the camera never
+renders. Each frame the lit proxies nearest the camera are copied into a fixed pool: 10 point, 4 spot, 2 shadowed
+spot, 2 directional and 2 hemisphere lights (`LIGHT_POOL`). Unused slots go dark, and an empty shadowed slot stops
+updating its shadow map. A shadowed spot beyond the two shadow slots still lights, without its shadow. The number of
+lights never changes, so switching a scene's lights on or off no longer recompiles every lit material, and no pixel
+pays for more lights than the pool.
+
+**Light zones.** Each region's lights are switched on only while D-17 is in it (they are proxies now; the pool picks
+from those that are on). Pass 3 adds two zones inside regions:
 in the Ration Hall (from 47.4) its own lights (the counter's flickering strip light, the shrine's candles, a vent's
 grey daylight, the kitchen's fill) replace DL-01's and the Sorting Hall's, long out of sight; in Up Only (from 117.8)
 its own (the failing pendant, the two UP lamps, the crank's work lamp, the car's lamp, the cold light down the
@@ -91,21 +109,56 @@ counterweight's shaft) replace the goods hall's and the cage's.
 scene's light and by motion and sound. Red is kept for what the world itself painted red: the franking press's hazard
 bands. The curiosities' red tags are gone.
 
+## The quest (pass 4)
+
+Within the first minute the player knows what D-17 is for: a birthday parcel for Mara, C-114, ring C, three levels
+down, 76 years overdue.
+- **His label** carries the depot's stamp, UNDELIVERED, under the address. Starting play from the opening, he looks
+  down and checks it (`CheckLabel`, `labelWake`), and the camera goes in close enough to read (the `label` shot): for
+  MARA · C-114 · RING C, UNDELIVERED. The same close-up plays each time he checks it: at the child's drawing in DL-05
+  (`label5`), on the balcony after the city (`label9`), and on reaching ring C's street (`label11`). Each plays once.
+- **The dispatch board** (DL-01): one line still lit, C-114 · RING C · UNDELIVERED, its lamp blinking
+  (`DispatchLineLamp`).
+- **The way down:** RING C ↓ stencilled at each scene's way on, the same stencil every time (`WayRingC01` to
+  `WayRingC10`), and "C-114 →" on ring C's barricade (`WayC114`, 134.6).
+- **The pause card:** "Delivering: a birthday parcel for Mara, C-114, ring C. Three levels down. 76 years late."
+
+## What happened here: set pieces (pass 4)
+
+Each set piece shows one step of the refuge's fall at full scale, without words where it can. The remains are
+shrouds and dry bones in clothes, never gore. Built by `art/pass4/build_story_depot.py` (DL-02, the stencils of DL-01 to
+DL-05, the dispatch line), `build_story_shafts.py` (DL-08, DL-09, the stencils of DL-06 to DL-09) and
+`build_story_ringc.py` (DL-10, its stencil, ring C's mark); DL-05's famine is `art/pass3/build_ration_hall.py`'s and
+DL-11's drowning `art/dl05/build_dl05.py`'s.
+
+| Scene | Set piece | What it shows | What it says |
+|---|---|---|---|
+| DL-02 | The last night shift | Five sorters' remains in their aprons: one over the sorting table's end, one against the wall holding a mailbag, one over the tea table, two at a bench under the gantry | They died at their posts, still sorting. |
+| DL-05 | The famine | Rows of the dead under sheets with ration tags on their toes; NO RATIONS · GRADE 4 over the counter, hacked through | The lower grades starved here, waiting. |
+| DL-08 | The fall | The goods lift's car crashed in a flooded pit under the near landing: snapped rope, burst gate, luggage, coats, a pram | People tried to ride the goods lift up, and it fell. |
+| DL-09 | The cut bridge | Across the atrium, the bridge to the upper city with its middle 24 m blown out; the near stump barricaded and heaped with belongings under GRADE 1–2 BEYOND THIS POINT; the far stump lit. Seen in the awe shot, through the coin viewer and from the balcony | The way up was cut, on purpose. |
+| DL-10 | The crush | 215 shoes, the queue barrier flattened toward the lift, LAST CAR hanging from one hook, hand marks and scratches down the lift front and the counterweight's shaft | The last car, and everyone who didn't fit. |
+| DL-11 | The drowning | A 1.4 m high-water line on every house, a table lashed into a raft, a pram half under, and a bed of bones in the alley's flooded foot under the White's water | Ring C drowned, and something has lived on what was left. |
+
+Each has at most one light of its own (the sorters, the wreck, the lair).
+
 ## DL-01 The Wake (plan estimate 2:00)
 
 1. **Opening, 20 s.**
    - D-17 wakes in the cradle. The parcel lamp, the relay pulses he answers, sparks, the work lamp, grit, then the camera move.
    - The parcel's label behind his chest window: "for MARA · C-114 · RING C" in a parent's hand, initials I.V. with a small
-     crooked tree, the postmark R.Y. 42, a BIRTHDAY / DO NOT OPEN stamp and the child's crayon drawing.
+     crooked tree, the postmark R.Y. 42, a BIRTHDAY / DO NOT OPEN stamp, the child's crayon drawing, and (pass 4) the
+     depot's UNDELIVERED stamp across it.
    - Skip appears after 1.5 s.
+   - As play begins, he checks his label and the camera goes in close on it (see *The quest*).
 2. **Curiosities by the cradle.** All optional (see Curiosities).
    - The parcel scale, the first: its Use glyph shows as soon as he is near, so the player learns that props can be
      used. He steps up, the needle swings, and a POSTAGE DUE ticket pops up for him to read. Stepping on it without
      Use still swings the needle.
    - The pull-cord lamp. He tiptoes up, tugs the cord, and the lamp warms the alcove, revealing a depot route map
      (depot, homes, school, works, ward, then up).
-   - The dispatch board: he finds his own route card (D-17 · ROUTE C · C-114, MARA pencilled in) in the rack under
-     it and taps his label. Beside it, the night shift's roster, every name struck through but IVO and D-17.
+   - The dispatch board: its last line still lit and blinking, C-114 · RING C · UNDELIVERED. He finds his own route
+     card (D-17 · ROUTE C · C-114, MARA pencilled in) in the rack under it and taps his label. Beside it, the night shift's roster, every name struck through but IVO and D-17.
 3. **Shutter.**
    - He crouches automatically under it.
    - Use on the T-handle: two heaves, the latch gives, the counterweight drops and the shutter swings up. He flinches.
@@ -141,7 +194,8 @@ bands. The curiosities' red tags are gone.
   at his feet.
 
 **Hints:** after about 5 s idle near the next useful thing, D-17 looks at it; at about 10 s he leans in. With the
-stuck-prompt option on, a key glyph appears at about 18 s. (None are authored yet for DL-05 and DL-10.)
+stuck-prompt option on, a key glyph appears at about 18 s. The look is held to a neck's range (pass 4): 70° either
+side, 35° up or down; a target behind him is let go.
 
 ## DL-02 The Sorting Hall (plan estimate 1:45)
 
@@ -165,6 +219,8 @@ stuck-prompt option on, a key glyph appears at about 18 s. (None are authored ye
    - Use to lift the parcel box (by its worn strap), carry it to the table's foot, and Use again to set it down.
    - Hop onto the box, climb onto the table, then up to the gantry (1.35 m).
 6. **The gantry.** Along it over the wreck to the lit doorway, and down into the weight room (DL-03).
+7. **The last night shift** (pass 4). The sorters' remains at their posts: over the table's end, against the back
+   wall with a mailbag, over the tea table, and at a bench under the gantry (see *What happened here*).
 
 Only the press can kill here; he is back just out of the passage.
 
@@ -200,23 +256,30 @@ Only the press can kill here; he is back just out of the passage.
 
 ## DL-05 The Ration Hall (plan estimate 2:30)
 
-New in pass 3 (`docs/scenes/DL-05_the_ration_hall.md`).
+New in pass 3; pass 4 made it the weigh-in (`docs/scenes/DL-05_the_ration_hall.md`, *Pass 4*).
 
-1. **The canteen.** The depot workers' canteen, where families slept when ring C flooded: queue barriers folded into
-   a maze, cots between the tables, bedrolls, a shrine of names and candles, a sky painted on the back wall, and the
-   RELOCATION BY GRADE notice with Grade 4 struck through: SUSPENDED. A checkpoint just inside.
-2. **The hatch.** The way on is through the serving hatch in the kitchen wall, shut by a steel shutter. Under the
-   counter's flickering strip light: the ration board with its chalked halvings, and taped by the winch, a child's
-   crayon drawing of a little courier carrying a parcel to a house, signed M.
-   - Use at the counter's winch (53.55): he turns to the handwheel and winds (`Crank`). Four strokes lift the shutter
-     to 1.2 m, and he holds it there.
-   - Any move, Use or Jump lets go, and it drops at once. Wind it and go, and it slams shut in front of him: loud, a
-     startle, not a death.
-3. **The drum.** An olive ration drum stands on a floor guide by the counter (54.6). Use at its left side and push it
-   right until it stops against the shutter (56.22), its rim under the shutter's lip. A drum-shaped dent in the lip
-   says it has been done before.
-4. **Under.** Wind, let go: the shutter slams onto the drum's chime and holds at 0.64 m. He crouches under it
-   automatically (a checkpoint past it), and walks on through the stripped kitchen into the scanner corridor.
+1. **The canteen.** The depot workers' canteen, where families slept when ring C flooded and where the lower grades
+   starved: queue barriers folded into a maze, a shrine of names and candles, a sky painted on the back wall, the
+   RELOCATION BY GRADE notice with Grade 4 struck through, SUSPENDED. The tables are gone; the floor is rows of the
+   dead under sheets with ration tags on their toes, and one on each cot. A checkpoint just inside (`ration`).
+2. **The weigh-in.** The way on is through the serving hatch in the kitchen wall. Over the counter, NO RATIONS ·
+   GRADE 4 in whitewash, and the counter hacked through. In front of the hatch, a weighbridge plate (53.85 to 55.75);
+   on a post at the counter's end (53.68), its dial and a sign: WEIGH-IN · ONE RATION PER HEAD. Taped beside it, a
+   child's crayon drawing of a little courier carrying a parcel to a house, signed M; passing it, he checks his label.
+   The hatch opens only while the plate reads a person.
+3. **Too light.** Standing on the plate, the needle barely moves: UNDER, and a buzzer.
+4. **Too heavy.** An olive ration drum stands by the counter (53.45). Use at its left side and push it right: it stops
+   on the plate, the needle slams to OVER, a clank and a bell. The hatch stays shut. Push again and it runs on past the
+   plate to the wall by the hatch (56.02), and stays.
+5. **A person.** One of the dead lies on the lane's back edge (52.3), a rope round its ankles; the drum blocked it until
+   now. Use at its feet and drag it right, walking backwards, slowly, as the courier in DL-04 (the first time he
+   hesitates before he takes hold). On the plate (54.8) the needle settles in PERSON; after a second the hatch winds
+   up to its serving height (0.64), the SERVED flag drops over the dial, and it stays. He pats the sheet.
+6. **Under.** He crouches under the hatch automatically (a checkpoint past it, `hatch`), and walks on through the
+   stripped kitchen, past RING C ↓, into the scanner corridor.
+
+The winch is gone, and so is the slam: nothing here kills. The shrouds are 16 draw calls, over the set
+pieces' budget of 12.
 
 ## DL-06 Return to Sender (plan estimate 2:45)
 
@@ -267,6 +330,8 @@ Once the belt runs with the points set to the ramp, the game counts the rest of 
 1. **Goods Lift 2.**
    - The goods hall ends in an open shaft, flooded to 1.75 below the landing, with the platform at the bottom, under
      the water. The first time the platform rises, something pale surfaces below it and sinks.
+   - Under the near landing (82.0 to 85.8), seen in section, the flooded pit runs on, and in it the goods lift's
+     car lies crashed on its side (pass 4, the fall).
    - A pan in the floor drives the head drum: load on it raises the platform. D-17 alone raises it halfway; stepping off drops it with a crash.
    - The goods trolley, still loaded with ballast, raises it all the way. Use at its push bar, then push it onto the pan.
 2. **The pawl.**
@@ -278,8 +343,8 @@ Once the belt runs with the points set to the ramp, the game counts the rest of 
    - With the pawl set, the platform no longer needs the trolley. Push the trolley off the pan, across the platform to
      the rail, climb onto it and over the rail.
    - **The White's first meeting.** Running, or landing from a jump, over the shaft is loud: the White comes up and
-     slaps the water, and he is knocked back off his feet, unhurt. Walking (Shift or B) is quiet. Falling into the
-     sump is a death.
+     slaps the water, and he is knocked back off his feet, unhurt. By the shaft he goes carefully whatever the auto-run
+     setting (pass 4), and walking is quiet; Shift or B runs. Falling into the sump is a death.
 4. **The returns belt.**
    - On the far landing (a checkpoint), a stove, a pan and ration tins where people camped; the belt starts after a
      bell, a beacon and the klaxon.
@@ -319,11 +384,13 @@ Once the belt runs with the points set to the ramp, the game counts the rest of 
      plays it again.
 6. **The refuge.**
    - The tunnel opens onto a balcony high in the atrium: three rings of homes around a void.
-   - He stops at the rail (`Awe`), the camera cranes up and out, and the music swells.
+   - He stops at the rail (`Awe`), the camera cranes up and out, and the music swells. Across the void, the cut
+     bridge (pass 4): the way up, its middle blown out.
    - The atrium is the refuge's underground city: a chasm dug into the rock, the poorest industrial levels at the
      bottom, the upper city rising into the haze.
    - On the balcony, a coin viewer (optional): he has no coin, presses the plunger anyway, and looks through it at the
      lit upper city. Left and right swing it, slowly; Use or Jump steps away.
+   - Walking on along the balcony, he checks his label, looking down toward ring C.
    - The balcony's deck runs on into the relocation lift's lobby (DL-10). The old stair down to ring C is gone.
 
 The tunnel and the balcony are built with DL-08's set (`art/dl04`); the game counts them as DL-09, as the plan does.
@@ -338,12 +405,14 @@ New in pass 3 (`docs/scenes/DL-10_up_only.md`).
    luggage; a painted queue line to the lift with what was dropped along it (a shoe, a doll, a birdcage); the
    departures board; over the lift, RELOCATION — GRADES 1–2 ONLY with EVERYONE painted across it. The car stands
    behind a lattice gate, its floor a plate that weighs passengers, with a load needle. Ring C is below; the old stair
-   lies collapsed beside the lift.
+   lies collapsed beside the lift. Pass 4, the crush: shoes by the hundred, the queue barrier flattened toward the
+   lift, LAST CAR hanging from one hook, hand marks down the lift front. On the lift front, DL-09's balance gauge,
+   reading car against counterweight: too light.
 2. **UP.** The panel has one button (123.95). Use: he turns to the wall and presses (`PressButtonHigh`). The car is
    empty, so the panel buzzes and nothing moves.
 3. **A passenger.** Under the failing pendant, the last suitcase, tagged C-114. Lift it, carry it to the car, and Use
-   in its doorway: he sets it on the plate. The plate dips, the needle swings, the gate draws shut, and the UP lamps
-   glow. Pressing the lobby's UP now sends the car up while the counterweight comes down its shaft, empty; 3 s later
+   in its doorway: he sets it on the plate. The plate dips, DL-04's three bay lamps on the car's sill light one by one,
+   the balance gauge swings to balanced, the gate draws shut, and the UP lamps glow. Pressing the lobby's UP now sends the car up while the counterweight comes down its shaft, empty; 3 s later
    the car comes back. It works, without him.
 4. **The service door.** Use at the crank on the pier (126.45): four strokes wind a striped service door up out of
    the lane, and it stays up. Behind it, the counterweight's open shaft, the counterweight at the deck with a
@@ -355,7 +424,8 @@ New in pass 3 (`docs/scenes/DL-10_up_only.md`).
 ## DL-11 The Child at the Address (plan estimate 3:30)
 
 1. **Ring C.**
-   - From the bottom landing to ring C's ledge. The lane is sealed (RING C SEALED · R.Y. 43); crouch under the barricade.
+   - From the bottom landing to ring C's ledge. The lane is sealed (RING C SEALED · R.Y. 43), "C-114 →" painted on
+     the barricade; crouch under it. On the street he checks his label.
    - Ring C is a street he walks through, abandoned and nearly dark. Behind the lane: C-102 and C-104 (split, a plank
      door 104A cut into it), both chalked GONE UP; a cross alley with the neighbourhood's standpipe, the ration queue's
      post and its painted marks, and a RATIONS / GRADE 4 – TUES sign; C-106, with UP IS FOR THEM half whitewashed under
@@ -365,6 +435,8 @@ New in pass 3 (`docs/scenes/DL-10_up_only.md`).
 2. **The flood.**
    - The lane's back half has sunk into deep water along C-108 and C-110, and at the narrow point by C-110 the whole
      lane has. The White lives in it: as he comes along, something pale surfaces far off and sinks.
+   - Pass 4, the drowning: a high-water line at 1.4 m on every house, a table lashed into a raft and a pram half under
+     at the narrow point, and in the alley's flooded foot between C-108 and C-110, a bed of bones, the White's lair.
    - Running or landing near the water is loud; walking is quiet. The first time it hears him, it surfaces, hisses
      and sinks: a warning. After that, heard, it comes and surfaces, and if he is on the bank within reach, it takes
      him (see The White).
@@ -447,7 +519,6 @@ was. The bed plays on, but a cue that is playing fades out on the respawn. Calm 
 | Hazard | Scene | World x | What it does |
 |---|---|---|---|
 | The franking press | DL-02 | 13.62 to 14.28 | Stamps every 2.6 s, its lamp blinking for 0.5 s first. Under it while it is down: crushed (`DeathCrush`), back at `room`. |
-| The ration hatch's shutter | DL-05 | 56.3 to 56.5 | Wound up and let go with nothing under it, it slams shut. Loud, a startle; not lethal. |
 | The gallery collapse | DL-07 | 78.95 to 80.05 | Sags under him, then falls once he is past. Not lethal; no way back. |
 | The shaft sump | DL-08 | 85.8 to 88.3 | The White slaps the water and knocks him back, unhurt (`Knockback`). Falling in is a death. |
 | The cage crash | DL-09 | 101.2 to 102.8 | Onto the buffers in the sump: `DeathFall`, back at `cage`, the plates still in the tray. |
@@ -455,7 +526,7 @@ was. The bed plays on, but a cue that is playing fades out on the respawn. Calm 
 | The lane | DL-11 | 145.95 to 150.6 | The first time, the White surfaces and hisses: a warning. After that it lunges and drags him under (`DeathGrabbed`), back at `ringc`. |
 
 The older failures are unchanged and are not deaths: the trench (DL-01) and the chute (DL-06) fade back to the
-checkpoint as before. Nothing kills in DL-10.
+checkpoint as before. Nothing kills in DL-05 or DL-10 (pass 4 removed the ration hatch's slam).
 
 ## The White
 
@@ -463,6 +534,8 @@ A pale, blind cave animal like a giant olm, about 2.5 m long, with feathery pink
 (`art/white/build_white.py`). It hunts by sound, never by sight, and never leaves the water.
 - **Noise:** running near its water (within 1.4 m; it was 2.2 before pass 3), or landing from a jump, is loud. Walking (Shift, B, or a
   half-pushed stick) is quiet. A splash or a bell is louder still.
+- **Careful by its water (pass 4):** within 2 m of the waters where it scares or hunts (DL-08's sump, DL-11's lane), he
+  goes carefully whatever the auto-run setting, so auto-run no longer sets it off. Shift or B still runs.
 - **The hunt:** it patrols, hears, listens for a moment, swims to the sound with ripples ahead of it, and surfaces.
   If he is on the edge within reach, it strikes about a body length; otherwise it sinks after about 2 s and patrols
   again.
@@ -485,7 +558,7 @@ A pale, blind cave animal like a giant olm, about 2.5 m long, with feathery pink
 - DL-02: out of the passage.
 - DL-03: the weight room's floor, and solved (the gate held open).
 - DL-04: through the bay door (`bay`).
-- DL-05: just inside the Ration Hall (`ration`, 48.6), and past the shutter (`hatch`, 57.05).
+- DL-05: just inside the Ration Hall (`ration`, 48.6), and past the hatch (`hatch`, 57.05: the body on the plate, served).
 - DL-06: scanned (63.3).
 - DL-07: the gallery landing (73.0), and past the gate (75.3).
 - DL-08: the goods hall (81.9), and the far landing, pawl set (89.2).
@@ -502,11 +575,13 @@ the White's one warning. Start over clears all of this.
 ## Camera, quirks and performance
 
 - **Camera:** one continuous side-on shot. Its framing widens, closes in or rises as D-17 moves (wider over the hall
-  and the rack reveal; the Ration Hall's shrine and cots, then its counter, winch, drum and hatch together; wider
+  and the rack reveal; the Ration Hall's shrine and cots, then its counter, plate, drum and hatch together; wider
   again to watch a loaded carrier climb the ramp, holding the gate in frame as it rises; the climbs, the shaft and
   the lit landing together for the cage; tall and wide over Up Only's lobby, lift and counterweight shaft, then down
   the shaft on the ride), and pushes in a little for climbs and actions. Gameplay never takes it away.
   - Authored shots are kept for emotional beats, and blend in and out of the side view:
+    - Pass 4, the label (`label`): whenever he checks his label (as play begins, and in DL-05, DL-09 and DL-11), the
+      camera goes in close enough to read it.
     - DL-04: the realisation among the couriers.
     - DL-06: the scan, the crane out over the pit, and the label close-up.
     - DL-09: the hopscotch (the long version: close and low while he checks nobody is watching, a crane up to about
@@ -522,8 +597,7 @@ the White's one warning. Start over clears all of this.
 - **Quirks:** D-17 has short reactions for particular moments.
   - Proud: he bounces when the bulkhead opens, when the points are set to the ramp, and when the cage's pawl bites.
   - PeekDown: he peeks over the trench, the cart's far edge, the pit rail and Lift 2's shaft.
-  - Startle: a slam or a crash close by (the weight room's gate, the ration hatch's shutter slamming shut, a carrier
-    tipping at the chute, the lift platform).
+  - Startle: a slam or a crash close by (the weight room's gate, a carrier tipping at the chute, the lift platform).
   - Startle also when the cage hauls itself back up after dipping under him, the first time the lift's UP buzzes,
     and at the White's warning.
   - Knockback: thrown off his feet by the White's slap in DL-08 or the cable's first arc in DL-09.
@@ -531,8 +605,11 @@ the White's one warning. Start over clears all of this.
     platform, rides the slipping cage braced with his claw on the pawl lever, flinches at the water, hops the chalk
     squares, stands in awe at the rail, rides the counterweight down looking up at the car, knocks at C-114 and pulls
     its cord, sits the rabbit up and lays a claw on the seated courier's head.
-  - Glance: passing an early curiosity he hasn't used yet, he turns his head to it.
-- **Performance:** see the budget in `docs/direction.md`. The resolution adapts to the frame rate.
+  - Glance: passing an early curiosity he hasn't used yet, he turns his head to it, once (pass 4: no more than 70° and
+    35°, never round to one behind him).
+  - Pass 4: he hesitates before taking hold of the body in DL-05, and pats its sheet once it is on the plate.
+- **Performance:** see the budget in `docs/direction.md`. The resolution adapts to the frame rate. Lights come from
+  the fixed pool (see *Lights* above), and ripples from a pool built at load.
 
 ## Music
 
@@ -570,7 +647,8 @@ the White's signs and D-17's knockback and death clips; `build_curios.py`: the c
 `insert_scenes()` to open the two gaps, then pass 3's `art/pass3` (`build_ration_hall.py`, `build_up_only.py` and its
 clips `PressButtonHigh` and `RideCounterweight`, and `build_lore.py`: the lore dressing of scenes 1 to 9, the cage's
 gauge, tray lamp and chevrons, its clips `CageRideLever` and `CagePullPawl`, the red remap and the curiosity tags'
-removal), and `art/white`. It writes `set`, `d17`, `couriers` (the dormant couriers' three poses and their rack
+removal), then pass 4's `art/pass4` (`build_story_depot.py`, `build_story_shafts.py`, `build_story_ringc.py`: the
+set pieces and the stencils; see *What happened here*), and `art/white`. It writes `set`, `d17`, `couriers` (the dormant couriers' three poses and their rack
 slots) and `white`, each as `.glb` and `.json`. A `.json` is split into parts of 10 MB of base64 (`pack_for_web`), so
 `set` is `set.json` and `set.1.json` to `set.3.json`. `--blend <path>` also saves the Blender file.
 

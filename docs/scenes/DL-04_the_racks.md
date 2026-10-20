@@ -155,3 +155,8 @@ From `docs/chapter1_pass3_plan.md`. Positions are game x.
 - **The way on:** the service passage beyond the bay door now opens into DL-05 The Ration Hall at 47.9, not the
   scanner corridor (which is now at 59.9, in DL-06).
 - **Checkpoints:** unchanged (`bay`, 47.1). The next, `ration`, is just inside the Ration Hall.
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`, section 2: the same stencil marks every scene's way on, so the direction is never
+in doubt. Here, RING C ↓ in the passage past the bay door (`WayRingC04`, 47.1). Nothing else changed.

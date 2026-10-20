@@ -260,3 +260,27 @@ steel (`HandledSteel`); `MailSlot9` and the forwarding terminal are brass. Secti
 **Curiosities:** the hall light switch at game 158.72 and the radio at 163.0.
 
 **Checkpoints:** `ringc` at game 135.25, `bedroom` at 164.1 and `forwarded` at 167.1.
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`. Positions are game x (section x + 54).
+
+**The drowning** (`art/dl05/build_dl05.py`): ring C drowned, and something has lived on what was left.
+- **The high water** (`D5HighWater`, `D5HighWaterFacade`): a line at 1.4 m on every house in the street, C-114's
+  included, above the lower tideline where the water stood longest.
+- **A raft and a pram** (`D5Raft`, `D5Pram`), half under in the narrow point's front slot (150.2, 149.5), clear of
+  the duct's bridge and the White's line: a kitchen table turned over, its legs sawn short, planks and an oil drum
+  lashed to it; a coach-built pram on its side, nose down.
+- **The lair** (`D5Lair`): in the flooded foot of the alley between C-108 and C-110 (147.05 to 147.95), the deepest
+  water, a bank of silt with a bed of bones on it in rags, long bones, ribs, skull domes with no faces, a boot, a tin
+  mug. One cold light on it (147.5). It barely reads through the water.
+
+**The quest:**
+- **"C-114 →"** painted on the barricade's face over the gap he crouches through (`WayC114`, 134.6).
+- **His label:** on reaching the street (137 to 140) he checks his label the first time, and the camera goes in close
+  on it.
+
+**The White, less sensitive:** beside the lane's water he goes carefully whatever the auto-run setting. Shift or B
+still runs, and running near it is still loud.
+
+**Checkpoints and hazards:** unchanged.

@@ -168,3 +168,35 @@ Built in final world x, after the scene gap is opened (`insert_scenes()` in `art
 - **The ride.** About 5.5 s without control. Right as a breather before ring C?
 - **The suitcase.** Never seen to arrive. Keep it that way (the answer stays at the edges: up)?
 - **Hints.** When he stands idle he looks at the suitcase, then the car while he carries it, then the service crank, then the counterweight's UP; the assist option shows the Use prompt there.
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`, sections 3 and 4. Positions are game x.
+
+**The crush** (`art/pass4/build_story_ringc.py`): the last car, and everyone who didn't fit.
+- **Shoes, 215 of them** (`UOShoes`): along the queue line, heaped against the lift front either side of the gate,
+  under the bench, strays on the porch, and a few fallen to ring C's landing at the shaft's foot. The lane, the
+  car's doorway, the stands and the service door's path are kept clear.
+- **The queue barrier** (`UOBarrier`): its posts all bent flat toward the lift, the rail crushed on the deck, its end
+  over the deck's edge.
+- **LAST CAR** (`UOLastCar`), an enamel board hanging from one hook under the gate's head (124.62); the other hook
+  bare, a snapped chain on it.
+- **Hand marks** (`UOHandMarks`), pale with dust, smeared down the lift front either side of the gate and down the
+  counterweight shaft's back wall (seen on the ride down), and fingernail scratches by the gate.
+
+**The echoes** (`art/pass3/build_up_only.py`): the lift says what it builds on.
+- **DL-09's balance gauge** (`UOBalanceGauge`, `UOBalanceNeedle`) on the lift front right of the gate, the same face a
+  little larger, reading car against counterweight. Empty, it sits deep in "too light"; with the suitcase aboard it
+  swings to balanced, and trembles while the car moves.
+- **DL-04's bay lamps:** three on the car's sill (`CarPlateLamp0` to `2`), dark until the suitcase is on the plate,
+  then lit one by one.
+- So the beat reads: the suitcase goes in, the lamps light, the needle swings to balanced, the gate closes. Then he
+  rides the counterweight down, the side of the scale he has loaded all chapter.
+
+**The way on:** RING C ↓ on the pier beside the counterweight's shaft, over the crank's work lamp (`WayRingC10`,
+126.44): the way on is down.
+
+**Where the build differs:** the plan had the lattice gate bent outward. It slides shut on the passenger, so it is left
+straight; the shoes, the barrier, LAST CAR and the hand marks carry the crush.
+
+**Checkpoints and hazards:** unchanged. Nothing kills here.

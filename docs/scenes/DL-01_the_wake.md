@@ -276,3 +276,26 @@ From `docs/chapter1_pass3_plan.md`. Positions are game x.
 - **Loading:** every material is compiled and every texture uploaded at load, so nothing hitches when it first
   appears.
 - **Checkpoints:** unchanged.
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`. Positions are game x.
+
+- **Fix, the wall behind the spawn:** it was Up Only's moving parts (the car, its gate leaves, the sheaves, the
+  service crank and door), built in their own space and moved twice, so they drew at the world origin, where he wakes.
+  They are now built in place (`Batch.done(local=True)` in `art/pass3/build_up_only.py`).
+- **Fix, the head look:** his idle look and the curiosity glance are held to a neck's range, 70° either side and 35°
+  up or down. A target behind him is let go rather than twisted round to. Each early curiosity draws one glance, not
+  one every time he passes.
+- **The quest, said plainly:**
+  - **His label:** the parcel label now carries the depot's return stamp, UNDELIVERED, struck across it in red under
+    the address (`art/d17/build_d17.py`). Starting play from the opening, he looks down and checks it (`CheckLabel`),
+    and the camera goes in close enough to read: for MARA · C-114 · RING C, UNDELIVERED. The plan had this cut on the
+    first frame of the wake; he wakes slumped with the label facing the floor, so it comes as the first thing he does.
+    The same close-up plays whenever he checks it later (DL-05, DL-09, DL-11).
+  - **The dispatch board:** one line along its bottom is still lit, C-114 · RING C · UNDELIVERED, and its lamp blinks
+    (`DispatchLineLamp`, `art/pass4/build_story_depot.py`).
+  - **The pause card:** "Delivering: a birthday parcel for Mara, C-114, ring C. Three levels down. 76 years late."
+  - **The way on:** RING C ↓ stencilled right of the exit door (`WayRingC01`, 11.36), the first of the same stencil at
+    every scene's way on.
+- **Checkpoints and hazards:** unchanged.

@@ -93,12 +93,23 @@ Add new ones for new moments rather than reusing an old one for something it doe
 ## Performance budget
 
 The browser build must run smoothly on an ordinary laptop. Keep within these limits:
-- **Lights:** at most about a dozen per region. Lights for scenes out of view are switched off while D-17 is hidden (the passage, the scanner corridor).
+- **Lights:** at most about a dozen per region, drawn through the fixed pool (see *Lights: a fixed pool*). Lights for scenes out of view are switched off while D-17 is hidden (the passage, the scanner corridor). A set piece adds at most one light.
 - **Shadows:** only a few lamps cast shadows, never more than two lit at once, all spot lights (never a point light: that is six passes). Only small props near them cast; walls and floors never do.
 - **Materials:** all worn surfaces share one shader program. Background crowds (the couriers) use plain materials.
 - **Culling:** set pieces more than about 18 m from the camera are hidden, shadows included. The couriers appear only when they can be seen, and the atrium only from the balcony.
 - **Far detail:** distant set pieces (the atrium) are flat and plain: quads for windows and doors, no worn-paint shader, no shadows. The camera's far plane opens up only where the view needs it.
 - **Resolution:** it adapts to hold 55 to 60 fps. MSAA is off because the post chain doesn't use it, and the bloom runs at half size.
+
+## Lights: a fixed pool
+
+The number of lights the renderer sees never changes. three.js builds each material's shader for the number of
+lights in the scene, so switching a region's lights on or off recompiled every lit material, and play stuttered. Now
+every light a scene builds is a proxy the camera never renders, and each frame the lit proxies nearest the camera are
+copied into a fixed pool: 10 point, 4 spot, 2 shadowed spot, 2 directional and 2 hemisphere lights. Unused slots go
+dark. Pass 4 took the game from 247 shader programs to 54, with none compiled during play but 3 in the opening.
+- A scene may build more lights than the pool holds, but only the nearest of each kind show at once.
+- Only two lit spots near the camera cast shadows; others still light, without them.
+- Never add a light outside the pool, or change the pool's size, mid-game.
 
 ## Scene length
 
@@ -139,3 +150,17 @@ Lore is read from the world, never from a log.
   - The refuge was built over a century ago.
   - Births stopped, and the last other resident died nine years ago.
   - Local forwarding terminals keep addresses, and there is no central directory.
+
+## Storytelling
+
+### Dark and blunt: say what happened
+
+The refuge didn't fade away; it failed, and people died of it. Say so, plainly, at full scale. Each step of the
+history gets a set piece that shows it happening, readable without words: the sorters dead at their posts, the
+famine's dead in rows, the goods lift crashed with its passengers' luggage, the bridge cut on purpose, the crush at
+the last car, the drowned street.
+- **Remains are shrouds and dry bones, never gore.** Bodies under sheets, or dry remains in their clothes, with no
+  faces; bones clean and old. No blood, no wounds, nothing fresh.
+- **Belongings tell the rest:** shoes, luggage, coats, a pram, a mailbag, ration tags.
+- **D-17 stays himself.** He hesitates and pats a sheet; he doesn't despair. The darkness is the world's, not his.
+- **Hope is kept at the edges:** Mara's family got out. The world around her didn't.

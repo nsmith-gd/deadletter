@@ -181,3 +181,26 @@ From `docs/chapter1_pass3_plan.md`. This was DL-07.
 | Along the belt (92.5), `LoreTimetable`, with chalk tallies beside it (93.12) | RELOCATION · LIFT 1 · UP: every departure struck through in pencil; the last, R.Y. 43, ringed and crossed: LAST | The lift that took people up ran to a timetable, and the timetable ran out. Lift 1 is the one lying broken in its shaft. |
 
 - **Checkpoints:** `goods` at 81.9 and `latched` at 89.2; otherwise unchanged.
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`. Positions are game x.
+
+**The fall** (`art/pass4/build_story_shafts.py`, `StoryFallWreck`, `StoryFallWater`). People tried to ride the goods
+lift up, and it fell.
+- **Where:** Lift 2's flooded sump runs on under the near landing (82.0 to the shaft at 85.8). The landing's slab is
+  cut back to a 0.35 m deck on beams, and the pit beneath is seen in section, like the shaft.
+- **What lies in it:** a goods-lift car on its side, half under the water: its corner posts buckled, its gate burst
+  outward, its snapped rope piled on top with the frayed end standing up. A trunk caught in its mouth, a case burst
+  open on it and others floating; a coat over it and two more floating face down; a pram capsized at the back, wheels
+  up.
+- **Light:** one cold light on the wreck (84.3).
+- **Nothing in the shaft moves:** the wreck stops at 85.8, so the platform's travel and the White's water are as
+  before. The pit's water is level with the sump's and open to it.
+
+**The White, less sensitive:** beside the shaft's sump D-17 goes carefully whatever the auto-run setting, so he no
+longer runs into its slap by default. Shift or B still runs, and running is still loud.
+
+**The way on:** RING C ↓ on the goods hall's back wall at the belt's end (`WayRingC08`, 96.1).
+
+**Checkpoints and hazards:** unchanged.

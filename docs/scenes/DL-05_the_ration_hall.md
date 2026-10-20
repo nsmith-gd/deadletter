@@ -8,6 +8,9 @@
 New in pass 3, between the Racks and Return to Sender. Where this plan and the pass 3 plan differ, this describes the
 game; section 11 lists the differences.
 
+> **Pass 4 (20 October 2026):** the winch puzzle in sections 1 to 4 is gone. The hatch is now a weigh-in, and the hall
+> is where the lower grades starved. *Pass 4* at the end supersedes sections 1 to 5, 9 and 10 where they differ.
+
 ## 1. What the scene must do
 
 | Requirement (pass 3 plan) | How the build meets it |
@@ -160,3 +163,77 @@ Built in final world x, after the scene gap is opened (`insert_scenes()` in `art
   stay up", or do players just wind again?
 - **Hints.** When he stands idle he looks at the drum, then (with the drum set) the winch; the assist option shows the Use prompt there.
 - **The drawing.** At the game's distance, does it read as D-17 and a house, or does it need a close-up?
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`, sections 3 and 4. Positions are game x.
+
+### The famine
+
+The lower grades starved here, waiting (`art/pass3/build_ration_hall.py`, `build_famine`).
+- **The dead:** the canteen's tables and benches are gone, burned or broken up, and the floor is the dead's, under
+  sheets with ration tags tied to their toes: six in a row along the back, feet to the camera (48.5 to 52.0), a child
+  in front of them by the door (48.75), and one on each cot, one curled. Shrouds only; nothing shows under them.
+- **NO RATIONS · GRADE 4** in whitewash on the wall over the counter, and the counter hacked through (55.92 to 56.27)
+  where someone took an axe to it to reach the servery.
+- **The one he drags** (`RationBody`) lies on the lane's back edge at 52.3, a rope round its ankles.
+- **Remains** share one painted palette with DL-02's sorters (`RemainsMat`), one draw call each.
+
+### The weigh-in (replaces the winch)
+
+The serving hatch opens only while the WEIGH-IN plate in front of it reads a person: one ration per head. It builds on
+DL-03 (he alone is too light for a plate) and DL-04 (a machine wants a body, so drag one on), and makes them dark.
+
+```
+x: 52.3 THE BODY (start; dragged by the rope at its feet)   53.45 DRUM (start)
+   53.68 WEIGH-IN post: the dial, its needle, the SERVED flag; the crayon drawing on the counter's front beside it
+   53.85-55.75 THE PLATE (a goods weighbridge let into the floor)   54.8 the drum's or the body's place on it
+   56.02 the drum, pushed on to the wall by the hatch   56.48 SHUTTER   56.1-56.7 the crawl
+```
+
+| On the plate | Reads | What happens |
+|---|---|---|
+| Nothing | Empty | The needle at rest. |
+| D-17 | UNDER | The needle barely moves; a short buzzer. Too light, as in DL-03. |
+| The drum | OVER | The needle slams round; a clank, then a bell and a shake. The hatch stays shut. |
+| The body | PERSON | A click; held for a second, the hatch winds up to its serving height (0.64, a crawl) with a ratchet and the chain, the SERVED flag drops over the dial, and it stays. |
+
+**Rules:**
+- **The drum** stands between the body and the plate. Use at its left side and push right (0.3 m/s): it stops first on
+  the plate (OVER). Push again and it runs on past the plate to the wall by the hatch (56.02), where it stays.
+- **The body:** once the drum is out of the way, Use at the rope round its feet and drag it, walking backwards, slowly
+  (0.2 m/s), as he dragged the courier in DL-04. The first time he takes hold, he hesitates (about 1.6 s). While the
+  drum is still in the way, the body stops against it.
+- **On the plate** he lets go. The needle settles in the PERSON band, the hatch winds up, and he pats the sheet
+  (`Pat`), as he patted the courier.
+- **Through:** he crouches under the hatch automatically and crawls through into the kitchen.
+- **The winch is gone,** and so is the slam: the shutter only ever winds up. Nothing kills here.
+
+| Verb | Rules | What you see |
+|---|---|---|
+| Push | Use at the drum, then move right; Use or Jump lets go | `PushWalk`; a thud and a shake at each stop |
+| Drag | Use at the body's rope, then move right; Use or Jump lets go | `PushWalk` backwards, the sheet dragging; a hesitation the first time; `Pat` at the end |
+| Crouch | Automatic under the hatch | `CrouchWalk` |
+
+**Hints:** idle, he looks at the drum; once it is at the wall, at the body's rope.
+
+**His label:** passing the crayon drawing (51.9 to 53.9) the first time, he checks his label, and the camera goes in
+close on it: for MARA · C-114 · RING C, UNDELIVERED.
+
+**The way on:** RING C ↓ stencilled in the kitchen past the hatch, over the shelves (`WayRingC05`, 57.3).
+
+**Checkpoints:** `ration` just inside (48.6): the body and the drum at their starts, the hatch shut. `hatch` past it
+(57.05): the drum at the wall, the body on the plate, the hatch at its serving height with SERVED showing.
+
+**Scene card, updated:**
+
+| Rule | This scene |
+|---|---|
+| Arc step | Weight on a plate: twist (it wants exactly a person). Give a machine a body: apply, made dark. |
+| Builds on | DL-03's plate and gauge (he is too light); DL-04's drag to the bay and his touch after it. |
+| Wrong assumptions | Stand on it: UNDER. Push the drum on: OVER. |
+| Linkage | The plate in front of the hatch, its dial and SERVED flag on a post at the counter's end. |
+| Tableau | The famine: the dead in rows, NO RATIONS · GRADE 4, the counter hacked through. |
+| Emotional shot | The label close-up at the drawing. |
+
+**Budget:** the shrouds are 16 draw calls, over the set pieces' 12 (`docs/chapter1_pass4_plan.md`, section 5).

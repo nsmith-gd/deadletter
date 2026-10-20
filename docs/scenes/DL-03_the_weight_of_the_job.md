@@ -140,3 +140,8 @@ From `docs/chapter1_pass3_plan.md`. Positions are game x.
 The plan put WE KEEP YOU ALIVE by the goods lift (DL-06 to DL-09); the build puts it here, where the job's weight is.
 
 - **No hazards, curiosities or checkpoint changes.**
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`, section 2: the same stencil marks every scene's way on, so the direction is never
+in doubt. Here, RING C ↓ by the gate, over its linkage (`WayRingC03`, 30.08). Nothing else changed.

@@ -202,3 +202,8 @@ game x above. The weights stand at 64.6 and 69.05, the bucket hangs at 72.0, the
   the residential access door (79.98), in the same hand as the sorting floor's. The barricade and UP IS FOR THEM on
   the sorting floor are in DL-06's *Pass 3*.
 - **Checkpoints:** `landing` at 73.0 and `gallery` at 75.3; otherwise unchanged.
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`, section 2: the same stencil marks every scene's way on, so the direction is never
+in doubt. Here, RING C ↓ on the residential door's return wall, under EVERYONE UP (`WayRingC07`, 80.09). Nothing else changed.

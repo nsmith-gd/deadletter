@@ -191,3 +191,24 @@ From `docs/chapter1_pass3_plan.md`. Positions are game x.
 The plan put the notices in DL-03; the build puts them on the tea corner's board, where the mugs are.
 
 - **Hazards and checkpoints:** unchanged (`room`, `weighroom`).
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`, section 3. Positions are game x.
+
+**The last night shift** (`art/pass4/build_story_depot.py`). The sorters died at their posts, in their aprons: dry,
+dark remains in clothes, no faces.
+
+| Who | Where | |
+|---|---|---|
+| `Sorter1` | Slumped over the sorting table's left end, on a stool (18.14) | Under the work lamp |
+| `Sorter2` | Sitting on the floor against the back wall, knees up (17.95) | Holding a mailbag in her arms |
+| `Sorter3` | Over the tea table in the tea corner, on the crate (16.54) | Beside the mugs with their names |
+| `Sorter4`, `Sorter5` | Side by side at a sorting bench under the gantry (23.96, 24.56) | A stool knocked over by them |
+
+- **What it says:** the night shift was cut, and they died still sorting. Read with the mugs (ODA, TOMAS, IVO, RUTH)
+  and the NIGHT SHIFT CUT notice.
+- **Build:** two meshes (seated, sitting) as linked duplicates, one draw call each in the remains palette
+  (`RemainsMat`, shared with DL-05's dead). One cold light on them (17.6).
+- **The way on:** RING C ↓ over the gantry, by the weight room's door (`WayRingC02`, 24.45).
+- **Hazards and checkpoints:** unchanged.

@@ -1,6 +1,7 @@
 # Chapter 1, pass 4: what happened here, said bluntly
 
-**Status:** in build, 20 October 2026. These are the director's notes from playing pass 3 (Version 13).
+**Status:** built, 20 October 2026 (see *Status: built* at the end). These are the director's notes from playing
+pass 3 (Version 13).
 
 The notes:
 - the White is too sensitive;
@@ -104,3 +105,58 @@ To hold the new set pieces to a budget:
    - `art/pass4/build_story_shafts.py`: DL-08 and DL-09, and the RING C ↓ stencils for DL-06 to DL-09.
    - `art/pass4/build_story_ringc.py`: DL-10 (with `art/pass3/build_up_only.py`) and DL-11, and the RING C ↓ stencil for DL-10.
 3. Game: the weigh-in, the quest beats, the DL-10 echoes, then measuring, checking, publishing and the docs.
+
+## Status: built
+
+Built 20 October 2026 in `game/undelivered/` (see its README), the three `art/pass4` modules,
+`art/pass3/build_ration_hall.py` and `art/pass3/build_up_only.py`. The scene docs in `docs/scenes/` each have a
+*Pass 4* section.
+
+Measured: (pending)
+
+### What shipped
+
+- **Fixes (section 1):**
+  - The spawn wall: Up Only's moving parts are built in place (`Batch.done(local=True)`), so nothing draws at the
+    world origin.
+  - The White: beside the water it hunts or scares in (DL-08's sump, DL-11's lane), D-17 goes carefully whatever the
+    auto-run setting. Shift or B still runs.
+  - The head look is held to 70° of yaw and 35° of pitch. A target behind him is dropped, not turned to. Each
+    curiosity gets one glance.
+  - The stutters had three causes:
+    1. **The warm-up compiled for the wrong target.** It compiled for the screen, but every frame renders through the
+       EffectComposer's render target (linear colour, no tone mapping until the output pass). So every material
+       compiled again the first time it was seen. It now compiles into `composer.renderTarget1`.
+    2. **Lights changed count.** Switching a region's lights on or off changed the number of lights, and three.js
+       recompiled every lit material. The scenes' lights are now proxies on layer 31, and a fixed pool (10 point,
+       4 spot, 2 shadowed spot, 2 directional, 2 hemisphere) is fed from them each frame, nearest the camera first
+       (`buildLightPool`, `updateLightPool`). The counts never change. Shader programs went from 247 to 54, and none
+       compile during play except 3 in the opening.
+    3. **Ripples:** pooled (`ripplePool`), as planned.
+- **The quest (section 2):**
+  - Starting play from the opening, he checks his label (`CheckLabel`), and the camera goes in close: for MARA ·
+    C-114 · RING C, stamped UNDELIVERED. The same close-up plays every time he checks it: at the child's drawing in
+    DL-05 (`label5`), on the balcony after the city (`label9`) and on reaching ring C's street (`label11`).
+  - The pause card: "Delivering: a birthday parcel for Mara, C-114, ring C. Three levels down. 76 years late."
+  - The dispatch board's one lit line, C-114 · RING C · UNDELIVERED, blinks (`DispatchLineLamp`).
+  - RING C ↓ is stencilled at each scene's way on (`WayRingC01` to `WayRingC10`), and "C-114 →" is painted on ring C's
+    barricade (`WayC114`).
+- **Set pieces (section 3):** all six, as in the table: the last night shift (DL-02), the famine (DL-05), the fallen
+  goods lift (DL-08), the cut bridge (DL-09), the crush (DL-10) and the drowning (DL-11).
+- **DL-05, the weigh-in (section 4):** as planned. Standing on the plate reads UNDER (a buzzer); the drum reads OVER (a
+  clank and a bell). The drum stands between the body and the plate, so it has to be pushed on past the plate to the
+  wall by the hatch. The shrouded body, dragged on, reads PERSON; after a second the hatch winds up to its serving
+  height, the SERVED flag drops, and it stays. He hesitates the first time he takes hold of the body, and pats the
+  sheet once it is on. Checkpoints `ration` and `hatch`.
+- **DL-10's echoes (section 4):** the DL-09 balance gauge on the lobby wall reads car against counterweight (too light
+  empty, balanced with the suitcase), and the DL-04 bay's three lamps on the car's plate light one by one as the
+  suitcase goes in.
+
+### Where the build differs
+
+- **The label close-up comes when he checks it,** not on the very first frame. He wakes slumped in the cradle with the
+  label facing the floor, so the first close-up is the check he makes as play begins.
+- **DL-10's lattice gate isn't bent outward.** It slides shut on the passenger, so a bent gate couldn't close. The
+  crush is told by the shoes, the flattened queue barrier, LAST CAR on one hook and the hand marks instead.
+- **DL-11's lair barely reads** through the White's water. The bones are there, but the water hides most of them.
+- **DL-05's shrouds are 16 draw calls,** over the 12 budget (section 5).

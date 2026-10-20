@@ -151,3 +151,9 @@ From `docs/chapter1_pass3_plan.md`. This was DL-05; the Ration Hall (DL-05) now 
   The game counts the sorting floor as DL-07 once the belt runs to the exit, so both are still in view during the
   Heap.
 - **Checkpoints:** `scanned` is now at 63.3.
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`, section 2: the same stencil marks every scene's way on, so the direction is never
+in doubt. Here, RING C ↓ on the sorting floor's back wall at its end, where the carriers go up the service
+ramp, under UP IS FOR THEM (`WayRingC06`, 68.72). Nothing else changed.

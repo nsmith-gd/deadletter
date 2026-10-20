@@ -251,3 +251,29 @@ hopscotch 108.3, the balcony 112.0 to 116.6 and the coin viewer 114.6. The balco
 **Lore:** `LoreBelongings`, a pram wheel and a tied bundle left against the back wall of the lit landing (103.95).
 
 **Checkpoints:** `cage` at 100.8, `landing8` at 103.3 and `tunnel` at 107.7; otherwise unchanged.
+
+## Pass 4 (built 20 October 2026)
+
+From `docs/chapter1_pass4_plan.md`. Positions are game x.
+
+**The cut bridge** (`art/pass4/build_story_shafts.py`, the `AtriumCutBridge*` objects). The way up was cut, on purpose.
+- From ring C's lip on the atrium's left wall, a stepped lattice-girder bridge on masonry piers climbs out across the
+  void toward the upper rings and the city. Its middle 24 m are blown out.
+- **The near stump** is barricaded with beds, doors and timbers, the checkpoint's boom still down, and heaped with
+  belongings. On the last portal over its broken end a board, turned to the balcony: GRADE 1–2 BEYOND THIS POINT.
+- Twisted girders, torn deck and cables hang from both stumps; a length of the fallen truss lies across the old
+  viaduct below.
+- **The far stump** still has its lamps lit, and runs into a lit gatehouse in the right wall.
+- **Seen:** in the awe shot's crane out over the atrium, through the coin viewer, and from the balcony. The balcony's
+  framing is raised so the near stump is in it. It is far detail: plain atrium materials, faces toward the balcony
+  only, no shadows, shown with the atrium (from the balcony only).
+
+**His label:** once he has stood in awe at the rail, walking on along the balcony (past 114.9) he checks his label
+the first time, looking down toward ring C, and the camera goes in close on it.
+
+**The way on:** RING C ↓ sprayed on a steel sheet wired to the porch rail at the balcony's end, by the lobby's
+entrance (`WayRingC09`, `WayRingC09Sheet`, 118.32).
+
+**Echo:** DL-10's lobby carries this scene's balance gauge (see DL-10's *Pass 4*).
+
+**Checkpoints and hazards:** unchanged.
