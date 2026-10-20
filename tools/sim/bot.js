@@ -244,7 +244,38 @@ window.__startBot = function (seed, opts = {}) {
     yield* until(() => C().courier.state === 'seated' && free(), 30, 'the cradle');
     yield* settle(); yield* wait(look(3.5));
     yield* curio('rack', 0.1 + 0.4 * P.curious);
-    yield* walk(1, () => G.region === 3, 'through the bay door', { max: 60 });
+    yield* walk(1, () => G.x > D.k2.RATION5.x0 + 1.0, 'through the bay door', { max: 60 });
+  }
+
+  // DL-05 The Ration Hall: the drum under the hatch's shutter; wind it up, let go, crawl under.
+  function* rationHall() {
+    const H = D.k2.RH5;
+    yield* wait(look(4.0));
+    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the shrine and the cots'); yield* walk(1, () => G.x > H.winchX - 2.4, 'among the cots'); yield* wait(look(3)); }
+    // Most wind it first, let go, and watch it slam.
+    if (mistakes && C().drum.state === 'free' && chance(0.85 - 0.3 * P.skill)) {
+      note('winds the shutter up');
+      yield* useAt(['winch5'], H.winchX, actIs('winch5'), 'winch');
+      yield* until(() => G.act && G.act.phase === 'hold', 20, 'wound');
+      yield* wait(think(2));
+      note('lets go: it slams'); move(1); yield* wait(0.25); move(0);
+      yield* until(() => C().rh.h < 0.01 && free(), 6, 'slam');
+      yield* wait(think(12));
+    } else yield* wait(think(8));
+    if (C().drum.state === 'free') {
+      yield* useAt(['grabPush:drum'], C().drum.x - H.gap, actIs('grabPush'), 'drum', { hop: false });
+      yield* until(() => G.hold === 'push', 10, 'grip drum');
+      yield* walk(1, () => C().drum.state !== 'free', 'push the drum', { hop: false, keepHolding: true, max: 30 });
+      note('drum under the shutter'); yield* settle();
+    }
+    yield* wait(think(4));
+    yield* useAt(['winch5'], H.winchX, actIs('winch5'), 'winch again');
+    yield* until(() => G.act && G.act.phase === 'hold', 20, 'wound again');
+    move(1); yield* wait(0.25); move(0);
+    yield* until(() => Math.abs(C().rh.h - H.onDrum) < 0.01 && free(), 6, 'onto the drum');
+    note('shutter on the drum'); yield* wait(look(1.5));
+    yield* walk(1, () => G.x > H.crawl[1] + 0.3, 'under the shutter', { max: 30 });
+    yield* walk(1, () => G.region === 3, 'to the scanner corridor', { max: 60 });
   }
 
   // DL-05 Return to Sender: the scanner, the pit, the levers (with a ride into the pile for many).
@@ -454,7 +485,7 @@ window.__startBot = function (seed, opts = {}) {
     if (chance(0.3 + 0.5 * P.curious)) { note('looks along ring C'); yield* wait(look(2.5)); }
     // Some run along the bank and the White takes them; they learn to walk, and to use the bell.
     let quiet = !mistakes || chance(0.35 + 0.4 * P.skill), ringFirst = !mistakes || chance(0.25 + 0.4 * P.skill);
-    for (let tries = 0; tries < 8 && G.x < OFF5 + 87.9; tries++) {
+    for (let tries = 0; tries < 8 && G.x < OFF5 + 96.9; tries++) {
       try {
         if (!quiet) note('runs along the flooded lane');
         if (ringFirst && C().duct.state === 'free') {
@@ -471,22 +502,22 @@ window.__startBot = function (seed, opts = {}) {
         }
         if (!dying()) {
           yield* letter('c110', K.LETTERS[2].x, 0.4 + 0.45 * P.curious, { quiet, hop: false });
-          if (!dying() && C().duct.state === 'bridge') yield* walk(1, () => G.x > OFF5 + 88.0 || dying() || C().duct.state !== 'bridge', 'across', { quiet, hop: false, max: 30 });
-          if (!dying() && C().duct.state !== 'bridge' && G.x < OFF5 + 87.9) { note('the White took him'); quiet = true; ringFirst = true; yield* wait(think(8)); continue; }
+          if (!dying() && C().duct.state === 'bridge') yield* walk(1, () => G.x > OFF5 + 97.0 || dying() || C().duct.state !== 'bridge', 'across', { quiet, hop: false, max: 30 });
+          if (!dying() && C().duct.state !== 'bridge' && G.x < OFF5 + 96.9) { note('the White took him'); quiet = true; ringFirst = true; yield* wait(think(8)); continue; }
         }
       } catch (e) { if (!dying()) { note('fumbles: ' + e.message.slice(0, 40)); yield* until(() => G.mode === 'play' && !G.act, 10, 'recover'); continue; } }
       if (dying()) { note('the White takes him'); yield* respawned('after the White'); quiet = true; ringFirst = true; yield* wait(think(8)); }
     }
     yield* post(9, K.SLOTS[2].x, 0.75);
-    yield* walk(1, () => G.dl5.knocked && !G.act && G.x > OFF5 + 94.4, 'to C-114', { max: 120 });
+    yield* walk(1, () => G.dl5.doorOpen && !G.act && G.x > OFF5 + 103.7, 'to C-114', { max: 120 });
     yield* curio('switch', 0.25 + 0.5 * P.curious);
     yield* curio('radio', 0.25 + 0.55 * P.curious);
     yield* wait(look(2.0));
     yield* walk(1, () => G.dl5.toyUp && !G.act, 'past the bed', { max: 120 });
-    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the photograph'); yield* walk(1, () => G.x > OFF5 + 103.1, 'photo'); yield* wait(look(3.5)); }
+    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the photograph'); yield* walk(1, () => G.x > OFF5 + 112.1, 'photo'); yield* wait(look(3.5)); }
     if (mistakes && chance(0.6 - 0.35 * P.skill)) {
       note('walks past the desk to the back door');
-      try { yield* walk(1, () => G.x > OFF5 + 105.2, 'to the back door', { hop: false, max: 8 }); } catch (e) { /* blocked */ }
+      try { yield* walk(1, () => G.x > OFF5 + 114.2, 'to the back door', { hop: false, max: 8 }); } catch (e) { /* blocked */ }
       yield* wait(think(8));
     }
     yield* wait(think(12));
@@ -496,7 +527,7 @@ window.__startBot = function (seed, opts = {}) {
     yield* wait(0.8); use(); yield* until(() => !G.hold, 10, 'release');
     yield* wait(look(3.5));
     yield* wait(think(5));
-    yield* useAt(['present'], OFF5 + 104.6, actIs('present'), 'terminal');
+    yield* useAt(['present'], OFF5 + 113.6, actIs('present'), 'terminal');
     yield* until(() => G.dl5.forwarded && !G.act, 30, 'forwarded'); note('forwarded');
     yield* wait(look(2.5));
     yield* walk(1, () => G.ended, 'out the back', { max: 120 });
@@ -504,7 +535,7 @@ window.__startBot = function (seed, opts = {}) {
   }
 
   const script = (function* () {
-    yield* opening(); yield* wake(); yield* sortingHall(); yield* weightRoom(); yield* racks();
+    yield* opening(); yield* wake(); yield* sortingHall(); yield* weightRoom(); yield* racks(); yield* rationHall();
     yield* returnToSender(); yield* heap(); yield* handbrake(); yield* cage(); yield* childAtTheAddress();
   })();
   // Scene splits by where he is, as the game draws them.

@@ -27,12 +27,18 @@ service"), the moment must be felt, not just seen.
 - **Sparseness still holds.** Between these moments, music stays sparse (the GDD's "sparse music at
   transitions"). The bed sits low and puzzles keep their room tone.
 
-## Colour language: what you can use is red
+## How things say "use me" (pass 3: not red)
 
-Anything D-17 can use carries red paint: handles, levers, the crank wheel, the pull-cord's bead, the
-sorting weight, the trolleys' grips, the pawl lever, the desk's edge. Nothing else in a scene is that
-red. On a phone screen this is how the player finds what matters. Light helps too: a pool of light
-over an interactable that would otherwise sit in shadow (the crank wheel).
+Red used to mark everything D-17 could use. Players learned "touch anything red" and stopped looking at the
+world, so red is no longer the code. What he can use is shown by:
+- **Wear:** handles, grips, bails, wheels and levers are worn bright where hands went: polished metal through
+  tired paint. The paint itself is the period's: faded oxide, green, black, bare steel.
+- **Light:** a pool of light falls on what matters, against a clean, readable background (the crank wheel,
+  the ration counter's winch, the cage's tray).
+- **Motion and sound:** a swinging tag, a ticking clock, a hum or a crackle draws the eye without colour.
+
+**Red is kept** only for what the world itself painted red: fire points and alarms, and danger stripes on
+machines that kill (the press, the arcs). The curiosities' red tags are gone; their light pools stay.
 
 ## Let the player try things
 
@@ -120,7 +126,7 @@ Don't make it a clean, regular silo.
 
 The light is warm amber against that haze. The first reveal from DL-08's balcony must say that a larger world lies ahead and above. On the poorest levels, homes stay mostly dark; the lights are the city's systems still running.
 
-**Light by level:** abandoned lower levels get very little light: a failing bulb or two, a lamp left on behind a door, light falling from far above. Darkness is the default down there, and a lit room is an event. Light grows with height: sparse on the middle tiers, warm and dense toward the upper city, where people still live. Keep what the player must read (the path, the red interactables) lit, even in the dark.
+**Light by level:** abandoned lower levels get very little light: a failing bulb or two, a lamp left on behind a door, light falling from far above. Darkness is the default down there, and a lit room is an event. Light grows with height: sparse on the middle tiers, warm and dense toward the upper city, where people still live. Keep what the player must read (the path, what he can use) lit, even in the dark.
 
 ## World building
 
