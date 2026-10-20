@@ -1,8 +1,8 @@
-# Undelivered (DL-01 to DL-09): playable prototype
+# Undelivered (DL-01 to DL-11): playable prototype
 
-A browser-playable build of chapter 1, reworked into nine scenes and played as one continuous level with no cut
-between them. It follows the chapter plan in `docs/chapter1_plan.md`, the scene plans in `docs/scenes/` and the
-standing direction in `docs/direction.md`. It uses D-17 and the set from Blender, and the gameplay code mirrors the
+A browser-playable build of chapter 1, eleven scenes played as one continuous level with no cut between them. It
+follows the chapter plan in `docs/chapter1_plan.md`, its pass 2 and pass 3 plans (`docs/chapter1_pass2_plan.md`,
+`docs/chapter1_pass3_plan.md`), the scene plans in `docs/scenes/` and the standing direction in `docs/direction.md`. It uses D-17 and the set from Blender, and the gameplay code mirrors the
 mechanisms planned for the Unity build.
 
 ## Run locally
@@ -16,9 +16,11 @@ python3 -m http.server 8765
 three.js 0.169.0 loads from jsDelivr. The models are in `assets/` as `.glb`, and also as `.json`
 (base64-wrapped GLB), because the artifact host serves `.json` but not `.glb`.
 - **Parts:** the host takes files up to 16 MB, so a large model is split into parts of 10 MB of base64:
-  `set.json` (which says how many parts there are), `set.1.json` and `set.2.json`. The game fetches the rest and
-  joins them.
-- **The White** (`white.json`) loads after the others. Without it, the game still plays, with the White unseen.
+  `set.json` (which says how many parts there are), then `set.1.json`, `set.2.json` and `set.3.json`. The game
+  fetches the rest and joins them.
+- **The White** loads before the title card's Begin, and at load every material is compiled and every texture
+  uploaded (`warmUp`), with each region's lights switched on in turn, so nothing hitches when it first appears.
+- **Without `white.json`** the game still plays, with the White unseen.
 
 ## Controls
 
@@ -39,29 +41,48 @@ touch devices, on-screen buttons appear once play begins.
 
 ## The level
 
-The nine scenes run left to right along one lane. The pause card shows the scene D-17 is in (`sceneName()` in the
+The eleven scenes run left to right along one lane. The pause card shows the scene D-17 is in (`sceneName()` in the
 game).
 
-| Scene | Was | World x | Built by | Plan estimate |
-|---|---|---|---|---|
-| DL-01 The Wake | DL-01, reworked | 0 to 12 | `art/dl01` | 2:00 |
-| DL-02 The Sorting Hall | new | 12 to 25 | `art/sorting_hall` | 1:45 |
-| DL-03 The Weight of the Job | DL-02 | 25 to 30.6 (the gate) | `art/dl02`, moved by OFF2 | 2:30 |
-| DL-04 The Racks | new | 30.6 to 47.9 | `art/dl02`'s racks hall, then `art/racks` | 2:30 |
-| DL-05 Return to Sender | DL-03 | 47.9 to 68.5, shared with DL-06 | `art/dl03`, moved by OFF3 | 2:45 |
-| DL-06 The Heap | new | the same space, then the gallery | `art/dl03`, moved by OFF3 | 2:30 |
-| DL-07 The Handbrake | DL-04, reworked | 68.5 to 85.6 | `art/dl04` (belt side), moved by OFF3 | 3:00 |
-| DL-08 The Slipping Cage | new | 85.6 to 106.75 | `art/cage`, then `art/dl04` (tunnel side), moved by OFF4 | 2:00 |
-| DL-09 The Child at the Address | DL-05, reworked | 106.75 to 137.1 | `art/dl05`, moved by OFF4 | 3:30 |
+| Scene | Was (pass 2) | World x | Built by | Plan estimate | Measured |
+|---|---|---|---|---|---|
+| DL-01 The Wake | DL-01 | 0 to 12 | `art/dl01` | 2:00 | — |
+| DL-02 The Sorting Hall | DL-02 | 12 to 25 | `art/sorting_hall` | 1:45 | — |
+| DL-03 The Weight of the Job | DL-03 | 25 to 30.6 (the gate) | `art/dl02`, moved by OFF2 | 2:30 | — |
+| DL-04 The Racks | DL-04 | 30.6 to 47.9 | `art/dl02`'s racks hall, then `art/racks` | 2:30 | — |
+| DL-05 The Ration Hall | new in pass 3 | 47.9 to 59.8 | `art/pass3/build_ration_hall.py` | 2:30 | — |
+| DL-06 Return to Sender | DL-05 | 59.8 to 80.5, shared with DL-07 | `art/dl03`, moved by OFF3 | 2:45 | — |
+| DL-07 The Heap | DL-06 | the same space, then the gallery | `art/dl03`, moved by OFF3 | 2:30 | — |
+| DL-08 The Handbrake | DL-07 | 80.5 to 97.6 | `art/dl04` (belt side), moved by OFF3 | 3:00 | — |
+| DL-09 The Slipping Cage | DL-08 | 97.6 to 118.8 | `art/cage`, then `art/dl04` (tunnel side), moved by OFF4 | 2:00 | — |
+| DL-10 Up Only | new in pass 3 | 118.8 to 127.9 (ring C's level) | `art/pass3/build_up_only.py` | 2:30 | — |
+| DL-11 The Child at the Address | DL-09 | 127.9 to 170.1 | `art/dl05`, moved by OFF5 | 3:30 | — |
 
-The estimates are first-time play from `docs/chapter1_plan.md`, not measurements. Playtest timings are pending.
+The lore dressing across scenes 1 to 9, the cage's readability pieces and the interactables' new materials are
+`art/pass3/build_lore.py`'s. The estimates are first-time play from `docs/chapter1_plan.md` and
+`docs/chapter1_pass3_plan.md`, not measurements. Pass 3's simulated timings are pending; the pass 2 runs
+(`tools/sim/README.md`) predate the new scenes.
 
 The code keeps its original module names, so they use the old numbers: `art/dl02` and `updateDL02` are DL-03 (and the
-start of DL-04), `updateDL03` is DL-05 and DL-06, `updateDL04` is DL-07 and the tunnel and balcony of DL-08, and
-`updateDL05` is DL-09. The rework (the new scenes, the reworked DL-01, DL-07 and DL-09, and the letters) is the
+start of DL-04), `updateDL03` is DL-06 and DL-07, `updateDL04` is DL-08 and the tunnel and balcony of DL-09, and
+`updateDL05` is DL-11. The rework (the scenes added then, the reworked DL-01, DL-08 and DL-11, and the letters) is the
 Chapter 1 module before `const HINTS`. Pass 2 (`docs/chapter1_pass2_plan.md`) follows it there: the curiosities
 (`CURIOS`), the White (`WATERS`, `updateWhite`), ring C (`updateRingC`), the hazards (`updateHazards`) and deaths
 (`DEATH`, `die`). Its props, hazards and D-17's clips for them come from `art/pass2`, and the White from `art/white`.
+Pass 3 is in the same module: the Ration Hall (`RATION5`, `RH5`, `updateWinch5`), Up Only (`UPONLY`, `UO`,
+`updateAct10`, `updateUpOnly`), the cage's readability (`BalanceNeedle` and the pawl lever in `updateCage`), C-114's
+shut door (`C114DOOR`, `KNOCK5_X`) and the light zones (`lightZoneFor`).
+
+**Light zones.** Each region's lights are switched on only while D-17 is in it. Pass 3 adds two zones inside regions:
+in the Ration Hall (from 47.4) its own lights (the counter's flickering strip light, the shrine's candles, a vent's
+grey daylight, the kitchen's fill) replace DL-01's and the Sorting Hall's, long out of sight; in Up Only (from 117.8)
+its own (the failing pendant, the two UP lamps, the crank's work lamp, the car's lamp, the cold light down the
+counterweight's shaft) replace the goods hall's and the cage's.
+
+**Interactables without red** (`docs/direction.md`). Red no longer says "use me". What D-17 can use is shown by wear
+(grips and handles worn bright through tired paint: `HandledSteel`, `HandledBrass`, `WornIron`, `WornStrap`), by the
+scene's light and by motion and sound. Red is kept for what the world itself painted red: the franking press's hazard
+bands. The curiosities' red tags are gone.
 
 ## DL-01 The Wake (plan estimate 2:00)
 
