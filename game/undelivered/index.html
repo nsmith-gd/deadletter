@@ -48,6 +48,9 @@
     border: 0; padding: 12px 22px; cursor: pointer; letter-spacing: 0.02em;
   }
   button.act.secondary { background: transparent; color: var(--paper); border: 1px solid var(--rule); }
+  .scene-pick { margin-top: 10px; font-size: 0.85rem; color: var(--muted); }
+  .scene-pick select { font: 0.9rem var(--body); color: var(--paper); background: var(--ink); border: 1px solid var(--rule); padding: 8px 10px; }
+  .scene-pick button.act { padding: 8px 14px; font-size: 0.9rem; }
   button.act:disabled { opacity: 0.45; cursor: progress; }
   button:focus-visible, input:focus-visible + span { outline: 2px solid var(--amber); outline-offset: 3px; }
   .controls { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 0.9rem; margin: 0; }
@@ -55,6 +58,9 @@
   .controls dd { margin: 0; }
   kbd { font-family: var(--mono); font-size: 0.78rem; border: 1px solid var(--rule); padding: 1px 6px; color: var(--paper); background: rgba(217, 209, 184, 0.06); }
   .opts { display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 14px; }
+  #end .card { animation: endIn 2.4s ease both; }
+  #end h2.sub { color: var(--muted); font-size: 1.3rem; margin-top: -6px; }
+  @keyframes endIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   .goal { margin: 0 0 12px; font-size: 0.95rem; line-height: 1.45; color: var(--paper); }
   .opts label { display: flex; gap: 10px; align-items: center; cursor: pointer; font-size: 0.92rem; }
   .opts input { accent-color: #d9d1b8; width: 16px; height: 16px; }
@@ -74,6 +80,12 @@
   }
   #found { position: absolute; right: calc(16px + env(safe-area-inset-right, 0px)); top: calc(14px + env(safe-area-inset-top, 0px));
     font: 500 0.85rem var(--mono); letter-spacing: 0.08em; color: var(--amber); opacity: 0; transition: opacity 0.8s; pointer-events: none; }
+  #intertitle { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 18px; padding: 24px; text-align: center; z-index: 5; transition: opacity 1.4s ease; }
+  #intertitle[hidden] { display: none; }
+  #intertitle p { font-family: var(--display); font-size: clamp(1.05rem, 2.6vw, 1.5rem); color: var(--paper); max-width: 34ch; opacity: 0; animation: titleLine 1.6s ease forwards; }
+  #intertitle p:nth-child(1) { animation-delay: 0.6s; } #intertitle p:nth-child(2) { animation-delay: 3.0s; }
+  #intertitle p:nth-child(3) { animation-delay: 5.6s; } #intertitle p:nth-child(4) { animation-delay: 8.4s; }
+  @keyframes titleLine { to { opacity: 1; } }
   #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
   #debug {
     position: absolute; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px));
@@ -99,6 +111,12 @@
 <div id="app">
   <canvas id="view" aria-label="Dead Letter, chapter 1, scenes DL-01 to DL-11, playable"></canvas>
   <div id="fade"></div>
+  <div id="intertitle" hidden>
+    <p>For seventy-six years the lower rings of the refuge have been dark.</p>
+    <p>Everyone who lived down here died, or went up.</p>
+    <p>Tonight the power came back on. Nobody was left to wonder why.</p>
+    <p>In the depot, one courier still had a parcel to deliver.</p>
+  </div>
   <div id="keycap" hidden></div>
   <div id="found" aria-live="polite"></div>
   <div id="debug" hidden></div>
@@ -130,10 +148,17 @@
         <label><input type="checkbox" id="opt-music" checked><span>Music</span></label>
         <label><input type="checkbox" id="opt-assist"><span>Show a button prompt if I'm stuck</span></label>
         <label><input type="checkbox" id="opt-calm"><span>Reduce flicker and flashes</span></label>
+        <label><input type="checkbox" id="opt-telemetry" checked><span>Share anonymous play data</span></label>
       </div>
+      <p class="note">This test build records how the game is played (scenes reached, timings, deaths, hints, frame rate, device type) to help improve it. Nothing personal is recorded. You can turn it off above.</p>
       <div class="row">
         <button class="act" id="begin" type="button" disabled>Begin</button>
         <span class="status" id="load-status" role="status">Loading the depot&hellip;</span>
+      </div>
+      <div class="row scene-pick">
+        <label for="scene-select">For testing, start at</label>
+        <select id="scene-select"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option></select>
+        <button class="act secondary" id="scene-go" type="button" disabled>Start there</button>
       </div>
       <p class="note">The eleven scenes of chapter 1, from The Wake to The Child at the Address, run as one, with no cut between them. Headphones recommended.</p>
     </div>
@@ -151,20 +176,30 @@
         <label><input type="checkbox" id="opt-music-p" checked><span>Music</span></label>
         <label><input type="checkbox" id="opt-assist-p"><span>Show a button prompt if I'm stuck</span></label>
         <label><input type="checkbox" id="opt-calm-p"><span>Reduce flicker and flashes</span></label>
+        <label><input type="checkbox" id="opt-telemetry-p" checked><span>Share anonymous play data</span></label>
       </div>
       <div class="row">
         <button class="act" id="resume" type="button">Resume</button>
         <button class="act secondary" id="checkpoint" type="button">Back to checkpoint</button>
         <button class="act secondary" id="restart" type="button">Start over</button>
       </div>
+      <div class="row scene-pick">
+        <label for="scene-select-p">Jump to</label>
+        <select id="scene-select-p"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option></select>
+        <button class="act secondary" id="scene-go-p" type="button">Go</button>
+        <button class="act secondary" id="export-log" type="button">Save play log</button>
+      </div>
     </div>
   </section>
 
   <section id="end" class="layer" hidden>
     <div class="card">
-      <div class="eyebrow"><span>End of chapter 1 &middot; DL-11</span><span id="end-time"></span></div>
-      <h2>Room 114</h2>
-      <p>Behind a fallen desk, pencil marks climb the wall, one a year, and a crooked tree is carved beside them. The terminal says nobody is home, and forwards the parcel to a school on ring B. D-17 sat the rabbit up and left the room as he found it. Next: <strong>DL-12 Coats Without Children</strong>.</p>
+      <div class="eyebrow"><span>Dead Letter</span><span id="end-time"></span></div>
+      <h1>End of chapter one</h1>
+      <h2 class="sub">Undelivered</h2>
+      <p>Behind a fallen desk, nine pencil marks climb the wall, one a year, and a crooked tree is drawn beside them. The terminal says nobody is home, and forwards the parcel up, to a school on ring B. D-17 sat the rabbit up and left the room as he found it.</p>
+      <p>Somewhere above, someone turned the power back on.</p>
+      <p class="note">Chapter two, <strong>Coats Without Children</strong>, is being made.</p>
       <p class="note" id="end-found"></p>
       <div class="row">
         <button class="act" id="again" type="button">Play again</button>
@@ -425,7 +460,7 @@ function materialFor(src) {
   else if (PLAIN[name]) {
     const [c, r, mt] = PLAIN[name]; m = new THREE.MeshStandardMaterial({ color: lin(c), roughness: r, metalness: mt });
     // Standing water is a little see-through, so something pale moving under it reads (pass 2: the White).
-    if (name === 'Water') { m.color = lin([0.03, 0.05, 0.052]); m.roughness = 0.06; m.metalness = 0.15; m.transparent = true; m.opacity = 0.66; m.depthWrite = false; }
+    if (name === 'Water') { m.color = lin([0.03, 0.05, 0.052]); m.roughness = 0.24; m.metalness = 0.04; m.transparent = true; m.opacity = 0.66; m.depthWrite = false; }   // pass 5: rougher, so lamps don't blind off it
   }
   else if (GLASSY[name]) { const [c, o, r] = GLASSY[name]; m = new THREE.MeshStandardMaterial({ color: lin(c), roughness: r, metalness: 0.1, transparent: true, opacity: o, depthWrite: false }); }
   else if (name === 'AtriumMist') {
@@ -1283,6 +1318,7 @@ function nearUse() {
   return null;
 }
 function beginUse(kind) {
+  Telemetry.event('use', { kind });
   if (kind.includes(':') || ['setdownItem', 'loadCarrier', 'loadTray', 'bell9', 'junction9', 'loadCar', 'up10', 'crank10', 'ride10'].includes(kind)) { beginCh1(kind); return; }
   if (kind === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
   game.vx = 0;
@@ -1553,6 +1589,7 @@ function updateExit(dt) {
   setClip('Walk', 0.2, v / CLIP_SPEED.Walk);
   stepSounds();
   if (e.t > (game.region === 4 ? 0.9 : 0.4) && !game.ended) { game.ended = true; finish(); }
+  if (game.region === 5 && e.t > 4.5) { game.x -= v * dt; setClip('Idle', 0.6); }     // out through the back door, into the dark
 }
 
 // From the DL-01 doorway: away from the camera, right along the passage behind the wall, back
@@ -1815,8 +1852,11 @@ function updateDL02(dt) {
   if (g.y > 0.3) game.gateEverOpen = true;
 
   if (!game.revealed && plateLoad(false) >= PASS_LOAD && g.y >= PASS_LOAD * GATE_OPEN_H - 0.01) {
-    game.revealed = true; game.revealTime = game.clock; game.rowsLit = 0; game.checkpoint = 'solved';
-    Music.play('racks');
+    // Pass 5: the gate opens, but the racks wait in the dark until he walks through it.
+    game.revealed = true; game.revealTime = 1e9; game.revealPending = true; game.rowsLit = 0; game.checkpoint = 'solved';
+  }
+  if (game.revealPending && game.region === 2 && game.x > GATE_X + 0.35) {
+    game.revealPending = false; game.revealTime = game.clock; Music.bed(false); Music.play('racks');
   }
 
   // Lights: the plate lamp and passage once the bulkhead is open; the rack rows one after another.
@@ -2003,7 +2043,12 @@ function buildDL03(setRoot) {
     if (np < 1700 && (rnd() < 0.75 || nl >= 600)) {
       const s = 0.12 + rnd() * 0.28;
       sc.set(s * (0.8 + rnd() * 0.6), s * (0.5 + rnd() * 0.5), s * (0.8 + rnd() * 0.5));
-      parcels.setMatrixAt(np, m4.compose(v.set(x, y, z), q, sc));
+      // Pass 5: nothing floats. Near the rim, where the heap is thin, parcels lie flat on the floor or on each other.
+      let py = y;
+      const depth = heapH(x, z) - HEAP.floor;
+      if (depth < 0.45) { py = HEAP.floor + sc.y * 0.45 + rnd() * Math.max(0, depth - sc.y * 0.5); e.set((rnd() - 0.5) * 0.2, rnd() * 6.3, (rnd() - 0.5) * 0.2); q.setFromEuler(e); }
+      py = Math.max(py, HEAP.floor + sc.y * 0.35);
+      parcels.setMatrixAt(np, m4.compose(v.set(x, py, z), q, sc));
       parcels.setColorAt(np, col.setRGB(0.55 + rnd() * 0.5, 0.5 + rnd() * 0.45, 0.45 + rnd() * 0.4));
       np++;
     } else if (nl < 600) {
@@ -2049,14 +2094,14 @@ function setRegionLights(r, zone = lightZoneFor(r)) {
   refs.dl03Lights.forEach((l) => (l.visible = r === 3));
   refs.dl04HallLights.forEach((l) => (l.visible = (r === 4 && !uo) || (r === 3 && game.upper)));
   refs.dl04MidLights.forEach((l) => (l.visible = r === 4 && !uo));
-  (refs.uoLights || []).forEach((l) => (l.visible = uo));
+  (refs.uoLights || []).forEach((l) => (l.visible = uo || r === 5));   // and the lobby's stay on behind him; the pool picks the near ones
   refs.dl04FarLights.forEach((l) => (l.visible = r === 4));
-  refs.dl05Lights.forEach((l) => (l.visible = r === 5));
+  refs.dl05Lights.forEach((l) => (l.visible = r === 5 || uo));          // ring C's lane is lit before he reaches the seal
   (refs.shLights || []).forEach((l) => (l.visible = r === 2 && !ration));
   (refs.rationLights || []).forEach((l) => (l.visible = ration));
   (refs.bayLights || []).forEach((l) => (l.visible = r === 2));
   (refs.cageLights || []).forEach((l) => (l.visible = r === 4 && !uo));
-  (refs.rcLights || []).forEach((l) => (l.visible = r === 5));
+  (refs.rcLights || []).forEach((l) => (l.visible = r === 5 || uo));
   game.lightRegion = r;
 }
 
@@ -2476,7 +2521,7 @@ function buildDL04(setRoot) {
   refs.dl04HallLights = [pan, P(0xffd8b0, 4.5, 6, OFF3 + 56.5, DECK + 2.6, -0.1)];
   refs.dl04MidLights = [P(0x9fb8c0, 2.2, 4.5, OFF3 + 54.05, DECK - 1.9, -0.3), P(0xffd0a0, 6, 6, OFF3 + 60.2, DECK + 2.6, -0.2),
     P(0xffd0a0, 5, 6, OFF3 + 63.2, DECK + 2.6, -0.2), P(0xffe0c0, 3.2, 2.2, OFF3 + 53.05, DECK + 0.7, 0.2),
-    P(0xa8bcc8, 3.5, 3.4, 84.3, 0.85, 0.55)];   // pass 4: the fallen goods lift in the flooded pit under the near landing
+    P(0xa8bcc8, 2.2, 3.4, 84.3, 1.15, 0.15)];   // pass 4: the fallen goods lift in the flooded pit under the near landing
   const beacon = new THREE.SpotLight(0xffa040, 0, 9, THREE.MathUtils.degToRad(24), 0.5, 1.6);
   beacon.position.set(OFF3 + 57.35, DECK + 2.1, -0.9); scene.add(beacon, beacon.target); refs.beacon4 = beacon;
   const hemi = new THREE.HemisphereLight(0xa9bcc6, 0x0b0e0f, 0); hemi.userData.base = 2.2;
@@ -2635,7 +2680,9 @@ function updateDL04(dt) {
   // Lights by where the camera is: the depot's behind the residential door, the rings' beyond the tunnel.
   if (inR4 && game.lightRegion === 3 && cam.x > OFF3 + 54) setRegionLights(4);
   else if (game.lightRegion === 4 && (game.region === 3 || (game.region === 4 && cam.x < OFF3 + 53))) setRegionLights(3);
-  const vista = inR4 ? smooth((game.x - (OFF4 + 69.0)) / 2.0) : game.region === 5 ? 1 - smooth((game.x - (OFF5 + 79.0)) / 1.6) : 0;
+  // Pass 5: the city's sky light is gone by the time he steps off the counterweight, long before the lights switch over
+  // at ring C's seal (it was 70% when it popped off there). Down the shaft the light goes with the height.
+  const vista = inR4 ? smooth((game.x - (OFF4 + 69.0)) / 2.0) * (game.x > OFF5 + 72.8 ? Math.min(1, game.y / DECK) : 1) : game.region === 5 ? 1 - smooth((game.x - (OFF5 + 73.8)) / 1.5) : 0;
   [...refs.dl04HallLights, ...refs.dl04MidLights].forEach((l) => (l.intensity = l.userData.base));
   refs.dl04FarLights.forEach((l, i) => { if (i > 0) l.intensity = l.userData.base * (i >= 3 ? vista : 1); });
   emissive.HallBulb4.emissiveIntensity = 9;
@@ -3292,6 +3339,9 @@ function buildCh1(setRoot) {
   for (const o of [c.press, c.pressWheel, c.collapse, c.bell, c.gong, c.junction, c.laneCable, c.swing, c.switchToggle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
   refs.hallLight = new THREE.PointLight(0xffd2a0, 0, 4.5, 2); refs.hallLight.position.set(OFF5 + 104.85, 1.95, -0.25); scene.add(refs.hallLight);
   if (c.suitcase && c.suitcase.children[0]) c.suitcase.children[0].position.y -= DECK;    // so the group sits at the floor it stands on
+  // Pass 5: the counterweight plates too. Their groups are placed at the landing's height, so the meshes inside must sit at
+  // the group's origin; they were drawn 3.4 m too high, out of the frame, since pass 2 (the invisible plates in the cage).
+  for (const g of c.plates) if (g && g.children[0]) g.children[0].position.y -= CG.top;
   for (const o of [c.uoNeedle, c.suitcaseTag, c.liftCar, c.liftPlate, c.liftNeedle, c.liftDoorL, c.liftDoorR, c.liftUp, c.serviceUp, c.serviceCrank, c.serviceChain,
     c.serviceDoor, c.liftCw, c.liftSheave, c.liftIdler, c.ropeCar, c.ropeCw]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
   for (const o of [c.door114, c.handle114, c.cord114]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
@@ -3489,7 +3539,7 @@ function itemsHere() {
   return out;
 }
 const PUSHABLES = {
-  cart: { region: 1, side: 1, state: () => game.ch1.cart, gap: CART1.gap, speed: PUSH_SPEED, min: CART1.x, max: () => PIT.x0 + CART1.half + 0.02, floor: 0, z: 0 },
+  cart: { region: 1, side: 1, state: () => game.ch1.cart, gap: CART1.gap, speed: PUSH_SPEED, min: CART1.x, max: () => PIT.x0 - CART1.half + 0.38, floor: 0, z: 0 },
   courier: { region: 2, side: -1, state: () => game.ch1.courier, gap: RK.gap, speed: 0.22, min: RK.courierX, max: () => RK.bayX, floor: 0, z: RK.courierZ },
   // The drum stops on the plate; pushed again, it goes on past it to the wall by the hatch.
   drum: { region: 2, side: 1, state: () => game.ch1.drum, gap: RH5.gap, speed: 0.3, min: RH5.drum0, max: () => (game.ch1.drum.x < RH5.drumPlate - 0.01 ? RH5.drumPlate : RH5.drumPark), floor: 0, z: 0 },
@@ -3497,7 +3547,7 @@ const PUSHABLES = {
   body: { region: 2, side: -1, state: () => game.ch1.body, gap: RH5.bodyGap, speed: 0.2, min: RH5.body0,
     max: () => { const d = game.ch1.drum; return Math.min(RH5.bodyPlate, d.x > game.ch1.body.x ? d.x - 0.225 - RH5.bodyHalf - 0.02 : Infinity); },
     avail: () => PUSHABLES.body.max() - game.ch1.body.x > 0.05, floor: 0, z: 0 },
-  duct: { region: 5, side: 1, state: () => game.ch1.duct, gap: DUCT9.gap, speed: 0.45, min: DUCT9.x, max: () => DIP9.x0 + DUCT9.half, floor: 0, z: 0 },
+  duct: { region: 5, side: 1, state: () => game.ch1.duct, gap: DUCT9.gap, speed: 0.45, min: DUCT9.x, max: () => DIP9.x0 - DUCT9.half + 0.4, floor: 0, z: 0 },
 };
 function pushHere() {
   const out = [];
@@ -3760,7 +3810,7 @@ function updateAct10(a, dt) {
     if (f >= 16 && !a.pressed) {
       a.pressed = true; Sound.click();
       if (uo.loaded && uo.gate >= 1 && uo.phase === 'idle') { uo.phase = 'up'; uo.t = 0; uo.riding = a.kind === 'ride10'; Sound.clunk(); Sound.chain(2.0); shake(0.15); }
-      else { uo.buzz = game.clock; Sound.buzzShort(); }
+      else { uo.buzz = game.clock; Sound.buzzShort(); Telemetry.event('liftBuzz', { from: a.kind }); }
     }
     if (f >= 34) {
       if (uo.riding && a.kind === 'ride10') { a.phase = 'ride'; a.t = 0; setClip('RideCounterweight', 0.3); return; }
@@ -3862,8 +3912,8 @@ function updateHoldCh1(dt, move) {
   // At the end of its travel: the cart and the duct drop into place; the courier is on the bay's plate.
   if (Math.abs(s.x - p.max()) < 0.005) {
     game.hold = null; game.pushKey = null; game.vx = 0; setClip('Idle', 0.3);
-    if (p === PUSHABLES.cart) { s.state = 'falling'; s.drop = 0; }
-    if (p === PUSHABLES.duct) { s.state = 'falling'; s.drop = 0; }
+    if (p === PUSHABLES.cart) { s.state = 'falling'; s.drop = 0; s.x0tip = s.x; Sound.scrape(); }
+    if (p === PUSHABLES.duct) { s.state = 'falling'; s.drop = 0; s.x0tip = s.x; Sound.scrape(); }
     if (p === PUSHABLES.courier) { s.state = 'cradle'; s.t = 0; Sound.drag(0); }
     if (p === PUSHABLES.drum) { if (Math.abs(s.x - RH5.drumPark) < 0.01) s.state = 'set'; Sound.thud(); shake(0.15); }
     if (p === PUSHABLES.body && Math.abs(s.x - RH5.bodyPlate) < 0.01) {
@@ -3874,17 +3924,27 @@ function updateHoldCh1(dt, move) {
   }
 }
 
+// Pass 5: something pushed over a pit's edge tips nose-first and slides in. Pushing stops with its front wheels over
+// the edge; then over 0.9 s the nose drops, it slides forward to where it lands, and it settles with a small bounce.
+function tipInto(g, s, half, xEnd, floorY) {
+  const t = s.drop, k = smooth(Math.min(1, t / 0.75));
+  const dip = t < 0.5 ? -0.5 * Math.sin(t / 0.5 * Math.PI / 2) : -0.5 * (1 - smooth((t - 0.5) / 0.35)) + (t > 0.85 ? 0.05 * Math.sin((t - 0.85) / 0.15 * Math.PI) : 0);
+  s.x = s.x0tip + (xEnd - s.x0tip) * k;
+  g.position.x = s.x;
+  g.position.y = floorY * k * k - Math.abs(Math.sin(dip)) * half * 0.45 * (1 - k);
+  g.rotation.z = dip;
+}
+
 // Per frame -----------------------------------------------------------------------------------
 function updateCh1(dt) {
   const s = game.ch1, k = refs.ch1;
   if (!k) return;
   // DL-01: the cart rolls to the edge and drops into the trench; the scale reads whoever stands on it.
   const cart = s.cart;
-  if (cart.state === 'falling') { cart.drop = Math.min(1, cart.drop + dt / 0.45); if (cart.drop >= 1) { cart.state = 'bridge'; Sound.thud(); shake(0.4); } }
+  if (cart.state === 'falling') { cart.drop = Math.min(1, cart.drop + dt / 0.9); if (cart.drop >= 0.8 && !cart.landed) { cart.landed = true; Sound.thud(); shake(0.4); } if (cart.drop >= 1) { cart.state = 'bridge'; cart.x = PIT.x0 + CART1.half + 0.02; } }
   if (k.cart) {
-    k.cart.position.x = cart.x;
-    k.cart.position.y = cart.state === 'bridge' ? PIT.y : cart.state === 'falling' ? PIT.y * cart.drop * cart.drop : 0;
-    k.cart.rotation.z = cart.state === 'falling' ? -0.25 * Math.sin(cart.drop * Math.PI) : 0;
+    if (cart.state === 'falling') tipInto(k.cart, cart, CART1.half, PIT.x0 + CART1.half + 0.02, PIT.y);
+    else { k.cart.position.x = cart.x; k.cart.position.y = cart.state === 'bridge' ? PIT.y : 0; k.cart.rotation.z = 0; }
     const roll = cart.x - (cart.lastX ?? cart.x); cart.lastX = cart.x;
     if (roll) (k.cartWheels ||= [0, 1, 2, 3].map((i) => k.cart.getObjectByName('DepotCartWheel' + i)).filter(Boolean)).forEach((w) => w.rotateZ(-roll / 0.065));
   }
@@ -3978,8 +4038,11 @@ function updateCh1(dt) {
   updateCage(dt);
   // DL-09: the duct drops into the flood and becomes the bridge; the water turns him back.
   const du = s.duct;
-  if (du.state === 'falling') { du.drop = Math.min(1, du.drop + dt / 0.5); if (du.drop >= 1) { du.state = 'bridge'; Sound.thud(); Sound.splash(1.3); shake(0.3); makeNoise((DIP9.x0 + DIP9.x1) / 2, 1.5); } }
-  if (k.duct) { k.duct.position.x = du.x; k.duct.position.y = du.state === 'bridge' ? DIP9.floor : du.state === 'falling' ? DIP9.floor * du.drop * du.drop : 0; }
+  if (du.state === 'falling') { du.drop = Math.min(1, du.drop + dt / 0.9); if (du.drop >= 1) { du.state = 'bridge'; du.x = DIP9.x0 + DUCT9.half; Sound.thud(); Sound.splash(1.3); shake(0.3); makeNoise((DIP9.x0 + DIP9.x1) / 2, 1.5); } }
+  if (k.duct) {
+    if (du.state === 'falling') tipInto(k.duct, du, DUCT9.half, DIP9.x0 + DUCT9.half, DIP9.floor);
+    else { k.duct.position.x = du.x; k.duct.position.y = du.state === 'bridge' ? DIP9.floor : 0; k.duct.rotation.z = 0; }
+  }
   if (game.region === 5 && du.state !== 'bridge' && !game.act && game.grounded && game.x + HALF * 0.6 > DIP9.x0 && game.x < DIP9.x1 && game.y < 0.02) {
     game.act = { kind: 'waterFlinch', phase: 'act', t: 0, backX: DIP9.x0 - 0.35 }; game.vx = 0; setClip(actions.WaterFlinch ? 'WaterFlinch' : 'Flinch', 0.1);
   }
@@ -4006,6 +4069,7 @@ function updateCh1(dt) {
   const reading = rh.served ? 'person' : drumOn ? 'over' : bodyOn ? 'person' : meOn ? 'under' : 'empty';
   if (reading !== sc.reading) {
     sc.reading = reading; sc.since = game.clock;
+    Telemetry.event('weigh', { reading });
     if (reading === 'under') { setTimeout(() => Sound.buzzShort(), 350); }
     if (reading === 'over') { Sound.clank(); setTimeout(() => { Sound.alarmBell(); shake(0.2); }, 300); }
     if (reading === 'person' && !rh.served) Sound.click();
@@ -4120,6 +4184,7 @@ function updateCage(dt) {
   const loaded = game.ch1.plates.filter((p) => p.state === 'tray').length;
   if (!inside) c.needExit = false;
   if (c.phase === 'top' && inside && game.grounded && !game.act && !game.hold && game.clock > c.readyAt && !c.needExit && loaded < 2) {
+    Telemetry.event('cageDip', { plates: loaded });
     c.phase = 'dip'; c.t = 0; game.act = { kind: 'cage', phase: 'act', t: 0 }; game.vx = 0; Sound.lurch(); Sound.groan(); shake(0.5);
   }
   if (c.phase === 'dip') {
@@ -4224,6 +4289,7 @@ function curioHere() {
 }
 function findCurio(id) {
   if (curioFound[id]) return;
+  Telemetry.event('curio', { id });
   curioFound[id] = true;
   // A small chime, a rising third, and the tally in the corner for a moment.
   Sound.found();
@@ -4467,7 +4533,7 @@ function updateWhite(dt) {
     const exposed = heroNearWater(w) && Math.abs(d) < reach && game.mode === 'play' && !(game.act && game.act.kind === 'death');
     if (w.part === 'hunt' && exposed && !persist.warned) {
       // Pass 3: the first time it finds him it rears and hisses and goes, a warning; only after that does it strike.
-      persist.warned = true; Sound.hiss(1); setTimeout(() => Sound.hiss(0), 900); Sound.splash(1); shake(0.4); playQuirk('Startle'); setWhite('sink');
+      persist.warned = true; Telemetry.event('whiteWarn'); Sound.hiss(1); setTimeout(() => Sound.hiss(0), 900); Sound.splash(1); shake(0.4); playQuirk('Startle'); setWhite('sink');
     } else if (w.part !== 'glimpse' && exposed) { white.yaw = d >= 0 ? 0 : Math.PI; setWhite(w.part === 'scare' ? 'slap' : 'strike'); }
     else if (white.t > (w.part === 'glimpse' ? 1.6 : 2.2)) setWhite('sink');
   } else if (st === 'slap') {
@@ -4748,6 +4814,7 @@ function releaseHolds() {
 }
 // how: crush, shock, grabbed or fall. o.follow(a, dt) can move him while the moment plays (dragged under, falling).
 function die(how, o = {}) {
+  Telemetry.event('death', { how });
   if (game.mode !== 'play' || (game.act && game.act.kind === 'death')) return;
   const d = DEATH[how] || DEATH.fall;
   releaseHolds();
@@ -4941,6 +5008,7 @@ function updateCharacter(dt, playing) {
     cap.style.left = `${(s.x * 0.5 + 0.5) * canvas.clientWidth}px`;
     cap.style.top = `${(-s.y * 0.5 + 0.5) * canvas.clientHeight}px`;
     cap.textContent = hint.key === 'use' ? (touchDevice ? 'USE' : 'E') : (touchDevice ? 'JUMP' : 'Space');
+    if (cap.hidden) Telemetry.event('prompt', { key: hint.key, first: !!firstCue });
     cap.hidden = false;
   } else cap.hidden = true;
 }
@@ -4985,7 +5053,7 @@ function frameFor(x) {
     cx += (THREE.MathUtils.clamp(x + lead, OFF2 + 19.0, OFF2 + 24.4) - cx) * kh;
     v = lerp3(v, fit(VOL.racks, 6.4), kh); fog += (0.045 - fog) * kh;
     // The solution widens to the racks for a few seconds.
-    const rk = game.clock - game.revealTime, kr = smooth(rk / 2.2) * (1 - smooth((rk - 8.5) / 2.5));
+    const rk = game.clock - game.revealTime, kr = smooth(rk / 3.6) * (1 - smooth((rk - 9.5) / 3.0));   // a slow pan
     if (kr > 0) { cx += (OFF2 + 20.7 - cx) * kr; v = lerp3(v, fit(VOL.reveal, 9.5), kr); fog += (0.03 - fog) * kr; }
     // Among the couriers after the realisation: low, close, at their eye level.
     const ks = game.realised && game.region === 2 ? smooth((x - (OFF2 + 17.7)) / 0.5) * (1 - smooth((x - (OFF2 + 22.6)) / 1.2)) : 0;
@@ -5016,7 +5084,11 @@ function frameFor(x) {
     const ch = game.ch1, gateMoving = ch && ch.gate6 < 0.7 * Math.min(2, ch.bucket) - 0.01, tumbling = ch && game.clock - (ch.tumbledAt ?? -99) < 2.5;
     const kw = !game.upper && ((refs.carriers && refs.carriers.some((c) => c.load && c.route === 'exit')) || gateMoving || tumbling) ? 1 : 0;
     game.watchLoad = (game.watchLoad || 0) + (kw - (game.watchLoad || 0)) * Math.min(1, 1 / 60 * 1.2);
-    if (game.watchLoad > 0.01) { tx += (OFF3 + 38.4 - tx) * smooth(game.watchLoad); v3 = lerp3(v3, fit([10.6, 2.5, 1.45], 10.8), smooth(game.watchLoad)); }
+    // Pass 5: the wide frame on the climb and the gate keeps him in it too, wherever he waits.
+    if (game.watchLoad > 0.01) {
+      const wc = THREE.MathUtils.lerp(OFF3 + 38.4, x, 0.35), ww = Math.max(10.8, 2 * Math.abs(x - wc) + 3.2);
+      tx += (wc - tx) * smooth(game.watchLoad); v3 = lerp3(v3, fit([10.6, 2.5, 1.45], ww), smooth(game.watchLoad));
+    }
     cx += (tx - cx) * k3; v = lerp3(v, v3, k3); fog += (0.05 - 0.012 * ku - fog) * k3;
     // The pit, after the refusal: wide, high, looking down at the heap, held while he takes it in.
     const st = game.scan.t, ph = game.scan.phase;
@@ -5302,7 +5374,7 @@ function resetWorld(name = 'start') {
   game.region = c.region || 1; game.transit = null; game.hold = null; game.nudged = false;
   Object.assign(game.weight, c.solved ? { x: OFF2 + 16.0, state: 'trolley', off: -0.12 } : { x: WEIGHT_X, state: 'floor', off: 0 }, { blend: 0, drop: null });
   Object.assign(game.trolley, { x: c.solved ? (PLATE.x0 + PLATE.x1) / 2 : TROLLEY_X, v: 0 });
-  game.revealed = !!c.solved; game.revealTime = -100; game.gateEverOpen = !!c.solved;
+  game.revealed = !!c.solved; game.revealTime = -100; game.revealPending = false; game.gateEverOpen = !!c.solved;
   game.load = c.solved ? LOAD.weight + LOAD.trolley : 0; game.needle = game.load;
   Object.assign(game.gate, { y: game.load * GATE_OPEN_H, v: 0, ticked: game.load * GATE_OPEN_H });
   // DL-03: the scanner waiting, or done with; no carriers until the belt runs.
@@ -5334,14 +5406,25 @@ function startOpening() {
   seen.clear(); clearLetters();
   resetWorld('start');
   game.cordOn = false; game.cordUsed = false; game.cordPull = 0;
-  game.mode = 'opening'; game.sceneTime = 0; cuePtr = 0; game.nextRelay = OPENING_FRAMES;
-  game.heardHall = false; Music.setPaused(false); Music.bed(false); Music.play('wake');
+  game.mode = 'card'; game.sceneTime = 0; cuePtr = 0; game.nextRelay = OPENING_FRAMES;
+  game.heardHall = false; Music.setPaused(false); Music.bed(false);
+  // Pass 5: why he wakes, said in words, before the wake. Any key, tap or click moves on.
+  const card = document.getElementById('intertitle');
+  card.hidden = false; card.style.opacity = 1;
+  const go = () => {
+    if (game.mode !== 'card') return;
+    game.mode = 'opening'; Music.play('wake');
+    card.style.opacity = 0; setTimeout(() => { card.hidden = true; }, 1400);
+    setTimeout(() => { if (game.mode === 'opening') skipBtn.hidden = false; }, 1500);
+    window.removeEventListener('keydown', go); card.removeEventListener('pointerdown', go);
+  };
+  setTimeout(go, 12500);
+  setTimeout(() => { window.addEventListener('keydown', go); card.addEventListener('pointerdown', go); }, 1200);
   refs.grit.forEach((g) => (g.m.visible = false));
   Object.values(actions).forEach((a) => a.stop()); current = null;
   setClip('Opening', 0);
   captureChest();
   skipBtn.hidden = true;
-  setTimeout(() => { if (game.mode === 'opening') skipBtn.hidden = false; }, 1500);
   touchEl.hidden = true;
   fadeEl.style.opacity = 0;
 }
@@ -5371,11 +5454,13 @@ function startPlay(checkpoint = 'start') {
 }
 function loadCheckpoint() {
   if (game.mode === 'title') return;
+  Telemetry.event('reloadCheckpoint');
   pauseEl.hidden = true; endEl.hidden = true;
   startPlay(game.checkpoint);
 }
 function togglePause() {
   if (game.mode === 'play' || game.mode === 'opening') {
+    Telemetry.event('pause');
     prevMode = game.mode; game.mode = 'paused'; pauseEl.hidden = false; syncOpts(); Music.setPaused(true);
     document.getElementById('pause-scene').textContent = sceneName();
     document.getElementById('pause-time').textContent = game.playStart ? fmt(Math.max(0, game.clock - game.playStart)) : '0:00';
@@ -5397,15 +5482,77 @@ const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(
 
 const tally = () => `Curiosities ${curioCount()} of ${CURIOS.length} \u00B7 letters posted ${letterState.posted || 0} of ${LETTERS.length}`;
 function finish() {
+  // Pass 5: a real ending. He walks on out of C-114 while the picture goes slowly to black; then the chapter's card.
   game.endTime = game.clock - game.playStart;
+  fadeEl.style.transition = 'opacity 4s ease';
+  Telemetry.event('end', { time: Math.round(game.endTime), deaths: game.deaths, found: Object.keys(curioFound).length }); Telemetry.flush();
   fadeEl.style.opacity = 1;
   Sound.distant();
   Music.queue('end');
-  setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; document.getElementById('end-found').textContent = tally(); endEl.hidden = false; document.getElementById('again').focus(); }, 1300);
+  setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; document.getElementById('end-found').textContent = tally(); endEl.hidden = false; document.getElementById('again').focus(); }, 5200);
 }
 
+// ---------------------------------------------------------------------------
+// Telemetry (pass 5): anonymous play events for playtests. Events carry the game clock, the scene and his x; they are
+// batched and POSTed as JSON to an endpoint if one is configured (?telemetry=https://... in the page URL, or
+// window.DL_TELEMETRY_URL), and always kept in a rolling local log the pause card can save to a file. No personal data:
+// a random session id, coarse device facts, and what happened in the game. tools/telemetry/ has a reference collector
+// and a summariser.
+// ---------------------------------------------------------------------------
+const Telemetry = (() => {
+  const BUILD = 'ch1-pass5';
+  const url = (() => { try { return new URLSearchParams(location.search).get('telemetry') || window.DL_TELEMETRY_URL || ''; } catch (e) { return ''; } })();
+  const sid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)) ;
+  let enabled = true, queue = [], log = [], seq = 0, sent = 0;
+  const stamp = () => ({ t: +game.clock.toFixed(2), play: game.playStart ? +(game.clock - game.playStart).toFixed(1) : null,
+    scene: game.mode === 'play' ? sceneName().slice(0, 5) : game.mode, x: +game.x.toFixed(2), cp: game.checkpoint });
+  function event(type, data = {}) {
+    if (!enabled) return;
+    const e = { i: seq++, type, ...stamp(), ...data };
+    queue.push(e); log.push(e); if (log.length > 4000) log.splice(0, log.length - 4000);
+    try { localStorage.setItem('dl01-telemetry-' + sid, JSON.stringify(log.slice(-1500))); } catch (err) { /* storage full or off */ }
+    if (queue.length >= 25) flush();
+  }
+  function flush(final = false) {
+    if (!url || !queue.length || !enabled) return;
+    const body = JSON.stringify({ sid, build: BUILD, sent: Date.now(), events: queue.splice(0) });
+    if (final && navigator.sendBeacon) { navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' })); return; }
+    fetch(url, { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'text/plain' } }).then(() => { sent++; }).catch(() => {
+      try { queue.unshift(...JSON.parse(body).events); } catch (err) { /* drop */ }
+    });
+  }
+  function device() {
+    let gpu = '';
+    try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); gpu = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)).slice(0, 80) : ''; } catch (e) { /* no info */ }
+    return { touch: touchDevice, w: innerWidth, h: innerHeight, dpr: devicePixelRatio, gpu, mobile: /Mobi|Android|iPhone|iPad/.test(navigator.userAgent), lang: navigator.language };
+  }
+  function save() {
+    const blob = new Blob([JSON.stringify({ sid, build: BUILD, device: device(), events: log }, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `dead-letter-playlog-${sid.slice(0, 8)}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  // Watching the game: scene and checkpoint changes, being stuck, and frame rate, sampled each second of play.
+  const w = { scene: null, cp: null, idleLogged: {}, frames: 0, time: 0, worst: 0, long: 0 };
+  function tick(rawDt) {
+    if (!enabled) return;
+    if (game.mode === 'play') {
+      const sc = sceneName();
+      if (sc !== w.scene) { event('scene', { name: sc, from: w.scene }); w.scene = sc; }
+      if (game.checkpoint !== w.cp) { event('checkpoint', { name: game.checkpoint }); w.cp = game.checkpoint; }
+      const idle = game.clock - input.lastActivity;
+      if (idle > 25 && !w.idleLogged[sc + game.checkpoint]) { w.idleLogged[sc + game.checkpoint] = true; event('idle', { sec: Math.round(idle) }); }
+      w.frames++; w.time += rawDt; w.worst = Math.max(w.worst, rawDt); if (rawDt > 0.05) w.long++;
+      if (w.time >= 10) { event('perf', { fps: +(w.frames / w.time).toFixed(1), worstMs: Math.round(w.worst * 1000), long: w.long, dpr: +renderer.getPixelRatio().toFixed(2) }); w.frames = 0; w.time = 0; w.worst = 0; w.long = 0; }
+    }
+  }
+  setInterval(() => flush(), 15000);
+  addEventListener('pagehide', () => { event('leave', {}); flush(true); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { event('hidden', {}); flush(true); } });
+  return { event, flush, save, tick, device, setEnabled(v) { enabled = v; }, get url() { return url; }, sid };
+})();
+
 // Options shared between the title and pause cards.
-const OPTS = { sound: true, music: true, assist: false, calm: false, autorun: true };
+const OPTS = { sound: true, music: true, assist: false, calm: false, autorun: true, telemetry: true };
 function setOpt(name, value) {
   try { localStorage.setItem('dl01-' + name, value ? '1' : '0'); } catch (e) { /* storage unavailable */ }
   if (name === 'sound') Sound.setEnabled(value);
@@ -5413,6 +5560,8 @@ function setOpt(name, value) {
   if (name === 'assist') game.assist = value;
   if (name === 'calm') { game.calm = value; bloom.strength = value ? 0.35 : 0.55; }
   if (name === 'autorun') game.autorun = value;
+  if (name === 'telemetry') Telemetry.setEnabled(value);
+  Telemetry.event('option', { name, value });
   syncOpts();
 }
 function getOpt(name) { try { const v = localStorage.getItem('dl01-' + name); return v === null ? OPTS[name] : v === '1'; } catch (e) { return OPTS[name]; } }
@@ -5423,15 +5572,27 @@ for (const n of Object.keys(OPTS)) {
   document.getElementById('opt-' + n).addEventListener('change', (e) => setOpt(n, e.target.checked));
   document.getElementById('opt-' + n + '-p').addEventListener('change', (e) => setOpt(n, e.target.checked));
 }
-game.assist = getOpt('assist'); game.calm = getOpt('calm'); game.autorun = getOpt('autorun');
+game.assist = getOpt('assist'); game.calm = getOpt('calm'); game.autorun = getOpt('autorun'); Telemetry.setEnabled(getOpt('telemetry'));
+Telemetry.event('session', { device: Telemetry.device(), opts: Object.fromEntries(Object.keys(OPTS).map((n) => [n, getOpt(n)])), referrer: document.referrer ? new URL(document.referrer).hostname : '' });
+document.getElementById('export-log').addEventListener('click', () => Telemetry.save());
 syncOpts();
 
-beginBtn.addEventListener('click', () => { Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); titleEl.hidden = true; startOpening(); });
-skipBtn.addEventListener('click', () => { startPlay('start'); });
+beginBtn.addEventListener('click', () => { Telemetry.event('begin'); Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); titleEl.hidden = true; startOpening(); });
+skipBtn.addEventListener('click', () => { Telemetry.event('skipIntro', { frame: Math.round(game.frame) }); startPlay('start'); });
 document.getElementById('resume').addEventListener('click', togglePause);
 document.getElementById('checkpoint').addEventListener('click', loadCheckpoint);
 document.getElementById('restart').addEventListener('click', () => { pauseEl.hidden = true; startOpening(); });
 document.getElementById('again').addEventListener('click', () => { endEl.hidden = true; startOpening(); });
+// Testing (pass 5): start at any scene's first checkpoint, from the title card or the pause card.
+function startAt(cp) {
+  Telemetry.event('startAt', { cp });
+  Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music'));
+  titleEl.hidden = true; pauseEl.hidden = true; endEl.hidden = true;
+  seen.clear(); clearLetters(); game.playStart = 0;
+  startPlay(cp);
+}
+document.getElementById('scene-go').addEventListener('click', () => startAt(document.getElementById('scene-select').value));
+document.getElementById('scene-go-p').addEventListener('click', () => startAt(document.getElementById('scene-select-p').value));
 document.getElementById('again-skip').addEventListener('click', () => { endEl.hidden = true; game.playStart = 0; seen.clear(); clearLetters(); startPlay('start'); });
 
 // ---------------------------------------------------------------------------
@@ -5487,6 +5648,7 @@ function frame(now) {
   adaptResolution(rawDt);
   if (refs.cull && (Math.floor(now / 100) !== frame.lastCull)) { frame.lastCull = Math.floor(now / 100); updateCulling(); }
   step(dt);
+  Telemetry.tick(rawDt);
   grain.uniforms.uTime.value = (now / 1000) % 100;
   if (!dbg.hidden) dbg.textContent = `mode ${game.mode}\nframe ${game.frame.toFixed(0)}  fps ${fpsAvg.toFixed(0)}\nx ${game.x.toFixed(2)}  y ${game.y.toFixed(2)}  vx ${game.vx.toFixed(2)}\nclip ${current}\ncrouch ${game.crouched}  ceiling ${ceilingAt(game.x).toFixed(2)}\ncheckpoint ${game.checkpoint}  released ${game.released}  door ${game.doorOpen.toFixed(2)}\nact ${game.act ? game.act.kind + ':' + game.act.phase : '-'}  autorun ${game.autorun}`;
   if (mixer) { updateLightPool(); composer.render(); }
@@ -5622,7 +5784,7 @@ function boot() {
     loadStatus.textContent = 'Preparing\u2026';
     warmUp();
     loadStatus.textContent = 'Ready'; loadStatus.classList.add('ok');
-    beginBtn.disabled = false; beginBtn.focus();
+    beginBtn.disabled = false; document.getElementById('scene-go').disabled = false; beginBtn.focus();
     captureChest(); camera.position.copy(cam.start); camera.lookAt(cam.chest); camera.setFocalLength(50); applyLights(0);
   }).catch((err) => {
     console.error(err);
