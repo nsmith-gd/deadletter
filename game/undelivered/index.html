@@ -1584,11 +1584,11 @@ function updateExit(dt) {
   e.t += dt;
   game.facing = 1;
   const v = game.region === 4 ? SLOW_WALK * 1.4 : WALK * 0.8;
+  if (game.region === 5) { updateEnd5(e, dt, v); return; }
   game.x += v * dt;
   if (game.region === 4) game.y = DECK - Math.max(0, game.x - STAIR_X) * 0.83;     // down the stair toward ring B
   setClip('Walk', 0.2, v / CLIP_SPEED.Walk);
   stepSounds();
-  if (game.region === 5) { updateEnd5(e, dt, v); return; }
   if (e.t > 0.9 && !game.ended) { game.ended = true; finish(); }
 }
 // Pass 6: the prologue's ending (END5). Out onto the landing; he stops and looks up, and the camera goes up the well
@@ -1600,7 +1600,7 @@ function updateEnd5(e, dt, v) {
     if (game.x >= END5.lookX) { game.x = END5.lookX; e.phase = 'look'; e.pt = 0; setClip('Idle', 0.5); game.lookAt = 'window'; }
     return;
   }
-  e.pt += dt; game.x -= v * dt;                                          // undo the generic walk step
+  e.pt += dt;
   if (e.phase === 'look') {
     game.x = END5.lookX;
     if (e.pt > 1.0 && !e.music) { e.music = true; Music.play('end', 4.0); Sound.distant(); }

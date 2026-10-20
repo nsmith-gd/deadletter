@@ -554,7 +554,8 @@ window.__startBot = function (seed, opts = {}) {
     yield* useAt(['present'], OFF5 + 113.6, actIs('present'), 'terminal');
     yield* until(() => G.dl5.forwarded && !G.act, 30, 'forwarded'); note('forwarded');
     yield* wait(look(2.5));
-    yield* walk(1, () => G.ended, 'out the back', { max: 120 });
+    yield* walk(1, () => G.ended || !!G.exit, 'out the back', { max: 120 });
+    yield* until(() => G.ended, 60, 'the ending');          // pass 6: the look up, the label, the stair
     mark('end');
   }
 

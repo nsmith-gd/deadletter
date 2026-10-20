@@ -25,7 +25,7 @@ DL-11 ring C. The water rose.
                   in the water: one lying head up the bank, a skull and long bones strewn down into the deep, a skull
                   on the first step. Pale bone near the surface, so it reads through the White's water.
   D5SealFloor     The floor under the seal (the barricade's crawl gap, x 134.2 .. 135.0 had none).
-  C114Stair       A steep cottage stair up to the parents' rooms, along the living room's back wall.
+  C114Stair       A steep cottage stair up the hall's back wall to the parents' rooms over it.
   D5NameCard114Wall (on the facade) and the card beside the door (in C114Home) are removed: the one on the door stays.
 
 Coordinates: metres, Blender Z up, the lane at y = 0, travel along +x, the camera at -y. Game (x, y, z) = (x, z, -y).
@@ -779,57 +779,51 @@ def remove_namecards():
     drop_unused_slots(home)
 
 
-# The stair: up the living room's back wall from its right end to the upper floor (2.62) over the kitchen's end.
-STAIR_X = (161.62, 163.32)                 # top (left) .. foot (right)
-STAIR_Y = (0.36, 0.99)                     # its open side (the banister) .. the back wall
-STAIR_TOP = 2.62
-UPPER0 = 2.62
+# The stair: up the hall's back wall, from beside the living room's doorway (its foot) to the upper floor over the
+# front door (its top, out of the frame's top), steep, as cramped houses' are; the coats, the photograph and the
+# switch stay clear under it.
+STAIR_X = (158.3, 159.86)                  # top (left) .. foot (right)
+STAIR_Y = (0.4, 0.985)                     # its open side (the banister) .. the back wall
+STAIR_TOP = 2.62                           # the upper floor (art/dl05 UPPER[0])
 
 
 def build_stair114(coll):
-    """A steep cottage stair: closed strings, treads and risers, its underside boarded (a cupboard under, a door), a
-    banister on the open side with square balusters, a newel at the foot; it rises into the dark of the upper floor."""
+    """A steep cottage stair: treads and risers between closed strings, a banister on the open side with square
+    balusters and a newel at the foot; it rises into the dark of the upper floor (the parents' rooms)."""
     x_top, x_foot = STAIR_X
     y0, y1 = STAIR_Y
     n = 12
     rise = STAIR_TOP / n
     going = (x_foot - x_top) / n
     bm = bmesh.new()
-    WD, PNT, DK = 0, 1, 2
+    WD, PNT = 0, 1
     for k in range(n):
-        x = x_foot - going * (k + 1)                       # tread k's front edge (stepping up toward -x)
+        x = x_foot - going * (k + 1)                       # tread k's front edge (the stair climbs toward -x)
         z = rise * (k + 1)
-        uo.bx(bm, (x - 0.015, x + going), (y0 + 0.03, y1 - 0.01), (z - 0.024, z), WD, 0.004)                # the tread
-        uo.bx(bm, (x + going - 0.012, x + going), (y0 + 0.03, y1 - 0.01), (z - rise, z - 0.02), PNT, 0.0)      # the riser
-    # The strings, the open one stepping with the treads (as a plank along the slope).
-    a = Vector((x_foot + 0.06, 0, 0.0))
-    b = Vector((x_top - 0.04, 0, STAIR_TOP + 0.06))
+        uo.bx(bm, (x - 0.02, x + going), (y0 + 0.03, y1 - 0.01), (z - 0.026, z), WD, 0.004)                # the tread, its nosing
+        uo.bx(bm, (x + going - 0.014, x + going), (y0 + 0.03, y1 - 0.01), (z - rise, z - 0.024), PNT, 0.0)    # the riser
+    # The strings, planks along the slope.
+    a = Vector((x_foot + 0.04, 0, 0.0))
+    b = Vector((x_top - 0.06, 0, STAIR_TOP + 0.06))
     ang = math.atan2(b.z - a.z, a.x - b.x)
     ln = (b - a).length
-    for yy in (y0 + 0.015, y1 - 0.005):
-        Ms = Matrix.Translation(((a.x + b.x) / 2, yy, (a.z + b.z) / 2 + 0.02)) @ _ry(ang)
-        add_box(bm, (0, 0, 0), (ln, 0.03, 0.24), mat=PNT, rot=Ms)
-    # Boarded under (a cupboard), its little door.
-    zt = lambda x: (x_foot - x) * STAIR_TOP / (x_foot - x_top) - 0.2          # noqa: E731
-    xb = x_top + 0.35
-    vs = [bm.verts.new(p_) for p_ in ((x_foot - 0.02, y0 + 0.02, 0.0), (xb, y0 + 0.02, 0.0), (xb, y0 + 0.02, zt(xb)))]
-    bm.faces.new(vs[::-1]).material_index = PNT
-    uo.bx(bm, (162.3, 162.82), (y0 + 0.004, y0 + 0.016), (0.04, 0.98), DK, 0.0)                           # the cupboard's door
-    add_sphere(bm, (162.37, y0 - 0.0, 0.55), 0.016, mat=WD, seg=6)
+    for yy in (y0 + 0.018, y1 - 0.012):
+        Ms = Matrix.Translation(((a.x + b.x) / 2, yy, (a.z + b.z) / 2 + 0.03)) @ _ry(ang)
+        add_box(bm, (0, 0, 0), (ln, 0.032, 0.26), mat=PNT, rot=Ms)
     # The banister: a newel at the foot, the rail up the slope, square balusters, one to a tread.
-    uo.bx(bm, (x_foot - 0.05, x_foot + 0.04), (y0 - 0.045, y0 + 0.045), (0.0, 1.08), WD, 0.008)
-    add_sphere(bm, (x_foot - 0.005, y0, 1.12), 0.045, mat=WD, seg=8)
-    r0 = Vector((x_foot - 0.005, y0, 0.98))
-    r1 = Vector((x_top, y0, STAIR_TOP + 0.9))
-    add_cyl(bm, r0, r1, 0.025, seg=6, mat=WD)
+    uo.bx(bm, (x_foot - 0.04, x_foot + 0.05), (y0 - 0.025, y0 + 0.065), (0.0, 1.0), WD, 0.008)
+    add_sphere(bm, (x_foot + 0.005, y0 + 0.02, 1.04), 0.045, mat=WD, seg=8)
+    r0 = Vector((x_foot + 0.005, y0 + 0.02, 0.92))
+    r1 = Vector((x_top - 0.06, y0 + 0.02, STAIR_TOP + 0.95))
+    add_cyl(bm, r0, r1, 0.024, seg=6, mat=WD)
     for k in range(1, n):
         x = x_foot - going * (k + 0.5)
         z = rise * (k + 1)
-        t = (x_foot - x) / (x_foot - x_top)
+        t = (x_foot + 0.005 - x) / (x_foot + 0.005 - r1.x)
         zr = r0.z + (r1.z - r0.z) * t
-        uo.bx(bm, (x - 0.014, x + 0.014), (y0 - 0.014, y0 + 0.014), (z, zr), WD, 0.0)
-    ob = obj('C114Stair', bm, ('CrateWood', 'LivingPaint', 'DustyDark'), coll, sharp=40)
-    report(ob, "DL-11: C-114's stair up to the parents' rooms, along the living room's back wall")
+        uo.bx(bm, (x - 0.013, x + 0.013), (y0 + 0.007, y0 + 0.033), (z, zr), WD, 0.0)
+    ob = obj('C114Stair', bm, ('CrateWood', 'HomePlaster'), coll, sharp=40)
+    report(ob, "DL-11: C-114's stair up to the parents' rooms, along the hall's back wall")
 
 
 # =====================================================================================================================
