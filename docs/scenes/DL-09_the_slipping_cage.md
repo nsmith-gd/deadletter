@@ -1,8 +1,8 @@
-# DL-08 The Slipping Cage: production plan
+# DL-09 The Slipping Cage: production plan
 
 **Status:** built as a playable prototype (`game/undelivered/`), for director review; not yet timed
 **Source:** `docs/chapter1_plan.md`, scene 8; `docs/chapter1_build_spec.md`, section 6 (18 October 2026)
-**Sequence:** DL-07 → DL-08 → DL-09, with no cut on either side
+**Sequence:** DL-08 → DL-09 → DL-10, with no cut on either side
 **Duration target:** about 2:00 first time, 1:00 floor (`docs/chapter1_plan.md`)
 
 New in the Chapter 1 rework: the chapter's set piece and finale. Where this plan and the build spec differ, this
@@ -13,12 +13,12 @@ plates and the tunnel cable: see *Pass 2* at the end.
 
 | Requirement (plan and overview) | How the build meets it |
 |---|---|
-| The belt leads to the residential access shaft and an old freight cage | Beyond the top of DL-07's returns belt, three climbs of 0.6 (a hatch housing, a dead conveyor gantry, the upper landing) reach an open freight cage standing level with the landing. Across the shaft and 1.8 m lower, the lit landing leads to the residential tunnel. |
+| The belt leads to the residential access shaft and an old freight cage | Beyond the top of DL-08's returns belt, three climbs of 0.6 (a hatch housing, a dead conveyor gantry, the upper landing) reach an open freight cage standing level with the landing. Across the shaft and 1.8 m lower, the lit landing leads to the residential tunnel. |
 | Halfway, its brake gives: it shudders, then slips | He walks in and it starts down by itself. It settles with a creak, lets down gently for 0.55 m, then shudders (a lurch, a shake, its bulb flickering) and slips, faster and faster. He crouches and grips the side rails (`CageBrace`). |
 | The cage has its own pawl lever; throw it as the cage passes the lit landing | A red lever on the cage's left post. Use throws it. A rod runs from its foot to a pawl behind the back mesh, which bites a toothed rack on the shaft wall. It bites only from 0.45 above the lit landing to just below it. Then the cage eases onto the landing with a clunk, the amber lamp steadies, and he straightens (`Proud`). |
 | Too early, it rattles; too late, it slides back to the bottom | Too early, the pawl clatters on the rack and the lever springs back; he can throw it again 0.6 s later. Too late, the cage drops onto the buffers with a crash. |
 | No death; back in control at once | Nothing fades. After a crash the counterweight hauls the cage back to the top with him in it, and it starts down again 1.6 s later: about 8 s from the crash until it moves again, and about 12 s to the next window. |
-| Then the release | The antechamber, then the tunnel, the look back, the hopscotch and the balcony over the chasm city, as built for DL-07 (`DL-07_the_handbrake.md`, sections 2, 6 and 7). |
+| Then the release | The antechamber, then the tunnel, the look back, the hopscotch and the balcony over the chasm city, as built for DL-08 (`DL-08_the_handbrake.md`, sections 2, 6 and 7). |
 
 ## 2. Beats
 
@@ -31,7 +31,7 @@ plates and the tunnel cable: see *Pass 2* at the end.
 | **The bite** | 0:31 | The window is the hang and the next half second, about 1.2 s in all. Thrown in time: the ratchet, the pawl's clatter, a hard shake, and the cage settles level with the landing. |
 | **Or the buffers** | | A crash at the bottom, a heavy shake, 1.4 s of quiet, then the chain hauls it up (about 5 s). It goes again. |
 | **Off** | 0:40 | `Proud`. He walks out under the antechamber's low ceiling, past the RESIDENTIAL ACCESS sign, to the tunnel mouth. |
-| **The release** | 1:00 | The look back (`LookBack`) and the depot's pulse fading; the hopscotch; the balcony and `Awe`, with `refuge`. Then down the stair to ring C (DL-09). |
+| **The release** | 1:00 | The look back (`LookBack`) and the depot's pulse fading; the hopscotch; the balcony and `Awe`, with `refuge`. Then down the stair to ring C (DL-11). |
 
 ## 3. Layout (game x in metres; z is height)
 
@@ -39,7 +39,7 @@ plates and the tunnel cable: see *Pass 2* at the end.
 x: 85.6 belt top end (deck 1.6)   86.8-87.4 climb 1 (2.2)   87.4-88.2 climb 2 (2.8)   88.2-89.2 UPPER LANDING (3.4)
    89.2-90.8 SHAFT and CAGE (centre 90.0; lever on its left post; rack and pawl at the back right)
    90.8-94.6 LOWER LANDING and antechamber (1.6; ceiling 3.3)   92.75 sign   94.6 tunnel mouth
-   96.3 hopscotch   100.0-104.6 balcony   101.3 Awe   104.75 stair down   106.75 ring C (DL-09)
+   96.3 hopscotch   100.0-104.6 balcony   101.3 Awe   104.75 stair down   106.75 ring C (DL-11)
 ```
 
 **The cage's floor (z):**
@@ -92,7 +92,7 @@ x: 85.6 belt top end (deck 1.6)   86.8-87.4 climb 1 (2.2)   87.4-88.2 climb 2 (2
   landing together, following him between x 88.2 and 91.4. It doesn't cut or close in while the cage falls.
 - **Light:** a cool light over the upper landing; a warm amber light at the lit landing, which pulses until the pawl
   holds and then steadies. The cage's bulb flickers while the brake gives.
-- **Shots:** none in the cage. After it, DL-07's `lookback`, `hopscotch` and `vista` (the chapter's one wide shot).
+- **Shots:** none in the cage. After it, DL-08's `lookback`, `hopscotch` and `vista` (the chapter's one wide shot).
 
 ## 7. Sound and music
 
@@ -100,7 +100,7 @@ x: 85.6 belt top end (deck 1.6)   86.8-87.4 climb 1 (2.2)   87.4-88.2 climb 2 (2
   slips, a lurch at the catch; the ratchet and the pawl's clatter as it bites, and a clunk at the landing. A crash on
   the buffers; the chain hauling it back.
 - **Music:** the depot's bed plays through the cage. It stops in the tunnel, and `refuge` starts at the balcony
-  (`DL-07_the_handbrake.md`, section 7).
+  (`DL-08_the_handbrake.md`, section 7).
 
 ## 8. Checkpoints
 
@@ -113,12 +113,12 @@ x: 85.6 belt top end (deck 1.6)   86.8-87.4 climb 1 (2.2)   87.4-88.2 climb 2 (2
 | Rule | This scene |
 |---|---|
 | Arc step | Latch and hold: twist (a pawl on a moving cage, against time), and the chapter's combine. |
-| Builds on | DL-07's pawl (set it when the platform is at the landing) and DL-01's latch; DL-02's climbs. New: timing. |
+| Builds on | DL-08's pawl (set it when the platform is at the landing) and DL-01's latch; DL-02's climbs. New: timing. |
 | Wrong assumption | Throw the lever as soon as it slips, or treat the catch as a stop. Early, it rattles; the catch is the cue. |
 | Checkpoints | `cage` before the set piece. A failure needs no respawn: the cage comes back up with him in it. |
 | Linkage | Lever, rod and pawl to the rack, seen through the torn mesh; the chain over the sheave to the counterweight. |
 | Gear | Set piece (execution), then traversal and the chapter's vista. |
-| Curiosity | The hopscotch; the lit window across the chasm (both built for DL-07). |
+| Curiosity | The hopscotch; the lit window across the chasm (both built for DL-08). |
 | Tableau | The chasm city from the balcony: ring C dark and barricaded, light growing toward the upper city. |
 | Emotional shot | The city reveal (`vista`), the chapter's one wide shot. |
 
@@ -140,8 +140,8 @@ x: 85.6 belt top end (deck 1.6)   86.8-87.4 climb 1 (2.2)   87.4-88.2 climb 2 (2
 - **No respawn on failure.** The plan makes the cage floor the checkpoint. The game never fades: the cage is hauled
   back to the top and tries again.
 - **The cargo lift** (the plan's background event, furniture climbing toward the upper city) is not built.
-- **The tunnel, the look back, the hopscotch and the balcony** are labelled DL-08 by the game, as the plan has them,
-  but built with DL-07 in `art/dl04` and placed by `OFF4`, and the spec lists them under DL-09.
+- **The tunnel, the look back, the hopscotch and the balcony** are labelled DL-09 by the game, as the plan has them,
+  but built with DL-08 in `art/dl04` and placed by `OFF4`, and the spec lists them under DL-11.
 - **Fixed:** the `tunnel` checkpoint used to be set only from `goods` or `latched`, so a restart after the cage put
   him back at its top. `updateTriggers4` now also moves on from `cage`.
 
@@ -174,7 +174,7 @@ the heavier counterweight is not built.
 
 **The crash is a death:** the cage hits the buffers in its own sump (`CageSump`, water at 0.05) with a splash.
 `DeathFall`, the cut, and he is back at `cage` on the upper landing, about 1.5 s after the crash. The White is not in
-this water (the plan had the cage over DL-07's sump, and the White taking him).
+this water (the plan had the cage over DL-08's sump, and the White taking him).
 
 **The tunnel cable** (`TunnelCable` over `TunnelWet`): in the antechamber at the lit landing's level (1.6), before
 the tunnel mouth (94.6), not in the tunnel. A downed cable over a wet patch (92.85 to 94.3) arcs in two places in

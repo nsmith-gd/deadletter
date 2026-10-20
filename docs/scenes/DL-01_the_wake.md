@@ -1,7 +1,8 @@
 # DL-01 The Wake: production plan
 
-> **Renumbered 18 October 2026.** Chapter 1 now has nine scenes; the next scene is DL-02 The Sorting Hall. The
-> rework in `docs/chapter1_plan.md` and `docs/chapter1_build_spec.md` supersedes this plan where they differ.
+> **Renumbered 18 October 2026.** Chapter 1 then had nine scenes (eleven since pass 3); the next scene is DL-02
+> The Sorting Hall. The rework in `docs/chapter1_plan.md` and `docs/chapter1_build_spec.md` supersedes this plan
+> where they differ.
 
 **Status:** proposal for director review
 **Source:** Dead Letter 45 Scene Overview, scene 01 (16 October 2026)
@@ -29,7 +30,7 @@ The current model has no parcel compartment. Scene 1 depends on one, so the mode
    - The warm glow behind the window is the **parcel lamp**, the first thing the player sees.
 2. **Parcel label.** It must read at Switch handheld size inside the close framing.
    - It carries a bold child silhouette and a destination mark (room glyph and number).
-   - Proposal: one small stamp beside the mark, so the crooked tree in DL-09 can pay it off. See decision D3.
+   - Proposal: one small stamp beside the mark, so the crooked tree in DL-11 can pay it off. See decision D3.
 3. **Three indicator lamps.** The pod's three warm slits already exist. They become D-17's half of a handshake with the relay: when the relay pulses its three lamps, his three answer.
    - This marks him as depot equipment, not a saviour, which is the point of DL-03.
    - It gives DL-42's repeated relay pulse a visible echo on his body.
@@ -203,7 +204,7 @@ The world is then scaled around him.
 
 **D2 · Parcel compartment.** A front hatch with a window and lamp on the pod, as in section 2. Do his three indicator lamps answer the relay?
 
-**D3 · Tree stamp.** Show a small tree stamp on the parcel label now, so DL-09 pays it off? Or keep the tree entirely for DL-09?
+**D3 · Tree stamp.** Show a small tree stamp on the parcel label now, so DL-11 pays it off? Or keep the tree entirely for DL-11?
 
 **D4 · Eye glints.** Faint sensor glints inside the eye sockets, or keep them pure dark holes, as in the concept?
 

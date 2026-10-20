@@ -37,7 +37,7 @@ the differences.
 ```
 x: 30.6 DL-03's gate   32.1 Realise   36.6 slow walk ends   40.1 art/dl02's hall ends   41.1 empty slot, chalk flowers
    41.2 FALLEN COURIER (40.8-41.6, 0.35 behind the lane; tow loop at its head end, 41.55, 0.44 high)   41.87 where he grips it
-   43.1 racks end   44.0-45.0 BAY PLATE   44.5 cradle   46.3-46.7 BAY DOOR   46.7-47.9 service passage   47.9 scanner corridor (DL-05)
+   43.1 racks end   44.0-45.0 BAY PLATE   44.5 cradle   46.3-46.7 BAY DOOR   46.7-47.9 service passage   47.9 the Ration Hall (DL-05)
 ```
 
 **The bay door:**

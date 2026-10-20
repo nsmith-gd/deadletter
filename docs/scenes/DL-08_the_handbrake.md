@@ -1,10 +1,13 @@
-# DL-07 The Handbrake: production plan
+# DL-08 The Handbrake: production plan
 
 **Status:** built as a playable prototype (`game/undelivered/`), for director review
 **Source:** Dead Letter 45 Scene Overview, scene 04 (16 October 2026)
-**Sequence:** DL-06 → DL-07 → DL-08, with no cut on either side
+**Sequence:** DL-07 → DL-08 → DL-09, with no cut on either side
 
-> **Renumbered 18 October 2026.** Chapter 1 now has nine scenes; this was DL-04. The rework in
+> **Renumbered 20 October 2026 (pass 3).** Chapter 1 now has eleven scenes; this was DL-07. See *Pass 3* at
+> the end.
+>
+> **Renumbered 18 October 2026.** Chapter 1 then had nine scenes; this was DL-04. The rework in
 > `docs/chapter1_plan.md` and `docs/chapter1_build_spec.md` supersedes this plan where they differ.
 **Duration target:** 6 to 7 minutes. The overview gives 5; from this scene on, scenes run a touch longer.
 
@@ -27,7 +30,7 @@
 
 | Beat | Time (approx.) | What happens |
 |---|---|---|
-| **Through the residential door** | 0:00 | He walks out of the DL-05 gallery through the residential access doorway into the goods hall of Lift 2. |
+| **Through the residential door** | 0:00 | He walks out of the DL-06 gallery through the residential access doorway into the goods hall of Lift 2. |
 | **The shaft** | 0:20 | The landing ends in an open shaft. If he is left at the edge, he leans over and looks down at the platform (`PeekDown`), and the camera looks down the shaft. Across it, the far landing and the tunnel sign. |
 | **The pan** | 0:40 | A hazard-bordered pan in the floor, a dial on the head frame, a sign showing a trolley on the pan and the platform up. Standing on it, the head drum turns and the platform climbs halfway. Stepping off drops it with a crash (`Startle`). |
 | **The trolley** | 1:30 | The goods trolley is parked by the door, loaded with ballast. He grabs it and pushes it onto the pan (slow, heavy). The platform comes up out of the dark, the camera low beside it, and arrives level with the landing. The amber `AT LANDING` lamp lights. |
@@ -37,13 +40,13 @@
 | **Warning** | 3:20 | Checkpoint. The returns belt starts with the bell, the beacon and the klaxon, and the first crate comes down its chute. |
 | **The crossing** | 3:40 | 6.8 m of belt running against him at 0.32 m/s, with a crate about every 3.5 s. Low crates are hopped, tall ones climbed. |
 | **The tunnel** | 4:40 | At the tunnel mouth he looks back at the depot (`LookBack`). The relay pulse fades. A chalk hopscotch grid on the floor: he hops it (`Hopscotch`). Chalk suns, houses and stick figures on the wall at a child's height. |
-| **The refuge** | 5:30 | The tunnel's back wall opens onto a balcony over the chasm city. He stops at the rail and takes it in (`Awe`, 6.5 s): the camera cranes up and out, and `refuge` swells to its peak. Then he walks on slowly, down the stair to ring C, and into DL-09 with no cut. |
+| **The refuge** | 5:30 | The tunnel's back wall opens onto a balcony over the chasm city. He stops at the rail and takes it in (`Awe`, 6.5 s): the camera cranes up and out, and `refuge` swells to its peak. Then he walks on slowly, down the stair to ring C, and into DL-11 with no cut. |
 
 ## 3. Layout (metres along the lane; deck height 1.6 m)
 
 ```
 x: 47.5 door   48.6 goods hall   49.5 trolley   50.5-51.9 PAN   52.45 PAWL   52.8-55.3 SHAFT   57.8 belt end
-   64.6 tunnel mouth   66.4-68.2 hopscotch   70.0-74.6 balcony   71.4 awe   74.75 stair down to ring C (DL-09)
+   64.6 tunnel mouth   66.4-68.2 hopscotch   70.0-74.6 balcony   71.4 awe   74.75 stair down to ring C (DL-11)
 ```
 
 **Loads on the pan** (a fraction of what brings the platform to the landing):
@@ -62,7 +65,7 @@ x: 47.5 door   48.6 goods hall   49.5 trolley   50.5-51.9 PAN   52.45 PAWL   52.
 ## 4. New models (`art/dl04/build_dl04.py`)
 
 - **The goods hall:**
-  - The residential doorway, now open in the DL-05 wall.
+  - The residential doorway, now open in the DL-06 wall.
   - The vestibule, and the hall's walls, beams and lamps.
   - Lift 1's shaft behind, with its wrecked platform and hanging chains.
 - **The goods trolley:** a heavier flatbed with a push bar, loaded with ballast pigs strapped under a frame.
@@ -134,7 +137,7 @@ he crosses the belt, and the refuge's air (a low, slow wind with a long reverb) 
 
 - **The tags.** Are the repair tags' initials too pointed? The last two, "M.", ten years after the others stop, are a quiet hint at Mara that later scenes can pay off or ignore.
 - **The lit window.** The one lit window on ring A seeds chapter 3, "Someone Home". Should it be findable later, or only a feeling here?
-- **The chalk tree.** The chalk on the tunnel walls avoids the crooked tree that DL-09 has to establish.
+- **The chalk tree.** The chalk on the tunnel walls avoids the crooked tree that DL-11 has to establish.
 - **The pawl insert.** The click is mostly sound and a small shake. Is the 1.8 s close-up enough, or should the dog be larger, or lit?
 - **The belt.** It has no failure state. If playtests find it too gentle, a faster second half or a pair of crates close together would add bite without adding death.
 
@@ -155,6 +158,6 @@ landing (surface −0.15), and the platform rests under the water.
 - **Falling in** (below −0.2 in the shaft) is a death: he sinks with a splash, then the cut. The shaft's edges
   normally keep him out.
 
-**Checkpoints:** unchanged (`goods`, `latched`, `tunnel`; `tunnel` now also moves on from DL-08's `landing8`).
-No curiosities in this scene; the tunnel's hopscotch and the balcony's coin viewer count as DL-08 (see
-`DL-08_the_slipping_cage.md`).
+**Checkpoints:** unchanged (`goods`, `latched`, `tunnel`; `tunnel` now also moves on from DL-09's `landing8`).
+No curiosities in this scene; the tunnel's hopscotch and the balcony's coin viewer count as DL-09 (see
+`DL-09_the_slipping_cage.md`).

@@ -1,10 +1,13 @@
-# DL-05 Return to Sender: production plan
+# DL-06 Return to Sender: production plan
 
 **Status:** built as a playable prototype (`game/undelivered/`), for director review
 **Source:** Dead Letter 45 Scene Overview, scene 03 (16 October 2026); GDD v0.1 world history
-**Sequence:** DL-04 → DL-05 → DL-06, with no cut on either side
+**Sequence:** DL-05 → DL-06 → DL-07, with no cut on either side
 
-> **Renumbered 18 October 2026.** Chapter 1 now has nine scenes; this was DL-03. The rework in
+> **Renumbered 20 October 2026 (pass 3).** Chapter 1 now has eleven scenes; this was DL-05. See *Pass 3* at
+> the end.
+>
+> **Renumbered 18 October 2026.** Chapter 1 then had nine scenes; this was DL-03. The rework in
 > `docs/chapter1_plan.md` and `docs/chapter1_build_spec.md` supersedes this plan where they differ.
 **Duration target:** 2 to 3 minutes
 
@@ -44,7 +47,7 @@ DL-03 now has the same treatment. When D-17 first walks in among the couriers:
 x: 26.9 corridor  28.9 SCANNER  30.5 hatch  31.0 DOCK   32.9 STOP   34.25 POINTS   34.6 junction   36.4 pit edge
                                  |rail behind the lane (z -0.55): hatch -> dock -> junction -> tip (36.5) -> chute
                                                                      \-> points lift -> ramp -> gallery (1.6 m)
-   gallery 38.85 ... landing 39.7 ... desk 42.6 ... day board 44.6 ... residential access doorway 47.5 (on into DL-07)
+   gallery 38.85 ... landing 39.7 ... desk 42.6 ... day board 44.6 ... residential access doorway 47.5 (on into DL-08)
 ```
 
 - **Carriers:**
@@ -112,7 +115,7 @@ The dates are proposals that fit the GDD:
 
 ## 7. Open questions
 
-- **The ring C seal.** Does it need a physical seal in DL-07 or DL-09, or is the notice enough?
+- **The ring C seal.** Does it need a physical seal in DL-08 or DL-11, or is the notice enough?
 - **The day board.** Is it too explicit? It is optional to read, and the GDD's three essential conclusions don't depend on it.
 - **The ride up.** It is about 7 s with no control. Allow hopping out partway, or keep it as a short breather after the beat?
 
@@ -122,6 +125,6 @@ From `docs/chapter1_pass2_plan.md`. Game x is section 3's x + 21 (`OFF3`).
 
 - **Curiosity, the sorter's chair** (`SorterChair`, `SorterCushion`): in the scanner corridor, before the arch.
   D-17 stands at game 48.8 (section 3's 27.8) and Use plays `SitChair`: he climbs up, turns round and sits down into
-  the cushion (it fits), feet swinging, and hops down. The plan put the chair in DL-06 and the stopped clock here;
+  the cushion (it fits), feet swinging, and hops down. The plan put the chair in DL-07 and the stopped clock here;
   the build swaps them. A later curiosity: no light pool or glance.
 - **No hazards, signs of the White or checkpoint changes.**
