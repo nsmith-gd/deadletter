@@ -47,17 +47,23 @@ game).
 
 | Scene | Was (pass 2) | World x | Built by | Plan estimate | Measured |
 |---|---|---|---|---|---|
-| DL-01 The Wake | DL-01 | 0 to 12 | `art/dl01` | 2:00 | — |
-| DL-02 The Sorting Hall | DL-02 | 12 to 25 | `art/sorting_hall` | 1:45 | — |
-| DL-03 The Weight of the Job | DL-03 | 25 to 30.6 (the gate) | `art/dl02`, moved by OFF2 | 2:30 | — |
-| DL-04 The Racks | DL-04 | 30.6 to 47.9 | `art/dl02`'s racks hall, then `art/racks` | 2:30 | — |
-| DL-05 The Ration Hall | new in pass 3 | 47.9 to 59.8 | `art/pass3/build_ration_hall.py` | 2:30 | — |
-| DL-06 Return to Sender | DL-05 | 59.8 to 80.5, shared with DL-07 | `art/dl03`, moved by OFF3 | 2:45 | — |
-| DL-07 The Heap | DL-06 | the same space, then the gallery | `art/dl03`, moved by OFF3 | 2:30 | — |
-| DL-08 The Handbrake | DL-07 | 80.5 to 97.6 | `art/dl04` (belt side), moved by OFF3 | 3:00 | — |
-| DL-09 The Slipping Cage | DL-08 | 97.6 to 118.8 | `art/cage`, then `art/dl04` (tunnel side), moved by OFF4 | 2:00 | — |
-| DL-10 Up Only | new in pass 3 | 118.8 to 127.9 (ring C's level) | `art/pass3/build_up_only.py` | 2:30 | — |
-| DL-11 The Child at the Address | DL-09 | 127.9 to 170.1 | `art/dl05`, moved by OFF5 | 3:30 | — |
+| DL-01 The Wake | DL-01 | 0 to 12 | `art/dl01` | 2:00 | 1:39 |
+| DL-02 The Sorting Hall | DL-02 | 12 to 25 | `art/sorting_hall` | 1:45 | 0:52 |
+| DL-03 The Weight of the Job | DL-03 | 25 to 30.6 (the gate) | `art/dl02`, moved by OFF2 | 2:30 | 1:25 |
+| DL-04 The Racks | DL-04 | 30.6 to 47.9 | `art/dl02`'s racks hall, then `art/racks` | 2:30 | 1:15 |
+| DL-05 The Ration Hall | new in pass 3 | 47.9 to 59.8 | `art/pass3/build_ration_hall.py` | 2:30 | 0:53 |
+| DL-06 Return to Sender | DL-05 | 59.8 to 80.5, shared with DL-07 | `art/dl03`, moved by OFF3 | 2:45 | 1:28 |
+| DL-07 The Heap | DL-06 | the same space, then the gallery | `art/dl03`, moved by OFF3 | 2:30 | 2:15 |
+| DL-08 The Handbrake | DL-07 | 80.5 to 97.6 | `art/dl04` (belt side), moved by OFF3 | 3:00 | 2:06 |
+| DL-09 The Slipping Cage | DL-08 | 97.6 to 118.8 | `art/cage`, then `art/dl04` (tunnel side), moved by OFF4 | 2:00 | 2:11 |
+| DL-10 Up Only | new in pass 3 | 118.8 to 127.9 (ring C's level) | `art/pass3/build_up_only.py` | 2:30 | 1:11 |
+| DL-11 The Child at the Address | DL-09 | 127.9 to 170.1 | `art/dl05`, moved by OFF5 | 3:30 | 2:08 |
+
+Measured: the median of 20 simulated first playthroughs of pass 3 (`tools/sim`, results in
+`tools/sim/results_pass3_first_playthrough.jsonl`). The whole chapter: median 17:47 (13:01 to 20:51), plus 0:20 of
+opening; 0.8 deaths a run on average; 6.2 of 12 curiosities found. The floor (the simulated player with no hesitation
+or mistakes, `results_pass3_mechanical.jsonl`) is 7:13. Pass 2's nine scenes measured 15:08 by the same method, and the
+director played them in 16:57.
 
 The lore dressing across scenes 1 to 9, the cage's readability pieces and the interactables' new materials are
 `art/pass3/build_lore.py`'s. The estimates are first-time play from `docs/chapter1_plan.md` and

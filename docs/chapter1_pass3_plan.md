@@ -183,5 +183,9 @@ DL-07 The Heap, and its DL-08 is DL-09 The Slipping Cage.
   DL-06's sorting floor; EVERYONE UP again by the residential door at the end of DL-07; the stove camp is on DL-08's far
   landing and Lift 1's RELOCATION timetable (LAST ringed) beside its belt; a pram wheel and a bundle at DL-09's lit
   landing.
-- **Not yet done:** pass 3's simulated timings (the new scenes' estimates stay 2:30 each), and idle look hints for
-  DL-05 and DL-10.
+- **Measured:** 20 simulated first playthroughs: median 17:47 (13:01 to 20:51), 0.8 deaths a run. By scene (medians):
+  DL-01 1:39, DL-02 0:52, DL-03 1:25, DL-04 1:15, DL-05 0:53, DL-06 1:28, DL-07 2:15, DL-08 2:06, DL-09 2:11,
+  DL-10 1:11, DL-11 2:08. The floor (no hesitation or mistakes) is 7:13. The simulated player knows the two new
+  puzzles' answers after one wrong try, so real first plays of DL-05 and DL-10 will run longer.
+- **Hints:** idle looks and assist prompts point to the drum, then the winch (DL-05); the suitcase, the car, the crank,
+  then the counterweight's UP (DL-10).
