@@ -122,3 +122,21 @@ From `docs/chapter1_pass2_plan.md`. Game x is section 3's x + 13 (`OFF2`).
   13.35), and `DragMarks`, wet drag marks from it across the weight room and back (game 25.7 to 28.0). Set dressing
   only: the plan's sound behind the wall is not built.
 - **No hazards, curiosities or checkpoint changes.**
+
+## Pass 3 (built 20 October 2026)
+
+From `docs/chapter1_pass3_plan.md`. Positions are game x.
+
+- **Use without red** (`docs/direction.md`): the sorting weight's bail is bare worn iron (`WornIron`), the trolley's
+  push bar worn steel (`HandledSteel`), and the gate's gauge needle black enamel on its cream dial.
+- **Lore** (`art/pass3/build_lore.py`):
+
+| Where | What it says | What it means |
+|---|---|---|
+| Across the weighing room's wall (27.75), `LoreStencilKeep` | WE KEEP YOU ALIVE, stencilled high | What the labour grades were told, or told themselves. |
+| Beside it (28.2), `LoreProtest` | WHO CARRIES WHOM?: a sorter holding the domes of the upper city up on his back; half torn down, its flap hanging (`LoreProtestFlap`) | Someone asked the question, and someone tore it down. |
+| By the doorway (25.95), `LorePatch03` | A plate bolted over a burnt hole, soot up the wall above it (`LoreSoot03`) | Something burned here, and was patched over. |
+
+The plan put WE KEEP YOU ALIVE by the goods lift (DL-06 to DL-09); the build puts it here, where the job's weight is.
+
+- **No hazards, curiosities or checkpoint changes.**

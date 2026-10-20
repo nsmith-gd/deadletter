@@ -161,3 +161,23 @@ landing (surface −0.15), and the platform rests under the water.
 **Checkpoints:** unchanged (`goods`, `latched`, `tunnel`; `tunnel` now also moves on from DL-09's `landing8`).
 No curiosities in this scene; the tunnel's hopscotch and the balcony's coin viewer count as DL-09 (see
 `DL-09_the_slipping_cage.md`).
+
+## Pass 3 (built 20 October 2026)
+
+From `docs/chapter1_pass3_plan.md`. This was DL-07.
+
+- **Moved:** game x is now section 3's x + 33 (`OFF3`), 12 more than in *Pass 2* above: the goods hall's door at
+  80.5, the pan 83.5 to 84.9, the pawl lever 85.45, the shaft (and its sump) 85.8 to 88.3, the belt 90.7 to 97.6. The
+  tunnel, the hopscotch and the balcony belong to DL-09 and are placed by `OFF4` (now 42).
+- **The White** in the shaft's sump is scaled to fit it and kept wholly inside the water; it turns only while deep.
+- **Use without red** (`docs/direction.md`): the trolley's push bar and the pawl lever are worn steel, bright where
+  hands went (`HandledSteel`). Section 1's red pawl lever is no longer red.
+- **Lore** (`art/pass3/build_lore.py`):
+
+| Where | What it says | What it means |
+|---|---|---|
+| By the residential door he comes through (79.98), `LoreEveryoneUp` | EVERYONE UP, with an arrow | The last word on the depot's walls before the lift hall. |
+| On the far landing (89.35), `LoreStove08` | A stove with a pan, ration tins and a blanket by the broom; soot up the wall | People camped here, by the lift, waiting. |
+| Along the belt (92.5), `LoreTimetable`, with chalk tallies beside it (93.12) | RELOCATION · LIFT 1 · UP: every departure struck through in pencil; the last, R.Y. 43, ringed and crossed: LAST | The lift that took people up ran to a timetable, and the timetable ran out. Lift 1 is the one lying broken in its shaft. |
+
+- **Checkpoints:** `goods` at 81.9 and `latched` at 89.2; otherwise unchanged.

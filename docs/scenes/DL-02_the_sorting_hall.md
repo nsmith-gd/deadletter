@@ -166,3 +166,28 @@ hall's only way to fail.
 | Named mugs (`CourierShelf`, `MugD17`) | 15.2, facing right, by the tea corner | He lifts the mug marked D-17, raises it as if to drink (he can't), a small droop, and sets it back with great care, nudging the handle round (`HoldMug`). |
 
 **Checkpoints:** unchanged (`room`, `weighroom`).
+
+## Pass 3 (built 20 October 2026)
+
+From `docs/chapter1_pass3_plan.md`. Positions are game x.
+
+- **Fix, setting the box down:** setting down never refuses. If the spot in front of him isn't flat, he puts the box at
+  the nearest flat spot within reach, or at his feet. (The director had trouble here; watch for it on mobile.)
+- **Use without red** (`docs/direction.md`): the box's strap is worn webbing (`WornStrap`); the hand franker's lever
+  and `MailSlot2` are brass, polished by use (`HandledBrass`). The franking press keeps its red hazard bands: it
+  kills. The red tags on the franker and the mugs are gone; their light pools and the glance stay.
+- **The tube letter is Mara's** (`art/sorting_hall/textures_sorting_hall.py`): a six-year-old's pencil capitals to the
+  post office, "DEAR POST, MY BIRTHDAY PARCEL HASNT COME. IS D-17 LOST? LOVE MARA C-114", stamped and postmarked
+  R.Y. 42. On the back, in crayon, what it says without words: a girl crying at the door of her house beside a
+  crooked tree, and far off in the dark a little courier with a parcel and a question mark over it.
+- **Lore** (`art/pass3/build_lore.py`):
+
+| Where | What it says | What it means |
+|---|---|---|
+| The tea corner (17.86), `LoreNoticeBoard` | NIGHT SHIFT CUT and GRADE 3 TRANSFERS SUSPENDED (an up arrow, crossed out), BY ORDER · R.Y. 42 | The year the parcel was posted, the work below was cut and the way up was shut. |
+| The hanging mugs (15.89), `LoreMugNames` | The night shift's names in enamel paint: ODA, TOMAS, IVO (with a crooked tree), RUTH. D-17's mug is untouched. | IVO is Mara's father; the parcel's sender signs I.V. under the same tree. |
+| The tea corner (17.0), `LoreBedroll02` | A bedroll and a ration tin | Someone slept here. |
+
+The plan put the notices in DL-03; the build puts them on the tea corner's board, where the mugs are.
+
+- **Hazards and checkpoints:** unchanged (`room`, `weighroom`).

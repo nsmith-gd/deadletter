@@ -208,3 +208,46 @@ glances into the lens), cranes up to about 45° over the whole court for the hop
 |---|---|---|
 | Hopscotch | The chalk, 96.15, once he has played it | Use plays the long hopscotch again, with its shot. |
 | Coin viewer (`CoinViewer`, `CoinViewerHead`, `CoinViewerStep`) | 102.6 on the balcony, facing right | `LookViewer`, about 7 s. He climbs the step, pats his compartment for a coin (there isn't one), presses the plunger anyway: clunk. Up to the eyepieces, and the `viewer` shot looks through them: a 110 mm lens across the chasm to the lit upper city, swinging as he swings the viewer. He stops dead on something, and his antenna wiggles. The plan's cargo lift is not built. |
+
+## Pass 3 (built 20 October 2026)
+
+From `docs/chapter1_pass3_plan.md`, section 3: the cage made readable. This was DL-08. The director found the cage
+puzzle confusing; its two steps stay, and each is now shown before it is asked for.
+
+**Positions:** 12 m further right than in *Pass 2* above (`OFF3` 33, `OFF4` 42). The belt's top end is at 97.6, the
+upper landing 100.2 to 101.2, the shaft and cage 101.2 to 102.8, the lit landing and antechamber 102.8 to 106.6
+(the cable's arcs 105.04 to 105.44 and 105.77 to 106.17, the hatch cover between), the tunnel mouth 106.6, the
+hopscotch 108.3, the balcony 112.0 to 116.6 and the coin viewer 114.6. The balcony's deck runs on as a porch to
+118.8, where DL-10 Up Only begins; the stair down to ring C is gone.
+
+**Step 1, the counterweight** (`art/pass3/build_lore.py`):
+- **The balance gauge** (`BalanceGauge`, `BalanceNeedle`): a dial on a post at the upper landing's left end (100.3),
+  with two pans drawn on it, the counterweight's on the left and the cage's on the right. With the tray empty its
+  needle sits deep in a hatched "too light" arc. Each plate in the tray moves it half the way back, and with both it
+  stands upright: balanced. When the cage dips under him, the needle kicks.
+- **The tray lamp** (`TrayLamp`, in a caged shade on the shaft's back wall, with its own point light): the
+  counterweight's open tray hangs in plain view beside the landing, lit, and the two plates lie in its pool.
+- **The plates** can't be set down inside the cage; held near the tray, they go in.
+
+**Step 2, the pawl:**
+- **He rides braced with his claw on the pawl lever** (`CageRideLever`, 48 frames, looping) from the moment the cage
+  settles. Use plays a visible pull (`CagePullPawl`, 18 frames): braced to frame 3, the lever through its throw by
+  frame 9, a little past, held. The game drives the lever from the clip, so the pull is seen.
+- **The mark:** white chevrons on the shaft's back wall at the lit landing's level (`LoreChevrons`), and one on the
+  cage's right front post at its floor (`CageMarker`). The two line up when the floor is level with the landing.
+- **The landing lamp** blinks faster as the cage comes down toward it (over its last 1.2 m), and steadies once the
+  pawl holds.
+- **A miss** still kills: the cage hits the buffers in its sump. The respawn is at `cage` on the upper landing, with
+  the plates still in the tray.
+
+**Other fixes:**
+- **The look back is cut.** With the cage and the cable behind him, the pan back from the tunnel no longer read as
+  the depot. He walks on to the hopscotch.
+- **The coin viewer is his:** at the eyepieces, left and right swing it slowly; Use or Jump steps away. Before, it
+  panned by itself, too quickly.
+- **Use without red** (`docs/direction.md`): the cage's pawl lever is worn steel (`HandledSteel`), the plates and tray
+  bare worn iron (`WornIron`), the coin viewer brass.
+
+**Lore:** `LoreBelongings`, a pram wheel and a tied bundle left against the back wall of the lit landing (103.95).
+
+**Checkpoints:** `cage` at 100.8, `landing8` at 103.3 and `tunnel` at 107.7; otherwise unchanged.

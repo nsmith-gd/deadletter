@@ -248,3 +248,31 @@ White. Positions are game x.
   platform drops to 0.028. Stepping on it without Use still swings the needle.
 - **A find:** a soft chime, and "◆ n / 12" in the corner for a moment.
 - **Checkpoints:** unchanged.
+
+## Pass 3 (built 20 October 2026)
+
+From `docs/chapter1_pass3_plan.md`. Positions are game x.
+
+- **Fix, the shutter's counterweight:** its chain was culled by the camera (its bounds sat at the origin), so the
+  weight seemed to drop from nothing. The chain now always draws.
+- **Use without red** (`docs/direction.md`): the latch lever, the cart's push bar and the bulkhead's crank wheel are
+  worn steel, bright where hands went (`HandledSteel`). The early curiosities lose their red tags and keep their
+  light pools and the glance.
+- **The parcel label** (`art/d17/build_d17.py`), in close-up as he wakes: "for MARA · C-114 · RING C" in a parent's
+  careful hand, the postmark R.Y. 42, a BIRTHDAY / DO NOT OPEN stamp, the sender's initials I.V. with a small crooked
+  tree, and the child's crayon drawing in the corner (a girl under a crooked tree, a sun). This settles decision D3:
+  the tree is on the label from the start, and DL-11 pays it off.
+- **His route card** in the rack under the dispatch board (`art/pass2/build_curios.py`): D-17 · ROUTE C · C-114, with
+  MARA pencilled in by the night clerk.
+- **Lore** (`art/pass3/build_lore.py`):
+
+| Where | What it says | What it means |
+|---|---|---|
+| The bulkhead over the exit (10.42), `LoreGradeChart` | The refuge in four painted bands, gold at the top, the depot at the bottom in plain grey: GRADE 4 · LABOUR | The refuge was built in grades, and this is the bottom. |
+| Beside the dispatch board (1.66), `LoreRoster` | The night shift's roster, torn, every name struck through but IVO and D-17; chalk tallies under it | The shift ran down to one sorter and one courier. |
+| The hall behind the lane (4.5), `LoreCot01` | A camp cot with a blanket, a crate and ration tins | At the end, people slept at work. |
+| Right of the bulkhead door (11.45), `LorePatch01` | A plate bolted over a hole | Mended with what came to hand. |
+
+- **Loading:** every material is compiled and every texture uploaded at load, so nothing hitches when it first
+  appears.
+- **Checkpoints:** unchanged.

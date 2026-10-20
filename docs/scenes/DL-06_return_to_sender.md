@@ -128,3 +128,26 @@ From `docs/chapter1_pass2_plan.md`. Game x is section 3's x + 21 (`OFF3`).
   the cushion (it fits), feet swinging, and hops down. The plan put the chair in DL-07 and the stopped clock here;
   the build swaps them. A later curiosity: no light pool or glance.
 - **No hazards, signs of the White or checkpoint changes.**
+
+## Pass 3 (built 20 October 2026)
+
+From `docs/chapter1_pass3_plan.md`. This was DL-05; the Ration Hall (DL-05) now comes before it.
+
+- **Moved:** the stretch is 12 m further right, to make room for the Ration Hall. Game x is now section 3's x + 33
+  (`OFF3`), and the game x in *Pass 2* above is 12 more: the sorter's chair at 60.8, the scanner at 61.9. The scanner
+  corridor starts at 59.9, where the Ration Hall's kitchen runs into it.
+- **Use without red** (`docs/direction.md`): the stop lever and the points lever are worn steel, bright where hands
+  went (`HandledSteel`); the points' heel goes yellow with its stand. Section 1's "red lever" and "red, on a yellow
+  stand" are no longer red.
+- **Loading carriers:** while the belt is stopped, a carrier standing anywhere on the floor line can be loaded, not
+  only one at the dock (see DL-07).
+- **Lore** (`art/pass3/build_lore.py`), on the sorting floor:
+
+| Where | What it says | What it means |
+|---|---|---|
+| Behind the belt (65.4), `LoreBarricade` | Sorting crates and planks once stacked across the floor, pulled apart and pushed to the wall | There was a barricade here, between the depot and the way up; then it came down. |
+| By the pit (68.3), `LoreUpStencil` | UP IS FOR THEM, stencilled, rollered over in grey, and EVERYONE UP painted across it with an arrow | Two times: when the way up was for the upper grades, and when everyone went. |
+
+  The game counts the sorting floor as DL-07 once the belt runs to the exit, so both are still in view during the
+  Heap.
+- **Checkpoints:** `scanned` is now at 63.3.

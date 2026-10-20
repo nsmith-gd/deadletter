@@ -179,3 +179,26 @@ chair here; the build swaps them (section 11: the chair is now built, in DL-06).
 glance.
 
 **Checkpoints:** unchanged. `gallery` now starts with both weights in the bucket.
+
+## Pass 3 (built 20 October 2026)
+
+From `docs/chapter1_pass3_plan.md`. This was DL-06. The stretch is 12 m further right (`OFF3` 33): add 12 to every
+game x above. The weights stand at 64.6 and 69.05, the bucket hangs at 72.0, the gate is at 74.9, the clock's key at
+73.38, the gallery collapse is 78.95 to 80.05 and the residential access doorway 80.5.
+
+**Fixes from the director's notes** (the plan calls this scene DL-06):
+
+| Note | Fix |
+|---|---|
+| A weight only goes into a carrier at the dock | While the belt is stopped, he can load any carrier standing on the floor line (within 0.6 of it). With the belt running, only the one waiting at the dock. |
+| The weight tipping out isn't shown | The weight tumbles from the tipping carrier into the bucket, visibly, with a rattle and the clank. |
+| The gate opening isn't in frame | While a loaded carrier climbs, the weight tumbles, or the bucket drops and the gate rises, the framing widens to hold the gate as well. |
+
+- **The White** in the heap's sump is scaled to fit its water (smaller in the sumps) and kept wholly inside it. It
+  turns only while deep.
+- **Use without red** (`docs/direction.md`): the two sorting weights and their bails are bare worn iron (`WornIron`);
+  `MailSlot6` and the clock's winder are brass, polished by use (`HandledBrass`).
+- **Lore** (`art/pass3/build_lore.py`): `LoreEveryoneUp`, EVERYONE UP with an arrow on the gallery's return wall by
+  the residential access door (79.98), in the same hand as the sorting floor's. The barricade and UP IS FOR THEM on
+  the sorting floor are in DL-06's *Pass 3*.
+- **Checkpoints:** `landing` at 73.0 and `gallery` at 75.3; otherwise unchanged.

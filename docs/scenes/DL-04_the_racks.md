@@ -141,3 +141,17 @@ From `docs/chapter1_pass2_plan.md`. Positions are game x.
   antenna droops; a stillness, then he hops down. It is offered only once the courier is seated in the cradle, so it
   is found by walking back from the bay. A later curiosity: no light pool or glance.
 - **No hazards or checkpoint changes.**
+
+## Pass 3 (built 20 October 2026)
+
+From `docs/chapter1_pass3_plan.md`. Positions are game x.
+
+- **Fix, the bay draws the courier in:** the director found it hard to land the courier on the plate. Now, once the
+  courier is within 0.6 m of the cradle (past 43.9), D-17 lets go by himself, the cradle's arms swing out and draw it
+  in over about 1.2 s, then close on it and seat it as before. It no longer has to be placed exactly.
+- **Use without red** (`docs/direction.md`): the fallen courier's tow loop is worn webbing (`WornStrap`).
+- **Lore** (`art/pass3/build_lore.py`): `LoreMemorial`, couriers' tags hung on a wire over the empty rack with the
+  chalk flowers (41.1). Someone kept the tags of the couriers that stopped.
+- **The way on:** the service passage beyond the bay door now opens into DL-05 The Ration Hall at 47.9, not the
+  scanner corridor (which is now at 59.9, in DL-06).
+- **Checkpoints:** unchanged (`bay`, 47.1). The next, `ration`, is just inside the Ration Hall.
