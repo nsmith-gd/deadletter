@@ -56,7 +56,7 @@ sys.path.insert(0, HERE)
 import handwriting as hw  # noqa: E402
 
 FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
-FONT_C = '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf'
+FONT_C = '/usr/share/fonts/truetype/crosextra/Carlito-Bold.ttf'
 FONT_M = '/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf'
 FONT_S = '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf'
 

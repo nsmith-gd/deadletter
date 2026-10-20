@@ -247,33 +247,23 @@ window.__startBot = function (seed, opts = {}) {
     yield* walk(1, () => G.x > D.k2.RATION5.x0 + 1.0, 'through the bay door', { max: 60 });
   }
 
-  // DL-05 The Ration Hall: the drum under the hatch's shutter; wind it up, let go, crawl under.
+  // DL-05 The Ration Hall, the weigh-in: he is too light; the drum is too heavy; the drum on past the plate, then the body.
   function* rationHall() {
-    const H = D.k2.RH5;
+    const H = D.k2.RH5, push = function* (key, x, label) {
+      yield* useAt(['grabPush:' + key], x, actIs('grabPush'), label, { hop: false });
+      yield* until(() => G.hold === 'push', 10, 'grip ' + label);
+      yield* walk(1, () => !G.hold, label, { hop: false, keepHolding: true, max: 40 });
+      yield* settle();
+    };
     yield* wait(look(4.0));
-    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the shrine and the cots'); yield* walk(1, () => G.x > H.winchX - 2.4, 'among the cots'); yield* wait(look(3)); }
-    // Most wind it first, let go, and watch it slam.
-    if (mistakes && C().drum.state === 'free' && chance(0.85 - 0.3 * P.skill)) {
-      note('winds the shutter up');
-      yield* useAt(['winch5'], H.winchX, actIs('winch5'), 'winch');
-      yield* until(() => G.act && G.act.phase === 'hold', 20, 'wound');
-      yield* wait(think(2));
-      note('lets go: it slams'); move(1); yield* wait(0.25); move(0);
-      yield* until(() => C().rh.h < 0.01 && free(), 6, 'slam');
-      yield* wait(think(12));
-    } else yield* wait(think(8));
-    if (C().drum.state === 'free') {
-      yield* useAt(['grabPush:drum'], C().drum.x - H.gap, actIs('grabPush'), 'drum', { hop: false });
-      yield* until(() => G.hold === 'push', 10, 'grip drum');
-      yield* walk(1, () => C().drum.state !== 'free', 'push the drum', { hop: false, keepHolding: true, max: 30 });
-      note('drum under the shutter'); yield* settle();
-    }
-    yield* wait(think(4));
-    yield* useAt(['winch5'], H.winchX, actIs('winch5'), 'winch again');
-    yield* until(() => G.act && G.act.phase === 'hold', 20, 'wound again');
-    move(1); yield* wait(0.25); move(0);
-    yield* until(() => Math.abs(C().rh.h - H.onDrum) < 0.01 && free(), 6, 'onto the drum');
-    note('shutter on the drum'); yield* wait(look(1.5));
+    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the dead'); yield* wait(look(4)); }
+    yield* walk(1, () => G.x > H.plate[0] + 0.6, 'onto the plate', { max: 40 });
+    note('stands on the plate: too light'); yield* wait(think(6));
+    if (C().drum.x < H.drumPlate - 0.01) { yield* push('drum', C().drum.x - H.gap, 'drum onto the plate'); note('drum: OVER'); yield* wait(think(10)); }
+    if (C().drum.state === 'free') { yield* push('drum', C().drum.x - H.gap, 'drum off the plate'); note('drum past the plate'); yield* wait(think(12)); }
+    if (C().body.state === 'free') { yield* push('body', C().body.x + H.bodyGap, 'drag the body'); note('the body on the plate'); }
+    yield* until(() => C().rh.served && C().rh.h >= H.onDrum - 0.01, 10, 'served'); note('served');
+    yield* settle(); yield* wait(look(2.0));
     yield* walk(1, () => G.x > H.crawl[1] + 0.3, 'under the shutter', { max: 30 });
     yield* walk(1, () => G.region === 3, 'to the scanner corridor', { max: 60 });
   }

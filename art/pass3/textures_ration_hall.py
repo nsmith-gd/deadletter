@@ -29,7 +29,7 @@ def _font(size, kind='sans-bold'):
     from PIL import ImageFont
     paths = {'sans-bold': '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
              'sans': '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-             'cond': '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf',
+             'cond': '/usr/share/fonts/truetype/crosextra/Carlito-Bold.ttf',
              'mono': '/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf',
              'serif': '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf',
              'hand': '/usr/share/fonts/truetype/freefont/FreeSansOblique.ttf'}

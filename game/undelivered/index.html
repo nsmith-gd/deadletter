@@ -347,6 +347,7 @@ const WORN = {
   LuggageLeather: { base: [.15, .08, .045], dirt: [.06, .035, .02], chip: [.27, .18, .11], rough: .62, chipRough: .8, metal: 0, grime: 12, chipScale: 40, chipAmt: .74, dustAmt: .5 },
   LuggageCanvas: { base: [.13, .135, .105], dirt: [.07, .065, .05], chip: [.21, .2, .16], rough: .9, chipRough: .9, metal: 0, grime: 10, chipScale: 30, chipAmt: .72, dustAmt: .6 },
   FloorPaint: { base: [.42, .39, .3], dirt: [.2, .18, .13], chip: [.075, .074, .07], rough: .85, chipRough: .92, metal: 0, grime: 3, chipScale: 14, chipAmt: .58, dustAmt: .4 },
+  BoneDry: { base: [.25, .225, .175], dirt: [.11, .095, .07], chip: [.33, .31, .26], rough: .88, chipRough: .9, metal: 0, grime: 10, chipScale: 40, chipAmt: .7 },
   CoatWool: { base: [.035, .034, .036], dirt: [.03, .026, .02], chip: [.07, .066, .06], rough: .95, chipRough: .95, metal: 0, grime: 8, chipScale: 30, chipAmt: .75, dust: [.06, .058, .052], dustAmt: .2 },
   ToyPatch: { base: [.42, .30, .08], dirt: [.20, .14, .05], chip: [.30, .32, .40], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
 };
@@ -377,7 +378,7 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   FallenLamp: [.85, .3, .08, 0], SeatedLamp: [.85, .3, .08, 0], SortLampBulb: [1, .85, .6, 6], TubeLamp: [.8, .9, 1, 2.5], GantryLamp: [1, .78, .5, 8], SlotLamp9: [1, .62, .22, 0], SlotLamp2: [1, .62, .22, 0], SlotLamp6: [1, .62, .22, 0],
   LandingAmber: [1, .62, .18, 0], StopStripe: [1, .55, .15, 0], CageBulb: [1, .86, .62, 0],
   TrayLamp: [1, .78, .45, 4], LiftUpLampGlow: [1, .58, .18, 0], ServiceUpLampGlow: [1, .58, .18, 0], LobbyBulb: [1, .84, .6, 0],
-  CarLamp: [1, .9, .75, 0], CrankLamp: [1, .86, .64, 0], ShaftSky: [.62, .74, .9, .6],
+  CarLamp: [1, .9, .75, 0], DispatchLineLamp: [1, .62, .26, 4], CarPlateLamp0: [.72, .92, 1, 0], CarPlateLamp1: [.72, .92, 1, 0], CarPlateLamp2: [.72, .92, 1, 0], CrankLamp: [1, .86, .64, 0], ShaftSky: [.62, .74, .9, .6],
   RationLamp: [.86, .95, .84, 3], RationCandle: [1, .62, .25, 4],
   RingLamp: [1, .78, .5, 0], RingLampRed: [1, .18, .1, 0], HomeLight: [1, .72, .4, 0], SkyPanel: [.7, .8, .9, 0] };
 
@@ -1282,7 +1283,7 @@ function nearUse() {
   return null;
 }
 function beginUse(kind) {
-  if (kind.includes(':') || ['setdownItem', 'loadCarrier', 'loadTray', 'bell9', 'junction9', 'winch5', 'loadCar', 'up10', 'crank10', 'ride10'].includes(kind)) { beginCh1(kind); return; }
+  if (kind.includes(':') || ['setdownItem', 'loadCarrier', 'loadTray', 'bell9', 'junction9', 'loadCar', 'up10', 'crank10', 'ride10'].includes(kind)) { beginCh1(kind); return; }
   if (kind === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
   game.vx = 0;
   if (kind === 'setdown') { beginSetDown(); return; }
@@ -2833,11 +2834,13 @@ const beltCarry4 = () => (game.region === 4 && game.grounded && beltRunning4() &
 // ---------------------------------------------------------------------------
 const REGION5_X = OFF5 + 73.9;                                         // pass 3: ring C's level starts under the counterweight's shaft
 const RATION5 = { x0: OFF2 + 34.9, x1: OFF3 + 26.8 };                // DL-05 The Ration Hall (pass 3): world x 47.9 to 59.8
-// Its puzzle: the hatch's shutter drops the moment the winch is let go. Push the drum under its line, wind, let go:
-// it slams onto the drum's chime and leaves a gap to crawl under.
-const RH5 = { drum0: OFF2 + 41.6, drum1: OFF2 + 43.22, drumZ: -0.38, gap: 0.55, pushZ: -0.22,
-  shutterX: OFF2 + 43.48, foot: [OFF2 + 43.30, OFF2 + 43.50], open: 1.2, onDrum: 0.64, crawl: [OFF2 + 43.10, OFF2 + 43.70],
-  winchX: OFF2 + 40.55, strokes: 4 };
+// Its puzzle (pass 4, the weigh-in): the serving hatch opens only while the WEIGH-IN plate in front of it reads a person,
+// one ration per head. He is too light (DL-03's lesson); the drum is too heavy; the answer is one of the dead, dragged on
+// as he dragged the courier to the bay (DL-04's). The drum stands between the body and the plate: push it on, past it.
+const RH5 = { drum0: OFF2 + 40.45, drumPlate: OFF2 + 41.80, drumPark: OFF2 + 43.02, drumZ: -0.38, gap: 0.55,
+  body0: OFF2 + 39.30, bodyPlate: OFF2 + 41.80, bodyHalf: 0.83, bodyZ: -0.35, bodyGap: 0.99,
+  plate: [OFF2 + 40.85, OFF2 + 42.75], needle: { under: -28, person: -140, over: -236 },
+  shutterX: OFF2 + 43.48, foot: [OFF2 + 43.30, OFF2 + 43.50], open: 1.2, onDrum: 0.64, crawl: [OFF2 + 43.10, OFF2 + 43.70] };
 const UPONLY = { x0: OFF4 + 76.8, x1: OFF5 + 76.75 };               // DL-10 Up Only (pass 3): from the balcony's end to ring C's lane
 // Its puzzle: the relocation lift only goes up, and won't go empty. The C-114 suitcase in the car (its floor plate weighs
 // passengers; the gate closes), the service door wound open, and UP pressed from the counterweight's own panel: the car
@@ -3262,8 +3265,9 @@ function buildCh1(setRoot) {
     suitcase: grouped(setRoot, 'Suitcase114', UO.caseX), suitcaseTag: R('Suitcase114Tag'),
     liftCar: R('LiftCar'), liftPlate: R('LiftFloorPlate'), liftNeedle: R('LiftLoadNeedle'), liftDoorL: R('LiftDoorL'), liftDoorR: R('LiftDoorR'),
     liftUp: R('LiftUpButton'), serviceUp: R('ServiceUpButton'), serviceCrank: R('ServiceCrank'), serviceChain: R('ServiceChain'), serviceDoor: R('ServiceDoor'),
-    liftCw: R('LiftCounterweight'), liftSheave: R('LiftSheave'), liftIdler: R('LiftSheaveIdler'), ropeCar: R('LiftRopeCar'), ropeCw: R('LiftRopeCW'),
-    drum: grouped(setRoot, 'RationDrum', RH5.drum0), rshutter: R('RationShutter'), winch: R('RationWinch'), rlamp: R('RationLamp'),
+    uoNeedle: R('UOBalanceNeedle'), liftCw: R('LiftCounterweight'), liftSheave: R('LiftSheave'), liftIdler: R('LiftSheaveIdler'), ropeCar: R('LiftRopeCar'), ropeCw: R('LiftRopeCW'),
+    drum: grouped(setRoot, 'RationDrum', RH5.drum0), body: grouped(setRoot, 'RationBody', RH5.body0), rshutter: R('RationShutter'), rlamp: R('RationLamp'),
+    rplate: R('RationScalePlate'), rneedle: R('RationScaleNeedle'), rflag: R('RationServedFlag'), dispatchLamp: R('DispatchLineLamp'),
   };
   const c = refs.ch1;
   if (c.seated) c.seated.visible = false;
@@ -3273,10 +3277,10 @@ function buildCh1(setRoot) {
   for (const o of [c.press, c.pressWheel, c.collapse, c.bell, c.gong, c.junction, c.laneCable, c.swing, c.switchToggle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
   refs.hallLight = new THREE.PointLight(0xffd2a0, 0, 4.5, 2); refs.hallLight.position.set(OFF5 + 104.85, 1.95, -0.25); scene.add(refs.hallLight);
   if (c.suitcase && c.suitcase.children[0]) c.suitcase.children[0].position.y -= DECK;    // so the group sits at the floor it stands on
-  for (const o of [c.suitcaseTag, c.liftCar, c.liftPlate, c.liftNeedle, c.liftDoorL, c.liftDoorR, c.liftUp, c.serviceUp, c.serviceCrank, c.serviceChain,
+  for (const o of [c.uoNeedle, c.suitcaseTag, c.liftCar, c.liftPlate, c.liftNeedle, c.liftDoorL, c.liftDoorR, c.liftUp, c.serviceUp, c.serviceCrank, c.serviceChain,
     c.serviceDoor, c.liftCw, c.liftSheave, c.liftIdler, c.ropeCar, c.ropeCw]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
   for (const o of [c.door114, c.handle114, c.cord114]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
-  for (const o of [c.rshutter, c.winch]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
+  for (const o of [c.rshutter, c.rplate, c.rneedle, c.rflag]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
   for (const o of [c.armL, c.armR, c.balanceNeedle, c.bayDoor, c.gate6, c.bucket, c.pulley6, c.sheave6, c.cage, c.counterweight, c.cageLever, c.cagePawl, c.sheave, c.scaleNeedle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
   if (c.held) {
     refs.wrists[1].add(c.held); c.held.position.set(0.0137, 0, -0.1426); c.held.quaternion.set(0.6964, 0.6964, 0.1228, 0.1228);
@@ -3286,10 +3290,10 @@ function buildCh1(setRoot) {
   for (const s of SLOTS) s.obj = R(s.name);
   // Lights: the hall's work lamp and its lit gantry door; the bay, cold; the cage's landing.
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
-  refs.shLights = [P(0xffd6a6, 4.0, 5.5, 20.6, 2.6, 0.3), P(0xffc890, 5.0, 4.0, 24.7, 2.7, 0.1), P(0xd9e6ff, 1.2, 3.0, SH.tubeX, 1.6, -0.3)];
+  refs.shLights = [P(0xffd6a6, 4.0, 5.5, 20.6, 2.6, 0.3), P(0xffc890, 5.0, 4.0, 24.7, 2.7, 0.1), P(0xd9e6ff, 1.2, 3.0, SH.tubeX, 1.6, -0.3), P(0xffc890, 1.0, 2.0, 24.2, 1.05, -0.25)];   // the sorters under the gantry
   refs.bayLights = [P(0xcfe4ff, 3.2, 4.5, RK.bayX, 2.4, -0.2)];
   refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF5 + 90.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF5 + 102.75, 0.9, 0.1),
-    P(0xcfdcf0, 2.6, 5.0, OFF5 + 99.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 91.72, 0.6, -0.2)];   // the square's lamp; the bell's small amber lamp
+    P(0xcfdcf0, 2.6, 5.0, OFF5 + 99.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 91.72, 0.6, -0.2), P(0xa8bccc, 0.7, 2.4, OFF5 + 93.5, 0.9, -2.2)];   // the lair   // the square's lamp; the bell's small amber lamp
   refs.cageLights = [P(0xffb050, 3.5, 4.5, CG.shaft.x1 + 0.4, DECK + 0.9, -0.3), P(0xd6dde8, 2.0, 5.0, CG.shaft.x0 - 0.6, CG.top + 1.6, -0.4),
     P(0xffc890, 1.6, 2.4, OFF3 + 68.45, CG.top + 0.8, -0.75)];   // the counterweight tray's own lamp, so the tray and its plates read
   // The Ration Hall: the strip tube over the counter (it flickers), the shrine's candles, the vent's grey daylight, the kitchen.
@@ -3304,7 +3308,7 @@ function buildCh1(setRoot) {
   const carLamp = new THREE.PointLight(0xffe8c8, 0, 2.5, 2); carLamp.userData.base = 0.8;
   if (c.liftCar) { c.liftCar.add(carLamp); carLamp.position.set(0, 2.0, -0.05); } else scene.add(carLamp);
   refs.uoLights = [P(0xffd29a, 1.4, 5, OFF5 + 67.35, 3.98, -0.2), P(0xff9a3c, 0.35, 1.2, OFF5 + 70.07, 2.29, -0.12), P(0xff9a3c, 0.3, 1.2, OFF5 + 73.55, 2.29, 0.2),
-    P(0xffdcae, 0.6, 2.2, OFF5 + 72.48, 3.08, -0.12), carLamp, shaft];
+    P(0xffdcae, 0.6, 2.2, OFF5 + 72.48, 3.08, -0.12), carLamp, shaft, P(0xd8c8a8, 0.5, 3.0, OFF5 + 70.6, 2.6, 0.9)];   // the crush at the gate
   [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights, ...refs.rationLights, ...refs.uoLights].forEach((l) => (l.intensity = l.userData.base));
 }
 
@@ -3322,8 +3326,10 @@ function resetCh1(cp) {
     uo: { d: past(cp, 'ringc') ? UO.travel : 0, phase: past(cp, 'ringc') ? 'gone' : 'idle', t: 0, riding: false, loaded: past(cp, 'ringc'), loadedAt: -100,
       gate: past(cp, 'ringc') ? 1 : 0, door: past(cp, 'ringc') ? 1 : 0, needle: past(cp, 'ringc') ? 1 : 0, buzz: -100, pressL: 0, pressS: 0,
       case: { x: UO.caseX, home: UO.caseX, base: DECK, state: past(cp, 'ringc') ? 'car' : 'floor', blend: 0, drop: null, dropT: 1 } },
-    drum: { x: past(cp, 'hatch') ? RH5.drum1 : RH5.drum0, v: 0, state: past(cp, 'hatch') ? 'set' : 'free' },
-    rh: { h: past(cp, 'hatch') ? RH5.onDrum : 0, v: 0, wound: 0, held: false, slamAt: -100 },
+    drum: { x: past(cp, 'hatch') ? RH5.drumPark : RH5.drum0, v: 0, state: past(cp, 'hatch') ? 'set' : 'free' },
+    body: { x: past(cp, 'hatch') ? RH5.bodyPlate : RH5.body0, v: 0, state: past(cp, 'hatch') ? 'plate' : 'free' },
+    rh: { h: past(cp, 'hatch') ? RH5.onDrum : 0, served: past(cp, 'hatch'), flag: past(cp, 'hatch') ? 1 : 0 },
+    scale: { reading: past(cp, 'hatch') ? 'person' : 'empty', since: 0, needle: past(cp, 'hatch') ? RH5.needle.person : 0, nv: 0, dip: 0 },
     duct: { x: past(cp, 'bedroom') ? DIP9.x0 + DUCT9.half : DUCT9.x, v: 0, state: past(cp, 'bedroom') ? 'bridge' : 'free', drop: 0 },
     plates: CW8.plates.map((x) => ({ x, home: x, base: CG.top, state: (persist.cw >= 2 && past(cp, 'cage')) || past(cp, 'landing8') ? 'tray' : 'floor', seat: undefined, blend: 0, drop: null })),
     collapse: past(cp, 'goods') ? 2 : 0, collapseT: 0, sumpShown: false, heapShown: false, shocked: 0,
@@ -3439,8 +3445,6 @@ function nearCh1() {
     if (deck && Math.abs(x - UO.crankStand) < 0.25 && uo.door < 1) return 'crank10';
     if (deck && x > UO.cw.x0 + 0.1 && x < UO.cw.x1 && uo.d < 0.01 && uo.phase === 'idle') return 'ride10';
   }
-  // DL-05: the Ration Hall's winch, on the counter.
-  if (game.region === 2 && Math.abs(x - RH5.winchX) < 0.26 && s.rh.h < RH5.open - 0.05) return 'winch5';
   // DL-09: C-108's doorbell, and the junction box's lever by C-110.
   if (game.region === 5 && Math.abs(x - BELL9.x) < 0.25 && game.clock > s.bellUntil) return 'bell9';
   if (game.region === 5 && Math.abs(x - JUNCTION9.x) < 0.25 && !s.junction) return 'junction9';
@@ -3471,18 +3475,23 @@ function itemsHere() {
 const PUSHABLES = {
   cart: { region: 1, side: 1, state: () => game.ch1.cart, gap: CART1.gap, speed: PUSH_SPEED, min: CART1.x, max: () => PIT.x0 + CART1.half + 0.02, floor: 0, z: 0 },
   courier: { region: 2, side: -1, state: () => game.ch1.courier, gap: RK.gap, speed: 0.22, min: RK.courierX, max: () => RK.bayX, floor: 0, z: RK.courierZ },
-  drum: { region: 2, side: 1, state: () => game.ch1.drum, gap: RH5.gap, speed: 0.3, min: RH5.drum0, max: () => RH5.drum1, floor: 0, z: RH5.pushZ },
+  // The drum stops on the plate; pushed again, it goes on past it to the wall by the hatch.
+  drum: { region: 2, side: 1, state: () => game.ch1.drum, gap: RH5.gap, speed: 0.3, min: RH5.drum0, max: () => (game.ch1.drum.x < RH5.drumPlate - 0.01 ? RH5.drumPlate : RH5.drumPark), floor: 0, z: 0 },
+  // The body, dragged as the courier was; the drum blocks it until it has gone past the plate.
+  body: { region: 2, side: -1, state: () => game.ch1.body, gap: RH5.bodyGap, speed: 0.2, min: RH5.body0,
+    max: () => { const d = game.ch1.drum; return Math.min(RH5.bodyPlate, d.x > game.ch1.body.x ? d.x - 0.225 - RH5.bodyHalf - 0.02 : Infinity); },
+    avail: () => PUSHABLES.body.max() - game.ch1.body.x > 0.05, floor: 0, z: 0 },
   duct: { region: 5, side: 1, state: () => game.ch1.duct, gap: DUCT9.gap, speed: 0.45, min: DUCT9.x, max: () => DIP9.x0 + DUCT9.half, floor: 0, z: 0 },
 };
 function pushHere() {
   const out = [];
   for (const [key, p] of Object.entries(PUSHABLES)) {
-    if (p.region !== game.region || p.state().state !== 'free') continue;
+    if (p.region !== game.region || p.state().state !== 'free' || (p.avail && !p.avail())) continue;
     out.push(Object.assign(p, { key, stand: () => p.state().x - p.side * p.gap }));
   }
   return out;
 }
-const ACT_CH1 = new Set(['loadCar', 'up10', 'crank10', 'ride10', 'winch5', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
+const ACT_CH1 = new Set(['loadCar', 'up10', 'crank10', 'ride10', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
 function beginCh1(kind) {
   const [k, arg] = kind.split(':');
   game.vx = 0;
@@ -3491,7 +3500,6 @@ function beginCh1(kind) {
   if (k === 'up10') { game.act = { kind: 'up10', phase: 'approach', t: 0, standX: UO.upStand, face: 1 }; return; }
   if (k === 'ride10') { game.act = { kind: 'ride10', phase: 'approach', t: 0, standX: UO.cw.stand, face: 1 }; return; }
   if (k === 'crank10') { game.act = { kind: 'crank10', phase: 'approach', t: 0, standX: UO.crankStand, face: 1, strokes: Math.round(game.ch1.uo.door * UO.strokes), lastF: 0 }; return; }
-  if (k === 'winch5') { game.act = { kind: 'winch5', phase: 'approach', t: 0, standX: RH5.winchX, face: 1, strokes: 0, lastF: 0 }; return; }
   if (k === 'bell9') { game.act = { kind: 'bell9', phase: 'approach', t: 0, standX: BELL9.x, face: 1 }; return; }
   if (k === 'junction9') { game.act = { kind: 'junction9', phase: 'approach', t: 0, standX: JUNCTION9.x - 0.25, face: 1 }; return; }
   if (k === 'curio') {
@@ -3556,7 +3564,6 @@ function updateActCh1(a, dt) {
   const s = game.ch1;
   if (a.kind === 'death') { updateDeath(a, dt); return; }
   if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
-  if (a.kind === 'winch5') { updateWinch5(a, dt); return; }
   if (['loadCar', 'up10', 'crank10', 'ride10'].includes(a.kind)) { updateAct10(a, dt); return; }
   if (a.kind === 'bell9' || a.kind === 'junction9') {
     // He turns to the wall to press the bell (or pull the lever), then back to the lane.
@@ -3613,7 +3620,13 @@ function updateActCh1(a, dt) {
     return;
   }
   if (a.kind === 'grabPush') {
-    if (a.phase === 'approach') { if (approachCh1(a, dt, a.p.z)) { setClip('Grab', 0.12); Sound.tap(); } return; }
+    if (a.phase === 'approach') {
+      if (!approachCh1(a, dt, a.p.z)) return;
+      // The first time, he stands over the body a moment before he takes hold.
+      if (a.p.key === 'body' && !seen.has('bodyGrab')) { seen.add('bodyGrab'); a.phase = 'hesitate'; a.t = 0; setClip('Idle', 0.4); return; }
+      setClip('Grab', 0.12); Sound.tap(); return;
+    }
+    if (a.phase === 'hesitate') { if (a.t > 1.6) { a.phase = 'act'; setClip('Grab', 0.12); Sound.tap(); } return; }
     if (actions.Grab.time * FPS >= 13) { game.act = null; game.hold = 'push'; game.pushKey = a.p.key; game.holdSide = a.p.side; setClip('PushIdle', 0.15); }
     return;
   }
@@ -3671,32 +3684,6 @@ function updateActCh1(a, dt) {
     return;
   }
   if (a.kind === 'cage') { updateCageAct(a, dt); return; }
-}
-// DL-05: winding the hatch's shutter. Each stroke of the handwheel lifts it a quarter of the way; at the top he holds it
-// until he lets go (a move, Use or Jump), and it drops: onto the drum's chime if the drum is under it, else shut.
-function updateWinch5(a, dt) {
-  const rh = game.ch1.rh;
-  if (a.phase === 'approach') { if (approachCh1(a, dt)) { game.yawOverride = Math.PI; a.phase = 'turn'; } return; }
-  if (a.phase === 'turn') {
-    if (Math.abs(game.yaw - Math.PI) < 0.06) { a.phase = 'wind'; a.t = 0; a.lastF = 0; rh.held = true; setClip('Crank', 0.2); }
-    else setClip('Walk', 0.2, 0.6);
-    return;
-  }
-  const move = input.axis || ((input.right ? 1 : 0) - (input.left ? 1 : 0));
-  if (a.t > 0.5 && (input.usePressed || input.jumpPressed || Math.abs(move) > 0.3)) {
-    input.usePressed = false; input.jumpPressed = false;
-    rh.held = false; game.act = null; game.yawOverride = null; setClip('Idle', 0.25); input.lastActivity = game.clock;
-    return;
-  }
-  if (a.phase === 'wind') {
-    const f = actions.Crank.time * FPS, stroke = f <= 12 ? smooth(f / 12) : 1;
-    rh.wound = Math.min(1, (a.strokes + stroke) / RH5.strokes);
-    if (f < a.lastF) {
-      a.strokes++; Sound.ratchet(); Sound.chain(0.25); shake(0.08);
-      if (a.strokes >= RH5.strokes) { a.phase = 'hold'; rh.wound = 1; actions.Crank.paused = true; }
-    }
-    a.lastF = f;
-  }
 }
 // DL-10 Up Only: loading the car, the two UP buttons, the service crank, the ride down.
 function updateAct10(a, dt) {
@@ -3796,6 +3783,11 @@ function updateUpOnly(dt) {
   if (k.liftPlate) k.liftPlate.position.y = k.liftPlate.userData.rest.p.y - (uo.loaded ? 0.01 : 0);
   uo.needle += ((uo.loaded ? 1 : 0) - uo.needle) * Math.min(1, dt * 2.5);
   if (k.liftNeedle) { rq(k.liftNeedle); k.liftNeedle.rotateZ(-2.6 * uo.needle + (uo.phase === 'up' ? Math.sin(game.clock * 23) * 0.03 : 0)); }
+  // Echoes (pass 4): the cage's balance gauge (DL-09) reads car against counterweight, and the bay's three lamps (DL-04)
+  // light one by one on the car's plate as it feels its passenger.
+  uo.gaugeK = (uo.gaugeK || 0) + (((uo.loaded ? 1 : 0) - (uo.gaugeK || 0)) * Math.min(1, dt * 1.5));
+  if (k.uoNeedle) { rq(k.uoNeedle); k.uoNeedle.rotateZ(THREE.MathUtils.degToRad(48) * uo.gaugeK + (uo.phase === 'up' ? Math.sin(game.clock * 21) * 0.02 : 0)); }
+  for (let i = 0; i < 3; i++) glow('CarPlateLamp' + i, uo.loaded && game.clock - uo.loadedAt > 0.25 + 0.3 * i ? 5 : 0.15);
   if (k.liftDoorL) k.liftDoorL.position.x = k.liftDoorL.userData.rest.p.x + UO.gate * uo.gate;
   if (k.liftDoorR) k.liftDoorR.position.x = k.liftDoorR.userData.rest.p.x - UO.gate * uo.gate;
   if (k.liftCw) k.liftCw.position.y = k.liftCw.userData.rest.p.y - d;
@@ -3849,7 +3841,7 @@ function updateHoldCh1(dt, move) {
   const speed = Math.abs(game.vx);
   if (speed > 0.03) setClip('PushWalk', 0.2, (Math.sign(game.vx) === game.holdSide ? 1 : -1) * Math.max(0.4, speed / CLIP_SPEED2.PushWalk));
   else setClip('PushIdle', 0.25);
-  if (game.pushKey === 'courier') Sound.drag(Math.min(1, speed / 0.22)); else if (speed > 0.05 && Math.random() < dt * 0.8) Sound.squeak();
+  if (game.pushKey === 'courier' || game.pushKey === 'body') Sound.drag(Math.min(1, speed / 0.22)); else if (speed > 0.05 && Math.random() < dt * 0.8) Sound.squeak();
   stepSounds();
   // At the end of its travel: the cart and the duct drop into place; the courier is on the bay's plate.
   if (Math.abs(s.x - p.max()) < 0.005) {
@@ -3857,7 +3849,12 @@ function updateHoldCh1(dt, move) {
     if (p === PUSHABLES.cart) { s.state = 'falling'; s.drop = 0; }
     if (p === PUSHABLES.duct) { s.state = 'falling'; s.drop = 0; }
     if (p === PUSHABLES.courier) { s.state = 'cradle'; s.t = 0; Sound.drag(0); }
-    if (p === PUSHABLES.drum) { s.state = 'set'; Sound.thud(); shake(0.15); }
+    if (p === PUSHABLES.drum) { if (Math.abs(s.x - RH5.drumPark) < 0.01) s.state = 'set'; Sound.thud(); shake(0.15); }
+    if (p === PUSHABLES.body && Math.abs(s.x - RH5.bodyPlate) < 0.01) {
+      s.state = 'plate'; Sound.drag(0);
+      setTimeout(() => { if (game.region === 2 && !game.act && !game.hold) playQuirk(actions.Pat ? 'Pat' : 'Idle'); }, 1600);   // he pats the sheet
+    }
+    if (p === PUSHABLES.body) Sound.drag(0);
   }
 }
 
@@ -3983,24 +3980,35 @@ function updateCh1(dt) {
   // Back out to the lane after letting go of the courier (or the drum).
   if (game.region === 2 && !game.act && game.hold !== 'push' && game.z < 0) game.z = Math.min(0, game.z + 0.45 * dt);
   updateUpOnly(dt);
-  // DL-05: the drum, the hatch's shutter and its winch, the counter's failing strip light.
-  const dr = s.drum, rh = s.rh;
+  // DL-05: the weigh-in. The plate reads what is on it; a person, held a moment, winds the hatch up to its serving
+  // height and drops the SERVED flag, and it stays. He alone barely moves the needle; the drum slams it to OVER.
+  const dr = s.drum, bd = s.body, rh = s.rh, sc = s.scale;
   if (k.drum) k.drum.position.x = dr.x;
-  if (rh.held) { rh.h += (RH5.open * rh.wound - rh.h) * Math.min(1, dt * 8); rh.v = 0; }
-  else {
-    const rest = dr.state === 'set' ? RH5.onDrum : 0;
-    if (rh.h > rest + 0.001) { rh.v -= 11 * dt; rh.h += rh.v * dt; }
-    if (rh.h <= rest + 0.001 && rh.v < 0) {
-      const hard = rh.v < -1.2;
-      rh.h = rest; rh.v = 0;
-      if (hard) {
-        Sound.gateSlam(); Sound.clank(); shake(rest ? 0.3 : 0.45); rh.slamAt = game.clock;
-        if (!rest && !game.act && game.region === 2 && Math.abs(game.x - RH5.shutterX) < 4) setTimeout(() => { if (!game.act && !game.hold) playQuirk('Startle'); }, 250);
-      }
-    }
+  if (k.body) k.body.position.x = bd.x;
+  const drumOn = Math.abs(dr.x - RH5.drumPlate) < 0.45, bodyOn = Math.abs(bd.x - RH5.bodyPlate) < 0.13;
+  const meOn = game.region === 2 && game.y < 0.05 && game.x > RH5.plate[0] && game.x < RH5.plate[1];
+  const reading = rh.served ? 'person' : drumOn ? 'over' : bodyOn ? 'person' : meOn ? 'under' : 'empty';
+  if (reading !== sc.reading) {
+    sc.reading = reading; sc.since = game.clock;
+    if (reading === 'under') { setTimeout(() => Sound.buzzShort(), 350); }
+    if (reading === 'over') { Sound.clank(); setTimeout(() => { Sound.alarmBell(); shake(0.2); }, 300); }
+    if (reading === 'person' && !rh.served) Sound.click();
   }
+  if (reading === 'person' && !rh.served && game.clock - sc.since > 1.0) { rh.served = true; rh.servedAt = game.clock; Sound.ratchet(); Sound.chain(1.5); }
+  // The needle: a heavy, damped swing to its reading.
+  const target = { empty: 0, under: RH5.needle.under, person: RH5.needle.person, over: RH5.needle.over }[reading];
+  sc.nv += ((target - sc.needle) * 30 - sc.nv * 7) * dt; sc.needle += sc.nv * dt;
+  if (k.rneedle) { k.rneedle.quaternion.copy(k.rneedle.userData.rest.q); k.rneedle.rotateZ(THREE.MathUtils.degToRad(sc.needle)); }
+  sc.dip += ((reading === 'empty' ? 0 : 1) - sc.dip) * Math.min(1, dt * 8);
+  if (k.rplate) k.rplate.position.y = k.rplate.userData.rest.p.y - 0.01 * sc.dip;
+  // The hatch winds up to the serving height; the flag drops.
+  const serveH = rh.served ? RH5.onDrum : 0;
+  if (rh.h < serveH) { rh.h = Math.min(serveH, rh.h + 0.22 * dt); if (Math.random() < dt * 6) Sound.ratchet(); if (rh.h >= serveH) { Sound.clunk(); shake(0.15); } }
+  rh.flag = rh.served ? Math.min(1, rh.flag + dt / 0.5) : 0;
+  if (k.rflag) { k.rflag.quaternion.copy(k.rflag.userData.rest.q); k.rflag.rotateX(-Math.PI / 2 * (1 - Math.pow(1 - rh.flag, 3))); }
   if (k.rshutter) k.rshutter.position.y = k.rshutter.userData.rest.p.y + rh.h;
-  if (k.winch) { k.winch.quaternion.copy(k.winch.userData.rest.q); k.winch.rotateZ(-THREE.MathUtils.degToRad(60 * RH5.strokes) * rh.h / RH5.open); }
+  // DL-01: the dispatch board's one lit line, blinking.
+  glow('DispatchLineLamp', game.region === 1 ? (Math.sin(game.clock * 3.2) > 0 ? 4 : 0.3) : 0);
   const zone = lightZoneFor(game.lightRegion);
   if (zone !== (game.lightZone || null)) setRegionLights(game.lightRegion, zone);
   if (game.lightZone === 'ration') {
@@ -4831,9 +4839,9 @@ const HINTS = [
   // The Chapter 1 rework
   { region: 2, when: () => game.ch1.box.state === 'floor' && !game.hold && game.x > SH.slotX && game.x < SH.table.x0 && game.y < 0.05, at: () => new THREE.Vector3(game.ch1.box.x, 0.3, 0), key: 'use' },
   { region: 2, when: () => game.ch1.courier.state === 'free' && !game.hold && game.x > RK.courierX && game.x < RK.door.x0, at: () => new THREE.Vector3(game.ch1.courier.x + RK.loopOff, 0.46, RK.courierZ), key: 'use' },
-  // DL-05: the drum under the shutter's line, then the winch.
-  { region: 2, when: () => game.ch1.drum.state === 'free' && !game.hold && game.x > RATION5.x0 + 2 && game.x < RH5.drum1, at: () => new THREE.Vector3(game.ch1.drum.x - 0.2, 0.55, RH5.drumZ), key: 'use' },
-  { region: 2, when: () => game.ch1.drum.state === 'set' && game.ch1.rh.h < 0.1 && !game.act && game.x > RATION5.x0 && game.x < RH5.shutterX, at: new THREE.Vector3(RH5.winchX, 0.5, -0.2), key: 'use' },
+  // DL-05: the drum (on, then past the plate), then the body.
+  { region: 2, when: () => !game.ch1.rh.served && game.ch1.drum.state === 'free' && !game.hold && game.x > RATION5.x0 + 2 && game.x < RH5.shutterX, at: () => new THREE.Vector3(game.ch1.drum.x - 0.2, 0.55, RH5.drumZ), key: 'use' },
+  { region: 2, when: () => !game.ch1.rh.served && game.ch1.drum.state === 'set' && game.ch1.body.state === 'free' && !game.hold && game.x > RATION5.x0, at: () => new THREE.Vector3(game.ch1.body.x + 0.67, 0.28, RH5.bodyZ), key: 'use' },
   // DL-10: the suitcase, into the car, the service crank, the counterweight's own UP.
   { region: 4, when: () => game.x > UPONLY.x0 && game.ch1.uo.case.state === 'floor' && !game.hold, at: () => new THREE.Vector3(game.ch1.uo.case.x, DECK + 0.3, 0), key: 'use' },
   { region: 4, when: () => game.x > UPONLY.x0 && game.hold === 'item' && game.carry && game.carry.key === 'case', at: new THREE.Vector3(UO.car.mid, DECK + 0.4, -0.7), key: 'use' },
@@ -4969,12 +4977,12 @@ function frameFor(x) {
     // DL-04: the end of the racks, the fallen courier and the bay, and its door.
     const kbay = smooth((x - (OFF2 + 25.4)) / 1.4);
     if (kbay > 0) { cx += (THREE.MathUtils.clamp(x + lead * 0.5, RK.courierX + 0.4, RK.door.x0 - 1.4) - cx) * kbay; v = lerp3(v, fit([6.2, 1.15, 0.8], 7.0), kbay); fog += (0.05 - fog) * kbay; }
-    // DL-05 The Ration Hall: the shrine and the cots, then the counter, with the winch, the drum and the hatch in one frame.
+    // DL-05 The Ration Hall: the shrine and the cots, then the counter, with the plate and its dial, the drum, the body and the hatch in one frame.
     const krh = smooth((x - (RATION5.x0 - 0.8)) / 1.2);
     if (krh > 0) {
       const kc = smooth((x - (OFF2 + 38.6)) / 1.4);
       let tx = THREE.MathUtils.clamp(x + lead * 0.6, OFF2 + 36.6, OFF2 + 38.6);
-      tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF2 + 42.0, OFF2 + 44.6) - tx) * kc;
+      tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF2 + 40.8, OFF2 + 44.2) - tx) * kc;
       cx += (tx - cx) * krh; v = lerp3(v, fit([6.4, 1.25, 0.8], 6.8), krh); fog += (0.045 - fog) * krh;
     }
     if (ksh > 0) { cx += (shx - cx) * ksh; v = lerp3(v, shv, ksh); fog += (0.05 - fog) * ksh; }
