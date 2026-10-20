@@ -1,6 +1,6 @@
 # Chapter 1, pass 5: time, cause, and a world gone dark
 
-**Status:** in build, 20 October 2026. These are the director's notes from playing pass 4 (Version 15).
+**Status:** built, 20 October 2026 (see *Status: built* at the end). These are the director's notes from playing pass 4 (Version 15).
 
 **Liked:** the falling letters and the mail slots; dragging a body onto the weigh-in ("quite dark"); the EVERYONE UP graffiti (in moderation); the two weights watched into the bucket; the flooded architecture; the hopscotch; the neighbourhood; the label close-up at C-114.
 
@@ -49,3 +49,41 @@ Every body has a visible cause.
 - **The ending:** a real ending. He walks out of C-114 into the dark, the screen fades, then END OF CHAPTER 1 and its summary. It no longer looks like the title menu.
 - **Testing:** a scene select (DL-01 to DL-11) on the title card and the pause card.
 - **Judder riding a carrier up the ramp:** to profile.
+- **Telemetry** (asked for alongside these notes): anonymous play data for wider playtests, see section 4.
+
+## 4. Telemetry
+
+The game records what testers do so we can see where they stall, die or quit, without watching each session.
+- **Events:**
+  - scene and checkpoint changes;
+  - deaths with their cause;
+  - interactions and button prompts;
+  - 25-second idles;
+  - curiosities;
+  - puzzle signals (the weigh-in's readings, lift buzzes, cage dips, the White's warnings);
+  - pauses, reloads, scene-select starts;
+  - frame rate every 10 s;
+  - the end, and leaving.
+- **Session facts:** coarse device facts and the options. No personal data; a random id per page load.
+- **Where it goes:**
+  - to any endpoint given as `?telemetry=URL`;
+  - always kept locally, saved from the pause card (Save play log).
+- **Tools:** `tools/telemetry/collector.py` collects; `tools/telemetry/summarise.py` reports per scene.
+- **Opt-out:** players can turn it off in Options, and the title card says it's on.
+
+## Status: built
+
+Built 20 October 2026 in `game/undelivered/`, `art/pass3`, `art/pass4`, `art/dl04`, `art/dl05`, `art/d17`,
+`art/music` and `tools/telemetry`. All of sections 1 to 4 shipped as written, with these notes:
+- **The cage plates** had been invisible since pass 2: the child mesh sat at the group's height again. They now show in
+  his hands and on the pans.
+- **Signs:** the stencil font the sign textures asked for (DejaVu Sans Condensed Bold) isn't installed, so signs had
+  fallen back to a small default face. They now use Carlito Bold, and the sign textures were regenerated.
+- **The judder riding the carrier:** the carriers moved after D-17 was placed, so he trailed his carrier by one frame.
+  The gap changed with every frame's length, so the two jittered against each other on the ramp. He is now placed
+  again after the carriers move (`syncRide`).
+- **Still open:**
+  - DL-11's lair still barely reads through the White's water;
+  - from the DL-09 balcony, the white shell of the lobby block shows at the frame's edge.
+
+Measured: (pending)

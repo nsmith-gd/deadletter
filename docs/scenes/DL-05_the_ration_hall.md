@@ -237,3 +237,10 @@ close on it: for MARA · C-114 · RING C, UNDELIVERED.
 | Emotional shot | The label close-up at the drawing. |
 
 **Budget:** the shrouds are 16 draw calls, over the set pieces' 12 (`docs/chapter1_pass4_plan.md`, section 5).
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **Time:** the dead under the sheets are bones.
+- **The weigh-in body:** its sheet ripples as he drags it.

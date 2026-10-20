@@ -299,3 +299,11 @@ From `docs/chapter1_pass4_plan.md`. Positions are game x.
   - **The way on:** RING C ↓ stencilled right of the exit door (`WayRingC01`, 11.36), the first of the same stencil at
     every scene's way on.
 - **Checkpoints and hazards:** unchanged.
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **Why he wakes:** a title card comes before the wake: the lower rings dark for 76 years, the power back tonight,
+  one courier with a parcel still to deliver.
+- **The cart into the pit:** pushed on past the lip, its front wheels drop, it slides, and it settles in the pit.

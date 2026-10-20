@@ -200,3 +200,11 @@ From `docs/chapter1_pass4_plan.md`, sections 3 and 4. Positions are game x.
 straight; the shoes, the barrier, LAST CAR and the hand marks carry the crush.
 
 **Checkpoints and hazards:** unchanged. Nothing kills here.
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **The crush:** what's left by the lift is household belongings (mattresses, pots and kettles, a chair on its back, a birdcage, a clock, a child's bear, crates of crockery), not loose green
+  shapes that read as body parts.
+- **The seal:** ring C's lights come on and Up Only's go off out of view, so nothing switches off in shot.

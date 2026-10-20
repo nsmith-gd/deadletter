@@ -157,3 +157,11 @@ From `docs/chapter1_pass3_plan.md`. This was DL-05; the Ration Hall (DL-05) now 
 From `docs/chapter1_pass4_plan.md`, section 2: the same stencil marks every scene's way on, so the direction is never
 in doubt. Here, RING C ↓ on the sorting floor's back wall at its end, where the carriers go up the service
 ramp, under UP IS FOR THEM (`WayRingC06`, 68.72). Nothing else changed.
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **EVERYONE UP** appears here (its first) and on C-106's wall in ring C only.
+- **The weights into the bucket:** the wide frame keeps D-17 in shot.
+- **Riding a carrier:** he no longer judders against it on the ramp (`syncRide`).

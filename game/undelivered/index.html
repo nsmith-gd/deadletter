@@ -2405,11 +2405,16 @@ function updateAct3(a, dt) {
     }
   }
 }
-// Riding: he goes where the carrier goes, until it stops on the gallery.
+// Riding: he goes where the carrier goes, until it stops on the gallery. The carriers move after the player is
+// updated, so he is placed again once they have (without that he trails the carrier by a frame, and the gap judders).
+function syncRide() {
+  const c = game.riding;
+  if (c) { game.x = c.root.position.x; game.y = c.root.position.y + CARRIER_FLOOR; game.z = RAIL_Z; }
+}
 function updateRide(dt) {
   const c = game.riding;
   if (!c) return;
-  game.x = c.root.position.x; game.y = c.root.position.y + CARRIER_FLOOR; game.z = RAIL_Z;
+  syncRide();
   Sound.roll(game.belt.running && c.state === 'move' ? 0.7 : 0);
   if (c.state === 'unload' && !game.act) { game.act = { kind: 'alight', phase: 'turn', t: 0 }; game.yawOverride = 0; }
   // Out again, anywhere on the sorting floor (he turns as he hops).
@@ -5547,9 +5552,17 @@ const Telemetry = (() => {
     try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); gpu = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)).slice(0, 80) : ''; } catch (e) { /* no info */ }
     return { touch: touchDevice, w: innerWidth, h: innerHeight, dpr: devicePixelRatio, gpu, mobile: /Mobi|Android|iPhone|iPad/.test(navigator.userAgent), lang: navigator.language };
   }
-  function save() {
-    const blob = new Blob([JSON.stringify({ sid, build: BUILD, device: device(), events: log }, null, 1)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `dead-letter-playlog-${sid.slice(0, 8)}.json`; a.click();
+  // In the artifact viewer a page can't download directly, so the log goes through its downloads capability, which asks
+  // the viewer first. Elsewhere it's a plain download link.
+  const inViewer = !!(window.claude && window.claude.use);
+  const downloads = inViewer ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+  async function save() {
+    const filename = `dead-letter-playlog-${sid.slice(0, 8)}.json`;
+    const data = JSON.stringify({ sid, build: BUILD, device: device(), events: log }, null, 1);
+    const dl = await downloads;
+    if (dl) { try { await dl.save({ filename, data }); } catch (e) { /* declined or unavailable */ } return; }
+    if (inViewer) return;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = filename; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
   // Watching the game: scene and checkpoint changes, being stuck, and frame rate, sampled each second of play.
@@ -5569,7 +5582,7 @@ const Telemetry = (() => {
   setInterval(() => flush(), 15000);
   addEventListener('pagehide', () => { event('leave', {}); flush(true); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { event('hidden', {}); flush(true); } });
-  return { event, flush, save, tick, device, setEnabled(v) { enabled = v; }, get url() { return url; }, sid };
+  return { event, flush, save, tick, device, setEnabled(v) { enabled = v; }, get url() { return url; }, sid, canSave: downloads.then((d) => !!d || !inViewer) };
 })();
 
 // Options shared between the title and pause cards.
@@ -5596,6 +5609,7 @@ for (const n of Object.keys(OPTS)) {
 game.assist = getOpt('assist'); game.calm = getOpt('calm'); game.autorun = getOpt('autorun'); Telemetry.setEnabled(getOpt('telemetry'));
 Telemetry.event('session', { device: Telemetry.device(), opts: Object.fromEntries(Object.keys(OPTS).map((n) => [n, getOpt(n)])), referrer: document.referrer ? new URL(document.referrer).hostname : '' });
 document.getElementById('export-log').addEventListener('click', () => Telemetry.save());
+Telemetry.canSave.then((ok) => { if (!ok) document.getElementById('export-log').hidden = true; });
 syncOpts();
 
 beginBtn.addEventListener('click', () => { Telemetry.event('begin'); Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); titleEl.hidden = true; startOpening(); });
@@ -5706,6 +5720,7 @@ function step(dt) {
       }
     }
     if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); updateRingC(dt); updateHazards(dt); updateClockHands(dt); } updateSparks(dt); updateCurios(dt); updateWhite(dt); }
+    if (game.mode === 'play') syncRide();
     updateCharacter(dt, game.mode === 'play');
     placeWeight(dt);
     updateQuirkTriggers();

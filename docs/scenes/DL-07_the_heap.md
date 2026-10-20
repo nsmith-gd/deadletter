@@ -207,3 +207,9 @@ game x above. The weights stand at 64.6 and 69.05, the bucket hangs at 72.0, the
 
 From `docs/chapter1_pass4_plan.md`, section 2: the same stencil marks every scene's way on, so the direction is never
 in doubt. Here, RING C ↓ on the residential door's return wall, under EVERYONE UP (`WayRingC07`, 80.09). Nothing else changed.
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **The parcel pile** rests on the floor near the pit's rim; it no longer floats with gaps beneath.

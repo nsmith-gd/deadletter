@@ -277,3 +277,11 @@ entrance (`WayRingC09`, `WayRingC09Sheet`, 118.32).
 **Echo:** DL-10's lobby carries this scene's balance gauge (see DL-10's *Pass 4*).
 
 **Checkpoints and hazards:** unchanged.
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **The cage plates** show at last. Since pass 2 they had been drawn 3.4 m above where they sat, so he seemed to carry
+  nothing.
+- **The city** is dark: a few lamps, more ruin and overgrowth.

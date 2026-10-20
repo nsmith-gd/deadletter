@@ -284,3 +284,10 @@ From `docs/chapter1_pass4_plan.md`. Positions are game x (section x + 54).
 still runs, and running near it is still loud.
 
 **Checkpoints and hazards:** unchanged.
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **The duct into the dip:** it tips in like DL-01's cart.
+- **The ending:** he walks out of C-114 into the dark, the screen fades, and the end card reads *End of chapter one*.

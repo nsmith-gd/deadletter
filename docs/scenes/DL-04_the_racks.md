@@ -160,3 +160,10 @@ From `docs/chapter1_pass3_plan.md`. Positions are game x.
 
 From `docs/chapter1_pass4_plan.md`, section 2: the same stencil marks every scene's way on, so the direction is never
 in doubt. Here, RING C ↓ in the passage past the bay door (`WayRingC04`, 47.1). Nothing else changed.
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **The couriers reveal** waits until he walks through the gate. The camera then pans across the racks and a darker,
+  sombre `racks` cue plays. The realisation (`kin`) comes at least 10 s later.

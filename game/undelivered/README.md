@@ -1,8 +1,8 @@
 # Undelivered (DL-01 to DL-11): playable prototype
 
 A browser-playable build of chapter 1, eleven scenes played as one continuous level with no cut between them. It
-follows the chapter plan in `docs/chapter1_plan.md`, its pass 2, 3 and 4 plans (`docs/chapter1_pass2_plan.md`,
-`docs/chapter1_pass3_plan.md`, `docs/chapter1_pass4_plan.md`), the scene plans in `docs/scenes/` and the standing direction in `docs/direction.md`.
+follows the chapter plan in `docs/chapter1_plan.md`, its pass 2 to 5 plans (`docs/chapter1_pass2_plan.md`,
+`docs/chapter1_pass3_plan.md`, `docs/chapter1_pass4_plan.md`, `docs/chapter1_pass5_plan.md`), the scene plans in `docs/scenes/` and the standing direction in `docs/direction.md`.
 It uses D-17 and the set from Blender, and the gameplay code mirrors the mechanisms planned for the Unity build.
 
 ## Run locally
@@ -108,6 +108,26 @@ counterweight's shaft) replace the goods hall's and the cage's.
 (grips and handles worn bright through tired paint: `HandledSteel`, `HandledBrass`, `WornIron`, `WornStrap`), by the
 scene's light and by motion and sound. Red is kept for what the world itself painted red: the franking press's hazard
 bands. The curiosities' red tags are gone.
+
+## Pass 5: time, cause, and a world gone dark
+
+See `docs/chapter1_pass5_plan.md` for the notes and what shipped. In the game:
+- **The opening card** (`#intertitle`): four lines say why D-17 wakes (the lower rings dark for 76 years, the power
+  back tonight, one courier with a parcel still to deliver). It holds 12.5 s, or until any key or tap, then the wake
+  plays with the `wake` cue.
+- **Pushing into pits** (`tipInto`): DL-01's cart and DL-11's duct can be pushed on past a pit's lip. The front wheels
+  drop, it slides, and it settles in the pit.
+- **The couriers reveal** waits for the gate in DL-04 (`game.revealPending`). Walking through it, the camera pans
+  across the racks and the sombre `racks` cue plays; the realisation (`kin`) waits 10 s after it.
+- **The weigh-in body's sheet** ripples as it is dragged (`refs.bodyRipple`, a vertex wave on a clone of its
+  material).
+- **The light at ring C's seal:** ring C's lights come on and Up Only's go off out of view, so nothing switches in shot.
+- **The ending** (`finish()`): he walks out of C-114, the screen fades over 4 s, and the end card reads *End of
+  chapter one, Undelivered*. It no longer looks like the title.
+- **The rider** (`syncRide`): carriers move after the player is updated, so D-17 is placed again once they have. He
+  used to trail his carrier by one frame, a gap that changed with every frame's length: the judder riding up the
+  ramp.
+- **Scene select** and **telemetry**: see *Testing hooks* and *Telemetry*.
 
 ## The quest (pass 4)
 
@@ -667,7 +687,18 @@ scenes fit between them. The game uses `OFF2 = 13`, `OFF3 = 33`, `OFF4 = 42` and
 - The other new builders (`art/sorting_hall`, `art/racks`, `art/cage`, `art/pass2`) build in world coordinates
   before the gaps open; `art/pass3` builds in final world x.
 
+## Telemetry
+
+The `Telemetry` module records anonymous play events (scenes, checkpoints, deaths, prompts, idles, puzzle signals,
+frame rate) for playtests. Send them to a collector with `?telemetry=https://your-host/events`; the pause card's
+**Save play log** saves the log as JSON (in the artifact viewer, through its downloads capability, which asks the
+viewer first). Players can turn it off in Options. `tools/telemetry/README.md` covers the events, the collector and the
+summary.
+
 ## Testing hooks
+
+- **Scene select:** the title card and the pause card have "For testing, start at" with DL-01 to DL-11. Each scene
+  starts from its checkpoint, with everything before it done (`startAt(cp)`).
 
 - **`window.__dl01`:** for automated traversal checks. It exposes:
   - the game state, `play(checkpoint)` to start at any checkpoint, `scene()` (the current scene's name), `near()`

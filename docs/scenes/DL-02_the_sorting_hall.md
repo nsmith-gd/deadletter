@@ -212,3 +212,11 @@ dark remains in clothes, no faces.
   (`RemainsMat`, shared with DL-05's dead). One cold light on them (17.6).
 - **The way on:** RING C ↓ over the gantry, by the weight room's door (`WayRingC02`, 24.45).
 - **Hazards and checkpoints:** unchanged.
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **Time:** the sorters are skeletons in their aprons, 76 years dead.
+- **The cause, shown:** the air was cut. The AIR · RINGS A–B PRIORITY notice, the depot's air gauge on zero, and the
+  bulkhead to the stairs welded shut, with scratch marks at its foot.

@@ -204,3 +204,10 @@ longer runs into its slap by default. Shift or B still runs, and running is stil
 **The way on:** RING C ↓ on the goods hall's back wall at the belt's end (`WayRingC08`, 96.1).
 
 **Checkpoints and hazards:** unchanged.
+
+## Pass 5 (built 20 October 2026)
+
+See `docs/chapter1_pass5_plan.md`.
+
+- **Water glare:** the water is rougher, and the light by the fallen lift sits higher and dimmer, so it no longer
+  blinds off the water.

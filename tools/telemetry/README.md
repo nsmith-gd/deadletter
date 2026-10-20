@@ -14,7 +14,9 @@ Players can turn it off (Options: "Share anonymous play data"); the title card s
   the game script). Batches of up to 25 events are POSTed every 15 s and when the page is hidden or closed
   (`sendBeacon`), as JSON text.
 - **Always, locally:** the last events are kept in the browser, and the pause card's **Save play log** downloads them
-  as a JSON file. Testers without an endpoint can send that file.
+  as a JSON file. Testers without an endpoint can send that file. In the claude.ai artifact viewer the save goes
+  through the page's `downloads` capability, so the viewer is asked to confirm it; where saving isn't available there,
+  the button is hidden.
 
 ## Collecting
 `collector.py` is a tiny stdlib server that appends each batch to `data/YYYY-MM-DD.jsonl` and answers CORS:
