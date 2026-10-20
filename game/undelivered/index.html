@@ -1387,11 +1387,12 @@ function mantleAt(f) {
 
 function wantsRun(move) {
   const shift = input.shift;
-  // Pass 4: by water the White lives in, he goes carefully whatever the auto-run setting; Shift (or B) still runs.
+  // Pass 4: with auto-run on, he never runs by water the White lives in (Shift or B, which means "walk", stays walk).
+  // With auto-run off, Shift runs as everywhere.
   const careful = white.w && (white.w.part === 'hunt' || white.w.part === 'scare') && game.x > white.w.x0 - 2.0 && game.x < white.w.x1 + 2.0;
-  const auto = game.autorun && !careful;
-  if (input.axis) return Math.abs(input.axis) > 0.65 ? auto !== shift : false;
-  return auto !== shift;
+  if (careful && game.autorun) return false;
+  if (input.axis) return Math.abs(input.axis) > 0.65 ? game.autorun !== shift : false;
+  return game.autorun !== shift;
 }
 
 function updatePlayer(dt) {
