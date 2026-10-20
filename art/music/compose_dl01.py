@@ -283,7 +283,7 @@ def far_bell(name, vel, rng=RNG, length=11.0):
         out += amp * np.exp(-t / tau) * (np.sin(2 * np.pi * f * ratio * t + ph) + 0.6 * np.sin(2 * np.pi * (f * ratio + beat) * t + ph))
     out *= np.minimum(1, t / 0.025) ** 2       # a padded strike
     out = onepole_lp(out.astype(np.float32), 1400)
-    return (out * (0.05 * vel)).astype(np.float32)
+    return (out * (0.018 * vel)).astype(np.float32)
 
 
 STRING_BODY = {
@@ -748,7 +748,7 @@ def cue_racks():
     L = 60
     m = Mix(L)
     m.stems['bell'] = Track(L)
-    m.wet['bell'], m.gain['bell'] = 0.85, 0.7
+    m.wet['bell'], m.gain['bell'] = 0.85, 0.25
     m['air'].add(wind(L, 0.055, rng) * env_curve(int(L * SR), 6, 12), 0)
 
     # The floor: a low D pedal under everything, never broken, rising a little into the swell.
@@ -766,7 +766,7 @@ def cue_racks():
               (6, 'D3', 4), (10, 'A2', 2),                     # over B-flat
               (12, 'C3', 3), (15, 'Bb2', 1), (16, 'A2', 2),    # over G minor
               (18, 'G2', 6)]                                   # held low, the strings gathering
-    line, off = legato_line(lament, 0, 'cello', 0.44, rng, vib_cents=15, tail=1.2,
+    line, off = legato_line(lament, 0, 'cello', 0.38, rng, vib_cents=15, tail=1.2,
                             shape=[(-0.3, 0.55), (6, 0.7), (12, 0.74), (18, 0.78), (24, 1.0)])
     m['solo'].add(line, t0 + off, -0.05)
     m['bell'].add(far_bell('D3', 0.32, rng), 13.6, -0.3)
@@ -785,7 +785,7 @@ def cue_racks():
     lament2 = [(0, 'G3', 3), (3, 'F3', 1), (4, 'Eb3', 2),
                (6, 'D3', 4), (10, 'Bb2', 2),
                (12, 'A2', 9)]
-    line2, off2 = legato_line(lament2, 0, 'cello', 0.62, rng, vib_cents=18, tail=3.5,
+    line2, off2 = legato_line(lament2, 0, 'cello', 0.58, rng, vib_cents=18, tail=3.5,
                               shape=[(-0.3, 0.55), (1.6, 1.0), (4.0, 0.95), (6.0, 0.72), (10, 0.55), (12, 0.45), (16, 0.3), (21, 0.16)])
     m['solo'].add(line2, t1 + off2, -0.05)
     vl_notes = [(t, octave(n, 1), b) for t, n, b in lament2[:4]]

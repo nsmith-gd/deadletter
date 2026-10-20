@@ -5639,7 +5639,7 @@ function frame(now) {
   const sim = window.__sim;
   if (sim) {
     // Test only: a simulated player drives the game at a fixed 60 Hz, several steps per frame, rendering now and then.
-    for (let i = 0; i < sim.steps; i++) { sim.bot?.(1 / 60); step(1 / 60); }
+    for (let i = 0; i < sim.steps; i++) { sim.bot?.(1 / 60); step(1 / 60); Telemetry.tick(1 / 60); }
     if (refs.cull) updateCulling();
     if (mixer && (sim.render || ++sim.frames % 30 === 0)) { updateLightPool(); composer.render(); }
     requestAnimationFrame(frame);
