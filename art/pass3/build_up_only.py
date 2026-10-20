@@ -72,7 +72,8 @@ PLATE = (124.32, 125.58, 0.58, 1.66)  # LiftFloorPlate (x0, x1, y0, y1), flush w
 CAR_H = 2.1                           # inside height
 CAR_HITCH = 2.3                       # the ropes' hitch, above the car's floor
 CAR_RAILS = (124.12, 125.78)          # the car's guide rails (x), at CAR_C's y
-PANEL_X = 124.07                      # LiftUpButton's x; its face is 0.30 ahead of him (y 0.30)
+PANEL_X = 124.07                      # LiftUpButton's x
+BUTTON_AHEAD = 0.30                   # both UP buttons' faces stand 0.30 ahead of him (the lobby's at y 0.30)
 BUTTON_DZ = 0.56                      # the UP buttons' height above the floor he stands on
 BUTTON_RIGHT = 0.12                   # the buttons sit this far to his right (the PressButtonHigh clip's reach)
 UP_STAND_X = PANEL_X - BUTTON_RIGHT   # facing the wall (+y), his right is +x
@@ -120,7 +121,7 @@ def service_button_face():
 
 def ride_x():
     """Where he stands on the footplate to ride and to press the service UP (its face 0.30 ahead of him)."""
-    return service_button_face().x - 0.30
+    return service_button_face().x - BUTTON_AHEAD
 
 
 def ledge_x0(dl01):
@@ -1130,13 +1131,13 @@ def build_panel(U, coll):
     brass UP (LiftUpButton, pushed in along +y), its amber lamp (LiftUpLamp)."""
     bz = DECK + BUTTON_DZ
     B = Batch(U)
-    box_y = (0.302, WALL_Y)
+    box_y = (0.322, WALL_Y)
     bx(B.bm, (PANEL_X - 0.09, PANEL_X + 0.09), box_y, (bz - 0.16, bz + 0.2), B('iron'), 0.012)
-    bx(B.bm, (PANEL_X - 0.075, PANEL_X + 0.075), (0.298, 0.303), (bz - 0.145, bz + 0.185), B('depot_green'), 0.003)
-    add_cyl(B.bm, (PANEL_X, 0.3, bz), (PANEL_X, 0.29, bz), 0.05, seg=20, mat=B('brass'))          # the bezel
-    add_cyl(B.bm, (PANEL_X, 0.3, bz + 0.13), (PANEL_X, 0.285, bz + 0.13), 0.026, seg=14, mat=B('brass'))
+    bx(B.bm, (PANEL_X - 0.075, PANEL_X + 0.075), (0.318, 0.323), (bz - 0.145, bz + 0.185), B('depot_green'), 0.003)
+    add_cyl(B.bm, (PANEL_X, 0.32, bz), (PANEL_X, 0.31, bz), 0.05, seg=20, mat=B('brass'))          # the bezel
+    add_cyl(B.bm, (PANEL_X, 0.32, bz + 0.13), (PANEL_X, 0.305, bz + 0.13), 0.026, seg=14, mat=B('brass'))
     for dx, dz in ((-0.06, -0.13), (0.06, -0.13), (-0.06, 0.17), (0.06, 0.17)):
-        add_sphere(B.bm, (PANEL_X + dx, 0.296, bz + dz), 0.007, seg=6, mat=B('brass'))
+        add_sphere(B.bm, (PANEL_X + dx, 0.316, bz + dz), 0.007, seg=6, mat=B('brass'))
     sign(B, (PANEL_X, WALL_Y - 0.004, bz + 0.42), 0.26, 0.26, R_PANEL, B('atlas'))
     bx(B.bm, (PANEL_X - 0.14, PANEL_X + 0.14), (WALL_Y - 0.003, WALL_Y), (bz + 0.28, bz + 0.56), B('brass'))
     add_cyl(B.bm, (PANEL_X - 0.09, 0.32, bz + 0.1), (PANEL_X - 0.15, 0.32, bz + 0.1), 0.012, seg=6, mat=B('steel'))   # conduit
@@ -1150,11 +1151,11 @@ def build_panel(U, coll):
     B.bm.faces.new(tri).material_index = B('brass')
     B.done('LiftUpButton', coll, origin=None)
     ob = bpy.data.objects['LiftUpButton']
-    ob.location = (PANEL_X, 0.272, bz)
+    ob.location = (PANEL_X, BUTTON_AHEAD, bz)
     bm = bmesh.new()
     add_sphere(bm, (0, 0, 0), 0.02, seg=12, scale=(1, 0.6, 1))
     ob = d17.mesh_object('LiftUpLamp', bm, [U['uplamp']], coll)
-    ob.location = (PANEL_X, 0.284, bz + 0.13)
+    ob.location = (PANEL_X, 0.305, bz + 0.13)
 
 
 def build_car(U, coll):
@@ -1622,7 +1623,7 @@ def build_set(dl01, m, coll):
 # --------------------------------------------------------------------------
 
 PRESS_AT = 16                         # the frame the push goes in
-PRESS_WRIST = Vector((-0.17, -0.2, 0.53))     # the right wrist on the button (body space): the push 0.30 ahead, 0.12 right, 0.56 up
+PRESS_WRIST = Vector((-0.133, -0.159, 0.559))     # the right wrist on the button (body space): the push 0.30 ahead, 0.12 right, 0.56 up
 PRESS_AIM = Vector((0.15, -0.95, 0.2))
 PRESS_VIA = Vector((-0.26, -0.16, 0.34))
 

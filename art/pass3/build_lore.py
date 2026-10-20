@@ -403,7 +403,7 @@ def make_up_stencil(path):
     rnd = random.Random(10)
     for k in range(9):
         x = 20 + k * 112
-        rd.rectangle((x, 30 + rnd.uniform(0, 30), x + 120, 420 + rnd.uniform(0, 40)), fill=(84, 86, 82, rnd.randint(130, 175)))
+        rd.rectangle((x, 30 + rnd.uniform(0, 30), x + 120, 420 + rnd.uniform(0, 40)), fill=(84, 86, 82, rnd.randint(105, 140)))
     roller = roller.filter(ImageFilter.GaussianBlur(3))
     img.alpha_composite(roller)
     over = Image.new('RGBA', (w, h), (0, 0, 0, 0))

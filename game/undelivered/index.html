@@ -333,6 +333,11 @@ const WORN = {
   RingPlasterB: { base: [.30, .20, .17], dirt: [.15, .10, .08], chip: [.20, .16, .13], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, streak: .6 },
   RoofSlate: { base: [.045, .05, .055], dirt: [.03, .03, .03], chip: [.08, .08, .075], rough: .7, chipRough: .8, metal: 0, grime: 4, chipScale: 24, chipAmt: .72, dust: [.07, .07, .065], dustAmt: .6 },
   LivingPaint: { base: [.30, .27, .20], dirt: [.16, .13, .09], chip: [.22, .19, .14], rough: .85, chipRough: .9, metal: 0, grime: 3, chipScale: 20, chipAmt: .74, streak: .4 },
+  DrumOlive: { base: [.07, .08, .05], dirt: [.045, .038, .024], chip: [.26, .25, .22], rough: .62, chipRough: .35, metal: .35, grime: 6, chipScale: 30, chipAmt: .68, dust: [.1, .095, .08], dustAmt: .5, streak: .5 },
+  HandWorn: { base: [.46, .44, .39], dirt: [.2, .18, .15], chip: [.62, .6, .55], rough: .35, chipRough: .3, metal: .3, grime: 22, chipScale: 60, chipAmt: .72, streak: .2 },
+  CotCanvas: { base: [.16, .15, .10], dirt: [.08, .07, .045], chip: [.2, .19, .15], rough: .95, chipRough: .95, metal: 0, grime: 6, chipScale: 30, chipAmt: .78, streak: .3 },
+  CanteenGreen: { base: [.10, .13, .10], dirt: [.05, .055, .045], chip: [.16, .15, .13], rough: .85, chipRough: .9, metal: 0, grime: 2, chipScale: 14, chipAmt: .7, streak: .8 },
+  HandleBlack: { base: [.02, .02, .018], dirt: [.035, .03, .024], chip: [.55, .53, .5], rough: .5, chipRough: .22, metal: .55, grime: 12, chipScale: 45, chipAmt: .58, dust: [.06, .058, .05], dustAmt: .3 },
   ToyPatch: { base: [.42, .30, .08], dirt: [.20, .14, .05], chip: [.30, .32, .40], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
 };
 const PLAIN = { TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .003], .3, 0], Shaft: [[.004, .004, .004], .9, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
@@ -342,7 +347,7 @@ const PLAIN = { TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .00
   AtriumCut: [[.085, .078, .066], .95, 0], AtriumSheet: [[.075, .082, .08], .6, .4], AtriumRust: [[.11, .048, .025], .85, 0], AtriumMasonry: [[.15, .135, .115], .85, 0],
   SectionCap: [[.012, .011, .01], .95, 0], FloodScum: [[.09, .095, .075], .9, 0], DirtyGlass: [[.03, .035, .035], .25, .2],
   AtriumCloth: [[.2, .13, .065], .9, 0], AtriumWood: [[.085, .06, .04], .88, 0],
-  Barricade: [[.4, .06, .04], .7, 0], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
+  Barricade: [[.4, .06, .04], .7, 0], CandleWax: [[.55, .5, .4], .6, 0], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
 const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
@@ -357,10 +362,11 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   RampLamp0: [.55, 1, .65, 0], RampLamp1: [.55, 1, .65, 0], RampLamp2: [.55, 1, .65, 0], RampLamp3: [.55, 1, .65, 0], RampLamp4: [.55, 1, .65, 0], RampLamp5: [.55, 1, .65, 0],
   WindowSun: [1, .72, .38, 0], HomeLampBulb: [1, .76, .46, 0], LaneBulb: [.78, .88, 1, 0], TermLamp0: [.75, 1, .82, 0], TermLamp1: [.75, 1, .82, 0], TermLamp2: [.75, 1, .82, 0],
   AtriumWindowGlow: [1, .6, .28, 2.5], AtriumHazeLights: [.62, .76, .95, 1.5],
-  HallBulbGlow: [1, .82, .55, 0], C108BellLamp: [1, .62, .22, 3], PressLamp: [1, .16, .08, 0],
+  HallBulbGlow: [1, .82, .55, 0], C108BellLamp: [1, .55, .16, 3], PressLamp: [1, .16, .08, 0],
   C108Lamp: [1, .7, .42, 1.2], BayLight: [.72, .88, 1, 2], BayLamp0: [.72, .92, 1, 0], BayLamp1: [.72, .92, 1, 0], BayLamp2: [.72, .92, 1, 0],
   FallenLamp: [.85, .3, .08, 0], SeatedLamp: [.85, .3, .08, 0], SortLampBulb: [1, .85, .6, 6], TubeLamp: [.8, .9, 1, 2.5], GantryLamp: [1, .78, .5, 8], SlotLamp9: [1, .62, .22, 0], SlotLamp2: [1, .62, .22, 0], SlotLamp6: [1, .62, .22, 0],
   LandingAmber: [1, .62, .18, 0], StopStripe: [1, .55, .15, 0], CageBulb: [1, .86, .62, 0],
+  RationLamp: [.86, .95, .84, 3], RationCandle: [1, .62, .25, 4],
   RingLamp: [1, .78, .5, 0], RingLampRed: [1, .18, .1, 0], HomeLight: [1, .72, .4, 0], SkyPanel: [.7, .8, .9, 0] };
 
 const lin = (a) => new THREE.Color().setRGB(a[0], a[1], a[2]);
@@ -804,7 +810,7 @@ const game = {
   trolley4: { x: OFF3 + 49.5, v: 0 }, plat: { h: 0, v: 0, latched: false, lurch: false, riseStart: -100, riseSeen: false, ticked: 0 },
   pawlLever: -18, pawlHold: null, pawlDip: 0, pawlDrop: -100, pawlClickAt: -100, belt4: { state: 'idle', t: 0, next: 0 }, dl4: {}, aweStart: -100,
   // DL-05
-  desk5: { x: OFF5 + 104.6, v: 0 }, dl5: {}, marksShotAt: -100,
+  desk5: { x: OFF5 + 113.6, v: 0 }, dl5: {}, marksShotAt: -100,
   // Pass 2: danger and curiosities
   deaths: 0, eyeLevel: 1,
 };
@@ -1263,7 +1269,7 @@ function nearUse() {
   return null;
 }
 function beginUse(kind) {
-  if (kind.includes(':') || ['setdownItem', 'loadCarrier', 'loadTray', 'bell9', 'junction9'].includes(kind)) { beginCh1(kind); return; }
+  if (kind.includes(':') || ['setdownItem', 'loadCarrier', 'loadTray', 'bell9', 'junction9', 'winch5'].includes(kind)) { beginCh1(kind); return; }
   if (kind === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
   game.vx = 0;
   if (kind === 'setdown') { beginSetDown(); return; }
@@ -2007,9 +2013,11 @@ function buildDL03(setRoot) {
 }
 
 // Lights by region: the far scenes cost nothing (switched when they are out of view).
-function setRegionLights(r) {
+function setRegionLights(r, ration = false) {
+  // The Ration Hall, at region 2's far end, swaps DL-01's and the Sorting Hall's lights (long out of sight) for its own.
+  ration = ration && r === 2; game.lightRation = ration;
   [...refs.relayLights, refs.work, refs.sparkLight, refs.cordLight, refs.pool].forEach((l) => (l.visible = r === 1));
-  [refs.cableLight, refs.doorLight, refs.back, refs.search].forEach((l) => (l.visible = r <= 2));
+  [refs.cableLight, refs.doorLight, refs.back, refs.search].forEach((l) => (l.visible = r <= 2 && !ration));
   refs.crankLight.visible = r === 1;
   refs.dl02Lights.forEach((l) => (l.visible = r === 2 || (l === refs.scannerLight && r === 3)));
   refs.dl03Lights.forEach((l) => (l.visible = r === 3));
@@ -2017,7 +2025,8 @@ function setRegionLights(r) {
   refs.dl04MidLights.forEach((l) => (l.visible = r === 4));
   refs.dl04FarLights.forEach((l) => (l.visible = r === 4));
   refs.dl05Lights.forEach((l) => (l.visible = r === 5));
-  (refs.shLights || []).forEach((l) => (l.visible = r === 2));
+  (refs.shLights || []).forEach((l) => (l.visible = r === 2 && !ration));
+  (refs.rationLights || []).forEach((l) => (l.visible = ration));
   (refs.bayLights || []).forEach((l) => (l.visible = r === 2));
   (refs.cageLights || []).forEach((l) => (l.visible = r === 4));
   (refs.rcLights || []).forEach((l) => (l.visible = r === 5));
@@ -2798,11 +2807,17 @@ const beltCarry4 = () => (game.region === 4 && game.grounded && beltRunning4() &
 // ---------------------------------------------------------------------------
 const STAIR_X0 = OFF5 + 74.75, STAIR_SLOPE = 0.833, REGION5_X = OFF5 + 76.75;
 const RATION5 = { x0: OFF2 + 34.9, x1: OFF3 + 26.8 };                // DL-05 The Ration Hall (pass 3): world x 47.9 to 59.8
+// Its puzzle: the hatch's shutter drops the moment the winch is let go. Push the drum under its line, wind, let go:
+// it slams onto the drum's chime and leaves a gap to crawl under.
+const RH5 = { drum0: OFF2 + 41.6, drum1: OFF2 + 43.22, drumZ: -0.38, gap: 0.55, pushZ: -0.22,
+  shutterX: OFF2 + 43.48, foot: [OFF2 + 43.30, OFF2 + 43.50], open: 1.2, onDrum: 0.64, crawl: [OFF2 + 43.10, OFF2 + 43.70],
+  winchX: OFF2 + 40.55, strokes: 4 };
 const UPONLY = { x0: OFF4 + 76.8, x1: OFF5 + 76.75 };               // DL-10 Up Only (pass 3): from the balcony's end to ring C's lane
 const BARRICADE5 = { x0: OFF5 + 80.2, x1: OFF5 + 81.0, gap: 0.62 };
-const KNOCK5_X = OFF5 + 94.2, INNER5_X = OFF5 + 100.5, TOY5_X = OFF5 + 102.1, TERM5_X = OFF5 + 104.6, END5_X = OFF5 + 107.1;
-const DESK5 = { x: OFF5 + 104.6, half: 0.55, z: -0.62, min: OFF5 + 103.45, clear: OFF5 + 103.55 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
-const KNOCK5_Z = -0.69;                                                                     // stepped in to knock on the door jamb
+const KNOCK5_X = OFF5 + 103.26, INNER5_X = OFF5 + 109.5, TOY5_X = OFF5 + 111.1, TERM5_X = OFF5 + 113.6, END5_X = OFF5 + 116.1;
+const DESK5 = { x: OFF5 + 113.6, half: 0.55, z: -0.62, min: OFF5 + 112.45, clear: OFF5 + 112.55 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
+const C114DOOR = { x: OFF5 + 103.6075, open: THREE.MathUtils.degToRad(95), handle: THREE.MathUtils.degToRad(-35) };
+const KNOCK5_Z = 0.07;                                                                      // a step toward the camera, square to C-114's shut front door
 const WALL5_Z = -1.0;
 
 function buildDL05(setRoot) {
@@ -2819,9 +2834,10 @@ function buildDL05(setRoot) {
   // C-114's door, the painted window's warmth, a fill, the terminal.
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
   const sun = new THREE.SpotLight(0xffc98a, 0, 4, THREE.MathUtils.degToRad(48), 0.7, 1.6);
-  sun.position.set(OFF5 + 101.65, 1.5, -0.9); sun.target.position.set(OFF5 + 101.9, 0.2, -0.1); sun.userData.base = 9; scene.add(sun, sun.target);
-  refs.dl05Lights = [P(0xdfe6f2, 1.0, 3.6, OFF5 + 81.65, 1.85, -0.5), P(0xdfe6f2, 0.9, 3.4, OFF5 + 86.3, 1.85, -0.5), P(0xffd9b0, 1.5, 3.5, OFF5 + 100.28, 1.0, -0.62),
-    sun, P(0xffe2c4, 2.4, 4.5, OFF5 + 103.3, 1.8, 0.5), P(0x9fe0c8, 0, 2.5, TERM5_X, 1.0, -0.6)];
+  sun.position.set(OFF5 + 110.65, 1.5, -0.9); sun.target.position.set(OFF5 + 110.9, 0.2, -0.1); sun.userData.base = 9; scene.add(sun, sun.target);
+  refs.dl05Lights = [P(0xdfe6f2, 1.0, 3.6, OFF5 + 81.65, 1.85, -0.5), P(0xdfe6f2, 0.9, 3.4, OFF5 + 95.3, 1.85, -0.5), P(0xffd9b0, 1.5, 3.5, OFF5 + 109.28, 1.0, -0.62),
+    sun, P(0xffe2c4, 2.4, 4.5, OFF5 + 112.3, 1.8, 0.5), P(0x9fe0c8, 0, 2.5, TERM5_X, 1.0, -0.6),
+    P(0xdfe6f2, 0.8, 3.2, OFF5 + 86.8, 1.85, -0.5), P(0xdfe6f2, 0.8, 3.2, OFF5 + 90.65, 1.85, -0.5)];   // the longer street's lane bulbs
   refs.termLight = refs.dl05Lights[5];
 }
 
@@ -2957,23 +2973,43 @@ function updateAct5(a, dt) {
     }
     return;
   }
-  if (a.kind === 'knock' && (a.phase === 'in' || a.phase === 'out')) {
-    const to = a.phase === 'in' ? KNOCK5_Z : 0, dz = to - game.z;
-    game.yawOverride = Math.PI * (a.phase === 'in' ? 0.82 : 0.18);
-    if (Math.abs(dz) < 0.004) {
-      game.z = to;
-      if (a.phase === 'out') { game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; return; }
-      a.phase = 'act'; game.yawOverride = Math.PI / 2; setClip('Knock', 0.25); return;
-    }
-    game.z += Math.sign(dz) * Math.min(Math.abs(dz), 0.45 * dt);
-    setClip('Walk', 0.2, 0.45 / CLIP_SPEED.Walk);
-    return;
-  }
+  // C-114's front door, shut: a small step toward the camera, square to the door. He knocks, politely, and waits.
+  // Nobody comes. He pulls the cord the family hung from the lever for the child, the latch gives, and the door swings in.
   if (a.kind === 'knock') {
-    const f = actions.Knock.time * FPS;
-    if (f >= 14 && !a.k1) { a.k1 = true; Sound.knock(); }
-    if (f >= 20 && !a.k2) { a.k2 = true; Sound.knock(); }
-    if (f >= 47) { a.phase = 'out'; setClip('Idle', 0.3); }
+    if (a.phase === 'in' || a.phase === 'out') {
+      const to = a.phase === 'in' ? KNOCK5_Z : 0, dz = to - game.z;
+      game.yawOverride = Math.PI / 2;
+      if (Math.abs(dz) < 0.004) {
+        game.z = to;
+        if (a.phase === 'out') { game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; return; }
+        a.phase = a.quick ? 'tugStep' : 'act'; a.t = 0;
+        if (!a.quick) setClip('Knock', 0.25);
+        return;
+      }
+      game.z += Math.sign(dz) * Math.min(Math.abs(dz), 0.45 * dt);
+      setClip('Walk', 0.2, 0.45 / CLIP_SPEED.Walk);
+      return;
+    }
+    if (a.phase === 'act') {
+      const f = actions.Knock.time * FPS;
+      if (f >= 14 && !a.k1) { a.k1 = true; Sound.knock(); }
+      if (f >= 20 && !a.k2) { a.k2 = true; Sound.knock(); }
+      if (f >= 47) { a.phase = 'wait'; a.t = 0; setClip('Idle', 0.4); }
+      return;
+    }
+    if (a.phase === 'wait') { if (a.t > 1.9) { a.phase = 'tugStep'; a.t = 0; } return; }
+    if (a.phase === 'tugStep') {                                   // 3 cm on, to bring the cord's toggle into his reach
+      const tx = KNOCK5_X + 0.03, dx = tx - game.x;
+      if (Math.abs(dx) < 0.004) { game.x = tx; a.phase = 'tug'; a.t = 0; setClip('Tug', 0.2); return; }
+      game.x += Math.sign(dx) * Math.min(Math.abs(dx), 0.2 * dt); setClip('Walk', 0.2, 0.3 / CLIP_SPEED.Walk);
+      return;
+    }
+    if (a.phase === 'tug') {
+      const f = actions.Tug.time * FPS;
+      game.dl5.cord = f >= 14 && f < 26 ? Math.min(1, (f - 14) / 5) * (f < 23 ? 1 : 1 - (f - 23) / 3) : 0;
+      if (f >= 19 && !game.dl5.doorOpen) { game.dl5.doorOpen = true; game.dl5.doorT = 0; Sound.click(); Sound.creak(0.5); }
+      if (f >= 43) { game.dl5.cord = 0; a.phase = 'out'; setClip('Idle', 0.3); }
+    }
   }
 }
 // Moments that start by themselves as he reaches them.
@@ -2983,7 +3019,7 @@ function updateTriggers5() {
   if (x > BARRICADE5.x1 + 0.3 && game.checkpoint !== 'ringc' && !['bedroom', 'forwarded'].includes(game.checkpoint)) game.checkpoint = 'ringc';
   if (x > KNOCK5_X - 0.05 && !d.knocked) {
     d.knocked = true;
-    if (once('knock')) { game.vx = 0; game.facing = 1; game.act = { kind: 'knock', phase: 'in', t: 0 }; return true; }
+    if (!d.doorOpen) { game.vx = 0; game.facing = 1; game.act = { kind: 'knock', phase: 'in', t: 0, quick: !once('knock') }; return true; }
   }
   if (x > INNER5_X + 0.4 && game.checkpoint === 'ringc') game.checkpoint = 'bedroom';
   if (x > TOY5_X - 0.05 && x < TOY5_X + 0.3 && !d.toyUp && !d.toyTried && game.facing > 0) {
@@ -3010,7 +3046,9 @@ function currentShot() {
   }
   if (game.region === 5) {
     // The marks and the tree, held, the first time.
-    if (game.clock - game.marksShotAt < 3.6) return { name: 'marks', pos: V3(OFF5 + 104.55, 0.72, 0.9), look: V3(OFF5 + 104.55, 0.68, -1.0), focal: 50, ease: 1.2 };
+    if (game.clock - game.marksShotAt < 3.6) return { name: 'marks', pos: V3(OFF5 + 113.55, 0.72, 0.9), look: V3(OFF5 + 113.55, 0.68, -1.0), focal: 50, ease: 1.2 };
+    // The knock: close, from behind his right shoulder, the door and its name card in frame; held until the door is open.
+    if (a && a.kind === 'knock' && !a.quick && a.phase !== 'out') return { name: 'knock', pos: V3(KNOCK5_X - 0.76, 0.72, 1.72), look: V3(KNOCK5_X + 0.16, 0.64, 0.12), focal: 28, ease: 1.2 };
     if (a && a.kind === 'present' && a.phase === 'act') return { name: 'terminal', pos: V3(X + 0.55, Y + 1.05, 0.75), look: V3(TERM5_X, 0.9, WALL5_Z), focal: 42, ease: 1.4 };
     if (a && a.kind === 'toy' && a.phase === 'act') return { name: 'toy', pos: V3(X + 1.15, Y + 1.15, -0.1), look: V3(TOY5_X - 0.02, 0.44, -0.36), focal: 34, ease: 1.6 };
   }
@@ -3143,23 +3181,23 @@ const RAIL7 = { x0: OFF3 + 55.6, x1: OFF3 + 55.75, h: DECK + 0.8 };
 const CG = { x0: OFF3 + 64.6, climbs: [[OFF3 + 65.8, OFF3 + 66.4, 2.2], [OFF3 + 66.4, OFF3 + 67.2, 2.8], [OFF3 + 67.2, OFF3 + 68.2, 3.4]],
   shaft: { x0: OFF3 + 68.2, x1: OFF3 + 69.8 }, top: 3.4, landing: DECK, bottom: -0.1, anteCeil: 3.3, braceX: OFF3 + 69.2 };
 // DL-09: ring C's flood, and the duct that bridges it.
-const DIP9 = { x0: OFF5 + 86.1, x1: OFF5 + 87.6, floor: -0.25 };
-const DUCT9 = { x: OFF5 + 85.0, half: 0.75, h: 0.26, gap: 1.10 };          // its red grip bar is 0.775 left of its centre
+const DIP9 = { x0: OFF5 + 95.1, x1: OFF5 + 96.6, floor: -0.25 };
+const DUCT9 = { x: OFF5 + 94.0, half: 0.75, h: 0.26, gap: 1.10 };          // its red grip bar is 0.775 left of its centre
 // The letters, and the red slots they are posted in.
 const LETTERS = [
   { id: 'tube', name: 'TubeLetter', region: 2, x: SH.tubeX, start: 'cup' },
   { id: 'heap', name: 'HeapLetter', region: 3, x: OFF3 + 43.4, start: 'rail', upper: true },
-  { id: 'c110', name: 'C110Letter', region: 5, x: OFF5 + 86.9, start: 'slot' },
+  { id: 'c110', name: 'C110Letter', region: 5, x: OFF5 + 95.9, start: 'slot' },
 ];
 const SLOTS = [
   { id: 2, name: 'MailSlot2', lamp: 'SlotLamp2', region: 2, x: SH.slotX },
   { id: 6, name: 'MailSlot6', lamp: 'SlotLamp6', region: 3, x: OFF3 + 44.2, upper: true },
-  { id: 9, name: 'MailSlot9', lamp: 'SlotLamp9', region: 5, x: OFF5 + 93.75 },
+  { id: 9, name: 'MailSlot9', lamp: 'SlotLamp9', region: 5, x: OFF5 + 102.75 },
 ];
 const letterState = {};
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const FLAT_LETTER = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);   // flat on the floor, across the lane                                   // kept through respawns and checkpoints; a new game clears it
-const CP_ORDER = ['start', 'shutter', 'hall', 'door', 'room', 'weighroom', 'solved', 'bay', 'scanned', 'landing', 'gallery',
+const CP_ORDER = ['start', 'shutter', 'hall', 'door', 'room', 'weighroom', 'solved', 'bay', 'ration', 'hatch', 'scanned', 'landing', 'gallery',
   'goods', 'latched', 'cage', 'landing8', 'tunnel', 'ringc', 'bedroom', 'forwarded'];
 const past = (cp, name) => CP_ORDER.indexOf(cp) >= CP_ORDER.indexOf(name);
 
@@ -3184,9 +3222,11 @@ function buildCh1(setRoot) {
     duct: grouped(setRoot, 'PushDuct', DUCT9.x),
     press: R('PressRam'), pressWheel: R('PressFlywheel'), collapse: R('GalleryCollapse'), collapseEdges: R('GalleryCollapseEdges'),
     plates: ['CwPlate0', 'CwPlate1'].map((n, i) => grouped(setRoot, n, CW8.plates[i])),
+    door114: R('C114FrontDoor'), handle114: R('C114DoorHandle'), cord114: R('C114DoorCord'),
     facade: R('C114Facade'), switchToggle: R('CurioSwitchToggle'), bell: R('C108Bell'), gong: R('C108Gong'),
     junction: R('JunctionLever'), laneCable: R('LaneCable'), swing: R('SquareSwing'),
     held: R('HeldLetter'),
+    drum: grouped(setRoot, 'RationDrum', RH5.drum0), rshutter: R('RationShutter'), winch: R('RationWinch'), rlamp: R('RationLamp'),
   };
   const c = refs.ch1;
   if (c.seated) c.seated.visible = false;
@@ -3194,7 +3234,9 @@ function buildCh1(setRoot) {
   if (c.facade) c.facade.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.userData.noCull = true; } });
   if (c.collapseEdges) c.collapseEdges.visible = false;
   for (const o of [c.press, c.pressWheel, c.collapse, c.bell, c.gong, c.junction, c.laneCable, c.swing, c.switchToggle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
-  refs.hallLight = new THREE.PointLight(0xffd2a0, 0, 4.5, 2); refs.hallLight.position.set(OFF5 + 95.85, 1.95, -0.25); scene.add(refs.hallLight);
+  refs.hallLight = new THREE.PointLight(0xffd2a0, 0, 4.5, 2); refs.hallLight.position.set(OFF5 + 104.85, 1.95, -0.25); scene.add(refs.hallLight);
+  for (const o of [c.door114, c.handle114, c.cord114]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
+  for (const o of [c.rshutter, c.winch]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
   for (const o of [c.armL, c.armR, c.bayDoor, c.gate6, c.bucket, c.pulley6, c.sheave6, c.cage, c.counterweight, c.cageLever, c.cagePawl, c.sheave, c.scaleNeedle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
   if (c.held) {
     refs.wrists[1].add(c.held); c.held.position.set(0.0137, 0, -0.1426); c.held.quaternion.set(0.6964, 0.6964, 0.1228, 0.1228);
@@ -3206,10 +3248,15 @@ function buildCh1(setRoot) {
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
   refs.shLights = [P(0xffd6a6, 4.0, 5.5, 20.6, 2.6, 0.3), P(0xffc890, 5.0, 4.0, 24.7, 2.7, 0.1), P(0xd9e6ff, 1.2, 3.0, SH.tubeX, 1.6, -0.3)];
   refs.bayLights = [P(0xcfe4ff, 3.2, 4.5, RK.bayX, 2.4, -0.2)];
-  refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF5 + 81.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF5 + 93.75, 0.9, 0.1),
-    P(0xcfdcf0, 2.6, 5.0, OFF5 + 90.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 82.72, 0.6, -0.2)];   // the square's lamp; the bell's small amber lamp
+  refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF5 + 90.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF5 + 102.75, 0.9, 0.1),
+    P(0xcfdcf0, 2.6, 5.0, OFF5 + 99.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 91.72, 0.6, -0.2)];   // the square's lamp; the bell's small amber lamp
   refs.cageLights = [P(0xffb050, 3.5, 4.5, CG.shaft.x1 + 0.4, DECK + 0.9, -0.3), P(0xd6dde8, 2.0, 5.0, CG.shaft.x0 - 0.6, CG.top + 1.6, -0.4)];
-  [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights].forEach((l) => (l.intensity = l.userData.base));
+  // The Ration Hall: the strip tube over the counter (it flickers), the shrine's candles, the vent's grey daylight, the kitchen.
+  const counter = new THREE.SpotLight(0xdcebd2, 0, 6.5, THREE.MathUtils.degToRad(31), 0.7, 2);
+  counter.position.set(OFF2 + 41.75, 1.98, 0.1); counter.target.position.set(OFF2 + 41.75, 0, -0.25); counter.userData.base = 14; scene.add(counter, counter.target);
+  refs.rationLights = [counter, P(0xdcebd2, 2.2, 4, OFF2 + 41.4, 1.5, 0.3), P(0xffa050, 1.2, 2.2, OFF2 + 36.65, 0.6, -0.95),
+    P(0x9fb8d8, 3, 6, OFF2 + 37.8, 2.7, -2.6), P(0xcfd6c8, 1.6, 3.5, OFF2 + 45.2, 1.9, -0.4)];
+  [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights, ...refs.rationLights].forEach((l) => (l.intensity = l.userData.base));
 }
 
 // State, set from the checkpoint (resetWorld calls this).
@@ -3223,6 +3270,8 @@ function resetCh1(cp) {
     weights: HP.weights.map((x) => ({ x, home: x, base: 0, state: 'floor', blend: 0, drop: null })),
     bucket: past(cp, 'gallery') ? 2 : 0, gate6: past(cp, 'gallery') ? 1.4 : 0,
     cage: { y: past(cp, 'landing8') ? CG.landing : CG.top, v: 0, phase: past(cp, 'landing8') ? 'caught' : 'top', t: 0, thrown: false, readyAt: 0, lever: 0 },
+    drum: { x: past(cp, 'hatch') ? RH5.drum1 : RH5.drum0, v: 0, state: past(cp, 'hatch') ? 'set' : 'free' },
+    rh: { h: past(cp, 'hatch') ? RH5.onDrum : 0, v: 0, wound: 0, held: false, slamAt: -100 },
     duct: { x: past(cp, 'bedroom') ? DIP9.x0 + DUCT9.half : DUCT9.x, v: 0, state: past(cp, 'bedroom') ? 'bridge' : 'free', drop: 0 },
     plates: CW8.plates.map((x) => ({ x, home: x, base: CG.top, state: (persist.cw >= 2 && past(cp, 'cage')) || past(cp, 'landing8') ? 'tray' : 'floor', seat: undefined, blend: 0, drop: null })),
     collapse: past(cp, 'goods') ? 2 : 0, collapseT: 0, sumpShown: false, heapShown: false, shocked: 0,
@@ -3277,6 +3326,7 @@ function surfaceCh1(x, h) {
   return h;
 }
 function ceilingCh1(x) {
+  if (game.region === 2 && x > RH5.crawl[0] && x < RH5.crawl[1] && game.ch1.rh.h < 1.15) return Math.max(game.ch1.rh.h, 0.01);
   if (game.region === 4 && x > CG.shaft.x1 && x < OFF4 + 64.6) return CG.anteCeil;
   return null;
 }
@@ -3285,6 +3335,10 @@ function limitsCh1(lo, hi) {
   const s = game.ch1, x = game.x;
   if (game.region === 2 && x < RK.door.x0 && s.bayDoor < 0.55) hi = Math.min(hi, RK.door.x0 - 0.04 - HALF);
   if (game.region === 2 && x < SH.x1 + 0.4) lo = Math.max(lo, SH.x0 + 0.2);
+  if (game.region === 5 && game.dl5 && !game.dl5.doorOpen && x < C114DOOR.x) hi = Math.min(hi, C114DOOR.x - 0.05 - HALF);   // C-114's door, shut
+  if (game.region === 2 && x > RATION5.x0 && game.ch1.rh.h < RH5.onDrum - 0.02) {                   // the shutter, down
+    if (x < RH5.shutterX) hi = Math.min(hi, RH5.foot[0] - HALF - 0.01); else lo = Math.max(lo, RH5.foot[1] + HALF + 0.01);
+  }
   if (game.region === 3 && game.upper && x < HP.gateX && s.gate6 < 0.8) hi = Math.min(hi, HP.gateX - 0.06 - HALF);
   if (game.region === 3 && game.upper) lo = Math.max(lo, HP.slide[0][0] + 0.1);
   if (game.region === 3 && game.upper && s.collapse && x > GALLERY6.x1) lo = Math.max(lo, GALLERY6.x1 + 0.19);
@@ -3313,6 +3367,8 @@ function nearCh1() {
   if (game.hold) return null;
   const cu = curioHere();
   if (cu) return 'curio:' + cu.id;
+  // DL-05: the Ration Hall's winch, on the counter.
+  if (game.region === 2 && Math.abs(x - RH5.winchX) < 0.26 && s.rh.h < RH5.open - 0.05) return 'winch5';
   // DL-09: C-108's doorbell, and the junction box's lever by C-110.
   if (game.region === 5 && Math.abs(x - BELL9.x) < 0.25 && game.clock > s.bellUntil) return 'bell9';
   if (game.region === 5 && Math.abs(x - JUNCTION9.x) < 0.25 && !s.junction) return 'junction9';
@@ -3342,6 +3398,7 @@ function itemsHere() {
 const PUSHABLES = {
   cart: { region: 1, side: 1, state: () => game.ch1.cart, gap: CART1.gap, speed: PUSH_SPEED, min: CART1.x, max: () => PIT.x0 + CART1.half + 0.02, floor: 0, z: 0 },
   courier: { region: 2, side: -1, state: () => game.ch1.courier, gap: RK.gap, speed: 0.22, min: RK.courierX, max: () => RK.bayX, floor: 0, z: RK.courierZ },
+  drum: { region: 2, side: 1, state: () => game.ch1.drum, gap: RH5.gap, speed: 0.3, min: RH5.drum0, max: () => RH5.drum1, floor: 0, z: RH5.pushZ },
   duct: { region: 5, side: 1, state: () => game.ch1.duct, gap: DUCT9.gap, speed: 0.45, min: DUCT9.x, max: () => DIP9.x0 + DUCT9.half, floor: 0, z: 0 },
 };
 function pushHere() {
@@ -3352,11 +3409,12 @@ function pushHere() {
   }
   return out;
 }
-const ACT_CH1 = new Set(['death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
+const ACT_CH1 = new Set(['winch5', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
 function beginCh1(kind) {
   const [k, arg] = kind.split(':');
   game.vx = 0;
   if (k === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
+  if (k === 'winch5') { game.act = { kind: 'winch5', phase: 'approach', t: 0, standX: RH5.winchX, face: 1, strokes: 0, lastF: 0 }; return; }
   if (k === 'bell9') { game.act = { kind: 'bell9', phase: 'approach', t: 0, standX: BELL9.x, face: 1 }; return; }
   if (k === 'junction9') { game.act = { kind: 'junction9', phase: 'approach', t: 0, standX: JUNCTION9.x - 0.25, face: 1 }; return; }
   if (k === 'curio') {
@@ -3421,6 +3479,7 @@ function updateActCh1(a, dt) {
   const s = game.ch1;
   if (a.kind === 'death') { updateDeath(a, dt); return; }
   if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
+  if (a.kind === 'winch5') { updateWinch5(a, dt); return; }
   if (a.kind === 'bell9' || a.kind === 'junction9') {
     // He turns to the wall to press the bell (or pull the lever), then back to the lane.
     if (a.phase === 'approach') { if (approachCh1(a, dt)) { game.yawOverride = Math.PI; a.phase = 'turn'; } return; }
@@ -3535,6 +3594,32 @@ function updateActCh1(a, dt) {
   }
   if (a.kind === 'cage') { updateCageAct(a, dt); return; }
 }
+// DL-05: winding the hatch's shutter. Each stroke of the handwheel lifts it a quarter of the way; at the top he holds it
+// until he lets go (a move, Use or Jump), and it drops: onto the drum's chime if the drum is under it, else shut.
+function updateWinch5(a, dt) {
+  const rh = game.ch1.rh;
+  if (a.phase === 'approach') { if (approachCh1(a, dt)) { game.yawOverride = Math.PI; a.phase = 'turn'; } return; }
+  if (a.phase === 'turn') {
+    if (Math.abs(game.yaw - Math.PI) < 0.06) { a.phase = 'wind'; a.t = 0; a.lastF = 0; rh.held = true; setClip('Crank', 0.2); }
+    else setClip('Walk', 0.2, 0.6);
+    return;
+  }
+  const move = input.axis || ((input.right ? 1 : 0) - (input.left ? 1 : 0));
+  if (a.t > 0.5 && (input.usePressed || input.jumpPressed || Math.abs(move) > 0.3)) {
+    input.usePressed = false; input.jumpPressed = false;
+    rh.held = false; game.act = null; game.yawOverride = null; setClip('Idle', 0.25); input.lastActivity = game.clock;
+    return;
+  }
+  if (a.phase === 'wind') {
+    const f = actions.Crank.time * FPS, stroke = f <= 12 ? smooth(f / 12) : 1;
+    rh.wound = Math.min(1, (a.strokes + stroke) / RH5.strokes);
+    if (f < a.lastF) {
+      a.strokes++; Sound.ratchet(); Sound.chain(0.25); shake(0.08);
+      if (a.strokes >= RH5.strokes) { a.phase = 'hold'; rh.wound = 1; actions.Crank.paused = true; }
+    }
+    a.lastF = f;
+  }
+}
 // The letter in his claw while he picks it up or posts it.
 function holdLetter(on) {
   const h = refs.ch1 && refs.ch1.held;
@@ -3568,6 +3653,7 @@ function updateHoldCh1(dt, move) {
     if (p === PUSHABLES.cart) { s.state = 'falling'; s.drop = 0; }
     if (p === PUSHABLES.duct) { s.state = 'falling'; s.drop = 0; }
     if (p === PUSHABLES.courier) { s.state = 'cradle'; s.t = 0; Sound.drag(0); }
+    if (p === PUSHABLES.drum) { s.state = 'set'; Sound.thud(); shake(0.15); }
   }
 }
 
@@ -3690,10 +3776,39 @@ function updateCh1(dt) {
   if (cl.obj) cl.obj.visible = !/held|posted/.test(letterState.c110);
   // The slots' stamp lamps blink when a letter goes in.
   for (const sl of SLOTS) glow(sl.lamp, sl.stamped && game.clock - sl.stamped < 1.2 ? (Math.sin((game.clock - sl.stamped) * 20) > 0 ? 6 : 1) : 0.6);
-  // Back out to the lane after letting go of the courier.
+  // Back out to the lane after letting go of the courier (or the drum).
   if (game.region === 2 && !game.act && game.hold !== 'push' && game.z < 0) game.z = Math.min(0, game.z + 0.45 * dt);
+  // DL-05: the drum, the hatch's shutter and its winch, the counter's failing strip light.
+  const dr = s.drum, rh = s.rh;
+  if (k.drum) k.drum.position.x = dr.x;
+  if (rh.held) { rh.h += (RH5.open * rh.wound - rh.h) * Math.min(1, dt * 8); rh.v = 0; }
+  else {
+    const rest = dr.state === 'set' ? RH5.onDrum : 0;
+    if (rh.h > rest + 0.001) { rh.v -= 11 * dt; rh.h += rh.v * dt; }
+    if (rh.h <= rest + 0.001 && rh.v < 0) {
+      const hard = rh.v < -1.2;
+      rh.h = rest; rh.v = 0;
+      if (hard) {
+        Sound.gateSlam(); Sound.clank(); shake(rest ? 0.3 : 0.45); rh.slamAt = game.clock;
+        if (!rest && !game.act && game.region === 2 && Math.abs(game.x - RH5.shutterX) < 4) setTimeout(() => { if (!game.act && !game.hold) playQuirk('Startle'); }, 250);
+      }
+    }
+  }
+  if (k.rshutter) k.rshutter.position.y = k.rshutter.userData.rest.p.y + rh.h;
+  if (k.winch) { k.winch.quaternion.copy(k.winch.userData.rest.q); k.winch.rotateZ(-THREE.MathUtils.degToRad(60 * RH5.strokes) * rh.h / RH5.open); }
+  if (game.lightRegion === 2) {
+    const want = game.x > RATION5.x0 - (game.lightRation ? 1.0 : 0.5);
+    if (want !== !!game.lightRation) setRegionLights(2, want);
+    if (game.lightRation) {
+      const t = game.clock, fl = game.calm ? 1 : (Math.sin(t * 0.7) > 0.93 ? 0.25 + 0.75 * (Math.sin(t * 61) > 0) : 0.92 + 0.08 * Math.sin(t * 9.1));
+      refs.rationLights[0].intensity = 14 * fl; refs.rationLights[1].intensity = 2.2 * fl; glow('RationLamp', 3 * fl);
+      refs.rationLights[2].intensity = 1.2 * (0.88 + 0.12 * Math.sin(t * 7.3) * Math.sin(t * 3.1));
+    }
+  }
   // Checkpoints for the new stretches.
   const cp = game.checkpoint, x = game.x;
+  if (game.region === 2 && x > RATION5.x0 + 0.6 && !past(cp, 'ration')) game.checkpoint = 'ration';
+  if (game.region === 2 && x > RH5.crawl[1] + 0.25 && !past(cp, 'hatch')) game.checkpoint = 'hatch';
   if (game.region === 2 && x > OFF2 + 12.6 && game.y < 0.05 && !past(cp, 'weighroom')) game.checkpoint = 'weighroom';
   if (game.region === 2 && x > RK.door.x1 + 0.2 && !past(cp, 'bay')) game.checkpoint = 'bay';
   if (game.region === 3 && game.upper && x > HP.gateX + 0.3 && !past(cp, 'gallery')) game.checkpoint = 'gallery';
@@ -3839,8 +3954,8 @@ const CURIOS = [
   { id: 'chair', region: 3, x: OFF3 + 27.8, standX: OFF3 + 27.8, face: 1, cond: () => !game.upper, clip: ['SitChair', 'Straighten'], dur: 4.0, cues: [[58, 'sit']] },
   { id: 'hopscotch', region: 4, x: HOP4_X - 0.15, cond: () => game.dl4.hopped, clip: ['HopscotchLong', 'Hopscotch'], builtIn: true },
   { id: 'viewer', region: 4, x: OFF4 + 72.6, standX: OFF4 + 72.6, face: 1, clip: ['LookViewer', 'Awe'], dur: 6.0, cues: [[58, 'coin']] },
-  { id: 'radio', region: 5, x: OFF5 + 100.0, z: -0.55, face: 1, clip: ['TuneRadio', 'Pat'], dur: 4.0, cues: [[34, 'radio']] },
-  { id: 'switch', region: 5, x: OFF5 + 95.72, z: -0.74, face: 1, clip: ['FlickSwitch', 'Pat'], dur: 2.2, cues: [[16, 'switch']] },
+  { id: 'radio', region: 5, x: OFF5 + 109.0, z: -0.55, face: 1, clip: ['TuneRadio', 'Pat'], dur: 4.0, cues: [[34, 'radio']] },
+  { id: 'switch', region: 5, x: OFF5 + 104.72, z: -0.74, face: 1, clip: ['FlickSwitch', 'Pat'], dur: 2.2, cues: [[16, 'switch']] },
 ];
 const curioFound = {};
 const curioCount = () => CURIOS.filter((c) => curioFound[c.id]).length;
@@ -4175,9 +4290,9 @@ function updateRipples(dt) {
 // DL-09's flooded lane (pass 2): the White lives in it. The near bank runs beside its water, and the bridged duct
 // crosses its narrow point. C-108's doorbell rings for a while and draws it to C-108's sunken step; the junction box's
 // lever drops the live cable into the water, and it flees for longer.
-const BELL9 = { x: OFF5 + 82.72, nose: OFF5 + 83.4, ring: 12 }, JUNCTION9 = { x: OFF5 + 85.92, tip: [OFF5 + 87.4, -0.1, -0.76] };
-WATERS.push({ id: 'lane9', region: 5, x0: OFF5 + 82.95, x1: OFF5 + 87.6, y: -0.1, z: -0.64, part: 'hunt', scale: 0.8, ledgeH: 0.1, reach: 1.35,
-  edges: [[OFF5 + 82.7, OFF5 + 87.6]], active: () => game.x < OFF5 + 90.5 });
+const BELL9 = { x: OFF5 + 91.72, nose: OFF5 + 92.4, ring: 12 }, JUNCTION9 = { x: OFF5 + 94.92, tip: [OFF5 + 96.4, -0.1, -0.76] };
+WATERS.push({ id: 'lane9', region: 5, x0: OFF5 + 91.95, x1: OFF5 + 96.6, y: -0.1, z: -0.64, part: 'hunt', scale: 0.8, ledgeH: 0.1, reach: 1.35,
+  edges: [[OFF5 + 91.7, OFF5 + 96.6]], active: () => game.x < OFF5 + 99.5 });
 function ringBell9() {
   const s = game.ch1;
   s.bellUntil = game.clock + BELL9.ring;
@@ -4209,12 +4324,28 @@ function updateRingC(dt) {
   if (k.laneCable) { k.laneCable.quaternion.copy(k.laneCable.userData.rest.q); k.laneCable.rotateX(Math.sin(game.clock * 0.7) * 0.03 + (game.clock < s.shortUntil ? Math.sin(game.clock * 40) * 0.02 : 0)); }
   if (k.swing) { k.swing.quaternion.copy(k.swing.userData.rest.q); k.swing.rotateX(Math.sin(game.clock * 0.9) * 0.06); }
   // The first time he comes along the lane it shows itself, far off, and sinks again.
-  if (!s.whiteShown && game.x > OFF5 + 82.3 && white.w && white.w.id === 'lane9') {
-    s.whiteShown = true; white.x = OFF5 + 86.9; white.tx = white.x; white.heard = null; setWhite('surface'); Sound.splash(0.5);
+  if (!s.whiteShown && game.x > OFF5 + 91.3 && white.w && white.w.id === 'lane9') {
+    s.whiteShown = true; white.x = OFF5 + 95.9; white.tx = white.x; white.heard = null; setWhite('surface'); Sound.splash(0.5);
+  }
+  // C-114's front door: the cord pulls the lever down, the latch gives, and it swings in, slowing.
+  if (k.door114 && game.dl5) {
+    const d5 = game.dl5;
+    if (d5.doorOpen && d5.doorT < 1) d5.doorT = Math.min(1, d5.doorT + dt / 1.6);
+    const open = d5.doorOpen ? 1 - Math.pow(1 - d5.doorT, 3) : 0;
+    k.door114.quaternion.copy(k.door114.userData.rest.q); k.door114.rotateY(C114DOOR.open * open);
+    const pull = d5.doorOpen && d5.doorT < 0.25 ? 1 - d5.doorT / 0.25 : 0, lever = Math.max(d5.cord || 0, pull);
+    if (k.handle114) {
+      const h = k.handle114, hr = h.userData.rest;
+      h.quaternion.copy(hr.q); h.rotateX(C114DOOR.handle * lever);
+      if (k.cord114) {
+        const cr = k.cord114.userData.rest, D = tq1.copy(hr.q).invert().premultiply(h.quaternion);
+        k.cord114.position.copy(cr.p).sub(hr.p).applyQuaternion(D).add(hr.p); k.cord114.quaternion.copy(D).multiply(cr.q);
+      }
+    }
   }
   // C-114: the front wall fades once he's through the door, so the house reads as a dollhouse cut.
   if (k.facade) {
-    const want = game.x > OFF5 + 94.3 ? 0 : 1;
+    const want = game.x > OFF5 + 103.4 && game.dl5.doorOpen ? 0 : 1;
     s.facadeK = (s.facadeK ?? 1) + (want - (s.facadeK ?? 1)) * Math.min(1, dt * 3);
     k.facade.visible = s.facadeK > 0.02;
     k.facade.traverse((o) => { if (o.isMesh) { o.material.opacity = s.facadeK; o.castShadow = s.facadeK > 0.98; o.material.depthWrite = s.facadeK > 0.98; } });
@@ -4419,9 +4550,9 @@ function updateSparks(dt) {
 const HINTS = [
   // DL-05
   { region: 5, when: () => !game.dl5.revealed && game.hold !== 'desk' && game.x > INNER5_X && game.x < game.desk5.x, at: () => new THREE.Vector3(game.desk5.x - 0.585, 0.62, DESK5.z), key: 'use' },
-  { region: 5, when: () => game.hold === 'desk' && game.desk5.x > DESK5.clear, at: new THREE.Vector3(OFF5 + 103.5, 0.05, 0), key: 'move' },
+  { region: 5, when: () => game.hold === 'desk' && game.desk5.x > DESK5.clear, at: new THREE.Vector3(OFF5 + 112.5, 0.05, 0), key: 'move' },
   { region: 5, when: () => game.dl5.revealed && !game.dl5.forwarded, at: new THREE.Vector3(TERM5_X, 0.95, WALL5_Z), key: 'use' },
-  { region: 5, when: () => game.dl5.forwarded && game.x < END5_X, at: new THREE.Vector3(OFF5 + 106.3, 0.6, 0), key: 'move' },
+  { region: 5, when: () => game.dl5.forwarded && game.x < END5_X, at: new THREE.Vector3(OFF5 + 115.3, 0.6, 0), key: 'move' },
   // DL-04
   { region: 4, when: () => !game.plat.latched && game.hold !== 'trolley4' && panTrolleyK() < 1 && game.x < game.trolley4.x,
     at: () => new THREE.Vector3(game.trolley4.x - T4_HALF - 0.02, DECK + 0.46, 0), key: 'use' },
@@ -4579,6 +4710,14 @@ function frameFor(x) {
     // DL-04: the end of the racks, the fallen courier and the bay, and its door.
     const kbay = smooth((x - (OFF2 + 25.4)) / 1.4);
     if (kbay > 0) { cx += (THREE.MathUtils.clamp(x + lead * 0.5, RK.courierX + 0.4, RK.door.x0 - 1.4) - cx) * kbay; v = lerp3(v, fit([6.2, 1.15, 0.8], 7.0), kbay); fog += (0.05 - fog) * kbay; }
+    // DL-05 The Ration Hall: the shrine and the cots, then the counter, with the winch, the drum and the hatch in one frame.
+    const krh = smooth((x - (RATION5.x0 - 0.8)) / 1.2);
+    if (krh > 0) {
+      const kc = smooth((x - (OFF2 + 38.6)) / 1.4);
+      let tx = THREE.MathUtils.clamp(x + lead * 0.6, OFF2 + 36.6, OFF2 + 38.6);
+      tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF2 + 42.0, OFF2 + 44.6) - tx) * kc;
+      cx += (tx - cx) * krh; v = lerp3(v, fit([6.4, 1.25, 0.8], 6.8), krh); fog += (0.045 - fog) * krh;
+    }
     if (ksh > 0) { cx += (shx - cx) * ksh; v = lerp3(v, shv, ksh); fog += (0.05 - fog) * ksh; }
   }
   // DL-03: the scanner corridor, the sorting floor, then up the ramp to the gallery over the pit.
@@ -4623,14 +4762,14 @@ function frameFor(x) {
   const k5 = game.upper ? smooth((x - (OFF5 + 75.6)) / 1.4) : 0;
   if (k5 > 0) {
     // The lane, the square, then C-114 room by room: hall, kitchen and living room, the bedroom, the back door.
-    const kl = smooth((x - (OFF5 + 79.6)) / 1.2), kh = smooth((x - (OFF5 + 94.2)) / 0.8), kr = smooth((x - (OFF5 + 97.0)) / 0.6);
-    const kb = smooth((x - (OFF5 + 100.3)) / 0.6), ke = smooth((x - (OFF5 + 105.3)) / 0.6);
+    const kl = smooth((x - (OFF5 + 79.6)) / 1.2), kh = smooth((x - (OFF5 + 103.2)) / 0.8), kr = smooth((x - (OFF5 + 106.0)) / 0.6);
+    const kb = smooth((x - (OFF5 + 109.3)) / 0.6), ke = smooth((x - (OFF5 + 114.3)) / 0.6);
     let tx = THREE.MathUtils.clamp(x + lead * 0.6, OFF5 + 77.4, OFF5 + 79.4);
-    tx += (THREE.MathUtils.clamp(x + lead, OFF5 + 82.0, OFF5 + 92.6) - tx) * kl;
-    tx += (THREE.MathUtils.clamp(x, OFF5 + 95.4, OFF5 + 96.3) - tx) * kh;
-    tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF5 + 98.0, OFF5 + 99.6) - tx) * kr;
-    tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF5 + 102.2, OFF5 + 103.6) - tx) * kb;
-    tx += (THREE.MathUtils.clamp(x + lead, OFF5 + 106.1, OFF5 + 107.3) - tx) * ke;
+    tx += (THREE.MathUtils.clamp(x + lead, OFF5 + 82.0, OFF5 + 101.6) - tx) * kl;
+    tx += (THREE.MathUtils.clamp(x, OFF5 + 104.4, OFF5 + 105.3) - tx) * kh;
+    tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF5 + 107.0, OFF5 + 108.6) - tx) * kr;
+    tx += (THREE.MathUtils.clamp(x + lead * 0.3, OFF5 + 111.2, OFF5 + 112.6) - tx) * kb;
+    tx += (THREE.MathUtils.clamp(x + lead, OFF5 + 115.1, OFF5 + 116.3) - tx) * ke;
     let v5 = fit([7.6, 1.5, 0.75], 8.0);
     v5 = lerp3(v5, fit([5.6, 2.15, 0.4], 6.0), kl);
     v5 = lerp3(v5, fit([4.9, 1.05, 0.72], 4.9), kh);
@@ -4844,6 +4983,8 @@ const CHECKPOINTS = {
   weighroom: { x: OFF2 + 12.9, released: true, door: 1, region: 2 },
   solved: { x: OFF2 + 16.95, released: true, door: 1, region: 2, solved: true },
   bay: { x: RK.door.x1 + 0.4, released: true, door: 1, region: 2, solved: true },
+  ration: { x: RATION5.x0 + 0.7, released: true, door: 1, region: 2, solved: true },
+  hatch: { x: RH5.crawl[1] + 0.35, released: true, door: 1, region: 2, solved: true },
   scanned: { x: OFF3 + 30.3, released: true, door: 1, region: 3, solved: true, scanned: true },
   landing: { x: OFF3 + 40.0, released: true, door: 1, region: 3, solved: true, scanned: true, upper: true },
   gallery: { x: OFF3 + 42.3, released: true, door: 1, region: 3, solved: true, scanned: true, upper: true },
@@ -4853,8 +4994,8 @@ const CHECKPOINTS = {
   landing8: { x: OFF3 + 70.3, y: CG.landing, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true },
   tunnel: { x: OFF4 + 65.7, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true },
   ringc: { y: 0, x: OFF5 + 81.25, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
-  bedroom: { y: 0, x: OFF5 + 101.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
-  forwarded: { y: 0, x: OFF5 + 104.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  bedroom: { y: 0, x: OFF5 + 110.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
+  forwarded: { y: 0, x: OFF5 + 113.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
 };
 function resetWorld(name = 'start') {
   const c = CHECKPOINTS[name];
@@ -4890,7 +5031,7 @@ function resetWorld(name = 'start') {
   camera.far = 60; camera.updateProjectionMatrix(); refs.humLevel = undefined; refs.chainKey = null;
   // DL-05: the desk against the wall, or dragged clear and the terminal answered.
   Object.assign(game.desk5, { x: c.forwarded ? DESK5.min : DESK5.x, v: 0, lastX: undefined });
-  game.dl5 = { knocked: !!c.ringc && c.x > KNOCK5_X, revealed: !!c.forwarded, forwarded: !!c.forwarded, toyUp: false, toyTried: !!c.forwarded };
+  game.dl5 = { knocked: !!c.ringc && c.x > KNOCK5_X, doorOpen: !!c.ringc && c.x > KNOCK5_X, doorT: 1, cord: 0, revealed: !!c.forwarded, forwarded: !!c.forwarded, toyUp: false, toyTried: !!c.forwarded };
   game.marksShotAt = -100;
   if (c.ringc) Object.assign(game.dl4, { lookedBack: true, hopped: true, refuge: true, awed: true });
   resetCh1(name);
@@ -5109,7 +5250,7 @@ function warmUp() {
   const keys = ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'aoMap'];
   scene.traverse((o) => { for (const m of [].concat(o.material || [])) for (const k of keys) if (m[k]) renderer.initTexture(m[k]); });
   const up = game.upper;
-  for (const [r, u] of [[1, false], [2, false], [3, false], [3, true], [4, true], [5, true]]) { game.upper = u; setRegionLights(r); renderer.compile(scene, camera); }
+  for (const [r, u, ra] of [[1, false], [2, false], [2, false, true], [3, false], [3, true], [4, true], [5, true]]) { game.upper = u; setRegionLights(r, ra); renderer.compile(scene, camera); }
   game.upper = up; setRegionLights(1);
   shown.forEach((o) => (o.visible = false));
 }
