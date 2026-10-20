@@ -195,3 +195,68 @@ and the White read. Then C-114 room by room: the hall (from 94.2), the kitchen a
   reset.
 - **bedroom**: just inside the bedroom (101.1, was 91.2). The duct is already the bridge.
 - **forwarded**: after the terminal (104.1, was 94.2).
+
+## Pass 3 (built 20 October 2026)
+
+From `docs/chapter1_pass3_plan.md`. This was DL-09; DL-10 Up Only now comes before it. This supersedes *Pass 2*'s
+layout and the knock in section 2.
+
+**Arrival:** the balcony's stair is gone. He comes down to ring C on Up Only's counterweight, onto the bottom landing
+at the foot of its shaft (section x 73.75 to 76.8), and on to the ledge. The game counts ring C from the shaft's foot
+(game x 127.9).
+
+**Positions:** ring C is now placed by `OFF5` (54): game x = section x + 54. The street grew 9 m between the barricade
+and C-108, so C-108 and everything after it is 9 further on in section x than in *Pass 2* (`S9` in
+`art/dl05/build_dl05.py`).
+
+```
+section x: 76.8-80.0 ledge   80.2-81.0 BARRICADE   81.0-103.5 the street
+   behind the lane: C-102 81.1-83.7   C-104 (and 104A) 83.8-86.2
+                    CROSS ALLEY 86.2-87.4 (standpipe 86.5; the ration queue's post 85.95)
+                    C-106 87.4-90.0 (window 89.3)   C-108 90.1-93.05 (BELL 91.72)   C-110 (JUNCTION 94.92)   C-112
+   the water: 91.95-96.6 (the narrow point 95.1-96.6)   DUCT 93.25-94.75, pushed into the narrow point as the bridge
+   SQUARE 99.5-103.5 (MAILSLOT9 102.75)
+C-114: knock 103.26   front door 103.61   switch 104.72   radio 109.0   inner door 109.5   toy 111.1
+       terminal and desk 113.6   end 116.1
+```
+
+**The street** (`art/dl05/build_dl05.py`): you pass through a neighbourhood, not past one wall.
+- **The new homes behind the lane:** C-102, chalked GONE UP, a sheet nailed over its fallen plaster; C-104, split in
+  two, a plank door 104A cut into it and chalked GONE UP, its window blocked up with odd blocks; the cross alley, with
+  the neighbourhood's standpipe (STANDPIPE 3 · GRADE 4), the ration queue's post and its painted marks back along the
+  lane, a RATIONS / GRADE 4 – TUES sign, steps up toward ring B and down toward the lower lanes; C-106, its door on the
+  alley, chalked GONE UP, and on its blank face an old UP IS FOR THEM, half whitewashed, under a later EVERYONE UP with
+  an arrow to the stairs. Every door is stencilled with its grade, a 4.
+- **The front row**, on the camera's side of the lane: odd numbers, every one cut down or fallen in (garden walls,
+  gates, porches, wall stumps, rooms open to the sky), kept below his height so it never hides him. C-111 went into
+  the sink with the lane.
+- **Over the lane:** washing lines, and the street cable with four bulbs.
+
+**The White** (the plan's section 1: too hard the first time):
+- **It warns first.** The first time it hears him (in a game), it surfaces, rears and hisses, and sinks again: a
+  startle, not a strike. After that, as in *Pass 2*, it lunges if he is on the bank within reach.
+- **It hears running from 1.4 m** of its water, not 2.2. Walking is always safe.
+- **It fits its water:** scaled to the lane's flood and kept wholly inside it; it turns only while deep.
+
+**The doorbell** (`C108Bell`) is a brass push with a small amber lamp, not red. He turns to the wall to press it.
+
+**C-114's front door is shut** (`C114FrontDoor`, its lever `C114DoorHandle` and the child's pull-cord
+`C114DoorCord`):
+1. At the front step (game 157.26) he steps toward the camera, square to the door, and knocks twice (`Knock`), seen
+   in a close three-quarter shot over his shoulder (`knock`, 28 mm).
+2. He waits, about 2 s. Nobody comes.
+3. He steps on 3 cm and pulls the cord the family hung from the lever so the child could reach it (`Tug`). The lever
+   goes down, the latch gives, and the door swings in.
+
+After a respawn the knock isn't repeated: he goes straight to the cord. Through the door, the street wall fades as in
+*Pass 2*.
+
+**The photograph** (`D5Photo`) is now her father in his sorter's apron, with Mara on his shoulders: IVO, from the
+mugs in DL-02.
+
+**Use without red** (`docs/direction.md`): the duct's grip, the junction box's lever and the desk's grip bar are worn
+steel (`HandledSteel`); `MailSlot9` and the forwarding terminal are brass. Section 4's red grip bar is no longer red.
+
+**Curiosities:** the hall light switch at game 158.72 and the radio at 163.0.
+
+**Checkpoints:** `ringc` at game 135.25, `bedroom` at 164.1 and `forwarded` at 167.1.
