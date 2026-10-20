@@ -43,7 +43,7 @@ machines that kill (the press, the arcs). The curiosities' red tags are gone; th
 ## Let the player try things
 
 If something looks like it can be climbed into or ridden, let the player do it, even if it ends badly.
-The carriers in DL-05 can be boarded anywhere, by Use or by a standing jump beside one (a running jump only jumps,
+The carriers in DL-06 can be boarded anywhere, by Use or by a standing jump beside one (a running jump only jumps,
 so hopping over something by the dock never boards a carrier by accident). Riding one to the chute
 tips D-17 onto the heap of dead post, and he is back at the checkpoint after a fade.
 
@@ -54,11 +54,12 @@ it away. Framing changes (wider over a puzzle room, closer in a tight space, hig
 three seconds as D-17 moves, and the whole puzzle stays in frame while the player thinks.
 
 **Authored shots are reserved for emotional moments** (`currentShot()` in the game). Each is eased in and back
-out, and never shows puzzle information the side view doesn't. In Chapter 1 there are seven:
+out, and never shows puzzle information the side view doesn't. In Chapter 1 they are:
 - **DL-04:** the realisation among the couriers, as the racks light.
-- **DL-05:** the scan, the pit and the label check, as one sequence.
-- **DL-08:** after the cage, the look back at the depot, and the crane out over the city, which hands back to D-17.
-- **DL-09:** the growth marks, the terminal answering, and the rabbit.
+- **DL-06:** the scan, the pit and the label check, as one sequence.
+- **DL-09:** after the cage, the hopscotch, the coin viewer, and the crane out over the city, which hands back to
+  D-17. (Pass 3 cut the look back at the depot.)
+- **DL-11:** the knock at C-114's shut door, the growth marks, the terminal answering, and the rabbit.
 
 The lenses:
 - **Low and close for intimacy:** 45 to 55 mm.
@@ -124,7 +125,7 @@ Don't make it a clean, regular silo.
 - **Mid-ground:** heavy arched viaducts spanning the chasm at different heights, waterfalls into misty depths, stalactites overhead.
 - **Background, higher up:** the grander upper city of domes, towers and chimneys, rising out of cool blue haze.
 
-The light is warm amber against that haze. The first reveal from DL-08's balcony must say that a larger world lies ahead and above. On the poorest levels, homes stay mostly dark; the lights are the city's systems still running.
+The light is warm amber against that haze. The first reveal from DL-09's balcony must say that a larger world lies ahead and above. On the poorest levels, homes stay mostly dark; the lights are the city's systems still running.
 
 **Light by level:** abandoned lower levels get very little light: a failing bulb or two, a lamp left on behind a door, light falling from far above. Darkness is the default down there, and a lit room is an event. Light grows with height: sparse on the middle tiers, warm and dense toward the upper city, where people still live. Keep what the player must read (the path, what he can use) lit, even in the dark.
 
