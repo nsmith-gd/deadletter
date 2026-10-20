@@ -877,10 +877,15 @@ def build_limbs(arm, mats, coll):
 # --------------------------------------------------------------------------
 
 def make_label_texture(path):
-    """Parcel label: child silhouette, destination glyph and room number, postal marks and the
-    sender's handwritten initials. Drawn bold so it reads at handheld size."""
+    """Parcel label (docs/chapter1_pass3_plan.md, section 5): "for MARA · C-114 · RING C" in a parent's careful
+    hand, a crayon drawing in the corner by the child (a girl under a crooked tree, the sun), the postmark
+    "R.Y. 42", a "BIRTHDAY - DO NOT OPEN" stamp and the sender's initials, I.V. Drawn bold so it reads at
+    handheld size. The hand is art/pass3/handwriting.py."""
+    import sys
     from PIL import Image, ImageDraw, ImageFilter
     import random
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'pass3'))
+    import handwriting as hw
     rnd = random.Random(17)
     w, h = 1024, 512
     img = Image.new('RGB', (w, h), (214, 198, 160))
@@ -892,51 +897,69 @@ def make_label_texture(path):
     img = img.filter(ImageFilter.GaussianBlur(18))
     d = ImageDraw.Draw(img)
     ink = (38, 32, 28)
+    pen = (30, 36, 78)                                                          # his blue-black ink
     d.rectangle((14, 14, w - 14, h - 14), outline=ink, width=10)
-    d.line((400, 30, 400, h - 30), fill=ink, width=8)
-    # Child silhouette: head, bob of hair, coat, legs and boots.
-    cx = 200
-    d.ellipse((cx - 62, 70, cx + 62, 194), fill=ink)
-    d.polygon([(cx - 70, 205), (cx + 70, 205), (cx + 112, 380), (cx - 112, 380)], fill=ink)
-    d.rectangle((cx - 52, 380, cx - 18, 450), fill=ink)
-    d.rectangle((cx + 18, 380, cx + 52, 450), fill=ink)
-    d.rectangle((cx - 66, 440, cx - 12, 466), fill=ink)
-    d.rectangle((cx + 12, 440, cx + 66, 466), fill=ink)
-    # Destination: a doorway glyph and a room number in blocky strokes.
-    d.rectangle((450, 70, 560, 220), outline=ink, width=14)
-    d.rectangle((488, 140, 522, 220), fill=ink)
-
-    def digit(x, y, n, s=58, t=16):
-        segs = {'1': 'bc', '4': 'fgbc'}
-        a, b_, c, dd, e, f, g = ((x, y, x + s, y + t), (x + s - t, y, x + s, y + s),
-                                (x + s - t, y + s, x + s, y + 2 * s), (x, y + 2 * s - t, x + s, y + 2 * s),
-                                (x, y + s, x + t, y + 2 * s), (x, y, x + t, y + s),
-                                (x, y + s - t // 2, x + s, y + s + t // 2))
-        boxes = dict(a=a, b=b_, c=c, d=dd, e=e, f=f, g=g)
-        for k in segs[n]:
-            d.rectangle(boxes[k], fill=ink)
-    for i, n in enumerate('114'):
-        digit(600 + i * 92, 92, n)
-    # Postal bars and a postmark.
-    for i in range(14):
-        x = 450 + i * 34
-        d.rectangle((x, 300, x + (10 if i % 3 else 20), 360), fill=ink)
-    d.ellipse((800, 300, 990, 490), outline=(120, 40, 34), width=8)
+    # A ruled address panel, as a careful sender draws it before writing.
+    for y in (176, 286):
+        d.line((44, y, 690, y), fill=(150, 136, 108), width=3)
+    hw.write(d, 'for', 50, 84, 62, 'parent', pen, 9, seed=21)
+    hw.write(d, 'MARA', 190, 36, 124, 'parent', pen, 14, seed=22)
+    d.line((192, 186, 600, 180), fill=pen, width=7)                              # underlined, twice
+    d.line((200, 200, 560, 196), fill=pen, width=5)
+    hw.write(d, 'C-114 · RING C', 50, 214, 58, 'parent', pen, 10, seed=23)
+    # The sender, small: initials and a little crooked tree, the family's mark.
+    hw.write(d, 'I.V.', 540, 404, 40, 'parent', pen, 6, seed=24)
+    hw.crooked_tree(d, 676, 470, 84, pen, random.Random(4), width=5)
+    # The postmark, top right: R.Y. 42, with wavy cancel lines off to the left.
+    pm = (52, 46, 74)
+    cx, cy, r = 880, 112, 78
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=pm, width=8)
+    d.ellipse((cx - r + 18, cy - r + 18, cx + r - 18, cy + r - 18), outline=pm, width=3)
+    hw.write(d, 'R.Y.', cx - 42, cy - 48, 32, 'clerk', pm, 6, seed=25)
+    hw.write(d, '42', cx - 30, cy - 6, 48, 'clerk', pm, 8, seed=26)
     for k in range(4):
-        d.line((790, 330 + k * 34, 1000, 318 + k * 34), fill=(120, 40, 34), width=6)
-    # The sender's handwritten initials, "I.V.", in quick pen strokes with a flourish.
-    pen = (52, 44, 92)
-
-    def stroke(pts, w=7):
-        d.line(pts, fill=pen, width=w, joint='curve')
-    stroke([(452, 470), (458, 430), (466, 392), (470, 380)])                    # I
-    stroke([(446, 386), (482, 378)], 6)
-    stroke([(442, 474), (474, 466)], 6)
-    d.ellipse((486, 462, 496, 472), fill=pen)                                   # .
-    stroke([(508, 384), (522, 430), (532, 468), (548, 420), (566, 380)])        # V
-    d.ellipse((572, 462, 582, 472), fill=pen)                                   # .
-    stroke([(440, 492), (500, 486), (560, 490), (610, 482), (640, 470)], 5)     # flourish
-    img = img.filter(ImageFilter.GaussianBlur(1.2))
+        y0 = cy - 36 + k * 24
+        d.line([(cx - r - 120 + t, y0 + 6 * math.sin(t * 0.07)) for t in range(0, 120, 6)], fill=pm, width=5)
+    # The stamp: BIRTHDAY / DO NOT OPEN in a box, in red ink, slightly crooked and patchy.
+    st = Image.new('RGBA', (430, 150), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(st)
+    red = (150, 36, 30, 235)
+    sd.rectangle((6, 6, 424, 144), outline=red, width=9)
+    sd.rectangle((18, 18, 412, 132), outline=red, width=3)
+    hw.write(sd, 'BIRTHDAY', 46, 28, 46, 'clerk', red, 9, seed=27)
+    hw.write(sd, 'DO NOT OPEN', 34, 86, 34, 'clerk', red, 7, seed=28)
+    holes = Image.new('L', st.size, 255)
+    hd = ImageDraw.Draw(holes)
+    for _ in range(40):
+        x, y, rr = rnd.uniform(0, 430), rnd.uniform(0, 150), rnd.uniform(3, 12)
+        hd.ellipse((x - rr, y - rr, x + rr, y + rr), fill=rnd.randint(40, 150))
+    from PIL import ImageChops
+    st.putalpha(ImageChops.multiply(st.split()[3], holes.filter(ImageFilter.GaussianBlur(2))))
+    st = st.rotate(4, resample=Image.BICUBIC, expand=True)
+    img.paste(st, (40, 312), st)
+    # The child's drawing, bottom right corner, in wax crayon: a crooked tree, a girl with her arms up, the sun.
+    cr = random.Random(9)
+    green, brown, blue, pink, orange = (70, 140, 70), (120, 80, 50), (52, 86, 168), (214, 92, 120), (226, 150, 40)
+    hw.crayon(d, [(730, 474), (990, 476)], green, 7, rnd=cr)
+    hw.crooked_tree(d, 800, 472, 150, brown, cr, width=9, leaves=green)
+    hw.crayon_circle(d, 960, 256, 22, orange, 6, rnd=cr)
+    for k in range(8):
+        a = 2 * math.pi * k / 8
+        hw.crayon(d, [(960 + 30 * math.cos(a), 256 + 30 * math.sin(a)), (960 + 42 * math.cos(a), 256 + 42 * math.sin(a))], orange, 4, 2, rnd=cr)
+    gx = 912                                                                     # the girl
+    hw.crayon_circle(d, gx, 372, 20, pink, 6, rnd=cr)
+    hw.crayon(d, [(gx - 8, 366), (gx - 6, 370)], blue, 3, 1, rnd=cr)
+    hw.crayon(d, [(gx + 6, 366), (gx + 8, 370)], blue, 3, 1, rnd=cr)
+    hw.crayon(d, [(gx - 8, 380), (gx, 385), (gx + 8, 380)], pink, 3, 2, rnd=cr)
+    hw.crayon(d, [(gx - 20, 364), (gx - 30, 360), (gx - 22, 376)], brown, 4, 2, rnd=cr)   # hair in bunches
+    hw.crayon(d, [(gx + 20, 364), (gx + 30, 360), (gx + 22, 376)], brown, 4, 2, rnd=cr)
+    hw.crayon(d, [(gx, 394), (gx - 26, 444), (gx + 26, 444), (gx, 394)], blue, 7, rnd=cr)   # the dress
+    hw.crayon(d, [(gx - 12, 406), (gx - 38, 378)], pink, 5, rnd=cr)                      # arms up
+    hw.crayon(d, [(gx + 12, 406), (gx + 38, 378)], pink, 5, rnd=cr)
+    hw.crayon(d, [(gx - 10, 444), (gx - 12, 468)], pink, 5, rnd=cr)
+    hw.crayon(d, [(gx + 10, 444), (gx + 12, 468)], pink, 5, rnd=cr)
+    hw.write(d, 'M', 950, 420, 38, 'child', blue, 6, seed=29)                     # signed with an M
+    img = img.filter(ImageFilter.GaussianBlur(1.0))
     os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path)
 

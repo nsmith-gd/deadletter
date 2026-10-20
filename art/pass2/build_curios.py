@@ -169,23 +169,38 @@ def make_ticket(path):
 
 
 def make_route_card(path):
-    """His route card: D-17, ROUTE C, C-114, a little house with a candle-lit window, three ticks."""
+    """His route card (pass 3): D-17 · ROUTE C · C-114 · MARA. The depot's printed card (blue header, D-17, ROUTE C),
+    a house pictogram with a lit window, the room number stencilled, and the addressee pencilled in by the night
+    clerk with a little star: a birthday on the round. Drawn at twice its old size so it reads in the clip."""
+    import sys
     from PIL import Image, ImageDraw, ImageFilter
-    w, h = 240, 336
+    sys.path.insert(0, os.path.join(HERE, '..', 'pass3'))
+    import handwriting as hw
+    w, h = 480, 672
     img = Image.new('RGB', (w, h), (222, 214, 188))
     d = ImageDraw.Draw(img)
-    ink, red, blue = (36, 34, 30), (160, 40, 32), (40, 62, 92)
-    d.rectangle((0, 0, w, 52), fill=blue)                         # the depot's blue header band
-    d.text((14, 6), 'D-17', font=_font(40), fill=(230, 224, 200))
-    d.text((14, 62), 'ROUTE C', font=_font(34), fill=ink)
-    d.line((14, 108, w - 14, 108), fill=ink, width=3)
-    hx, hy = w // 2, 196                                          # the house pictogram
-    d.polygon([(hx - 62, hy - 6), (hx, hy - 62), (hx + 62, hy - 6)], outline=ink, width=8)
-    d.rectangle((hx - 46, hy - 6, hx + 46, hy + 56), outline=ink, width=8)
-    d.rectangle((hx - 32, hy + 8, hx - 8, hy + 32), fill=(214, 160, 60))   # a lit window
-    d.rectangle((hx + 10, hy + 14, hx + 32, hy + 56), fill=ink)            # the door
-    d.text((22, 262), 'C-114', font=_font(52), fill=red)
-    img = img.filter(ImageFilter.GaussianBlur(0.6))
+    ink, blue, pencil = (36, 34, 30), (40, 62, 92), (70, 68, 74)
+    d.rectangle((0, 0, w, 104), fill=blue)                        # the depot's blue header band
+    d.text((28, 10), 'D-17', font=_font(80), fill=(230, 224, 200))
+    d.text((300, 40), 'COURIER', font=_font(26), fill=(190, 196, 200))
+    d.text((28, 122), 'ROUTE C', font=_font(70), fill=ink)
+    d.line((28, 214, w - 28, 214), fill=ink, width=5)
+    hx, hy = 150, 330                                             # the house pictogram
+    d.polygon([(hx - 100, hy - 10), (hx, hy - 100), (hx + 100, hy - 10)], outline=ink, width=12)
+    d.rectangle((hx - 74, hy - 10, hx + 74, hy + 90), outline=ink, width=12)
+    d.rectangle((hx - 52, hy + 12, hx - 14, hy + 50), fill=(214, 160, 60))   # a lit window
+    d.rectangle((hx + 16, hy + 22, hx + 52, hy + 90), fill=ink)              # the door
+    d.text((268, 278), 'C-114', font=_font(54, True), fill=ink)
+    d.line((28, 450, w - 28, 450), fill=(150, 140, 116), width=3)
+    hw.write(d, 'MARA', 40, 478, 92, 'parent', pencil, 10, seed=31)      # pencilled in by the night clerk
+    sx, sy = 400, 520                                             # and a little star by it
+    pts = [(sx + (30 if k % 2 == 0 else 12) * math.cos(-math.pi / 2 + math.pi * k / 5),
+            sy + (30 if k % 2 == 0 else 12) * math.sin(-math.pi / 2 + math.pi * k / 5)) for k in range(11)]
+    d.line(pts, fill=pencil, width=5, joint='curve')
+    for k in range(3):                                            # three ticks: the rounds he made
+        x = 40 + k * 60
+        d.line((x, 620, x + 14, 640, x + 40, 596), fill=ink, width=7)
+    img = img.filter(ImageFilter.GaussianBlur(0.8))
     _age(img, 12, 0.35).save(path)
 
 
