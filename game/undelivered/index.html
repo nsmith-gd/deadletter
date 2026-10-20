@@ -83,8 +83,9 @@
   #intertitle { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 18px; padding: 24px; text-align: center; z-index: 5; transition: opacity 1.4s ease; }
   #intertitle[hidden] { display: none; }
   #intertitle p { font-family: var(--display); font-size: clamp(1.05rem, 2.6vw, 1.5rem); color: var(--paper); max-width: 34ch; opacity: 0; animation: titleLine 1.6s ease forwards; }
-  #intertitle p:nth-child(1) { animation-delay: 0.6s; } #intertitle p:nth-child(2) { animation-delay: 3.0s; }
-  #intertitle p:nth-child(3) { animation-delay: 5.6s; } #intertitle p:nth-child(4) { animation-delay: 8.4s; }
+  #intertitle p.year { font-size: clamp(.8rem, 1.6vw, 1rem); letter-spacing: .3em; opacity: 0; color: var(--muted, #9a958a); }
+  #intertitle p:nth-child(1) { animation-delay: 0.6s; } #intertitle p:nth-child(2) { animation-delay: 2.4s; }
+  #intertitle p:nth-child(3) { animation-delay: 5.2s; }
   @keyframes titleLine { to { opacity: 1; } }
   #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
   #debug {
@@ -109,13 +110,12 @@
 </script>
 
 <div id="app">
-  <canvas id="view" aria-label="Dead Letter, chapter 1, scenes DL-01 to DL-11, playable"></canvas>
+  <canvas id="view" aria-label="Dead Letter, the prologue, scenes DL-01 to DL-11, playable"></canvas>
   <div id="fade"></div>
   <div id="intertitle" hidden>
-    <p>For seventy-six years the lower rings of the refuge have been dark.</p>
-    <p>Everyone who lived down here died, or went up.</p>
-    <p>Tonight the power came back on. Nobody was left to wonder why.</p>
-    <p>In the depot, one courier still had a parcel to deliver.</p>
+    <p class="year">R.Y. 119</p>
+    <p>Seventy-six years of dark.</p>
+    <p>Then, tonight, the lights came on.</p>
   </div>
   <div id="keycap" hidden></div>
   <div id="found" aria-live="polite"></div>
@@ -134,7 +134,7 @@
 
   <section id="title" class="layer">
     <div class="card">
-      <div class="eyebrow"><span>Dead Letter &middot; chapter 1 &middot; prototype</span><span>Scenes 01&ndash;11 of 51 &middot; ~20 min</span></div>
+      <div class="eyebrow"><span>Dead Letter &middot; prologue &middot; prototype</span><span>Scenes 01&ndash;11 &middot; ~15&ndash;20 min</span></div>
       <h1><span class="code">DL-01&ndash;11</span> Undelivered</h1>
       <p class="lede">A courier wakes beneath the refuge with a parcel still undelivered, and finds out what he is.</p>
       <dl class="controls">
@@ -160,7 +160,7 @@
         <select id="scene-select"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option></select>
         <button class="act secondary" id="scene-go" type="button" disabled>Start there</button>
       </div>
-      <p class="note">The eleven scenes of chapter 1, from The Wake to The Child at the Address, run as one, with no cut between them. Headphones recommended.</p>
+      <p class="note">The eleven scenes of the prologue, from The Wake to The Child at the Address, run as one, with no cut between them. Headphones recommended.</p>
     </div>
   </section>
 
@@ -195,11 +195,10 @@
   <section id="end" class="layer" hidden>
     <div class="card">
       <div class="eyebrow"><span>Dead Letter</span><span id="end-time"></span></div>
-      <h1>End of chapter one</h1>
+      <h1>End of the prologue</h1>
       <h2 class="sub">Undelivered</h2>
       <p>Behind a fallen desk, nine pencil marks climb the wall, one a year, and a crooked tree is drawn beside them. The terminal says nobody is home, and forwards the parcel up, to a school on ring B. D-17 sat the rabbit up and left the room as he found it.</p>
-      <p>Somewhere above, someone turned the power back on.</p>
-      <p class="note">Chapter two, <strong>Coats Without Children</strong>, is being made.</p>
+      <p class="note">Chapter one, <strong>Attendance</strong>, is being made.</p>
       <p class="note" id="end-found"></p>
       <div class="row">
         <button class="act" id="again" type="button">Play again</button>
@@ -746,12 +745,13 @@ const Music = (() => {
   return {
     prefetch, init,
     // Play a cue from the top, fading out any cue already playing. The bed waits until it ends.
-    play(name) {
+    // Every cue fades in (1.2 s unless asked otherwise), so none bursts in at full level.
+    play(name, fadeIn = 1.2) {
       if (!ctx) return;
       this.stop(1.5);
       const asked = ctx.currentTime;
       const c = { name, src: null, gain: ctx.createGain() };
-      c.gain.gain.value = LEVEL[name]; c.gain.connect(bus);
+      c.gain.gain.setValueAtTime(0.0001, asked); c.gain.gain.linearRampToValueAtTime(LEVEL[name], asked + Math.max(0.05, fadeIn)); c.gain.connect(bus);
       cue = c; updateBed();
       get(name).then((b) => {
         if (cue !== c || !b) { if (cue === c) { cue = null; updateBed(); } return; }
@@ -1588,8 +1588,36 @@ function updateExit(dt) {
   if (game.region === 4) game.y = DECK - Math.max(0, game.x - STAIR_X) * 0.83;     // down the stair toward ring B
   setClip('Walk', 0.2, v / CLIP_SPEED.Walk);
   stepSounds();
-  if (e.t > (game.region === 4 ? 0.9 : 0.4) && !game.ended) { game.ended = true; finish(); }
-  if (game.region === 5 && e.t > 4.5) { game.x -= v * dt; setClip('Idle', 0.6); }     // out through the back door, into the dark
+  if (game.region === 5) { updateEnd5(e, dt, v); return; }
+  if (e.t > 0.9 && !game.ended) { game.ended = true; finish(); }
+}
+// Pass 6: the prologue's ending (END5). Out onto the landing; he stops and looks up, and the camera goes up the well
+// with his look to the window; he checks his label; then up the stair into the dark as the picture fades.
+function updateEnd5(e, dt, v) {
+  e.phase ||= 'out';
+  if (e.phase === 'out') {
+    game.x += v * dt; setClip('Walk', 0.2, v / CLIP_SPEED.Walk); stepSounds();
+    if (game.x >= END5.lookX) { game.x = END5.lookX; e.phase = 'look'; e.pt = 0; setClip('Idle', 0.5); game.lookAt = 'window'; }
+    return;
+  }
+  e.pt += dt; game.x -= v * dt;                                          // undo the generic walk step
+  if (e.phase === 'look') {
+    game.x = END5.lookX;
+    if (e.pt > 1.0 && !e.music) { e.music = true; Music.play('end', 4.0); Sound.distant(); }
+    if (e.pt > 10.5) { e.phase = 'label'; e.pt = 0; game.lookAt = null; game.act = { kind: 'quirk', clip: 'CheckLabel', phase: 'act', t: 0, cancel: false }; setClip('CheckLabel', 0.2); }
+    return;
+  }
+  if (e.phase === 'label') {
+    game.x = END5.lookX;
+    const act = actions.CheckLabel, done = !act || act.time >= act.getClip().duration - 0.05;
+    if (done) { e.held = (e.held || 0) + dt; if (e.held > 0.8) { game.act = null; e.phase = 'stair'; e.pt = 0; } }
+    return;
+  }
+  // Up the stair, into the dark.
+  game.x += SLOW_WALK * 1.4 * dt;
+  game.y = Math.max(game.y, (game.x - END5.stairX) * END5.stairRise);
+  setClip('Walk', 0.2, SLOW_WALK * 1.4 / CLIP_SPEED.Walk); stepSounds();
+  if (e.pt > 2.4 && !game.ended) { game.ended = true; finish(); }
 }
 
 // From the DL-01 doorway: away from the camera, right along the passage behind the wall, back
@@ -1855,8 +1883,10 @@ function updateDL02(dt) {
     // Pass 5: the gate opens, but the racks wait in the dark until he walks through it.
     game.revealed = true; game.revealTime = 1e9; game.revealPending = true; game.rowsLit = 0; game.checkpoint = 'solved';
   }
-  if (game.revealPending && game.region === 2 && game.x > GATE_X + 0.35) {
-    game.revealPending = false; game.revealTime = game.clock; Music.bed(false); Music.play('racks');
+  // The reveal plays the moment he is through the gate, however it was opened (a half-open gate can be crawled under).
+  if ((game.revealPending || !game.revealed) && game.region === 2 && !game.transit && game.x > GATE_X + 0.2) {
+    game.revealed = true; game.revealPending = false; game.revealTime = game.clock; game.rowsLit = 0; game.checkpoint = 'solved';
+    Music.bed(false); Music.play('racks', 0.6);
   }
 
   // Lights: the plate lamp and passage once the bulkhead is open; the rack rows one after another.
@@ -2247,7 +2277,7 @@ function updateScan(dt) {
     }
     drawScreen(t < SCAN.READ ? (t > SCAN.SWEEP ? 'scan' : 'idle') : t < SCAN.REJECT ? 'read' : 'reject', t);
     if (t >= SCAN.READ && !sc.read) { sc.read = true; Sound.chirp(); }
-    if (t >= SCAN.REJECT && !sc.rejected) { sc.rejected = true; Sound.reject(); Music.play('dead'); }
+    if (t >= SCAN.REJECT && !sc.rejected) { sc.rejected = true; Sound.reject(); Music.play('dead', 0.15); }
     if (t >= SCAN.HATCH && !refs.carriers.length) spawnCarrier();
     if (t >= SCAN.REVEAL) { sc.phase = 'reveal'; game.act = null; input.lastActivity = game.clock; game.lookAt = 'heap'; }
   } else if (sc.phase === 'reveal') {
@@ -2571,7 +2601,7 @@ function updateChain4() {
 function latchPawl() {
   const p = game.plat;
   p.latched = true; game.pawlDrop = game.clock; game.pawlClickAt = game.clock;
-  Sound.pawlClick(); shake(0.22); Music.play('latch');
+  Sound.pawlClick(); shake(0.22); Music.play('latch', 0.15);
 }
 
 // Crates of returned post: down the chute from the rings, along the belt, off through the hatch.
@@ -2869,7 +2899,7 @@ function updateTriggers4() {
     d.hopped = true;
     if (once('hopscotch')) { startHopscotch(x); return true; }
   }
-  if (x > VISTA_X0 - 0.6 && !d.refuge) { d.refuge = true; Music.bed(false); Music.play('refuge'); }
+  if (x > VISTA_X0 - 0.6 && !d.refuge) { d.refuge = true; Music.bed(false); Music.play('refuge', 3.0); }
   if (x > AWE_X && !d.awed) {
     d.awed = true;
     if (once('awe')) { game.aweStart = game.clock; game.vx = 0; game.act = { kind: 'awe', phase: 'turn', t: 0 }; return true; }
@@ -2902,6 +2932,10 @@ const UO = { caseX: OFF5 + 67.3, caseHalf: 0.16, car: { x0: OFF5 + 70.35, x1: OF
   upStand: OFF5 + 69.95, crankStand: OFF5 + 72.45, door: OFF5 + 72.76, cw: { x0: OFF5 + 72.85, x1: OFF5 + 73.75, stand: OFF5 + 73.37 },
   travel: 1.6, strokes: 4, doorLift: 1.45, gate: 0.56, ride: 5.5 };
 const BARRICADE5 = { x0: OFF5 + 80.2, x1: OFF5 + 81.0, gap: 0.62 };
+// Pass 6, the ending: out of C-114's back door onto a landing; he looks up the dark well to the one lit window, the
+// new cable running down from it to the junction box here; he checks his label and takes the stair up toward ring B.
+const END5 = { lookX: OFF5 + 118.6, stairX: OFF5 + 121.4, stairRise: 0.75, win: new THREE.Vector3(OFF5 + 119.6, 30, -7), box: new THREE.Vector3(OFF5 + 118.3, 1.1, -1.0),
+  cam: new THREE.Vector3(OFF5 + 117.2, 0.5, 1.6) };
 const KNOCK5_X = OFF5 + 103.26, INNER5_X = OFF5 + 109.5, TOY5_X = OFF5 + 111.1, TERM5_X = OFF5 + 113.6, END5_X = OFF5 + 116.1;
 const DESK5 = { x: OFF5 + 113.6, half: 0.55, z: -0.62, min: OFF5 + 112.45, clear: OFF5 + 112.55 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
 const C114DOOR = { x: OFF5 + 103.6075, open: THREE.MathUtils.degToRad(95), handle: THREE.MathUtils.degToRad(-35) };
@@ -3132,6 +3166,10 @@ function currentShot() {
     return { name: 'realise', pos: V3(X + 1.7 - 0.8 * k, 0.42 + 0.2 * k, 1.0 + 0.3 * k),
       look: V3(X - 0.1 + 0.1 * k, 0.6 - 0.1 * k, -1.4 + 1.4 * k), focal: 30 + 20 * k, ease: 1.1 };
   }
+  // Pass 6: a secret room, framed from inside once he's in the doorway.
+  if (a && a.kind === 'secret' && a.se.cam && (a.phase === 'look' || (a.phase === 'in' && game.z < a.se.room.z * 0.4))) {
+    return { name: 'secret', pos: a.se.cam.clone(), look: a.se.look.clone(), focal: a.se.focal || 30, ease: 1.3 };
+  }
   // Pass 4: whenever he checks his label, the camera goes in close enough to read it: for MARA, C-114, RING C, and the
   // stamp across it, UNDELIVERED. The quest, said plainly.
   if (a && a.kind === 'quirk' && a.clip === 'CheckLabel' && refs.label && actions.CheckLabel) {
@@ -3142,6 +3180,13 @@ function currentShot() {
       const fwd = V3(Math.sin(game.yaw), 0, Math.cos(game.yaw));
       return { name: 'label', pos: L.clone().addScaledVector(fwd, 0.27).add(V3(0, 0.15, 0.05)), look: L, focal: 50, ease: 3.0 };
     }
+  }
+  if (game.region === 5 && game.exit && game.exit.phase === 'look') {
+    // Pass 6: the look up. From low behind him, the camera rises with his look up the well to the one lit window and
+    // holds there; then comes back down to him.
+    const t = game.exit.pt, up = smooth((t - 0.8) / 4.5) * (1 - smooth((t - 8.6) / 1.8));
+    const look = V3(X + 0.3, Y + 0.7, -0.4).lerp(END5.win, up);
+    return { name: 'ending', pos: END5.cam.clone().add(V3(0, 1.6 * up, 0)), look, focal: 28 + 10 * up, ease: 0.9 };
   }
   if (game.region === 5) {
     // The marks and the tree, held, the first time.
@@ -3442,7 +3487,7 @@ function resetCh1(cp) {
     if (c110.obj && c110.rest) { c110.obj.position.copy(c110.rest); c110.obj.quaternion.copy(c110.restQ); }
   }
 }
-function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; persist.cw = 0; persist.shockedOnce = false; persist.warned = false; }
+function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; for (const k of Object.keys(secretFound)) delete secretFound[k]; persist.cw = 0; persist.shockedOnce = false; persist.warned = false; }
 
 // Collision ---------------------------------------------------------------------------------
 function floorCh1(x) {
@@ -3525,6 +3570,8 @@ function nearCh1() {
   if (game.hold) return null;
   const cu = curioHere();
   if (cu) return 'curio:' + cu.id;
+  const se = secretHere();
+  if (se) return 'secret:' + se.id;
   // DL-10: the lift's UP, the service door's crank, and the counterweight's own UP.
   if (game.region === 4 && x > UPONLY.x0) {
     const uo = s.uo, deck = Math.abs(game.y - DECK) < 0.05;
@@ -3578,17 +3625,27 @@ function pushHere() {
   }
   return out;
 }
-const ACT_CH1 = new Set(['loadCar', 'up10', 'crank10', 'ride10', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
+const ACT_CH1 = new Set(['loadCar', 'up10', 'crank10', 'ride10', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck', 'shove', 'secret']);
 function beginCh1(kind) {
   const [k, arg] = kind.split(':');
   game.vx = 0;
-  if (k === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
+  if (k === 'release') {
+    const p = PUSHABLES[game.pushKey], st = p && p.state();
+    game.hold = null; game.pushKey = null; setClip('Idle', 0.25);
+    if (st && st.lip) tipOver(st);
+    return;
+  }
   if (k === 'loadCar') { game.act = { kind: 'loadCar', phase: 'approach', t: 0, it: game.carry, standX: UO.car.mid, face: 1 }; return; }
   if (k === 'up10') { game.act = { kind: 'up10', phase: 'approach', t: 0, standX: UO.upStand, face: 1 }; return; }
   if (k === 'ride10') { game.act = { kind: 'ride10', phase: 'approach', t: 0, standX: UO.cw.stand, face: 1 }; return; }
   if (k === 'crank10') { game.act = { kind: 'crank10', phase: 'approach', t: 0, standX: UO.crankStand, face: 1, strokes: Math.round(game.ch1.uo.door * UO.strokes), lastF: 0 }; return; }
   if (k === 'bell9') { game.act = { kind: 'bell9', phase: 'approach', t: 0, standX: BELL9.x, face: 1 }; return; }
   if (k === 'junction9') { game.act = { kind: 'junction9', phase: 'approach', t: 0, standX: JUNCTION9.x - 0.25, face: 1 }; return; }
+  if (k === 'secret') {
+    const se = SECRETS.find((q) => q.id === arg);
+    game.act = { kind: 'secret', se, phase: 'approach', t: 0, standX: se.stand, face: Math.sign(se.stand - game.x) || 1 };
+    return;
+  }
   if (k === 'curio') {
     const c = CURIOS.find((q) => q.id === arg);
     game.act = { kind: 'curio', c, phase: 'approach', t: 0, standX: c.standX ?? c.x, face: c.face || game.facing };
@@ -3651,6 +3708,7 @@ function updateActCh1(a, dt) {
   const s = game.ch1;
   if (a.kind === 'death') { updateDeath(a, dt); return; }
   if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
+  if (a.kind === 'secret') { updateSecretAct(a, dt); return; }
   if (['loadCar', 'up10', 'crank10', 'ride10'].includes(a.kind)) { updateAct10(a, dt); return; }
   if (a.kind === 'bell9' || a.kind === 'junction9') {
     // He turns to the wall to press the bell (or pull the lever), then back to the lane.
@@ -3700,7 +3758,14 @@ function updateActCh1(a, dt) {
     if (a.phase === 'turn') { if (Math.abs(game.yaw - Math.PI) < 0.06) { a.phase = 'act'; setClip('SetDownHigh', 0.15); } else setClip('Walk', 0.2, 0.6); return; }
     const f = actions.SetDownHigh.time * FPS, it = a.it;
     if (f >= 14 && it.state === 'carried') {
-      if (it.g && (a.c.state === 'dock' || a.c.state === 'move')) { it.state = 'carrier'; a.c.load = it; it.g.position.set(0, 0, 0); a.c.body.add(it.g); it.g.position.set(0, CARRIER_FLOOR, 0); Sound.setDown(true); }
+      if (it.g && (a.c.state === 'dock' || a.c.state === 'move')) {
+        // One weight sits in the middle of the tub; a second goes in beside it, and the first shifts over.
+        it.state = 'carrier'; a.c.body.add(it.g); it.g.rotation.set(0, 0, 0);
+        if (a.c.load) { a.c.load2 = it; a.c.load.g.position.set(-0.14, CARRIER_FLOOR, 0); it.g.position.set(0.14, CARRIER_FLOOR, 0); }
+        else { a.c.load = it; it.g.position.set(0, CARRIER_FLOOR, 0); }
+        a.c.payload.forEach((m) => (m.visible = false));        // the parcels it came with make way
+        Sound.setDown(true);
+      }
       else { it.state = 'floor'; it.x = game.x; it.base = 0; }
     }
     if (f >= 35) { game.act = null; game.hold = null; game.carry = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); }
@@ -3765,6 +3830,7 @@ function updateActCh1(a, dt) {
     if (f >= 29) { game.act = null; setClip('Idle', 0.3); }
     return;
   }
+  if (a.kind === 'shove') { if (a.t > 0.8) { game.act = null; setClip('Idle', 0.3); } return; }
   if (a.kind === 'trenchStuck') {
     if (a.t > 0.2 && !a.f) { a.f = true; setClip('Flinch', 0.2); Sound.worried(); }
     if (a.t > 2.0 && !a.r) { a.r = true; respawn(); }
@@ -3913,7 +3979,9 @@ function holdLetter(on) {
 // Pushing the cart, the duct; dragging the courier -------------------------------------------
 function updateHoldCh1(dt, move) {
   const p = PUSHABLES[game.pushKey], s = p.state();
-  if (input.jumpPressed) { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
+  const tips = p === PUSHABLES.cart || p === PUSHABLES.duct, atLip = tips && Math.abs(s.x - p.max()) < 0.005;
+  // Let go with it at the lip and it goes in.
+  if (input.jumpPressed) { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); if (atLip) tipOver(s); return; }
   game.facing = game.holdSide;
   const target = Math.sign(move) * p.speed * Math.min(1, Math.abs(move) * 1.15), acc = 1.4;
   game.vx += Math.max(-acc * dt, Math.min(acc * dt, target - game.vx));
@@ -3930,11 +3998,21 @@ function updateHoldCh1(dt, move) {
   else setClip('PushIdle', 0.25);
   if (game.pushKey === 'courier' || game.pushKey === 'body') Sound.drag(Math.min(1, speed / 0.22)); else if (speed > 0.05 && Math.random() < dt * 0.8) Sound.squeak();
   stepSounds();
-  // At the end of its travel: the cart and the duct drop into place; the courier is on the bay's plate.
+  // The cart and the duct stop at a pit's lip with their front wheels over, teetering. He keeps hold of them; pushing on
+  // into the lip a moment, he gives them a last shove and lets go, and they go in (so does letting go there).
+  if (tips) {
+    s.lip = atLip;
+    s.shove = atLip && move && Math.sign(move) === p.side ? (s.shove || 0) + dt : 0;
+    if (s.shove > 0.45) {
+      game.hold = null; game.pushKey = null; game.vx = 0; s.shove = 0;
+      if (actions.Nudge) { game.act = { kind: 'shove', phase: 'act', t: 0 }; setClip('Nudge', 0.12); } else setClip('Idle', 0.3);
+      tipOver(s);
+    }
+    return;
+  }
+  // At the end of its travel: the courier is on the bay's plate; the drum and the body are set.
   if (Math.abs(s.x - p.max()) < 0.005) {
     game.hold = null; game.pushKey = null; game.vx = 0; setClip('Idle', 0.3);
-    if (p === PUSHABLES.cart) { s.state = 'falling'; s.drop = 0; s.x0tip = s.x; Sound.scrape(); }
-    if (p === PUSHABLES.duct) { s.state = 'falling'; s.drop = 0; s.x0tip = s.x; Sound.scrape(); }
     if (p === PUSHABLES.courier) { s.state = 'cradle'; s.t = 0; Sound.drag(0); }
     if (p === PUSHABLES.drum) { if (Math.abs(s.x - RH5.drumPark) < 0.01) s.state = 'set'; Sound.thud(); shake(0.15); }
     if (p === PUSHABLES.body && Math.abs(s.x - RH5.bodyPlate) < 0.01) {
@@ -3945,6 +4023,9 @@ function updateHoldCh1(dt, move) {
   }
 }
 
+// Front wheels over the lip, held: the nose dips and rocks a little.
+function teeter() { return -0.07 - (game.calm ? 0 : 0.015 * Math.sin(game.clock * 7)); }
+function tipOver(s) { s.state = 'falling'; s.drop = 0; s.x0tip = s.x; s.lip = false; Sound.scrape(); }
 // Pass 5: something pushed over a pit's edge tips nose-first and slides in. Pushing stops with its front wheels over
 // the edge; then over 0.9 s the nose drops, it slides forward to where it lands, and it settles with a small bounce.
 function tipInto(g, s, half, xEnd, floorY) {
@@ -3965,7 +4046,7 @@ function updateCh1(dt) {
   if (cart.state === 'falling') { cart.drop = Math.min(1, cart.drop + dt / 0.9); if (cart.drop >= 0.8 && !cart.landed) { cart.landed = true; Sound.thud(); shake(0.4); } if (cart.drop >= 1) { cart.state = 'bridge'; cart.x = PIT.x0 + CART1.half + 0.02; } }
   if (k.cart) {
     if (cart.state === 'falling') tipInto(k.cart, cart, CART1.half, PIT.x0 + CART1.half + 0.02, PIT.y);
-    else { k.cart.position.x = cart.x; k.cart.position.y = cart.state === 'bridge' ? PIT.y : 0; k.cart.rotation.z = 0; }
+    else { k.cart.position.x = cart.x; k.cart.position.y = cart.state === 'bridge' ? PIT.y : 0; k.cart.rotation.z = cart.lip && cart.state !== 'bridge' ? teeter() : 0; }
     const roll = cart.x - (cart.lastX ?? cart.x); cart.lastX = cart.x;
     if (roll) (k.cartWheels ||= [0, 1, 2, 3].map((i) => k.cart.getObjectByName('DepotCartWheel' + i)).filter(Boolean)).forEach((w) => w.rotateZ(-roll / 0.065));
   }
@@ -3992,11 +4073,10 @@ function updateCh1(dt) {
   const cr = s.courier;
   if (k.courier) { k.courier.position.x = cr.x; k.courier.visible = cr.state !== 'seated'; }
   const dOnPlate = game.region === 2 && game.x > RK.plate.x0 && game.x < RK.plate.x1 && game.y < 0.1;
-  // Pass 3: once the courier is near, the cradle reaches out and draws it in; no need to land it exactly.
-  if (cr.state === 'free' && cr.x > RK.bayX - 0.6) {
-    cr.state = 'drawn'; cr.t = 0; Sound.drag(0); Sound.servo(0.5, 260, 520, 0.03);
-    if (game.hold === 'push' && game.pushKey === 'courier') { game.hold = null; game.pushKey = null; game.vx = 0; setClip('Idle', 0.3); }
-  }
+  // He drags it all the way onto the plate himself. Let go of it near the bay and the cradle reaches out and draws in
+  // the rest (no need to land it exactly), but never out of his hands.
+  const dragging = game.hold === 'push' && game.pushKey === 'courier';
+  if (cr.state === 'free' && !dragging && cr.x > RK.bayX - 0.6) { cr.state = 'drawn'; cr.t = 0; Sound.drag(0); Sound.servo(0.5, 260, 520, 0.03); }
   if (cr.state === 'drawn') {
     cr.t += dt;
     const reach = Math.sin(Math.PI * Math.min(1, cr.t / 1.2));
@@ -4062,7 +4142,7 @@ function updateCh1(dt) {
   if (du.state === 'falling') { du.drop = Math.min(1, du.drop + dt / 0.9); if (du.drop >= 1) { du.state = 'bridge'; du.x = DIP9.x0 + DUCT9.half; Sound.thud(); Sound.splash(1.3); shake(0.3); makeNoise((DIP9.x0 + DIP9.x1) / 2, 1.5); } }
   if (k.duct) {
     if (du.state === 'falling') tipInto(k.duct, du, DUCT9.half, DIP9.x0 + DUCT9.half, DIP9.floor);
-    else { k.duct.position.x = du.x; k.duct.position.y = du.state === 'bridge' ? DIP9.floor : 0; k.duct.rotation.z = 0; }
+    else { k.duct.position.x = du.x; k.duct.position.y = du.state === 'bridge' ? DIP9.floor : 0; k.duct.rotation.z = du.lip && du.state !== 'bridge' ? teeter() : 0; }
   }
   if (game.region === 5 && du.state !== 'bridge' && !game.act && game.grounded && game.x + HALF * 0.6 > DIP9.x0 && game.x < DIP9.x1 && game.y < 0.02) {
     game.act = { kind: 'waterFlinch', phase: 'act', t: 0, backX: DIP9.x0 - 0.35 }; game.vx = 0; setClip(actions.WaterFlinch ? 'WaterFlinch' : 'Flinch', 0.1);
@@ -4175,7 +4255,7 @@ function loadableCarrier() {
   if (!refs.carriers) return null;
   let best = null;
   for (const c of refs.carriers) {
-    if (c.load || c.ridden || c.root.position.y > 0.2) continue;
+    if ((c.load && c.load2) || c.ridden || c.root.position.y > 0.2) continue;
     const ok = c.state === 'dock' ? Math.abs(game.x - DOCK_X) < 0.7 : (!game.belt.running && c.state === 'move' && Math.abs(game.x - c.root.position.x) < 0.6);
     const d = Math.abs(game.x - c.root.position.x);
     if (ok && (!best || d < best.d)) best = { c, d };
@@ -4183,6 +4263,7 @@ function loadableCarrier() {
   return best && best.c;
 }
 function carrierLoadTip(c, into) {
+  if (c.load2) { const second = { load: c.load2 }; c.load2 = null; setTimeout(() => carrierLoadTip(second, into), 180); }
   const it = c.load; if (!it) return;
   c.load = null;
   it.g.getWorldPosition(tv1); scene.attach(it.g);
@@ -4304,6 +4385,49 @@ const CURIOS = [
 ];
 const curioFound = {};
 const curioCount = () => CURIOS.filter((c) => curioFound[c.id]).length;
+// Pass 6: secret rooms. A gap in the back wall he can notice; Use, and he goes in (away from the camera, as through
+// DL-01's doorway), the camera frames the room, and he stays until the player moves him on. Each room tells one small
+// story by its layout. `ready` stays false until the room's art is in the build.
+const SECRETS = [
+  { id: 'reader', name: 'The reader', region: 3, upper: false, ready: false, open: [0, 0], stand: 0, room: { x: 0, z: -2.4 }, cam: null, look: null },
+  { id: 'den', name: 'The den', region: 4, ready: false, open: [0, 0], stand: 0, room: { x: 0, z: -2.4 }, cam: null, look: null },
+];
+const secretFound = {};
+function secretHere() {
+  if (game.mode !== 'play') return null;
+  for (const se of SECRETS) {
+    if (!se.ready || se.region !== game.region || (se.region === 3 && !!se.upper !== !!game.upper)) continue;
+    if (game.x > se.open[0] - 0.2 && game.x < se.open[1] + 0.2) return se;
+  }
+  return null;
+}
+function updateSecretAct(a, dt) {
+  const se = a.se;
+  if (a.phase === 'approach') { if (approachCh1(a, dt)) { a.phase = 'turn'; game.yawOverride = Math.PI; } return; }
+  const walkTo = (x, z) => {
+    const dx = x - game.x, dz = z - game.z, d = Math.hypot(dx, dz);
+    if (d < 0.01) { game.x = x; game.z = z; return true; }
+    const st = Math.min(d, WALK * 0.7 * dt); game.x += dx / d * st; game.z += dz / d * st;
+    setClip('Walk', 0.2, WALK * 0.7 / CLIP_SPEED.Walk); stepSounds(); return false;
+  };
+  if (a.phase === 'turn') { if (Math.abs(game.yaw - Math.PI) < 0.06) a.phase = 'in'; else setClip('Walk', 0.2, 0.6); return; }
+  if (a.phase === 'in') {
+    if (walkTo(se.stand, se.room.z * 0.45) && walkTo(se.room.x, se.room.z)) {
+      a.phase = 'look'; a.t = 0; setClip('Idle', 0.5); game.yawOverride = se.face ?? Math.PI;
+      if (!secretFound[se.id]) { secretFound[se.id] = true; Telemetry.event('secret', { id: se.id }); }
+    }
+    return;
+  }
+  if (a.phase === 'look') {
+    // He stays as long as the player likes; any move, jump or Use takes him back out.
+    if (a.t > 2.0 && (input.axis || input.left || input.right || input.jumpPressed || input.usePressed)) { a.phase = 'out'; game.yawOverride = 0; }
+    return;
+  }
+  if (a.phase === 'out') {
+    if (Math.abs(game.yaw) > 0.06) { setClip('Walk', 0.2, 0.6); return; }
+    if (walkTo(se.stand, se.room.z * 0.45) && walkTo(se.stand, 0)) { game.z = 0; game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+  }
+}
 function curioHere() {
   if (game.mode !== 'play') return null;
   for (const c of CURIOS) {
@@ -5004,8 +5128,10 @@ function updateCharacter(dt, playing) {
   // Curiosity as the hint system: after a few idle seconds near something useful he looks at it.
   // When the rack lights come on, he looks before anything else.
   const rk = game.clock - game.revealTime;
-  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform';
-  const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2) : REVEAL_LOOK;
+  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform' || game.lookAt === 'window';
+  // The window is far above: look along the line to it (a point 2 m out on it, within the head look's reach).
+  const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2)
+    : game.lookAt === 'window' ? tv4.copy(END5.win).sub(tv3.set(game.x, game.y + 0.6, game.z)).setLength(2).add(tv3) : REVEAL_LOOK;
   // The early curiosities: he turns his head to each as he passes, the first time.
   const glance = !looking && glanceCurio();
   if (glance) glance.glanceT = (glance.glanceT || 0) + dt;                // one look each, the first time he passes
@@ -5013,7 +5139,7 @@ function updateCharacter(dt, playing) {
   const idle = looking || glance ? 99 : game.clock - input.lastActivity;
   // Riding the cage counts as standing: the catch's hint must show while the ride runs.
   const free = (game.grounded && !game.act) || (game.act && game.act.kind === 'cage');
-  const want = hint && idle > HINT_LOOK && free && !game.mantle && !game.exit && !game.transit && !game.riding ? 1 : 0;
+  const want = hint && idle > HINT_LOOK && (free || game.lookAt === 'window') && !game.mantle && (!game.exit || game.lookAt === 'window') && !game.transit && !game.riding ? 1 : 0;
   game.hintWeight += (want - game.hintWeight) * Math.min(1, dt * 2.5);
   // Pass 4: the look is limited to what a neck can do (70 degrees either way, 35 up or down), and a target behind him
   // is let go rather than twisted round to; the old free rotation flipped his head when a target was nearly behind.
@@ -5434,17 +5560,17 @@ function startOpening() {
   game.cordOn = false; game.cordUsed = false; game.cordPull = 0;
   game.mode = 'card'; game.sceneTime = 0; cuePtr = 0; game.nextRelay = OPENING_FRAMES;
   game.heardHall = false; Music.setPaused(false); Music.bed(false);
-  // Pass 5: why he wakes, said in words, before the wake. Any key, tap or click moves on.
+  // The card before the wake: the power is back after 76 years, and nothing says why. Any key, tap or click moves on.
   const card = document.getElementById('intertitle');
   card.hidden = false; card.style.opacity = 1;
   const go = () => {
     if (game.mode !== 'card') return;
-    game.mode = 'opening'; Music.play('wake');
+    game.mode = 'opening'; Music.play('wake', 0.6);
     card.style.opacity = 0; setTimeout(() => { card.hidden = true; }, 1400);
     setTimeout(() => { if (game.mode === 'opening') skipBtn.hidden = false; }, 1500);
     window.removeEventListener('keydown', go); card.removeEventListener('pointerdown', go);
   };
-  setTimeout(go, 12500);
+  setTimeout(go, 9500);
   setTimeout(() => { window.addEventListener('keydown', go); card.addEventListener('pointerdown', go); }, 1200);
   refs.grit.forEach((g) => (g.m.visible = false));
   Object.values(actions).forEach((a) => a.stop()); current = null;
@@ -5506,15 +5632,19 @@ function sceneName() {
 }
 const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
-const tally = () => `Curiosities ${curioCount()} of ${CURIOS.length} \u00B7 letters posted ${letterState.posted || 0} of ${LETTERS.length}`;
+const tally = () => {
+  const rooms = SECRETS.filter((q) => q.ready);
+  return `Curiosities ${curioCount()} of ${CURIOS.length} \u00B7 letters posted ${letterState.posted || 0} of ${LETTERS.length}` +
+    (rooms.length ? ` \u00B7 secret rooms ${rooms.filter((q) => secretFound[q.id]).length} of ${rooms.length}` : '');
+};
 function finish() {
-  // Pass 5: a real ending. He walks on out of C-114 while the picture goes slowly to black; then the chapter's card.
+  // The picture goes slowly to black as he climbs away into the dark; then the prologue's card.
   game.endTime = game.clock - game.playStart;
   fadeEl.style.transition = 'opacity 4s ease';
   Telemetry.event('end', { time: Math.round(game.endTime), deaths: game.deaths, found: Object.keys(curioFound).length }); Telemetry.flush();
   fadeEl.style.opacity = 1;
   Sound.distant();
-  Music.queue('end');
+  if (Music.playing() !== 'end') Music.queue('end');
   setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; document.getElementById('end-found').textContent = tally(); endEl.hidden = false; document.getElementById('again').focus(); }, 5200);
 }
 
@@ -5526,7 +5656,7 @@ function finish() {
 // and a summariser.
 // ---------------------------------------------------------------------------
 const Telemetry = (() => {
-  const BUILD = 'ch1-pass5';
+  const BUILD = 'prologue-pass6';
   const url = (() => { try { return new URLSearchParams(location.search).get('telemetry') || window.DL_TELEMETRY_URL || ''; } catch (e) { return ''; } })();
   const sid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)) ;
   let enabled = true, queue = [], log = [], seq = 0, sent = 0;
