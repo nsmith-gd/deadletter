@@ -6,7 +6,8 @@ The depot workers' canteen and ration counter, the bottom of the refuge, where t
 families slept when ring C flooded, and where they starved when the rations ran out (pass 4, the famine). Left to right:
 
     x 47.9 to 48.1   the hall's end wall, with a doorway the size of the Racks' passage (y -0.9 to 0.67, 2.4 high)
-    x 48.1 to 53.2   the canteen, its floor rows of the dead under sheets, ration tags on their toes (two on the cots):
+    x 48.1 to 53.2   the canteen, its floor rows of the dead under sheets, ration tags on their toes (two on the cots;
+                     pass 5: skeletons, the sheets settled onto the bones):
                      the shrine on the first column (49.65), the painted sky on the back wall, the grade notice and the
                      tally marks on the second column; one shrouded body on the lane's back edge, a rope on its ankles
     x 53.2 to 56.6   the ration counter behind the lane, hacked through at 55.92 to 56.27; NO RATIONS / GRADE 4 painted
@@ -29,9 +30,17 @@ Driven by the game (game/undelivered/index.html):
     RationServedFlag   the SERVED flag on the dial; origin on its hinge (FLAG_HINGE), modelled up (hidden); drops by
                        turning FLAG_THROW about x (game x)
     RationBody         the shrouded body to drag; origin at its centre on the floor (BODY_START_X, BODY_Y, 0), lying
-                       along x, its feet to +x with the drag toggle at BODY_LOOP (x offset, height); moves in x
+                       along x, its feet to +x with the drag toggle at BODY_LOOP (x offset, height); moves in x.
+                       Pass 5: one mesh, 1.65 long on its local x (game x), up its local z (game y); its sheet is cut
+                       every 1.4 to 3.2 cm along x (60-odd sections), so the game can ripple it as it is dragged
     RationLamp         the counter's strip tube (emissive; flickers)
     RationCandles      the shrine's candle flames (emissive)
+
+Pass 5 (docs/chapter1_pass5_plan.md): the dead have been dead seventy-six years. Under the sheets, skeletons: the
+linen has settled onto the bones (a dome over the skull, ridges over the ribs, sunk to the spine below them, the
+pelvis's wings, the long bones), the feet out from under the hems are bone with the ration tags on their toes, a
+forearm and hand from under some sheets' edges, dust over all of it. The bone helpers (skull, hand, foot, rib cage,
+spine, pelvis, rags) are shared with art/pass4/build_story_depot.py's sorters.
 
 Coordinates: metres, Blender Z up, the lane at y = 0, travel along +x, the camera at -y.
 """
@@ -1078,8 +1087,11 @@ def frame3(x, y_hint):
 def long_bone(bm, a, b, r, knob=1.55, seg=6):
     """A long bone: a shaft with its two ends swollen into joints."""
     a, b = Vector(a), Vector(b)
-    ts = (0.0, 0.06, 0.2, 0.8, 0.94, 1.0)
-    rs = (r * knob * 0.7, r * knob, r, r * 0.95, r * knob, r * knob * 0.7)
+    ts = (0.0, 0.09, 0.91, 1.0)
+    rs = (r * knob * 0.8, r * knob * 0.9, r * knob * 0.9, r * knob * 0.8)
+    if (b - a).length > 0.12:                              # a long one: a shaft between swollen ends
+        ts = (0.0, 0.08, 0.5, 0.92, 1.0)
+        rs = (r * knob * 0.75, r * knob, r * 0.85, r * knob, r * knob * 0.75)
     return sweep(bm, [a.lerp(b, t) for t in ts], rs, seg=seg)
 
 
@@ -1133,7 +1145,7 @@ def hand(P, W, hd, hn, s=1.0, curl=0.6, spread=1.0, cell='bone'):
                 dv = (Matrix.Rotation(curl, 3, sd) @ dv).normalized()
             pts.append(pts[-1] + dv * L * s)
         rs = [0.0055 * s] + [max(0.0035, 0.0062 - 0.0008 * j) * s for j in range(len(lens))]
-        P.add(cell, lambda bm, pts=pts, rs=rs: sweep(bm, pts, rs, seg=4), size=0.1)
+        P.add(cell, lambda bm, pts=pts, rs=rs: sweep(bm, pts, rs, seg=3), size=0.1)
 
 
 def foot(P, A, fd, up, s=1.0, curl=0.25, cell='bone'):
@@ -1146,8 +1158,8 @@ def foot(P, A, fd, up, s=1.0, curl=0.25, cell='bone'):
     P.add(cell, lambda bm: ellipsoid(bm, A + (d * 0.015 - n * 0.005) * s, M, (0.03 * s, 0.02 * s, 0.024 * s), seg=6), size=0.1)
     tips = []
     for k in range(5):
-        base = A + (d * 0.05 + sd * (0.011 * (k - 2) - 0.004) - n * 0.008 * abs(k - 2)) * s
-        dirn = (d + sd * 0.1 * (k - 2)).normalized()
+        base = A + (d * 0.05 + sd * (0.0105 * (k - 2) - 0.004) - n * 0.008 * abs(k - 2)) * s
+        dirn = (d + sd * 0.04 * (k - 2)).normalized()
         lens = (0.075 - 0.006 * k, 0.03 - 0.003 * k, 0.018)
         pts = [base]
         dv = dirn
@@ -1156,12 +1168,12 @@ def foot(P, A, fd, up, s=1.0, curl=0.25, cell='bone'):
                 dv = (Matrix.Rotation(curl, 3, sd) @ dv).normalized()
             pts.append(pts[-1] + dv * L * s)
         r0 = (0.009 if k == 0 else 0.0065) * s
-        P.add(cell, lambda bm, pts=pts, r0=r0: sweep(bm, pts, [r0, r0 * 0.85, r0 * 0.8, r0 * 0.65], seg=4), size=0.1)
+        P.add(cell, lambda bm, pts=pts, r0=r0: sweep(bm, pts, [r0, r0 * 0.85, r0 * 0.8, r0 * 0.65], seg=3), size=0.1)
         tips.append(pts[-1])
     return tips
 
 
-def ribcage(P, top, bottom, lat, fwd, s=1.0, n=8, cell='bone', sternum=True):
+def ribcage(P, top, bottom, lat, fwd, s=1.0, n=7, cell='bone', sternum=True):
     """The thoracic spine from `top` to `bottom` (the back of the chest) and its ribs: each pair arcs out and round to
     the front, the lower ones short (floating), the upper ones joined to a sternum."""
     top, bottom = Vector(top), Vector(bottom)
@@ -1180,10 +1192,10 @@ def ribcage(P, top, bottom, lat, fwd, s=1.0, n=8, cell='bone', sternum=True):
         tmax = math.pi * (0.9 if i < n - 2 else 0.6)
         for side in (1, -1):
             pts = []
-            for k in range(7):
-                t = tmax * k / 6
+            for k in range(5):
+                t = tmax * k / 4
                 pts.append(S + lat * side * a * math.sin(t) + fwd * b * (1 - math.cos(t)) / 2 + down * drop * (1 - math.cos(t)) / 2)
-            P.add(cell, lambda bm, pts=pts: sweep(bm, pts, [0.0085 * s] * 6 + [0.0065 * s], seg=4), size=0.15)
+            P.add(cell, lambda bm, pts=pts: sweep(bm, pts, [0.009 * s] * 4 + [0.007 * s], seg=4), size=0.15)
         if i == 0:
             ends.append(S + fwd * b + down * drop * 0.95)
         if i == n - 3:
@@ -1194,7 +1206,7 @@ def ribcage(P, top, bottom, lat, fwd, s=1.0, n=8, cell='bone', sternum=True):
     return ends[0] if ends else top
 
 
-def spine(P, pts, s=1.0, step=0.026, cell='bone'):
+def spine(P, pts, s=1.0, step=0.05, cell='bone'):
     """The spine as a column of vertebrae along pts: a tube swelling at each one."""
     pts = [Vector(p) for p in pts]
     path = []
@@ -1203,7 +1215,7 @@ def spine(P, pts, s=1.0, step=0.026, cell='bone'):
         path += [a.lerp(b, i / k) for i in range(k)]
     path.append(pts[-1])
     rs = [(0.019 if i % 2 else 0.013) * s for i in range(len(path))]
-    P.add(cell, lambda bm: sweep(bm, path, rs, seg=6), size=0.15)
+    P.add(cell, lambda bm: sweep(bm, path, rs, seg=5), size=0.15)
 
 
 def pelvis(P, c, up, lat, fwd, s=1.0, cell='bone'):
@@ -1217,7 +1229,7 @@ def pelvis(P, c, up, lat, fwd, s=1.0, cell='bone'):
                                                        (0.018 * s, 0.065 * s, 0.06 * s), seg=8), size=0.15)
     P.add(cell, lambda bm: ellipsoid(bm, c + (-f * 0.04 + u * 0.02) * s, M, (0.022 * s, 0.045 * s, 0.055 * s), seg=6), size=0.15)
     P.add(cell, lambda bm: add_torus(bm, c + (f * 0.035 - u * 0.02) * s, (u * 0.55 + f * 0.45).normalized(), 0.058 * s,
-                                     0.013 * s, mat=0, seg=12, rseg=4), size=0.15)
+                                     0.014 * s, mat=0, seg=10, rseg=3), size=0.15)
 
 
 def cloth(P, cell, pts, thick=0.0015):
@@ -1309,7 +1321,7 @@ def _mirror(caps):
     return [((a[0], -a[1], a[2]), (b[0], -b[1], b[2]), rl, rv) for a, b, rl, rv in caps]
 
 
-_ADULT = [((-0.72, 0.0, 0.0), (-0.66, 0.0, 0.0), 0.08, 0.15),                         # the skull, face up
+_ADULT = [((-0.745, 0.0, 0.0), (-0.665, 0.0, 0.0), 0.075, 0.125),                     # the skull, face up
           ((-0.60, 0.0, 0.0), (-0.54, 0.0, 0.0), 0.03, 0.035),                         # the jaw and the neck
           ((-0.53, 0.0, 0.0), (-0.45, 0.0, 0.0), 0.125, 0.11),                         # the rib cage
           ((-0.45, 0.0, 0.0), (-0.32, 0.0, 0.0), 0.15, 0.125),
@@ -1319,13 +1331,13 @@ _ADULT = [((-0.72, 0.0, 0.0), (-0.66, 0.0, 0.0), 0.08, 0.15),                   
           ((0.03, 0.10, 0.0), (0.38, 0.09, 0.0), 0.024, 0.032), ((0.03, -0.10, 0.0), (0.38, -0.09, 0.0), 0.024, 0.032),
           ((0.38, 0.09, 0.0), (0.42, 0.09, 0.0), 0.035, 0.05), ((0.38, -0.09, 0.0), (0.42, -0.09, 0.0), 0.035, 0.05),
           ((0.42, 0.09, 0.0), (0.66, 0.09, 0.0), 0.024, 0.032), ((0.42, -0.09, 0.0), (0.66, -0.09, 0.0), 0.024, 0.032)]
-_FEET = [((0.645, 0.095, 0.045), (0.25, 0.5, 0.83), (0.95, 0.2, -0.25)),
-         ((0.645, -0.095, 0.045), (0.25, -0.5, 0.83), (0.95, -0.2, -0.25))]
-_BOUND = [((0.645, 0.05, 0.05), (0.12, 0.16, 0.98), (0.99, 0.0, -0.12)),               # tied together, toes up
-          ((0.645, -0.05, 0.05), (0.12, -0.16, 0.98), (0.99, 0.0, -0.12))]
+_FEET = [((0.645, 0.095, 0.058), (0.25, 0.45, 0.86), (0.95, 0.2, -0.25)),
+         ((0.645, -0.095, 0.058), (0.25, -0.45, 0.86), (0.95, -0.2, -0.25))]
+_BOUND = [((0.645, 0.05, 0.06), (0.12, 0.16, 0.98), (0.99, 0.0, -0.12)),               # tied together, toes up
+          ((0.645, -0.05, 0.06), (0.12, -0.16, 0.98), (0.99, 0.0, -0.12))]
 SHROUDS = {
-    'adult': dict(caps=_ADULT + _ARM_IN + _mirror(_ARM_IN), ribs=(-0.535, -0.31, 0.15, 0.042, 0.11),
-                  fine=(-0.76, -0.27), sheet=(-0.84, 0.58, -0.29, 0.29, 14), settle=3.2,
+    'adult': dict(caps=_ADULT + _ARM_IN + _mirror(_ARM_IN), ribs=(-0.535, -0.31, 0.15, 0.042, 0.065),
+                  fine=(-0.56, -0.28), sheet=(-0.81, 0.58, -0.275, 0.275, 12), settle=3.2,
                   feet=_FEET, shins=0.09, hand=None, length=1.65),
     'curled': dict(caps=[((-0.50, 0.06, 0.0), (-0.47, 0.06, 0.0), 0.085, 0.14),             # on its side, knees drawn up
                          ((-0.42, 0.04, 0.0), (-0.36, 0.03, 0.0), 0.03, 0.05),
@@ -1373,7 +1385,7 @@ def shroud(kind, seed=0.0, rope=False):
     xs, x = [], x0
     while x < x1 - 1e-6:                                     # fine over the skull and the ribs, coarser elsewhere
         xs.append(x)
-        x += 0.012 if f0 <= x <= f1 else 0.034
+        x += 0.014 if f0 <= x <= f1 else 0.032
     xs.append(x1)
     nx = len(xs) - 1
     ys = [y0 + (y1 - y0) * j / ny for j in range(ny + 1)]
@@ -1408,13 +1420,14 @@ def shroud(kind, seed=0.0, rope=False):
         for j, y in enumerate(ys):
             z = S[i][j]
             edge = i == 0 or j == 0 or j == ny
+            xx = x - (0.012 * (1 + noise.noise(Vector((y * 13.0, seed, 2.3)))) if i == 0 else 0.0)   # the head end's hem
             if z > 0.004 and not edge:
                 z += 0.006 + 0.004 * noise.noise(Vector((x * 7.0, y * 9.0, seed * 3.1))) * min(1.0, z * 12)
             if edge or z < 0.004:
                 z = 0.003 + 0.002 * abs(noise.noise(Vector((x * 11.0, y * 11.0, seed))))
             # the hem, rotted ragged along the sides
             yy = y + (0.012 * noise.noise(Vector((x * 9.0, seed, 1.7))) if j in (0, ny) else 0.0)
-            row.append(Vector((x, yy, z)))
+            row.append(Vector((xx, yy, z)))
         pts.append(row)
     # The foot end hangs over the shins: a short ragged drop below its edge.
     drop = [Vector((p.x + 0.012 + 0.008 * noise.noise(Vector((p.y * 13.0, seed, 0.4))), p.y, max(0.003, p.z - 0.035)))

@@ -11,6 +11,15 @@ DL-04 continues straight on from DL-03's gallery, at the gallery's height (1.6 m
   - the residential access tunnel, with children's chalk on its floor and walls;
   - a balcony high in the refuge's atrium: three rings of homes around a void.
 
+Pass 5 (docs/chapter1_pass5_plan.md, section 3): the city has gone dark. Its lights are put out by the group after it
+is built (_go_dark: about one window in twenty still glows, clustered at the cut bridge's far gatehouse, the great hall
+and one lane of the middle tier, and round the one lit home window); more of it is broken (_ruin: a toppled tower on
+the middle tier and the great hall's left tower, a fallen span of the high viaduct; balconies fallen or hanging,
+galleries torn off the lip, the low catwalk's middle gone, holes and caved roofs in the homes); and it is overgrown
+(_overgrow: vines down the walls, off the viaducts and the cables, roots from the roof, moss on the ledges, water
+stains down the rock, dead trees). New objects AtriumVines, AtriumMoss, AtriumStains (materials AtriumVine,
+AtriumMoss, AtriumWet).
+
 Coordinates as before: metres, Blender Z up, the lane at y = 0, travel along +x.
 """
 import math
@@ -423,8 +432,8 @@ def dl04_materials(m):
     m['atcloth'] = simple_material('AtriumCloth', (0.2, 0.13, 0.065), 0.9)        # awnings, washing, tarps
     m['atwood'] = simple_material('AtriumWood', (0.085, 0.06, 0.04), 0.88)        # shutters, doors, crates
     # Pass 5: the city gone dark, overgrown (docs/chapter1_pass5_plan.md, section 3).
-    m['vine'] = simple_material('AtriumVine', (0.03, 0.038, 0.02), 0.9)            # vines and roots, hanging
-    m['moss'] = simple_material('AtriumMoss', (0.06, 0.075, 0.035), 0.95)          # moss and lichen on the ledges
+    m['vine'] = simple_material('AtriumVine', (0.055, 0.068, 0.036), 0.9)          # vines and roots, hanging
+    m['moss'] = simple_material('AtriumMoss', (0.085, 0.1, 0.05), 0.95)            # moss and lichen on the ledges
     m['wet'] = simple_material('AtriumWet', (0.014, 0.016, 0.015), 0.35)           # water stains down the rock
 
 
@@ -2102,6 +2111,7 @@ def _block(b, c, w, d, h, tier, rnd):
 
 
 TOWERS = []                          # (c, r, h) of every tower built: pass 5 topples one
+CABLE_RUNS = []                      # the cables slung across the chasm (their points): pass 5 hangs vines on them
 
 
 def _tower(b, c, r, h, rnd):
@@ -2621,6 +2631,397 @@ def _fan(blades, frame, hub, axis, radius, n_blades):
     add_cyl(blades, (0, 0, -0.5), (0, 0, 0.5), radius * 0.14, seg=12)
 
 
+# --------------------------------------------------------------------------
+# Pass 5 (docs/chapter1_pass5_plan.md, section 3): the city gone dark. Most of its lights are out, a few still burn
+# where someone might still be; more of it is broken; it is overgrown, stained, abandoned. All far detail: few
+# materials, merged by material with the rest of the atrium.
+# --------------------------------------------------------------------------
+
+# Where a light may still burn (local x, y, z, radius): the far stump's gatehouse (art/pass4's cut bridge runs into
+# it, its own lamps lit), the great hall at the top of the city, a lane of homes on the city's middle tier. The one
+# lit home window (HOME_U) gets a neighbour or two of its own in _go_dark.
+STILL_LIT = ((112.0, 99.0, 19.0, 16.0), (108.0, 258.0, 66.0, 30.0), (86.0, 192.0, 34.0, 14.0))
+DARK_BASE = {'glow': 0.012, 'haze': 0.04, 'lamp': 0.006, 'red': 0.15}      # what still burns elsewhere
+# The lobby's site (art/pass3/build_up_only.py clears it): no overgrowth there (local: world x - 42).
+_SITE = ((74.0, 90.0), (-3.5, 4.5), (-1.5, 10.0))
+
+
+def _in_site(p):
+    return all(lo <= v <= hi for v, (lo, hi) in zip(p, _SITE))
+
+
+def _islands(bm):
+    """The bmesh's faces in groups that belong together: faces sharing a corner (boxes built face by face share
+    their corners' positions, not their verts)."""
+    bm.faces.index_update()
+    bm.faces.ensure_lookup_table()
+    parent = list(range(len(bm.faces)))
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+    seen = {}
+    for f in bm.faces:
+        for v in f.verts:
+            key = (round(v.co.x, 3), round(v.co.y, 3), round(v.co.z, 3))
+            j = seen.setdefault(key, f.index)
+            if j != f.index:
+                a, c = find(j), find(f.index)
+                if a != c:
+                    parent[a] = c
+    groups = {}
+    for f in bm.faces:
+        groups.setdefault(find(f.index), []).append(f)
+    return list(groups.values())
+
+
+def _move_faces(src, dst, faces):
+    for f in faces:
+        nf = dst.faces.new([dst.verts.new(v.co) for v in f.verts])
+        nf.material_index = f.material_index
+    bmesh.ops.delete(src, geom=faces, context='FACES')
+
+
+def _go_dark(b, home=None):
+    """Put most of the city's lights out: windows, lamps and bulbs, by the group (a lamp box goes out whole). What
+    still burns is clustered where someone might still be; big lit bands (a drum, a lantern) only there."""
+    centres = [(Vector(c[:3]), c[3]) for c in STILL_LIT]
+    if home is not None:
+        centres.append((Vector(home), 7.0))
+    stats = {}
+    for key in ('glow', 'haze', 'lamp', 'red'):
+        groups = _islands(b[key])
+        out, n_out = [], 0
+        for g in groups:
+            c = sum((f.calc_center_median() for f in g), Vector()) / len(g)
+            area = sum(f.calc_area() for f in g)
+            near = sum(math.exp(-((c - q).length / r) ** 2) for q, r in centres)
+            p = DARK_BASE[key] + (0.5 if key != 'red' else 0.0) * near
+            if area > 8.0:
+                p = 0.6 * near if near > 0.5 else 0.0
+            if _drnd(c, 41).random() >= p:
+                out.extend(g)
+                n_out += 1
+        stats[key] = (len(groups), len(groups) - n_out)
+        _move_faces(b[key], b['dark'], out)
+    print('dl04: the city gone dark, groups (total, still lit):', stats)
+
+
+def _delete_in(bm, test):
+    gone = [f for f in bm.faces if test(f.calc_center_median())]
+    if gone:
+        bmesh.ops.delete(bm, geom=gone, context='FACES')
+    return len(gone)
+
+
+def _topple(b, c, r, h, side, frac=0.58, lean=1.2):
+    """A tower's top broken off: everything over the break taken away, a jagged stump, and the top itself lying
+    against what it fell on, toward side (+-x), its cap still on."""
+    zb = c.z + h * frac
+    test = lambda p: (p.x - c.x) ** 2 + (p.y - c.y) ** 2 < (r + 1.3) ** 2 and p.z > zb - 0.3    # noqa: E731
+    n = sum(_delete_in(b[k], test) for k in ('masonry', 'glow', 'sheet', 'cut', 'cable', 'lamp', 'dark', 'haze'))
+    dr = _drnd(c, 43)
+    add_cyl(b['masonry'], c + Vector((0, 0, zb - 0.6)), c + Vector((0, 0, zb - 0.3)), r, seg=10)   # the stump's edge
+    for k in range(6):                                                    # its broken masonry, jagged
+        a = 2 * math.pi * k / 6 + dr.uniform(-0.3, 0.3)
+        hh = dr.uniform(0.6, 2.2)
+        _abox(b['masonry'], c + Vector((r * 0.8 * math.cos(a), r * 0.8 * math.sin(a), zb - 0.3 + hh / 2)), (r * 0.7, 0.8, hh),
+              rot=_rz(a + 1.571) @ Matrix.Rotation(dr.uniform(-0.3, 0.3), 4, 'X'))
+    ln = h * (1 - frac)
+    d = Vector((side * math.sin(lean), -0.18, math.cos(lean))).normalized()
+    p0 = c + Vector((side * r * 0.6, 0, zb - 0.4))
+    p1 = p0 + d * ln
+    add_cyl(b['masonry'], p0, p1, r * 0.97, seg=10)
+    add_cyl(b['cut'], p0 + d * (ln - 4.6), p0 + d * (ln - 4.25), r + 0.7, seg=10)          # its gallery
+    add_cyl(b['sheet'], p1, p1 + d * (r * 2.5), r * 1.1, 0.05, seg=10)                       # its cap
+    for k in range(5):                                                    # what came down with it
+        s = dr.uniform(0.8, 2.0)
+        q = c + Vector((side * (r + dr.uniform(1.0, 6.0)), dr.uniform(-3.0, 1.0), s * 0.4))
+        _abox(b['cut'], q, (s, s * 0.8, s * 0.7), rot=_rz(dr.uniform(0, 3)))
+    print(f'dl04: toppled the tower at {tuple(round(v, 1) for v in c)} (h {h:.0f}): {n} faces taken off its top')
+
+
+def _dead_tree(bm, base, h, rnd):
+    """A dead tree: a trunk forking three times into bare branches, five-sided and tapering."""
+    def br(p, d, ln, r, lvl):
+        e = p + d * ln
+        add_cyl(bm, p, e, r, r * 0.68, seg=5)
+        if lvl >= 3:
+            return
+        for k in range(2 if lvl == 0 else rnd.choice((2, 3))):
+            az = rnd.uniform(0, 2 * math.pi)
+            tilt = rnd.uniform(0.45, 0.9)
+            side = Vector((math.cos(az), math.sin(az), 0))
+            nd = (d * math.cos(tilt) + side * math.sin(tilt) + Vector((0, 0, 0.15))).normalized()
+            br(e - d * (r * 0.5), nd, ln * rnd.uniform(0.6, 0.78), r * 0.62, lvl + 1)
+    lean = Vector((rnd.uniform(-0.12, 0.12), rnd.uniform(-0.12, 0.12), 1.0)).normalized()
+    br(Vector(base), lean, h * 0.42, h * 0.035, 0)
+    for k in range(4):                                                    # roots over the ground
+        a = 2 * math.pi * k / 4 + rnd.uniform(-0.4, 0.4)
+        add_cyl(bm, Vector(base) + UP * 0.3, Vector(base) + Vector((math.cos(a) * h * 0.12, math.sin(a) * h * 0.12, -0.2)),
+                h * 0.025, h * 0.008, seg=5)
+
+
+def _curtain(bm, tops, bots, rnd, tails=True):
+    """Vines hanging in a ragged curtain: a strip from each top to its bottom, thin strands trailing below."""
+    for (ta, ba), (tb, bb) in zip(zip(tops, bots), zip(tops[1:], bots[1:])):
+        bm.faces.new([bm.verts.new(p) for p in (ta, tb, bb, ba)])
+    if tails:
+        for t, bt in zip(tops, bots):
+            if rnd.random() < 0.6:
+                d = (bt - t)
+                ln = d.length * rnd.uniform(0.3, 0.9)
+                w = Vector((d.y, -d.x, 0)).normalized() * 0.12 if Vector((d.y, -d.x, 0)).length > 1e-6 else Vector((0.12, 0, 0))
+                bm.faces.new([bm.verts.new(p) for p in (bt - w, bt + w, bt + d.normalized() * ln)])
+
+
+def _strand(bm, top, along, ln, w, rnd):
+    """One hanging strand of vine: a thin ribbon, narrowing, swaying a little as it drops."""
+    sway = along * rnd.uniform(-0.25, 0.25) * ln
+    mid = top - UP * (ln * 0.55) + sway * 0.4
+    bot = top - UP * ln + sway
+    pts = (top - along * w, top + along * w, mid + along * (w * 0.6), bot + along * (w * 0.15), bot - along * (w * 0.15), mid - along * (w * 0.6))
+    bm.faces.new([bm.verts.new(p) for p in pts])
+
+
+def _overgrow(b, WL, WR, letters, rnd):
+    """Vines down the walls and from the roof, moss on the ledges, water stains down the rock, vines off the
+    viaducts' parapets, and dead trees where there were gardens."""
+    vine, moss, wet = b['vine'], b['moss'], b['wet']
+    for W in (WL, WR):
+        keep_off = [u for (L, u) in letters.values() if L is W]
+        for ring, umax, pc, lo, hi in (('C', 150.0, 0.35, 1.0, 4.0), ('B', 220.0, 0.5, 2.0, 8.5), ('A', 240.0, 0.45, 2.5, 10.0)):
+            z0 = _tier(ring)[1]
+            u = rnd.uniform(1.0, 6.0)
+            while u < min(umax, W['len'] - 4):
+                width = rnd.uniform(3.0, 12.0)
+                if rnd.random() < pc and not any(abs(u + width / 2 - k) < width / 2 + 5.0 for k in keep_off):
+                    tops, bots = [], []
+                    v = u
+                    while v <= u + width:
+                        lip, _, T, F = _wledge(W, v, ring)
+                        top = lip + F * 0.25 + UP * 0.05
+                        ln = rnd.uniform(lo, hi)
+                        if ring == 'C':                                   # the face below ring C leans out: follow it
+                            bot = _wface(W, v, z0 - ln, 0.35)
+                        else:
+                            bot = top - UP * ln
+                        tops.append(top)
+                        bots.append(bot)
+                        v += rnd.uniform(0.7, 1.4)
+                    if len(tops) > 1 and not _in_site(tops[0]) and not _in_site(tops[-1]):
+                        _curtain(vine, tops, bots, rnd)
+                u += width + rnd.uniform(2.0, 10.0)
+            # Moss along the lip: over its edge and a little way back on the terrace.
+            u = rnd.uniform(0.0, 5.0)
+            while u < min(umax, W['len'] - 4):
+                ln = rnd.uniform(3.0, 14.0)
+                if rnd.random() < 0.55:
+                    rows = []
+                    v = u
+                    while v <= u + ln:
+                        lip, back, T, F = _wledge(W, v, ring)
+                        dep = rnd.uniform(0.3, 1.6)
+                        rows.append((lip - F * dep + UP * 0.03, lip + F * 0.06 + UP * 0.03, lip + F * 0.08 - UP * rnd.uniform(0.2, 0.7)))
+                        v += 1.5
+                    if len(rows) > 1 and not _in_site(rows[0][1]):
+                        for ra, rb in zip(rows, rows[1:]):
+                            moss.faces.new([moss.verts.new(p) for p in (ra[0], ra[1], rb[1], rb[0])])
+                            moss.faces.new([moss.verts.new(p) for p in (ra[1], ra[2], rb[2], rb[1])])
+                u += ln + rnd.uniform(2.0, 10.0)
+            # Water stains down the face under the lip, following the rock.
+            u = rnd.uniform(2.0, 8.0)
+            while u < min(umax, W['len'] - 4):
+                w, ln = rnd.uniform(0.6, 2.4), rnd.uniform(3.0, 14.0)
+                zt = z0 - 0.25                                 # _wface adds the terrace's step itself
+                cols = []
+                for k in range(5):
+                    t = k / 4
+                    hw = w / 2 * (1 - 0.85 * t)
+                    cols.append((_wface(W, u - hw, zt - ln * t, 0.06), _wface(W, u + hw, zt - ln * t, 0.06)))
+                if not _in_site(cols[0][0]):
+                    for (a0, a1), (c0, c1) in zip(cols, cols[1:]):
+                        wet.faces.new([wet.verts.new(p) for p in (a0, a1, c1, c0)])
+                u += rnd.uniform(5.0, 16.0)
+        # High on the walls, above ring A: great curtains of vine and root hanging off the rock as it leans out.
+        for z in (34.0, 42.0, 52.0):
+            u = rnd.uniform(5.0, 20.0)
+            while u < W['len'] - 10:
+                width = rnd.uniform(4.0, 14.0)
+                if rnd.random() < 0.4:
+                    tops, bots = [], []
+                    v = u
+                    while v <= u + width:
+                        top = _wface(W, v, z, 0.5)
+                        tops.append(top)
+                        bots.append(top - UP * rnd.uniform(3.0, 14.0))
+                        v += rnd.uniform(0.9, 1.8)
+                    if len(tops) > 1:
+                        _curtain(vine, tops, bots, rnd)
+                u += width + rnd.uniform(4.0, 16.0)
+    # Roots down from the roof, in clumps, as thin as threads from here.
+    for i in range(44):
+        y = 14.0 + (i / 43) ** 1.3 * 210.0
+        xa, xb = _wpos(WL, _wat_y(WL, y)).x, _wpos(WR, _wat_y(WR, y)).x
+        x = rnd.uniform(xa + 4.0, xb - 4.0)
+        for k in range(rnd.randint(2, 5)):
+            p = Vector((x + rnd.uniform(-3.0, 3.0), y + rnd.uniform(-3.0, 3.0), 0.0))
+            p.z = _ceil_z(p.x, p.y) + 1.5
+            ln = rnd.uniform(8.0, 30.0) * (1.0 if y > 40 else 0.5)
+            sway = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), 0)) * 0.08 * ln
+            pts = [p - UP * (ln * t) + sway * (t * t) for t in (0.0, 0.35, 0.7, 1.0)]
+            _wire(vine, pts, rnd.uniform(0.1, 0.28))
+    # Vines off the viaducts' parapets, on the side toward the balcony.
+    for y, z, width, spans in VIADUCTS:
+        ul, ur = _wat_y(WL, y), _wat_y(WR, y)
+        pl, _, nl = _wframe(WL, ul)
+        pr, _, nr = _wframe(WR, ur)
+        a, e = pl + nl * 5.0, pr + nr * 5.0
+        a.z = e.z = 0.0
+        T = (e - a).normalized()
+        F = Vector((-T.y, T.x, 0.0))
+        s = 1 if F.y < 0 else -1
+        L = (e - a).length
+        x = rnd.uniform(1.0, 6.0)
+        while x < L - 3:
+            ln = rnd.uniform(3.0, 10.0)
+            if rnd.random() < 0.55:
+                tops, bots = [], []
+                v = x
+                while v <= min(x + ln, L - 1):
+                    top = a + T * v + F * (s * (width / 2 + 0.3)) + Vector((0, 0, z + 2.3))
+                    tops.append(top)
+                    bots.append(top - UP * rnd.uniform(1.0, 6.5))
+                    v += rnd.uniform(0.8, 1.5)
+                if len(tops) > 1:
+                    _curtain(vine, tops, bots, rnd)
+            x += ln + rnd.uniform(2.0, 9.0)
+    # Vines hanging in the viaducts' arches, against the haze: strands off the intrados.
+    for y, z, width, spans in VIADUCTS:
+        a, T, F, L, pw, piers = _viaduct_frame(WL, WR, y, spans)
+        s = 1 if F.y < 0 else -1
+        for p0, p1 in zip(piers, piers[1:]):
+            u0, u1 = p0 + T * (pw / 2), p1 - T * (pw / 2)
+            r = (u1 - u0).length / 2
+            mid = (u0 + u1) / 2
+            spring = z - 1.0 - r
+            for c in range(rnd.randint(0, 3)):
+                ang = rnd.uniform(0.4, math.pi - 0.4)
+                for k in range(rnd.randint(4, 10)):
+                    aa = ang + rnd.uniform(-0.12, 0.12)
+                    q = mid + F * (s * (width / 2 - rnd.uniform(0.2, 1.2))) + T * (r * math.cos(aa)) + Vector((0, 0, spring + r * math.sin(aa) - 0.1))
+                    _strand(vine, q, T, rnd.uniform(0.6, 0.45 * r * math.sin(aa) + 1.0), rnd.uniform(0.1, 0.22), rnd)
+    # Vines grown along the cables slung across the chasm, hanging off them in clumps of strands.
+    for pts in CABLE_RUNS:
+        L = [0.0]
+        for p0, p1 in zip(pts, pts[1:]):
+            L.append(L[-1] + (p1 - p0).length)
+
+        def at(d):
+            for k in range(len(pts) - 1):
+                if L[k + 1] >= d:
+                    return pts[k].lerp(pts[k + 1], (d - L[k]) / max(1e-6, L[k + 1] - L[k])), (pts[k + 1] - pts[k]).normalized()
+            return pts[-1], (pts[-1] - pts[-2]).normalized()
+        d = rnd.uniform(0.0, 6.0)
+        while d < L[-1] - 1.0:
+            span = rnd.uniform(0.8, 3.0)
+            for k in range(rnd.randint(4, 12)):
+                q, dv = at(min(L[-1], d + rnd.uniform(0.0, span)))
+                ln = rnd.uniform(0.3, 1.6) * (2.5 if rnd.random() < 0.15 else 1.0)
+                _strand(vine, q - UP * 0.03, dv, ln, rnd.uniform(0.08, 0.2), rnd)
+            d += span + rnd.uniform(3.0, 12.0)
+    # Water down the rock where the falls come over, wider than the falls.
+    for W, u, z, w in ((WL, 96.0, 12.0, 3.0), (WR, 58.0, -2.0, 2.2), (WR, 150.0, 30.0, 5.0)):
+        cols = []
+        for k in range(6):
+            t = k / 5
+            hw = w * (1.2 + 0.6 * t)
+            cols.append((_wface(W, u - hw, z - 30.0 * t, 0.08), _wface(W, u + hw, z - 30.0 * t, 0.08)))
+        for (a0, a1), (c0, c1) in zip(cols, cols[1:]):
+            wet.faces.new([wet.verts.new(p) for p in (a0, a1, c1, c0)])
+    # Dead trees: one in the planter at the front of the city's first tier, where there was a garden; one on ring
+    # C's terrace on the right, in what was its little square.
+    y0, top, _ = MESAS[0]
+    for base, hgt in ((Vector((97.0, y0 + 2.6, top)), 13.0), (_wledge(WR, 40.0, 'C')[0].lerp(_wledge(WR, 40.0, 'C')[1], 0.45), 8.0)):
+        add_cyl(b['cut'], base, base + UP * 0.55, hgt * 0.13, seg=12)
+        add_cyl(b['dark'], base + UP * 0.55, base + UP * 0.56, hgt * 0.12, seg=12)
+        _dead_tree(b['masonry'], base + UP * 0.5, hgt, rnd)
+
+
+def _viaduct_frame(WL, WR, y, spans):
+    """A viaduct's line as _viaduct lays it out: its start, direction, side, length, pier width and piers."""
+    pl, _, nl = _wframe(WL, _wat_y(WL, y))
+    pr, _, nr = _wframe(WR, _wat_y(WR, y))
+    a, e = pl + nl * 5.0, pr + nr * 5.0
+    a.z = e.z = 0.0
+    L = (e - a).length
+    T = (e - a).normalized()
+    F = Vector((-T.y, T.x, 0.0))
+    pw = L / spans * 0.16
+    return a, T, F, L, pw, [a + T * (L * i / spans) for i in range(spans + 1)]
+
+
+def _break_span(b, WL, WR, vi, rnd):
+    """One span of a viaduct fallen: its arch, spandrel, parapet and the homes over it gone, the broken ends of its
+    masonry ragged on the piers either side. Returns the gap's two ends (deck top)."""
+    y, z, width, spans = VIADUCTS[vi]
+    a, T, F, L, pw, piers = _viaduct_frame(WL, WR, y, spans)
+    top = z + 1.4
+    mids = [(p0 + p1) / 2 for p0, p1 in zip(piers, piers[1:])]
+    k = min(range(1, spans - 1), key=lambda i: abs(mids[i].x - 95.0))
+    g0, g1 = (L * k / spans) + pw / 2 + 0.2, (L * (k + 1) / spans) - pw / 2 - 0.2
+    gc, gh = (g0 + g1) / 2, (g1 - g0) / 2
+
+    def in_gap(p):
+        d = p - a
+        return abs(d.dot(T) - gc) < gh and abs(d.dot(F)) < width / 2 + 4.0 and p.z > z - 1.5 - (g1 - g0) / 2
+    n = sum(_delete_in(b[key], in_gap) for key in ('masonry', 'cut', 'plaster', 'sheet', 'rust', 'glow', 'dark', 'lamp'))
+    # The parapets, their copings and string courses ran the whole length: cut them back to the gap.
+    rail = lambda p: abs((p - a).dot(T) - L / 2) < 1.0 and abs(abs((p - a).dot(F)) - width / 2) < 0.8 and top - 0.7 < p.z < top + 1.4  # noqa: E731
+    n += sum(_delete_in(b[key], rail) for key in ('masonry', 'cut'))
+    rot = _rot(T, F)
+    for s0, s1 in ((0.0, g0), (g1, L)):
+        c = a + T * ((s0 + s1) / 2)
+        for s in (-1, 1):
+            _abox(b['masonry'], c + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 0.5)), (s1 - s0, 0.4, 1.0), rot=rot)
+            _abox(b['cut'], c + F * (s * (width / 2 - 0.2)) + Vector((0, 0, top + 1.06)), (s1 - s0, 0.62, 0.14), rot=rot)
+            _abox(b['cut'], c + F * (s * (width / 2 + 0.1)) + Vector((0, 0, top - 0.25)), (s1 - s0, 0.5, 0.4), rot=rot)
+    ends = []
+    for g, sgn in ((g0, 1), (g1, -1)):                    # the broken ends: ragged blocks standing off them
+        p = a + T * g
+        for i in range(7):
+            sz = rnd.uniform(0.6, 1.6)
+            q = p + T * (sgn * rnd.uniform(-0.4, 0.6)) + F * rnd.uniform(-width / 2, width / 2) + Vector((0, 0, top - rnd.uniform(0.0, 3.5)))
+            _abox(b['masonry'], q, (sz, sz * 0.9, sz * 1.1), rot=rot @ _rz(rnd.uniform(-0.5, 0.5)) @ Matrix.Rotation(rnd.uniform(-0.5, 0.5), 4, 'X'))
+        ends.append(p + Vector((0, 0, top)))
+    print(f'dl04: viaduct {vi} (y {y}) span {k} fallen, {n} faces taken out')
+    return ends, (a, T, F, width, top)
+
+
+def _ruin(b, WL, WR, rnd):
+    """Two towers broken: one on the city's middle tier, in the middle of the wide view, and the great hall's left.
+    One span of the high viaduct fallen, a dead tree on its deck by the gap."""
+    ends, (a, T, F, width, top) = _break_span(b, WL, WR, 2, rnd)
+    base = ends[1] + T * 7.0 + F * 0.6
+    _dead_tree(b['masonry'], base, 9.0, rnd)
+    aim = Vector((92.0, 150.0, 22.0)) - VIEW_EYE
+    best, bs = None, -2.0
+    for c, r, h in TOWERS:
+        if c.y > 240.0:
+            continue
+        d = (c + Vector((0, 0, h)) - VIEW_EYE).normalized()
+        score = d.dot(aim.normalized())
+        if score > bs:
+            best, bs = (c, r, h), score
+    if best:
+        _topple(b, best[0], best[1], best[2], 1)
+    for c, r, h in TOWERS:
+        if c.y > 240.0 and c.x < 90.0:
+            _topple(b, c, r, h, 1, frac=0.62, lean=1.05)
+
+
 def build_atrium(m, coll):
     """The balcony and stair down to ring C, and the refuge's cave: a city in a chasm under the mountain,
     read in layers. Either side, dark cliffs with ring C's sealed homes at the balcony's level and ring B's
@@ -2652,7 +3053,9 @@ def build_atrium(m, coll):
 
     rnd = random.Random(470)
     keys = ('plaster', 'masonry', 'sheet', 'rust', 'dark', 'barricade', 'cut', 'cable', 'lamp', 'red', 'glow', 'haze', 'mist', 'card',
-            'cloth', 'wood', 'signs')
+            'cloth', 'wood', 'signs', 'vine', 'moss', 'wet')
+    TOWERS.clear()
+    CABLE_RUNS.clear()
     b = {k: bmesh.new() for k in keys}
     b['signs'].loops.layers.uv.new('UVMap')
     WL = _wall(CHASM_LEFT, -1, 0.0)
@@ -2735,6 +3138,7 @@ def build_atrium(m, coll):
         c = _wledge(WR, ub, rb)[0] + Vector((0, 0, 4.0))
         pts = _sag(a, c, sag, 18)
         _wire(b['cable'], pts, 0.05)
+        CABLE_RUNS.append(pts)
         for i in range(2, len(pts) - 2, 2):
             if rnd.random() < 2 * _litp(pts[i].z):
                 add_box(b['glow'], pts[i] - Vector((0, 0, 0.3)), (0.32, 0.32, 0.36))
@@ -2764,6 +3168,7 @@ def build_atrium(m, coll):
         a, e = _wface(WL, ua, z, 0.3), _wface(WR, ub, z, 0.3)
         pts = _sag(a, e, sag, 20)
         _wire(b['cable'], pts, 0.04)
+        CABLE_RUNS.append(pts)
         for k in range(n):
             q = pts[int((k + 0.5) / n * 19) + 1]
             _hang_lamp(b, q, xr.uniform(0.6, 1.6), warm=xr.random() < 0.8, lit=xr.random() < 0.35 + 2.0 * _litp(q.z))
@@ -2773,6 +3178,7 @@ def build_atrium(m, coll):
     top_a, top_e = a + UP * 7.0, e + UP * 7.0
     hang = _sag(top_a, top_e, 4.0, 16)
     _wire(b['cable'], hang, 0.05)
+    CABLE_RUNS.append(hang)
     for off, rr, mat in ((0.0, 0.32, 'rust'), (0.75, 0.22, 'sheet')):
         side = Vector((-(e - a).y, (e - a).x, 0)).normalized() * off
         line = _sag(a + side, e + side, 1.2, 16)
@@ -2813,15 +3219,21 @@ def build_atrium(m, coll):
     sky.faces.new([sky.verts.new(p) for p in pts])
     _cave_obj('AtriumSkyGlimpse', sky, [m['skypanel']], coll)
 
+    # Pass 5: broken, overgrown, and gone dark (its own random stream: the layout above never moves).
+    _ruin(b, WL, WR, random.Random(5006))
+    _overgrow(b, WL, WR, letters, random.Random(5005))
+    _go_dark(b, home=lit[0] if lit else None)
+
     mats = {'plaster': m['plaster'], 'masonry': m['masonry'], 'sheet': m['sheet'], 'rust': m['rust'], 'dark': m['dark'],
             'barricade': m['barricade'], 'cut': m['cut'], 'cable': m['rubber'], 'lamp': m['ringlamp'], 'red': m['ringred'],
             'glow': m['windowglow'], 'haze': m['hazelights'], 'mist': m['mist'], 'card': m['stone'],
-            'cloth': m['atcloth'], 'wood': m['atwood'],
+            'cloth': m['atcloth'], 'wood': m['atwood'], 'vine': m['vine'], 'moss': m['moss'], 'wet': m['wet'],
             'signs': _image_material('RingLetterSigns', os.path.join(TEX, 'atrium_signs.png'), rough=0.85, alpha=True)}
     names = {'plaster': 'AtriumHomes', 'masonry': 'AtriumMasonry', 'sheet': 'AtriumSheet', 'rust': 'AtriumRust',
              'dark': 'AtriumOpenings', 'barricade': 'AtriumBarricades', 'cut': 'AtriumCutStone', 'cable': 'AtriumCables',
              'lamp': 'AtriumLamps', 'red': 'AtriumRedLamps', 'glow': 'AtriumWindowGlow', 'haze': 'AtriumHazeLights',
-             'mist': 'AtriumMist', 'card': 'AtriumSkyline', 'cloth': 'AtriumCloth', 'wood': 'AtriumWood', 'signs': 'AtriumSigns'}
+             'mist': 'AtriumMist', 'card': 'AtriumSkyline', 'cloth': 'AtriumCloth', 'wood': 'AtriumWood', 'signs': 'AtriumSigns',
+             'vine': 'AtriumVines', 'moss': 'AtriumMoss', 'wet': 'AtriumStains'}
     for k in keys:
         if len(b[k].verts):                       # round things share their normals; boxes stay crisp
             _cave_obj(names[k], b[k], [mats[k]], coll, smooth=k in ('sheet', 'rust', 'cable', 'masonry'), sharp=150 if k == 'cable' else 50)

@@ -53,7 +53,7 @@ SORTERS = [
 STOOLS = [(18.14, 0.40), (23.96, 0.16), (24.56, 0.16)]
 KNOCKED_STOOL = (23.62, 0.40)                          # on its side, by the bench
 BENCH = (23.68, 24.86, 0.62, 0.98, 0.75)               # x0, x1, y0, y1, top: a sorting bench with a case of holes
-MAILBAG = (17.95, 0.66, 0.17)                          # on Sorter2's lap, in her arms
+MAILBAG = (17.95, 0.65, 0.06)                          # on Sorter2's lap, in her arms (under her rib cage)
 CAP_FLOOR = (18.42, 0.78)                              # Sorter1's cap, fallen by the stool, toward the wall
 
 # What killed them (pass 5): the bulkhead to the stairs, between the tea corner (its jamb x 17.34) and the
@@ -406,7 +406,7 @@ def make_story_air(path):
            fill=(60, 54, 44, 160), width=2)
     # ---- The small cells.
     mottle('steel', (78, 88, 80), blot=12, n=50, rmax=26, speck=8, streaks=10)
-    mottle('weld', (66, 62, 58), blot=20, n=80, rmax=12, speck=4)
+    mottle('weld', (128, 120, 106), blot=22, n=80, rmax=12, speck=4)
     wx0, wy0, wx1, wy1 = AIR_CELLS['weld']
     for _ in range(60):                                             # temper colours and slag flecks
         x, y, r = rnd.uniform(wx0, wx1), rnd.uniform(wy0, wy1), rnd.uniform(2, 9)
@@ -466,20 +466,20 @@ SEATED = dict(                                         # slumped over the table,
     skirt=[V((0.06, 0.0, 0.585)), V((0.42, 0.0, 0.585)), V((0.47, 0.0, 0.36))],
     table=0.751,                                       # the letters under the right hand lie on the table's top
 )
-SITTING = dict(                                        # on the floor, her back to the welded door, knees up, head down
+SITTING = dict(                                        # on the floor, her back to the welded door, legs out, head up
     pelvis=V((0.0, 0.0, 0.13)), chest=V((-0.03, 0.0, 0.55)),
     shoulder=(V((-0.02, 0.17, 0.53)), V((-0.02, -0.17, 0.53))),
-    neck=V((0.02, 0.0, 0.60)), head=V((0.11, 0.03, 0.61)), face=V((0.6, 0.15, -0.8)), crown=V((0.8, 0.0, 0.6)),
+    neck=V((0.0, 0.0, 0.60)), head=V((0.06, 0.02, 0.665)), face=V((0.88, 0.12, -0.45)), crown=V((0.45, 0.0, 0.89)),
     # Both arms round the mailbag on her lap, the finger bones in its canvas.
-    elbow=(V((0.10, 0.24, 0.33)), V((0.10, -0.24, 0.33))),
-    wrist=(V((0.25, 0.12, 0.42)), V((0.25, -0.12, 0.42))),
-    hand=((V((0.3, -0.6, -0.2)), V((0, 0, 1))), (V((0.3, 0.6, -0.2)), V((0, 0, 1)))),
-    curl=(0.55, 0.55),
+    elbow=(V((0.06, 0.22, 0.30)), V((0.06, -0.22, 0.30))),
+    wrist=(V((0.22, 0.11, 0.37)), V((0.22, -0.11, 0.37))),
+    hand=((V((0.6, -0.5, -0.6)), V((0.3, 0, 1))), (V((0.6, 0.5, -0.6)), V((0.3, 0, 1)))),
+    curl=(0.5, 0.5),
     hip=(V((0.02, 0.1, 0.11)), V((0.02, -0.1, 0.11))),
-    knee=(V((0.30, 0.13, 0.43)), V((0.30, -0.12, 0.42))),
-    ankle=(V((0.40, 0.13, 0.08)), V((0.41, -0.12, 0.08))),
-    foot=(V((1, 0.1, 0)), V((1, -0.1, 0))),
-    skirt=[V((0.09, 0.0, 0.17)), V((0.31, 0.0, 0.50))],
+    knee=(V((0.34, 0.13, 0.27)), V((0.34, -0.12, 0.26))),
+    ankle=(V((0.58, 0.14, 0.07)), V((0.58, -0.13, 0.07))),
+    foot=(V((1, 0.12, 0.1)), V((1, -0.12, 0.1))),
+    skirt=[V((0.09, 0.0, 0.17)), V((0.34, 0.0, 0.33))],
     table=None,
 )
 
@@ -496,14 +496,14 @@ def _frame(z, y_hint):
     return M
 
 
-def _cap(P, H, crown, face, s=1.0):
+def _cap(P, H, crown, face, s=1.0, back=0.008):
     """A sorter's peaked cap (depot green cloth, the peak stiffened), on the crown of a skull or wherever it fell."""
     z = crown.normalized()
     x = (face - z * face.dot(z)).normalized()
     y = z.cross(x)
     R = Matrix((x, y, z)).transposed().to_4x4()
-    c = Vector(H) + z * 0.088 * s - x * 0.008 * s
-    P.add('cap', lambda bm: rounded_box((0.205 * s, 0.18 * s, 0.062 * s), c, p=2.6, cuts=4, dents=((0.004, 9.0),), seed=3.0,
+    c = Vector(H) + z * 0.088 * s - x * back * s
+    P.add('cap', lambda bm: rounded_box((0.205 * s, 0.18 * s, 0.062 * s), c, p=2.6, cuts=3, dents=((0.004, 9.0),), seed=3.0,
                                         bm=bm, mat=0, rot=R), size=0.2)
     P.add('cap', lambda bm: rounded_box((0.075 * s, 0.17 * s, 0.009 * s), c + (x * 0.105 - z * 0.028) * s, p=3.0, cuts=2,
                                         bm=bm, mat=0, rot=R @ Matrix.Rotation(0.3, 4, 'Y')), size=0.2)
@@ -567,12 +567,12 @@ def sorter(J, bib=True, cap=False, seed=1.0):
         u = -1 + 2 * i / cols
         col = []
         rows = 3
-        reach = 0.45 + 0.25 * rnd.random()
+        reach = 0.3 + 0.2 * rnd.random()
         for j in range(rows + 1):
             v = j / rows * reach
-            p = t1.lerp(t12, v) - fwd * 0.045 + lat * u * 0.15
-            over = max(0.0, abs(u) - 0.45)
-            p += fwd * over * 0.12 - Z * over * 0.1
+            p = t1.lerp(t12, v) - fwd * 0.032 + lat * u * 0.12
+            over = max(0.0, abs(u) - 0.5)
+            p += fwd * over * 0.1 - Z * over * 0.06
             col.append(p)
         pts.append(col)
     rh.cloth(P, 'rag', pts)
@@ -583,7 +583,7 @@ def sorter(J, bib=True, cap=False, seed=1.0):
     # The apron: canvas outlasts the shirt. Its neck strap, the bib hanging from it below the ribs (seated), the skirt
     # over the lap and the knees, the ties at the back.
     P.add('apron', lambda bm: add_torus(bm, nk + fwd * 0.012 - up * 0.01, (up * 0.8 + fwd * 0.45).normalized(), 0.058, 0.0055,
-                                        mat=0, seg=12, rseg=4))
+                                        mat=0, seg=10, rseg=3))
     if bib:
         top = [nk + fwd * 0.06 + lat * u * 0.085 for u in (-1, -0.33, 0.33, 1)]
         bot = [pel + up * 0.14 + fwd * 0.12 + lat * u * 0.13 for u in (-1, -0.33, 0.33, 1)]
@@ -604,8 +604,8 @@ def sorter(J, bib=True, cap=False, seed=1.0):
     for s in (1, -1):
         P.add('apron', lambda bm, s=s: add_cyl(bm, pel + lat * s * 0.15 + fwd * 0.04 + up * 0.08, back, 0.006, mat=0, seg=4))
         P.add('apron', lambda bm, s=s: add_cyl(bm, back, back + lat * s * 0.03 - Z * 0.11, 0.007, 0.005, mat=0, seg=4))
-    if cap:
-        _cap(P, H, crown, face)
+    if cap:                                              # pushed back on the skull, the brow and the sockets clear
+        _cap(P, H, (crown - face * 0.35).normalized(), face, back=0.035)
     # The letters under the right hand's finger bones, on the table.
     if J['table'] is not None:
         W, (hd, hn) = J['wrist'][1], J['hand'][1]
@@ -732,12 +732,12 @@ def _bead(P, pts, seed, r=0.0085):
     path = []
     for a, b in zip(pts, pts[1:]):
         a, b = Vector(a), Vector(b)
-        k = max(2, int((b - a).length / 0.022))
+        k = max(2, int((b - a).length / 0.03))
         path += [a.lerp(b, i / k) for i in range(k)]
     path.append(Vector(pts[-1]))
     rs = [r * (0.75 + 0.5 * rnd.random()) for _ in path]
     rs[0] = rs[-1] = r * 0.4
-    P.add('weld', lambda bm: rh.sweep(bm, path, rs, seg=5), size=0.08)
+    P.add('weld', lambda bm: rh.sweep(bm, path, rs, seg=4), size=0.08)
 
 
 def _place(P, ob_name, origin, coll):

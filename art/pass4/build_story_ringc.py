@@ -482,18 +482,19 @@ def _sector(bm, c, r, a0, a1, h, mat, n=5):
 
 
 def _knot(t, top, s, mat):
-    """The knot a sheet's corners are tied in, its two ears standing up."""
+    """The knot a sheet's corners are tied in, the ends flopped over either side."""
     top = Vector(top)
-    add_sphere(t, top, s, mat=mat, seg=6, scale=(1.3, 1.0, 0.75))
-    for sx in (-1, 1):
-        add_cyl(t, top + Vector((sx * s * 0.6, 0, s * 0.2)), top + Vector((sx * s * 2.0, s * 0.5 * sx, s * 1.7)), s * 0.55, s * 0.12,
-                mat=mat, seg=5)
+    add_sphere(t, top, s, mat=mat, seg=6, scale=(1.3, 1.0, 0.7))
+    for sx, yaw in ((-1, 0.35), (1, -0.5)):
+        M = Matrix.Translation(top + Vector((sx * s * 1.4, sx * s * 0.3, s * 0.2))) @ _rz(yaw) @ _ry(sx * -0.5)
+        rounded_box((s * 2.4, s * 1.2, s * 0.35), (0, 0, 0), p=3.0, cuts=1, seed=sx, mat=mat, bm=t, rot=M)
 
 
 def it_bundle(t, L, W, H, mat, seed=0.0):
     """Belongings tied up in a sheet or a blanket: a soft lump, the corners knotted on top."""
-    rounded_box((L, W, H), (0, 0, H / 2), p=2.3, cuts=2, dents=((0.018, 6.0),), seed=seed, mat=mat, bm=t)
-    _knot(t, (0.05 * L, 0, H * 0.97), min(L, W) * 0.13, mat)
+    rounded_box((L, W, H), (0, 0, H / 2), p=2.0, cuts=2, dents=((0.02, 6.0),), seed=seed, mat=mat, bm=t,
+                shape=lambda q: q.__setitem__(2, q[2] + 0.3 * max(0.0, q[2]) * (1 - q[0] * q[0]) * (1 - q[1] * q[1])))     # gathered to the knot
+    _knot(t, (0.05 * L, 0, H * 1.08), min(L, W) * 0.14, mat)
 
 
 def it_case_flat(t, L, T, H, body, latches=True):
@@ -683,9 +684,10 @@ def it_photos(t, rnd, n=3, frame=True):
 
 def it_blanket(t, L, W, mat, seed=0.0):
     """A blanket dropped in a heap of folds."""
-    rounded_box((L, W, 0.04), (0, 0, 0.02), p=2.2, cuts=3, dents=((0.014, 5.0),), seed=seed, mat=mat, bm=t)
-    rounded_box((L * 0.5, W * 0.8, 0.035), (L * 0.18, W * 0.05, 0.045), p=2.2, cuts=2, dents=((0.01, 6.0),), seed=seed + 1,
-                mat=mat, bm=t, rot=_rz(0.25))
+    rounded_box((L, W, 0.03), (0, 0, 0.015), p=6.0, cuts=3, dents=((0.012, 5.0),), seed=seed, mat=mat, bm=t)
+    rounded_box((L * 0.55, W * 0.95, 0.03), (L * 0.2, W * 0.03, 0.04), p=6.0, cuts=2, dents=((0.01, 6.0),), seed=seed + 1,
+                mat=mat, bm=t, rot=_rz(0.12))                           # folded back on itself
+    add_cyl(t, (L * 0.2 - L * 0.275, -W * 0.45, 0.045), (L * 0.2 - L * 0.275, W * 0.45, 0.045), 0.03, mat=mat, seg=6)   # the fold
 
 
 def it_broom(t):
@@ -711,7 +713,7 @@ def _pieces():
         ('bundle', (0.5, 0.38, 0.26, CREAM, 2.0), 118.3, 1.75, 0.5, 'flat', D),
         # Along the queue line, in front of the lane: thicker toward the gate.
         ('pot', (0.11, 0.12, STL, False, True), 118.75, -0.6, 0.0, _rx(math.radians(80)), D),
-        ('bundle', (0.5, 0.42, 0.18, CREAM, 3.0), 119.2, -0.72, -0.3, 'flat', D),
+        ('bundle', (0.4, 0.34, 0.15, CREAM, 3.0), 119.2, -0.7, -0.3, 'flat', D),
         ('case_flat', (0.56, 0.16, 0.38, LEA), 119.95, -0.66, 0.12, 'flat', D),
         ('mattress', (0.9, 0.105), 120.75, -0.82, -0.08, 'flat', D),
         ('clock', (), 121.2, -0.55, 0.6, 'flat', D),
@@ -722,20 +724,20 @@ def _pieces():
         ('photos', (2, True), 123.75, -0.5, 0.0, 'flat', D),
         ('bear', (), 123.95, -0.82, 2.6, 'flat', D),
         # The crush, in front of the gate: heaped where they stopped.
-        ('bundle', (0.55, 0.42, 0.18, CAN, 5.0), 124.55, -0.66, 0.2, 'flat', D),
+        ('bundle', (0.44, 0.36, 0.15, CAN, 5.0), 124.55, -0.66, 0.2, 'flat', D),
         ('case_flat', (0.5, 0.15, 0.34, LEA), 125.2, -0.55, -0.2, 'flat', D),
         ('bag', (0.46, 0.1, CAN, True), 125.12, -0.88, 0.0, 'flat', D),
         ('cage', (), 125.75, -0.62, 0.3, _rx(math.radians(90)), D),
-        ('bundle', (0.42, 0.36, 0.17, TOY, 6.0), 126.15, -0.7, 0.9, 'flat', D),
+        ('bundle', (0.38, 0.32, 0.15, TOY, 6.0), 126.15, -0.7, 0.9, 'flat', D),
         # Behind the lane: the waiting area, round what pass 3 left there.
         ('mattress', (0.9, 0.13), 121.32, 0.98, 0.0, on_end, D),
-        ('sewing', (), 121.33, 0.6, 0.12, 'flat', D),
-        ('cover', (), 121.36, 0.32, 0.0, _rx(math.radians(90)), D),
-        ('crockery', (True,), 122.32, 0.97, -0.08, 'flat', D),
+        ('sewing', (), 121.33, 0.66, 0.12, 'flat', D),
+        ('cover', (), 121.36, 0.47, 0.0, _rx(math.radians(90)), D),
+        ('crockery', (True,), 122.37, 1.02, -0.06, 'flat', D),
         ('bundle', (0.34, 0.3, 0.24, CREAM, 7.0), 122.82, 0.98, 0.3, 'flat', D),
         ('kettle', (), 122.48, 0.47, 0.8, 'flat', D),
         # Against the lift front: the broom by the UP button, a case and a bundle on it right of the gate.
-        ('broom', (), 123.63, 0.22, 1.571, _ry(math.radians(-83.5)), D),
+        ('broom', (), 123.6, 0.21, 1.571, _ry(math.radians(-83.5)), D),
         ('case_up', (0.5, 0.15, 0.36, CAN), 125.93, 0.25, 0.0, 'flat', D),
         ('bundle_wall', (0.36, 0.16, 0.22, COT, 8.0), 125.9, 0.255, 0.0, 'flat', D + 0.39),
         # Fallen down the shaft, on ring C's landing at its foot.

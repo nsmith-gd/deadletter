@@ -3345,6 +3345,22 @@ function buildCh1(setRoot) {
   for (const o of [c.uoNeedle, c.suitcaseTag, c.liftCar, c.liftPlate, c.liftNeedle, c.liftDoorL, c.liftDoorR, c.liftUp, c.serviceUp, c.serviceCrank, c.serviceChain,
     c.serviceDoor, c.liftCw, c.liftSheave, c.liftIdler, c.ropeCar, c.ropeCw]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
   for (const o of [c.door114, c.handle114, c.cord114]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
+  // Pass 5: the dragged body's sheet ripples, travelling along its length while it moves (a vertex wave on its own copy
+  // of the remains material).
+  const bodyMesh = c.body && c.body.getObjectByProperty('isMesh', true);
+  if (bodyMesh) {
+    const bm = bodyMesh.material.clone(); bm.userData.shader = null;
+    refs.bodyRipple = { uTime: { value: 0 }, uAmp: { value: 0 } };
+    bm.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, refs.bodyRipple);
+      sh.vertexShader = 'uniform float uTime; uniform float uAmp;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+        float lift = smoothstep(0.03, 0.25, position.y);
+        transformed.y += uAmp * lift * 0.014 * sin(position.x * 11.0 - uTime * 9.0);
+        transformed.z += uAmp * lift * 0.010 * sin(position.x * 7.0 - uTime * 6.0 + 1.3);`);
+    };
+    bm.customProgramCacheKey = () => 'bodyRipple';
+    bodyMesh.material = bm;
+  }
   for (const o of [c.rshutter, c.rplate, c.rneedle, c.rflag]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
   for (const o of [c.armL, c.armR, c.balanceNeedle, c.bayDoor, c.gate6, c.bucket, c.pulley6, c.sheave6, c.cage, c.counterweight, c.cageLever, c.cagePawl, c.sheave, c.scaleNeedle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
   if (c.held) {
@@ -3356,7 +3372,7 @@ function buildCh1(setRoot) {
   // Lights: the hall's work lamp and its lit gantry door; the bay, cold; the cage's landing.
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
   refs.shLights = [P(0xffd6a6, 4.0, 5.5, 20.6, 2.6, 0.3), P(0xffc890, 5.0, 4.0, 24.7, 2.7, 0.1), P(0xd9e6ff, 1.2, 3.0, SH.tubeX, 1.6, -0.3), P(0xffc890, 1.2, 2.0, 24.2, 1.05, -0.25),
-    P(0xb8c8d4, 1.8, 2.6, 17.6, 1.3, 0.35)];   // the sorters: under the gantry, and at the table and the wall, cold
+    P(0xb8c8d4, 1.8, 2.6, 17.6, 1.3, 0.35), P(0xd9e6ff, 1.1, 4.5, 17.9, 2.6, 0.8)];   // pass 5: the welded door, its notice and the air gauge   // the sorters: under the gantry, and at the table and the wall, cold
   refs.bayLights = [P(0xcfe4ff, 3.2, 4.5, RK.bayX, 2.4, -0.2)];
   refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF5 + 90.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF5 + 102.75, 0.9, 0.1),
     P(0xcfdcf0, 2.6, 5.0, OFF5 + 99.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 91.72, 0.6, -0.2), P(0xa8bccc, 2.2, 2.8, OFF5 + 93.5, 1.0, -2.0)];   // the lair   // the square's lamp; the bell's small amber lamp
@@ -3366,7 +3382,7 @@ function buildCh1(setRoot) {
   const counter = new THREE.SpotLight(0xdcebd2, 0, 6.5, THREE.MathUtils.degToRad(31), 0.7, 2);
   counter.position.set(OFF2 + 41.75, 1.98, 0.1); counter.target.position.set(OFF2 + 41.75, 0, -0.25); counter.userData.base = 14; scene.add(counter, counter.target);
   refs.rationLights = [counter, P(0xdcebd2, 2.2, 4, OFF2 + 41.4, 1.5, 0.3), P(0xffa050, 1.2, 2.2, OFF2 + 36.65, 0.6, -0.95),
-    P(0x9fb8d8, 3, 6, OFF2 + 37.8, 2.7, -2.6), P(0xcfd6c8, 1.6, 3.5, OFF2 + 45.2, 1.9, -0.4)];
+    P(0x9fb8d8, 3, 6, OFF2 + 37.8, 2.7, -2.6), P(0xcfd6c8, 1.6, 3.5, OFF2 + 45.2, 1.9, -0.4), P(0xb4c4d0, 1.2, 3.5, OFF2 + 37.5, 1.6, -1.2)];
   // Up Only: the failing pendant over the luggage, the two UP lamps, the crank's work lamp, the car's lamp (it rides with the
   // car), and the cold light falling down the shaft from far above.
   const shaft = new THREE.SpotLight(0xb8ccff, 0, 16, 0.21, 0.6, 1.4);
@@ -4064,6 +4080,11 @@ function updateCh1(dt) {
   const dr = s.drum, bd = s.body, rh = s.rh, sc = s.weigh;
   if (k.drum) k.drum.position.x = dr.x;
   if (k.body) k.body.position.x = bd.x;
+  if (refs.bodyRipple) {
+    const moving = game.hold === 'push' && game.pushKey === 'body' ? Math.min(1, Math.abs(game.vx) / 0.12) : 0;
+    refs.bodyRipple.uAmp.value += (moving - refs.bodyRipple.uAmp.value) * Math.min(1, dt * 4);
+    refs.bodyRipple.uTime.value += dt;
+  }
   const drumOn = Math.abs(dr.x - RH5.drumPlate) < 0.45, bodyOn = Math.abs(bd.x - RH5.bodyPlate) < 0.13;
   const meOn = game.region === 2 && game.y < 0.05 && game.x > RH5.plate[0] && game.x < RH5.plate[1];
   const reading = rh.served ? 'person' : drumOn ? 'over' : bodyOn ? 'person' : meOn ? 'under' : 'empty';
