@@ -96,7 +96,7 @@
 </script>
 
 <div id="app">
-  <canvas id="view" aria-label="Dead Letter, chapter 1, scenes DL-01 to DL-09, playable"></canvas>
+  <canvas id="view" aria-label="Dead Letter, chapter 1, scenes DL-01 to DL-11, playable"></canvas>
   <div id="fade"></div>
   <div id="keycap" hidden></div>
   <div id="found" aria-live="polite"></div>
@@ -218,7 +218,7 @@ const MANTLE_KEYS = [[0, 0, 0], [6, 0, 0], [10, 0.03, 0.12], [14, 0.03, 0.18], [
   [24, 0.05, 0.38], [32, 0.10, 0.78], [38, 0.20, 0.95], [44, 0.33, 1.0], [56, 0.38, 1.0]];   // build_dl01.py matches
 const MANTLE_FRAMES = 56;
 const HINT_LOOK = 5, HINT_LEAN = 10, HINT_GLYPH = 18;
-const LOOP_FRAMES = { Idle: 168, Walk: 11, Run: 10, CrouchWalk: 13, CrouchIdle: 48, JumpAir: 8, Crank: 24,
+const LOOP_FRAMES = { Idle: 168, Walk: 11, Run: 10, CrouchWalk: 13, CrouchIdle: 48, JumpAir: 8, Crank: 24, CageRideLever: 48,
   CarryIdle: 48, CarryWalk: 14, PushIdle: 48, PushWalk: 12, Ride: 48, SadWalk: 16 };
 
 // DL-02 The Weight of the Job (art/dl02/build_dl02.py uses the same numbers).
@@ -338,6 +338,13 @@ const WORN = {
   CotCanvas: { base: [.16, .15, .10], dirt: [.08, .07, .045], chip: [.2, .19, .15], rough: .95, chipRough: .95, metal: 0, grime: 6, chipScale: 30, chipAmt: .78, streak: .3 },
   CanteenGreen: { base: [.10, .13, .10], dirt: [.05, .055, .045], chip: [.16, .15, .13], rough: .85, chipRough: .9, metal: 0, grime: 2, chipScale: 14, chipAmt: .7, streak: .8 },
   HandleBlack: { base: [.02, .02, .018], dirt: [.035, .03, .024], chip: [.55, .53, .5], rough: .5, chipRough: .22, metal: .55, grime: 12, chipScale: 45, chipAmt: .58, dust: [.06, .058, .05], dustAmt: .3 },
+  HandledSteel: { base: [.06, .065, .06], dirt: [.04, .035, .03], chip: [.55, .53, .5], rough: .55, chipRough: .22, metal: .6, grime: 6, chipScale: 22, chipAmt: .52, dust: [.08, .075, .07], dustAmt: .2 },
+  HandledBrass: { base: [.2, .14, .06], dirt: [.08, .06, .03], chip: [.62, .46, .2], rough: .5, chipRough: .2, metal: .85, grime: 8, chipScale: 26, chipAmt: .5, dust: [.12, .1, .07], dustAmt: .2 },
+  WornIron: { base: [.045, .043, .04], dirt: [.06, .035, .02], chip: [.3, .29, .27], rough: .7, chipRough: .35, metal: .6, grime: 9, chipScale: 40, chipAmt: .6, dust: [.09, .085, .075], dustAmt: .4 },
+  WornStrap: { base: [.2, .17, .11], dirt: [.1, .08, .05], chip: [.32, .28, .2], rough: .95, chipRough: .9, metal: 0, grime: 14, chipScale: 50, chipAmt: .7, dust: [.2, .18, .14], dustAmt: .3 },
+  LuggageLeather: { base: [.15, .08, .045], dirt: [.06, .035, .02], chip: [.27, .18, .11], rough: .62, chipRough: .8, metal: 0, grime: 12, chipScale: 40, chipAmt: .74, dustAmt: .5 },
+  LuggageCanvas: { base: [.13, .135, .105], dirt: [.07, .065, .05], chip: [.21, .2, .16], rough: .9, chipRough: .9, metal: 0, grime: 10, chipScale: 30, chipAmt: .72, dustAmt: .6 },
+  FloorPaint: { base: [.42, .39, .3], dirt: [.2, .18, .13], chip: [.075, .074, .07], rough: .85, chipRough: .92, metal: 0, grime: 3, chipScale: 14, chipAmt: .58, dustAmt: .4 },
   ToyPatch: { base: [.42, .30, .08], dirt: [.20, .14, .05], chip: [.30, .32, .40], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
 };
 const PLAIN = { TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .003], .3, 0], Shaft: [[.004, .004, .004], .9, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
@@ -347,7 +354,7 @@ const PLAIN = { TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .00
   AtriumCut: [[.085, .078, .066], .95, 0], AtriumSheet: [[.075, .082, .08], .6, .4], AtriumRust: [[.11, .048, .025], .85, 0], AtriumMasonry: [[.15, .135, .115], .85, 0],
   SectionCap: [[.012, .011, .01], .95, 0], FloodScum: [[.09, .095, .075], .9, 0], DirtyGlass: [[.03, .035, .035], .25, .2],
   AtriumCloth: [[.2, .13, .065], .9, 0], AtriumWood: [[.085, .06, .04], .88, 0],
-  Barricade: [[.4, .06, .04], .7, 0], CandleWax: [[.55, .5, .4], .6, 0], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
+  Barricade: [[.4, .06, .04], .7, 0], CandleWax: [[.55, .5, .4], .6, 0], GaugeNeedle: [[.02, .018, .016], .4, .3], BrassPolished: [[.8, .62, .32], .22, 1], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
 const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
@@ -358,7 +365,7 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   PitBulb: [1, .86, .66, 0], GalleryBulb: [.9, .95, 1, 0], CarrierLamp: [1, .6, .2, 0],
   RowLight0: [.8, .92, .95, 0], RowLight1: [.8, .92, .95, 0], RowLight2: [.8, .92, .95, 0], RowLight3: [.8, .92, .95, 0],
   RowLight4: [.8, .92, .95, 0], RowLight5: [.8, .92, .95, 0],
-  HallBulb4: [1, .88, .7, 0], AtLanding: [1, .62, .18, 0], PawlLamp: [1, .2, .1, 0], BeaconLamp: [1, .55, .12, 0], TunnelBulb: [.95, .9, .78, 0],
+  HallBulb4: [1, .88, .7, 0], AtLanding: [1, .62, .18, 0], PawlLamp: [1, .55, .16, 0], BeaconLamp: [1, .55, .12, 0], TunnelBulb: [.95, .9, .78, 0],
   RampLamp0: [.55, 1, .65, 0], RampLamp1: [.55, 1, .65, 0], RampLamp2: [.55, 1, .65, 0], RampLamp3: [.55, 1, .65, 0], RampLamp4: [.55, 1, .65, 0], RampLamp5: [.55, 1, .65, 0],
   WindowSun: [1, .72, .38, 0], HomeLampBulb: [1, .76, .46, 0], LaneBulb: [.78, .88, 1, 0], TermLamp0: [.75, 1, .82, 0], TermLamp1: [.75, 1, .82, 0], TermLamp2: [.75, 1, .82, 0],
   AtriumWindowGlow: [1, .6, .28, 2.5], AtriumHazeLights: [.62, .76, .95, 1.5],
@@ -366,6 +373,8 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   C108Lamp: [1, .7, .42, 1.2], BayLight: [.72, .88, 1, 2], BayLamp0: [.72, .92, 1, 0], BayLamp1: [.72, .92, 1, 0], BayLamp2: [.72, .92, 1, 0],
   FallenLamp: [.85, .3, .08, 0], SeatedLamp: [.85, .3, .08, 0], SortLampBulb: [1, .85, .6, 6], TubeLamp: [.8, .9, 1, 2.5], GantryLamp: [1, .78, .5, 8], SlotLamp9: [1, .62, .22, 0], SlotLamp2: [1, .62, .22, 0], SlotLamp6: [1, .62, .22, 0],
   LandingAmber: [1, .62, .18, 0], StopStripe: [1, .55, .15, 0], CageBulb: [1, .86, .62, 0],
+  TrayLamp: [1, .78, .45, 4], LiftUpLampGlow: [1, .58, .18, 0], ServiceUpLampGlow: [1, .58, .18, 0], LobbyBulb: [1, .84, .6, 0],
+  CarLamp: [1, .9, .75, 0], CrankLamp: [1, .86, .64, 0], ShaftSky: [.62, .74, .9, .6],
   RationLamp: [.86, .95, .84, 3], RationCandle: [1, .62, .25, 4],
   RingLamp: [1, .78, .5, 0], RingLampRed: [1, .18, .1, 0], HomeLight: [1, .72, .4, 0], SkyPanel: [.7, .8, .9, 0] };
 
@@ -1202,7 +1211,6 @@ function floorAt(x) {
   const f = game.ch1 ? floorCh1(x) : null;
   if (f !== null) return f;
   if (x > SHAFT.x0 && x < SHAFT.x1) return platTop();
-  if (x > STAIR_X0 && game.upper) return Math.max(0, DECK - (x - STAIR_X0) * STAIR_SLOPE);   // down the stair to ring C
   if (x > CORRIDOR_X0) return game.upper ? GALLERY.h : 0;
   return x > PIT.x0 && x < PIT.x1 ? PIT.y : 0;
 }
@@ -1242,7 +1250,7 @@ function rightLimit() { return game.ch1 ? limitsCh1(leftLimit0(), rightLimit0())
 function leftLimit0() {
   if (game.region === 1) return LEFT_LIMIT;
   if (game.region === 4) return game.x >= SHAFT.x1 - 0.05 && !liftOpen() ? SHAFT.x1 + HALF - 0.08 : DOOR4_X - 0.6;
-  if (game.region === 5) return REGION5_X - 1.0;
+  if (game.region === 5) return UO.cw.x0 + HALF;
   if (game.region === 3) return game.upper ? GALLERY.x0 + 0.15 : REGION3_X - 0.15;
   return game.x > GATE_X && gateBlocks() ? GATE_X + 0.06 + HALF : SH.x0 + 0.2;
 }
@@ -1271,7 +1279,7 @@ function nearUse() {
   return null;
 }
 function beginUse(kind) {
-  if (kind.includes(':') || ['setdownItem', 'loadCarrier', 'loadTray', 'bell9', 'junction9', 'winch5'].includes(kind)) { beginCh1(kind); return; }
+  if (kind.includes(':') || ['setdownItem', 'loadCarrier', 'loadTray', 'bell9', 'junction9', 'winch5', 'loadCar', 'up10', 'crank10', 'ride10'].includes(kind)) { beginCh1(kind); return; }
   if (kind === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
   game.vx = 0;
   if (kind === 'setdown') { beginSetDown(); return; }
@@ -2015,22 +2023,31 @@ function buildDL03(setRoot) {
 }
 
 // Lights by region: the far scenes cost nothing (switched when they are out of view).
-function setRegionLights(r, ration = false) {
-  // The Ration Hall, at region 2's far end, swaps DL-01's and the Sorting Hall's lights (long out of sight) for its own.
-  ration = ration && r === 2; game.lightRation = ration;
+// Two light zones inside regions (pass 3): the Ration Hall, at region 2's far end, swaps DL-01's and the Sorting Hall's
+// lights (long out of sight) for its own; Up Only, past the balcony, swaps the goods hall's and the cage's for its own.
+function lightZoneFor(r) {
+  const was = game.lightZone, x = game.x;
+  if (r === 2 && x > RATION5.x0 - (was === 'ration' ? 1.0 : 0.5)) return 'ration';
+  if (r === 4 && game.region >= 4 && x > UPONLY.x0 - (was === 'uo' ? 1.4 : 1.0)) return 'uo';
+  return null;
+}
+function setRegionLights(r, zone = lightZoneFor(r)) {
+  const ration = zone === 'ration' && r === 2, uo = zone === 'uo' && r === 4;
+  game.lightZone = ration || uo ? zone : null;
   [...refs.relayLights, refs.work, refs.sparkLight, refs.cordLight, refs.pool].forEach((l) => (l.visible = r === 1));
   [refs.cableLight, refs.doorLight, refs.back, refs.search].forEach((l) => (l.visible = r <= 2 && !ration));
   refs.crankLight.visible = r === 1;
   refs.dl02Lights.forEach((l) => (l.visible = r === 2 || (l === refs.scannerLight && r === 3)));
   refs.dl03Lights.forEach((l) => (l.visible = r === 3));
-  refs.dl04HallLights.forEach((l) => (l.visible = r === 4 || (r === 3 && game.upper)));
-  refs.dl04MidLights.forEach((l) => (l.visible = r === 4));
+  refs.dl04HallLights.forEach((l) => (l.visible = (r === 4 && !uo) || (r === 3 && game.upper)));
+  refs.dl04MidLights.forEach((l) => (l.visible = r === 4 && !uo));
+  (refs.uoLights || []).forEach((l) => (l.visible = uo));
   refs.dl04FarLights.forEach((l) => (l.visible = r === 4));
   refs.dl05Lights.forEach((l) => (l.visible = r === 5));
   (refs.shLights || []).forEach((l) => (l.visible = r === 2 && !ration));
   (refs.rationLights || []).forEach((l) => (l.visible = ration));
   (refs.bayLights || []).forEach((l) => (l.visible = r === 2));
-  (refs.cageLights || []).forEach((l) => (l.visible = r === 4));
+  (refs.cageLights || []).forEach((l) => (l.visible = r === 4 && !uo));
   (refs.rcLights || []).forEach((l) => (l.visible = r === 5));
   game.lightRegion = r;
 }
@@ -2807,7 +2824,7 @@ const beltCarry4 = () => (game.region === 4 && game.grounded && beltRunning4() &
 // lane to C-114. A child's room: a fallen desk in front of the forwarding terminal hides the growth marks
 // and a carved tree; presenting the parcel at the terminal gives the next address, her school.
 // ---------------------------------------------------------------------------
-const STAIR_X0 = OFF5 + 74.75, STAIR_SLOPE = 0.833, REGION5_X = OFF5 + 76.75;
+const REGION5_X = OFF5 + 73.9;                                         // pass 3: ring C's level starts under the counterweight's shaft
 const RATION5 = { x0: OFF2 + 34.9, x1: OFF3 + 26.8 };                // DL-05 The Ration Hall (pass 3): world x 47.9 to 59.8
 // Its puzzle: the hatch's shutter drops the moment the winch is let go. Push the drum under its line, wind, let go:
 // it slams onto the drum's chime and leaves a gap to crawl under.
@@ -2815,6 +2832,12 @@ const RH5 = { drum0: OFF2 + 41.6, drum1: OFF2 + 43.22, drumZ: -0.38, gap: 0.55, 
   shutterX: OFF2 + 43.48, foot: [OFF2 + 43.30, OFF2 + 43.50], open: 1.2, onDrum: 0.64, crawl: [OFF2 + 43.10, OFF2 + 43.70],
   winchX: OFF2 + 40.55, strokes: 4 };
 const UPONLY = { x0: OFF4 + 76.8, x1: OFF5 + 76.75 };               // DL-10 Up Only (pass 3): from the balcony's end to ring C's lane
+// Its puzzle: the relocation lift only goes up, and won't go empty. The C-114 suitcase in the car (its floor plate weighs
+// passengers; the gate closes), the service door wound open, and UP pressed from the counterweight's own panel: the car
+// goes up with the suitcase, the way its family did, and the counterweight comes down its shaft with him to ring C.
+const UO = { caseX: OFF5 + 67.3, caseHalf: 0.16, car: { x0: OFF5 + 70.35, x1: OFF5 + 71.55, mid: OFF5 + 70.95, z: -0.85 },
+  upStand: OFF5 + 69.95, crankStand: OFF5 + 72.45, door: OFF5 + 72.76, cw: { x0: OFF5 + 72.85, x1: OFF5 + 73.75, stand: OFF5 + 73.37 },
+  travel: 1.6, strokes: 4, doorLift: 1.45, gate: 0.56, ride: 5.5 };
 const BARRICADE5 = { x0: OFF5 + 80.2, x1: OFF5 + 81.0, gap: 0.62 };
 const KNOCK5_X = OFF5 + 103.26, INNER5_X = OFF5 + 109.5, TOY5_X = OFF5 + 111.1, TERM5_X = OFF5 + 113.6, END5_X = OFF5 + 116.1;
 const DESK5 = { x: OFF5 + 113.6, half: 0.55, z: -0.62, min: OFF5 + 112.45, clear: OFF5 + 112.55 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
@@ -3181,7 +3204,7 @@ const HP = { gateX: OFF3 + 41.9, bucketX: OFF3 + 39.0, weights: [OFF3 + 31.6, OF
 const RAIL7 = { x0: OFF3 + 55.6, x1: OFF3 + 55.75, h: DECK + 0.8 };
 // DL-08 The Slipping Cage.
 const CG = { x0: OFF3 + 64.6, climbs: [[OFF3 + 65.8, OFF3 + 66.4, 2.2], [OFF3 + 66.4, OFF3 + 67.2, 2.8], [OFF3 + 67.2, OFF3 + 68.2, 3.4]],
-  shaft: { x0: OFF3 + 68.2, x1: OFF3 + 69.8 }, top: 3.4, landing: DECK, bottom: -0.1, anteCeil: 3.3, braceX: OFF3 + 69.2 };
+  shaft: { x0: OFF3 + 68.2, x1: OFF3 + 69.8 }, top: 3.4, landing: DECK, bottom: -0.1, anteCeil: 3.3, braceX: OFF3 + 68.52 };          // braced with his claw on the pawl lever (pass 3)
 // DL-09: ring C's flood, and the duct that bridges it.
 const DIP9 = { x0: OFF5 + 95.1, x1: OFF5 + 96.6, floor: -0.25 };
 const DUCT9 = { x: OFF5 + 94.0, half: 0.75, h: 0.26, gap: 1.10 };          // its red grip bar is 0.775 left of its centre
@@ -3200,7 +3223,7 @@ const letterState = {};
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const FLAT_LETTER = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);   // flat on the floor, across the lane                                   // kept through respawns and checkpoints; a new game clears it
 const CP_ORDER = ['start', 'shutter', 'hall', 'door', 'room', 'weighroom', 'solved', 'bay', 'ration', 'hatch', 'scanned', 'landing', 'gallery',
-  'goods', 'latched', 'cage', 'landing8', 'tunnel', 'ringc', 'bedroom', 'forwarded'];
+  'goods', 'latched', 'cage', 'landing8', 'tunnel', 'uponly', 'ringc', 'bedroom', 'forwarded'];
 const past = (cp, name) => CP_ORDER.indexOf(cp) >= CP_ORDER.indexOf(name);
 
 // Build: find the movable pieces and give each a group to move by.
@@ -3220,6 +3243,7 @@ function buildCh1(setRoot) {
     armL: R('CradleArmL'), armR: R('CradleArmR'), bayPlate: R('BayPlate'), bayDoor: R('BayDoor'),
     weights: HP.weights.map((x, i) => grouped(setRoot, 'HeapWeight' + i, x)),
     gate6: R('GalleryGate'), bucket: R('GateBucket'), pulley6: R('GatePulley'), sheave6: R('GateSheave'),
+    balanceNeedle: R('BalanceNeedle'),
     cage: R('Cage'), cageLever: R('CagePawlLever'), cagePawl: R('CagePawl'), counterweight: R('CageCounterweight'), sheave: R('CageSheave'),
     duct: grouped(setRoot, 'PushDuct', DUCT9.x),
     press: R('PressRam'), pressWheel: R('PressFlywheel'), collapse: R('GalleryCollapse'), collapseEdges: R('GalleryCollapseEdges'),
@@ -3228,6 +3252,10 @@ function buildCh1(setRoot) {
     facade: R('C114Facade'), switchToggle: R('CurioSwitchToggle'), bell: R('C108Bell'), gong: R('C108Gong'),
     junction: R('JunctionLever'), laneCable: R('LaneCable'), swing: R('SquareSwing'),
     held: R('HeldLetter'),
+    suitcase: grouped(setRoot, 'Suitcase114', UO.caseX), suitcaseTag: R('Suitcase114Tag'),
+    liftCar: R('LiftCar'), liftPlate: R('LiftFloorPlate'), liftNeedle: R('LiftLoadNeedle'), liftDoorL: R('LiftDoorL'), liftDoorR: R('LiftDoorR'),
+    liftUp: R('LiftUpButton'), serviceUp: R('ServiceUpButton'), serviceCrank: R('ServiceCrank'), serviceChain: R('ServiceChain'), serviceDoor: R('ServiceDoor'),
+    liftCw: R('LiftCounterweight'), liftSheave: R('LiftSheave'), liftIdler: R('LiftSheaveIdler'), ropeCar: R('LiftRopeCar'), ropeCw: R('LiftRopeCW'),
     drum: grouped(setRoot, 'RationDrum', RH5.drum0), rshutter: R('RationShutter'), winch: R('RationWinch'), rlamp: R('RationLamp'),
   };
   const c = refs.ch1;
@@ -3237,9 +3265,12 @@ function buildCh1(setRoot) {
   if (c.collapseEdges) c.collapseEdges.visible = false;
   for (const o of [c.press, c.pressWheel, c.collapse, c.bell, c.gong, c.junction, c.laneCable, c.swing, c.switchToggle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
   refs.hallLight = new THREE.PointLight(0xffd2a0, 0, 4.5, 2); refs.hallLight.position.set(OFF5 + 104.85, 1.95, -0.25); scene.add(refs.hallLight);
+  if (c.suitcase && c.suitcase.children[0]) c.suitcase.children[0].position.y -= DECK;    // so the group sits at the floor it stands on
+  for (const o of [c.suitcaseTag, c.liftCar, c.liftPlate, c.liftNeedle, c.liftDoorL, c.liftDoorR, c.liftUp, c.serviceUp, c.serviceCrank, c.serviceChain,
+    c.serviceDoor, c.liftCw, c.liftSheave, c.liftIdler, c.ropeCar, c.ropeCw]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
   for (const o of [c.door114, c.handle114, c.cord114]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
   for (const o of [c.rshutter, c.winch]) if (o) { o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() }; o.traverse((m) => { if (m.isMesh) m.userData.noCull = true; }); }
-  for (const o of [c.armL, c.armR, c.bayDoor, c.gate6, c.bucket, c.pulley6, c.sheave6, c.cage, c.counterweight, c.cageLever, c.cagePawl, c.sheave, c.scaleNeedle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
+  for (const o of [c.armL, c.armR, c.balanceNeedle, c.bayDoor, c.gate6, c.bucket, c.pulley6, c.sheave6, c.cage, c.counterweight, c.cageLever, c.cagePawl, c.sheave, c.scaleNeedle]) if (o) o.userData.rest = { p: o.position.clone(), q: o.quaternion.clone() };
   if (c.held) {
     refs.wrists[1].add(c.held); c.held.position.set(0.0137, 0, -0.1426); c.held.quaternion.set(0.6964, 0.6964, 0.1228, 0.1228);
     c.held.visible = false; c.held.traverse((m) => { if (m.isMesh) m.userData.noCull = true; });
@@ -3252,13 +3283,22 @@ function buildCh1(setRoot) {
   refs.bayLights = [P(0xcfe4ff, 3.2, 4.5, RK.bayX, 2.4, -0.2)];
   refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF5 + 90.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF5 + 102.75, 0.9, 0.1),
     P(0xcfdcf0, 2.6, 5.0, OFF5 + 99.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 91.72, 0.6, -0.2)];   // the square's lamp; the bell's small amber lamp
-  refs.cageLights = [P(0xffb050, 3.5, 4.5, CG.shaft.x1 + 0.4, DECK + 0.9, -0.3), P(0xd6dde8, 2.0, 5.0, CG.shaft.x0 - 0.6, CG.top + 1.6, -0.4)];
+  refs.cageLights = [P(0xffb050, 3.5, 4.5, CG.shaft.x1 + 0.4, DECK + 0.9, -0.3), P(0xd6dde8, 2.0, 5.0, CG.shaft.x0 - 0.6, CG.top + 1.6, -0.4),
+    P(0xffc890, 1.6, 2.4, OFF3 + 68.45, CG.top + 0.8, -0.75)];   // the counterweight tray's own lamp, so the tray and its plates read
   // The Ration Hall: the strip tube over the counter (it flickers), the shrine's candles, the vent's grey daylight, the kitchen.
   const counter = new THREE.SpotLight(0xdcebd2, 0, 6.5, THREE.MathUtils.degToRad(31), 0.7, 2);
   counter.position.set(OFF2 + 41.75, 1.98, 0.1); counter.target.position.set(OFF2 + 41.75, 0, -0.25); counter.userData.base = 14; scene.add(counter, counter.target);
   refs.rationLights = [counter, P(0xdcebd2, 2.2, 4, OFF2 + 41.4, 1.5, 0.3), P(0xffa050, 1.2, 2.2, OFF2 + 36.65, 0.6, -0.95),
     P(0x9fb8d8, 3, 6, OFF2 + 37.8, 2.7, -2.6), P(0xcfd6c8, 1.6, 3.5, OFF2 + 45.2, 1.9, -0.4)];
-  [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights, ...refs.rationLights].forEach((l) => (l.intensity = l.userData.base));
+  // Up Only: the failing pendant over the luggage, the two UP lamps, the crank's work lamp, the car's lamp (it rides with the
+  // car), and the cold light falling down the shaft from far above.
+  const shaft = new THREE.SpotLight(0xb8ccff, 0, 16, 0.21, 0.6, 1.4);
+  shaft.position.set(OFF5 + 73.45, 12.5, -0.3); shaft.target.position.set(OFF5 + 73.6, 0, -0.2); shaft.userData.base = 10; scene.add(shaft, shaft.target);
+  const carLamp = new THREE.PointLight(0xffe8c8, 0, 2.5, 2); carLamp.userData.base = 0.8;
+  if (c.liftCar) { c.liftCar.add(carLamp); carLamp.position.set(0, 2.0, -0.05); } else scene.add(carLamp);
+  refs.uoLights = [P(0xffd29a, 1.4, 5, OFF5 + 67.35, 3.98, -0.2), P(0xff9a3c, 0.35, 1.2, OFF5 + 70.07, 2.29, -0.12), P(0xff9a3c, 0.3, 1.2, OFF5 + 73.55, 2.29, 0.2),
+    P(0xffdcae, 0.6, 2.2, OFF5 + 72.48, 3.08, -0.12), carLamp, shaft];
+  [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights, ...refs.rationLights, ...refs.uoLights].forEach((l) => (l.intensity = l.userData.base));
 }
 
 // State, set from the checkpoint (resetWorld calls this).
@@ -3272,6 +3312,9 @@ function resetCh1(cp) {
     weights: HP.weights.map((x) => ({ x, home: x, base: 0, state: 'floor', blend: 0, drop: null })),
     bucket: past(cp, 'gallery') ? 2 : 0, gate6: past(cp, 'gallery') ? 1.4 : 0,
     cage: { y: past(cp, 'landing8') ? CG.landing : CG.top, v: 0, phase: past(cp, 'landing8') ? 'caught' : 'top', t: 0, thrown: false, readyAt: 0, lever: 0 },
+    uo: { d: past(cp, 'ringc') ? UO.travel : 0, phase: past(cp, 'ringc') ? 'gone' : 'idle', t: 0, riding: false, loaded: past(cp, 'ringc'), loadedAt: -100,
+      gate: past(cp, 'ringc') ? 1 : 0, door: past(cp, 'ringc') ? 1 : 0, needle: past(cp, 'ringc') ? 1 : 0, buzz: -100, pressL: 0, pressS: 0,
+      case: { x: UO.caseX, home: UO.caseX, base: DECK, state: past(cp, 'ringc') ? 'car' : 'floor', blend: 0, drop: null, dropT: 1 } },
     drum: { x: past(cp, 'hatch') ? RH5.drum1 : RH5.drum0, v: 0, state: past(cp, 'hatch') ? 'set' : 'free' },
     rh: { h: past(cp, 'hatch') ? RH5.onDrum : 0, v: 0, wound: 0, held: false, slamAt: -100 },
     duct: { x: past(cp, 'bedroom') ? DIP9.x0 + DUCT9.half : DUCT9.x, v: 0, state: past(cp, 'bedroom') ? 'bridge' : 'free', drop: 0 },
@@ -3303,6 +3346,7 @@ function clearLetters() { for (const k of Object.keys(letterState)) delete lette
 
 // Collision ---------------------------------------------------------------------------------
 function floorCh1(x) {
+  if (game.upper && game.region >= 4 && x > UO.cw.x0) return x < UO.cw.x1 ? DECK - game.ch1.uo.d : 0;     // DL-10: the counterweight, then ring C
   if (game.region === 4 && x > CG.shaft.x0 && x < CG.shaft.x1) return game.ch1.cage.y;
   if (game.region === 5 && x > DIP9.x0 && x < DIP9.x1) return game.ch1.duct.state === 'bridge' ? DIP9.floor + DUCT9.h : DIP9.floor;
   if (game.region === 1 && x > PIT.x0 && x < PIT.x1 && game.ch1.cart.state === 'bridge') return PIT.y + CART1.h;
@@ -3321,6 +3365,8 @@ function surfaceCh1(x, h) {
   if (game.region === 4) for (const p of s.plates) if (p.state === 'floor' && Math.abs(x - p.x) <= 0.06 && Math.abs(h - p.base) < 0.05) h = Math.max(h, p.base + 0.21);
   if (game.region === 3) for (const w of s.weights) if (w.state === 'floor' && Math.abs(x - w.x) <= WEIGHT_R && !game.upper) h = Math.max(h, WEIGHT_H);
   if (game.region === 4) {
+    const cs = s.uo.case;
+    if (cs.state === 'floor' && Math.abs(x - cs.x) <= UO.caseHalf && Math.abs(h - cs.base) < 0.05) h = Math.max(h, cs.base + 0.2);
     if (x >= RAIL7.x0 && x <= RAIL7.x1) h = Math.max(h, RAIL7.h);
     for (const [a, b, top] of CG.climbs) if (x >= a && x <= b) h = Math.max(h, top);
   }
@@ -3352,6 +3398,15 @@ function limitsCh1(lo, hi) {
       if (!(c.phase === 'caught' && Math.abs(c.y - CG.landing) < 0.02)) hi = Math.min(hi, CG.shaft.x1 - HALF);
     }
     if (x > CG.shaft.x1 && x < OFF4 + 64.6) lo = Math.max(lo, CG.shaft.x1 - 0.1);   // the cage stays below the antechamber's ceiling
+    // DL-10: the service door, shut; the open shaft while the counterweight is down; its far wall at deck level.
+    if (x > UPONLY.x0) {
+      const uo = s.uo;
+      if (game.y > DECK - 0.3) {
+        if (x < UO.door && uo.door < 0.98) hi = Math.min(hi, UO.door - HALF - 0.01);
+        if (x < UO.cw.x0 + 0.1 && uo.d > 0.01) hi = Math.min(hi, UO.cw.x0 - HALF + 0.05);
+        hi = Math.min(hi, UO.cw.x1 - HALF);
+      } else lo = Math.max(lo, UO.cw.x0 + HALF);
+    }
   }
   return [lo, hi];
 }
@@ -3363,12 +3418,20 @@ function nearCh1() {
   if (game.hold === 'push') return 'release';
   if (game.hold === 'item') {
     if (game.region === 3 && !game.upper && loadableCarrier()) return 'loadCarrier';
+    if (game.region === 4 && game.carry && game.carry.key === 'case' && x > UO.car.x0 - 0.25 && x < UO.car.x1 + 0.25 && s.uo.phase === 'idle') return 'loadCar';
     if (game.region === 4 && game.carry && game.carry.key && game.carry.key[0] === 'p' && x > CW8.trayX - 0.8 && x < CG.shaft.x1 && game.ch1.cage.phase === 'top') return 'loadTray';
     return 'setdownItem';
   }
   if (game.hold) return null;
   const cu = curioHere();
   if (cu) return 'curio:' + cu.id;
+  // DL-10: the lift's UP, the service door's crank, and the counterweight's own UP.
+  if (game.region === 4 && x > UPONLY.x0) {
+    const uo = s.uo, deck = Math.abs(game.y - DECK) < 0.05;
+    if (deck && Math.abs(x - UO.upStand) < 0.22 && uo.phase === 'idle') return 'up10';
+    if (deck && Math.abs(x - UO.crankStand) < 0.25 && uo.door < 1) return 'crank10';
+    if (deck && x > UO.cw.x0 + 0.1 && x < UO.cw.x1 && uo.d < 0.01 && uo.phase === 'idle') return 'ride10';
+  }
   // DL-05: the Ration Hall's winch, on the counter.
   if (game.region === 2 && Math.abs(x - RH5.winchX) < 0.26 && s.rh.h < RH5.open - 0.05) return 'winch5';
   // DL-09: C-108's doorbell, and the junction box's lever by C-110.
@@ -3394,6 +3457,7 @@ function itemsHere() {
   const s = game.ch1, out = [];
   if (game.region === 2) out.push(Object.assign(s.box, { key: 'box', h: 0.2, r: 0.2, below: BAIL_BELOW_WRIST, g: refs.ch1.box }));
   if (game.region === 3) s.weights.forEach((w, i) => out.push(Object.assign(w, { key: 'w' + i, h: WEIGHT_H, r: WEIGHT_R, below: BAIL_BELOW_WRIST, g: refs.ch1.weights[i] })));
+  if (game.region === 4) out.push(Object.assign(s.uo.case, { key: 'case', h: 0.2, r: UO.caseHalf, below: 0.24, g: refs.ch1.suitcase }));
   if (game.region === 4) s.plates.forEach((p, i) => out.push(Object.assign(p, { key: 'p' + i, h: 0.21, r: 0.05, below: BAIL_BELOW_WRIST, g: refs.ch1.plates[i] })));
   return out;
 }
@@ -3411,11 +3475,15 @@ function pushHere() {
   }
   return out;
 }
-const ACT_CH1 = new Set(['winch5', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
+const ACT_CH1 = new Set(['loadCar', 'up10', 'crank10', 'ride10', 'winch5', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck']);
 function beginCh1(kind) {
   const [k, arg] = kind.split(':');
   game.vx = 0;
   if (k === 'release') { game.hold = null; game.pushKey = null; setClip('Idle', 0.25); return; }
+  if (k === 'loadCar') { game.act = { kind: 'loadCar', phase: 'approach', t: 0, it: game.carry, standX: UO.car.mid, face: 1 }; return; }
+  if (k === 'up10') { game.act = { kind: 'up10', phase: 'approach', t: 0, standX: UO.upStand, face: 1 }; return; }
+  if (k === 'ride10') { game.act = { kind: 'ride10', phase: 'approach', t: 0, standX: UO.cw.stand, face: 1 }; return; }
+  if (k === 'crank10') { game.act = { kind: 'crank10', phase: 'approach', t: 0, standX: UO.crankStand, face: 1, strokes: Math.round(game.ch1.uo.door * UO.strokes), lastF: 0 }; return; }
   if (k === 'winch5') { game.act = { kind: 'winch5', phase: 'approach', t: 0, standX: RH5.winchX, face: 1, strokes: 0, lastF: 0 }; return; }
   if (k === 'bell9') { game.act = { kind: 'bell9', phase: 'approach', t: 0, standX: BELL9.x, face: 1 }; return; }
   if (k === 'junction9') { game.act = { kind: 'junction9', phase: 'approach', t: 0, standX: JUNCTION9.x - 0.25, face: 1 }; return; }
@@ -3482,6 +3550,7 @@ function updateActCh1(a, dt) {
   if (a.kind === 'death') { updateDeath(a, dt); return; }
   if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
   if (a.kind === 'winch5') { updateWinch5(a, dt); return; }
+  if (['loadCar', 'up10', 'crank10', 'ride10'].includes(a.kind)) { updateAct10(a, dt); return; }
   if (a.kind === 'bell9' || a.kind === 'junction9') {
     // He turns to the wall to press the bell (or pull the lever), then back to the lane.
     if (a.phase === 'approach') { if (approachCh1(a, dt)) { game.yawOverride = Math.PI; a.phase = 'turn'; } return; }
@@ -3621,6 +3690,132 @@ function updateWinch5(a, dt) {
     }
     a.lastF = f;
   }
+}
+// DL-10 Up Only: loading the car, the two UP buttons, the service crank, the ride down.
+function updateAct10(a, dt) {
+  const uo = game.ch1.uo;
+  if (a.phase === 'approach') {
+    if (!approachCh1(a, dt)) return;
+    if (a.kind === 'ride10') { a.phase = 'act'; a.t = 0; setClip('PressButtonHigh', 0.15); }
+    else { game.yawOverride = Math.PI; a.phase = 'turn'; }
+    return;
+  }
+  if (a.phase === 'turn') {
+    if (Math.abs(game.yaw - Math.PI) > 0.06) { setClip(game.hold === 'item' ? 'CarryIdle' : 'Walk', 0.2, 0.6); return; }
+    a.t = 0; a.lastF = 0;
+    a.phase = a.kind === 'loadCar' ? 'in' : 'act';
+    if (a.kind === 'up10') setClip('PressButtonHigh', 0.15);
+    if (a.kind === 'crank10') setClip('Crank', 0.2);
+    return;
+  }
+  if (a.kind === 'loadCar') {
+    // A step into the car's doorway, the suitcase down on the floor plate, a step back out.
+    if (a.phase === 'in' || a.phase === 'out') {
+      const to = a.phase === 'in' ? -0.5 : 0, dz = to - game.z;
+      if (Math.abs(dz) < 0.004) {
+        game.z = to;
+        if (a.phase === 'in') { a.phase = 'act'; setClip('SetDown', 0.15); }
+        else { game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+        return;
+      }
+      game.z += Math.sign(dz) * Math.min(Math.abs(dz), 0.45 * dt);
+      setClip(game.hold === 'item' ? 'CarryWalk' : 'Walk', 0.2, 0.5);
+      return;
+    }
+    const f = actions.SetDown.time * FPS, it = a.it;
+    if (f >= 14 && it.state === 'carried') {
+      it.state = 'car'; it.from = refs.ch1.suitcase ? refs.ch1.suitcase.position.clone() : null; it.dropT = 0;
+      uo.loaded = true; uo.loadedAt = game.clock; Sound.setDown(true);
+    }
+    if (f >= 35) { game.hold = null; game.carry = null; a.phase = 'out'; setClip('Idle', 0.2); }
+    return;
+  }
+  if (a.kind === 'crank10') {
+    // As DL-01's door: each stroke of the wheel winds the striped door a quarter of the way up. It holds where it is left.
+    const f = actions.Crank.time * FPS, stroke = f <= 12 ? smooth(f / 12) : 1;
+    uo.door = Math.max(uo.door, Math.min(1, (a.strokes + stroke) / UO.strokes));
+    if (f < a.lastF) {
+      a.strokes++; Sound.ratchet(); Sound.doorRumble(); shake(0.12);
+      if (a.strokes >= UO.strokes) { uo.door = 1; Sound.doorOpen(); game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; return; }
+    }
+    a.lastF = f;
+    const move = input.axis || ((input.right ? 1 : 0) - (input.left ? 1 : 0));
+    if (a.t > 0.5 && Math.abs(move) > 0.3) { game.act = null; game.yawOverride = null; setClip('Idle', 0.25); }
+    return;
+  }
+  // The two UP buttons. The car only goes with a passenger aboard and its gate shut; otherwise the panel buzzes.
+  if (a.phase === 'act') {
+    const f = actions.PressButtonHigh ? actions.PressButtonHigh.time * FPS : a.t * FPS;
+    uo[a.kind === 'up10' ? 'pressL' : 'pressS'] = f > 13 && f < 22 ? 1 : 0;
+    if (f >= 16 && !a.pressed) {
+      a.pressed = true; Sound.click();
+      if (uo.loaded && uo.gate >= 1 && uo.phase === 'idle') { uo.phase = 'up'; uo.t = 0; uo.riding = a.kind === 'ride10'; Sound.clunk(); Sound.chain(2.0); shake(0.15); }
+      else { uo.buzz = game.clock; Sound.buzzShort(); }
+    }
+    if (f >= 34) {
+      if (uo.riding && a.kind === 'ride10') { a.phase = 'ride'; a.t = 0; setClip('RideCounterweight', 0.3); return; }
+      game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock;
+      if (game.clock - uo.buzz < 1.5 && once('uoBuzz')) setTimeout(() => { if (!game.act && !game.hold) playQuirk('Startle'); }, 200);
+    }
+    return;
+  }
+  if (a.phase === 'ride') {
+    // Down the open shaft on the counterweight's frame, his claws on its rails, looking up at the car going away.
+    game.x = UO.cw.stand; game.y = DECK - uo.d; game.vx = 0; game.grounded = true; game.facing = 1;
+    if (uo.phase === 'gone' && a.t > 1.0) { game.act = null; setClip('Idle', 0.4); input.lastActivity = game.clock; }
+  }
+}
+function updateUpOnly(dt) {
+  const uo = game.ch1.uo, k = refs.ch1, it = uo.case;
+  uo.t += dt;
+  // The floor plate feels a passenger: the needle swings over and the gate draws shut.
+  if (uo.loaded && uo.gate < 1 && game.clock - uo.loadedAt > 0.8) {
+    if (uo.gate === 0) Sound.creak(0.5);
+    uo.gate = Math.min(1, uo.gate + dt / 1.4);
+    if (uo.gate >= 1) { Sound.gateSlam(); shake(0.12); }
+  }
+  const T = UO.ride;
+  if (uo.phase === 'up') {
+    uo.d = UO.travel * smooth(Math.min(1, uo.t / T));
+    if (uo.t >= T) { uo.phase = uo.riding ? 'gone' : 'top'; uo.t = 0; Sound.clunk(); shake(uo.riding ? 0.35 : 0.12); }
+  } else if (uo.phase === 'top') { if (uo.t > 3) { uo.phase = 'down'; uo.t = 0; Sound.chain(2.0); } }
+  else if (uo.phase === 'down') {
+    uo.d = UO.travel * (1 - smooth(Math.min(1, uo.t / T)));
+    if (uo.t >= T) { uo.phase = 'idle'; uo.d = 0; Sound.clunk(); }
+  }
+  if ((uo.phase === 'up' || uo.phase === 'down') && Math.random() < dt * 1.5) Sound.squeak();
+  const d = uo.d, rq = (o) => o.quaternion.copy(o.userData.rest.q);
+  if (k.liftCar) k.liftCar.position.y = k.liftCar.userData.rest.p.y + d;
+  if (k.liftPlate) k.liftPlate.position.y = k.liftPlate.userData.rest.p.y - (uo.loaded ? 0.01 : 0);
+  uo.needle += ((uo.loaded ? 1 : 0) - uo.needle) * Math.min(1, dt * 2.5);
+  if (k.liftNeedle) { rq(k.liftNeedle); k.liftNeedle.rotateZ(-2.6 * uo.needle + (uo.phase === 'up' ? Math.sin(game.clock * 23) * 0.03 : 0)); }
+  if (k.liftDoorL) k.liftDoorL.position.x = k.liftDoorL.userData.rest.p.x + UO.gate * uo.gate;
+  if (k.liftDoorR) k.liftDoorR.position.x = k.liftDoorR.userData.rest.p.x - UO.gate * uo.gate;
+  if (k.liftCw) k.liftCw.position.y = k.liftCw.userData.rest.p.y - d;
+  for (const o of [k.liftSheave, k.liftIdler]) if (o) { rq(o); o.rotateZ(-d / 0.3); }
+  if (k.ropeCar) k.ropeCar.scale.y = (2.05 - d) / 2.05;
+  if (k.ropeCw) k.ropeCw.scale.y = (3.8 + d) / 3.8;
+  if (k.serviceDoor) k.serviceDoor.position.y = k.serviceDoor.userData.rest.p.y + UO.doorLift * uo.door;
+  if (k.serviceCrank) { rq(k.serviceCrank); k.serviceCrank.rotateZ(-THREE.MathUtils.degToRad(60 * UO.strokes) * uo.door); }
+  if (k.serviceChain) k.serviceChain.position.y = k.serviceChain.userData.rest.p.y + ((UO.doorLift * uo.door) % 0.06);
+  if (k.liftUp) k.liftUp.position.z = k.liftUp.userData.rest.p.z - 0.012 * uo.pressL;
+  if (k.serviceUp) k.serviceUp.position.set(k.serviceUp.userData.rest.p.x + 0.906 * 0.012 * uo.pressS, k.serviceUp.userData.rest.p.y, k.serviceUp.userData.rest.p.z - 0.423 * 0.012 * uo.pressS);
+  // The UP lamps: steady when it will go, a stutter when it buzzes, a dull glow otherwise.
+  const ready = uo.loaded && uo.gate >= 1 && uo.phase === 'idle', buzz = game.clock - uo.buzz < 0.9;
+  const up = ready ? 3 + 1.2 * Math.sin(game.clock * 3) : buzz ? (Math.sin(game.clock * 40) > 0 ? 4 : 0.2) : 0.4;
+  glow('LiftUpLampGlow', up); glow('ServiceUpLampGlow', up);
+  const t = game.clock, fl = game.calm ? 1 : (Math.sin(t * 0.9) > 0.9 ? 0.2 + 0.8 * (Math.sin(t * 53) > 0) : 0.9 + 0.1 * Math.sin(t * 11));
+  glow('LobbyBulb', 6 * fl); glow('CarLamp', 4); glow('CrankLamp', 5);
+  if (refs.uoLights) refs.uoLights[0].intensity = 1.4 * fl;
+  // The suitcase: carried, set down in the car (it settles onto the plate), then up with the car.
+  const g = k.suitcase;
+  if (it.state === 'car' && g) {
+    it.dropT = Math.min(1, (it.dropT ?? 1) + dt / 0.25);
+    tv4.set(UO.car.mid, DECK + d - 0.01, UO.car.z);
+    if (it.from && it.dropT < 1) g.position.copy(it.from).lerp(tv4, smooth(it.dropT)); else g.position.copy(tv4);
+    g.rotation.set(0, 0, 0);
+  } else placeItem(it, g, dt);
+  if (k.suitcaseTag) { rq(k.suitcaseTag); k.suitcaseTag.rotateZ(0.12 * Math.sin(t * 2.3) + (uo.phase === 'up' ? 0.1 * Math.sin(t * 9) : 0)); }
 }
 // The letter in his claw while he picks it up or posts it.
 function holdLetter(on) {
@@ -3780,6 +3975,7 @@ function updateCh1(dt) {
   for (const sl of SLOTS) glow(sl.lamp, sl.stamped && game.clock - sl.stamped < 1.2 ? (Math.sin((game.clock - sl.stamped) * 20) > 0 ? 6 : 1) : 0.6);
   // Back out to the lane after letting go of the courier (or the drum).
   if (game.region === 2 && !game.act && game.hold !== 'push' && game.z < 0) game.z = Math.min(0, game.z + 0.45 * dt);
+  updateUpOnly(dt);
   // DL-05: the drum, the hatch's shutter and its winch, the counter's failing strip light.
   const dr = s.drum, rh = s.rh;
   if (k.drum) k.drum.position.x = dr.x;
@@ -3798,10 +3994,10 @@ function updateCh1(dt) {
   }
   if (k.rshutter) k.rshutter.position.y = k.rshutter.userData.rest.p.y + rh.h;
   if (k.winch) { k.winch.quaternion.copy(k.winch.userData.rest.q); k.winch.rotateZ(-THREE.MathUtils.degToRad(60 * RH5.strokes) * rh.h / RH5.open); }
-  if (game.lightRegion === 2) {
-    const want = game.x > RATION5.x0 - (game.lightRation ? 1.0 : 0.5);
-    if (want !== !!game.lightRation) setRegionLights(2, want);
-    if (game.lightRation) {
+  const zone = lightZoneFor(game.lightRegion);
+  if (zone !== (game.lightZone || null)) setRegionLights(game.lightRegion, zone);
+  if (game.lightZone === 'ration') {
+    {
       const t = game.clock, fl = game.calm ? 1 : (Math.sin(t * 0.7) > 0.93 ? 0.25 + 0.75 * (Math.sin(t * 61) > 0) : 0.92 + 0.08 * Math.sin(t * 9.1));
       refs.rationLights[0].intensity = 14 * fl; refs.rationLights[1].intensity = 2.2 * fl; glow('RationLamp', 3 * fl);
       refs.rationLights[2].intensity = 1.2 * (0.88 + 0.12 * Math.sin(t * 7.3) * Math.sin(t * 3.1));
@@ -3811,6 +4007,7 @@ function updateCh1(dt) {
   const cp = game.checkpoint, x = game.x;
   if (game.region === 2 && x > RATION5.x0 + 0.6 && !past(cp, 'ration')) game.checkpoint = 'ration';
   if (game.region === 2 && x > RH5.crawl[1] + 0.25 && !past(cp, 'hatch')) game.checkpoint = 'hatch';
+  if (game.region === 4 && x > UPONLY.x0 + 0.4 && game.grounded && !past(cp, 'uponly')) game.checkpoint = 'uponly';
   if (game.region === 2 && x > OFF2 + 12.6 && game.y < 0.05 && !past(cp, 'weighroom')) game.checkpoint = 'weighroom';
   if (game.region === 2 && x > RK.door.x1 + 0.2 && !past(cp, 'bay')) game.checkpoint = 'bay';
   if (game.region === 3 && game.upper && x > HP.gateX + 0.3 && !past(cp, 'gallery')) game.checkpoint = 'gallery';
@@ -3915,13 +4112,25 @@ function updateCage(dt) {
   else if (c.phase === 'haul') { c.y = Math.min(CG.top, c.y + 0.7 * dt); if (c.y >= CG.top) { c.phase = 'top'; c.t = 0; c.caughtOnce = false; c.readyAt = game.clock + 1.6; if (game.act && game.act.kind === 'cage') { game.act = null; setClip('Idle', 0.3); } } }
   if (k.cage) k.cage.position.y = k.cage.userData.rest.p.y + (c.y - CG.top);
   if (k.counterweight) k.counterweight.position.y = k.counterweight.userData.rest.p.y - (c.y - CG.top);
-  c.lever += ((c.thrown && c.phase !== 'top' ? 1 : 0) - c.lever) * Math.min(1, dt * 10);
+  // The lever follows his pull (CagePullPawl: braced to frame 3, through its throw by frame 9, a little past, held).
+  const pull = game.act && game.act.kind === 'cage' && game.act.pullAt !== undefined && actions.CagePullPawl ? actions.CagePullPawl.time * FPS : -1;
+  if (pull >= 0 && c.thrown) c.lever = pull < 3 ? 0 : pull < 9 ? smooth((pull - 3) / 6) : pull < 11 ? 1 + 0.04 * Math.sin((pull - 9) / 2 * Math.PI) : 1;
+  else c.lever += ((c.thrown && c.phase !== 'top' ? 1 : 0) - c.lever) * Math.min(1, dt * 10);
+  // The balance gauge on the landing: deep in "too light" with the tray empty, a third of the way per plate.
+  if (k.balanceNeedle) {
+    c.needle = (c.needle ?? 0) + (loaded / 2 - (c.needle ?? 0)) * Math.min(1, dt * 3);
+    const kick = c.phase === 'dip' ? Math.sin(c.t * 18) * Math.exp(-c.t * 2.5) * 0.25 : 0;
+    k.balanceNeedle.quaternion.copy(k.balanceNeedle.userData.rest.q); k.balanceNeedle.rotateZ(THREE.MathUtils.degToRad(48) * (c.needle + kick));
+  }
   c.pawl = c.phase === 'bite' || c.phase === 'caught' ? 1 : Math.max(0, (c.pawl || 0) - dt * 2);
   if (k.cageLever) { k.cageLever.quaternion.copy(k.cageLever.userData.rest.q); k.cageLever.rotateZ(THREE.MathUtils.degToRad(-55) * c.lever); }
   if (k.cagePawl) { k.cagePawl.quaternion.copy(k.cagePawl.userData.rest.q); k.cagePawl.rotateZ(THREE.MathUtils.degToRad(-75) * Math.max(c.pawl, c.lever * 0.35)); }
   if (k.sheave) { k.sheave.quaternion.copy(k.sheave.userData.rest.q); k.sheave.rotateZ(-(CG.top - c.y) / 0.3); }
   // The lit landing pulses until the pawl holds there; the cage's own bulb flickers when the brake gives.
-  const lamp = c.phase === 'caught' ? 3 : 5 + 4 * Math.max(0, Math.sin(game.clock * 6));
+  // It blinks faster as the cage comes down toward it: the moment to pull is when it's level with the chevrons.
+  const near = ['lower', 'shudder', 'slip', 'stall'].includes(c.phase) ? THREE.MathUtils.clamp(1 - (c.y - L) / 1.2, 0, 1) : 0;
+  const lamp = c.phase === 'caught' ? 3 : 5 + 4 * Math.max(0, Math.sin(game.clock * (6 + 16 * near)));
+  glow('TrayLamp', 4);
   glow('LandingAmber', lamp); glow('StopStripe', lamp * 0.4);
   glow('CageBulb', ['shudder', 'slip', 'stall', 'crash'].includes(c.phase) && !game.calm ? (Math.sin(game.clock * 37) > 0.1 ? 4 : 0.4) : 3);
 }
@@ -3930,10 +4139,14 @@ function updateCageAct(a, dt) {
   game.y = c.y; game.grounded = true; game.vx = 0;
   game.x += (CG.braceX - game.x) * Math.min(1, dt * 3); game.facing = 1;
   const tense = c.phase === 'shudder' || c.phase === 'slip' || c.phase === 'stall' || c.phase === 'crash';
-  setClip(tense && actions.CageBrace ? 'CageBrace' : 'Idle', 0.2);
+  // Pass 3: he rides with his claw on the pawl lever, braced (CageRideLever); Use pulls it, visibly (CagePullPawl).
+  const riding = ['settle', 'lower', 'shudder', 'slip', 'stall'].includes(c.phase) && actions.CageRideLever;
+  const pulling = a.pullAt !== undefined && actions.CagePullPawl && game.clock - a.pullAt < 0.75;
+  if (pulling) setClip('CagePullPawl', 0.08);
+  else { if (a.pullAt !== undefined && !c.thrown) a.pullAt = undefined; setClip(riding ? 'CageRideLever' : tense && actions.CageBrace ? 'CageBrace' : 'Idle', 0.2); }
   // The pawl: Use. It bites from the catch down to the landing; above it rattles, below it misses.
   if (input.usePressed && !c.thrown && ['lower', 'shudder', 'slip', 'stall'].includes(c.phase)) {
-    c.thrown = true;
+    c.thrown = true; a.pullAt = game.clock;
     if (c.y <= CG.landing + 0.45 && c.y >= CG.landing - 0.06) { c.phase = 'bite'; c.t = 0; Sound.ratchet(); Sound.pawlClatter(); shake(0.5); }
     else { Sound.pawlClatter(); setTimeout(() => { if (c.phase !== 'bite' && c.phase !== 'caught') c.thrown = false; }, 600); }
   }
@@ -4757,6 +4970,15 @@ function frameFor(x) {
     // DL-08: the climbs and the cage's shaft, from the upper landing down to the lit landing.
     const kc = smooth((x - (CG.x0 + 0.4)) / 1.0) * (1 - kt);
     if (kc > 0) { tx += (THREE.MathUtils.clamp(x + lead * 0.4, CG.shaft.x0 - 1.0, CG.shaft.x1 + 0.6) - tx) * kc; v4 = lerp3(v4, fit([7.8, 1.6, 1.1], 7.4), kc); }
+    // DL-10 Up Only: the lobby wide and tall enough for the luggage, the car, the crank, the counterweight's shaft and the
+    // ropes over them all; then down the shaft with him on the ride.
+    const ko = smooth((x - (UPONLY.x0 - 0.8)) / 1.4);
+    if (ko > 0) {
+      const down = smooth(THREE.MathUtils.clamp(1 - game.y / DECK, 0, 1));
+      let ox = THREE.MathUtils.clamp(x + lead * 0.5, OFF5 + 68.2, OFF5 + 71.6);
+      ox += (OFF5 + 74.2 - ox) * down;
+      tx += (ox - tx) * ko; v4 = lerp3(v4, lerp3(fit([8.6, 3.0, 2.5], 8.6), fit([6.4, 1.3, 0.75], 6.2), down), ko);
+    }
     cx += (tx - cx) * k4; v = lerp3(v, v4, k4);
     fog += (0.05 + 0.012 * kt - 0.0575 * kv - fog) * k4;
   }
@@ -4995,6 +5217,7 @@ const CHECKPOINTS = {
   cage: { x: OFF3 + 67.8, y: CG.top, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true },
   landing8: { x: OFF3 + 70.3, y: CG.landing, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true },
   tunnel: { x: OFF4 + 65.7, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true },
+  uponly: { x: UPONLY.x0 + 0.6, y: DECK, released: true, door: 1, region: 4, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true },
   ringc: { y: 0, x: OFF5 + 81.25, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
   bedroom: { y: 0, x: OFF5 + 110.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
   forwarded: { y: 0, x: OFF5 + 113.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
@@ -5239,7 +5462,7 @@ function step(dt) {
 }
 
 // Test hook for automated traversal checks.
-window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
+window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR, UO, UPONLY, CG }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
   clip: () => current, renderer, carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
   crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), offsets: { OFF2, OFF3, OFF4, OFF5 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
   k: { CART1, PIT, SH, RK, HP, RAIL7, CG, DIP9, DUCT9, GATE_X, DOCK_X, PAWL_X, GALLERY, T4_HALF, PUSH_GAP4, GRIP_FWD, SLOTS, LETTERS: LETTERS.map((l) => ({ id: l.id, x: l.x })) } };
@@ -5252,8 +5475,8 @@ function warmUp() {
   const keys = ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'aoMap'];
   scene.traverse((o) => { for (const m of [].concat(o.material || [])) for (const k of keys) if (m[k]) renderer.initTexture(m[k]); });
   const up = game.upper;
-  for (const [r, u, ra] of [[1, false], [2, false], [2, false, true], [3, false], [3, true], [4, true], [5, true]]) { game.upper = u; setRegionLights(r, ra); renderer.compile(scene, camera); }
-  game.upper = up; setRegionLights(1);
+  for (const [r, u, z] of [[1, false], [2, false], [2, false, 'ration'], [3, false], [3, true], [4, true], [4, true, 'uo'], [5, true]]) { game.upper = u; setRegionLights(r, z || null); renderer.compile(scene, camera); }
+  game.upper = up; setRegionLights(1, null);
   shown.forEach((o) => (o.visible = false));
 }
 function boot() {

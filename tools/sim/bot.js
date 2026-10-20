@@ -474,7 +474,41 @@ window.__startBot = function (seed, opts = {}) {
     yield* curio('hopscotch', 0.1 + 0.3 * P.curious);
     yield* curio('viewer', 0.2 + 0.5 * P.curious);
     yield* wait(look(4.0));
-    yield* walk(1, () => G.region === 5, 'to the stair', { max: 120 });
+    yield* upOnly();
+  }
+
+  // DL-10 Up Only: UP buzzes with the car empty; the C-114 suitcase into the car; the service door; ride the counterweight.
+  function* upOnly() {
+    const U = D.k2.UO, uo = () => C().uo;
+    yield* walk(1, () => G.x > D.k2.UPONLY.x0 + 0.6, 'into the lobby', { max: 120 });
+    yield* wait(look(4.0));
+    if (chance(0.3 + 0.5 * P.curious)) { note('looks at the luggage'); yield* wait(look(3)); }
+    if (mistakes && chance(0.85 - 0.3 * P.skill)) {
+      note('presses UP: it buzzes');
+      yield* useAt(['up10'], U.upStand, actIs('up10'), 'UP');
+      yield* until(() => !G.act, 6, 'buzz'); yield* wait(think(10));
+    } else yield* wait(think(6));
+    if (uo().case.state === 'floor') {
+      yield* useAt(['liftItem:case'], uo().case.x, actIs('liftItem'), 'suitcase', { hop: false });
+      yield* until(() => G.hold === 'item', 10, 'carrying suitcase');
+      yield* walk(1, () => D.near() === 'loadCar', 'to the car', { hop: false, max: 30 });
+      use(); yield* until(() => G.act && G.act.kind === 'loadCar', 3, 'load car');
+      yield* settle(); note('suitcase in the car');
+      yield* until(() => uo().gate >= 1, 6, 'gate shut'); yield* wait(look(1.5));
+    }
+    if (mistakes && chance(0.6 - 0.3 * P.skill)) {
+      note('sends the car up from the lobby');
+      yield* useAt(['up10'], U.upStand, actIs('up10'), 'UP again');
+      yield* until(() => uo().phase === 'top', 12, 'car up'); yield* wait(look(2));
+      yield* until(() => uo().phase === 'idle', 15, 'car back'); yield* wait(think(8));
+    } else yield* wait(think(5));
+    yield* useAt(['crank10'], U.crankStand, actIs('crank10'), 'service crank', { hop: false });
+    yield* until(() => uo().door >= 1 && !G.act, 30, 'service door up'); note('service door open');
+    yield* wait(think(3));
+    yield* useAt(['ride10'], U.cw.stand, actIs('ride10'), 'counterweight UP', { hop: false });
+    yield* until(() => uo().phase === 'gone' && !G.act, 20, 'the ride'); note('rides the counterweight down');
+    yield* wait(look(2.0));
+    yield* walk(1, () => G.region === 5, 'to ring C', { max: 60 });
   }
 
   // DL-09 The Child at the Address: the flooded lane and the White, the doorbell, the duct; then C-114.

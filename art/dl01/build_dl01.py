@@ -1416,6 +1416,7 @@ def main():
     curios.add_clips(sys.modules[__name__], arm)
     ration_hall.add_clips(sys.modules[__name__], arm)
     up_only.add_clips(sys.modules[__name__], arm)
+    lore.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False
