@@ -1458,7 +1458,7 @@ function updatePlayer(dt) {
   // DL-02: walking in among the couriers, he stops and understands.
   if (game.region === 2 && game.revealed && !game.realised && game.x > GATE_X + 1.5 && game.grounded && !game.hold) {
     game.realised = true;
-    if (once('realise')) { game.kinSlow = true; game.vx = 0; game.act = { kind: 'realise', phase: 'act', t: 0 }; setClip('Realise', 0.4); Music.play('kin'); return; }
+    if (once('realise')) { game.kinSlow = true; game.vx = 0; game.act = { kind: 'realise', phase: 'act', t: 0 }; setClip('Realise', 0.4); if (game.clock - game.revealTime < 45) Music.queue('kin'); else Music.play('kin'); return; }   // pass 5: the lament plays through; kin follows it
   }
 
   const use = input.usePressed ? nearUse() : null;

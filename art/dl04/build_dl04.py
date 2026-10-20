@@ -1249,8 +1249,12 @@ def _house(b, c, T, F, w, d, floors, rnd, mat, lit=0.0, home=False):
                 ops.append((f, u, 'door'))
             elif rnd.random() < 0.85:
                 ops.append((f, u, 'glow' if rnd.random() < lit else 'dark'))
-    # The roof: its slab, and what stands on it.
-    _abox(roof_mat, c + Vector((0, 0, h + 0.1)) + F * 0.2, (w + 0.3, d + 0.5, 0.2), rot=rot)
+    # The roof: its slab, and what stands on it. Pass 5: now and then caved in, sagging into the house.
+    cr = _drnd(c, 31)
+    if cr.random() < 0.22:
+        _abox(roof_mat, c + Vector((0, 0, h - 0.5)) + F * 0.2, (w + 0.3, d + 0.5, 0.2), rot=rot @ Matrix.Rotation(cr.choice((-1, 1)) * 0.3, 4, 'Y'))
+    else:
+        _abox(roof_mat, c + Vector((0, 0, h + 0.1)) + F * 0.2, (w + 0.3, d + 0.5, 0.2), rot=rot)
     if tank:
         _tank(b, tank[0], 0.6, 1.3, dr, lod, mat=tank[1])
     elif flue:
@@ -1325,9 +1329,28 @@ def _house(b, c, T, F, w, d, floors, rnd, mat, lit=0.0, home=False):
                 _sign(b['signs'], fc + T * (u - 0.8) + UP * 1.5 + F * 0.01, T, F, (0.45, 0.45), 1)
     for u, z, bw in balconies:
         _balcony(b, fc + T * u + UP * z, T, F, bw, lod, dr)
+    if cr.random() < 0.3:                              # pass 5: a hole broken through the front, its rubble below
+        _breach(b, fc + F * 0.05 + T * cr.uniform(-w / 3, w / 3) + UP * cr.uniform(2.0, h - 1.5), T, F, cr.uniform(0.9, 1.6), cr)
+        for i in range(cr.randint(3, 6)):
+            s = cr.uniform(0.3, 0.7)
+            _abox(b['cut'], fc + F * cr.uniform(0.3, 1.6) + T * cr.uniform(-w / 3, w / 3) + UP * (s * 0.35), (s, s * 0.8, s * 0.7),
+                  rot=rot @ _rz(cr.uniform(-0.6, 0.6)))
     for f in range(1, floors):                         # string courses between the floors
         _abox(b['cut'], fc + UP * (3.0 * f + 0.02) + F * 0.04, (w - 2 * ch + 0.02, 0.1, 0.14), rot=rot)
     _abox(b['cut'], fc + UP * (h - 0.12) + F * 0.06, (w + 0.1, 0.14, 0.24), rot=rot)     # the cornice
+
+
+def _breach(b, c, T, F, r, dr):
+    """A ragged hole through a wall, c at its middle in the wall's face: dark, its rim of broken masonry."""
+    pts = []
+    for k in range(9):
+        a = 2 * math.pi * k / 9
+        rr = r * dr.uniform(0.6, 1.15)
+        pts.append(c + T * (rr * math.cos(a)) + UP * (rr * 0.8 * math.sin(a)))
+    _quad(b['dark'], pts, F)
+    for k in range(0, 9, 2):                           # broken ends of the masonry round it
+        q = pts[k] + (pts[k] - c).normalized() * 0.15 + F * 0.05
+        _abox(b['cut'], q, (0.35, 0.18, 0.25), rot=_rot(T, F) @ Matrix.Rotation(dr.uniform(-0.7, 0.7), 4, 'Y'))
 
 
 def _barricade(b, c, T, F, span, rnd):
@@ -1850,38 +1873,59 @@ def _viaduct(b, WL, WR, y, z, width, spans, rnd):
                     _chimney(b, hb - hF * 0.5 + hT * dr.uniform(-hw / 3, hw / 3) + UP * (hh + 0.18), hT, hF, 1.4, dr)
 
 
-def _catwalk(b, WL, WR, y, z, rnd):
-    """A steel catwalk across the chasm, hung from the roof."""
+def _catwalk(b, WL, WR, y, z, rnd, broken=None):
+    """A steel catwalk across the chasm, hung from the roof. Pass 5: broken (a span (t0, t1) of its length)
+    leaves a gap, both ends torn and bent down into it, cables hanging."""
     pl, _, nl = _wframe(WL, _wat_y(WL, y))
     pr, _, nr = _wframe(WR, _wat_y(WR, y + 6))
     a, e = pl + nl * 3.0 + Vector((0, 0, z)), pr + nr * 3.0 + Vector((0, 0, z))
     d = e - a
     T = Vector((d.x, d.y, 0)).normalized()
     F = Vector((-T.y, T.x, 0.0))
-    _abox(b['sheet'], (a + e) / 2, (d.length, 1.4, 0.12), rot=_rot(T, F))
-    for s in (-1, 1):
-        _abox(b['sheet'], (a + e) / 2 + F * (s * 0.68) + Vector((0, 0, 1.0)), (d.length, 0.05, 0.05), rot=_rot(T, F))
-    _abox(b['rust'], (a + e) / 2 - Vector((0, 0, 0.8)), (d.length, 0.5, 1.4), rot=_rot(T, F))     # its girder
+    runs = [(a, e)] if not broken else [(a, a.lerp(e, broken[0])), (a.lerp(e, broken[1]), e)]
+    for ra, re in runs:
+        dd = (re - ra).length
+        _abox(b['sheet'], (ra + re) / 2, (dd, 1.4, 0.12), rot=_rot(T, F))
+        for s in (-1, 1):
+            _abox(b['sheet'], (ra + re) / 2 + F * (s * 0.68) + Vector((0, 0, 1.0)), (dd, 0.05, 0.05), rot=_rot(T, F))
+        _abox(b['rust'], (ra + re) / 2 - Vector((0, 0, 0.8)), (dd, 0.5, 1.4), rot=_rot(T, F))     # its girder
+    if broken:
+        for end, s, ang, ln in ((runs[0][1], 1, 0.6, 7.0), (runs[1][0], -1, 0.95, 9.0)):
+            dv = (T * s * math.cos(ang) - UP * math.sin(ang))
+            R = _rot(T, F) @ Matrix.Rotation(s * ang, 4, 'Y')
+            _abox(b['sheet'], end + dv * (ln / 2), (ln, 1.3, 0.12), rot=R)
+            _abox(b['rust'], end + dv * (ln * 0.4) - UP * 0.7, (ln * 0.8, 0.5, 1.2), rot=R)
+            tip = end + dv * ln
+            for k in range(3):
+                q = tip + F * (0.6 * (k - 1)) + T * (0.4 * k * s)
+                _wire(b['cable'], [q, q - UP * (6.0 + 5.0 * k) + T * (0.8 * s)], 0.04)
     x = 6.0
     while x < d.length - 3:
         p = a.lerp(e, x / d.length)
-        if rnd.random() < 2 * _litp(z):
+        gap = broken and broken[0] - 0.04 < x / d.length < broken[1] + 0.04
+        if rnd.random() < 2 * _litp(z) and not gap:
             _abox(b['glow'], p + F * 0.7 + Vector((0, 0, 1.4)), (0.35, 0.35, 0.35), rot=_rot(T, F))
         x += 10.0
     lod = _lod((a + e) / 2)
     x = 5.0
     while x < d.length - 2:                            # work lamps hung under its girder
         p = a.lerp(e, x / d.length)
+        if broken and broken[0] - 0.04 < x / d.length < broken[1] + 0.04:
+            x += 14.0
+            continue
         if lod >= 1:
             dr = _drnd(p)
             _hang_lamp(b, p - Vector((0, 0, 1.5)), 0.5, warm=dr.random() < 0.4, lit=dr.random() < 0.6)
         x += 14.0
     if lod >= 1:
-        for s in (-1, 1):
-            _abox(b['sheet'], (a + e) / 2 + F * (s * 0.68) + Vector((0, 0, 0.5)), (d.length, 0.04, 0.04), rot=_rot(T, F))
+        for ra, re in runs:
+            for s in (-1, 1):
+                _abox(b['sheet'], (ra + re) / 2 + F * (s * 0.68) + Vector((0, 0, 0.5)), ((re - ra).length, 0.04, 0.04), rot=_rot(T, F))
         if lod >= 2:
             k = int(d.length / 1.2)
             for i in range(k):
+                if broken and broken[0] < (i + 0.5) / k < broken[1]:
+                    continue
                 q = a.lerp(e, (i + 0.5) / k) - F * 0.68
                 _quad(b['sheet'], [q - T * 0.02, q + T * 0.02, q + T * 0.02 + Vector((0, 0, 1.0)), q - T * 0.02 + Vector((0, 0, 1.0))], -F)
 
@@ -2684,7 +2728,7 @@ def build_atrium(m, coll):
     # Across the chasm: viaducts, a catwalk, cables.
     for y, z, width, spans in VIADUCTS:
         _viaduct(b, WL, WR, y, z, width, spans, rnd)
-    _catwalk(b, WL, WR, 44.0, -5.0, rnd)
+    _catwalk(b, WL, WR, 44.0, -5.0, rnd, broken=(0.4, 0.6))       # pass 5: its middle fallen
     _catwalk(b, WL, WR, 140.0, 10.0, rnd)
     for (ua, ra), (ub, rb), sag in (((25.0, 'B'), (35.0, 'B'), 5.0), ((55.0, 'C'), (48.0, 'B'), 4.0), ((80.0, 'A'), (95.0, 'A'), 7.0)):
         a = _wledge(WL, ua, ra)[0] + Vector((0, 0, 4.0))
