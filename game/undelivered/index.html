@@ -5776,12 +5776,21 @@ function buildCulling(setRoot) {
     // The atrium is only there once he is out on the balcony; DL-04 only once he is up on the gallery.
     const atrium = /^Atrium/.test(o.name) || /^Atrium/.test(o.parent?.name || '');
     // Pass 5: Up Only's lobby stays out of the city's crane shot (it read as a grey block in its corner).
-    if (/^(UO|Lift|Service)/.test(o.name) || /^(UO|Lift|Service)/.test(o.parent?.name || '')) { box.setFromObject(o); refs.cull.push({ o, x0: box.min.x, x1: box.max.x, when: () => game.upper && !(game.act && game.act.kind === 'awe') }); return; }
+    if (/^(UO|Lift|Service)/.test(o.name) || /^(UO|Lift|Service)/.test(o.parent?.name || '')) { box.setFromObject(o); refs.cull.push({ o, x0: box.min.x, x1: box.max.x, when: uoLobbyShown }); return; }
     refs.cull.push({ o, x0: atrium ? -Infinity : box.min.x, x1: atrium ? Infinity : box.max.x, when: atrium ? () => (game.region === 4 && cam.x > OFF4 + 62) || (game.region === 5 && cam.x < OFF5 + 82) : box.min.x > OFF3 + 47.3 ? () => game.upper : null });
   });
   // The couriers stay hidden until the rack lights come on or he is at the gate: before that they are dark.
   refs.couriers.forEach((o) => refs.cull.push({ o, x0: OFF2 + 17.5, x1: OFF2 + 27.0, when: () => game.revealed || game.x > GATE_X - 0.8 }));
   refs.heapMeshes.forEach((o) => refs.cull.push({ o, x0: OFF3 + 36.0, x1: OFF3 + 53.0 }));
+}
+// Pass 6: Up Only's lobby (lamps and all) is hidden for the city's crane shot, and comes back only once it is out of
+// frame, so it never pops in (pass 5 brought it back the instant the shot ended, in view: a lamp popping on).
+function camRightEdge() { return camera.position.x + Math.abs(camera.position.z) * Math.tan(THREE.MathUtils.degToRad(camera.getEffectiveFOV()) / 2) * camera.aspect; }
+function uoLobbyShown() {
+  if (!game.upper || (game.act && game.act.kind === 'awe')) return false;
+  const d = game.dl4;
+  if (d && !d.uoShown && (game.x > AWE_X + 3 || (d.awed && camRightEdge() < UPONLY.x0 - 0.2))) d.uoShown = true;
+  return !!(d && d.uoShown);
 }
 function updateCulling() {
   const a = cam.x - CULL_MARGIN, b = cam.x + CULL_MARGIN;
