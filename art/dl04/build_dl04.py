@@ -426,7 +426,7 @@ def dl04_materials(m):
     m['sheet'] = simple_material('AtriumSheet', (0.075, 0.082, 0.08), 0.6, metallic=0.4)
     m['rust'] = simple_material('AtriumRust', (0.11, 0.048, 0.025), 0.85)
     m['masonry'] = simple_material('AtriumMasonry', (0.15, 0.135, 0.115), 0.85)
-    m['windowglow'] = emission_material('AtriumWindowGlow', (1.0, 0.55, 0.24), 1.4)     # pass 5: the few left, dim and warm
+    m['windowglow'] = emission_material('AtriumWindowGlow', (1.0, 0.55, 0.24), 1.2)     # pass 5: the few left, dim and warm
     m['hazelights'] = emission_material('AtriumHazeLights', (0.6, 0.72, 0.9), 0.6)
     m['mist'] = emission_material('AtriumMist', (0.32, 0.4, 0.48), 0.1)
     m['atcloth'] = simple_material('AtriumCloth', (0.2, 0.13, 0.065), 0.9)        # awnings, washing, tarps
@@ -2693,7 +2693,7 @@ def _go_dark(b, home=None):
     stats = {}
     for key in ('glow', 'haze', 'lamp', 'red'):
         groups = _islands(b[key])
-        out, n_out = [], 0
+        out, housings, n_out = [], [], 0                # dark windows; dead lamps and lanterns (their housings)
         for g in groups:
             c = sum((f.calc_center_median() for f in g), Vector()) / len(g)
             area = sum(f.calc_area() for f in g)
@@ -2702,10 +2702,11 @@ def _go_dark(b, home=None):
             if area > 8.0:
                 p = 0.6 * near if near > 0.5 else 0.0
             if _drnd(c, 41).random() >= p:
-                out.extend(g)
+                (housings if len(g) >= 5 and area < 2.0 else out).extend(g)
                 n_out += 1
         stats[key] = (len(groups), len(groups) - n_out)
         _move_faces(b[key], b['dark'], out)
+        _move_faces(b[key], b['sheet'], housings)
     print('dl04: the city gone dark, groups (total, still lit):', stats)
 
 
@@ -3016,10 +3017,10 @@ def _ruin(b, WL, WR, rnd):
         if score > bs:
             best, bs = (c, r, h), score
     if best:
-        _topple(b, best[0], best[1], best[2], 1)
+        _topple(b, best[0], best[1], best[2], 1, lean=1.25)
     for c, r, h in TOWERS:
-        if c.y > 240.0 and c.x < 90.0:
-            _topple(b, c, r, h, 1, frac=0.62, lean=1.05)
+        if c.y > 240.0 and c.x < 90.0:                   # its top fallen against the great dome
+            _topple(b, c, r, h, 1, frac=0.62, lean=1.33)
 
 
 def build_atrium(m, coll):

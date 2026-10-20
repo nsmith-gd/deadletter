@@ -733,7 +733,7 @@ def _pieces():
         ('mattress', (0.9, 0.13), 121.32, 0.98, 0.0, on_end, D),
         ('sewing', (), 121.33, 0.66, 0.12, 'flat', D),
         ('cover', (), 121.36, 0.47, 0.0, _rx(math.radians(90)), D),
-        ('crockery', (True,), 122.37, 1.02, -0.06, 'flat', D),
+        ('crockery', (True,), 122.43, 1.02, -0.06, 'flat', D),
         ('bundle', (0.34, 0.3, 0.24, CREAM, 7.0), 122.82, 0.98, 0.3, 'flat', D),
         ('kettle', (), 122.48, 0.47, 0.8, 'flat', D),
         # Against the lift front: the broom by the UP button, a case and a bundle on it right of the gate.
