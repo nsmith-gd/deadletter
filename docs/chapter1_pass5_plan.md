@@ -86,4 +86,11 @@ Built 20 October 2026 in `game/undelivered/`, `art/pass3`, `art/pass4`, `art/dl0
   - DL-11's lair still barely reads through the White's water;
   - from the DL-09 balcony, the white shell of the lobby block shows at the frame's edge.
 
-Measured: (pending)
+Measured:
+- **20 simulated first playthroughs** (`tools/sim/results_pass5_first_playthrough.jsonl`), all completed with no page
+  errors:
+  - mean 19:15 and median 19:51 of play (range 14:41 to 22:13);
+  - pass 3 was 17:37;
+  - 0.5 deaths a run.
+- **The mechanical floor:** 7:45.
+- **Shader compiles during play:** 3, at a scene-select start, as before. No new hitch sources.

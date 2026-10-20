@@ -34,3 +34,14 @@ bounds move.
   (seeds 101 to 120), all completed. Mean 14:55 and median 15:08 of play (range 11:27 to 19:09), plus the 20 s opening.
   The simulated players died 1.2 times a run on average (at most 4) and found 6 of the 12 curiosities on average.
 - **`results_pass2_mechanical.jsonl`:** the pass 2 floor with the player model off: 6:14 of play.
+- **`results_pass3_first_playthrough.jsonl`:** the eleven-scene Chapter 1 after pass 3, 20 runs, all completed. Mean
+  17:37 and median 17:47 of play (range 13:01 to 20:51), plus the 20 s opening.
+- **`results_pass5_first_playthrough.jsonl`:** Chapter 1 after pass 5 (the weigh-in, the reveal at the gate, the tipping
+  cart and duct, the ending), 20 runs (seeds 201 to 220), all completed with no page errors. Mean 19:15 and median 19:51
+  of play (range 14:41 to 22:13). Most of the 1:38 over pass 3 is DL-05's weigh-in (+0:24), DL-06 (+0:20) and
+  DL-08 (+0:14). Deaths 0.5 a run (at most 2); curiosities 5.8 a run.
+  - The opening card is timed in real seconds, so the sim's sped-up clock inflates its "opening" row (about 1:30).
+    For a player the card is 12.5 s or less, then the 20 s wake.
+  - `QUERY` appends a query string to the game's URL, for example `QUERY='?telemetry=http://127.0.0.1:8787/events'`
+    to send the runs' telemetry to a local collector.
+- **`results_pass5_mechanical.jsonl`:** the pass 5 floor with the player model off: 7:45 of play.

@@ -14,7 +14,7 @@ for (let n = 0; n < +count; n++) {
   page.on('pageerror', (e) => errs.push(e.message));
   await page.route('https://cdn.jsdelivr.net/npm/three@0.169.0/**', (r) => r.fulfill({ path: path.join(path.resolve('node_modules/three'), r.request().url().split('three@0.169.0/')[1]), contentType: 'text/javascript' }));
   await page.route('https://fonts.**', (r) => r.abort());
-  await page.goto((process.env.GAME || 'http://127.0.0.1:8765') + '/index.html');
+  await page.goto((process.env.GAME || 'http://127.0.0.1:8765') + '/index.html' + (process.env.QUERY || ''));
   await page.waitForFunction(() => !document.getElementById('begin').disabled, null, { timeout: 300000 });
   await page.addScriptTag({ content: BOT });
   await page.evaluate(([s, m, s0]) => window.__startBot(s, { mechanical: m === 'mechanical', steps: 10, trace: s0 }), [seed, mode, process.env.TRACE || '']);
