@@ -65,6 +65,9 @@ def main(paths):
                 prompts[sc] += 1
             elif e['type'] == 'end':
                 totals.append(e.get('time'))
+                if cur and since is not None:
+                    dwell[cur].append(e['t'] - since)
+                    since = None
             elif e['type'] == 'perf':
                 dev = s['device'] or {}
                 key = ('mobile' if dev.get('mobile') else 'desktop') + ' / ' + (dev.get('gpu') or '?')[:40]

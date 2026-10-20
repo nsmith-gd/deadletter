@@ -393,7 +393,7 @@ const PLAIN = { TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .00
   AtriumCut: [[.085, .078, .066], .95, 0], AtriumSheet: [[.075, .082, .08], .6, .4], AtriumRust: [[.11, .048, .025], .85, 0], AtriumMasonry: [[.15, .135, .115], .85, 0],
   SectionCap: [[.012, .011, .01], .95, 0], FloodScum: [[.09, .095, .075], .9, 0], DirtyGlass: [[.03, .035, .035], .25, .2],
   AtriumCloth: [[.2, .13, .065], .9, 0], AtriumWood: [[.085, .06, .04], .88, 0],
-  Barricade: [[.4, .06, .04], .7, 0], CandleWax: [[.55, .5, .4], .6, 0], GaugeNeedle: [[.02, .018, .016], .4, .3], BrassPolished: [[.8, .62, .32], .22, 1], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
+  Barricade: [[.4, .06, .04], .7, 0], AtriumVine: [[.055, .068, .036], .9, 0], AtriumMoss: [[.085, .1, .05], .95, 0], AtriumWet: [[.014, .016, .015], .35, 0], CandleWax: [[.55, .5, .4], .6, 0], GaugeNeedle: [[.02, .018, .016], .4, .3], BrassPolished: [[.8, .62, .32], .22, 1], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
 const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
@@ -407,7 +407,7 @@ const EMIT = { Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: 
   HallBulb4: [1, .88, .7, 0], AtLanding: [1, .62, .18, 0], PawlLamp: [1, .55, .16, 0], BeaconLamp: [1, .55, .12, 0], TunnelBulb: [.95, .9, .78, 0],
   RampLamp0: [.55, 1, .65, 0], RampLamp1: [.55, 1, .65, 0], RampLamp2: [.55, 1, .65, 0], RampLamp3: [.55, 1, .65, 0], RampLamp4: [.55, 1, .65, 0], RampLamp5: [.55, 1, .65, 0],
   WindowSun: [1, .72, .38, 0], HomeLampBulb: [1, .76, .46, 0], LaneBulb: [.78, .88, 1, 0], TermLamp0: [.75, 1, .82, 0], TermLamp1: [.75, 1, .82, 0], TermLamp2: [.75, 1, .82, 0],
-  AtriumWindowGlow: [1, .6, .28, 2.5], AtriumHazeLights: [.62, .76, .95, 1.5],
+  AtriumWindowGlow: [1, .55, .24, 1.2], AtriumHazeLights: [.6, .72, .9, .6],
   HallBulbGlow: [1, .82, .55, 0], C108BellLamp: [1, .55, .16, 3], PressLamp: [1, .16, .08, 0],
   C108Lamp: [1, .7, .42, 1.2], BayLight: [.72, .88, 1, 2], BayLamp0: [.72, .92, 1, 0], BayLamp1: [.72, .92, 1, 0], BayLamp2: [.72, .92, 1, 0],
   FallenLamp: [.85, .3, .08, 0], SeatedLamp: [.85, .3, .08, 0], SortLampBulb: [1, .85, .6, 6], TubeLamp: [.8, .9, 1, 2.5], GantryLamp: [1, .78, .5, 8], SlotLamp9: [1, .62, .22, 0], SlotLamp2: [1, .62, .22, 0], SlotLamp6: [1, .62, .22, 0],
@@ -1456,7 +1456,7 @@ function updatePlayer(dt) {
   if (game.riding) { updateRide(dt); return; }
 
   // DL-02: walking in among the couriers, he stops and understands.
-  if (game.region === 2 && game.revealed && !game.realised && game.x > GATE_X + 1.5 && game.grounded && !game.hold) {
+  if (game.region === 2 && game.revealed && !game.revealPending && game.clock - game.revealTime > 10 && !game.realised && game.x > GATE_X + 1.5 && game.grounded && !game.hold) {   // pass 5: after the pan
     game.realised = true;
     if (once('realise')) { game.kinSlow = true; game.vx = 0; game.act = { kind: 'realise', phase: 'act', t: 0 }; setClip('Realise', 0.4); if (game.clock - game.revealTime < 45) Music.queue('kin'); else Music.play('kin'); return; }   // pass 5: the lament plays through; kin follows it
   }
@@ -2504,7 +2504,7 @@ function buildDL04(setRoot) {
   const beltMat = new THREE.MeshStandardMaterial({ map: refs.belt4Tex, roughness: 0.85, metalness: 0 });
   refs.ReturnsBelt.traverse((o) => { if (o.isMesh) o.material = beltMat; });
   // The atrium is far detail: plain materials, seen from either side.
-  for (const n of ['AtriumPlaster', 'AtriumDark', 'AtriumStone', 'Barricade', 'AtriumCut', 'AtriumSheet', 'AtriumRust', 'AtriumMasonry', 'AtriumCloth', 'AtriumWood']) if (materialCache[n]) materialCache[n].side = THREE.DoubleSide;
+  for (const n of ['AtriumPlaster', 'AtriumDark', 'AtriumStone', 'Barricade', 'AtriumCut', 'AtriumSheet', 'AtriumRust', 'AtriumMasonry', 'AtriumCloth', 'AtriumWood', 'AtriumVine', 'AtriumMoss', 'AtriumWet']) if (materialCache[n]) materialCache[n].side = THREE.DoubleSide;
   refs.fans = ['AtriumFanLow', 'AtriumFanHigh'].map((n) => setRoot.getObjectByName(n)).filter(Boolean);
   // Chains: the platform's two from the drum, the pan's over its pulley; rebuilt as they run.
   refs.chain4 = new THREE.InstancedMesh(new THREE.TorusGeometry(0.02, 0.0055, 4, 10), materialFor({ name: 'DepotSteel' }), 440);
@@ -2524,8 +2524,8 @@ function buildDL04(setRoot) {
     P(0xa8bcc8, 2.2, 3.4, 84.3, 1.15, 0.15)];   // pass 4: the fallen goods lift in the flooded pit under the near landing
   const beacon = new THREE.SpotLight(0xffa040, 0, 9, THREE.MathUtils.degToRad(24), 0.5, 1.6);
   beacon.position.set(OFF3 + 57.35, DECK + 2.1, -0.9); scene.add(beacon, beacon.target); refs.beacon4 = beacon;
-  const hemi = new THREE.HemisphereLight(0xa9bcc6, 0x0b0e0f, 0); hemi.userData.base = 2.2;
-  const sky = new THREE.DirectionalLight(0xc0d2dc, 0); sky.position.set(OFF4 + 77.3, 30, -41.5); sky.target.position.set(OFF4 + 70, -20, -30); sky.userData.base = 1.6;
+  const hemi = new THREE.HemisphereLight(0xa9bcc6, 0x0b0e0f, 0); hemi.userData.base = 1.5;   // pass 5: a city gone dark
+  const sky = new THREE.DirectionalLight(0xc0d2dc, 0); sky.position.set(OFF4 + 77.3, 30, -41.5); sky.target.position.set(OFF4 + 70, -20, -30); sky.userData.base = 1.1;
   scene.add(hemi, sky, sky.target);
   refs.dl04FarLights = [beacon, P(0xf2e6c8, 2.6, 4.5, OFF4 + 66.0, DECK + 1.85, -1.0), P(0xf2e6c8, 2.6, 4.5, OFF4 + 68.9, DECK + 1.85, -1.0), hemi, sky];
   // What is left of the sky array still lets down a little light: faint shafts through the void.
@@ -5631,6 +5631,8 @@ function buildCulling(setRoot) {
     box.setFromObject(o);
     // The atrium is only there once he is out on the balcony; DL-04 only once he is up on the gallery.
     const atrium = /^Atrium/.test(o.name) || /^Atrium/.test(o.parent?.name || '');
+    // Pass 5: Up Only's lobby stays out of the city's crane shot (it read as a grey block in its corner).
+    if (/^(UO|Lift|Service)/.test(o.name) || /^(UO|Lift|Service)/.test(o.parent?.name || '')) { box.setFromObject(o); refs.cull.push({ o, x0: box.min.x, x1: box.max.x, when: () => game.upper && !(game.act && game.act.kind === 'awe') }); return; }
     refs.cull.push({ o, x0: atrium ? -Infinity : box.min.x, x1: atrium ? Infinity : box.max.x, when: atrium ? () => (game.region === 4 && cam.x > OFF4 + 62) || (game.region === 5 && cam.x < OFF5 + 82) : box.min.x > OFF3 + 47.3 ? () => game.upper : null });
   });
   // The couriers stay hidden until the rack lights come on or he is at the gate: before that they are dark.
