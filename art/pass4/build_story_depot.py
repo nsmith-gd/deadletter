@@ -3,10 +3,10 @@
 What happened here, said plainly, in the depot's scenes (DL-01 to DL-05):
 
   DL-02  The last night shift. The sorters died at their posts, in their aprons: one slumped over the sorting table's
-         end under the work lamp (Sorter1), one curled on the floor against the back wall holding a mailbag
-         (Sorter2, her stool knocked over), one over the tea table in the alcove (Sorter3), two side by side at a
+         end under the work lamp (Sorter1), one sitting on the floor against the back wall, knees up, holding
+         a mailbag (Sorter2), one over the tea table in the alcove (Sorter3), two side by side at a
          sorting bench under the gantry (Sorter4, Sorter5). Dry, dark remains in clothes, no faces; two meshes
-         (seated, curled) as linked duplicates, each one draw call in the remains atlas (art/pass3, RemainsMat).
+         (seated, sitting) as linked duplicates, each one draw call in the remains atlas (art/pass3, RemainsMat).
   DL-05  The famine and the weigh-in are art/pass3/build_ration_hall.py's (this module only reports them).
   Quest  RING C with an arrow down-and-on, stencilled at each scene's way on (WayRingC01 to WayRingC05); the DL-01
          dispatch board's last line lit, C-114 / RING C / UNDELIVERED, with its lamp (DispatchLineLamp, blinks).
@@ -33,10 +33,11 @@ TEX = os.path.join(HERE, 'textures')
 # Layout (shared with the game)
 # --------------------------------------------------------------------------
 # The sorters: (name, mesh, x, y, z, turn in degrees). The seated pose faces +x with the table's edge 0.46 ahead of
-# the origin (the stool's centre on the floor); the curled one lies along x, head to -x, facing -y.
+# the origin (the stool's centre on the floor); the sitting one faces +x
+# with her back 0.12 behind the origin.
 SORTERS = [
     ('Sorter1', 'seated', 18.14, 0.40, 0.0, 0),        # the sorting table's left end (art/sorting_hall TABLE x 18.6)
-    ('Sorter2', 'curled', 17.95, 0.86, 0.0, 0),        # on the floor against the back wall (y 1.0), with the mailbag
+    ('Sorter2', 'sitting', 17.95, 0.87, 0.0, -90),     # on the floor against the back wall (y 1.0), with the mailbag
     ('Sorter3', 'seated', 16.54, 1.42, -0.03, 180),    # the tea corner: on the crate, over the tea table (x 15.48-16.08)
     ('Sorter4', 'seated', 23.96, 0.16, 0.0, 90),       # under the gantry, at the sorting bench (front edge y 0.62)
     ('Sorter5', 'seated', 24.56, 0.16, 0.0, 90),
@@ -44,16 +45,16 @@ SORTERS = [
 STOOLS = [(18.14, 0.40), (23.96, 0.16), (24.56, 0.16)]
 KNOCKED_STOOL = (23.62, 0.40)                          # on its side, by the bench
 BENCH = (23.68, 24.86, 0.62, 0.98, 0.75)               # x0, x1, y0, y1, top: a sorting bench with a case of holes
-MAILBAG = (17.72, 0.63, 0.0)                           # in Sorter2's arms
+MAILBAG = (17.95, 0.66, 0.17)                          # on Sorter2's lap, in her arms
 
 # RING C, down and on: (name, x, z) on the first wall behind; the stencil is STENCIL wide and high.
-STENCIL = (0.5, 0.25)
+STENCIL = (0.84, 0.42)                                 # as DL-06 to DL-10's (art/pass4 story_shafts, story_ringc)
 WAYS = [
-    ('WayRingC01', 11.18, 0.93),                       # DL-01: right of the exit door (10.0 to 10.8)
+    ('WayRingC01', 11.36, 0.94),                       # DL-01: right of the exit door (10.0 to 10.8)
     ('WayRingC02', 24.45, 1.95),                       # DL-02: over the gantry, by the weight room's door (x 25)
-    ('WayRingC03', 30.2, 1.85),                        # DL-03: by the gate (30.6), over its linkage
+    ('WayRingC03', 30.08, 1.86),                       # DL-03: by the gate (30.6), over its linkage
     ('WayRingC04', 47.1, 1.2),                         # DL-04: in the passage past the bay door (46.3 to 46.7)
-    ('WayRingC05', 57.2, 2.07),                        # DL-05: in the kitchen past the hatch, over the shelves
+    ('WayRingC05', 57.32, 2.09),                       # DL-05: in the kitchen past the hatch, over the shelves
 ]
 
 # The DL-01 dispatch board (art/dl01 build_dispatch_board: centre x 1.05, z 1.72, 0.72 x 0.45, face y 0.968).
@@ -86,18 +87,38 @@ def make_ring_c(path):
     w, h = 512, 256
     ink = Image.new('L', (w, h), 0)
     d = ImageDraw.Draw(ink)
-    f = _font(118)
-    d.text((18, 52), 'RING C', font=f, fill=255)
-    tw = d.textbbox((18, 52), 'RING C', font=f)
-    # The arrow, down and on (toward +x): a thick shaft from upper left to lower right, a solid head.
-    ax0, ay0, ax1, ay1 = 400, 52, 476, 150
-    d.line((ax0, ay0, ax1 - 18, ay1 - 18), fill=255, width=30)
-    d.polygon([(ax1 + 22, ay1 + 22), (ax1 - 52, ay1 + 8), (ax1 + 8, ay1 - 52)], fill=255)
-    # Stencil bridges: the cutter's ties through the letters' bowls and between shaft and head.
-    for x0, y0, x1, y1 in ((60, 52, 66, 120), (196, 52, 202, 112), (250, 120, 256, 200), (322, 52, 328, 100),
-                           (322, 130, 328, 200)):
-        d.rectangle((x0, y0, x1, y1), fill=0)
-    d.line((ax1 - 36, ay1 - 8, ax1 - 8, ay1 - 36), fill=0, width=6)
+    f = _font(88)
+    text = 'RING C'
+    tx, ty = 14, 0
+    bb = d.textbbox((0, 0), text, font=f)
+    ty = (h - (bb[3] - bb[1])) // 2 - bb[1]
+    d.text((tx, ty), text, font=f, fill=255)
+    top, bot = ty + bb[1], ty + bb[3]
+    # Stencil bridges: the cutter's ties across the closed and curled letters (R's bowl, G and C top and bottom).
+    for k, ch in enumerate(text):
+        if ch not in 'RGC':
+            continue
+        x0 = tx + d.textlength(text[:k], font=f)
+        cw = d.textlength(ch, font=f)
+        if ch == 'R':
+            d.rectangle((x0 + cw * 0.5, top, x0 + cw * 0.5 + 6, top + (bot - top) * 0.22), fill=0)
+            d.rectangle((x0 + cw * 0.5, top + (bot - top) * 0.36, x0 + cw * 0.5 + 6, top + (bot - top) * 0.52), fill=0)
+        else:
+            d.rectangle((x0 + cw * 0.5, top - 2, x0 + cw * 0.5 + 6, top + (bot - top) * 0.25), fill=0)
+            d.rectangle((x0 + cw * 0.5, bot - (bot - top) * 0.25, x0 + cw * 0.5 + 6, bot + 2), fill=0)
+    # The arrow, down and on (toward +x), after the words: a thick shaft from upper left to lower right, a solid head.
+    end = tx + d.textlength(text, font=f) + 22
+    ax0, ay0 = end, top - 6
+    ax1, ay1 = w - 44, bot + 18                             # the head's tip, down and right
+    ux, uy = (ax1 - ax0), (ay1 - ay0)
+    n = math.hypot(ux, uy)
+    ux, uy = ux / n, uy / n
+    px, py = -uy, ux
+    neck = (ax1 - ux * 46, ay1 - uy * 46)
+    d.line((ax0, ay0, neck[0], neck[1]), fill=255, width=24)
+    d.polygon([(ax1, ay1), (neck[0] + px * 34, neck[1] + py * 34), (neck[0] - px * 34, neck[1] - py * 34)], fill=255)
+    bx, by = neck[0] - ux * 4, neck[1] - uy * 4                # the bridge between shaft and head
+    d.line((bx + px * 16, by + py * 16, bx - px * 16, by - py * 16), fill=0, width=6)
     # Under the stencil's edge, the overspray; then the paint's own thin patches.
     spray = ink.filter(ImageFilter.GaussianBlur(7)).point(lambda v: int(v * 0.35))
     holes = Image.new('L', (w, h), 255)
@@ -122,14 +143,18 @@ def make_dispatch_board(dl01, path):
     chalk = Image.open(src).convert('RGB')
     os.remove(src)
     w, h = chalk.size                                               # 768 x 480
+    rnd = random.Random(4503)
     img = Image.new('RGB', (w, h), (26, 34, 30))
+    d = ImageDraw.Draw(img, 'RGBA')
+    for _ in range(60):                                             # the board's own wiped chalk, as the original's
+        x, y, r = rnd.uniform(0, w), rnd.uniform(0, h), rnd.uniform(30, 120)
+        d.ellipse((x - r, y - r * 0.4, x + r, y + r * 0.4), fill=(200, 205, 190, rnd.randint(4, 10)))
     k = BOARD_LINE[0] - 0.02
     sm = chalk.resize((int(w * k), int(h * k)), Image.LANCZOS)      # the chalk, kept in proportion, above the line
-    img.paste(sm, ((w - sm.size[0]) // 2, 0))
+    mask = Image.new('L', sm.size, 0)
+    ImageDraw.Draw(mask).rectangle((14, 0, sm.size[0] - 14, sm.size[1] - 10), fill=255)
+    img.paste(sm, ((w - sm.size[0]) // 2, 0), mask.filter(ImageFilter.GaussianBlur(8)))
     d = ImageDraw.Draw(img, 'RGBA')
-    edge = chalk.crop((0, 0, 8, h)).resize((((w - sm.size[0]) // 2) + 1, int(h * k)))
-    img.paste(edge, (0, 0))
-    img.paste(edge, (w - edge.size[0], 0))
     y0, y1 = int(h * BOARD_LINE[0]), int(h * BOARD_LINE[1])
     d.rectangle((0, y0 - 6, w, y1 + 6), fill=(14, 16, 14))                       # the line's slot
     d.rectangle((10, y0, w - 10, y1), fill=(232, 226, 200))                      # its enamel plate, lit from beside
@@ -188,19 +213,19 @@ SEATED = dict(
     foot=(V((1, 0.05, 0)), V((1, -0.05, 0))),
     skirt=[V((0.06, 0.0, 0.585)), V((0.42, 0.0, 0.585)), V((0.47, 0.0, 0.36))],
 )
-CURLED = dict(
-    pelvis=V((0.0, 0.0, 0.17)), chest=V((-0.42, 0.0, 0.18)),
-    shoulder=(V((-0.40, 0.02, 0.33)), V((-0.40, 0.02, 0.06))),
-    neck=V((-0.52, -0.01, 0.17)), head=V((-0.62, -0.04, 0.12)), face=V((0.0, -0.7, -0.7)),
-    # Both arms round the mailbag in front of her.
-    elbow=(V((-0.30, -0.28, 0.32)), V((-0.30, -0.25, 0.05))),
-    wrist=(V((-0.12, -0.34, 0.24)), V((-0.10, -0.32, 0.06))),
-    hand=((V((0.3, 0.2, -0.9)), V((0, -1, 0))), (V((0.5, 0.5, 0.3)), V((0, 0, 1)))),
-    hip=(V((0.0, 0.02, 0.27)), V((0.0, 0.02, 0.07))),
-    knee=(V((0.20, -0.36, 0.25)), V((0.24, -0.32, 0.08))),
-    ankle=(V((0.42, -0.12, 0.22)), V((0.45, -0.08, 0.06))),
-    foot=(V((0.2, -1, 0)), V((0.2, -1, 0))),
-    skirt=[V((0.02, -0.10, 0.20)), V((0.22, -0.40, 0.18))],
+SITTING = dict(                                        # on the floor, her back to the wall, knees up, head down
+    pelvis=V((0.0, 0.0, 0.13)), chest=V((-0.03, 0.0, 0.55)),
+    shoulder=(V((-0.02, 0.17, 0.53)), V((-0.02, -0.17, 0.53))),
+    neck=V((0.02, 0.0, 0.60)), head=V((0.11, 0.03, 0.61)), face=V((0.6, 0.15, -0.8)),
+    # Both arms round the mailbag on her lap.
+    elbow=(V((0.10, 0.24, 0.33)), V((0.10, -0.24, 0.33))),
+    wrist=(V((0.25, 0.12, 0.42)), V((0.25, -0.12, 0.42))),
+    hand=((V((0.3, -0.6, -0.2)), V((0, 0, 1))), (V((0.3, 0.6, -0.2)), V((0, 0, 1)))),
+    hip=(V((0.02, 0.1, 0.11)), V((0.02, -0.1, 0.11))),
+    knee=(V((0.30, 0.13, 0.43)), V((0.30, -0.12, 0.42))),
+    ankle=(V((0.40, 0.13, 0.08)), V((0.41, -0.12, 0.08))),
+    foot=(V((1, 0.1, 0)), V((1, -0.1, 0))),
+    skirt=[V((0.09, 0.0, 0.17)), V((0.31, 0.0, 0.50))],
 )
 
 
@@ -230,7 +255,7 @@ def sorter(J):
     rot = _frame(up, lat)                                   # local x = forward, y = left, z = up the spine
     mid = (pel + ch) / 2
     # The shirt over the ribs: a slack tapered block; the pelvis; the shoulders.
-    P.add('cloth', lambda bm: rounded_box((0.17, 0.30, L + 0.08), mid, p=3.2, cuts=5, taper=lambda z: 0.82 + 0.18 * (z + 1) / 2,
+    P.add('cloth', lambda bm: rounded_box((0.17, 0.29, L + 0.08), mid, p=2.3, cuts=5, taper=lambda z: 0.82 + 0.18 * (z + 1) / 2,
                                           dents=((0.006, 7.0),), seed=1.0, bm=bm, mat=0, rot=rot))
     P.add('cloth', lambda bm: add_sphere(bm, pel, 0.11, mat=0, seg=10, scale=(1.0, 1.3, 0.8)))
     for s in (sl, sr):
@@ -244,9 +269,11 @@ def sorter(J):
         P.add('apron', lambda bm, a=a, b=b, dz=dz: rounded_box((0.012, 0.32, dz.length + 0.02), (a + b) / 2, p=6, cuts=3,
                                                                 bm=bm, mat=0, rot=_frame(dz, lat)))
     back = pel - fwd * 0.08 + up * 0.08
+    down = Vector((0, 0, -1))
     for s in (1, -1):
         P.add('apron', lambda bm, s=s: add_cyl(bm, pel + lat * s * 0.15 + fwd * 0.04 + up * 0.08, back, 0.006, mat=0, seg=4))
-        P.add('apron', lambda bm, s=s: add_torus(bm, back + lat * s * 0.035, fwd, 0.025, 0.006, mat=0, seg=8, rseg=4))
+        P.add('apron', lambda bm, s=s: add_cyl(bm, back, back + lat * s * 0.03 + down * 0.11, 0.007, 0.005, mat=0, seg=4))
+    P.add('apron', lambda bm: add_sphere(bm, back, 0.016, mat=0, seg=6))
     # The neck and the skull: a dark cranium, the jaw a small block under it.
     P.add('bone', lambda bm: add_cyl(bm, ch, J['neck'], 0.025, 0.022, mat=0, seg=6))
     H, face = J['head'], J['face'].normalized()
@@ -282,7 +309,7 @@ def sorter(J):
 
 def build_sorters(coll):
     meshes = {'seated': sorter(SEATED).mesh('SorterRemainsSeated', 'RemainsMat'),
-              'curled': sorter(CURLED).mesh('SorterRemainsCurled', 'RemainsMat')}
+              'sitting': sorter(SITTING).mesh('SorterRemainsSitting', 'RemainsMat')}
     out = []
     for name, kind, x, y, z, turn in SORTERS:
         ob = bpy.data.objects.new(name, meshes[kind])
@@ -303,10 +330,8 @@ def stool(wood, steel, c, rot=None):
         t = 2 * math.pi * k / 3 + 0.4
         add_cyl(steel, (0.07 * math.cos(t), 0.07 * math.sin(t), 0.415), (0.16 * math.cos(t), 0.16 * math.sin(t), 0.0), 0.012, mat=0, seg=6)
     add_torus(steel, (0, 0, 0.16), (0, 0, 1), 0.115, 0.008, mat=0, seg=16, rseg=4)
-    wood.verts.ensure_lookup_table()
-    steel.verts.ensure_lookup_table()
-    bmesh.ops.transform(wood, matrix=M, verts=wood.verts[a:])
-    bmesh.ops.transform(steel, matrix=M, verts=steel.verts[b:])
+    bmesh.ops.transform(wood, matrix=M, verts=list(wood.verts)[a:])
+    bmesh.ops.transform(steel, matrix=M, verts=list(steel.verts)[b:])
 
 
 def build_dl02_props(coll):

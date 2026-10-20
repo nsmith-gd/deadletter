@@ -2651,14 +2651,14 @@ def make_highwater():
     n2 = _tile_noise(W, H, 28, 5802, octaves=2)
     ragged = (0.004 * np.sin(2 * np.pi * 2 * xs / W + 0.7) + 0.003 * np.sin(2 * np.pi * 9 * xs / W + 2.1) + 0.005 * (n2[0:1, :] - 0.5))
     under = HIGH_Z + ragged - zc                                     # metres below the line
-    silt, dark, scum = np.array([60.0, 50.0, 38.0]), np.array([26.0, 21.0, 16.0]), np.array([104.0, 106.0, 86.0])
+    silt, dark, scum = np.array([56.0, 47.0, 36.0]), np.array([22.0, 18.0, 14.0]), np.array([128.0, 128.0, 104.0])
     col = np.zeros((H, W, 3)) + silt
     # A faint wash all the way down (it stood here only days), fading in above the old line's decal.
-    a = np.clip(0.1 + 0.16 * (n1 - 0.4), 0.03, 0.24) * np.clip((zc - z0) / 0.05, 0, 1) * (under > 0)
-    # The tide band: darker for the last 7 cm under the line.
-    band = np.clip(1 - under / 0.07, 0, 1) * (under > 0)
-    a = np.maximum(a, band * np.clip(0.42 + 0.3 * (n2 - 0.5), 0.25, 0.6))
-    col = col * (1 - band[..., None] * 0.5) + dark * band[..., None] * 0.5
+    a = np.clip(0.3 + 0.2 * (n1 - 0.45), 0.18, 0.42) * np.clip((zc - z0) / 0.06, 0, 1) * (under > 0)
+    # The tide band: dark for the last 12 cm under the line, darkest at it.
+    band = np.clip(1 - under / 0.12, 0, 1) ** 0.7 * (under > 0)
+    a = np.maximum(a, band * np.clip(0.72 + 0.25 * (n2 - 0.5), 0.55, 0.85))
+    col = col * (1 - band[..., None] * 0.7) + dark * band[..., None] * 0.7
     # Runs from the line.
     for _ in range(60):
         x = rnd.randrange(W)
@@ -2670,17 +2670,17 @@ def make_highwater():
             a[:, xx] = np.maximum(a[:, xx], run)
             col[:, xx] = col[:, xx] * (1 - run[:, None]) + dark * run[:, None]
     # The line: dark, 2 cm, crisp on top.
-    line = np.clip(1 - np.abs(under - 0.008) / 0.012, 0, 1) * (under > -0.002)
-    a = np.maximum(a, line * np.clip(0.85 + 0.2 * (n2 - 0.5), 0.6, 0.95))
+    line = np.clip(1 - np.abs(under - 0.012) / 0.016, 0, 1) * (under > -0.002)
+    a = np.maximum(a, line * np.clip(0.92 + 0.2 * (n2 - 0.5), 0.75, 0.97))
     col = col * (1 - line[..., None]) + dark * line[..., None]
     # Scum: a pale crust in clumps along the line and just over it, and drift (dark stalks, a feather of grit).
     crust = np.zeros((H, W))
     yy, xx = np.ogrid[:H, :W]
     row = lambda z: (z1 - z) / (z1 - z0) * H            # noqa: E731
-    for _ in range(140):
+    for _ in range(220):
         x = rnd.uniform(0, W)
-        y = row(HIGH_Z + rnd.uniform(-0.004, 0.022))
-        r = rnd.uniform(1.5, 5.5)
+        y = row(HIGH_Z + rnd.uniform(-0.002, 0.03))
+        r = rnd.uniform(2.5, 8.0)
         for ox in (-W, 0, W):
             crust = np.maximum(crust, np.clip(1 - ((xx - x - ox) ** 2 / (r * 1.8) ** 2 + (yy - y) ** 2 / r ** 2), 0, 1))
     crust *= np.clip(0.55 + 0.6 * (n2 - 0.4), 0.2, 1.0)
@@ -2698,7 +2698,7 @@ def make_highwater():
                 col[py, px] = dark
     rgba = np.dstack([np.clip(col, 0, 255), np.clip(a * 255, 0, 255)]).astype('uint8')
     img = Image.fromarray(rgba, 'RGBA').filter(ImageFilter.GaussianBlur(0.5))
-    _save(img, 'highwater.png', 24)
+    _save(img, 'highwater.png', 64)
 
 
 class _Behind:
@@ -2809,7 +2809,7 @@ def build_drowning(m, coll):
         'BoneDry', base=(0.25, 0.225, 0.175), dirt=(0.11, 0.095, 0.07), chip=(0.33, 0.31, 0.26), rough=0.88, chip_rough=0.9,
         metallic=0.0, grime_scale=10.0, chip_scale=40.0, chip_amount=0.7, dust_amount=0.0)
     m['bone'] = bone
-    m.setdefault('cloth', bpy.data.materials.get('AtriumCloth') or m['paper'])
+    m['cloth'] = m['toy']                     # rags and the bundle: the street's own cloth (no new draw call)
 
     # The raft: a kitchen table turned over, its legs sawn short, planks lashed across it, an oil drum lashed under one
     # side for a float; the drum's side has gone under, and the table with it.

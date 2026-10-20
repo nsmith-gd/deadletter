@@ -14,13 +14,14 @@ DL-10 Up Only, "the crush" (sections 3 and 4): the lift lobby after the last car
   UOHandMarks   hand marks, pale with dust, smeared down the lift front either side of the gate, on the gate's
                 architrave, and down the counterweight shaft's back wall (seen as the counterweight goes down);
                 fingernail scratches by the gate. One decal object.
-  WayRingC10    RING C and an arrow down-and-on, stencilled on the counterweight shaft's back wall over the
-                counterweight: the way on is down.
+  WayRingC10    RING C and an arrow down-and-on, stencilled on the pier right beside the counterweight's shaft, over
+                the crank's work lamp: the way on is down. The same stencil as DL-06 to DL-09's (WayRingCMat, made by
+                art/pass4/build_story_shafts.py, which runs first); the atlas keeps one of its own for a lone build.
 DL-11 ring C:
   WayC114       "C-114 ->" painted on the barricade's face over the gap he crouches through.
 
 The atlas (art/pass4/textures/ringc_story.png, RingCStoryMat, alpha: a decal in the game) holds the board, the hand
-marks, the scratches and both way marks. The DL-10 echoes of earlier puzzles (the balance gauge, the plate's lamps)
+marks, the scratches and the way marks. The DL-10 echoes of earlier puzzles (the balance gauge, the plate's lamps)
 are built with the lift in art/pass3/build_up_only.py; DL-11's drowning (the high-water line, the raft, the pram, the
 White's lair) with the street in art/dl05/build_dl05.py.
 
@@ -52,7 +53,7 @@ R_RING = (512, 256, 1024, 768)        # RING C and the arrow down-and-on, stenci
 R_C114 = (512, 768, 1024, 1024)       # C-114 and an arrow, painted (0.62 x 0.31)
 
 # Where things go (Blender world).
-STENCIL10 = (127.3, uo.SHAFT_BACK - 0.014, 3.45, 0.62)     # WayRingC10: centre x, y, z, size (over the counterweight)
+STENCIL10 = (126.435, uo.WALL_Y - 0.004, 3.63, 0.49)      # WayRingC10: centre x, y, z, width (the pier beside the shaft)
 C114_MARK = (134.6, -0.557, 0.84, 0.6, 0.3)                 # WayC114: centre x, y, z, w, h (the barricade's face)
 LASTCAR_HOOK = (124.62, 0.288, uo.DECK + uo.GATE[2])        # the hook it hangs from, under the gate's head
 LASTCAR_HOOK2 = 125.28                                      # the bare hook, its chain snapped
@@ -444,10 +445,11 @@ SHOE_MATS = ('DustyDark', 'LuggageLeather', 'ChildPaint')
 
 
 def _loft(bm, secs, mat):
-    """A shoe lofted through cross sections (x, sole z, half width, height), toe toward +x: six-sided rings, capped."""
+    """A shoe's upper lofted through cross sections (x, sole z, half width, height), toe toward +x: six-sided rings,
+    capped."""
     rings = []
     for x, z0, w, h in secs:
-        pts = ((-w, z0), (w, z0), (1.05 * w, z0 + 0.45 * h), (0.68 * w, z0 + h), (-0.68 * w, z0 + h), (-1.05 * w, z0 + 0.45 * h))
+        pts = ((-w, z0), (w, z0), (1.05 * w, z0 + 0.5 * h), (0.62 * w, z0 + h), (-0.62 * w, z0 + h), (-1.05 * w, z0 + 0.5 * h))
         rings.append([bm.verts.new((x, y, z)) for y, z in pts])
     for a, b in zip(rings, rings[1:]):
         for k in range(6):
@@ -456,8 +458,56 @@ def _loft(bm, secs, mat):
     bm.faces.new(rings[-1]).material_index = mat
 
 
+def _top(secs, x):
+    """The upper's top height at x."""
+    for (xa, za, _, ha), (xb, zb, _, hb) in zip(secs, secs[1:]):
+        if xa <= x <= xb:
+            t = (x - xa) / (xb - xa)
+            return (za + ha) * (1 - t) + (zb + hb) * t
+    return secs[-1][1] + secs[-1][3]
+
+
+def _shoe(bm, secs, mat, opening, sole=0.012, heel=None, strap=None):
+    """A shoe: its upper (mat); under a flat upper a sole slab a little proud all round, dark (slot 0), with a heel
+    block under its back; under a raised one (a lady's shoe) a heel post down to the floor; the opening on top, dark;
+    an optional bar strap."""
+    _loft(bm, secs, mat)
+    made = []
+    flat = all(z0 == 0 for _, z0, _, _ in secs)
+    if flat:                                                     # heel, waist and toe: a six-sided slab
+        keep = (secs[0], secs[len(secs) // 2], secs[-1])
+        ring = [(x, -w - 0.003) for x, _, w, _ in keep] + [(x, w + 0.003) for x, _, w, _ in keep[::-1]]
+        n = len(ring)
+        vb = [bm.verts.new((x, y, -sole)) for x, y in ring]
+        vt = [bm.verts.new((x, y, 0.0)) for x, y in ring]
+        made.append(bm.faces.new(vb[::-1]))
+        for k in range(n):
+            made.append(bm.faces.new((vb[k], vb[(k + 1) % n], vt[(k + 1) % n], vt[k])))
+        for f in made:
+            f.material_index = 0
+    if heel:
+        hx, hw, hh = heel
+        if flat:
+            add_box(bm, (hx, 0, -sole - hh / 2), (hw, hw * 1.5, hh), mat=0)
+        else:
+            top = secs[0][1] + 0.004
+            add_box(bm, (hx, 0, top / 2), (hw, hw * 1.2, top), mat=0)
+    # The opening: a dark oval on the top over the heel half, following the upper's slope.
+    ox0, ox1, ow = opening
+    pts = []
+    for k in range(6):
+        a = 2 * math.pi * k / 6
+        x = (ox0 + ox1) / 2 + (ox1 - ox0) / 2 * math.cos(a)
+        y = ow * math.sin(a)
+        pts.append(bm.verts.new((x, y, _top(secs, x) + 0.003)))
+    bm.faces.new(pts).material_index = 0
+    if strap:
+        sx, sw = strap
+        add_box(bm, (sx, 0, _top(secs, sx) + 0.002), (0.016, sw, 0.006), mat=0)
+
+
 def shoe_templates():
-    """The few shoes everything is made of, as meshes: (mesh, material slot choices, weight)."""
+    """The few shoes everything is made of, as meshes: (variants by material slot, slot choices, weight)."""
     out = []
 
     def mk(name, build):
@@ -468,23 +518,19 @@ def shoe_templates():
         bm.to_mesh(me)
         bm.free()
         return me
-    # A man's shoe, a laced boot, a woman's shoe on a small heel, a child's bar shoe.
-    oxford = ((-0.135, 0, 0.032, 0.07), (-0.08, 0, 0.042, 0.075), (0.02, 0, 0.046, 0.062), (0.1, 0, 0.042, 0.05), (0.135, 0, 0.024, 0.032))
-    boot = ((-0.135, 0, 0.034, 0.19), (-0.07, 0, 0.042, 0.2), (0.0, 0, 0.046, 0.12), (0.09, 0, 0.044, 0.055), (0.135, 0, 0.025, 0.034))
-    court = ((-0.12, 0.055, 0.026, 0.045), (-0.07, 0.04, 0.032, 0.04), (0.0, 0.012, 0.036, 0.034), (0.08, 0, 0.034, 0.03), (0.12, 0, 0.018, 0.02))
-    child = tuple((x * 0.56, z, w * 0.68, h * 0.78) for x, z, w, h in oxford)
-
-    def court_b(bm, mat):
-        _loft(bm, court, mat)
-        add_box(bm, (-0.105, 0, 0.03), (0.026, 0.026, 0.06), mat=mat)
-    for name, secs, mats, wt in (('UOShoeA', oxford, (0, 0, 1), 5), ('UOShoeB', boot, (0, 1), 3),
-                                 ('UOShoeC', court, (0, 1, 1), 3), ('UOShoeD', child, (1, 2, 2), 2)):
-        variants = []
-        for mi in sorted(set(mats)):
-            if name == 'UOShoeC':
-                variants.append((mi, mk(f'{name}{mi}', lambda bm, mi=mi: court_b(bm, mi))))
-            else:
-                variants.append((mi, mk(f'{name}{mi}', lambda bm, mi=mi, s=secs: _loft(bm, s, mi))))
+    # A man's shoe, a laced boot, a woman's shoe on a heel, a child's bar shoe: sole (x, z, half width, height).
+    oxford = ((-0.135, 0, 0.03, 0.062), (-0.1, 0, 0.041, 0.068), (-0.01, 0, 0.046, 0.062), (0.075, 0, 0.044, 0.046), (0.135, 0, 0.025, 0.026))
+    boot = ((-0.135, 0, 0.033, 0.17), (-0.09, 0, 0.042, 0.18), (-0.01, 0, 0.046, 0.12), (0.075, 0, 0.044, 0.05), (0.135, 0, 0.025, 0.028))
+    court = ((-0.12, 0.055, 0.025, 0.04), (-0.08, 0.045, 0.031, 0.04), (0.0, 0.012, 0.036, 0.03), (0.07, 0, 0.034, 0.028), (0.12, 0, 0.017, 0.018))
+    child = tuple((x * 0.56, z, w * 0.7, h * 0.85) for x, z, w, h in oxford)
+    kinds = (
+        ('UOShoeA', lambda bm, mi: _shoe(bm, oxford, mi, (-0.125, -0.03, 0.022), heel=(-0.105, 0.055, 0.014)), (0, 1, 1), 5),
+        ('UOShoeB', lambda bm, mi: _shoe(bm, boot, mi, (-0.125, -0.065, 0.024), heel=(-0.105, 0.055, 0.016)), (0, 1), 3),
+        ('UOShoeC', lambda bm, mi: _shoe(bm, court, mi, (-0.11, 0.0, 0.022), sole=0.006, heel=(-0.105, 0.02, 0.0)), (0, 1, 2), 3),
+        ('UOShoeD', lambda bm, mi: _shoe(bm, child, mi, (-0.07, -0.01, 0.015), heel=(-0.06, 0.032, 0.008), strap=(-0.02, 0.062)), (1, 2, 2), 2),
+    )
+    for name, build, mats, wt in kinds:
+        variants = [(mi, mk(f'{name}{mi}', lambda bm, mi=mi, b=build: b(bm, mi))) for mi in sorted(set(mats))]
         out.append((variants, mats, wt))
     return out
 
@@ -516,20 +562,21 @@ def build_shoes(coll):
 
     def pose(heap=False):
         r = rnd.random()
-        if r < 0.45:
+        if r < 0.66:
             M = I4()
-        elif r < 0.85:
-            M = _rx(math.radians(rnd.choice((-1, 1)) * rnd.uniform(70, 100)))      # on its side
+        elif r < 0.92:
+            M = _rx(math.radians(rnd.choice((-1, 1)) * rnd.uniform(75, 95)))      # on its side
         else:
-            M = _rx(math.radians(rnd.uniform(160, 200)))                         # sole up
+            M = _rx(math.radians(rnd.uniform(165, 195)))                         # sole up
         if heap:
-            M = _ry(math.radians(rnd.uniform(-30, 30))) @ _rx(math.radians(rnd.uniform(-25, 25))) @ M
+            M = _ry(math.radians(rnd.uniform(-35, 35))) @ _rx(math.radians(rnd.uniform(-25, 25))) @ M
         return M
 
     def put(x, y, z, heap=False, kid=0.0, scale=1.0):
         me = pick(kid)
         s = scale * rnd.uniform(0.92, 1.06)
-        M = Matrix.Translation((x, y, 0)) @ _rz(rnd.uniform(0, 2 * math.pi)) @ Matrix.Diagonal((s, s, s, 1)) @ pose(heap)
+        yaw = rnd.choice((0.0, math.pi)) + rnd.gauss(0, 0.5) if rnd.random() < 0.7 else rnd.uniform(0, 2 * math.pi)   # mostly broadside
+        M = Matrix.Translation((x, y, 0)) @ _rz(yaw) @ Matrix.Diagonal((s, s, s, 1)) @ pose(heap)
         _drop(bm, me, M, z)
         count[0] += 1
 
@@ -574,10 +621,10 @@ def build_shoes(coll):
     z = DECK
     # In front of the lane, along the queue line: thicker toward the gate.
     front = lambda x, y: 0.25 if x < uo.LOBBY_X0 else min(1.0, 0.4 + 0.6 * max(0.0, (x - 120.5) / 3.6)) * (0.75 if x > 125.6 else 1.0)  # noqa: E731
-    scatter(118, 116.8, 126.6, -0.95, -0.42, z, front)
+    scatter(96, 116.8, 126.6, -0.9, -0.42, z, front)
     heap(24, 124.95, -0.66, 0.42, 0.26, 0.12, z)                    # crushed up in front of the gate
     # Behind the lane: round the heap of luggage and under the bench, in the waiting area.
-    scatter(46, 118.95, 123.5, 0.38, 1.14, z, lambda x, y: 0.8, gap=0.12, kid=0.5)
+    scatter(40, 118.95, 123.5, 0.38, 1.14, z, lambda x, y: 0.8, gap=0.12, kid=0.5)
     scatter(9, 116.8, 118.55, 0.35, 2.2, z, lambda x, y: 0.6, gap=0.2)          # strays on the porch
     # Heaped against the lift front either side of the gate (under the balance gauge), clear of the stands.
     heap(30, 125.93, 0.28, 0.3, 0.05, 0.22, z)
@@ -585,7 +632,7 @@ def build_shoes(coll):
     # Fallen down the shaft, at ring C's landing by its foot.
     scatter(8, 127.85, 128.7, -0.62, 0.95, 0.0, lambda x, y: 0.0 if -0.3 < y < 0.32 else 1.0, gap=0.14)
     mats = [material(n) for n in SHOE_MATS]
-    ob = d17.mesh_object('UOShoes', bm, mats, coll, sharp=50)
+    ob = d17.mesh_object('UOShoes', bm, mats, coll, sharp=75)
     for t in tmpl:
         for _, me in t[0]:
             bpy.data.meshes.remove(me)
@@ -764,12 +811,13 @@ def ring_c_material():
 
 
 def build_way_ringc10(coll, atlas):
-    """WayRingC10: the shared RING C stencil (0.84 x 0.42, as DL-06 to DL-09's) on the counterweight shaft's back wall,
-    over the counterweight; or, failing that, the atlas's own."""
+    """WayRingC10: the shared RING C stencil (DL-06 to DL-09's, smaller: 0.49 x 0.245) on the pier between the lift and
+    the counterweight's shaft, over the crank's work lamp (the shaft's own back wall is hidden from the side camera
+    behind the service door's casing); or, failing that, the atlas's own."""
     x, y, zc, s = STENCIL10
     mt = ring_c_material()
     if mt is not None:
-        w, h = 0.84, 0.42
+        w, h = s, s / 2
         bm = bmesh.new()
         uvl = bm.loops.layers.uv.new('UVMap')
         f = bm.faces.new([bm.verts.new(c) for c in ((x - w / 2, y, zc - h / 2), (x + w / 2, y, zc - h / 2), (x + w / 2, y, zc + h / 2), (x - w / 2, y, zc + h / 2))])

@@ -705,21 +705,21 @@ def make_remains_atlas(path):
             c = rnd.randint(0, 255)
             d.point((x, y), fill=(c, c, c, rnd.randint(8, 30)))
     # The sheet: grey linen, yellowed and stained where it lay; long creases.
-    fill('sheet', (122, 118, 106), 22, n=90, rmax=0.18, speck=12)
+    fill('sheet', (112, 108, 96), 18, n=90, rmax=0.18, speck=12)
     x0, y0, x1, y1 = ATLAS_CELLS['sheet']
     for _ in range(26):                                    # creases
         y = rnd.uniform(y0, y1)
-        d.line([(x0 + t, y + 6 * math.sin(t * 0.04 + y)) for t in range(0, x1 - x0, 8)], fill=(70, 66, 58, rnd.randint(30, 70)), width=rnd.randint(1, 3))
+        d.line([(x0 + t, y + 6 * math.sin(t * 0.04 + y)) for t in range(0, x1 - x0, 8)], fill=(60, 56, 48, rnd.randint(50, 110)), width=rnd.randint(2, 4))
     for _ in range(10):                                    # stains: dust and damp, never blood
         x, y, r = rnd.uniform(x0, x1), rnd.uniform(y0, y1), rnd.uniform(8, 34)
         d.ellipse((x - r, y - r * 0.6, x + r, y + r * 0.6), fill=(96, 84, 60, rnd.randint(40, 90)))
-    fill('bone', (92, 80, 62), 14, n=30, speck=10, streaks=10)
-    fill('cloth', (34, 33, 31), 8, n=40, speck=14, streaks=6)
-    fill('apron', (78, 70, 56), 14, n=40, speck=12, streaks=4)
-    fill('shoe', (22, 19, 17), 6, n=20, speck=20)
+    fill('bone', (126, 110, 84), 14, n=30, speck=10, streaks=10)
+    fill('cloth', (64, 61, 55), 10, n=40, speck=14, streaks=6)
+    fill('apron', (116, 104, 82), 14, n=40, speck=12, streaks=4)
+    fill('shoe', (40, 35, 31), 6, n=20, speck=20)
     fill('rope', (104, 88, 60), 10, n=10, speck=8, streaks=30)
-    fill('bag', (58, 62, 52), 10, n=30, speck=12, streaks=8)
-    fill('dark', (20, 19, 18), 4, n=10, speck=30)
+    fill('bag', (86, 92, 76), 10, n=30, speck=12, streaks=8)
+    fill('dark', (38, 34, 30), 4, n=10, speck=30)
     fill('cap', (30, 40, 34), 6, n=20, speck=20)
     fill('wood', (70, 52, 34), 10, n=10, speck=10, streaks=24)
     # The ration tag: buff card, a reinforced eyelet at its top, the grade and a number.

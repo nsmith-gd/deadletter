@@ -2,26 +2,29 @@
 Bridge, and the RING C stencils for DL-06 to DL-09. Built in FINAL world x, after the pass 3 modules; other builders'
 objects are only changed here, by name.
 
-  DL-08  The fall. Lift 2's sump runs on under the near landing (x 83.3 to the shaft at 85.8): the landing's slab is
+  DL-08  The fall. Lift 2's sump runs on under the near landing (x 82.0 to the shaft at 85.8): the landing's slab is
          cut back to a 0.35 m deck on beams, and the flooded pit beneath it is seen in section, like the shaft. In it
          a goods-lift car lies where it fell, on its side and half under the water: its corner posts buckled, its
-         lattice gate burst outward, its snapped cable piled on top with the frayed end standing up. Suitcases, a
-         trunk and coats have spilled out of it: two coats float face down. A pram lies nose down in the water,
-         one wheel up. Nothing of it is in the shaft (x >= 85.8), so the platform's travel and the White's water
-         (SHAFT.x0..x1 at game z 1.2) are untouched.
-           StoryFallPit    the cavity's walls, beams and tide line (Concrete, WallPanel, DepotSteel, FloodMud)
-           StoryFallWater  its water, level with the sump's (-0.15)
-           StoryFallWreck  the car, the cable, the luggage, the coats, the pram
-         Changed: G4Floor (its first slab is rebuilt round the cavity), G4ShaftFaces (the near face stops at the
-         cavity's ceiling, except behind the rack), Sump7Scum (the strip on the near face goes; the cavity has its own).
-  DL-09  The cut bridge. From ring C's lip, left of the balcony, a girder bridge on masonry piers climbs out across
-         the chasm toward the upper city's first tier; its middle spans are blown out. The near stump is heaped with
-         belongings behind a barricade of beds, doors and crates, and at its broken end a board on two posts says
-         GRADE 1-2 BEYOND THIS POINT. Twisted girders and cables hang from both stumps. The far stump runs into a lit
-         gatehouse on the upper city's tier. Far detail: plain atrium materials, faces toward the balcony only.
-           AtriumCutBridge* (named Atrium* so it moves and culls with the atrium): Masonry, Steel, Rust, Junk, Lamps,
-           Glow, Sign.
-  Stencils  WayRingC06..09: RING C and an arrow down and on, the same worn stencil each time (WayRingCMat).
+         lattice gate burst outward, its snapped rope piled on top with the frayed end standing up. A trunk is caught
+         in its mouth, a case lies burst open on it, cases float; a coat lies over it and two more float face down.
+         A pram floats capsized at the back, wheels up. Nothing of it is in the shaft (x >= 85.8), so the platform's
+         travel and the White's water (SHAFT.x0..x1 at game z 1.2) are untouched.
+           StoryFallWreck  the car, the rope, the luggage, the coats, the pram, and the pit's own back wall, deck
+                           beams, pipe and tide lines: one static object, ten materials
+           StoryFallWater  the pit's water, level with the sump's (-0.15), open to Sump7Water at x 85.8
+         Changed by name: G4Floor (its first slab is rebuilt round the cavity), G4ShaftFaces (the near face stops at
+         the cavity's ceiling, except behind the rack), Sump7Scum (the strip on the near face goes).
+  DL-09  The cut bridge. From ring C's lip on the left wall, a stepped lattice-girder bridge on masonry piers climbs
+         out across the void toward the upper rings and the city; its middle 24 m are blown out. The near stump is
+         heaped with belongings against a barricade of beds, doors and timbers with the checkpoint's boom still down,
+         and over its broken end a board on the last portal says GRADE 1-2 BEYOND THIS POINT, turned to the balcony.
+         Twisted girders, torn deck and cables hang from both stumps; a length of the fallen truss lies across the old
+         viaduct below. The far stump's lamps still burn, and it runs into a lit gatehouse in the right wall. Far
+         detail: plain atrium materials, only the faces toward the balcony, no shadows.
+           AtriumCutBridge{Masonry,Steel,Twisted,Cables,Junk,Bundles,Boom,Lamps,Glow,Sign}: named Atrium* so the game
+           shows them with the atrium (from the balcony only).
+  Stencils  WayRingC06..09: RING C and an arrow down and on, the same worn stencil each time (WayRingCMat, made here
+         unless another pass 4 module made it first); WayRingC09Sheet carries the DL-09 one on the porch rail.
 
 Coordinates: metres, Blender Z up, the lane at y = 0, travel along +x, the camera at -y. Game (x, z, -y).
 """
@@ -36,7 +39,6 @@ from mathutils import Matrix, Vector
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEX = os.path.join(HERE, 'textures')
 FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
-FONT_C = '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf'
 
 DECK = 1.6
 # DL-08: Lift 2's shaft and sump (art/dl04 SHAFT 52.8..55.3 + OFF3 33; art/pass2 Sump7Water).
@@ -44,7 +46,8 @@ SHAFT = (85.8, 88.3)
 SUMP_WATER = -0.15
 SUMP_FRONT = -1.6                     # the slab's front face: the section the camera looks through
 PIT_FLOOR = -1.22
-CAV = dict(x0=83.3, x1=SHAFT[0], back=0.95, ceil=1.25)   # the cavity under the near landing
+CAV = dict(x0=82.0, x1=SHAFT[0], back=0.95, ceil=1.25)
+CAR = (1.45, 1.15, 2.0)               # the goods-lift car: width, depth, height   # the cavity under the near landing
 RACK_Y = 0.35                         # the shaft's near face stays full height behind this (the rack is at 0.5)
 
 
@@ -60,119 +63,75 @@ def _font(path, size):
         return ImageFont.load_default()
 
 
-def _wear(img, seed, holes=70, rmin=2, rmax=10, keep=(70, 200), blur=1.4):
-    from PIL import Image, ImageDraw, ImageFilter, ImageChops
+def _blotches(size, seed, scale=24, blur=6.0):
+    """Soft random blotches (L image, 0..255): a low-resolution noise field blown up and blurred."""
+    from PIL import Image, ImageFilter
     rnd = random.Random(seed)
-    w, h = img.size
-    m = Image.new('L', (w, h), 255)
-    d = ImageDraw.Draw(m)
-    for _ in range(holes):
-        x, y, r = rnd.uniform(0, w), rnd.uniform(0, h), rnd.uniform(rmin, rmax)
-        d.ellipse((x - r, y - r * rnd.uniform(0.4, 1), x + r, y + r), fill=rnd.randint(*keep))
-    img.putalpha(ImageChops.multiply(img.split()[3], m.filter(ImageFilter.GaussianBlur(blur))))
-    return img
+    w, h = size
+    sw, sh = max(2, w // scale), max(2, h // scale)
+    small = Image.new('L', (sw, sh))
+    small.putdata([rnd.randint(0, 255) for _ in range(sw * sh)])
+    return small.resize((w, h), Image.BICUBIC).filter(ImageFilter.GaussianBlur(blur))
 
 
-def make_ring_c(path):
-    """RING C and an arrow down and on (to the lower right), sprayed through a cut stencil: the letters' bridges
-    show, the edges carry a little overspray, the paint is worn through in patches and has run in places."""
-    from PIL import Image, ImageDraw, ImageFilter, ImageChops
-    w, h = 1024, 512
-    paint = (226, 219, 198)
-    mask = Image.new('L', (w, h), 0)
-    d = ImageDraw.Draw(mask)
-    f = _font(FONT, 236)
-    x0, y0 = 40, 120
-    text = 'RING C'
-    d.text((x0, y0), text, font=f, fill=255)
-    # The stencil's bridges: thin uncut strips through the counters and across the open bowls.
-    x = x0
-    ad = ImageDraw.Draw(mask)
+def _fit_text(mask, text, path, box, fill=255):
+    """Draw text into an L mask, squeezed or stretched to fill box (x0, y0, x1, y1): the font's own proportions
+    are not kept (signwriters condense to fit). Returns the glyphs' x spans in the mask, for the stencil's bridges."""
+    from PIL import Image, ImageDraw
+    f = _font(path, 200)
+    tmp = Image.new('L', (int(ImageDraw.Draw(Image.new('L', (1, 1))).textlength(text, font=f)) + 40, 280), 0)
+    d = ImageDraw.Draw(tmp)
+    d.text((20, 20), text, font=f, fill=fill)
+    bb = tmp.getbbox()
+    spans, x = [], 20.0
     for ch in text:
         cw = d.textlength(ch, font=f)
-        if ch == 'R':
-            ad.rectangle((x + cw * 0.18, y0 + 96, x + cw * 0.7, y0 + 108), fill=0)      # across the bowl's foot
-            ad.rectangle((x + cw * 0.46, y0 + 30, x + cw * 0.46 + 11, y0 + 80), fill=0)  # through the bowl's top
-        elif ch == 'G':
-            ad.rectangle((x + cw * 0.47, y0 + 30, x + cw * 0.47 + 11, y0 + 70), fill=0)
-        elif ch == 'C':
-            ad.rectangle((x + cw * 0.52, y0 + 30, x + cw * 0.52 + 11, y0 + 70), fill=0)
-            ad.rectangle((x + cw * 0.52, y0 + 200, x + cw * 0.52 + 11, y0 + 250), fill=0)
-        elif ch == 'N':
-            ad.rectangle((x + cw * 0.45, y0 + 120, x + cw * 0.45 + 10, y0 + 160), fill=0)
+        spans.append((ch, x, x + cw))
         x += cw
-    # The arrow: a thick shaft down to the right, its head at the lower right, a bridge between them.
-    ax0, ay0, ax1, ay1 = 790, 110, 930, 330
-    t = 26
-    d.polygon([(ax0 - t, ay0 + t * 0.4), (ax0 + t * 0.4, ay0 - t), (ax1 - 52 + t * 0.6, ay1 - 52 - t * 0.6),
-               (ax1 - 52 - t * 0.6, ay1 - 52 + t * 0.6)], fill=255)
-    d.polygon([(ax1 + 40, ay1 + 40), (ax1 + 46, ay1 - 118), (ax1 - 118, ay1 + 46)], fill=255)
-    ad.line((ax1 - 92, ay1 - 30, ax1 - 30, ay1 - 92), fill=0, width=14)
-    # A bar under it all, as such stencils have.
-    d.rectangle((x0 + 6, 412, 980, 440), fill=255)
-    for bx in (300, 640):
-        ad.rectangle((bx, 410, bx + 12, 442), fill=0)
-    # Overspray: a soft halo at low strength, then the crisp paint over it.
-    halo = mask.filter(ImageFilter.GaussianBlur(7)).point(lambda v: int(v * 0.22))
-    rnd = random.Random(808)
-    runs = Image.new('L', (w, h), 0)                 # paint runs from the bottoms of a few strokes
-    rd = ImageDraw.Draw(runs)
-    for _ in range(16):
-        xx = rnd.uniform(60, 960)
-        yy = 360 if rnd.random() < 0.7 else 440
-        if mask.getpixel((int(xx), int(yy) - 4)) > 128:
-            rd.line((xx, yy - 6, xx + rnd.uniform(-2, 2), yy + rnd.uniform(18, 60)), fill=205, width=rnd.randint(3, 6))
-    alpha = ImageChops.lighter(ImageChops.lighter(halo, mask.filter(ImageFilter.GaussianBlur(1.1))), runs)
-    img = Image.new('RGBA', (w, h), paint + (0,))
-    img.putalpha(alpha)
-    _wear(img, 809, holes=110, rmin=3, rmax=16, keep=(40, 190), blur=2.0)
-    # Grime settled over it, darker toward the bottom.
-    grime = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    gd = ImageDraw.Draw(grime)
-    for _ in range(50):
-        xx, yy, r = rnd.uniform(0, w), rnd.uniform(0, h), rnd.uniform(10, 70)
-        gd.ellipse((xx - r, yy - r, xx + r, yy + r), fill=(70, 62, 48, rnd.randint(20, 60)))
-    grime = grime.filter(ImageFilter.GaussianBlur(10))
-    rgb = Image.alpha_composite(Image.new('RGBA', (w, h), paint + (255,)), grime).convert('RGB')
-    rgb.putalpha(img.split()[3])
-    rgb.save(path)
+    crop = tmp.crop(bb)
+    bw, bh = box[2] - box[0], box[3] - box[1]
+    crop = crop.resize((bw, bh), Image.LANCZOS)
+    mask.paste(crop, (box[0], box[1]), crop)
+    sx = bw / (bb[2] - bb[0])
+    return [(ch, box[0] + (a - bb[0]) * sx, box[0] + (e - bb[0]) * sx) for ch, a, e in spans]
 
 
 def make_grade_sign(path):
-    """The checkpoint board at the cut bridge's near end: GRADE 1-2 / BEYOND THIS POINT, black on cream with a red
-    band, BY ORDER; weathered, a corner gone, smeared with something thrown at it."""
-    from PIL import Image, ImageDraw, ImageFilter
+    """The checkpoint board at the cut bridge's near end: GRADE 1-2 / BEYOND THIS POINT, black on cream between red
+    bands, BY ORDER; weathered, streaked with rust from its bolts, a corner broken off."""
+    from PIL import Image, ImageDraw, ImageFilter, ImageChops
     w, h = 1024, 512
-    img = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    cream, ink, red = (214, 204, 176), (22, 20, 18), (150, 36, 28)
+    img = Image.new('RGB', (w, h), cream)
     d = ImageDraw.Draw(img)
-    cream, ink, red = (214, 204, 176, 255), (22, 20, 18, 255), (150, 36, 28, 255)
-    d.rectangle((0, 0, w, h), fill=cream)
-    d.rectangle((0, 0, w, 64), fill=red)
-    d.rectangle((0, h - 40, w, h), fill=red)
-    d.rectangle((10, 10, w - 10, h - 10), outline=ink, width=8)
-    f1, f2, f3 = _font(FONT_C, 200), _font(FONT_C, 104), _font(FONT, 34)
-    s = 'GRADE 1–2'
-    d.text(((w - d.textlength(s, font=f1)) / 2, 66), s, font=f1, fill=ink)
-    s = 'BEYOND THIS POINT'
-    d.text(((w - d.textlength(s, font=f2)) / 2, 300), s, font=f2, fill=ink)
-    s = 'BY ORDER · REFUGE AUTHORITY'
-    d.text(((w - d.textlength(s, font=f3)) / 2, 14), s, font=f3, fill=cream)
+    d.rectangle((0, 0, w, 70), fill=red)
+    d.rectangle((0, h - 44, w, h), fill=red)
+    d.rectangle((12, 12, w - 12, h - 12), outline=ink, width=8)
+    for box, text, col in (((60, 92, 964, 300), 'GRADE 1–2', ink), ((80, 322, 944, 446), 'BEYOND THIS POINT', ink),
+                           ((240, 18, 784, 54), 'BY ORDER · REFUGE AUTHORITY', cream)):
+        m = Image.new('L', (w, h), 0)
+        _fit_text(m, text, FONT, box)
+        img.paste(Image.new('RGB', (w, h), col), (0, 0), m)
     rnd = random.Random(912)
-    for _ in range(26):                                   # thrown muck and rust runs
-        x, y, r = rnd.uniform(0, w), rnd.uniform(60, h), rnd.uniform(6, 34)
-        d.ellipse((x - r, y - r, x + r, y + r), fill=(60, 48, 34, rnd.randint(60, 150)))
-    for _ in range(14):
-        x = rnd.uniform(0, w)
-        d.line((x, rnd.uniform(0, 200), x + rnd.uniform(-6, 6), h), fill=(90, 50, 30, rnd.randint(40, 90)), width=rnd.randint(3, 9))
-    img = img.filter(ImageFilter.GaussianBlur(0.8))
-    a = img.split()[3]
-    ad = ImageDraw.Draw(a)
-    ad.polygon([(w, h), (w - 150, h), (w - 90, h - 60), (w - 40, h - 130), (w, h - 170)], fill=0)   # a corner gone
+    over = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    od = ImageDraw.Draw(over)
+    for x, y in ((40, 40), (w - 40, 40), (40, h - 40), (w - 40, h - 40), (w // 2, 40), (w // 2, h - 40)):
+        od.ellipse((x - 9, y - 9, x + 9, y + 9), fill=(40, 30, 22, 255))                     # bolts
+        od.line((x, y + 8, x + rnd.uniform(-4, 4), y + rnd.uniform(60, 180)), fill=(110, 52, 26, 120), width=rnd.randint(6, 12))
+    for _ in range(18):                                                                        # thrown muck
+        x, y, r = rnd.uniform(0, w), rnd.uniform(80, h), rnd.uniform(10, 40)
+        od.ellipse((x - r, y - r * 0.7, x + r, y + r * 0.7), fill=(52, 42, 30, rnd.randint(30, 70)))
+    over = over.filter(ImageFilter.GaussianBlur(3.0))
+    tone = _blotches((w, h), 913, scale=36, blur=14).point(lambda v: int(170 + v * 0.33))
+    img = Image.merge('RGB', [ImageChops.multiply(c, tone) for c in img.split()]).convert('RGBA')
+    img.alpha_composite(over)
+    a = Image.new('L', (w, h), 255)
+    ImageDraw.Draw(a).polygon([(w, h), (w - 150, h), (w - 96, h - 58), (w - 44, h - 128), (w, h - 172)], fill=0)
     img.putalpha(a)
     img.save(path)
 
 
-TEXTURES = {'ringc': ('way_ring_c.png', make_ring_c), 'grade': ('grade_sign.png', make_grade_sign)}
+TEXTURES = {'grade': ('grade_sign.png', make_grade_sign)}
 
 
 def texture(key):
@@ -394,44 +353,46 @@ def open_cavity():
         edit_mesh(sc, strip)
 
 
+PIT_PARTS = []
+
+
 def build_pit(coll):
     """The cavity's own surfaces: a panelled back wall like the shaft's, the beams carrying the deck (their cut ends in
     the section), a pipe, the tide line, and the water."""
     from build_d17 import add_cyl
     x0, x1, back, ceil = CAV['x0'], CAV['x1'], CAV['back'], CAV['ceil']
 
-    def pit(bm):
-        bx(bm, (x0, x1), (back - 0.04, back), (PIT_FLOOR, ceil), 1)                     # the back wall's panel face
+    def pit(bm, mi):
+        bx(bm, (x0, x1), (back - 0.04, back), (PIT_FLOOR, ceil), mi[1])                 # the back wall's panel face
         for k in range(1, 3):                                                          # its panel seams
             xx = x0 + (x1 - x0) * k / 3
-            bx(bm, (xx - 0.015, xx + 0.015), (back - 0.06, back - 0.04), (PIT_FLOOR, ceil), 2)
+            bx(bm, (xx - 0.015, xx + 0.015), (back - 0.06, back - 0.04), (PIT_FLOOR, ceil), mi[2])
         for xx in (x0 + 0.35, x0 + 1.25, x1 - 0.3):                                     # deck beams, front to back
-            bx(bm, (xx - 0.07, xx + 0.07), (SUMP_FRONT, back), (ceil - 0.18, ceil - 0.15), 2)
-            bx(bm, (xx - 0.012, xx + 0.012), (SUMP_FRONT, back), (ceil - 0.15, ceil - 0.02), 2)
-            bx(bm, (xx - 0.07, xx + 0.07), (SUMP_FRONT, back), (ceil - 0.02, ceil), 2)
-        add_cyl(bm, (x0 + 0.02, back - 0.16, ceil - 0.32), (x1 - 0.02, back - 0.16, ceil - 0.32), 0.05, seg=10, mat=2)
+            bx(bm, (xx - 0.07, xx + 0.07), (SUMP_FRONT, back), (ceil - 0.18, ceil - 0.15), mi[2])
+            bx(bm, (xx - 0.012, xx + 0.012), (SUMP_FRONT, back), (ceil - 0.15, ceil - 0.02), mi[2])
+            bx(bm, (xx - 0.07, xx + 0.07), (SUMP_FRONT, back), (ceil - 0.02, ceil), mi[2])
+        add_cyl(bm, (x0 + 0.02, back - 0.16, ceil - 0.32), (x1 - 0.02, back - 0.16, ceil - 0.32), 0.05, seg=10, mat=mi[2])
         # The tide line: mud on the back wall and the pit's left face, a band of old, higher water above it.
-        bx(bm, (x0, x1), (back - 0.046, back - 0.04), (SUMP_WATER - 0.02, SUMP_WATER + 0.07), 3)
-        bx(bm, (x0, x1), (back - 0.045, back - 0.041), (SUMP_WATER + 0.28, SUMP_WATER + 0.33), 3)
-        bx(bm, (x0, x0 + 0.006), (SUMP_FRONT, back), (SUMP_WATER - 0.02, SUMP_WATER + 0.07), 3)
-        bx(bm, (x0, x0 + 0.005), (SUMP_FRONT, back), (SUMP_WATER + 0.28, SUMP_WATER + 0.33), 3)
-    solid('StoryFallPit', pit, ['Concrete', 'WallPanel', 'DepotSteel', 'FloodMud'], coll)
+        bx(bm, (x0, x1), (back - 0.046, back - 0.04), (SUMP_WATER - 0.02, SUMP_WATER + 0.07), mi[3])
+        bx(bm, (x0, x1), (back - 0.045, back - 0.041), (SUMP_WATER + 0.28, SUMP_WATER + 0.33), mi[3])
+        bx(bm, (x0, x0 + 0.006), (SUMP_FRONT, back), (SUMP_WATER - 0.02, SUMP_WATER + 0.07), mi[3])
+        bx(bm, (x0, x0 + 0.005), (SUMP_FRONT, back), (SUMP_WATER + 0.28, SUMP_WATER + 0.33), mi[3])
+    PIT_PARTS.append(pit)                                 # built into StoryFallWreck: one object, one draw per material
 
     def water(bm):
         vs = bx(bm, (x0 + 0.003, x1 - 0.002), (SUMP_FRONT, back - 0.045), (-1.3, SUMP_WATER))
         side = [f for f in bm.faces if all(abs(v.co.x - (x1 - 0.002)) < 1e-4 for v in f.verts)]
         bmesh.ops.delete(bm, geom=side, context='FACES')                                 # open to the sump's own water
     solid('StoryFallWater', water, ['Water'], coll)
-    note('StoryFallPit', f'DL-08 the flooded pit under the near landing, x {x0}..{x1}, deck underside {ceil}, back wall y {back}')
     note('StoryFallWater', f'DL-08 its water, surface {SUMP_WATER} (game y), joining Sump7Water at x {x1}')
 
 
 def _car(bm):
-    """The goods-lift car, upright in its own space: origin at its floor's centre, 1.2 wide (x), 1.0 deep (y),
-    1.7 high; the gate on its front (-y). Built crushed: the posts buckle near the floor."""
+    """The goods-lift car, upright in its own space: origin at its floor's centre, CAR wide (x), deep (y) and high;
+    the gate on its front (-y). Built crushed: the posts buckle near the floor."""
     from build_d17 import add_box, add_cyl
-    W, D, H = 1.2, 1.0, 1.7
-    S, F_, C = 0, 1, 2                                     # ShutterSteel, DepotSteel, (unused)
+    W, D, H = CAR
+    S, F_ = 0, 1                                           # ShutterSteel, DepotSteel
     bx(bm, (-W / 2, W / 2), (-D / 2, D / 2), (-0.08, 0.0), S)                       # the floor
     for y in (-D / 2 + 0.03, D / 2 - 0.03):
         bx(bm, (-W / 2, W / 2), (y - 0.03, y + 0.03), (-0.16, -0.06), F_)          # its channels
@@ -469,35 +430,28 @@ def _gate(bm, mat):
     """The car's collapsible gate, burst outward: two leaves of diagonal lattice, one bowed out from the car's front
     and hanging from its top track, the other torn free and lying out flat (in car space; front is -y)."""
     from build_d17 import add_box
-    W, D, H = 1.2, 1.0, 1.7
+    W, D, H = CAR
     y = -D / 2 - 0.02
     # Leaf 1: from the left post, bowed out toward the camera, hanging from the track.
     n = 6
     for k in range(n + 1):
-        x = -W / 2 + 0.04 + k * 0.1
-        bow = -0.32 * math.sin(math.pi * k / n)
+        x = -W / 2 + 0.04 + k * (W / 2 - 0.04) / n
+        bow = -0.34 * math.sin(math.pi * k / n)
         add_box(bm, (x, y + bow, H / 2 + 0.05), (0.014, 0.014, H - 0.2), mat=mat)
         if k < n:
-            for z in (0.35, 0.85, 1.35):
+            for z in (0.4, 0.95, 1.5):
                 a = Vector((x, y + bow, z - 0.25))
-                e = Vector((x + 0.1, y - 0.32 * math.sin(math.pi * (k + 1) / n), z + 0.25))
+                e = Vector((x + (W / 2 - 0.04) / n, y - 0.34 * math.sin(math.pi * (k + 1) / n), z + 0.25))
                 for p, q in ((a, e), (a + Vector((0, 0, 0.5)), e - Vector((0, 0, 0.5)))):
                     c, d = (p + q) / 2, q - p
                     add_box(bm, c, (0.012, 0.012, d.length),
                             mat=mat, rot=Vector((0, 0, 1)).rotation_difference(d.normalized()).to_matrix().to_4x4())
-    # Leaf 2: torn off its track, lying out over the water from the car's foot.
-    M = Matrix.Translation((0.25, y - 0.15, 0.0)) @ rot('X', 78) @ rot('Z', 8)
-    for k in range(5):
-        vs = add_box(bm, (k * 0.1, 0, 0.7), (0.014, 0.014, 1.3), mat=mat)
-        xform(vs, M)
-        if k < 4:
-            for z in (0.3, 0.75, 1.2):
-                for s in (-1, 1):
-                    vs = add_box(bm, (k * 0.1 + 0.05, 0, z), (0.012, 0.012, 0.52), mat=mat, rot=rot('Y', s * 11))
-                    xform(vs, M)
+    # Bars torn out of the other leaf, sticking out of the car's mouth.
+    for k, (x, z, ang) in enumerate(((0.2, 0.5, 30), (0.32, 1.0, -24), (0.45, 1.4, 40))):
+        add_box(bm, (x, y - 0.18, z), (0.014, 0.4, 0.014), mat=mat, rot=rot('X', ang) @ rot('Z', 15 * (k - 1)))
 
 
-def _cable(bm, mat, coil_c, end_up):
+def _cable(bm, mat, coil_c, end_up, tilt=None):
     """The snapped hoist rope, fallen after the car: loose loops piled on it, a tail over the edge, the frayed end
     standing up with its strands splayed."""
     from build_d17 import add_cyl
@@ -507,8 +461,9 @@ def _cable(bm, mat, coil_c, end_up):
         t = k / 24
         r = 0.34 - 0.03 * t + 0.04 * math.sin(t * 5.1)
         a = 2 * math.pi * t
-        pts.append(coil_c + Vector((r * math.cos(a) * 1.15, r * math.sin(a) * 0.8, 0.028 * t + 0.02 * math.sin(a * 2.3))))
-    tail = [pts[-1] + Vector((0.12 * i, -0.06 * i, -0.09 * i * i)) for i in range(1, 8)]
+        q = Vector((r * math.cos(a) * 1.15, r * math.sin(a) * 0.8, 0.028 * t + 0.02 * math.sin(a * 2.3)))
+        pts.append(coil_c + ((tilt.to_3x3() @ q) if tilt else q))
+    tail = [pts[-1] + Vector((0.03 * i, -0.08 * i, -0.022 * i * i)) for i in range(1, 8)]     # over the gate's edge
     for a, b in zip(pts + tail[:-1], pts[1:] + tail):
         add_cyl(bm, a, b, 0.016, seg=6, mat=mat)
     # The frayed end, standing out of the pile.
@@ -522,7 +477,7 @@ def _cable(bm, mat, coil_c, end_up):
 
 def _suitcase(bm, c, size, R, mat, strap=None, open_lid=0.0):
     """A suitcase (or trunk): body, a lid seam, corners, a handle; strap straps round it."""
-    from build_d17 import add_box, add_cyl, add_torus
+    from build_d17 import add_box, add_cyl
     sx, sy, sz = size
     M = Matrix.Translation(c) @ R
     out = []
@@ -540,7 +495,7 @@ def _suitcase(bm, c, size, R, mat, strap=None, open_lid=0.0):
     return out
 
 
-def _coat(bm, c, yaw, mat, spread=1.0, drape=None):
+def _coat(bm, c, yaw, mat, spread=1.0, tilt=None):
     """A long coat lying face down, sleeves out: from above and from the side it reads as somebody. No head, no
     hands: the collar ends at the water (or the edge)."""
     from build_d17 import add_box, add_cyl, add_sphere
@@ -554,7 +509,7 @@ def _coat(bm, c, yaw, mat, spread=1.0, drape=None):
         wr = el + Vector((0.12 * spread, s * 0.18, -0.04))
         out += add_cyl(bm, sh, el, 0.07, 0.06, seg=7, mat=mat)
         out += add_cyl(bm, el, wr, 0.06, 0.055, seg=7, mat=mat)
-    M = Matrix.Translation(c) @ rot('Z', yaw) @ (drape or Matrix.Identity(4))
+    M = Matrix.Translation(c) @ (tilt or Matrix.Identity(4)) @ rot('Z', yaw)
     xform(out, M)
     return out
 
@@ -587,12 +542,18 @@ def build_wreck(coll):
     """The car on its side in the pit, half under, its roof end raised toward the shaft; what it carried around it."""
     from build_d17 import add_box, add_cyl, add_sphere
     # The car: toppled onto its right side (its top toward +x, toward the shaft), the long axis 20 degrees up,
-    # turned a little, its floor end deep in the water at the cavity's far left.
-    car_at = Vector((83.86, -0.32, -0.63))
-    R = rot('Z', -7) @ rot('Y', 70) @ rot('X', -6)
+    # turned a little, its floor end deep in the water. Its shackle stops short of the shaft (x 85.8).
+    car_at = Vector((83.42, -0.32, -0.49))
+    R = rot('Z', -6) @ rot('Y', 78) @ rot('X', -5)
     M = Matrix.Translation(car_at) @ R
     up = (R @ Vector((-1, 0, 0, 0))).to_3d()               # the car's left side, now facing up
     axis = (R @ Vector((0, 0, 1, 0))).to_3d()
+    across = (R @ Vector((0, 1, 0, 0))).to_3d()            # front (-) to back (+)
+    lie = rot('Y', -12)                                    # lying on that side
+
+    def on_top(s, t, h=0.0):
+        """A point on the car's upturned side: s along it from the floor, t across it (- toward the gate)."""
+        return car_at + axis * s + up * (CAR[0] / 2 + 0.03 + h) + across * t
 
     def wreck(bm):
         # 0 ShutterSteel, 1 DepotSteel, 2 WornIron, 3 LuggageLeather, 4 LuggageCanvas, 5 CoatWool, 6 HandleBlack, 7 Rubber
@@ -605,38 +566,47 @@ def build_wreck(coll):
         tmp.free()
         bm.from_mesh(me)
         bpy.data.meshes.remove(me)
-        # The rope, piled on the car's upturned side about two thirds of the way up it.
-        top = car_at + axis * 1.0 + up * 0.62
-        _cable(bm, 2, top, Vector((0.12, -0.05, 0.42)))
-        # The luggage: a trunk wedged in the gate, a case burst open on the car's side, cases floating.
-        _suitcase(bm, car_at + axis * 0.55 + Vector((0, -0.62, 0.05)), (0.62, 0.36, 0.34), rot('Z', 18) @ rot('X', -24), 3, strap=4)
-        _suitcase(bm, top + Vector((-0.42, -0.12, 0.08)), (0.5, 0.3, 0.14), rot('Z', -30) @ rot('Y', -12), 3, open_lid=120)
-        add_sphere(bm, top + Vector((-0.36, -0.36, 0.12)), 0.14, seg=8, scale=(1.4, 1.0, 0.45), mat=5)  # clothes out of it
-        for c, s, r, mt in (((84.45, -1.32, SUMP_WATER - 0.05), (0.5, 0.3, 0.17), rot('Z', 12) @ rot('Y', 9), 4),
-                            ((85.25, -1.05, SUMP_WATER - 0.07), (0.44, 0.28, 0.16), rot('Z', -38) @ rot('X', 14), 3),
-                            ((83.55, -1.38, SUMP_WATER - 0.09), (0.4, 0.26, 0.15), rot('Z', 64) @ rot('Y', -25), 4),
-                            ((85.35, 0.62, SUMP_WATER - 0.04), (0.56, 0.32, 0.2), rot('Z', 80) @ rot('Y', 6), 3)):
-            _suitcase(bm, Vector(c), s, r, mt, strap=4 if mt == 3 else None)
-        # Coats: two face down in the water, one hung half out of the car's mouth over the torn gate.
-        _coat(bm, Vector((84.95, -1.28, SUMP_WATER + 0.01)), 196, 5, spread=1.0)
-        _coat(bm, Vector((83.62, -0.98, SUMP_WATER + 0.0)), 128, 5, spread=0.7)
-        _coat(bm, car_at + axis * 1.15 + Vector((0.0, -0.66, 0.0)), 262, 5, spread=0.4, drape=rot('Y', 38) @ rot('X', 20))
-        # A hat, floating.
-        add_cyl(bm, (84.38, -0.9, SUMP_WATER - 0.01), (84.38, -0.9, SUMP_WATER + 0.02), 0.17, seg=14, mat=5)
-        add_cyl(bm, (84.38, -0.9, SUMP_WATER + 0.02), (84.38, -0.9, SUMP_WATER + 0.11), 0.1, 0.09, seg=12, mat=5)
-        # The pram, nose down at the pit's left, a big wheel up out of the water toward the camera.
-        _pram(bm, Vector((83.62, -1.06, SUMP_WATER - 0.62)), rot('Z', 8) @ rot('Y', -52), 6, 7, 1)
-        # Odds: a shoe, a bundle, letters, on the car's side and the water.
-        add_box(bm, top + Vector((0.3, -0.2, 0.04)), (0.11, 0.05, 0.05), mat=3, rot=rot('Z', 40))
-        add_sphere(bm, car_at + axis * 1.45 + up * 0.62 + Vector((0, 0.15, 0.1)), 0.16, seg=8, scale=(1.2, 1.0, 0.7), mat=4)
+        # The rope, piled on the car's upturned side two thirds of the way up, the frayed end standing out of it.
+        _cable(bm, 2, on_top(1.25, 0.05), Vector((0.12, -0.08, 0.3)), tilt=lie)
+        # A trunk in the car's mouth behind the burst gate; a case burst open on its side, clothes spilling.
+        _suitcase(bm, car_at + axis * 0.7 + across * -0.42 + up * 0.15, (0.62, 0.36, 0.34), R @ rot('X', 90) @ rot('Z', 12), 3, strap=4)
+        _suitcase(bm, on_top(0.5, -0.12, 0.07), (0.5, 0.3, 0.14), lie @ rot('Z', -30), 3, open_lid=120)
+        add_sphere(bm, on_top(0.5, -0.42, 0.1), 0.14, seg=8, scale=(1.4, 1.0, 0.45), mat=5)
+        # A coat lying over its top, the collar hanging over the gate's edge.
+        _coat(bm, on_top(1.75, -0.12, 0.06), 270, 5, spread=0.5, tilt=lie)
+        # Cases floating low in front of it and behind it.
+        for c, sz, r, mt in (((84.5, -1.3, SUMP_WATER - 0.05), (0.5, 0.3, 0.17), rot('Z', 12) @ rot('Y', 9), 4),
+                             ((85.3, -1.22, SUMP_WATER - 0.07), (0.44, 0.28, 0.16), rot('Z', -38) @ rot('X', 14), 3),
+                             ((83.85, -1.32), (0.4, 0.26, 0.15), rot('Z', 64) @ rot('Y', -25), 4),
+                             ((85.35, 0.48, SUMP_WATER - 0.04), (0.56, 0.32, 0.2), rot('Z', 80) @ rot('Y', 6), 3)):
+            c = Vector(c) if len(c) == 3 else Vector((c[0], c[1], SUMP_WATER - 0.09))
+            _suitcase(bm, c, sz, r, mt, strap=4 if mt == 3 else None)
+        # Coats face down in the water: one at the pit's left, one behind the car.
+        _coat(bm, Vector((82.78, -1.0, SUMP_WATER + 0.01)), 8, 5, spread=0.35)
+        _coat(bm, Vector((84.6, 0.36, SUMP_WATER + 0.01)), 176, 5, spread=0.5)
+        # A hat, floating by the car's foot.
+        add_cyl(bm, (83.62, -1.16, SUMP_WATER - 0.01), (83.62, -1.16, SUMP_WATER + 0.02), 0.17, seg=14, mat=5)
+        add_cyl(bm, (83.62, -1.16, SUMP_WATER + 0.02), (83.62, -1.16, SUMP_WATER + 0.11), 0.1, 0.09, seg=12, mat=5)
+        # The pram, capsized at the pit's back left, its wheels up out of the water.
+        _pram(bm, Vector((82.58, 0.32, 0.2)), rot('Z', 10) @ rot('Y', 165), 6, 7, 1)
+        # A child's shoe on the car, a bundle on its roof end.
+        add_box(bm, on_top(1.05, -0.48, 0.04), (0.11, 0.05, 0.05), mat=3, rot=lie @ rot('Z', 40))
+        add_sphere(bm, on_top(1.85, 0.3, 0.1), 0.16, seg=8, scale=(1.2, 1.0, 0.7), mat=4)
+        for part in PIT_PARTS:                             # the pit's walls, beams and tide lines
+            part(bm, mi=(None, 8, 1, 9))
     ob = solid('StoryFallWreck', wreck, ['ShutterSteel', 'DepotSteel', 'WornIron', 'LuggageLeather', 'LuggageCanvas',
-                                         'CoatWool', 'HandleBlack', 'Rubber'], coll, sharp=40)
+                                         'CoatWool', 'HandleBlack', 'Rubber', 'WallPanel', 'FloodMud'], coll, sharp=40)
+    bb = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
+    mx, my = max(v.x for v in bb), min(v.y for v in bb)
+    if mx > SHAFT[0] + 0.001 or my < SUMP_FRONT - 0.001:
+        print(f'story_shafts: WARNING the wreck reaches x {mx:.3f} (shaft at {SHAFT[0]}), y {my:.3f} (section at {SUMP_FRONT})')
     note('StoryFallWreck', f'DL-08 the goods-lift car on its side in the pit, half under (car floor at {tuple(round(v, 2) for v in car_at)}), '
                            'its rope piled on it, luggage, coats and a pram spilled; all of it at x < 85.8')
     return ob
 
 
 def build_fall(coll):
+    PIT_PARTS.clear()
     open_cavity()
     build_pit(coll)
     build_wreck(coll)
@@ -649,10 +619,10 @@ def build_fall(coll):
 # The gap's centre, the bridge's heading (horizontal, from the near stump toward the far one) and its climb: chosen so
 # the near stump, the sign and the gap sit in the coin viewer's frame at its rest yaw, cross the top band of the
 # balcony's side view, and run from the lower left to the middle of the awe crane's last frame.
-BRIDGE_GAP = Vector((121.5, 72.0, 7.6))
+BRIDGE_GAP = Vector((127.0, 71.5, 9.5))
 BRIDGE_DIR = Vector((52.0, 53.5, 0.0)).normalized()
-BRIDGE_SLOPE = 0.115                  # rise per metre along it
-BRIDGE_GAP_LEN = 17.0
+BRIDGE_SLOPE = 0.242                  # rise per horizontal metre: a stepped bridge climbing to the upper city
+BRIDGE_GAP_LEN = 24.0
 BRIDGE_W = 6.0                        # the deck's width
 TRUSS_H = 3.2
 VIEWER_EYE = Vector((114.7, -0.25, 2.7))   # the coin viewer's eyepieces (game (X + 0.1, Y + 1.1, 0.25))
@@ -766,7 +736,12 @@ def build_bridge(coll):
     def span(s0, s1):
         """Deck, kerbs and the two through-trusses from s0 to s1."""
         a, e = _at(s0), _at(s1)
-        _beam(b['steel'], a + U * -0.35, e + U * -0.35, BRIDGE_W, 0.7, 0)                       # deck
+        _beam(b['steel'], a + U * -0.55, e + U * -0.55, BRIDGE_W, 0.7, 0)                       # deck
+        k = 0
+        while s0 + (k + 1) * 1.5 <= s1:                                                          # its steps
+            q = _at(s0 + k * 1.5)
+            _beam(b['masonry'], q + U * 0.08, q + U * 0.08 + T * 1.5, BRIDGE_W - 0.8, 0.56, 0)
+            k += 1
         n = max(1, int(round(abs(s1 - s0) / 4.5)))
         for side in (-1, 1):
             o = S * (side * BRIDGE_W / 2)
@@ -787,16 +762,15 @@ def build_bridge(coll):
 
     def pier(s, base_z):
         p = _at(s) + U * -0.7
-        h = p.z - base_z
-        for k, (w0, w1) in enumerate(((3.2, 2.2),)):
-            c0 = Vector((p.x, p.y, base_z))
-            # A tapered pier: four faces from a wide foot to the deck's underside, a cap under the bearings.
-            pts0 = [c0 + T * (sx * w0 / 2) + S * (sy * (BRIDGE_W + 1.2) / 2) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
-            pts1 = [Vector((q.x, q.y, p.z - 0.5)) + (Vector((p.x, p.y, 0)) - Vector((q.x, q.y, 0))) * (1 - w1 / w0) for q in pts0]
-            for i in range(4):
-                j = (i + 1) % 4
-                _quad(b['masonry'], [pts0[i], pts0[j], pts1[j], pts1[i]], 0)
-            _beam(b['masonry'], p + U * -0.5 - T * (w1 / 2 + 0.3), p + U * -0.5 + T * (w1 / 2 + 0.3), BRIDGE_W + 1.6, 0.6, 0)
+        w0, w1 = 3.2, 2.2
+        c0 = Vector((p.x, p.y, base_z))
+        # A tapered pier: four faces from a wide foot to the deck's underside, a cap under the bearings.
+        pts0 = [c0 + T * (sx * w0 / 2) + S * (sy * (BRIDGE_W + 1.2) / 2) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+        pts1 = [Vector((q.x, q.y, p.z - 0.5)) + (Vector((p.x, p.y, 0)) - Vector((q.x, q.y, 0))) * (1 - w1 / w0) for q in pts0]
+        for i in range(4):
+            j = (i + 1) % 4
+            _quad(b['masonry'], [pts0[i], pts0[j], pts1[j], pts1[i]], 0)
+        _beam(b['masonry'], p + U * -0.5 - T * (w1 / 2 + 0.3), p + U * -0.5 + T * (w1 / 2 + 0.3), BRIDGE_W + 1.6, 0.6, 0)
 
     # The stumps.
     s_n1, s_f0 = -half, half
@@ -804,6 +778,26 @@ def build_bridge(coll):
     span(s_f0, s_far)
     _break_end(b, _at(s_n1), T, S, 1, rnd)
     _break_end(b, _at(s_f0), T, S, -1, rnd)
+    # What fell: a length of the blown span's truss lying across the old viaduct below the gap's far end, its near
+    # end over the parapet and hanging into the void; slabs of its deck beside it.
+    y0, y1, zd = VIADUCT_NEAR
+    p0 = Vector((_at(half).x - 6.5, y0 + 1.2, zd + 0.3))
+    p1 = Vector((_at(half).x + 1.0, y1 - 1.6, zd + 0.3))
+    lean = Vector((0, -0.35, 1.0)).normalized() * 2.2
+    _beam(b['rust'], p0, p1, 0.4, 0.5, 0)
+    _beam(b['rust'], p0 + lean, p1 + lean, 0.35, 0.4, 0)
+    for k in range(6):
+        q0 = p0.lerp(p1, k / 5)
+        _beam(b['rust'], q0, q0 + lean, 0.25, 0.25, 0)
+        if k < 5:
+            _beam(b['rust'], q0, p0.lerp(p1, (k + 1) / 5) + lean, 0.22, 0.22, 0)
+    hang = p0 + Vector((-0.5, -1.4, 0.0))                     # over the parapet and down
+    _beam(b['rust'], p0, hang + Vector((-0.6, -0.8, -5.5)), 0.4, 0.5, 0)
+    _beam(b['rust'], p0 + lean, hang + lean * 0.5 + Vector((-0.9, -0.6, -5.0)), 0.35, 0.4, 0)
+    for k, (dx, dy, ang) in enumerate(((-2.0, 1.4, 0.3), (2.5, 2.2, -0.2), (-4.0, 3.0, 0.5))):
+        c = Vector((p1.x + dx, y0 + dy, zd + 0.45))
+        _beam(b['steel'], c - Vector((1.2, 0.3 * ang, 0)), c + Vector((1.2, 0.3 * ang, 0.2 * ang)), 1.8, 0.35, 0)
+
     # Piers: under each stump (none on the catwalk's line); the far stump's first stands on the old viaduct's deck.
     for s in (s_near + 0.45 * (s_n1 - s_near), s_n1 - 3.0, s_f0 + 3.0, s_f0 + 0.55 * (s_far - s_f0)):
         y = _at(s).y
@@ -815,7 +809,7 @@ def build_bridge(coll):
     # Abutments: masonry blocks into the rock at both ends.
     for s, d in ((s_near, -1), (s_far, 1)):
         p = _at(s)
-        _beam(b['masonry'], p + T * (d * -3.0) + U * -0.8, p + T * (d * 4.0) + U * -0.8, BRIDGE_W + 2.0, 6.0, 0)
+        _beam(b['masonry'], p + T * (d * -3.0) + U * -3.6, p + T * (d * 4.0) + U * -3.6, BRIDGE_W + 2.0, 6.0, 0)
 
     # The near stump: a barricade across it 4 m short of the break, belongings heaped against it, the sign at the end.
     s_bar = s_n1 - 4.5
@@ -844,14 +838,16 @@ def build_bridge(coll):
         p = _at(s_bar - rnd.uniform(4.0, 11.0)) + S * rnd.uniform(-2.0, 2.0)
         _beam(b['junk'], p, p + U * 1.3 + T * 0.5, 0.9, 0.12, 0)
         _beam(b['steel'], p + U * 1.25 + T * 0.45 - S * 0.5, p + U * 1.25 + T * 0.45 + S * 0.5, 0.1, 0.1, 0)
-    # The sign: a board on two posts at the stump's end, turned to face the balcony and the coin viewer.
-    end = _at(s_n1 - 1.2)
+    # The sign: a board standing on the truss's last portal over the stump's end, like a border gantry's, turned to
+    # face the balcony and the coin viewer (so the truss's near side doesn't hide it).
+    end = _at(s_n1 - 0.9)
     to_eye = Vector((VIEWER_EYE.x - end.x, VIEWER_EYE.y - end.y, 0)).normalized()
     side = to_eye.cross(U).normalized()
-    sw, sh, sz0 = 4.4, 2.2, 1.7
+    sw, sh, sz0 = 4.4, 2.2, TRUSS_H + 0.35
     for sx in (-1, 1):
         q = end + side * (sx * sw * 0.36)
-        _beam(b['steel'], q, q + U * (sz0 + sh), 0.18, 0.18, 0)
+        _beam(b['steel'], q + U * (TRUSS_H - 0.2), q + U * (sz0 + sh), 0.18, 0.18, 0)
+    _beam(b['steel'], end + U * TRUSS_H - S * (BRIDGE_W / 2), end + U * TRUSS_H + S * (BRIDGE_W / 2), 0.3, 0.3, 0)
     c = end + U * (sz0 + sh / 2) + to_eye * 0.12
     sign_pts = [c + side * (sx * sw / 2) + U * (sz * sh / 2) for sx, sz in ((1, -1), (-1, -1), (-1, 1), (1, 1))]
     # The far stump: lamps on posts along it, still lit, and the lit gate it runs into on the far side.
@@ -867,9 +863,9 @@ def build_bridge(coll):
         q = g + S * (side_ * (BRIDGE_W / 2 + 1.4))
         _beam(b['masonry'], q + U * -1.0, q + U * 11.0, 2.6, 3.0, 0)
         _beam(b['masonry'], q + U * 11.0, q + U * 12.6, 3.2, 3.6, 0)
-        for zz in (5.0, 8.0):
-            w0 = q - T * 1.52 + U * zz
-            _quad(b['glow'], [w0 + S * -0.4, w0 + S * 0.4, w0 + S * 0.4 + U * 1.3, w0 + S * -0.4 + U * 1.3], 0)
+        for zz in (5.0, 8.0):                             # lit windows on the face toward the balcony (-y)
+            w0 = q + Vector((0, -1.33, zz))
+            _quad(b['glow'], [w0 + Vector((-0.4, 0, 0)), w0 + Vector((0.4, 0, 0)), w0 + Vector((0.4, 0, 1.3)), w0 + Vector((-0.4, 0, 1.3))], 0)
     _beam(b['masonry'], g + S * (-BRIDGE_W / 2 - 1.4) + U * 8.0, g + S * (BRIDGE_W / 2 + 1.4) + U * 8.0, 2.4, 3.0, 0)
     w0 = g - T * 0.3 + U * 0.2                              # the gate's mouth, lit from within
     _quad(b['glow'], [w0 + S * (-BRIDGE_W / 2 + 0.2), w0 + S * (BRIDGE_W / 2 - 0.2), w0 + S * (BRIDGE_W / 2 - 0.2) + U * 6.2,
@@ -880,7 +876,6 @@ def build_bridge(coll):
     names = {'masonry': 'AtriumCutBridgeMasonry', 'steel': 'AtriumCutBridgeSteel', 'rust': 'AtriumCutBridgeTwisted',
              'cable': 'AtriumCutBridgeCables', 'junk': 'AtriumCutBridgeJunk', 'cloth': 'AtriumCutBridgeBundles',
              'red': 'AtriumCutBridgeBoom', 'lamp': 'AtriumCutBridgeLamps', 'glow': 'AtriumCutBridgeGlow'}
-    import build_d17 as d17
     for k in keys:
         if not len(b[k].faces):
             b[k].free()
@@ -917,20 +912,48 @@ def build_bridge(coll):
 STENCIL_SIZE = (0.84, 0.42)
 # name: (centre x, centre z, the y to stand in front of (None: the first wall behind), why there)
 STENCILS = {
-    'WayRingC06': (72.6, 2.3, None, 'DL-06: over the service ramp\'s head, where the carrier brings him up to the gallery'),
-    'WayRingC07': (80.0, 2.05, None, 'DL-07: beside the residential door, the gallery\'s way on'),
-    'WayRingC08': (97.0, 2.3, None, 'DL-08: at the belt\'s end, by the way on to the cage'),
-    'WayRingC09': (118.4, 2.2, None, 'DL-09: at the balcony\'s end, over the stair down'),
+    'WayRingC06': (68.72, 1.0, None, "DL-06: on the sorting floor's back wall at its end, where the carriers go up the "
+                                     "service ramp to the gallery; under the UP IS FOR THEM stencil (top of it 1.4)"),
+    'WayRingC07': (80.09, 2.0, None, "DL-07: on the residential door's return wall, under EVERYONE UP"),
+    'WayRingC08': (96.1, 2.35, None, "DL-08: on the goods hall's back wall at the belt's end, before the chute and the "
+                                     "way on to the cage"),
+    'WayRingC09': (118.32, 2.2, 2.315, "DL-09: sprayed on a steel sheet wired to the porch rail at the balcony's end, "
+                                       "by the lobby's entrance"),
 }
+SHEET09 = (117.88, 118.76, 1.93, 2.47, 2.325)   # x0, x1, z0, z1, y of its face: hung on the porch rail (y 2.34)
 
 
 def ring_c_material():
-    """Shared by name with the other pass 4 modules: whichever runs first makes it."""
+    """The RING C stencil every scene shares: WayRingCMat, made by art/pass4/build_story_depot.py (which runs first in
+    the full build) from its ring_c.png; made here from the same function if this module runs without it."""
     mt = bpy.data.materials.get('WayRingCMat')
-    return mt if mt is not None else image_mat('WayRingCMat', 'ringc', rough=0.85)
+    if mt is not None:
+        return mt
+    import build_story_depot as depot
+    path = os.path.join(TEX, 'ring_c.png')
+    if not os.path.exists(path):
+        os.makedirs(TEX, exist_ok=True)
+        depot.make_ring_c(path)
+    TEXTURES['ringc'] = ('ring_c.png', depot.make_ring_c)
+    return image_mat('WayRingCMat', 'ringc', rough=0.85)
+
+
+def build_sheet09(coll):
+    """A dented steel sheet wired to the porch rail, for the DL-09 stencil (there is no wall at the balcony's end)."""
+    from build_d17 import add_torus
+    x0, x1, z0, z1, y = SHEET09
+
+    def sheet(bm):
+        bx(bm, (x0, x1), (y, y + 0.012), (z0, z1), 0, rot=None)
+        for x in (x0 + 0.08, x1 - 0.08):                          # wire loops over the top rail (z 2.58)
+            add_torus(bm, (x, y + 0.02, 2.53), (1, 0, 0), 0.06, 0.004, seg=10, rseg=3, mat=1)
+            add_torus(bm, (x, y + 0.02, 2.12), (1, 0, 0), 0.04, 0.004, seg=10, rseg=3, mat=1)
+    ob = solid('WayRingC09Sheet', sheet, ['ShutterSteel', 'DepotSteel'], coll)
+    note('WayRingC09Sheet', 'DL-09 the steel sheet the stencil is sprayed on, wired to the porch rail')
 
 
 def build_stencils(coll):
+    build_sheet09(coll)
     mat = ring_c_material()
     for name, (x, z, y, why) in STENCILS.items():
         if y is None:

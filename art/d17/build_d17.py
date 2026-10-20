@@ -966,7 +966,7 @@ def make_label_texture(path):
     us = Image.new('RGBA', (sw, sh), (0, 0, 0, 0))
     ud = ImageDraw.Draw(us)
     ured = (168, 26, 22, 255)
-    ud.rectangle((4, 4, sw - 5, sh - 5), outline=ured, width=11)
+    ud.rectangle((4, 4, sw - 5, sh - 5), outline=ured, width=12)
     ud.rectangle((20, 20, sw - 21, sh - 21), outline=ured, width=3)
     size = 96
     while True:                                                                   # fit the word to the box
@@ -976,7 +976,7 @@ def make_label_texture(path):
             sf = ImageFont.load_default()
             break
         tb = ud.textbbox((0, 0), 'UNDELIVERED', font=sf)
-        if tb[2] - tb[0] <= sw - 64 or size < 30:
+        if tb[2] - tb[0] <= sw - 52 or size < 30:
             break
         size -= 2
     tb = ud.textbbox((0, 0), 'UNDELIVERED', font=sf)
@@ -995,8 +995,8 @@ def make_label_texture(path):
     ox, oy = 404, 292
     # Ink, not paint: multiply it into the paper so the pen and the crayon show through it.
     layer = Image.new('RGB', img.size, (255, 255, 255))
-    a = us.split()[3].point(lambda v: int(v * 0.92))
-    tint = Image.new('RGB', us.size, (190, 40, 34))
+    a = us.split()[3]
+    tint = Image.new('RGB', us.size, (176, 26, 22))
     layer.paste(Image.composite(tint, Image.new('RGB', us.size, (255, 255, 255)), a), (ox, oy))
     img = ImageChops.multiply(img, layer)
     img = img.filter(ImageFilter.GaussianBlur(1.0))

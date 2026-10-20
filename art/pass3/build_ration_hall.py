@@ -1023,6 +1023,14 @@ class Painted:
         return me
 
 
+def _axes(xdir, ydir):
+    """A 4x4 rotation whose local x runs along xdir and local y as near ydir as can be."""
+    x = Vector(xdir).normalized()
+    y = Vector(ydir) - x * Vector(ydir).dot(x)
+    y = y.normalized() if y.length > 1e-6 else Vector((0, 0, 1)).cross(x).normalized()
+    return Matrix((x, y, x.cross(y))).transposed().to_4x4()
+
+
 def _cap_height(x, y, cap):
     """Top of a capsule (a, b, half-width, half-height) lying on the floor, at plan point (x, y); 0 outside."""
     (ax, ay, az), (bx, by, bz), rl, rv = cap
@@ -1039,18 +1047,20 @@ def _cap_height(x, y, cap):
 # sheet's extent and resolution, and the feet left out at its foot end (heel, toe, width, thickness, width axis).
 SHROUDS = {
     'adult': dict(
-        caps=[((-0.69, 0, 0.095), (-0.69, 0, 0.095), 0.10, 0.10),                 # head
-              ((-0.60, 0, 0.07), (-0.54, 0, 0.08), 0.055, 0.05),                   # neck
-              ((-0.48, 0, 0.10), (-0.10, 0, 0.085), 0.17, 0.09),                   # chest to belly, sunk
-              ((-0.08, 0, 0.08), (0.04, 0, 0.08), 0.16, 0.08),                     # pelvis
-              ((-0.46, 0.215, 0.05), (-0.18, 0.225, 0.045), 0.045, 0.045), ((-0.46, -0.215, 0.05), (-0.18, -0.225, 0.045), 0.045, 0.045),
-              ((-0.18, 0.225, 0.045), (0.05, 0.2, 0.04), 0.04, 0.04), ((-0.18, -0.225, 0.045), (0.05, -0.2, 0.04), 0.04, 0.04),
-              ((0.05, 0.2, 0.035), (0.13, 0.19, 0.03), 0.04, 0.03), ((0.05, -0.2, 0.035), (0.13, -0.19, 0.03), 0.04, 0.03),
-              ((0.04, 0.09, 0.065), (0.40, 0.095, 0.06), 0.075, 0.06), ((0.04, -0.09, 0.065), (0.40, -0.095, 0.06), 0.075, 0.06),
-              ((0.40, 0.095, 0.06), (0.70, 0.09, 0.045), 0.055, 0.045), ((0.40, -0.095, 0.06), (0.70, -0.09, 0.045), 0.055, 0.045)],
-        sheet=(-0.84, 0.64, -0.32, 0.32, 38, 16),
-        feet=[((0.66, 0.09, 0.045), (0.705, 0.105, 0.195), 0.07, 0.05, (0, 1, 0)),
-              ((0.66, -0.09, 0.045), (0.705, -0.105, 0.195), 0.07, 0.05, (0, 1, 0))],
+        caps=[((-0.69, 0, 0.11), (-0.69, 0, 0.11), 0.105, 0.11),                  # head
+              ((-0.60, 0, 0.07), (-0.55, 0, 0.075), 0.06, 0.05),                   # neck
+              ((-0.50, 0, 0.11), (-0.32, 0, 0.11), 0.19, 0.11),                    # chest and shoulders
+              ((-0.30, 0, 0.09), (-0.10, 0, 0.065), 0.16, 0.065),                  # the belly, sunk
+              ((-0.08, 0, 0.08), (0.04, 0, 0.08), 0.17, 0.08),                     # pelvis
+              ((-0.46, 0.215, 0.06), (-0.18, 0.225, 0.05), 0.045, 0.05), ((-0.46, -0.215, 0.06), (-0.18, -0.225, 0.05), 0.045, 0.05),
+              ((-0.18, 0.225, 0.05), (0.05, 0.2, 0.045), 0.04, 0.045), ((-0.18, -0.225, 0.05), (0.05, -0.2, 0.045), 0.04, 0.045),
+              ((0.05, 0.2, 0.04), (0.13, 0.19, 0.035), 0.04, 0.035), ((0.05, -0.2, 0.04), (0.13, -0.19, 0.035), 0.04, 0.035),
+              ((0.04, 0.09, 0.07), (0.40, 0.085, 0.065), 0.075, 0.07), ((0.04, -0.09, 0.07), (0.40, -0.085, 0.065), 0.075, 0.07),
+              ((0.40, 0.085, 0.065), (0.66, 0.08, 0.05), 0.055, 0.05), ((0.40, -0.085, 0.065), (0.66, -0.08, 0.05), 0.055, 0.05),
+              ((0.70, 0.09, 0.19), (0.70, 0.09, 0.19), 0.06, 0.055), ((0.70, -0.09, 0.19), (0.70, -0.09, 0.19), 0.06, 0.055)],   # feet, toes up
+        sheet=(-0.86, 0.80, -0.29, 0.29, 42, 16),
+        feet=[((0.62, 0.08, 0.05), (0.70, 0.09, 0.245), 0.075, 0.055, (0, 1, 0)),
+              ((0.62, -0.08, 0.05), (0.70, -0.09, 0.245), 0.075, 0.055, (0, 1, 0))],
         tag=1, length=1.65),
     'curled': dict(                                                                   # on its side, knees drawn up
         caps=[((-0.50, 0.06, 0.10), (-0.50, 0.06, 0.10), 0.10, 0.10),
@@ -1059,10 +1069,11 @@ SHROUDS = {
               ((0.0, 0.06, 0.14), (0.06, 0.06, 0.14), 0.13, 0.16),
               ((0.06, 0.0, 0.13), (0.28, -0.26, 0.12), 0.08, 0.11),
               ((0.28, -0.26, 0.10), (0.46, -0.04, 0.08), 0.06, 0.09),
-              ((-0.30, -0.10, 0.20), (-0.08, -0.20, 0.17), 0.06, 0.06)],
-        sheet=(-0.64, 0.44, -0.44, 0.30, 30, 20),
-        feet=[((0.45, -0.02, 0.05), (0.52, -0.13, 0.05), 0.06, 0.045, (0, 0, 1)),
-              ((0.46, 0.0, 0.13), (0.54, -0.11, 0.135), 0.06, 0.045, (0, 0, 1))],
+              ((-0.30, -0.10, 0.20), (-0.08, -0.20, 0.17), 0.06, 0.06),
+              ((0.48, -0.03, 0.05), (0.54, -0.12, 0.05), 0.05, 0.05), ((0.49, -0.01, 0.13), (0.55, -0.10, 0.13), 0.05, 0.05)],
+        sheet=(-0.64, 0.62, -0.44, 0.30, 32, 20),
+        feet=[((0.45, -0.02, 0.05), (0.55, -0.12, 0.10), 0.06, 0.045, (0, 0, 1)),
+              ((0.46, 0.0, 0.13), (0.56, -0.10, 0.18), 0.06, 0.045, (0, 0, 1))],
         tag=1, length=1.2),
 }
 SHROUDS['child'] = dict(SHROUDS['adult'], length=1.02, scale=(0.62, 0.72, 0.72))
@@ -1083,14 +1094,13 @@ def shroud(kind, seed=0.0, rope=False):
     wooden toggle lying across the toes (D-17's grip). Returns (painted, toggle position or None)."""
     spec = SHROUDS[kind]
     caps, (x0, x1, y0, y1, nx, ny), feet = _scaled(spec)
-    rnd = random.Random(int(seed * 1000) + 77)
     xs = [x0 + (x1 - x0) * i / nx for i in range(nx + 1)]
     ys = [y0 + (y1 - y0) * j / ny for j in range(ny + 1)]
     H = [[max(_cap_height(x, y, c) for c in caps) for y in ys] for x in xs]
     # Drape: a cone dilation (the sheet tents from the high points), then a blur, then creases.
-    k = 1.5
+    k = 2.4
     dx, dy = (x1 - x0) / nx, (y1 - y0) / ny
-    rad = 0.16
+    rad = 0.1
     ri, rj = int(rad / dx) + 1, int(rad / dy) + 1
     S = [[0.0] * (ny + 1) for _ in range(nx + 1)]
     for i in range(nx + 1):
@@ -1104,7 +1114,7 @@ def shroud(kind, seed=0.0, rope=False):
                         if v > best:
                             best = v
             S[i][j] = best
-    for _ in range(2):
+    for _ in range(1):
         T = [row[:] for row in S]
         for i in range(1, nx):
             for j in range(1, ny):
@@ -1129,38 +1139,35 @@ def shroud(kind, seed=0.0, rope=False):
     pts.append(drop)
     P = Painted()
     P.grid('sheet', pts, nx + 1, ny)
-    # The legs where they leave the sheet, and the feet: bare, dry, toes up; a ration tag on a string.
-    for (h, t, w, th, ax) in feet:
-        h, t = Vector(h), Vector(t)
-        leg = h - Vector((0.1, 0, 0)) * (1 if ax == (0, 1, 0) else 0.0) - (t - h).normalized() * (0.0 if ax == (0, 1, 0) else 0.08)
-        P.add('cloth', lambda bm, a=leg, b=h: add_cyl(bm, a + Vector((0, 0, 0.005)), b + Vector((0, 0, 0.01)), w * 0.42, w * 0.38, mat=0, seg=8))
-        P.add('bone', lambda bm, a=h, b=t: d17.add_wedge(bm, a, b, w, w * 1.05, th, th * 0.6, ax, mat=0))
-        P.add('bone', lambda bm, b=t: add_sphere(bm, b, th * 0.55, mat=0, seg=8, scale=(1.0, 1.4, 0.8)))
-    th_, tt = Vector(feet[-1][0]), Vector(feet[-1][1])
+    # The ration tag: tied to a toe under the sheet, its string out from under the hem at the foot end.
+    tt = Vector(feet[-1][1])
     side = -1.0 if tt.y <= 0 else 1.0
-    knot = tt + Vector((0.004, side * 0.012, -0.012))
-    hang = knot + Vector((0.035, side * 0.05, -0.05))
+    knot = Vector((x1 - 0.01, tt.y, max(0.04, min(tt.z, 0.12))))
+    hang = Vector((x1 + 0.05, tt.y + side * 0.03, knot.z - 0.03))
     P.add('rope', lambda bm: add_cyl(bm, knot, hang, 0.0025, mat=0, seg=4))
     tw, tl = 0.05, 0.085                                     # the tag, hanging at 45 degrees to the body, two-sided
     nrm = Vector((0.707, side * 0.707, 0.0))
     up = Vector((0, 0, 1))
     for n_ in (nrm, -nrm):
         r = up.cross(n_)                                     # text right, so the face's normal is r x up = n_
-        c = hang - Vector((0, 0, tl / 2 + 0.004)) + n_ * 0.0008
+        c = hang - Vector((0, 0, tl / 2 + 0.002)) + n_ * 0.0008
         P.quads('tag', [[c - r * tw / 2 - up * tl / 2, c + r * tw / 2 - up * tl / 2,
                          c + r * tw / 2 + up * tl / 2, c - r * tw / 2 + up * tl / 2]])
     grip = None
     if rope:
-        # Rope round each ankle, a knot between them, two strands up over the toes to a wooden toggle lying across.
-        for (h, t, w, th, ax) in feet:
-            P.add('rope', lambda bm, c=Vector(h) + Vector((0.0, 0, 0.012)): add_torus(bm, c, (1, 0, 0), w * 0.5, 0.009, mat=0, seg=12, rseg=5))
-        kc = Vector(((feet[0][0][0] + feet[1][0][0]) / 2 + 0.01, 0.0, 0.075))
+        # Rope bound round the sheet at the ankles (an oval band round both), knotted on top, two strands on to a
+        # wooden toggle lying across the tented toes.
+        ax_ = feet[0][0][0] - 0.05
+        bh = max(_cap_height(ax_, y, c) for y in (-0.08, 0.0, 0.08) for c in caps) + 0.03
+
+        def band(bm):
+            vs = add_torus(bm, (ax_, 0, bh / 2), (1, 0, 0), 0.15, 0.011, mat=0, seg=20, rseg=5)
+            bmesh.ops.scale(bm, vec=(1.0, 1.0, bh / 2 / 0.15), space=Matrix.Translation((-ax_, 0, -bh / 2)), verts=vs)
+        P.add('rope', band)
+        kc = Vector((ax_, 0.0, bh + 0.012))
         P.add('rope', lambda bm: add_sphere(bm, kc, 0.022, mat=0, seg=8))
-        for (h, t, w, th, ax) in feet:
-            P.add('rope', lambda bm, a=Vector(h) + Vector((0, 0, 0.012)): add_cyl(bm, a, kc, 0.008, mat=0, seg=5))
-        toes_top = max(f[1][2] for f in feet) + 0.03
-        gx = max(f[1][0] for f in feet)
-        grip = Vector((gx, 0.0, toes_top + 0.018))
+        top = max(_cap_height(feet[0][1][0], f[1][1], c) for f in feet for c in caps) + 0.012
+        grip = Vector((feet[0][1][0] + 0.01, 0.0, top + 0.02))
         for s in (-1, 1):
             P.add('rope', lambda bm, s=s: add_cyl(bm, kc, grip + Vector((0, s * 0.075, 0)), 0.008, mat=0, seg=5))
             P.add('rope', lambda bm, s=s: add_torus(bm, grip + Vector((0, s * 0.075, 0)), (0, 1, 0), 0.022, 0.007, mat=0, seg=10, rseg=4))
@@ -1178,15 +1185,15 @@ def shroud(kind, seed=0.0, rope=False):
 
 # Where the dead lie (x, y, z, turn in degrees, shape): feet to +x before the turn.
 FAMINE = [
-    ('RationDead01', 48.47, 1.885, 0.0, -90, 'adult'),      # by the end wall, feet to the camera
-    ('RationDead02', 49.09, 1.885, 0.002, -90, 'adult'),
-    ('RationDead03', 48.75, 0.82, 0.004, 0, 'child'),       # in front of them, small
-    ('RationDead04', 50.95, 0.98, 0.0, 0, 'adult'),         # right of the shrine
-    ('RationDead05', 50.78, 1.85, 0.002, 180, 'adult'),     # between the columns
-    ('RationDead06', 52.35, 1.85, 0.004, 180, 'curled'),
-    ('RationDead07', 51.95, 2.5, 0.0, 0, 'adult'),
+    ('RationDead01', 48.47, 1.985, 0.0, -90, 'adult'),      # a row, feet to the camera: two by the end wall,
+    ('RationDead02', 49.09, 1.985, 0.002, -90, 'adult'),
+    ('RationDead03', 50.20, 1.985, 0.0, -90, 'adult'),      # four between the columns, under the vent
+    ('RationDead04', 50.80, 1.985, 0.002, -90, 'adult'),
+    ('RationDead05', 51.40, 1.985, 0.0, -90, 'adult'),
+    ('RationDead06', 52.00, 1.985, 0.002, -90, 'adult'),
+    ('RationDead07', 48.75, 0.86, 0.004, 0, 'child'),       # in front of the row, by the door: small
     ('RationDead08', 49.25, 3.15, 0.37, 0, 'adult'),        # on the cots
-    ('RationDead09', 52.0, 3.22, 0.37, 180, 'adult'),
+    ('RationDead09', 52.0, 3.22, 0.37, 180, 'curled'),
 ]
 
 
@@ -1291,7 +1298,7 @@ def build_weighin(P, coll):
         f = tmp.faces.new([tmp.verts.new(p) for p in t])
         for lp, (a, b) in zip(f.loops, uv):
             lp[uvl].uv = (u0 + (u1 - u0) * a, v0 + (v1 - v0) * b)
-    bmesh.ops.remove_doubles(tmp, verts=tmp.verts, dist=1e-6)
+    bmesh.ops.remove_doubles(tmp, verts=tmp.verts[:], dist=1e-6)
     Pw._merge(tmp)
     Pw.quads('sign', [_face_quad((x, 0.845), 0.4, 0.2, 0.604)])
     Pw.obj('RationWeighIn', 'WeighInMat', coll)
@@ -1326,7 +1333,7 @@ def build_weighin(P, coll):
 
 def build_paint(coll):
     """NO RATIONS / GRADE 4, slapped in whitewash on the wall over the counter."""
-    decal('RationNoRations', 'NoRationsMat', 53.65, 56.15, 2.76, 3.70, BACK_Y - 0.02, coll)
+    decal('RationNoRations', 'NoRationsMat', 53.65, 56.15, 2.9, 3.84, BACK_Y - 0.02, coll)
 
 
 # --------------------------------------------------------------------------
