@@ -1383,8 +1383,11 @@ function mantleAt(f) {
 
 function wantsRun(move) {
   const shift = input.shift;
-  if (input.axis) return Math.abs(input.axis) > 0.65 ? game.autorun !== shift : false;
-  return game.autorun !== shift;
+  // Pass 4: by water the White lives in, he goes carefully whatever the auto-run setting; Shift (or B) still runs.
+  const careful = white.w && (white.w.part === 'hunt' || white.w.part === 'scare') && game.x > white.w.x0 - 2.0 && game.x < white.w.x1 + 2.0;
+  const auto = game.autorun && !careful;
+  if (input.axis) return Math.abs(input.axis) > 0.65 ? auto !== shift : false;
+  return auto !== shift;
 }
 
 function updatePlayer(dt) {
@@ -4281,7 +4284,7 @@ function glanceCurio() {
   if (game.act || game.hold) return null;
   let best = null;
   for (const c of CURIOS) {
-    if (!c.early || curioFound[c.id] || c.region !== game.region || (c.region === 3 && !!c.upper !== !!game.upper) || (c.cond && !c.cond())) continue;
+    if (!c.early || curioFound[c.id] || (c.glanceT || 0) > 2.2 || c.region !== game.region || (c.region === 3 && !!c.upper !== !!game.upper) || (c.cond && !c.cond())) continue;
     const d = Math.abs(game.x - c.x);
     if (d < 1.8 && d > 0.15 && (!best || d < best.d)) best = { c, d };
   }
@@ -4480,24 +4483,32 @@ function knockBack(dir) {
   setClip(actions.Knockback ? 'Knockback' : 'Startle', 0.06); Sound.worried();
 }
 // Rings on the water where it moves near the surface: the tell that it is coming.
+// Pass 4: a fixed pool of ripples, built at load (so the warm-up compiles their shader) and reused. Creating and
+// disposing a material per ripple released the shader whenever the last ripple faded, and the next one recompiled it.
+function buildRipples() {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d');
+  g.strokeStyle = 'rgba(200,215,220,0.9)'; g.lineWidth = 3; g.beginPath(); g.arc(32, 32, 28, 0, Math.PI * 2); g.stroke();
+  const mat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const geo = new THREE.PlaneGeometry(1, 1);
+  refs.ripplePool = Array.from({ length: 25 }, () => {
+    const m = new THREE.Mesh(geo, mat.clone()); m.rotation.x = -Math.PI / 2; m.visible = false; m.frustumCulled = false; m.userData.t = 1e9; scene.add(m); return m;
+  });
+}
 function spawnRipple(x, y, z, size) {
-  if (!refs.rippleMat) {
-    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d');
-    g.strokeStyle = 'rgba(200,215,220,0.9)'; g.lineWidth = 3; g.beginPath(); g.arc(32, 32, 28, 0, Math.PI * 2); g.stroke();
-    refs.rippleMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  }
+  if (!refs.ripplePool) buildRipples();
   if (white.ripples.length > 24 || (white.lastRipple && game.clock - white.lastRipple < 0.18)) return;
+  const m = refs.ripplePool.find((r) => !r.visible);
+  if (!m) return;
   white.lastRipple = game.clock;
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), refs.rippleMat.clone());
-  m.rotation.x = -Math.PI / 2; m.position.set(x, y + 0.01, z); m.userData.t = 0; m.userData.size = size;
-  scene.add(m); white.ripples.push(m);
+  m.position.set(x, y + 0.01, z); m.userData.t = 0; m.userData.size = size; m.visible = true;
+  white.ripples.push(m);
 }
 function updateRipples(dt) {
   for (let i = white.ripples.length - 1; i >= 0; i--) {
     const m = white.ripples[i]; m.userData.t += dt;
     const k = m.userData.t / 1.4, r = m.userData.size + k * 0.9;
     m.scale.set(r, r, 1); m.material.opacity = 0.2 * (1 - k);
-    if (k >= 1) { scene.remove(m); m.material.dispose(); white.ripples.splice(i, 1); }
+    if (k >= 1) { m.visible = false; white.ripples.splice(i, 1); }
   }
 }
 
@@ -4822,6 +4833,17 @@ const HINTS = [
   { when: () => game.doorOpen < 1 && game.x > 8.6 && game.x < 10.0, at: new THREE.Vector3(CRANK_X, 0.45, -0.2), key: 'use' },
   { when: () => game.doorOpen >= 1 && game.x > 9.0, at: new THREE.Vector3((DOOR.x0 + DOOR.x1) / 2, 0.5, -0.65), key: 'move' },
 ];
+const _lq = new THREE.Quaternion(), LOOK_YAW = THREE.MathUtils.degToRad(70), LOOK_PITCH = THREE.MathUtils.degToRad(35), _up = new THREE.Vector3(0, 1, 0);
+function headLook(at) {
+  const head = refs.head.getWorldPosition(tv1), d = tv2.subVectors(at, head);
+  const yawTo = Math.atan2(d.x, d.z), dist = Math.hypot(d.x, d.z);
+  let dy = Math.atan2(Math.sin(yawTo - game.yaw), Math.cos(yawTo - game.yaw));
+  if (Math.abs(dy) > THREE.MathUtils.degToRad(110) || dist + Math.abs(d.y) > 6) return null;      // behind him, or too far to mean anything
+  dy = THREE.MathUtils.clamp(dy, -LOOK_YAW, LOOK_YAW);
+  const pitch = THREE.MathUtils.clamp(-Math.atan2(d.y, Math.max(dist, 0.05)), -LOOK_PITCH, LOOK_PITCH);
+  const right = tv3.set(Math.cos(game.yaw + dy), 0, -Math.sin(game.yaw + dy));
+  return new THREE.Quaternion().setFromAxisAngle(_up, dy).premultiply(new THREE.Quaternion().setFromAxisAngle(right, pitch));
+}
 function hintTarget() {
   const h = HINTS.find((h) => (h.region || 1) === game.region && h.when());
   return h ? { key: h.key, at: typeof h.at === 'function' ? h.at() : h.at } : null;
@@ -4857,20 +4879,22 @@ function updateCharacter(dt, playing) {
   const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2) : REVEAL_LOOK;
   // The early curiosities: he turns his head to each as he passes, the first time.
   const glance = !looking && glanceCurio();
+  if (glance) glance.glanceT = (glance.glanceT || 0) + dt;                // one look each, the first time he passes
   let hint = looking ? { at: lookAt, key: 'move' } : glance ? { at: curioPoint(glance), key: 'use', glance: true } : hintTarget();
   const idle = looking || glance ? 99 : game.clock - input.lastActivity;
   // Riding the cage counts as standing: the catch's hint must show while the ride runs.
   const free = (game.grounded && !game.act) || (game.act && game.act.kind === 'cage');
   const want = hint && idle > HINT_LOOK && free && !game.mantle && !game.exit && !game.transit && !game.riding ? 1 : 0;
   game.hintWeight += (want - game.hintWeight) * Math.min(1, dt * 2.5);
-  if (game.hintWeight > 0.01 && hint) {
-    const headPos = refs.head.getWorldPosition(tv1);
-    const dir = tv2.subVectors(hint.at, headPos).normalize();
-    const fwd = new THREE.Vector3(Math.sin(game.yaw), 0, Math.cos(game.yaw));
-    const q = new THREE.Quaternion().setFromUnitVectors(fwd, dir);
-    q.premultiply(new THREE.Quaternion().setFromAxisAngle(dir, THREE.MathUtils.degToRad(10)));
-    rotateBoneWorld(refs.head, new THREE.Quaternion().slerp(q, game.hintWeight * 0.85));
-    if (idle > HINT_LEAN && !looking && !hint.glance && !game.hold) rotateBoneWorld(refs.body, new THREE.Quaternion().slerp(q, game.hintWeight * 0.15));
+  // Pass 4: the look is limited to what a neck can do (70 degrees either way, 35 up or down), and a target behind him
+  // is let go rather than twisted round to; the old free rotation flipped his head when a target was nearly behind.
+  const q = hint && headLook(hint.at);
+  if (!q) game.hintWeight = Math.max(0, game.hintWeight - dt * 4);
+  else game.lastLook = q.clone();
+  if (game.hintWeight > 0.01 && (q || game.lastLook)) {
+    const qq = q || game.lastLook;
+    rotateBoneWorld(refs.head, _lq.identity().slerp(qq, game.hintWeight * 0.85));
+    if (q && idle > HINT_LEAN && !looking && !hint.glance && !game.hold) rotateBoneWorld(refs.body, _lq.identity().slerp(qq, game.hintWeight * 0.15));
   }
   const cap = document.getElementById('keycap');
   // The very first curiosity shows its prompt at once: that is how the player learns props can be used.
@@ -5478,6 +5502,7 @@ window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.p
 // Compile every shader variant the regions' lights will ask for, and upload every texture, before play. A region's
 // lights switching on changes the light count, and three.js answers that by recompiling shaders: mid-game, a stall.
 function warmUp() {
+  if (!refs.ripplePool) buildRipples();
   const shown = [];
   scene.traverse((o) => { if ((o.isMesh || o.isPoints || o.isLine) && !o.visible) { o.visible = true; shown.push(o); } });
   const keys = ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'aoMap'];

@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl04'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl05'))
-for _d in ('sorting_hall', 'racks', 'cage', 'pass2', 'pass3', 'white'):
+for _d in ('sorting_hall', 'racks', 'cage', 'pass2', 'pass3', 'pass4', 'white'):
     sys.path.insert(0, os.path.join(HERE, '..', _d))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
@@ -49,6 +49,9 @@ import build_curios as curios  # noqa: E402
 import build_ration_hall as ration_hall  # noqa: E402
 import build_up_only as up_only  # noqa: E402
 import build_lore as lore  # noqa: E402
+import build_story_depot as story_depot  # noqa: E402
+import build_story_shafts as story_shafts  # noqa: E402
+import build_story_ringc as story_ringc  # noqa: E402
 import build_white as white  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
@@ -1380,6 +1383,11 @@ def main():
     ration_hall.build_set(sys.modules[__name__], m, set_coll)
     up_only.build_set(sys.modules[__name__], m, set_coll)
     lore.build_set(sys.modules[__name__], m, set_coll)
+    # Pass 4: the story set pieces (each module owns its scenes; see docs/chapter1_pass4_plan.md).
+    bpy.context.view_layer.update()
+    story_depot.build_set(sys.modules[__name__], m, set_coll)
+    story_shafts.build_set(sys.modules[__name__], m, set_coll)
+    story_ringc.build_set(sys.modules[__name__], m, set_coll)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
@@ -1417,6 +1425,9 @@ def main():
     ration_hall.add_clips(sys.modules[__name__], arm)
     up_only.add_clips(sys.modules[__name__], arm)
     lore.add_clips(sys.modules[__name__], arm)
+    story_depot.add_clips(sys.modules[__name__], arm)
+    story_shafts.add_clips(sys.modules[__name__], arm)
+    story_ringc.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False

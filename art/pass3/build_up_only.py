@@ -224,11 +224,13 @@ class Batch:
         self.mats.append(mat)
         return len(self.mats) - 1
 
-    def done(self, name, coll, origin=None, sharp=35):
+    def done(self, name, coll, origin=None, sharp=35, local=False):
+        """origin: where the object's origin goes. Geometry built in world coordinates is moved to it; geometry already
+        built in the object's own space (local=True) is left as it is."""
         if not len(self.bm.verts):
             self.bm.free()
             return None
-        if origin is not None:
+        if origin is not None and not local:
             bmesh.ops.translate(self.bm, vec=-Vector(origin), verts=self.bm.verts)
         ob = d17.mesh_object(name, self.bm, self.mats, coll, sharp=sharp)
         if origin is not None:
@@ -1123,7 +1125,7 @@ def build_lift_front(U, coll):
         for sy in (-1, 1):                                                     # hangers on the track
             add_cyl(B.bm, (sy * 0.18, -0.02, gh + 0.05), (sy * 0.18, 0.02, gh + 0.05), 0.025, seg=10, mat=B('steel'))
             bx(B.bm, (sy * 0.18 - 0.01, sy * 0.18 + 0.01), (-0.006, 0.006), (gh - 0.04, gh + 0.05), B('steel'))
-        B.done(name, coll, origin=(xc, GATE_Y, DECK))
+        B.done(name, coll, origin=(xc, GATE_Y, DECK), local=True)
 
 
 def build_panel(U, coll):
@@ -1240,7 +1242,7 @@ def build_car(U, coll):
         bx(B.bm, (x - 0.03, x + 0.03), (py0 + 0.1, py1 - 0.1), (-0.22, -0.16), iron, 0.006)
     add_cyl(B.bm, (px0 + 0.2, 0.0, -0.24), (px1 - 0.05, 0.0, -0.3), 0.018, seg=8, mat=iron)
     add_cyl(B.bm, (px1 - 0.05, 0.0, -0.36), (px1 - 0.05, 0.0, -0.18), 0.05, seg=12, mat=iron)
-    B.done('LiftCar', coll, origin=(CAR_C[0], CAR_C[1], DECK))
+    B.done('LiftCar', coll, origin=(CAR_C[0], CAR_C[1], DECK), local=True)
     car = bpy.data.objects['LiftCar']
 
     # LiftFloorPlate: the weighing plate, chequered, flush with the floor; origin at its top centre. It dips 0.01.
@@ -1290,7 +1292,7 @@ def build_car(U, coll):
             add_box(B.bm, (math.cos(a) * SHEAVE_R * 0.5, -0.055, math.sin(a) * SHEAVE_R * 0.5), (SHEAVE_R * 0.75, 0.03, 0.05),
                     mat=iron, rot=_ry(-a))
         bx(B.bm, (SHEAVE_R * 0.55, SHEAVE_R * 0.75), (-0.075, -0.065), (-0.025, 0.025), B('yellow'))     # a paint mark, so it reads turning
-        B.done(name, coll, origin=(sx, ROPE_Y, SHEAVE_Z))
+        B.done(name, coll, origin=(sx, ROPE_Y, SHEAVE_Z), local=True)
 
 
 # --------------------------------------------------------------------------
@@ -1336,7 +1338,7 @@ def build_service(U, coll):
     add_cyl(B.bm, (0, -0.022, 0), (0, -0.015, 0), 0.02, seg=10, mat=B('bright'))
     knob = Vector((CRANK_R * math.cos(math.radians(30)), 0, CRANK_R * math.sin(math.radians(30))))
     add_cyl(B.bm, knob, knob + Vector((0, -0.07, 0)), 0.014, seg=10, mat=B('bright'))
-    B.done('ServiceCrank', coll, origin=CRANK)
+    B.done('ServiceCrank', coll, origin=CRANK, local=True)
 
     # ServiceChain: the run from the drum up to the first sprocket; the game slides it along z (pitch 0.06) as he winds.
     bm = bmesh.new()
@@ -1365,7 +1367,7 @@ def build_service(U, coll):
         sign(B, (s_ * (t + 0.006), -0.05, 1.22), 0.22, 0.22, R_SERVICE, B('atlas'), face=(s_, 0, 0))
     add_torus(B.bm, (0, ya - yc + 0.1, h + 0.04), (1, 0, 0), 0.03, 0.008, mat=B('steel'), seg=12, rseg=4)     # its lifting eye
     chain(B.bm, (0, ya - yc + 0.1, h + 0.07), (0, ya - yc + 0.1, h + 0.25), mat=B('steel'))
-    B.done('ServiceDoor', coll, origin=(SDOOR[0], yc, DECK))
+    B.done('ServiceDoor', coll, origin=(SDOOR[0], yc, DECK), local=True)
     # The casing's front, toward the camera, banded too; a caged work lamp over the crank (CrankLamp).
     B = Batch(U)
     bx(B.bm, (SDOOR[0] - 0.08, SDOOR[0] + 0.08), (SDOOR[1][0] - 0.065, SDOOR[1][0] - 0.06), (CASING_Z, 5.0), B('yellow'))
