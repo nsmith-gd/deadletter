@@ -4808,6 +4808,14 @@ const HINTS = [
   // The Chapter 1 rework
   { region: 2, when: () => game.ch1.box.state === 'floor' && !game.hold && game.x > SH.slotX && game.x < SH.table.x0 && game.y < 0.05, at: () => new THREE.Vector3(game.ch1.box.x, 0.3, 0), key: 'use' },
   { region: 2, when: () => game.ch1.courier.state === 'free' && !game.hold && game.x > RK.courierX && game.x < RK.door.x0, at: () => new THREE.Vector3(game.ch1.courier.x + RK.loopOff, 0.46, RK.courierZ), key: 'use' },
+  // DL-05: the drum under the shutter's line, then the winch.
+  { region: 2, when: () => game.ch1.drum.state === 'free' && !game.hold && game.x > RATION5.x0 + 2 && game.x < RH5.drum1, at: () => new THREE.Vector3(game.ch1.drum.x - 0.2, 0.55, RH5.drumZ), key: 'use' },
+  { region: 2, when: () => game.ch1.drum.state === 'set' && game.ch1.rh.h < 0.1 && !game.act && game.x > RATION5.x0 && game.x < RH5.shutterX, at: new THREE.Vector3(RH5.winchX, 0.5, -0.2), key: 'use' },
+  // DL-10: the suitcase, into the car, the service crank, the counterweight's own UP.
+  { region: 4, when: () => game.x > UPONLY.x0 && game.ch1.uo.case.state === 'floor' && !game.hold, at: () => new THREE.Vector3(game.ch1.uo.case.x, DECK + 0.3, 0), key: 'use' },
+  { region: 4, when: () => game.x > UPONLY.x0 && game.hold === 'item' && game.carry && game.carry.key === 'case', at: new THREE.Vector3(UO.car.mid, DECK + 0.4, -0.7), key: 'use' },
+  { region: 4, when: () => game.x > UPONLY.x0 && game.ch1.uo.loaded && game.ch1.uo.door < 1 && !game.act, at: new THREE.Vector3(UO.crankStand, DECK + 0.45, -0.2), key: 'use' },
+  { region: 4, when: () => game.x > UPONLY.x0 && game.ch1.uo.loaded && game.ch1.uo.door >= 1 && game.ch1.uo.phase === 'idle' && !game.act, at: new THREE.Vector3(UO.cw.x1 - 0.08, DECK + 0.56, 0.12), key: 'use' },
   { region: 3, when: () => !game.upper && game.ch1.bucket < 2 && !game.hold && game.route === 'exit' && game.belt.running, at: () => { const w = game.ch1.weights.find((q) => q.state === 'floor'); return new THREE.Vector3(w ? w.x : HP.weights[0], 0.3, 0); }, key: 'use' },
   { region: 4, when: () => game.act && game.act.kind === 'cage' && game.ch1.cage.phase === 'stall', at: () => new THREE.Vector3(CG.shaft.x0 + 0.2, game.ch1.cage.y + 0.5, -0.2), key: 'use' },
   { region: 5, when: () => game.ch1.duct.state === 'free' && !game.hold && game.x < game.ch1.duct.x, at: () => new THREE.Vector3(game.ch1.duct.x - DUCT9.half, 0.46, 0), key: 'use' },

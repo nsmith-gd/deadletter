@@ -158,5 +158,5 @@ Built in final world x, after the scene gap is opened (`insert_scenes()` in `art
   for "Someone Home"), or should they be stubs, long out?
 - **The wrong assumption.** The slam is loud and startles him, but costs nothing. Is that enough to read as "it won't
   stay up", or do players just wind again?
-- **Hints.** No idle look is authored yet for the drum or the winch.
+- **Hints.** When he stands idle he looks at the drum, then (with the drum set) the winch; the assist option shows the Use prompt there.
 - **The drawing.** At the game's distance, does it read as D-17 and a house, or does it need a close-up?

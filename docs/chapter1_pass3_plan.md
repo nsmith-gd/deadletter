@@ -1,6 +1,7 @@
 # Chapter 1, pass 3: clarity, two more puzzles, the collapse below
 
-**Status:** in build, 19 October 2026. These are the director's notes from playing pass 2 (Version 12, finished in 16:57).
+**Status:** built, 20 October 2026 (see *Status: built* at the end). These are the director's notes from playing pass 2
+(Version 12, finished in 16:57).
 
 **What worked and stays:**
 - the box-and-desk introduction;
@@ -139,3 +140,48 @@ The ring C relocation lift lobby: the place the families left from.
    - ring C's longer street with C-114's shut door;
    - the lore dressing across scenes 1 to 9.
 2. Offsets and the two scenes' logic, then renumbering, the simulated player, measuring, a visual check, publishing and the docs.
+
+## Status: built (20 October 2026)
+
+Everything above is in the game (`game/undelivered/`), with the docs: the scene docs renumbered (`docs/scenes/`, each
+with a *Pass 3* section), two new ones (`DL-05_the_ration_hall.md`, `DL-10_up_only.md`), the game's README and
+`docs/scene_overview.md` (now 51 scenes). Section 1 uses pass 2's scene numbers except for DL-11: its DL-06 is now
+DL-07 The Heap, and its DL-08 is DL-09 The Slipping Cage.
+
+**What shipped:**
+- **Section 1:** every fix.
+- **Section 2:** red is no longer the code. Grips, handles and levers are worn steel or brass, weights and plates bare
+  worn iron, straps worn webbing (`art/pass3/build_lore.py`); red stays only on the franking press's hazard bands. The
+  curiosities' red tags are gone. `docs/direction.md` matches.
+- **Section 3:** the cage's balance gauge, the tray's lamp, the chevrons on the shaft wall and the cage, the ride with
+  his claw on the pawl lever (`CageRideLever`) and the visible pull (`CagePullPawl`), and the landing lamp blinking
+  faster as the cage nears it.
+- **Section 4:** DL-05 The Ration Hall (world x 47.9 to 59.8, `art/pass3/build_ration_hall.py`) and DL-10 Up Only
+  (118.8 to ring C's level at 127.9, `art/pass3/build_up_only.py`), each with its own light zone. The offsets are
+  `OFF3` 33, `OFF4` 42 and, new, `OFF5` 54 for ring C.
+- **Section 5:** the lore across scenes 1 to 9 (`art/pass3/build_lore.py`); the parcel label in a parent's hand
+  ("for MARA · C-114 · RING C", initials I.V., R.Y. 42, BIRTHDAY / DO NOT OPEN, Mara's drawing); Mara's own letter in
+  the tube; MARA on the route card; ring C's longer street; the photograph of her father in his sorter's apron with her
+  on his shoulders.
+
+**Where the build differs from this plan:**
+- **The Ration Hall:** a pushable olive ration drum on a floor guide, not a carried crate. The guide ends at the
+  shutter's line; the shutter's lip lands on the drum's chime at 0.64, and the dent in the lip is drum-shaped. Wound
+  and left with nothing under it, the shutter slams shut and he startles; he isn't thrown back. He holds the wheel
+  at the top, and any move, Use or Jump lets go.
+- **Up Only:** the lobby's UP is a demonstration. With the suitcase aboard, it sends the car up and back while the
+  counterweight comes down empty. The solving press is the counterweight's own service UP, on the shaft's far wall,
+  pressed from its footplate. The car's doors are a lattice gate. The balcony's old stair is removed; it is the
+  collapsed stair beside the lift.
+- **C-114's door:** after the knock and the wait, he opens it with the family's cord, hung from the door's lever so
+  the child could reach it, rather than trying the handle.
+- **The cage's gauge:** each plate moves the needle half the way (two plates balance it), not a third.
+- **Where the lore went:** the grade chart is over DL-01's exit and the roster beside its dispatch board; NIGHT SHIFT
+  CUT · GRADE 3 TRANSFERS SUSPENDED is on DL-02's tea-corner board with the named mugs (IVO's with a crooked tree), not
+  in DL-03; WE KEEP YOU ALIVE and WHO CARRIES WHOM? are in DL-03's weighing room, not by the goods lift; the courier
+  memorial tags are over DL-04's empty rack; the dismantled barricade and UP IS FOR THEM under EVERYONE UP are on
+  DL-06's sorting floor; EVERYONE UP again by the residential door at the end of DL-07; the stove camp is on DL-08's far
+  landing and Lift 1's RELOCATION timetable (LAST ringed) beside its belt; a pram wheel and a bundle at DL-09's lit
+  landing.
+- **Not yet done:** pass 3's simulated timings (the new scenes' estimates stay 2:30 each), and idle look hints for
+  DL-05 and DL-10.

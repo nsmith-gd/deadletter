@@ -167,4 +167,4 @@ Built in final world x, after the scene gap is opened (`insert_scenes()` in `art
   frame sooner?
 - **The ride.** About 5.5 s without control. Right as a breather before ring C?
 - **The suitcase.** Never seen to arrive. Keep it that way (the answer stays at the edges: up)?
-- **Hints.** No idle look is authored yet for the suitcase, the crank or the counterweight.
+- **Hints.** When he stands idle he looks at the suitcase, then the car while he carries it, then the service crank, then the counterweight's UP; the assist option shows the Use prompt there.
