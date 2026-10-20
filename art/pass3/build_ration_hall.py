@@ -3,28 +3,35 @@ insert_scenes() has opened the gap between the Racks' service passage (ends x 47
 the return line (starts x 59.9).
 
 The depot workers' canteen and ration counter, the bottom of the refuge, where the labour grades queued and where
-families slept when ring C flooded. Left to right:
+families slept when ring C flooded, and where they starved when the rations ran out (pass 4, the famine). Left to right:
 
     x 47.9 to 48.1   the hall's end wall, with a doorway the size of the Racks' passage (y -0.9 to 0.67, 2.4 high)
-    x 48.1 to 53.2   the canteen: the shrine on the first column (49.65), the queue barriers folded into a maze
-                     behind the lane (50.1 to 52.6), canteen tables with cots between them and bedrolls everywhere,
-                     the painted sky on the back wall, the grade notice and the tally marks on the second column
-    x 53.2 to 56.6   the ration counter behind the lane, its grille, fascia and chalked ration board; the winch at
-                     its left end (53.55), the crayon drawing taped beside it, the ration drum on its guide (54.6)
+    x 48.1 to 53.2   the canteen, its floor rows of the dead under sheets, ration tags on their toes (two on the cots):
+                     the shrine on the first column (49.65), the painted sky on the back wall, the grade notice and the
+                     tally marks on the second column; one shrouded body on the lane's back edge, a rope on its ankles
+    x 53.2 to 56.6   the ration counter behind the lane, hacked through at 55.92 to 56.27; NO RATIONS / GRADE 4 painted
+                     on the wall over it; the WEIGH-IN post at its left end (53.68: the dial, its needle and the SERVED
+                     flag); the crayon drawing on the counter's front; the drum (53.45); the weighbridge plate let into
+                     the floor in front of the hatch (53.85 to 55.75)
     x 56.6 to 56.84  the kitchen wall, with the serving hatch (y -0.6 to 0.77, 1.30 high) and its steel shutter
     x 56.84 to 59.9  the kitchen, stripped, low (2.4), running into the scanner corridor's section at 59.9
 
-The puzzle: the shutter drops the moment the winch's wheel is let go. Push the drum along its guide until it
-stops against the shutter (its rim under the shutter's lip), wind, let go: the lip slams onto the drum's rim and
-holds at 0.64, and he crouches under. The lip carries a drum-shaped arc dent (and the floor a rust ring): it has
-been done before.
+The puzzle (pass 4, docs/chapter1_pass4_plan.md section 4): the hatch opens only while the plate reads a person. D-17
+alone reads UNDER; the drum slams the needle to OVER; one of the dead, dragged onto the plate, reads PERSON, and the
+hatch winds up and stays (SERVED). The winch is gone. The shutter's lip still carries the drum dent from pass 3.
 
 Driven by the game (game/undelivered/index.html):
-    RationShutter  origin on its bottom edge (the lip's underside) at (SHUTTER_X, 0, 0); moves in z (game y)
-    RationWinch    the handwheel; origin at its axle (WINCH); turns about y (game z), 60 degrees a Crank stroke
-    RationDrum     the pushable drum; origin at its base centre (DRUM_START_X, DRUM_Y, 0); moves in x
-    RationLamp     the counter's strip tube (emissive; flickers)
-    RationCandles  the shrine's candle flames (emissive)
+    RationShutter      origin on its bottom edge (the lip's underside) at (SHUTTER_X, 0, 0); moves in z (game y)
+    RationDrum         the pushable drum; origin at its base centre (DRUM_START_X, DRUM_Y, 0); moves in x
+    RationScalePlate   the weighbridge plate; origin at its top centre (PLATE_C); dips PLATE_DIP in z (game y)
+    RationScaleNeedle  the dial's needle; origin at the dial's centre (DIAL_C), modelled pointing at zero; turns about
+                       y (game z): see NEEDLE_SWEEP (clockwise as the camera sees it, so game z rotation = -sweep)
+    RationServedFlag   the SERVED flag on the dial; origin on its hinge (FLAG_HINGE), modelled up (hidden); drops by
+                       turning FLAG_THROW about x (game x)
+    RationBody         the shrouded body to drag; origin at its centre on the floor (BODY_START_X, BODY_Y, 0), lying
+                       along x, its feet to +x with the drag toggle at BODY_LOOP (x offset, height); moves in x
+    RationLamp         the counter's strip tube (emissive; flickers)
+    RationCandles      the shrine's candle flames (emissive)
 
 Coordinates: metres, Blender Z up, the lane at y = 0, travel along +x, the camera at -y.
 """
@@ -80,18 +87,35 @@ HOUSING = (56.40, 56.60, 1.30, 2.62)  # x0, x1, z0, z1 of the box it winds up in
 DRUM_Y = 0.38                        # behind the lane (game z -0.38)
 DRUM_R = 0.225                       # its half-width: the chimes and rolling hoops
 DRUM_H = 0.65                        # the top chime
-DRUM_START_X = 54.6
-DRUM_STOP_X = SHUTTER_X - SHUTTER_T / 2 - DRUM_R - 0.02      # 56.22: against the shutter, rim under its lip
+DRUM_START_X = 53.45                 # left of the plate, in front of the counter's left end
+DRUM_STOP_X = SHUTTER_X - SHUTTER_T / 2 - DRUM_R - 0.02      # 56.22: where pass 3's drums were jammed under the lip (the dent)
 DENT = 0.01                          # the lip's dent, where drums' chimes have bitten
-SHUTTER_REST = DRUM_H - DENT         # 0.64: on the drum
-GUIDE_X0 = 54.25                     # the drum's floor guide runs from here to the stop
+SHUTTER_REST = DRUM_H - DENT
 
-WINCH = Vector((53.55, 0.2, 0.45))   # the handwheel's axle centre; as DL-01's crank (the Crank clip fits)
-WHEEL_R = 0.15
-PULLEY_Z = 2.78                      # the cable's run from the winch to the shutter housing
-CABLE_Y = 0.43
+# The weigh-in (pass 4): a goods weighbridge let into the floor in front of the hatch.
+PLATE = (53.85, 55.75)               # x0, x1 of the plate
+PLATE_Y = (-0.30, 0.64)              # y0, y1 (game z +0.30 to -0.64): the lane and the drag line behind it
+PLATE_TOP = 0.004                    # flush (4 mm proud, as the bay plate)
+PLATE_DIP = 0.01                     # how far it sinks under a load
+PLATE_C = ((PLATE[0] + PLATE[1]) / 2, (PLATE_Y[0] + PLATE_Y[1]) / 2, PLATE_TOP)   # (54.80, 0.17, 0.004): its origin
+PIT = (PLATE[0] - 0.02, PLATE[1] + 0.02, PLATE_Y[0] - 0.02, PLATE_Y[1] + 0.02, -0.05)  # x0, x1, y0, y1, floor
+DRUM_PLATE_X = PLATE_C[0]            # 54.80: the drum squarely on the plate
+DRUM_PARK_X = 56.02                  # pushed on past the plate, into the corner by the hatch (rim 1.5 cm short of the lip)
+POST = (53.68, 0.645)                # the WEIGH-IN post: x, y (behind the drag line, in front of the counter)
+DIAL_C = (53.68, 0.494, 1.25)        # the dial's centre (its face toward -y): the needle's pivot
+DIAL_R = 0.236
+NEEDLE_LEN = 0.205
+# Needle sweeps, degrees clockwise from zero (as the camera sees it). The dial's bands: UNDER 0 to 110, PERSON 110 to
+# 170, OVER 170 to 240 (the stop). Blender: rotation_euler.y = +sweep; the game (glTF): rotation.z = -sweep.
+NEEDLE_SWEEP = {'D-17': 28.0, 'PERSON': 140.0, 'OVER': 236.0}
+FLAG_HINGE = (53.68, 0.50, 1.64)     # the SERVED flag's hinge, over the dial
+FLAG_THROW = -90.0                   # degrees about x (game x): up and hidden -> hanging in front, SERVED to the camera
+BODY_Y = 0.35                        # the drag line (as the courier's in DL-04, game z -0.35)
+BODY_START_X = 52.3
+BODY_PLATE_X = PLATE_C[0]            # 54.80: fully on the plate from 54.675 to 54.925
+HACK = (55.92, 56.27)                # where the counter has been hacked through
 
-LAMP = (54.75, 0.25, 2.05)           # the strip tube's centre over the counter, between the winch and the hatch
+LAMP = (54.75, 0.25, 2.05)           # the strip tube's centre over the counter
 LAMP_LEN = 2.0
 SHRINE_X = COLUMNS[0][0]
 CANDLE_FLAMES = []                   # filled by build_shrine: (x, y, z) of each lit flame
@@ -148,6 +172,16 @@ NEW = {
     'DrumStencil': lambda: _image_material('DrumStencil', tex.texture('drum_stencil.png'), 0.7, alpha=True),
     'RationSignMat': lambda: _image_material('RationSignMat', tex.texture('ration_sign.png'), 0.8),
     'DrumRingMat': lambda: _image_material('DrumRingMat', tex.texture('drum_ring.png'), 0.95, alpha=True),
+    # Pass 4. The remains: one painted palette for every figure and shroud (DL-02's sorters too), one draw call each.
+    'RemainsMat': lambda: _image_material('RemainsMat', tex.texture('remains_atlas.png'), 0.9),
+    'WeighInMat': lambda: _image_material('WeighInMat', tex.texture('weighin.png'), 0.45),
+    'NoRationsMat': lambda: _image_material('NoRationsMat', tex.texture('no_rations.png'), 0.95, alpha=True),
+    # Made by other scenes' builders; the same names and values here when this one runs first or alone.
+    'GaugeNeedle': lambda: simple_material('GaugeNeedle', (0.02, 0.018, 0.016), 0.4, metallic=0.3),
+    'PlateSteel': lambda: worn_material('PlateSteel', base=(0.11, 0.115, 0.11), dirt=(0.06, 0.04, 0.025),
+                                        chip=(0.2, 0.19, 0.17), rough=0.55, chip_rough=0.4, metallic=0.7),
+    'SafetyYellow': lambda: worn_material('SafetyYellow', base=(0.55, 0.42, 0.06), dirt=(0.2, 0.16, 0.05),
+                                          chip=(0.07, 0.068, 0.062), rough=0.8, chip_rough=0.9, metallic=0.0),
 }
 
 
@@ -296,8 +330,14 @@ def build_shell(P):
     """Floor, walls, ceiling, columns, the kitchen wall with its hatch, the kitchen, and the joins at both ends."""
     # Floor: RacksFloor covers the hall to x 51; this runs on under the kitchen and the scanner corridor to 63,
     # where art/dl03's sorting floor begins (nothing else covers 51 to 63 since the gap was opened).
+    # Pass 4: cut round the weighbridge's pit, so the plate can sink into it.
     bm = P['Concrete']
-    box(bm, FLOOR_X[0], FLOOR_X[1], -4.0, 3.8, -0.1, 0.0)
+    px0, px1, py0, py1, pz = PIT
+    box(bm, FLOOR_X[0], px0, -4.0, 3.8, -0.1, 0.0)
+    box(bm, px1, FLOOR_X[1], -4.0, 3.8, -0.1, 0.0)
+    box(bm, px0, px1, -4.0, py0, -0.1, 0.0)
+    box(bm, px0, px1, py1, 3.8, -0.1, 0.0)
+    box(bm, px0, px1, py0, py1, -0.1, pz)
     # The canteen's end wall, with the doorway from the Racks' passage, and a cut cap toward the camera.
     w = P['WallPanel']
     ex0, ex1 = ENTRY
@@ -381,18 +421,24 @@ def build_counter(P, coll):
     c0, c1 = COUNTER
     fy, by = COUNTER_Y
     w = P['WallPanel']
-    # Body and front panels (DepotGreen) with shadow gaps, a scuffed steel kick plate.
-    box(w, c0, c1, fy + 0.03, by, 0, COUNTER_TOP - 0.03)
+    h0, h1 = HACK
+    # Body and front panels (DepotGreen) with shadow gaps, a scuffed steel kick plate; all cut where the counter has
+    # been hacked through (pass 4: someone took an axe to it, to get at the servery behind).
+    for a, b in ((c0, h0), (h1, c1)):
+        box(w, a, b, fy + 0.03, by, 0, COUNTER_TOP - 0.03)
+        rbox(P['DepotSteel'], a, b, fy - 0.012, fy + 0.03, 0, 0.13, p=6, cuts=3)
+        # The top: wood, its front edge rounded and worn where elbows leaned.
+        rbox(P['CrateWood'], a - (0.03 if a == c0 else 0.0), b, fy - 0.05, by + 0.02, COUNTER_TOP - 0.035, COUNTER_TOP + 0.01,
+             p=5, cuts=6, dents=((0.002, 9.0),), seed=3 + a)
     n = 6
     pw = (c1 - c0) / n
     for i in range(n):
-        x0 = c0 + i * pw + 0.012
-        rbox(P['DepotGreen'], x0, x0 + pw - 0.024, fy, fy + 0.035, 0.14, COUNTER_TOP - 0.05, p=10, cuts=3,
-             dents=((0.0015, 6.0),), seed=i)
-    rbox(P['DepotSteel'], c0, c1, fy - 0.012, fy + 0.03, 0, 0.13, p=6, cuts=3)
-    # The top: wood, its front edge rounded and worn where elbows leaned.
-    rbox(P['CrateWood'], c0 - 0.03, c1, fy - 0.05, by + 0.02, COUNTER_TOP - 0.035, COUNTER_TOP + 0.01, p=5, cuts=6,
-         dents=((0.002, 9.0),), seed=3)
+        x0, x1 = c0 + i * pw + 0.012, c0 + (i + 1) * pw - 0.012
+        for a, b in ((x0, min(x1, h0)), (max(x0, h1), x1)):
+            if b - a > 0.05:
+                rbox(P['DepotGreen'], a, b, fy, fy + 0.035, 0.14, COUNTER_TOP - 0.05, p=10, cuts=3,
+                     dents=((0.0015, 6.0),), seed=i + a)
+    build_hack(P)
     # The grille: bars up to the fascia, two serving slots cut through it at counter height.
     st = P['DepotSteel']
     slots = ((54.35, 54.75), (55.55, 55.95))
@@ -401,7 +447,11 @@ def build_counter(P, coll):
         z0 = COUNTER_TOP + 0.01
         if any(a < x < b for a, b in slots):
             z0 = 1.24
-        cyl(st, (x, GRILLE_Y, z0), (x, GRILLE_Y, FASCIA_Z[0]), 0.008, seg=6)
+        if h0 - 0.02 < x < h1 + 0.02:                          # over the hack: the bars cut and bent back
+            cyl(st, (x, GRILLE_Y, FASCIA_Z[0]), (x, GRILLE_Y, 1.5), 0.008, seg=6)
+            cyl(st, (x, GRILLE_Y, 1.5), (x + 0.05, GRILLE_Y + 0.22, 1.3), 0.008, seg=6)
+        else:
+            cyl(st, (x, GRILLE_Y, z0), (x, GRILLE_Y, FASCIA_Z[0]), 0.008, seg=6)
         x += 0.1
     for z in (1.24, 1.66, FASCIA_Z[0] - 0.02):
         rbox(st, c0 + 0.02, SHUTTER_X - 0.18, GRILLE_Y - 0.015, GRILLE_Y + 0.015, z - 0.015, z + 0.015, p=4, cuts=2)
@@ -451,101 +501,39 @@ def build_counter(P, coll):
         cyl(P['LetterPaper'], (bx0 + 0.3 + k * 0.08, GRILLE_Y - 0.09, bz0 - 0.012), (bx0 + 0.33 + k * 0.08, GRILLE_Y - 0.085, bz0 - 0.012), 0.006, seg=6)
 
 
-def build_winch(P, coll):
-    """The winch at the counter's left end: two cast frames, a pinion on the handwheel's axle driving a big gear
-    on the cable spool above. Its ratchet's pawl has snapped (the bright break, the piece on the base plate):
-    that is why the shutter drops the moment the wheel is let go. The cable climbs to a pulley over the counter,
-    runs along under the ceiling to the shutter housing, and drops in."""
-    wx, wy, wz = WINCH
-    ir, st, pawl = P['CastIron'], P['DepotSteel'], P['HandWorn']
-    # Base plate, bolted to the floor and the counter's kick plate.
-    rbox(ir, wx - 0.25, wx + 0.25, wy + 0.06, COUNTER_Y[0] - 0.01, 0, 0.035, p=6, cuts=3)
-    for x in (wx - 0.21, wx + 0.21):
-        for y in (wy + 0.1, COUNTER_Y[0] - 0.05):
-            cyl(st, (x, y, 0.03), (x, y, 0.05), 0.014, seg=6)
-    # Frames: plates in the x-z plane with rounded tops, a rib down each edge.
-    frame_y = (wy + 0.1, COUNTER_Y[0] - 0.05)
-    z2 = wz + 0.05 + 0.165
-    for fy in frame_y:
-        for sx in (-1, 1):                               # an A of two legs, splayed, a tie across
-            cyl(ir, (wx + sx * 0.2, fy, 0.03), (wx + sx * 0.06, fy, z2 + 0.06), 0.022, 0.018, seg=10)
-            rbox(ir, wx + sx * 0.2 - 0.04, wx + sx * 0.2 + 0.04, fy - 0.03, fy + 0.03, 0.03, 0.06, p=5, cuts=2)
-        cyl(ir, (wx - 0.15, fy, 0.24), (wx + 0.15, fy, 0.24), 0.014, seg=8)
-        rbox(ir, wx - 0.09, wx + 0.09, fy - 0.018, fy + 0.018, wz - 0.06, z2 + 0.09, p=3.0, cuts=5, seed=fy)
-    # Axle 1 (the handwheel's, which the game turns) with its pinion; axle 2 above with the gear and spool.
-    cyl(st, (wx, wy + 0.05, wz), (wx, frame_y[1] + 0.04, wz), 0.02, seg=12)
-    cyl(st, (wx, frame_y[0] - 0.03, z2), (wx, frame_y[1] + 0.04, z2), 0.024, seg=12)
-    for fy in frame_y:
-        for z in (wz, z2):
-            cyl(ir, (wx, fy - 0.03, z), (wx, fy + 0.03, z), 0.045, seg=14)          # bearing bosses
-    gy = frame_y[1] - 0.06
-
-    def gear(cx, cz, r, teeth, y0, y1, bm):
-        cyl(bm, (cx, y0, cz), (cx, y1, cz), r, seg=max(16, teeth))
-        for k in range(teeth):
-            a = 2 * math.pi * k / teeth
-            add_box(bm, (cx + (r + 0.008) * math.cos(a), (y0 + y1) / 2, cz + (r + 0.008) * math.sin(a)),
-                    (0.018, y1 - y0, 0.016 * r / 0.05 if r < 0.08 else 0.022), mat=0,
-                    rot=Matrix.Rotation(-a, 4, 'Y'))
-    gear(wx, wz, 0.045, 10, gy - 0.02, gy + 0.02, st)
-    gear(wx, z2, 0.155, 36, gy - 0.016, gy + 0.016, ir)
-    for k in range(5):                                          # the big gear's spokes, cut out
-        a = 2 * math.pi * k / 5 + 0.3
-        cyl(st, (wx, gy - 0.02, z2), (wx + 0.12 * math.cos(a), gy - 0.02, z2 + 0.12 * math.sin(a)), 0.012, seg=6)
-    # The spool, the cable wound on it.
-    sy0, sy1 = CABLE_Y - 0.06, CABLE_Y + 0.06
-    for y in (sy0, sy1):
-        cyl(ir, (wx, y - 0.008, z2), (wx, y + 0.008, z2), 0.1, seg=20)
-    cyl(st, (wx, sy0, z2), (wx, sy1, z2), 0.055, seg=16)
-    for k in range(7):
-        add_torus(P['Cable'], (wx, sy0 + 0.012 + k * 0.016, z2), (0, 1, 0), 0.066, 0.008, mat=0, seg=18, rseg=5)
-    # The ratchet wheel on the handwheel's axle, outside the front frame, and its snapped pawl.
-    ry = frame_y[0] - 0.035
-    gear(wx, wz, 0.06, 14, ry - 0.012, ry + 0.012, st)
-    px, pz = wx + 0.13, wz + 0.1
-    cyl(st, (px, ry - 0.025, pz), (px, ry + 0.02, pz), 0.012, seg=8)                # pawl pivot
-    add_box(ir, (px - 0.02, ry, pz - 0.012), (0.05, 0.016, 0.022), mat=0, rot=Matrix.Rotation(0.5, 4, 'Y'))
-    add_box(pawl, (px - 0.044, ry, pz - 0.026), (0.008, 0.017, 0.023), mat=0, rot=Matrix.Rotation(0.5, 4, 'Y'))   # the break
-    add_box(ir, (wx + 0.16, wy + 0.2, 0.045), (0.06, 0.018, 0.02), mat=0, rot=Matrix.Rotation(0.9, 4, 'Z'))        # the piece
-    # A spring that used to hold it, hanging loose.
-    pts = [Vector((px + 0.01, ry, pz + 0.015)) + Vector((0.006 * math.cos(t * 1.4), 0.006 * math.sin(t * 1.4), -0.004 * t)) for t in range(14)]
-    polyline(st, pts, 0.002, 4)
-
-    # The cable: from the spool's right side straight up to a pulley over the counter, along under the ceiling
-    # to a pulley over the housing, and down into it.
-    cx_up = wx + 0.066
-    p1 = Vector((cx_up + 0.06, CABLE_Y, PULLEY_Z))
-    p2 = Vector((SHUTTER_X + 0.06 - 0.12, CABLE_Y, PULLEY_Z))
-    cab = P['Cable']
-    polyline(cab, [(cx_up, CABLE_Y, z2), (cx_up, CABLE_Y, PULLEY_Z)], 0.006, 6)
-    polyline(cab, [(p1.x, CABLE_Y, PULLEY_Z + 0.06), (p2.x, CABLE_Y, PULLEY_Z + 0.06)], 0.006, 6)
-    polyline(cab, [(p2.x + 0.06, CABLE_Y, PULLEY_Z), (p2.x + 0.06, CABLE_Y, HOUSING[3] - 0.02)], 0.006, 6)
-    for p in (p1, p2):
-        cyl(ir, p + Vector((0, -0.02, 0)), p + Vector((0, 0.02, 0)), 0.065, seg=20)
-        add_torus(st, p, (0, 1, 0), 0.062, 0.008, mat=0, seg=20, rseg=5)
-        # Straps up to the ceiling beam's line.
-        for dy in (-0.035, 0.035):
-            box(st, p.x - 0.012, p.x + 0.012, CABLE_Y + dy - 0.004, CABLE_Y + dy + 0.004, PULLEY_Z, CEIL)
-    for x in (54.6, 55.6):                                      # cable eyes on hangers along the run
-        cyl(st, (x, CABLE_Y, PULLEY_Z + 0.06), (x, CABLE_Y, CEIL), 0.006, seg=6)
-        add_torus(st, (x, CABLE_Y, PULLEY_Z + 0.06), (1, 0, 0), 0.016, 0.004, mat=0, seg=10, rseg=4)
-
-    # The handwheel itself: the game turns it about its axle. Hub and spokes cast iron; the rim and the
-    # spinner knob polished bright by hands.
-    bm = bmesh.new()
-    cyl(bm, (0, -0.035, 0), (0, 0.1, 0), 0.035, seg=16)
-    cyl(bm, (0, -0.045, 0), (0, -0.035, 0), 0.026, seg=16)
-    for k in range(6):
-        a = 2 * math.pi * k / 6 + math.radians(30)
-        cyl(bm, (0.03 * math.cos(a), 0, 0.03 * math.sin(a)), ((WHEEL_R - 0.01) * math.cos(a), 0, (WHEEL_R - 0.01) * math.sin(a)), 0.009, seg=6)
-    add_torus(bm, (0, 0, 0), (0, 1, 0), WHEEL_R, 0.016, mat=1, seg=36, rseg=8)
-    ka = math.radians(90)
-    kp = Vector((WHEEL_R * math.cos(ka), 0, WHEEL_R * math.sin(ka)))
-    add_cyl(bm, kp, kp + Vector((0, -0.075, 0)), 0.014, 0.017, mat=1, seg=12)
-    add_sphere(bm, kp + Vector((0, -0.078, 0)), 0.019, mat=1, seg=12)
-    wheel = obj('RationWinch', bm, ['CastIron', 'HandWorn'], coll)
-    wheel.location = WINCH
-    return wheel
+def build_hack(P):
+    """The counter hacked through between HACK[0] and HACK[1]: splintered ends to the top and the panels, the axe
+    left in the cut, splinters and a broken panel on the floor. Through the gap: the empty servery."""
+    rnd = random.Random(5041)
+    h0, h1 = HACK
+    fy, by = COUNTER_Y
+    wood, green, st = P['CrateWood'], P['DepotGreen'], P['DepotSteel']
+    for x, sgn in ((h0, 1), (h1, -1)):
+        for k in range(7):                                     # splinters off the top's cut ends, into the gap
+            y = rnd.uniform(fy - 0.04, by)
+            z = COUNTER_TOP - rnd.uniform(0.0, 0.03)
+            L = rnd.uniform(0.03, 0.12)
+            add_wedge = d17.add_wedge
+            add_wedge(wood, (x - sgn * 0.01, y, z), (x + sgn * L, y + rnd.uniform(-0.03, 0.03), z - rnd.uniform(0, 0.05)),
+                      0.03, 0.004, 0.02, 0.003, (0, 1, 0), mat=0)
+        for k in range(5):                                     # the panels' torn ends
+            z = rnd.uniform(0.18, 0.85)
+            L = rnd.uniform(0.03, 0.09)
+            d17.add_wedge(green, (x - sgn * 0.01, fy + 0.017, z), (x + sgn * L, fy + 0.01 + rnd.uniform(-0.02, 0.01), z + rnd.uniform(-0.06, 0.06)),
+                          0.08, 0.006, 0.03, 0.004, (0, 0, 1), mat=0)
+    # The axe, its head bitten into the left cut's top edge, the haft up and back over the counter.
+    hx, hy, hz = h0 + 0.015, fy + 0.18, COUNTER_TOP - 0.01
+    d17.add_box(st, (hx, hy, hz), (0.05, 0.014, 0.1), mat=0, rot=Matrix.Rotation(-0.5, 4, 'Y'))
+    d17.add_box(P['HandWorn'], (hx + 0.03, hy, hz - 0.035), (0.012, 0.015, 0.08), mat=0, rot=Matrix.Rotation(-0.5, 4, 'Y'))
+    cyl(wood, (hx - 0.02, hy, hz + 0.03), (hx - 0.3, hy + 0.05, hz + 0.26), 0.016, seg=8)
+    # On the floor at its foot and inside: a panel prised off, splinters, chips.
+    rbox(green, h0 - 0.05, h1 + 0.02, fy - 0.07, fy - 0.035, 0.0, 0.012, p=8, cuts=2,
+         rot=Matrix.Rotation(0.12, 4, 'Z'))
+    for k in range(14):
+        x = rnd.uniform(h0 - 0.15, h1 + 0.1)
+        y = rnd.uniform(fy - 0.06, fy + 0.5)
+        d17.add_box(wood, (x, y, 0.004), (rnd.uniform(0.03, 0.14), rnd.uniform(0.008, 0.02), 0.008), mat=0,
+                    rot=Matrix.Rotation(rnd.uniform(0, math.pi), 4, 'Z'))
 
 
 def build_shutter(coll):
@@ -693,25 +681,16 @@ def build_drum(coll):
     return ob
 
 
-def build_guide(P, coll):
-    """The drum's guide: a steel channel let into the floor under its centre line, a bump rail along the
-    counter's foot behind it, the stop, the rust ring where drums have stood, and scrapes along the way."""
+def build_drum_marks(P, coll):
+    """Where drums have stood and been shoved: the bump rail along the counter's foot, scraped bright, and the rust
+    ring in the corner by the hatch, where the drum ends up if it is pushed on past the plate."""
     st, pawl = P['DepotSteel'], P['HandWorn']
-    gx1 = DRUM_STOP_X + 0.06
-    for dy in (-0.045, 0.045):
-        box(st, GUIDE_X0, gx1, DRUM_Y + dy - 0.022, DRUM_Y + dy + 0.022, 0.0, 0.004)
-    box(P['Shaft'], GUIDE_X0, gx1, DRUM_Y - 0.023, DRUM_Y + 0.023, 0.0, 0.0015)
-    for x in (GUIDE_X0 + 0.02, (GUIDE_X0 + gx1) / 2, gx1 - 0.02):
-        for dy in (-0.05, 0.05):
-            cyl(st, (x, DRUM_Y + dy, 0.004), (x, DRUM_Y + dy, 0.008), 0.008, seg=6)
-    box(st, gx1 - 0.03, gx1, DRUM_Y - 0.02, DRUM_Y + 0.02, 0.0, 0.03)          # the stop lug, under the drum
-    # The bump rail: angle iron on the counter's foot, scraped bright along its edge.
     ry = COUNTER_Y[0] - 0.035
-    rbox(st, GUIDE_X0 - 0.05, PART[0] - 0.03, ry - 0.012, ry + 0.012, 0.09, 0.2, p=6, cuts=3)
-    box(pawl, GUIDE_X0 + 0.2, PART[0] - 0.1, ry - 0.0135, ry - 0.011, 0.12, 0.17)
-    for x in (GUIDE_X0 + 0.1, 55.4, 56.4):
+    rbox(st, COUNTER[0] + 0.05, PART[0] - 0.03, ry - 0.012, ry + 0.012, 0.09, 0.2, p=6, cuts=3)
+    box(pawl, COUNTER[0] + 0.3, PART[0] - 0.1, ry - 0.0135, ry - 0.011, 0.12, 0.17)
+    for x in (COUNTER[0] + 0.15, 55.4, 56.4):
         box(st, x - 0.015, x + 0.015, ry, COUNTER_Y[0], 0.1, 0.19)
-    floor_decal('RationDrumRing', 'DrumRingMat', DRUM_STOP_X, DRUM_Y, 0.56, coll)
+    floor_decal('RationDrumRing', 'DrumRingMat', DRUM_PARK_X, DRUM_Y, 0.5, coll)
 
 
 def build_lamp(P, coll):
@@ -739,57 +718,6 @@ def build_lamp(P, coll):
     cyl(bm, (x - h + 0.02, y, z + 0.02), (x + h - 0.02, y, z + 0.02), 0.016, seg=12)
     lamp = obj('RationLamp', bm, ['RationLamp'], coll)
     return lamp
-
-
-def build_maze(P):
-    """The queue barriers, folded back and forth into a maze in front of the counter: three rows behind the lane,
-    joined at alternate ends; one section pulled out and leaning, one fallen flat. A bedroll in the queue."""
-    st = P['DepotSteel']
-
-    def barrier(p0, p1, h=1.0, lean=0.0, flat=False):
-        p0, p1 = Vector(p0), Vector(p1)
-        d = (p1 - p0)
-        L = d.length
-        u = d.normalized()
-        side = Vector((-u.y, u.x, 0))
-        up = Vector((0, 0, 1))
-        if flat:
-            up, side = side, -up
-        elif lean:
-            up = (up * math.cos(lean) + side * math.sin(lean)).normalized()
-        b = p0 + up * 0.08
-        t = p0 + up * h
-        polyline(st, [b, b + d], 0.016, 8)
-        polyline(st, [t, t + d], 0.018, 8)
-        for e in (p0, p1):
-            polyline(st, [e + up * 0.02, e + up * (h + 0.02)], 0.018, 8)
-            if not flat:
-                foot = e + up * 0.01
-                add_box(st, foot, (0.04, 0.5, 0.02), mat=0, rot=Matrix.Rotation(math.atan2(u.y, u.x), 4, 'Z'))
-        n = int(L / 0.11)
-        for k in range(1, n):
-            q = p0 + d * (k / n)
-            cyl(st, q + up * 0.08, q + up * h, 0.007, seg=5)
-    rows = (0.62, 1.12, 1.62)
-    barrier((50.45, rows[0], 0), (51.5, rows[0], 0))
-    barrier((51.5, rows[0], 0), (52.55, rows[0] - 0.02, 0))
-    barrier((50.15, rows[1], 0), (51.2, rows[1], 0))
-    barrier((51.35, rows[1] + 0.05, 0), (52.35, rows[1] + 0.12, 0), lean=0.28)     # pulled out, leaning
-    barrier((50.45, rows[2], 0), (51.5, rows[2], 0))
-    barrier((51.6, 1.98, 0.0), (52.6, 2.02, 0.0), flat=True)                      # fallen flat
-    barrier((52.6, rows[0], 0), (52.6, rows[1], 0), h=1.0)
-    barrier((50.12, rows[1], 0), (50.12, rows[2], 0), h=1.0)
-
-
-def bedroll(P, c, length, along_x=True, r=0.09, key='ToyFabric', strap='Rubber', seed=0.0):
-    c = Vector(c)
-    d = Vector((length / 2, 0, 0)) if along_x else Vector((0, length / 2, 0))
-    rot = None if along_x else Matrix.Rotation(math.pi / 2, 4, 'Z')
-    rounded_box((length, 2 * r * 1.15, 2 * r * 0.85), c + Vector((0, 0, r * 0.85)), p=2.6, cuts=6,
-                dents=((0.008, 6.0), (0.003, 18.0)), seed=seed, bm=P[key], mat=0, rot=rot)
-    for s in (-0.3, 0.3):
-        q = c + d * s * 2 + Vector((0, 0, r * 0.85))
-        add_torus(P[strap], q, d.normalized(), r * 1.02, 0.008, mat=0, seg=14, rseg=4)
 
 
 def cot(P, cx, cy, along_x=True, length=1.85, width=0.68, h=0.4, blanket=True, seed=0.0, small=False):
@@ -839,71 +767,26 @@ def cot(P, cx, cy, along_x=True, length=1.85, width=0.68, h=0.4, blanket=True, s
                     rot=None if along_x else Matrix.Rotation(math.pi / 2, 4, 'Z'))
 
 
-def table(P, cx, cy, length=1.7, depth=0.7, h=0.74):
-    st = P['DepotSteel']
-    rbox(P['CrateWood'], cx - length / 2, cx + length / 2, cy - depth / 2, cy + depth / 2, h - 0.04, h, p=6, cuts=4,
-         dents=((0.0015, 8.0),), seed=cx)
-    for x in (cx - length / 2 + 0.15, cx + length / 2 - 0.15):
-        for s in (-1, 1):
-            cyl(st, (x, cy + s * (depth / 2 - 0.06), h - 0.04), (x, cy + s * (depth / 2 - 0.16), 0.0), 0.018, seg=8)
-        cyl(st, (x, cy - depth / 2 + 0.11, 0.25), (x, cy + depth / 2 - 0.11, 0.25), 0.012, seg=6)
-    cyl(st, (cx - length / 2 + 0.15, cy, 0.25), (cx + length / 2 - 0.15, cy, 0.25), 0.012, seg=6)
-
-
-def bench(P, cx, cy, length=1.5, h=0.44, upturned_on=None, tipped=False):
-    st = P['DepotSteel']
-    w = 0.26
-    if upturned_on is not None:                           # upside down on a table, legs in the air
-        top = upturned_on
-        rbox(P['CrateWood'], cx - length / 2, cx + length / 2, cy - w / 2, cy + w / 2, top, top + 0.04, p=6, cuts=3)
-        for x in (cx - length / 2 + 0.12, cx + length / 2 - 0.12):
-            for s in (-1, 1):
-                cyl(st, (x, cy + s * 0.08, top + 0.04), (x, cy + s * 0.1, top + 0.04 + h - 0.04), 0.015, seg=6)
-        return
-    if tipped:                                            # on its side
-        rbox(P['CrateWood'], cx - length / 2, cx + length / 2, cy - 0.02, cy + 0.02, 0.0, w, p=6, cuts=3)
-        for x in (cx - length / 2 + 0.12, cx + length / 2 - 0.12):
-            for s in (-1, 1):
-                cyl(st, (x, cy + 0.02, w / 2 + s * 0.08), (x, cy + h - 0.02, w / 2 + s * 0.1), 0.015, seg=6)
-        return
-    rbox(P['CrateWood'], cx - length / 2, cx + length / 2, cy - w / 2, cy + w / 2, h - 0.04, h, p=6, cuts=3)
-    for x in (cx - length / 2 + 0.12, cx + length / 2 - 0.12):
-        for s in (-1, 1):
-            cyl(st, (x, cy + s * 0.08, h - 0.04), (x, cy + s * 0.1, 0.0), 0.015, seg=6)
-
-
 def build_canteen(P, coll):
-    """Tables with cots between them, bedrolls on the floor, on a table and in the queue; a washing line; the
-    sky on the back wall; the notice and the tallies on the second column; a few dark things in the foreground."""
+    """The cots, the stove, a washing line; the sky on the back wall; the notice and the tallies on the second
+    column; litter on the floor. The dead are build_famine's."""
     rnd = random.Random(5006)
-    # Tables and benches.
-    table(P, 49.2, 2.4)
-    table(P, 52.0, 2.4)
-    bench(P, 49.2, 1.92)
-    bench(P, 52.0, 2.4, upturned_on=0.74)
-    bench(P, 52.1, 2.95, tipped=True)
-    bedroll(P, (49.1, 2.42, 0.74), 1.4, True, r=0.1, key='ToyFabric', seed=1.0)          # someone slept on the table
-    # Cots: against the back wall, and a small one between the tables.
-    cot(P, 49.25, 3.15, True, seed=0.3)
-    cot(P, 52.0, 3.22, True, seed=0.7)
-    cot(P, 50.62, 2.62, False, length=1.3, width=0.55, h=0.32, seed=1.3, small=True)
-    # Bedrolls on the floor: by the door, in the queue between the barriers, under the second table.
-    bedroll(P, (48.45, 1.25, 0.0), 1.2, False, r=0.085, key='CotCanvas', seed=2.0)
-    bedroll(P, (48.75, 1.25, 0.0), 1.15, False, r=0.08, key='ToyFabric', seed=2.4)
-    bedroll(P, (51.2, 0.87, 0.0), 1.1, True, r=0.08, key='ToyFabric', seed=3.0)
-    rounded_box((0.8, 0.5, 0.05), Vector((52.0, 2.4, 0.03)), p=2.4, cuts=8, dents=((0.01, 6.0),), seed=4.0,
-                bm=P['CotCanvas'], mat=0)
-    # A kettle on a camp stove on the first table; a bucket; tin cups.
+    # Pass 4: the tables and benches are gone (burned, or broken up for the stove); the floor is the dead's. The two
+    # cots against the back wall stay, each with one of them on it (build_famine), their blankets taken for sheets.
+    cot(P, 49.25, 3.15, True, blanket=False, seed=0.3)
+    cot(P, 52.0, 3.22, True, blanket=False, seed=0.7)
+    # The camp stove and its kettle on the floor between the cots, a bucket, tin cups.
     st = P['BareMetal']
-    cyl(P['CastIron'], (48.75, 2.3, 0.74), (48.75, 2.3, 0.8), 0.09, seg=16)
-    lathe(st, [(0.0, 0.8), (0.085, 0.8), (0.09, 0.84), (0.08, 0.9), (0.05, 0.93), (0.02, 0.94), (0.0, 0.94)], 16,
-          center=(48.75, 2.3, 0.0))
-    cyl(st, (48.83, 2.3, 0.86), (48.9, 2.3, 0.9), 0.008, seg=6)
-    add_torus(st, (48.75, 2.3, 0.97), (1, 0, 0), 0.05, 0.005, mat=0, seg=12, rseg=4)
+    kx, ky = 50.62, 3.3
+    cyl(P['CastIron'], (kx, ky, 0.0), (kx, ky, 0.06), 0.09, seg=16)
+    lathe(st, [(0.0, 0.06), (0.085, 0.06), (0.09, 0.10), (0.08, 0.16), (0.05, 0.19), (0.02, 0.2), (0.0, 0.2)], 16,
+          center=(kx, ky, 0.0))
+    cyl(st, (kx + 0.08, ky, 0.12), (kx + 0.15, ky, 0.16), 0.008, seg=6)
+    add_torus(st, (kx, ky, 0.23), (1, 0, 0), 0.05, 0.005, mat=0, seg=12, rseg=4)
     lathe(st, [(0.0, 0.0), (0.12, 0.0), (0.15, 0.26), (0.142, 0.26), (0.112, 0.008), (0.0, 0.008)], 18,
-          center=(50.85, 1.45, 0.0))
-    for x, y in ((49.6, 2.5), (52.4, 2.25), (51.9, 2.6)):
-        cyl(st, (x, y, 0.74), (x, y, 0.82), 0.035, seg=12)
+          center=(50.85, 3.0, 0.0))
+    for x, y in ((50.4, 3.05), (50.75, 3.45)):
+        cyl(st, (x, y, 0.0), (x, y, 0.08), 0.035, seg=12)
     # The washing line, from the shrine's column to the end wall: a small shirt, socks, a towel.
     a, b = Vector((COLUMNS[0][0] - COL_W / 2, 1.42, 1.9)), Vector((ENTRY[1], 1.7, 1.98))
     line = catenary(a, b, 0.09, 10)
@@ -1000,7 +883,7 @@ def build_shrine(P, coll):
 
 
 def build_drawing(P, coll):
-    """Mara's crayon drawing, taped to the counter's front beside the winch, in the lamp's light."""
+    """Mara's crayon drawing, taped to the counter's front by the WEIGH-IN post, in the lamp's light."""
     x0, x1, z0, z1 = 53.86, 54.2, 0.47, 0.725
     decal('RationDrawing', 'CrayonDrawingMat', x0, x1, z0, z1, COUNTER_Y[0] - 0.003, coll, tilt=-0.04)
 
@@ -1044,26 +927,430 @@ def build_kitchen(P):
 
 
 # --------------------------------------------------------------------------
+# Pass 4: the remains (shared with art/pass4/build_story_depot.py), the famine, the weigh-in
+# --------------------------------------------------------------------------
+
+class Painted:
+    """One mesh in one atlas material: each part takes its paint from a cell of the atlas (a UV rectangle).
+    Closed parts get outward normals in isolation; open surfaces (sheets, cards) are wound by their builders."""
+    def __init__(self, rect_of=tex.atlas_uv):
+        self.bm = bmesh.new()
+        self.uv = self.bm.loops.layers.uv.new('UVMap')
+        self.rect_of = rect_of
+
+    def add(self, cell, build, size=0.3, closed=True):
+        """build(bm) adds geometry with the d17 primitives (mat=0); its faces are box-projected into `cell`, one
+        texel patch `size` metres across."""
+        tmp = bmesh.new()
+        tmp.loops.layers.uv.new('UVMap')
+        build(tmp)
+        if closed and tmp.faces:
+            bmesh.ops.recalc_face_normals(tmp, faces=tmp.faces[:])
+        self._project(tmp, self.rect_of(cell), size)
+        self._merge(tmp)
+
+    def _project(self, tmp, rect, size):
+        u0, v0, u1, v1 = rect
+        mu, mv = (u1 - u0) * 0.06, (v1 - v0) * 0.06
+        uvl = tmp.loops.layers.uv['UVMap']
+        for f in tmp.faces:
+            f.normal_update()
+            n = f.normal
+            ax = max(range(3), key=lambda k: abs(n[k]))
+            i, j = [(1, 2), (0, 2), (0, 1)][ax]
+            c = f.calc_center_median()
+            off = (math.sin(c.x * 12.9 + c.y * 78.2 + c.z * 37.7) * 0.5 + 0.5) * 0.4
+            for lp in f.loops:
+                p = lp.vert.co
+                a = min(0.98, max(0.02, 0.3 + off + (p[i] - c[i]) / size))
+                b = min(0.98, max(0.02, 0.3 + off * 0.7 + (p[j] - c[j]) / size))
+                lp[uvl].uv = (u0 + mu + (u1 - u0 - 2 * mu) * a, v0 + mv + (v1 - v0 - 2 * mv) * b)
+
+    def _merge(self, tmp):
+        me = bpy.data.meshes.new('_painted')
+        tmp.to_mesh(me)
+        tmp.free()
+        self.bm.from_mesh(me)
+        bpy.data.meshes.remove(me)
+
+    def quads(self, cell, quads, uvs=None):
+        """Explicit quads (already wound to face out), UVs over the whole cell (or the given per-corner uvs)."""
+        u0, v0, u1, v1 = self.rect_of(cell)
+        tmp = bmesh.new()
+        uvl = tmp.loops.layers.uv.new('UVMap')
+        for q in quads:
+            f = tmp.faces.new([tmp.verts.new(p) for p in q])
+            for lp, (a, b) in zip(f.loops, uvs or ((0, 0), (1, 0), (1, 1), (0, 1))):
+                lp[uvl].uv = (u0 + (u1 - u0) * a, v0 + (v1 - v0) * b)
+        self._merge(tmp)
+
+    def grid(self, cell, pts, nx, ny):
+        """A sheet: pts[i][j] (i along u, j along v), wound so its face is +u x +v; UVs over the cell."""
+        u0, v0, u1, v1 = self.rect_of(cell)
+        tmp = bmesh.new()
+        uvl = tmp.loops.layers.uv.new('UVMap')
+        vs = [[tmp.verts.new(pts[i][j]) for j in range(ny + 1)] for i in range(nx + 1)]
+        for i in range(nx):
+            for j in range(ny):
+                f = tmp.faces.new((vs[i][j], vs[i + 1][j], vs[i + 1][j + 1], vs[i][j + 1]))
+                for lp, (a, b) in zip(f.loops, ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1))):
+                    lp[uvl].uv = (u0 + (u1 - u0) * (0.02 + 0.96 * a / nx), v0 + (v1 - v0) * (0.02 + 0.96 * b / ny))
+        self._merge(tmp)
+
+    def transform(self, M):
+        bmesh.ops.transform(self.bm, matrix=M, verts=self.bm.verts)
+
+    def obj(self, name, matname, coll, sharp=40):
+        """Write it out as is (no normal recalculation: the open parts are wound already)."""
+        me = bpy.data.meshes.new(name)
+        self.bm.to_mesh(me)
+        self.bm.free()
+        me.materials.append(mat(matname))
+        me.polygons.foreach_set('use_smooth', [True] * len(me.polygons))
+        me.set_sharp_from_angle(angle=math.radians(sharp))
+        ob = bpy.data.objects.new(name, me)
+        coll.objects.link(ob)
+        return ob
+
+    def mesh(self, name, matname, sharp=40):
+        """The same, as mesh data only (for linked duplicates)."""
+        me = bpy.data.meshes.new(name)
+        self.bm.to_mesh(me)
+        self.bm.free()
+        me.materials.append(mat(matname))
+        me.polygons.foreach_set('use_smooth', [True] * len(me.polygons))
+        me.set_sharp_from_angle(angle=math.radians(sharp))
+        return me
+
+
+def _cap_height(x, y, cap):
+    """Top of a capsule (a, b, half-width, half-height) lying on the floor, at plan point (x, y); 0 outside."""
+    (ax, ay, az), (bx, by, bz), rl, rv = cap
+    dx, dy = bx - ax, by - ay
+    L2 = dx * dx + dy * dy
+    t = 0.0 if L2 < 1e-9 else max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / L2))
+    d = math.hypot(x - (ax + dx * t), y - (ay + dy * t))
+    if d >= rl:
+        return 0.0
+    return az + (bz - az) * t + rv * math.sqrt(1.0 - (d / rl) ** 2)
+
+
+# The dead under their sheets, lying on the floor. Each: the body's capsules (only the sheet shows them), the
+# sheet's extent and resolution, and the feet left out at its foot end (heel, toe, width, thickness, width axis).
+SHROUDS = {
+    'adult': dict(
+        caps=[((-0.69, 0, 0.095), (-0.69, 0, 0.095), 0.10, 0.10),                 # head
+              ((-0.60, 0, 0.07), (-0.54, 0, 0.08), 0.055, 0.05),                   # neck
+              ((-0.48, 0, 0.10), (-0.10, 0, 0.085), 0.17, 0.09),                   # chest to belly, sunk
+              ((-0.08, 0, 0.08), (0.04, 0, 0.08), 0.16, 0.08),                     # pelvis
+              ((-0.46, 0.215, 0.05), (-0.18, 0.225, 0.045), 0.045, 0.045), ((-0.46, -0.215, 0.05), (-0.18, -0.225, 0.045), 0.045, 0.045),
+              ((-0.18, 0.225, 0.045), (0.05, 0.2, 0.04), 0.04, 0.04), ((-0.18, -0.225, 0.045), (0.05, -0.2, 0.04), 0.04, 0.04),
+              ((0.05, 0.2, 0.035), (0.13, 0.19, 0.03), 0.04, 0.03), ((0.05, -0.2, 0.035), (0.13, -0.19, 0.03), 0.04, 0.03),
+              ((0.04, 0.09, 0.065), (0.40, 0.095, 0.06), 0.075, 0.06), ((0.04, -0.09, 0.065), (0.40, -0.095, 0.06), 0.075, 0.06),
+              ((0.40, 0.095, 0.06), (0.70, 0.09, 0.045), 0.055, 0.045), ((0.40, -0.095, 0.06), (0.70, -0.09, 0.045), 0.055, 0.045)],
+        sheet=(-0.84, 0.64, -0.32, 0.32, 38, 16),
+        feet=[((0.66, 0.09, 0.045), (0.705, 0.105, 0.195), 0.07, 0.05, (0, 1, 0)),
+              ((0.66, -0.09, 0.045), (0.705, -0.105, 0.195), 0.07, 0.05, (0, 1, 0))],
+        tag=1, length=1.65),
+    'curled': dict(                                                                   # on its side, knees drawn up
+        caps=[((-0.50, 0.06, 0.10), (-0.50, 0.06, 0.10), 0.10, 0.10),
+              ((-0.42, 0.04, 0.10), (-0.36, 0.03, 0.12), 0.06, 0.06),
+              ((-0.34, 0.03, 0.15), (0.0, 0.06, 0.15), 0.12, 0.16),
+              ((0.0, 0.06, 0.14), (0.06, 0.06, 0.14), 0.13, 0.16),
+              ((0.06, 0.0, 0.13), (0.28, -0.26, 0.12), 0.08, 0.11),
+              ((0.28, -0.26, 0.10), (0.46, -0.04, 0.08), 0.06, 0.09),
+              ((-0.30, -0.10, 0.20), (-0.08, -0.20, 0.17), 0.06, 0.06)],
+        sheet=(-0.64, 0.44, -0.44, 0.30, 30, 20),
+        feet=[((0.45, -0.02, 0.05), (0.52, -0.13, 0.05), 0.06, 0.045, (0, 0, 1)),
+              ((0.46, 0.0, 0.13), (0.54, -0.11, 0.135), 0.06, 0.045, (0, 0, 1))],
+        tag=1, length=1.2),
+}
+SHROUDS['child'] = dict(SHROUDS['adult'], length=1.02, scale=(0.62, 0.72, 0.72))
+
+
+def _scaled(spec):
+    sx, sy, sz = spec.get('scale', (1, 1, 1))
+    S = lambda p: (p[0] * sx, p[1] * sy, p[2] * sz)           # noqa: E731
+    caps = [(S(a), S(b), rl * sy, rv * sz) for a, b, rl, rv in spec['caps']]
+    x0, x1, y0, y1, nx, ny = spec['sheet']
+    feet = [(S(h), S(t), w * sy, th * sz, ax) for h, t, w, th, ax in spec['feet']]
+    return caps, (x0 * sx, x1 * sx, y0 * sy, y1 * sy, nx, ny), feet
+
+
+def shroud(kind, seed=0.0, rope=False):
+    """A body under a sheet, as a Painted mesh in the remains atlas, its origin at the centre of its footprint on the
+    floor, lying along x with its feet to +x. A ration tag tied to a toe. With rope: a rope round the ankles to a
+    wooden toggle lying across the toes (D-17's grip). Returns (painted, toggle position or None)."""
+    spec = SHROUDS[kind]
+    caps, (x0, x1, y0, y1, nx, ny), feet = _scaled(spec)
+    rnd = random.Random(int(seed * 1000) + 77)
+    xs = [x0 + (x1 - x0) * i / nx for i in range(nx + 1)]
+    ys = [y0 + (y1 - y0) * j / ny for j in range(ny + 1)]
+    H = [[max(_cap_height(x, y, c) for c in caps) for y in ys] for x in xs]
+    # Drape: a cone dilation (the sheet tents from the high points), then a blur, then creases.
+    k = 1.5
+    dx, dy = (x1 - x0) / nx, (y1 - y0) / ny
+    rad = 0.16
+    ri, rj = int(rad / dx) + 1, int(rad / dy) + 1
+    S = [[0.0] * (ny + 1) for _ in range(nx + 1)]
+    for i in range(nx + 1):
+        for j in range(ny + 1):
+            best = H[i][j]
+            for p in range(max(0, i - ri), min(nx, i + ri) + 1):
+                for q in range(max(0, j - rj), min(ny, j + rj) + 1):
+                    h = H[p][q]
+                    if h > best:
+                        v = h - k * math.hypot((p - i) * dx, (q - j) * dy)
+                        if v > best:
+                            best = v
+            S[i][j] = best
+    for _ in range(2):
+        T = [row[:] for row in S]
+        for i in range(1, nx):
+            for j in range(1, ny):
+                T[i][j] = (S[i][j] * 4 + S[i - 1][j] + S[i + 1][j] + S[i][j - 1] + S[i][j + 1]) / 8
+        S = T
+    pts = []
+    for i, x in enumerate(xs):
+        row = []
+        for j, y in enumerate(ys):
+            z = S[i][j]
+            edge = i == 0 or j == 0 or j == ny
+            if z > 0.004 and not edge:
+                z += 0.01 + 0.006 * noise.noise(Vector((x * 7.0, y * 9.0, seed * 3.1))) * min(1.0, z * 12)
+            else:
+                z = 0.003
+            if edge or z < 0.004:
+                z = 0.003 + 0.002 * abs(noise.noise(Vector((x * 11.0, y * 11.0, seed))))
+            row.append(Vector((x, y, z)))
+        pts.append(row)
+    # The foot end hangs over the shins: a short drop below its edge.
+    drop = [Vector((p.x + 0.012, p.y, max(0.003, p.z - 0.04))) for p in pts[-1]]
+    pts.append(drop)
+    P = Painted()
+    P.grid('sheet', pts, nx + 1, ny)
+    # The legs where they leave the sheet, and the feet: bare, dry, toes up; a ration tag on a string.
+    for (h, t, w, th, ax) in feet:
+        h, t = Vector(h), Vector(t)
+        leg = h - Vector((0.1, 0, 0)) * (1 if ax == (0, 1, 0) else 0.0) - (t - h).normalized() * (0.0 if ax == (0, 1, 0) else 0.08)
+        P.add('cloth', lambda bm, a=leg, b=h: add_cyl(bm, a + Vector((0, 0, 0.005)), b + Vector((0, 0, 0.01)), w * 0.42, w * 0.38, mat=0, seg=8))
+        P.add('bone', lambda bm, a=h, b=t: d17.add_wedge(bm, a, b, w, w * 1.05, th, th * 0.6, ax, mat=0))
+        P.add('bone', lambda bm, b=t: add_sphere(bm, b, th * 0.55, mat=0, seg=8, scale=(1.0, 1.4, 0.8)))
+    th_, tt = Vector(feet[-1][0]), Vector(feet[-1][1])
+    side = -1.0 if tt.y <= 0 else 1.0
+    knot = tt + Vector((0.004, side * 0.012, -0.012))
+    hang = knot + Vector((0.035, side * 0.05, -0.05))
+    P.add('rope', lambda bm: add_cyl(bm, knot, hang, 0.0025, mat=0, seg=4))
+    tw, tl = 0.05, 0.085                                     # the tag, hanging at 45 degrees to the body, two-sided
+    nrm = Vector((0.707, side * 0.707, 0.0))
+    up = Vector((0, 0, 1))
+    for n_ in (nrm, -nrm):
+        r = up.cross(n_)                                     # text right, so the face's normal is r x up = n_
+        c = hang - Vector((0, 0, tl / 2 + 0.004)) + n_ * 0.0008
+        P.quads('tag', [[c - r * tw / 2 - up * tl / 2, c + r * tw / 2 - up * tl / 2,
+                         c + r * tw / 2 + up * tl / 2, c - r * tw / 2 + up * tl / 2]])
+    grip = None
+    if rope:
+        # Rope round each ankle, a knot between them, two strands up over the toes to a wooden toggle lying across.
+        for (h, t, w, th, ax) in feet:
+            P.add('rope', lambda bm, c=Vector(h) + Vector((0.0, 0, 0.012)): add_torus(bm, c, (1, 0, 0), w * 0.5, 0.009, mat=0, seg=12, rseg=5))
+        kc = Vector(((feet[0][0][0] + feet[1][0][0]) / 2 + 0.01, 0.0, 0.075))
+        P.add('rope', lambda bm: add_sphere(bm, kc, 0.022, mat=0, seg=8))
+        for (h, t, w, th, ax) in feet:
+            P.add('rope', lambda bm, a=Vector(h) + Vector((0, 0, 0.012)): add_cyl(bm, a, kc, 0.008, mat=0, seg=5))
+        toes_top = max(f[1][2] for f in feet) + 0.03
+        gx = max(f[1][0] for f in feet)
+        grip = Vector((gx, 0.0, toes_top + 0.018))
+        for s in (-1, 1):
+            P.add('rope', lambda bm, s=s: add_cyl(bm, kc, grip + Vector((0, s * 0.075, 0)), 0.008, mat=0, seg=5))
+            P.add('rope', lambda bm, s=s: add_torus(bm, grip + Vector((0, s * 0.075, 0)), (0, 1, 0), 0.022, 0.007, mat=0, seg=10, rseg=4))
+        P.add('wood', lambda bm: add_cyl(bm, grip - Vector((0, 0.13, 0)), grip + Vector((0, 0.13, 0)), 0.016, mat=0, seg=10))
+    # Centre it on its length and stretch it to the spec's length.
+    xs_all = [v.co.x for v in P.bm.verts]
+    lo, hi = min(xs_all), max(xs_all)
+    sx = spec['length'] / (hi - lo)
+    M = Matrix.Diagonal((sx, 1, 1, 1)) @ Matrix.Translation((-(lo + hi) / 2, 0, 0))
+    P.transform(M)
+    if grip is not None:
+        grip = M @ grip
+    return P, grip
+
+
+# Where the dead lie (x, y, z, turn in degrees, shape): feet to +x before the turn.
+FAMINE = [
+    ('RationDead01', 48.47, 1.885, 0.0, -90, 'adult'),      # by the end wall, feet to the camera
+    ('RationDead02', 49.09, 1.885, 0.002, -90, 'adult'),
+    ('RationDead03', 48.75, 0.82, 0.004, 0, 'child'),       # in front of them, small
+    ('RationDead04', 50.95, 0.98, 0.0, 0, 'adult'),         # right of the shrine
+    ('RationDead05', 50.78, 1.85, 0.002, 180, 'adult'),     # between the columns
+    ('RationDead06', 52.35, 1.85, 0.004, 180, 'curled'),
+    ('RationDead07', 51.95, 2.5, 0.0, 0, 'adult'),
+    ('RationDead08', 49.25, 3.15, 0.37, 0, 'adult'),        # on the cots
+    ('RationDead09', 52.0, 3.22, 0.37, 180, 'adult'),
+]
+
+
+def build_famine(coll):
+    """The dead under sheets in rows across the canteen floor and on the cots: linked duplicates of three shapes,
+    each one mesh in the remains atlas (sheet, feet, tag). And the one D-17 drags, RationBody."""
+    meshes = {}
+    for kind, seed in (('adult', 1.0), ('curled', 2.0), ('child', 3.0)):
+        P, _ = shroud(kind, seed)
+        meshes[kind] = P.mesh('RationShroud_' + kind, 'RemainsMat')
+    out = []
+    for name, x, y, z, turn, kind in FAMINE:
+        ob = bpy.data.objects.new(name, meshes[kind])
+        coll.objects.link(ob)
+        ob.location = (x, y, z)
+        ob.rotation_euler = (0, 0, math.radians(turn))
+        out.append(ob)
+    P, grip = shroud('adult', 4.0, rope=True)
+    body = P.obj('RationBody', 'RemainsMat', coll)
+    body.location = (BODY_START_X, BODY_Y, 0.0)
+    BODY_LOOP[:] = [round(grip.x, 3), round(grip.z, 3)]
+    return out, body
+
+
+BODY_LOOP = []                       # filled by build_famine: the toggle's (x offset from the origin, height)
+
+
+def _face_quad(c, w, h, y):
+    """Corners of a quad facing -y (the camera), wound to face it."""
+    cx, cz = c
+    return [Vector((cx - w / 2, y, cz - h / 2)), Vector((cx + w / 2, y, cz - h / 2)),
+            Vector((cx + w / 2, y, cz + h / 2)), Vector((cx - w / 2, y, cz + h / 2))]
+
+
+def build_weighin(P, coll):
+    """The WEIGH-IN: a goods weighbridge let into the floor in front of the hatch (RationScalePlate), its dial on a
+    post at the counter's left end (face, RationScaleNeedle, RationServedFlag), the sign on the post."""
+    # The pit's curb: angle iron round it, flush with the floor.
+    px0, px1, py0, py1, pz = PIT
+    st = P['DepotSteel']
+    for (a, b, c, d) in ((px0 - 0.04, px1 + 0.04, py0 - 0.04, py0), (px0 - 0.04, px1 + 0.04, py1, py1 + 0.04),
+                         (px0 - 0.04, px0, py0, py1), (px1, px1 + 0.04, py0, py1)):
+        box(st, a, b, c, d, pz, 0.0015)
+    box(P['Shaft'], px0, px1, py0, py1, pz, pz + 0.002)
+    # The plate: chequer-ridged steel, a yellow band along its front and ends. Origin at its top centre.
+    cx, cy, top = PLATE_C
+    hx, hy = (PLATE[1] - PLATE[0]) / 2, (PLATE_Y[1] - PLATE_Y[0]) / 2
+    bm = bmesh.new()
+    add_box(bm, (0, 0, -0.017), (2 * hx, 2 * hy, 0.034), mat=0)
+    k = 0
+    x = -hx + 0.06
+    while x < hx - 0.05:
+        add_box(bm, (x, 0, 0.0015), (0.012, 2 * hy - 0.06, 0.003), mat=0)
+        x += 0.1
+        k += 1
+    add_box(bm, (0, -hy + 0.04, 0.0006), (2 * hx - 0.02, 0.06, 0.0012), mat=1)
+    for s in (-1, 1):
+        add_box(bm, (s * (hx - 0.04), 0, 0.0006), (0.06, 2 * hy - 0.02, 0.0012), mat=1)
+    for sx in (-1, 1):                                   # lifting eyes in the corners
+        for sy in (-1, 1):
+            cyl(bm, (sx * (hx - 0.1), sy * (hy - 0.1), 0.0), (sx * (hx - 0.1), sy * (hy - 0.1), 0.004), 0.025, seg=10)
+    plate = obj('RationScalePlate', bm, ['PlateSteel', 'SafetyYellow'], coll, sharp=30)
+    plate.location = PLATE_C
+
+    # The post, its foot bolted to the floor, the counter's corner behind it; the dial's case on it, the flag's bracket.
+    x, y = POST
+    g = P['DepotGreen']
+    rbox(g, x - 0.03, x + 0.03, y - 0.03, y + 0.03, 0.0, 1.62, p=10, cuts=3)
+    rbox(st, x - 0.1, x + 0.1, y - 0.035, y + 0.035, 0.0, 0.014, p=5, cuts=2)
+    for dx in (-0.075, 0.075):
+        cyl(st, (x + dx, y, 0.014), (x + dx, y, 0.026), 0.009, seg=6)
+    dcx, dcy, dcz = DIAL_C
+    cyl(g, (dcx, dcy + 0.016, dcz), (dcx, y - 0.03, dcz), 0.25, seg=36)
+    add_torus(st, (dcx, dcy + 0.009, dcz), (0, 1, 0), 0.246, 0.012, mat=0, seg=36, rseg=6)
+    rbox(g, x - 0.24, x + 0.24, 0.606, 0.614, 0.735, 0.955, p=6, cuts=2)                      # the sign's backing
+    fx, fy, fz = FLAG_HINGE
+    for dx in (-0.19, 0.19):                                                                    # the flag's bracket
+        top_z = dcz + math.sqrt(max(0.0, 0.25 ** 2 - dx ** 2)) - 0.01
+        cyl(st, (fx + dx, fy + 0.004, top_z), (fx + dx, fy + 0.004, fz + 0.012), 0.007, seg=6)
+    cyl(st, (fx - 0.2, fy, fz), (fx + 0.2, fy, fz), 0.005, seg=6)
+    # The face and the sign: one atlas.
+    Pw = Painted(tex.weigh_uv)
+    n = 40
+    rimg = 244.0
+    ring = []
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        ring.append((math.cos(a), math.sin(a)))
+    fy_face = dcy + 0.013
+    tris = []
+    uvs = []
+    for i in range(n):
+        (c0, s0), (c1, s1) = ring[i], ring[(i + 1) % n]
+        tris.append([Vector((dcx, fy_face, dcz)), Vector((dcx + DIAL_R * c0, fy_face, dcz + DIAL_R * s0)),
+                     Vector((dcx + DIAL_R * c1, fy_face, dcz + DIAL_R * s1))])
+        uvs.append([(256 / 512, 0.5), ((256 + rimg * c0) / 512, (256 + rimg * s0) / 512),
+                    ((256 + rimg * c1) / 512, (256 + rimg * s1) / 512)])
+    tmp = bmesh.new()
+    uvl = tmp.loops.layers.uv.new('UVMap')
+    u0, v0, u1, v1 = tex.weigh_uv('dial')
+    for t, uv in zip(tris, uvs):
+        f = tmp.faces.new([tmp.verts.new(p) for p in t])
+        for lp, (a, b) in zip(f.loops, uv):
+            lp[uvl].uv = (u0 + (u1 - u0) * a, v0 + (v1 - v0) * b)
+    bmesh.ops.remove_doubles(tmp, verts=tmp.verts, dist=1e-6)
+    Pw._merge(tmp)
+    Pw.quads('sign', [_face_quad((x, 0.845), 0.4, 0.2, 0.604)])
+    Pw.obj('RationWeighIn', 'WeighInMat', coll)
+
+    # The needle: a flat blade with a short tail and a hub, pivoting at the dial's centre, pointing at zero.
+    a = math.radians(-120.0)
+    d = Vector((math.sin(a), 0, math.cos(a)))
+    bm = bmesh.new()
+    d17.add_wedge(bm, -d * 0.05, d * NEEDLE_LEN, 0.022, 0.004, 0.005, 0.004, (0, 0, 1) if abs(d.z) < 0.9 else (1, 0, 0), mat=0)
+    cyl(bm, (0, -0.012, 0), (0, 0.008, 0), 0.024, seg=16)
+    cyl(bm, (0, -0.016, 0), (0, -0.012, 0), 0.012, seg=12)
+    needle = obj('RationScaleNeedle', bm, ['GaugeNeedle'], coll, sharp=30)
+    needle.location = (dcx, dcy, dcz)
+
+    # The SERVED flag: built hanging (its face to the camera), then turned up into its hidden rest about the hinge.
+    Pf = Painted(tex.weigh_uv)
+    w, h, t = 0.34, 0.11, 0.008
+    q = _face_quad((0.0, -0.006 - h / 2), w, h, -t / 2)
+    Pf.quads('served', [q])
+    back = [Vector((p.x, t / 2, p.z)) for p in q][::-1]
+    Pf.quads('flagback', [back])
+    for (i0, i1) in ((0, 1), (1, 2), (2, 3), (3, 0)):                    # the edges
+        a0, a1 = q[i0], q[i1]
+        e = [a0, Vector((a0.x, t / 2, a0.z)), Vector((a1.x, t / 2, a1.z)), a1]
+        Pf.quads('flagback', [e])
+    Pf.add('flagback', lambda bm: add_cyl(bm, (-0.12, 0, 0), (0.12, 0, 0), 0.009, mat=0, seg=8))
+    Pf.transform(Matrix.Rotation(math.radians(-FLAG_THROW), 4, 'X'))
+    flag = Pf.obj('RationServedFlag', 'WeighInMat', coll, sharp=30)
+    flag.location = FLAG_HINGE
+    return plate, needle, flag
+
+
+def build_paint(coll):
+    """NO RATIONS / GRADE 4, slapped in whitewash on the wall over the counter."""
+    decal('RationNoRations', 'NoRationsMat', 53.65, 56.15, 2.76, 3.70, BACK_Y - 0.02, coll)
+
+
+# --------------------------------------------------------------------------
 
 def build_set(dl01, m, coll):
     tex.make_textures()
     P = Parts()
     build_shell(P)
     build_counter(P, coll)
-    build_winch(P, coll)
     build_shutter(coll)
     build_drum(coll)
-    build_guide(P, coll)
+    build_drum_marks(P, coll)
     build_lamp(P, coll)
-    build_maze(P)
     build_canteen(P, coll)
     build_shrine(P, coll)
     build_drawing(P, coll)
     build_kitchen(P)
+    build_weighin(P, coll)
+    build_famine(coll)
+    build_paint(coll)
     P.emit(coll)
 
 
 def add_clips(dl01, arm):
-    """The winch's wheel sits where DL-01's crank wheel does relative to D-17 (0.2 in front of him, axle at 0.45,
-    radius 0.15) and turns 60 degrees a stroke: the existing Crank clip fits, so no new clip."""
+    """No new clips: the drum is pushed (PushWalk), the body dragged as DL-04's courier is (its toggle is lower:
+    BODY_LOOP)."""
     pass

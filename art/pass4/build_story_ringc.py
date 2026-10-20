@@ -75,14 +75,21 @@ def _ry(a):
 # The atlas
 # =====================================================================================================================
 
-def _font(size, kind='cond'):
+def _font(size, kind='bold'):
     from PIL import ImageFont
-    path = {'cond': '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf',
-            'bold': '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'}[kind]
-    try:
-        return ImageFont.truetype(path, size)
-    except OSError:
-        return ImageFont.load_default()
+    for path in ('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf'):
+        try:
+            return ImageFont.truetype(path, size)
+        except OSError:
+            pass
+    return ImageFont.load_default()
+
+
+def _fit(text, width, size):
+    """The bold font at the largest size up to `size` that sets `text` within `width` pixels."""
+    while size > 8 and _font(size).getlength(text) > width:
+        size -= 2
+    return _font(size)
 
 
 def _noise(w, h, cells, seed):
@@ -212,13 +219,13 @@ def _hands(w, h, seed, n):
         hw_, hh_ = hm.size
         x = rnd.uniform(-hw_ * 0.25, w - hw_ * 0.75)
         y0 = rnd.uniform(-hh_ * 0.2, h * 0.55)
-        slide = rnd.choice((0, 0.15, 0.3, 0.45, 0.6)) * h * rnd.uniform(0.6, 1.0)
+        slide = rnd.choice((0, 0, 0.12, 0.25, 0.4)) * h * rnd.uniform(0.6, 1.0)
         steps = max(1, int(slide / 6))
         for j in range(steps + 1):
             t = j / steps
             yy = y0 + slide * t
             xx = x + rnd.uniform(-1.5, 1.5) + 8 * math.sin(t * 2.0 + k)
-            strength = (0.18 + 0.22 * t) if slide else 1.0                 # heavier where the hand stopped
+            strength = (0.07 + 0.13 * t) if slide else 1.0                 # heavier where the hand stopped
             stamp = hm.point(lambda v, s_=strength: int(v * s_))
             layer = Image.new('L', (w, h), 0)
             layer.paste(stamp, (int(xx), int(yy)))
@@ -287,10 +294,10 @@ def make_atlas():
     board = Image.new('RGBA', (x1 - x0, y1 - y0), (*green, 255))
     d = ImageDraw.Draw(board)
     d.rectangle((10, 10, x1 - x0 - 11, y1 - y0 - 11), outline=(*cream, 255), width=9)
-    f = _font(150, 'bold')
+    f = _fit('LAST CAR', x1 - x0 - 90, 140)
     l, t, r, b = d.textbbox((0, 0), 'LAST CAR', font=f)
-    d.text(((x1 - x0 - (r - l)) / 2 - l, 70 - t), 'LAST CAR', font=f, fill=(*cream, 255))
-    f2 = _font(30, 'bold')
+    d.text(((x1 - x0 - (r - l)) / 2 - l, (y1 - y0 + 40 - (b - t)) / 2 - t), 'LAST CAR', font=f, fill=(*cream, 255))
+    f2 = _font(30)
     l, t, r, b = d.textbbox((0, 0), 'RING C  ·  UP', font=f2)
     d.text(((x1 - x0 - (r - l)) / 2 - l, 34 - t), 'RING C  ·  UP', font=f2, fill=(*cream, 255))
     rnd = random.Random(4101)
@@ -320,7 +327,7 @@ def make_atlas():
     x0, y0, x1, y1 = R_RING
     W, H = x1 - x0, y1 - y0
     mask = Image.new('L', (W, H), 0)
-    f = _font(150, 'cond')
+    f = _fit('RING C', W * 0.86, 160)
     glyphs = _stencil_glyphs('RING C', f, 12)
     total = sum(a for _, a in glyphs)
     x = (W - total) / 2
@@ -336,16 +343,15 @@ def make_atlas():
     x0, y0, x1, y1 = R_C114
     W, H = x1 - x0, y1 - y0
     mask = Image.new('L', (W, H), 0)
-    f = _font(124, 'bold')
+    f = _font(118)
     x = 22
     rnd = random.Random(4130)
     for ch in 'C-114':
         g = Image.new('L', (150, 190), 0)
-        gl, gt, gr, gb = f.getbbox(ch)
-        ImageDraw.Draw(g).text((20 - gl, 30 - gt), ch, font=f, fill=255)
-        g = g.rotate(rnd.uniform(-5, 5), resample=Image.BICUBIC)
-        mask.paste(g, (int(x - 20), int(20 + rnd.uniform(-6, 6))), g)
-        x += f.getlength(ch) * 0.92
+        ImageDraw.Draw(g).text((20, 150), ch, font=f, fill=255, anchor='ls')      # on one baseline
+        g = g.rotate(rnd.uniform(-5, 5), resample=Image.BICUBIC, center=(60, 120))
+        mask.paste(g, (int(x - 20), int(-10 + rnd.uniform(-5, 5))), g)
+        x += f.getlength(ch) * 0.94
     d = ImageDraw.Draw(mask)
     ay = 118
     d.line((x + 18, ay, W - 46, ay - 4), fill=255, width=22)
@@ -568,14 +574,14 @@ def build_shoes(coll):
     z = DECK
     # In front of the lane, along the queue line: thicker toward the gate.
     front = lambda x, y: 0.25 if x < uo.LOBBY_X0 else min(1.0, 0.4 + 0.6 * max(0.0, (x - 120.5) / 3.6)) * (0.75 if x > 125.6 else 1.0)  # noqa: E731
-    scatter(118, 116.8, 126.6, -0.95, -0.32, z, front)
+    scatter(118, 116.8, 126.6, -0.95, -0.42, z, front)
     heap(24, 124.95, -0.66, 0.42, 0.26, 0.12, z)                    # crushed up in front of the gate
     # Behind the lane: round the heap of luggage and under the bench, in the waiting area.
-    scatter(46, 118.95, 123.5, 0.28, 1.14, z, lambda x, y: 0.8, gap=0.12, kid=0.5)
+    scatter(46, 118.95, 123.5, 0.38, 1.14, z, lambda x, y: 0.8, gap=0.12, kid=0.5)
     scatter(9, 116.8, 118.55, 0.35, 2.2, z, lambda x, y: 0.6, gap=0.2)          # strays on the porch
     # Heaped against the lift front either side of the gate (under the balance gauge), clear of the stands.
-    heap(30, 125.93, 0.22, 0.3, 0.13, 0.24, z)
-    heap(8, 123.67, 0.24, 0.1, 0.1, 0.14, z)
+    heap(30, 125.93, 0.28, 0.3, 0.05, 0.22, z)
+    heap(8, 123.66, 0.29, 0.08, 0.04, 0.12, z)
     # Fallen down the shaft, at ring C's landing by its foot.
     scatter(8, 127.85, 128.7, -0.62, 0.95, 0.0, lambda x, y: 0.0 if -0.3 < y < 0.32 else 1.0, gap=0.14)
     mats = [material(n) for n in SHOE_MATS]
@@ -593,7 +599,7 @@ def I4():
 
 # What the shoes keep clear of (x0, x1, y0, y1, Blender world): the lane, the things already on the floor, the stands.
 KEEP_CLEAR = (
-    (116.5, 128.8, -0.28, 0.24),        # the lane
+    (116.5, 128.8, -0.4, 0.26),         # the lane (shoe centres: none reaches |y| < 0.2)
     (118.62, 118.98, 0.5, 2.5),         # the entrance's wall
     (119.0, 121.02, 0.5, 1.22),         # the heap of left luggage
     (121.62, 122.3, 0.26, 0.85),        # the case burst open
@@ -699,6 +705,7 @@ def build_last_car(coll, atlas):
     tmp.free()
     bm.from_mesh(me)
     bpy.data.meshes.remove(me)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])          # the solids; the face goes on after, wound to -y
     corners = [R @ Vector((u - ex, -T / 2 - 0.002, v)) for u, v in ((0, -H), (W, -H), (W, 0), (0, 0))]
     f = bm.faces.new([bm.verts.new(c) for c in corners])
     f.material_index = atl
@@ -739,9 +746,43 @@ def build_marks(coll, atlas):
         wall_quad(126.88, 127.22, 1.6, 2.6, ys, sub(R_HAND_B, 0.0, 0.0, 1.0, 1.0)),
     ]
     marks = _decal_obj('UOHandMarks', q, coll, atlas)
+    return marks, build_way_ringc10(coll, atlas)
+
+
+def ring_c_material():
+    """The RING C stencil every scene shares (WayRingCMat, made by whichever pass 4 module runs first; in the full
+    build art/pass4/build_story_shafts.py, before this one). None if it cannot be had."""
+    mt = bpy.data.materials.get('WayRingCMat')
+    if mt is None:
+        try:
+            import build_story_shafts
+            mt = build_story_shafts.ring_c_material()
+        except Exception as e:                       # built on its own without it: the atlas's own stencil
+            print('story_ringc: no WayRingCMat:', e)
+            mt = None
+    return mt
+
+
+def build_way_ringc10(coll, atlas):
+    """WayRingC10: the shared RING C stencil (0.84 x 0.42, as DL-06 to DL-09's) on the counterweight shaft's back wall,
+    over the counterweight; or, failing that, the atlas's own."""
     x, y, zc, s = STENCIL10
-    way = _decal_obj('WayRingC10', [wall_quad(x - s / 2, x + s / 2, zc - s / 2, zc + s / 2, y, R_RING)], coll, atlas)
-    return marks, way
+    mt = ring_c_material()
+    if mt is not None:
+        w, h = 0.84, 0.42
+        bm = bmesh.new()
+        uvl = bm.loops.layers.uv.new('UVMap')
+        f = bm.faces.new([bm.verts.new(c) for c in ((x - w / 2, y, zc - h / 2), (x + w / 2, y, zc - h / 2), (x + w / 2, y, zc + h / 2), (x - w / 2, y, zc + h / 2))])
+        for lp, uv in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+            lp[uvl].uv = uv
+        me = bpy.data.meshes.new('WayRingC10')
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(mt)
+        ob = bpy.data.objects.new('WayRingC10', me)
+        coll.objects.link(ob)
+        return ob
+    return _decal_obj('WayRingC10', [wall_quad(x - s / 2, x + s / 2, zc - s / 2, zc + s / 2, y, R_RING)], coll, atlas)
 
 
 def build_way_c114(coll, atlas):

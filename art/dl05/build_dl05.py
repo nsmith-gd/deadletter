@@ -2589,11 +2589,10 @@ def build_flood(m, coll):
     _mud_patches('D5Scum', [(p0 + 0.12, 0.85, WATER_Z - 0.0015, 0.1), (p0 + 0.5, 0.42, WATER_Z - 0.0015, 0.07), (85.6 + S9, 0.9, WATER_Z - 0.0015, 0.09),
                             (86.3 + S9, 0.88, WATER_Z - 0.0015, 0.08), (87.45 + S9, -0.85, WATER_Z - 0.0015, 0.09), (86.25 + S9, -0.9, WATER_Z - 0.0015, 0.07),
                             (87.4 + S9, 0.45, WATER_Z - 0.0015, 0.06), (ALLEY[0] + 0.3, 2.2, WATER_Z - 0.0015, 0.1)], m['scum'], coll, 5092)
-    # Afloat: a plank, a child's ball, a tin bowl, a shutter slat, two letters gone soft.
+    # Afloat: a plank, a child's ball, a shutter slat, two letters gone soft (pass 4: the tin bowl is on the raft).
     A = Batch(m)
     cbox(A.bm, (85.05 + S9, 0.62, WATER_Z + 0.005), (0.9, 0.12, 0.025), 0.005, A('wood'), rot=_rz(0.25))
     add_sphere(A.bm, (83.95 + S9, 0.5, WATER_Z + 0.03), 0.07, seg=14, mat=A('childpaint'))
-    add_cyl(A.bm, (86.55 + S9, -0.62, WATER_Z - 0.01), (86.55 + S9, -0.62, WATER_Z + 0.03), 0.07, 0.09, seg=12, mat=A('steel'))
     cbox(A.bm, (84.5 + S9, 0.9, WATER_Z + 0.003), (0.5, 0.06, 0.012), 0.003, A('depot_green'), rot=_rz(-0.4))
     for x, y, a in ((85.7 + S9, 0.72, 0.6), (87.15 + S9, -0.3, 2.2)):
         add_box(A.bm, (x, y, WATER_Z + 0.001), (0.16, 0.11, 0.002), mat=A('letters'), rot=_rz(a))
@@ -2622,6 +2621,311 @@ def build_flood(m, coll):
     add_sphere(bm, (-0.05, 0, 0.099), 0.034, seg=10, scale=(1.7, 1.0, 0.22), mat=2)
     bmesh.ops.transform(bm, matrix=Matrix.Translation((87.05 + S9, 0.4, WATER_Z - 0.005)) @ _rz(0.5) @ _rx(math.radians(78)), verts=bm.verts)
     _obj('D5DrownedShoe', bm, [m['paper'], m['rubber'], m['shaft']], coll, sharp=60)
+
+
+# --- pass 4: the drowning (docs/chapter1_pass4_plan.md, section 3) -----------------------------------------------
+# Ring C drowned, and something has lived on what was left. The high water stood at HIGH_Z on every house in the
+# street (D5HighWater; it fell later to TIDE_Z, where it stood longest); a kitchen table lashed into a raft and a
+# pram lie half under in the narrow point's front slot, clear of the duct's bridge (|y| < 0.25) and of the White's
+# line (y 0.64, along the back); in the flooded foot of the alley between C-108 and C-110, the deepest water and the
+# only part of its bed the camera sees, a bed of bones on a bank of silt: the White's lair.
+HIGH_Z = 1.4                          # the high water's line
+HW_TEX = (1.6, 1.02, 1.54)            # its decal's texture: tiles 1.6 m along x, covers z 1.02 .. 1.54
+RAFT = (87.17 + S9, -0.75, -0.07, 5.0, 10.0, 6.0)   # the raft: x, y, height of its deck's centre, yaw, roll, pitch (deg)
+PRAM = (86.45 + S9, -0.86, -0.13, -8.0, 68.0, 14.0) # the pram: x, y, height of its body's centre, yaw, roll, pitch
+LAIR = (ALLEY[0] + 0.17, ALLEY[1] - 0.17)          # the lair's bank of silt fills the alley's water across x ...
+LAIR_SLOPE = ((1.25, -0.88), (1.9, -0.64), (2.3, -0.5), (2.62, -0.44))   # ... rising (y, z) to the foot of its steps
+
+
+def make_highwater():
+    """The high water's mark (512 x 256, u = x / 1.6, v from z 1.02 to 1.54): a faint silt wash below, a dark band
+    under the line, the line itself dark and ragged, a crust of scum and drift caught along it, runs below."""
+    import numpy as np
+    from PIL import Image, ImageFilter
+    W, H = 512, 256
+    tw, z0, z1 = HW_TEX
+    rnd = random.Random(5800)
+    zc = z1 - (np.arange(H)[:, None] + 0.5) / H * (z1 - z0)
+    xs = np.arange(W)[None, :]
+    n1 = _tile_noise(W, H, 8, 5801)
+    n2 = _tile_noise(W, H, 28, 5802, octaves=2)
+    ragged = (0.004 * np.sin(2 * np.pi * 2 * xs / W + 0.7) + 0.003 * np.sin(2 * np.pi * 9 * xs / W + 2.1) + 0.005 * (n2[0:1, :] - 0.5))
+    under = HIGH_Z + ragged - zc                                     # metres below the line
+    silt, dark, scum = np.array([60.0, 50.0, 38.0]), np.array([26.0, 21.0, 16.0]), np.array([104.0, 106.0, 86.0])
+    col = np.zeros((H, W, 3)) + silt
+    # A faint wash all the way down (it stood here only days), fading in above the old line's decal.
+    a = np.clip(0.1 + 0.16 * (n1 - 0.4), 0.03, 0.24) * np.clip((zc - z0) / 0.05, 0, 1) * (under > 0)
+    # The tide band: darker for the last 7 cm under the line.
+    band = np.clip(1 - under / 0.07, 0, 1) * (under > 0)
+    a = np.maximum(a, band * np.clip(0.42 + 0.3 * (n2 - 0.5), 0.25, 0.6))
+    col = col * (1 - band[..., None] * 0.5) + dark * band[..., None] * 0.5
+    # Runs from the line.
+    for _ in range(60):
+        x = rnd.randrange(W)
+        ln = rnd.uniform(0.03, 0.3)
+        st = rnd.uniform(0.15, 0.35)
+        for dx in range(rnd.choice((1, 2, 2, 3))):
+            xx = (x + dx) % W
+            run = np.clip(1 - under[:, xx] / ln, 0, 1) * (under[:, xx] > 0) * st
+            a[:, xx] = np.maximum(a[:, xx], run)
+            col[:, xx] = col[:, xx] * (1 - run[:, None]) + dark * run[:, None]
+    # The line: dark, 2 cm, crisp on top.
+    line = np.clip(1 - np.abs(under - 0.008) / 0.012, 0, 1) * (under > -0.002)
+    a = np.maximum(a, line * np.clip(0.85 + 0.2 * (n2 - 0.5), 0.6, 0.95))
+    col = col * (1 - line[..., None]) + dark * line[..., None]
+    # Scum: a pale crust in clumps along the line and just over it, and drift (dark stalks, a feather of grit).
+    crust = np.zeros((H, W))
+    yy, xx = np.ogrid[:H, :W]
+    row = lambda z: (z1 - z) / (z1 - z0) * H            # noqa: E731
+    for _ in range(140):
+        x = rnd.uniform(0, W)
+        y = row(HIGH_Z + rnd.uniform(-0.004, 0.022))
+        r = rnd.uniform(1.5, 5.5)
+        for ox in (-W, 0, W):
+            crust = np.maximum(crust, np.clip(1 - ((xx - x - ox) ** 2 / (r * 1.8) ** 2 + (yy - y) ** 2 / r ** 2), 0, 1))
+    crust *= np.clip(0.55 + 0.6 * (n2 - 0.4), 0.2, 1.0)
+    a = np.maximum(a, crust * 0.85)
+    col = col * (1 - crust[..., None]) + scum * crust[..., None]
+    for _ in range(26):
+        x = rnd.uniform(0, W)
+        y = row(HIGH_Z + rnd.uniform(0.0, 0.015))
+        ln_ = rnd.uniform(6, 18)
+        ang = rnd.uniform(-0.5, 0.5)
+        for t in np.linspace(0, 1, 24):
+            px, py = int(x + math.cos(ang) * ln_ * t) % W, int(y - math.sin(ang) * ln_ * t)
+            if 0 <= py < H:
+                a[py, px] = max(a[py, px], 0.8)
+                col[py, px] = dark
+    rgba = np.dstack([np.clip(col, 0, 255), np.clip(a * 255, 0, 255)]).astype('uint8')
+    img = Image.fromarray(rgba, 'RGBA').filter(ImageFilter.GaussianBlur(0.5))
+    _save(img, 'highwater.png', 24)
+
+
+class _Behind:
+    """A BVH whose ray casts pass through anything in front of y_min (to lay a decal on walls behind props)."""
+    def __init__(self, bvh, y_min):
+        self.bvh, self.y_min = bvh, y_min
+
+    def ray_cast(self, o, d, reach):
+        o = Vector(o)
+        while True:
+            hit = self.bvh.ray_cast(o, d, reach)
+            if hit[0] is None or self.y_min is None or hit[0].y >= self.y_min:
+                return hit
+            reach -= (hit[0] - o).length + 0.002
+            o = hit[0] + d * 0.002
+            if reach <= 0:
+                return (None, None, None, None)
+
+
+def build_highwater(m, coll, street=('D5Homes', 'D5Square', 'D5Home108Room'), y_min=None):
+    """D5HighWater: the high water's line laid as a decal over every house in the street (the back row, the cross
+    alley, C-108's room through its window, the square), as the tideline is; D5HighWaterFacade on C-114's street wall
+    (a child of C114Facade, so it fades with it)."""
+    from mathutils.bvhtree import BVHTree
+    make_highwater()
+    mat = _imgmat('D5HighWaterMat', 'highwater.png', rough=0.85, alpha=True)
+    tw, z0, z1 = HW_TEX
+
+    def bvh_of(names):
+        bpy.context.view_layer.update()
+        bm = bmesh.new()
+        for n in names:
+            ob = bpy.data.objects.get(n)
+            if ob is None:
+                continue
+            me = ob.data.copy()
+            me.transform(ob.matrix_world)
+            bm.from_mesh(me)
+            bpy.data.meshes.remove(me)
+        tree = BVHTree.FromBMesh(bm)
+        bm.free()
+        return _Behind(tree, y_min)
+
+    def decal(name, parts):
+        verts, faces, uvs = [], [], []
+        n = 0
+        for names, xa, xb, y_from in parts:
+            n += _project_decal(verts, faces, uvs, bvh_of(names), xa, xb, z0, z1, y_from=y_from)
+        uvs = [(x / tw, (z - z0) / (z1 - z0)) for x, _, z in verts]
+        me = bpy.data.meshes.new(name)
+        me.from_pydata(verts, [], faces)
+        uv = me.uv_layers.new(name='UVMap')
+        for poly in me.polygons:
+            for li in poly.loop_indices:
+                uv.data[li].uv = uvs[me.loops[li].vertex_index]
+        me.materials.append(mat)
+        ob = bpy.data.objects.new(name, me)
+        coll.objects.link(ob)
+        print(f'{name}: {n} quads')
+        return ob
+    decal('D5HighWater', [(list(street), LANE_C[0], LANE_C[1], LANE_Y[0] + 0.05)])
+    facade = bpy.data.objects.get('C114Facade')
+    if facade is not None:
+        ob = decal('D5HighWaterFacade', [(['C114Facade'], X0_114, X1_114, -3.0)])
+        bpy.context.view_layer.update()
+        ob.parent = facade
+        ob.matrix_parent_inverse = facade.matrix_world.inverted()
+
+
+def _lair_z(y):
+    """The top of the lair's bank of silt at y."""
+    pts = LAIR_SLOPE
+    if y <= pts[0][0]:
+        return pts[0][1]
+    for (ya, za), (yb, zb) in zip(pts, pts[1:]):
+        if y <= yb:
+            return za + (zb - za) * (y - ya) / (yb - ya)
+    return pts[-1][1]
+
+
+def _bone_long(bm, c, d, ln, r, mat):
+    """A long bone: a shaft and a knuckled end each side (low: six sides)."""
+    c, d = Vector(c), Vector(d).normalized()
+    side = d.cross(Vector((0, 0, 1)))
+    if side.length < 1e-3:
+        side = Vector((1, 0, 0))
+    side.normalize()
+    a, b = c - d * (ln / 2), c + d * (ln / 2)
+    add_cyl(bm, a + d * r, b - d * r, r, seg=6, mat=mat)
+    for e, k in ((a, 1.0), (b, 0.8)):
+        add_cyl(bm, e - side * r * 1.5 * k, e + side * r * 1.5 * k, r * 1.45 * k, seg=6, mat=mat)
+
+
+def _bone_rib(bm, c, yaw, R, r, mat, tilt=0.0):
+    pts = []
+    for k in range(5):
+        t = -0.35 + 1.6 * k / 4
+        p = Vector((R * math.sin(t), 0.0, R * (math.cos(t) - 1)))
+        pts.append(Vector(c) + (_rz(yaw) @ _rx(tilt)).to_3x3() @ p)
+    for a, b in zip(pts, pts[1:]):
+        add_cyl(bm, a, b, r, seg=4, mat=mat)
+
+
+def build_drowning(m, coll):
+    """D5Raft, D5Pram, D5Lair (static; merged into D5Street)."""
+    rnd = random.Random(5810)
+    bone = bpy.data.materials.get('BoneDry') or worn_material(
+        'BoneDry', base=(0.25, 0.225, 0.175), dirt=(0.11, 0.095, 0.07), chip=(0.33, 0.31, 0.26), rough=0.88, chip_rough=0.9,
+        metallic=0.0, grime_scale=10.0, chip_scale=40.0, chip_amount=0.7, dust_amount=0.0)
+    m['bone'] = bone
+    m.setdefault('cloth', bpy.data.materials.get('AtriumCloth') or m['paper'])
+
+    # The raft: a kitchen table turned over, its legs sawn short, planks lashed across it, an oil drum lashed under one
+    # side for a float; the drum's side has gone under, and the table with it.
+    x, y, z, yaw, roll, pitch = RAFT
+    M = Matrix.Translation((x, y, z)) @ _rz(math.radians(yaw)) @ _rx(math.radians(roll)) @ _ry(math.radians(pitch))
+    B = Batch(m)
+    tb = bmesh.new()
+    wd, stl, rope, cl = B('wood'), B('steel'), B('paper'), B('cloth')
+    L, D = 0.66, 0.5
+    cbox(tb, (0, 0, -0.0175), (L, D, 0.035), 0.006, wd)                                   # the top, upside down
+    for s in (-1, 1):
+        cbox(tb, (0, s * (D / 2 - 0.05), 0.03), (L - 0.08, 0.022, 0.06), 0.004, wd)          # its apron, up
+        cbox(tb, (s * (L / 2 - 0.05), 0, 0.03), (0.022, D - 0.1, 0.06), 0.004, wd)
+        for t in (-1, 1):
+            cbox(tb, (s * (L / 2 - 0.05), t * (D / 2 - 0.05), 0.07), (0.045, 0.045, 0.14), 0.005, wd)   # legs, sawn short
+    for k, (yy, ln, a) in enumerate(((-0.1, 0.8, 0.0), (0.1, 0.78, 0.03))):                 # planks lashed across
+        cbox(tb, (0.01 * k, yy, 0.071), (ln, 0.1, 0.022), 0.004, wd, rot=_rz(a))
+    cbox(tb, (0.05, 0.0, 0.086), (0.42, 0.09, 0.02), 0.004, wd, rot=_rz(0.5) @ _rx(0.12))   # one more, broken
+    for sx in (-1, 1):
+        for yy in (-0.1, 0.1):
+            add_torus(tb, (sx * (L / 2 - 0.05), yy, 0.06), (1, 0, 0), 0.045, 0.006, mat=rope, seg=8, rseg=3)
+    add_cyl(tb, (-L / 2 + 0.05, -D / 2 + 0.05, 0.12), (L / 2 - 0.05, -D / 2 + 0.05, 0.12), 0.006, seg=4, mat=rope)   # a hand line
+    add_cyl(tb, (-L / 2 + 0.05, D / 2 - 0.05, 0.12), (L / 2 - 0.05, D / 2 - 0.05, 0.1), 0.006, seg=4, mat=rope)
+    add_cyl(tb, (-0.26, -0.13, -0.17), (0.26, -0.13, -0.17), 0.13, seg=14, mat=stl)          # the drum, under
+    for sx in (-0.16, 0.16):
+        add_torus(tb, (sx, -0.13, -0.17), (1, 0, 0), 0.134, 0.006, mat=rope, seg=14, rseg=3)
+    add_cyl(tb, (-0.15, -0.05, 0.082), (-0.15, -0.05, 0.12), 0.06, 0.08, seg=12, mat=stl)   # the tin bowl, and a bundle
+    rounded_box((0.22, 0.15, 0.11), (0.12, 0.06, 0.135), p=2.2, cuts=2, dents=((0.008, 8.0),), seed=7, mat=cl, bm=tb)
+    bmesh.ops.transform(tb, matrix=M, verts=tb.verts)
+    _merge(B.bm, tb)
+    B.done('D5Raft', coll)
+
+    # The pram: a coach-built pram tipped onto its side against the front wall, nose down, half under; its handle over
+    # the broken wall, its wheels toward the lane.
+    x, y, z, yaw, roll, pitch = PRAM
+    M = Matrix.Translation((x, y, z)) @ _rz(math.radians(yaw)) @ _rx(math.radians(roll)) @ _ry(math.radians(pitch))
+    B = Batch(m)
+    pb = bmesh.new()
+    body, hood, stl, tyre = B('childpaint'), B('rubber'), B('steel'), B('rubber')
+    rounded_box((0.58, 0.3, 0.22), (0, 0, 0), p=4.0, cuts=2, mat=body, bm=pb,
+                shape=lambda q: q.__setitem__(2, q[2] if q[2] < 0 else q[2] * (1.0 + 0.12 * q[0])))
+    cbox(pb, (0, 0, 0.112), (0.6, 0.32, 0.018), 0.006, stl)                                # its rim
+    add_sphere(pb, (-0.17, 0, 0.11), 0.17, seg=12, scale=(1.05, 0.95, 0.95), mat=hood)      # the hood, up
+    for s in (-1, 1):
+        add_cyl(pb, (-0.22, s * 0.12, -0.13), (0.22, s * 0.12, -0.13), 0.01, seg=6, mat=stl)  # the chassis
+        for xw in (-0.2, 0.2):
+            c = Vector((xw, s * 0.2, -0.17))
+            add_torus(pb, c, (0, 1, 0), 0.11, 0.013, mat=tyre, seg=14, rseg=4)
+            for k in range(4):
+                a = k * math.pi / 4
+                add_cyl(pb, c + Vector((0.1 * math.cos(a), 0, 0.1 * math.sin(a))), c - Vector((0.1 * math.cos(a), 0, 0.1 * math.sin(a))),
+                        0.004, seg=4, mat=stl)
+            add_cyl(pb, c - Vector((0, 0.02, 0)), c + Vector((0, 0.02, 0)), 0.02, seg=8, mat=stl)
+            add_cyl(pb, c, Vector((xw * 0.8, s * 0.12, -0.13)), 0.007, seg=4, mat=stl)
+        add_cyl(pb, (-0.28, s * 0.12, 0.08), (-0.5, s * 0.12, 0.36), 0.011, seg=6, mat=stl)  # the handle's arms
+    add_cyl(pb, (-0.5, -0.135, 0.36), (-0.5, 0.135, 0.36), 0.016, seg=8, mat=hood)          # its grip
+    bmesh.ops.transform(pb, matrix=M, verts=pb.verts)
+    _merge(B.bm, pb)
+    B.done('D5Pram', coll)
+
+    # The lair: a bank of silt filling the alley's flooded foot, rising to its steps, and on it the bones of the ones
+    # it took, in their rags: long bones, ribs, skulls (domes only, no faces), a pelvis or two; a boot, a tin mug.
+    B = Batch(m)
+    bn, mud, cl = B('bone'), B('mud'), B('cloth')
+    x0, x1 = LAIR
+    poly = [(LAIR_SLOPE[0][0], POOL_BED - 0.02), (LAIR_SLOPE[-1][0], POOL_BED - 0.02)] + [p for p in LAIR_SLOPE[::-1]]
+    prism(B.bm, poly, 'x', x0, x1, mat=mud)
+    for k in range(5):                                                                   # lumps in it
+        yy = rnd.uniform(1.5, 2.5)
+        rounded_box((rnd.uniform(0.15, 0.3), rnd.uniform(0.12, 0.25), 0.08), (rnd.uniform(x0 + 0.1, x1 - 0.1), yy, _lair_z(yy) - 0.01),
+                    p=2.0, cuts=1, seed=k, mat=mud, bm=B.bm)
+    count = {'long': 0, 'rib': 0, 'skull': 0}
+
+    def at(yy, lift=0.0):
+        return _lair_z(yy) + lift
+    for k in range(30):                                                                  # long bones, every way
+        yy = rnd.uniform(1.45, 2.58)
+        xx = rnd.uniform(x0 + 0.04, x1 - 0.04)
+        ln, r = rnd.uniform(0.26, 0.44), rnd.uniform(0.016, 0.022)
+        a = rnd.uniform(0, math.pi)
+        d = Vector((math.cos(a), math.sin(a), 0))
+        d.z = (_lair_z(yy + d.y * 0.1) - _lair_z(yy - d.y * 0.1)) / 0.2 * d.y + rnd.uniform(-0.15, 0.15)
+        _bone_long(B.bm, (xx, yy, at(yy, r * 1.2 + rnd.uniform(0, 0.05))), d, ln, r, bn)
+        count['long'] += 1
+    for k in range(3):                                                                   # ribs over a spine, half in the silt
+        yy = rnd.uniform(1.7, 2.45)
+        xx = rnd.uniform(x0 + 0.12, x1 - 0.12)
+        yaw = rnd.uniform(-0.5, 0.5) + (math.pi / 2 if k % 2 else 0)
+        base = Vector((xx, yy, at(yy, 0.07)))
+        sd = (_rz(yaw).to_3x3() @ Vector((1, 0, 0)))
+        for j in range(6):                                                               # the spine's bones
+            p = base + sd * (j - 2.5) * 0.045
+            add_box(B.bm, p, (0.03, 0.04, 0.03), mat=bn, rot=_rz(yaw))
+        for j in range(5):
+            for s in (-1, 1):
+                _bone_rib(B.bm, base + sd * (j - 2) * 0.05, yaw + s * math.pi / 2 + math.pi / 2, rnd.uniform(0.1, 0.13), 0.0075, bn,
+                          tilt=s * 0.25)
+                count['rib'] += 1
+    for k in range(5):                                                                   # skulls: domes, sunk, faces down
+        yy = rnd.uniform(1.6, 2.55)
+        xx = rnd.uniform(x0 + 0.08, x1 - 0.08)
+        add_sphere(B.bm, (xx, yy, at(yy, 0.02)), 0.075, seg=10, scale=(1.0, 1.25, 0.82), mat=bn)
+        count['skull'] += 1
+    for k in range(2):                                                                   # a pelvis
+        yy = rnd.uniform(1.9, 2.5)
+        rounded_box((0.24, 0.15, 0.06), (rnd.uniform(x0 + 0.12, x1 - 0.12), yy, at(yy, 0.03)), p=2.2, cuts=1, seed=k + 3, mat=bn, bm=B.bm,
+                    rot=_rz(rnd.uniform(0, 3)) @ _rx(rnd.uniform(-0.4, 0.4)))
+    for k in range(4):                                                                   # rags: a coat, a shawl
+        yy = rnd.uniform(1.55, 2.5)
+        rounded_box((rnd.uniform(0.25, 0.4), rnd.uniform(0.18, 0.3), 0.05), (rnd.uniform(x0 + 0.12, x1 - 0.12), yy, at(yy, 0.01)), p=2.0,
+                    cuts=2, dents=((0.012, 7.0),), seed=k + 9, mat=cl, bm=B.bm, rot=_rz(rnd.uniform(0, 3)))
+    yy = 2.2
+    rounded_box((0.26, 0.09, 0.16), (x0 + 0.15, yy, at(yy, 0.06)), p=2.4, cuts=2, seed=21, mat=cl, bm=B.bm, rot=_rz(1.2) @ _rx(1.3))   # a boot
+    add_cyl(B.bm, (x1 - 0.15, 2.0, at(2.0, 0.0)), (x1 - 0.12, 2.04, at(2.0, 0.08)), 0.04, seg=10, mat=B('steel'))   # a tin mug
+    B.done('D5Lair', coll)
+    print('dl05: lair', count)
 
 
 def build_duct(m, coll):
@@ -3775,7 +4079,8 @@ def merge_objects(coll, names, new_name):
 
 
 STREET_STATIC = ['D5Lane', 'D5Homes', 'D5LaneFront', 'D5Square', 'D5Overhead', 'D5Railings', 'D5Washing', 'FloodDip', 'D5ScumLine', 'D5Afloat',
-                 'D5Letters', 'D5DeadBulbs', 'D5Bicycle', 'D5DrownedShoe', 'D5Home108Room', 'D5Table108', 'D5Mud', 'D5Mud108', 'D5Scum']
+                 'D5Letters', 'D5DeadBulbs', 'D5Bicycle', 'D5DrownedShoe', 'D5Home108Room', 'D5Table108', 'D5Mud', 'D5Mud108', 'D5Scum',
+                 'D5Raft', 'D5Pram', 'D5Lair']
 HOME_STATIC = ['C114Interior', 'C114Exterior', 'C114HallProps', 'C114Kitchen', 'C114Table', 'C114Sideboard', 'C114Upstairs',
                'ChildBed', 'D5Bedding', 'D5Quilt', 'D5WindowFrame', 'D5Drawing', 'D5DrawingPin', 'D5MobileWire', 'D5MobileStars', 'D5Rug', 'D5RugLiving',
                'D5Shelf', 'D5Cup', 'D5Pencils', 'D5WoodenBird', 'D5PhotoFrame', 'D5Photo', 'D5HallPhoto', 'D5Crayons', 'D5FloorDrawing', 'D5DeskLeg',
@@ -3793,6 +4098,7 @@ def build_set(dl01, m, coll):
     build_c108_room(m, coll)
     build_c110_letters(m, coll)
     build_flood(m, coll)
+    build_drowning(m, coll)
     build_duct(m, coll)
     build_mailslot(m, coll)
     build_far(m, coll)
@@ -3803,6 +4109,7 @@ def build_set(dl01, m, coll):
     build_toy(m, coll)
     build_passage(m, coll)
     build_tideline(m, coll)
+    build_highwater(m, coll)
     merge_objects(coll, STREET_STATIC, 'D5Street')
     merge_objects(coll, HOME_STATIC, 'C114Home')
 

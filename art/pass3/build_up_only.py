@@ -1305,6 +1305,80 @@ def build_car(U, coll):
 
 
 # --------------------------------------------------------------------------
+# Pass 4: what the lift builds on (the bay's lamps from DL-04, the cage's balance gauge from DL-09)
+# --------------------------------------------------------------------------
+
+def plate_lamp_bar(bm, mat):
+    """The lamps' housing on the car's sill, car-local: a low steel strip with a hood, its face toward the camera."""
+    y0 = PLATE_LAMP_Y
+    bx(bm, (-0.22, 0.22), (y0, y0 + 0.028), (0.0, 0.05), mat, 0.005)
+    bx(bm, (-0.235, 0.235), (y0 - 0.012, y0 + 0.028), (0.05, 0.056), mat, 0.002)
+
+
+def build_plate_lamps(coll, car):
+    """CarPlateLamp0..2: the bay's three lamps (DL-04's BayLamp0..2, the same colour and the same row) on the car's
+    sill at the weighing plate's front edge, facing the camera; children of LiftCar, so they ride up with it. The game
+    lights them one by one as the plate takes a passenger's weight."""
+    for i, x in enumerate(PLATE_LAMPS):
+        bm = bmesh.new()
+        add_sphere(bm, (0, 0, 0), 0.019, seg=12, scale=(1, 0.5, 1))
+        mat = bpy.data.materials.get(f'CarPlateLamp{i}') or emission_material(f'CarPlateLamp{i}', (0.72, 0.92, 1.0), 0.0)
+        ob = d17.mesh_object(f'CarPlateLamp{i}', bm, [mat], coll)
+        ob.parent = car
+        ob.location = (x, PLATE_LAMP_Y - 0.001, PLATE_LAMP_Z)                  # car-local
+
+
+def build_balance_gauge(coll):
+    """UOBalanceGauge: the cage's balance gauge from DL-09 (the same face, BalanceGaugeMat, built by
+    art/pass3/build_lore.py; made here first when this runs before it) on the lift front between the gate and the
+    crank's pier, reading the car against the counterweight. UOBalanceNeedle: origin at the dial's centre, modelled
+    pointing up (balanced), set at "too light": it turns about Blender +Y (game -Z), rotation_euler.y = +48 deg
+    (game rotation.z = -48 deg) too light, 0 balanced, as DL-09's."""
+    import build_lore as lore
+    cx, cy, cz = UO_GAUGE_C
+    R = UO_GAUGE_R
+    k = R / 0.14
+    bm = bmesh.new()                                   # mats: 0 green, 1 brass, 2 face
+    uvl = bm.loops.layers.uv.new('UVMap')
+    add_cyl(bm, (cx, WALL_Y, cz), (cx, cy - 0.005, cz), R + 0.025, seg=28, mat=0)            # the case, on the wall
+    add_torus(bm, (cx, cy - 0.006, cz), (0, 1, 0), R + 0.012, 0.012, seg=28, rseg=6, mat=1)   # its bezel
+    add_cyl(bm, (cx, cy + 0.03, cz + R + 0.02), (cx, cy + 0.03, cz + 0.42), 0.012, seg=6, mat=0)   # conduit up the wall
+    add_cyl(bm, (cx, cy + 0.03, cz + 0.42), (cx, WALL_Y, cz + 0.42), 0.012, seg=6, mat=0)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])          # the solids; the face is added after, wound to -y
+    n = 32
+    rr = R + 0.005
+    c0 = bm.verts.new((cx, cy - 0.008, cz))
+    ring = [bm.verts.new((cx + rr * math.cos(2 * math.pi * j / n), cy - 0.008, cz + rr * math.sin(2 * math.pi * j / n))) for j in range(n)]
+    for j in range(n):
+        f = bm.faces.new((c0, ring[j], ring[(j + 1) % n]))
+        f.material_index = 2
+        for lp in f.loops:
+            p = lp.vert.co
+            lp[uvl].uv = (0.5 + (p.x - cx) / (2 * rr) * 0.94, 0.5 + (p.z - cz) / (2 * rr) * 0.94)
+    mats = [lore.material('DepotGreen'), lore.material('HandledBrass'), lore.image_mat('BalanceGaugeMat', 'gauge', rough=0.4, alpha=False)]
+    me = bpy.data.meshes.new('UOBalanceGauge')
+    bm.normal_update()
+    bm.to_mesh(me)
+    bm.free()
+    for mt in mats:
+        me.materials.append(mt)
+    me.polygons.foreach_set('use_smooth', [True] * len(me.polygons))
+    me.set_sharp_from_angle(angle=math.radians(35))
+    ob = bpy.data.objects.new('UOBalanceGauge', me)
+    coll.objects.link(ob)
+    # The needle: DL-09's, scaled to the dial.
+    bm = bmesh.new()
+    add_box(bm, (0, 0, 0.055 * k), (0.012 * k, 0.004, 0.11 * k), mat=0)
+    add_box(bm, (0, 0, 0.112 * k), (0.02 * k, 0.004, 0.02 * k), mat=0, rot=Matrix.Rotation(math.radians(45), 4, 'Y'))
+    add_box(bm, (0, 0, -0.025 * k), (0.02 * k, 0.004, 0.05 * k), mat=0)
+    add_cyl(bm, (0, -0.004, 0), (0, 0.004, 0), 0.016 * k, seg=14, mat=1)
+    nd = d17.mesh_object('UOBalanceNeedle', bm, [lore.material('GaugeNeedle'), lore.material('HandledBrass')], coll)
+    nd.location = (cx, cy - 0.016, cz)
+    nd.rotation_euler = (0, math.radians(UO_NEEDLE_TOO_LIGHT), 0)
+    return ob, nd
+
+
+# --------------------------------------------------------------------------
 # The crank, the service door, the counterweight and the service UP
 # --------------------------------------------------------------------------
 
@@ -1624,6 +1698,7 @@ def build_set(dl01, m, coll):
     build_lift_front(U, coll)
     build_panel(U, coll)
     build_car(U, coll)
+    build_balance_gauge(coll)
     build_service(U, coll)
     build_suitcase114(U, coll)
     build_stair(U, coll)
