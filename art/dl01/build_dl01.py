@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl04'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl05'))
-for _d in ('sorting_hall', 'racks', 'cage', 'pass2', 'pass3', 'pass4', 'white'):
+for _d in ('sorting_hall', 'racks', 'cage', 'pass2', 'pass3', 'pass4', 'pass6', 'white'):
     sys.path.insert(0, os.path.join(HERE, '..', _d))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
@@ -52,6 +52,11 @@ import build_lore as lore  # noqa: E402
 import build_story_depot as story_depot  # noqa: E402
 import build_story_shafts as story_shafts  # noqa: E402
 import build_story_ringc as story_ringc  # noqa: E402
+# Pass 6: the tableaux (docs/chapter1_pass6_plan.md), each module owning its scenes; built only once it exists.
+PASS6 = []
+for _name in ('build_tableaux_depot', 'build_tableaux_ringc'):
+    if os.path.exists(os.path.join(HERE, '..', 'pass6', _name + '.py')):
+        PASS6.append(__import__(_name))
 import build_white as white  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,
@@ -1388,6 +1393,10 @@ def main():
     story_depot.build_set(sys.modules[__name__], m, set_coll)
     story_shafts.build_set(sys.modules[__name__], m, set_coll)
     story_ringc.build_set(sys.modules[__name__], m, set_coll)
+    # Pass 6: the tableaux, after everything they change.
+    for mod in PASS6:
+        bpy.context.view_layer.update()
+        mod.build_set(sys.modules[__name__], m, set_coll)
 
     # Pose D-17 dormant at his start mark to fit the cradle, then return him to the origin:
     # the game places and turns him itself.
@@ -1428,6 +1437,9 @@ def main():
     story_depot.add_clips(sys.modules[__name__], arm)
     story_shafts.add_clips(sys.modules[__name__], arm)
     story_ringc.add_clips(sys.modules[__name__], arm)
+    for mod in PASS6:
+        if hasattr(mod, 'add_clips'):
+            mod.add_clips(sys.modules[__name__], arm)
 
     for t in arm.animation_data.nla_tracks:
         t.mute = False
