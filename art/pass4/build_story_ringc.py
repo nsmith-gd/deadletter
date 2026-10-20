@@ -1,11 +1,15 @@
 """Chapter 1, pass 4 (docs/chapter1_pass4_plan.md): story_ringc. Built in FINAL world x, after the pass 3 modules.
 
 DL-10 Up Only, "the crush" (sections 3 and 4): the lift lobby after the last car went.
-  UOShoes       shoes by the hundred: along the queue line in front of the lane, heaped against the lift front either
-                side of the gate, under the bench, strays on the porch, a few fallen to ring C's landing at the
-                shaft's foot. A few shoe meshes, baked into one static object (one node, three materials: see below).
-                The lane (|y| < 0.25), the car's doorway, the UP button's and the crank's stands and the service
-                door's path are kept clear.
+  UOBelongings  (pass 5: was UOShoes) what people dropped on the way to the last car, when they could carry no more:
+                bundles tied up in sheets, suitcases and holdalls (two burst open), rolled mattresses, pots, a pan and
+                kettles, a chair on its back, a birdcage on its side, a clock, a child's bear, blankets, a broom, two
+                crates of crockery and plates slid out of one, a sewing machine and its cover, photographs face down.
+                Along the queue line in front of the lane (nothing over 0.27 high), heaped in front of the gate,
+                against the lift front either side of it, round the waiting area's bench, on the porch, and a few
+                fallen to ring C's landing at the shaft's foot. One static object, nine materials (BELONG_MATS). The
+                lane (y -0.32 .. 0.16), Suitcase114, the car's doorway, the UP button's and the crank's stands, the
+                service door's path and the counterweight's shaft are kept clear.
   UOBarrier     the queue's barrier: steel posts bolted along the line's front edge, every one bent flat toward the
                 lift, the rail between them crushed and lying on the deck, its end hanging over the deck's edge.
   UOLastCar     LAST CAR on an enamel board, hanging from one hook under the gate's head (the other hook bare, a
@@ -36,7 +40,7 @@ import bmesh
 from mathutils import Matrix, Vector
 
 import build_d17 as d17
-from build_d17 import add_box, add_cyl, add_torus, worn_material, simple_material
+from build_d17 import add_box, add_cyl, add_sphere, add_torus, rounded_box, worn_material, simple_material
 import build_up_only as uo
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -402,7 +406,21 @@ def material(name):
             'SafetyYellow': dict(base=(0.55, 0.42, 0.06), dirt=(0.2, 0.16, 0.05), chip=(0.07, 0.068, 0.062), rough=0.8,
                                  chip_rough=0.9, metallic=0.0),
             'DepotGreen': dict(base=(0.06, 0.09, 0.07), dirt=(0.04, 0.035, 0.025), chip=(0.12, 0.11, 0.1), rough=0.65,
-                               chip_rough=0.5, metallic=0.2)}
+                               chip_rough=0.5, metallic=0.2),
+            'LuggageCanvas': dict(base=(0.13, 0.135, 0.105), dirt=(0.07, 0.065, 0.05), chip=(0.21, 0.2, 0.16), rough=0.9,
+                                  chip_rough=0.9, metallic=0.0),
+            'CrateWood': dict(base=(0.18, 0.12, 0.07), dirt=(0.08, 0.055, 0.035), chip=(0.25, 0.19, 0.12), rough=0.85,
+                              chip_rough=0.8, metallic=0.0),
+            'DustyCream': dict(base=(0.5, 0.46, 0.35), dirt=(0.3, 0.26, 0.18), chip=(0.03, 0.027, 0.022), rough=0.85,
+                               chip_rough=0.55, metallic=0.0),
+            'ToyFabric': dict(base=(0.36, 0.33, 0.3), dirt=(0.18, 0.15, 0.12), chip=(0.42, 0.4, 0.36), rough=0.95,
+                              chip_rough=0.95, metallic=0.0),
+            'CotCanvas': dict(base=(0.16, 0.15, 0.1), dirt=(0.08, 0.07, 0.045), chip=(0.2, 0.19, 0.15), rough=0.95,
+                              chip_rough=0.95, metallic=0.0)}
+    plain = {'TeaEnamel': ((0.58, 0.55, 0.47), 0.35, 0.0), 'Brass': ((0.45, 0.32, 0.12), 0.45, 0.8)}
+    if name in plain:
+        c, r, mt_ = plain[name]
+        return simple_material(name, c, r, metallic=mt_)
     if name in worn:
         return worn_material(name, **worn[name])
     return simple_material(name, (0.2, 0.2, 0.2), 0.8)
@@ -438,205 +456,355 @@ def sub(rect, u0, v0, u1, v1):
 
 
 # =====================================================================================================================
-# DL-10: the shoes
+# DL-10: what they left behind (pass 5: was the shoes)
 # =====================================================================================================================
+# docs/chapter1_pass5_plan.md, section 2: the crush at the last car, told by household belongings dropped on the way,
+# not by shoes. Fewer, larger, readable things: bundles tied up in sheets, suitcases and bags (burst, open), a rolled
+# mattress, pots and a kettle, a chair, a birdcage, a clock, a child's bear, blankets, a broom, a crate of crockery, a
+# sewing machine, photographs face down. One static object (UOBelongings), the materials below.
 
-SHOE_MATS = ('DustyDark', 'LuggageLeather', 'ChildPaint')
-
-
-def _loft(bm, secs, mat):
-    """A shoe's upper lofted through cross sections (x, sole z, half width, height), toe toward +x: six-sided rings,
-    capped."""
-    rings = []
-    for x, z0, w, h in secs:
-        pts = ((-w, z0), (w, z0), (1.05 * w, z0 + 0.5 * h), (0.62 * w, z0 + h), (-0.62 * w, z0 + h), (-1.05 * w, z0 + 0.5 * h))
-        rings.append([bm.verts.new((x, y, z)) for y, z in pts])
-    for a, b in zip(rings, rings[1:]):
-        for k in range(6):
-            bm.faces.new((a[k], a[(k + 1) % 6], b[(k + 1) % 6], b[k])).material_index = mat
-    bm.faces.new(rings[0][::-1]).material_index = mat
-    bm.faces.new(rings[-1]).material_index = mat
+BELONG_MATS = ('LuggageLeather', 'LuggageCanvas', 'CrateWood', 'DustyCream', 'TeaEnamel', 'DepotSteel', 'Brass', 'ToyFabric',
+               'CotCanvas')
+LEA, CAN, WOOD, CREAM, ENAM, STL, BRS, TOY, COT = range(9)
 
 
-def _top(secs, x):
-    """The upper's top height at x."""
-    for (xa, za, _, ha), (xb, zb, _, hb) in zip(secs, secs[1:]):
-        if xa <= x <= xb:
-            t = (x - xa) / (xb - xa)
-            return (za + ha) * (1 - t) + (zb + hb) * t
-    return secs[-1][1] + secs[-1][3]
+def _sector(bm, c, r, a0, a1, h, mat, n=5):
+    """A flat circular sector (a broken plate's piece) on z = c.z, h thick."""
+    c = Vector(c)
+    ring = [c] + [c + Vector((r * math.cos(a0 + (a1 - a0) * k / n), r * math.sin(a0 + (a1 - a0) * k / n), 0)) for k in range(n + 1)]
+    lo = [bm.verts.new(p) for p in ring]
+    hi = [bm.verts.new(p + Vector((0, 0, h))) for p in ring]
+    bm.faces.new(lo[::-1]).material_index = mat
+    bm.faces.new(hi).material_index = mat
+    m = len(ring)
+    for k in range(m):
+        bm.faces.new((lo[k], lo[(k + 1) % m], hi[(k + 1) % m], hi[k])).material_index = mat
 
 
-def _shoe(bm, secs, mat, opening, sole=0.012, heel=None, strap=None):
-    """A shoe: its upper (mat); under a flat upper a sole slab a little proud all round, dark (slot 0), with a heel
-    block under its back; under a raised one (a lady's shoe) a heel post down to the floor; the opening on top, dark;
-    an optional bar strap."""
-    _loft(bm, secs, mat)
-    made = []
-    flat = all(z0 == 0 for _, z0, _, _ in secs)
-    if flat:                                                     # heel, waist and toe: a six-sided slab
-        keep = (secs[0], secs[len(secs) // 2], secs[-1])
-        ring = [(x, -w - 0.003) for x, _, w, _ in keep] + [(x, w + 0.003) for x, _, w, _ in keep[::-1]]
-        n = len(ring)
-        vb = [bm.verts.new((x, y, -sole)) for x, y in ring]
-        vt = [bm.verts.new((x, y, 0.0)) for x, y in ring]
-        made.append(bm.faces.new(vb[::-1]))
-        for k in range(n):
-            made.append(bm.faces.new((vb[k], vb[(k + 1) % n], vt[(k + 1) % n], vt[k])))
-        for f in made:
-            f.material_index = 0
-    if heel:
-        hx, hw, hh = heel
-        if flat:
-            add_box(bm, (hx, 0, -sole - hh / 2), (hw, hw * 1.5, hh), mat=0)
+def _knot(t, top, s, mat):
+    """The knot a sheet's corners are tied in, its two ears standing up."""
+    top = Vector(top)
+    add_sphere(t, top, s, mat=mat, seg=6, scale=(1.3, 1.0, 0.75))
+    for sx in (-1, 1):
+        add_cyl(t, top + Vector((sx * s * 0.6, 0, s * 0.2)), top + Vector((sx * s * 2.0, s * 0.5 * sx, s * 1.7)), s * 0.55, s * 0.12,
+                mat=mat, seg=5)
+
+
+def it_bundle(t, L, W, H, mat, seed=0.0):
+    """Belongings tied up in a sheet or a blanket: a soft lump, the corners knotted on top."""
+    rounded_box((L, W, H), (0, 0, H / 2), p=2.3, cuts=2, dents=((0.018, 6.0),), seed=seed, mat=mat, bm=t)
+    _knot(t, (0.05 * L, 0, H * 0.97), min(L, W) * 0.13, mat)
+
+
+def it_case_flat(t, L, T, H, body, latches=True):
+    """A suitcase lying on its side (as dropped): length x, its thickness now up."""
+    uo.suitcase(t, (0, H / 2, 0), (L, T, H), _rx(math.radians(90)), body, STL, LEA, latches=latches)
+
+
+def it_case_open(t, L, W, H, body, rnd):
+    """A case burst open: the tray, the lid flung back flat behind its hinge, clothes spilling over the front."""
+    rounded_box((L, W, H), (0, 0, H / 2), p=6, cuts=2, dents=((0.004, 5.0),), seed=L, mat=body, bm=t)
+    rounded_box((L * 0.9, W * 0.82, 0.05), (0, 0, H - 0.005), p=2.0, cuts=2, dents=((0.012, 8.0),), seed=W, mat=CREAM, bm=t)
+    lid = Matrix.Translation((0, W / 2, 0.0)) @ _rx(math.radians(-8)) @ Matrix.Translation((0, W / 2 + 0.01, H * 0.3))
+    rounded_box((L, W, H * 0.6), (0, 0, 0), p=6, cuts=2, dents=((0.004, 5.0),), seed=H, mat=body, bm=t, rot=lid)
+    for k in range(3):                                          # clothes, out over its ends
+        rounded_box((rnd.uniform(0.2, 0.3), rnd.uniform(0.14, 0.2), 0.03),
+                    ((1 if k % 2 else -1) * (L / 2 + rnd.uniform(0.02, 0.1)), rnd.uniform(-W / 4, W / 4), 0.015 + 0.012 * k), p=2.0, cuts=2,
+                    dents=((0.008, 9.0),), seed=k + L, mat=(TOY, CREAM, CAN)[k % 3], bm=t, rot=_rz(rnd.uniform(-0.8, 0.8)))
+
+
+def it_bag(t, L, R, mat, burst=False, rnd=None):
+    """A soft holdall: a stuffed lump with two leather handles; burst, clothes out of its open end."""
+    rounded_box((L, R * 2, R * 1.6), (0, 0, R * 0.8), p=2.4, cuts=2, dents=((0.012, 6.0),), seed=L * 3, mat=mat, bm=t)
+    for sy in (-0.35, 0.35):
+        add_torus(t, (0, sy * R, R * 1.55), (0, 1, 0), 0.075, 0.009, mat=LEA, seg=10, rseg=3)
+    add_box(t, (0, 0, R * 1.6 + 0.002), (L * 0.85, 0.02, 0.008), mat=STL)       # the zip
+    if burst and rnd:
+        for k in range(3):
+            rounded_box((rnd.uniform(0.18, 0.3), rnd.uniform(0.12, 0.2), 0.03),
+                        (L / 2 + rnd.uniform(0.02, 0.2), rnd.uniform(-0.12, 0.12), 0.015 + 0.012 * k), p=2.0, cuts=2,
+                        dents=((0.008, 9.0),), seed=k * 7, mat=(CREAM, TOY, COT)[k], bm=t, rot=_rz(rnd.uniform(-0.9, 0.9)))
+
+
+def it_mattress(t, L, r):
+    """A mattress rolled up and tied with cord, lying along x."""
+    add_cyl(t, (-L / 2, 0, r), (L / 2, 0, r), r, mat=COT, seg=12, dents=(0.006, 5.0))
+    for sx in (-0.3, 0.3):
+        add_torus(t, (sx * L, 0, r), (1, 0, 0), r + 0.004, 0.008, mat=CAN, seg=12, rseg=3)
+    for sx in (-1, 1):                                           # the roll's ends: its layers, a step in
+        add_cyl(t, (sx * (L / 2 + 0.004), 0, r), (sx * (L / 2 - 0.002), 0, r), r * 0.62, mat=CREAM, seg=10)
+
+
+def it_pot(t, r, h, mat, pan=False, lid=True):
+    """A cooking pot (two lugs, a lid) or a pan (one long handle)."""
+    add_cyl(t, (0, 0, 0), (0, 0, h), r, mat=mat, seg=14)
+    add_torus(t, (0, 0, h), (0, 0, 1), r, 0.006, mat=mat, seg=14, rseg=3)
+    if pan:
+        add_cyl(t, (r * 0.95, 0, h * 0.8), (r + 0.2, 0, h * 0.95), 0.011, mat=STL, seg=6)
+    else:
+        for sx in (-1, 1):
+            add_box(t, (sx * (r + 0.015), 0, h * 0.82), (0.03, 0.05, 0.012), mat=STL)
+        if lid:
+            add_cyl(t, (0, 0, h), (0, 0, h + 0.012), r * 0.98, r * 0.7, mat=mat, seg=14)
+            add_sphere(t, (0, 0, h + 0.02), 0.012, mat=STL, seg=6)
+
+
+def it_kettle(t):
+    """A white enamel kettle: its body, lid and knob, spout and bail handle."""
+    add_cyl(t, (0, 0, 0), (0, 0, 0.12), 0.095, 0.068, mat=ENAM, seg=14)
+    add_cyl(t, (0, 0, 0.12), (0, 0, 0.135), 0.066, 0.03, mat=ENAM, seg=12)
+    add_sphere(t, (0, 0, 0.142), 0.012, mat=STL, seg=6)
+    add_cyl(t, (0.07, 0, 0.035), (0.155, 0, 0.12), 0.02, 0.009, mat=ENAM, seg=6)
+    pts = [Vector((-0.055, 0, 0.125)), Vector((-0.04, 0, 0.2)), Vector((0.04, 0, 0.2)), Vector((0.055, 0, 0.125))]
+    for a, b in zip(pts, pts[1:]):
+        add_cyl(t, a, b, 0.006, mat=STL, seg=5)
+
+
+def it_chair(t):
+    """A kitchen chair: seat, four legs and a stretcher, the back's two posts and rails."""
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            uo.bx(t, (sx * 0.17 - 0.016, sx * 0.17 + 0.016), (sy * 0.16 - 0.016, sy * 0.16 + 0.016), (0, 0.44), WOOD)
+        uo.bx(t, (sx * 0.17 - 0.016, sx * 0.17 + 0.016), (0.145, 0.177), (0.44, 0.9), WOOD)
+    uo.cbox(t, (0, 0, 0.455), (0.42, 0.4, 0.03), 0.008, WOOD)
+    for z in (0.64, 0.84):
+        uo.bx(t, (-0.16, 0.16), (0.15, 0.172), (z - 0.03, z + 0.03), WOOD)
+    uo.bx(t, (-0.16, 0.16), (-0.17, -0.15), (0.14, 0.17), WOOD)
+    uo.bx(t, (-0.18, -0.16), (-0.15, 0.15), (0.14, 0.17), WOOD)
+
+
+def it_cage(t):
+    """A small square birdcage, brass: a tray, a roof, its bars, a ring to hang it by; the door hangs open."""
+    w, d, h = 0.22, 0.16, 0.24
+    uo.bx(t, (-w / 2 - 0.01, w / 2 + 0.01), (-d / 2 - 0.01, d / 2 + 0.01), (0, 0.025), BRS)
+    uo.bx(t, (-w / 2, w / 2), (-d / 2, d / 2), (h, h + 0.012), BRS)
+    add_torus(t, (0, 0, h + 0.04), (1, 0, 0), 0.026, 0.004, mat=BRS, seg=10, rseg=3)
+    for k in range(9):
+        x = -w / 2 + w * k / 8
+        for y in (-d / 2, d / 2):
+            if y < 0 and 3 <= k <= 4:                                  # the door's gap
+                continue
+            add_box(t, (x, y, (0.025 + h) / 2), (0.004, 0.004, h - 0.025), mat=BRS)
+    for k in range(1, 6):
+        y = -d / 2 + d * k / 6
+        for x in (-w / 2, w / 2):
+            add_box(t, (x, y, (0.025 + h) / 2), (0.004, 0.004, h - 0.025), mat=BRS)
+    door = Matrix.Translation((-w / 2 + w * 3 / 8 - 0.01, -d / 2, 0.03)) @ _rz(math.radians(-70))
+    for k in range(3):
+        add_box(t, door @ Vector((0.012 + 0.012 * k, 0, 0.06)), (0.004, 0.004, 0.12), mat=BRS, rot=_rz(math.radians(-70)))
+
+
+def it_clock(t):
+    """A wall clock lying on its back: a turned wooden case, a brass bezel, the dial and its hands."""
+    add_cyl(t, (0, 0, 0), (0, 0, 0.045), 0.15, mat=WOOD, seg=16)
+    add_torus(t, (0, 0, 0.047), (0, 0, 1), 0.128, 0.011, mat=BRS, seg=16, rseg=4)
+    add_cyl(t, (0, 0, 0.044), (0, 0, 0.049), 0.12, mat=CREAM, seg=16)
+    add_box(t, (0.03, 0.012, 0.051), (0.075, 0.008, 0.003), mat=STL, rot=_rz(0.4))
+    add_box(t, (-0.012, 0.035, 0.052), (0.012, 0.09, 0.003), mat=STL, rot=_rz(-0.3))
+    for k in range(12):
+        a = 2 * math.pi * k / 12
+        add_box(t, (0.105 * math.cos(a), 0.105 * math.sin(a), 0.05), (0.014, 0.004, 0.002), mat=STL, rot=_rz(a))
+
+
+def it_bear(t):
+    """A child's bear, on its back, arms out."""
+    add_sphere(t, (0, 0, 0.055), 0.075, mat=TOY, seg=10, scale=(1.25, 1.0, 0.7))
+    add_sphere(t, (0.14, 0, 0.06), 0.058, mat=TOY, seg=10, scale=(1.0, 1.0, 0.85))
+    add_sphere(t, (0.15, 0, 0.11), 0.024, mat=TOY, seg=6)                     # the snout, up
+    add_sphere(t, (0.155, 0, 0.13), 0.009, mat=STL, seg=6)
+    for sy in (-1, 1):
+        add_sphere(t, (0.17, sy * 0.05, 0.095), 0.022, mat=TOY, seg=6, scale=(1, 1, 0.6))
+        add_cyl(t, (0.05, sy * 0.06, 0.06), (0.1, sy * 0.15, 0.03), 0.026, 0.022, mat=TOY, seg=6)
+        add_cyl(t, (-0.07, sy * 0.045, 0.045), (-0.17, sy * 0.08, 0.03), 0.03, 0.028, mat=TOY, seg=6)
+
+
+def it_crockery(t, rnd, tipped=False):
+    """A crate of crockery packed in a hurry: slatted sides, plates on edge, a cup or two; tipped, they slid out."""
+    L, W, H = 0.46, 0.3, 0.2
+    uo.bx(t, (-L / 2, L / 2), (-W / 2, W / 2), (0, 0.015), WOOD)
+    for z0 in (0.015, 0.11):
+        for sy in (-1, 1):
+            uo.bx(t, (-L / 2, L / 2), (sy * W / 2 - 0.007, sy * W / 2 + 0.007), (z0, z0 + 0.075), WOOD)
+        for sx in (-1, 1):
+            uo.bx(t, (sx * L / 2 - 0.007, sx * L / 2 + 0.007), (-W / 2, W / 2), (z0, z0 + 0.075), WOOD)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            uo.bx(t, (sx * (L / 2 - 0.02) - 0.014, sx * (L / 2 - 0.02) + 0.014), (sy * (W / 2 - 0.02) - 0.014, sy * (W / 2 - 0.02) + 0.014), (0, H), WOOD)
+    n = 4 if tipped else 6
+    for k in range(n):                                             # plates on edge, packed along it
+        x = -L / 2 + 0.07 + k * 0.045
+        add_cyl(t, (x, 0, 0.115), (x + 0.012, 0, 0.115), 0.1, mat=ENAM, seg=12)
+    for k in range(2):
+        add_cyl(t, (0.13, -0.06 + 0.12 * k, 0.015), (0.13, -0.06 + 0.12 * k, 0.09), 0.04, 0.035, mat=ENAM, seg=10)
+
+
+def it_plates(t, rnd, n=3):
+    """Plates that slid out: whole ones and broken ones, flat on the floor."""
+    for k in range(n):
+        c = Vector((rnd.uniform(-0.15, 0.15), rnd.uniform(-0.1, 0.1), 0.0))
+        if k % 2:
+            a0 = rnd.uniform(0, 6.28)
+            _sector(t, c, 0.1, a0, a0 + rnd.uniform(1.6, 2.6), 0.008, ENAM)
+            _sector(t, c + Vector((0.09, 0.05, 0)), 0.1, a0 + 3.0, a0 + 4.6, 0.008, ENAM)
         else:
-            top = secs[0][1] + 0.004
-            add_box(bm, (hx, 0, top / 2), (hw, hw * 1.2, top), mat=0)
-    # The opening: a dark oval on the top over the heel half, following the upper's slope.
-    ox0, ox1, ow = opening
-    pts = []
-    for k in range(6):
-        a = 2 * math.pi * k / 6
-        x = (ox0 + ox1) / 2 + (ox1 - ox0) / 2 * math.cos(a)
-        y = ow * math.sin(a)
-        pts.append(bm.verts.new((x, y, _top(secs, x) + 0.003)))
-    bm.faces.new(pts).material_index = 0
-    if strap:
-        sx, sw = strap
-        add_box(bm, (sx, 0, _top(secs, sx) + 0.002), (0.016, sw, 0.006), mat=0)
+            add_cyl(t, c, c + Vector((0, 0, 0.012)), 0.1, 0.085, mat=ENAM, seg=14)
 
 
-def shoe_templates():
-    """The few shoes everything is made of, as meshes: (variants by material slot, slot choices, weight)."""
-    out = []
-
-    def mk(name, build):
-        bm = bmesh.new()
-        build(bm)
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-        me = bpy.data.meshes.new(name)
-        bm.to_mesh(me)
-        bm.free()
-        return me
-    # A man's shoe, a laced boot, a woman's shoe on a heel, a child's bar shoe: sole (x, z, half width, height).
-    oxford = ((-0.135, 0, 0.03, 0.062), (-0.1, 0, 0.041, 0.068), (-0.01, 0, 0.046, 0.062), (0.075, 0, 0.044, 0.046), (0.135, 0, 0.025, 0.026))
-    boot = ((-0.135, 0, 0.033, 0.17), (-0.09, 0, 0.042, 0.18), (-0.01, 0, 0.046, 0.12), (0.075, 0, 0.044, 0.05), (0.135, 0, 0.025, 0.028))
-    court = ((-0.12, 0.055, 0.025, 0.04), (-0.08, 0.045, 0.031, 0.04), (0.0, 0.012, 0.036, 0.03), (0.07, 0, 0.034, 0.028), (0.12, 0, 0.017, 0.018))
-    child = tuple((x * 0.56, z, w * 0.7, h * 0.85) for x, z, w, h in oxford)
-    kinds = (
-        ('UOShoeA', lambda bm, mi: _shoe(bm, oxford, mi, (-0.125, -0.03, 0.022), heel=(-0.105, 0.055, 0.014)), (0, 1, 1), 5),
-        ('UOShoeB', lambda bm, mi: _shoe(bm, boot, mi, (-0.125, -0.065, 0.024), heel=(-0.105, 0.055, 0.016)), (0, 1), 3),
-        ('UOShoeC', lambda bm, mi: _shoe(bm, court, mi, (-0.11, 0.0, 0.022), sole=0.006, heel=(-0.105, 0.02, 0.0)), (0, 1, 2), 3),
-        ('UOShoeD', lambda bm, mi: _shoe(bm, child, mi, (-0.07, -0.01, 0.015), heel=(-0.06, 0.032, 0.008), strap=(-0.02, 0.062)), (1, 2, 2), 2),
-    )
-    for name, build, mats, wt in kinds:
-        variants = [(mi, mk(f'{name}{mi}', lambda bm, mi=mi, b=build: b(bm, mi))) for mi in sorted(set(mats))]
-        out.append((variants, mats, wt))
-    return out
+def it_sewing_machine(t):
+    """A hand sewing machine on its wooden base, black and brass: the bed, the pillar, the arm, the head, its wheel."""
+    uo.cbox(t, (0, 0, 0.022), (0.44, 0.22, 0.044), 0.008, WOOD)
+    uo.bx(t, (-0.18, 0.18), (-0.08, 0.08), (0.044, 0.07), STL)
+    uo.cbox(t, (0.13, 0, 0.16), (0.08, 0.085, 0.18), 0.015, STL)
+    uo.cbox(t, (0.0, 0, 0.255), (0.33, 0.075, 0.07), 0.02, STL)
+    uo.cbox(t, (-0.14, 0, 0.19), (0.075, 0.08, 0.13), 0.015, STL)
+    add_cyl(t, (-0.15, 0, 0.13), (-0.15, 0, 0.075), 0.006, mat=BRS, seg=5)
+    add_cyl(t, (0.175, -0.005, 0.22), (0.175, 0.03, 0.22), 0.065, mat=BRS, seg=14)
+    add_cyl(t, (0.05, 0, 0.29), (0.05, 0, 0.33), 0.005, mat=BRS, seg=5)
+    add_cyl(t, (0.05, 0, 0.3), (0.05, 0, 0.33), 0.014, mat=CREAM, seg=8)       # a reel of thread
 
 
-def _drop(bm, me, M, z_base):
-    """Add a template under M, its lowest point set on z_base."""
-    n0 = len(bm.verts)
-    bm.from_mesh(me)
-    bm.verts.ensure_lookup_table()
-    vs = bm.verts[n0:]
-    bmesh.ops.transform(bm, matrix=M, verts=vs)
-    lo = min(v.co.z for v in vs)
-    for v in vs:
-        v.co.z += z_base - lo
+def it_cover(t):
+    """The sewing machine's wooden cover, a hooped box, knocked off and lying on its side."""
+    uo.cbox(t, (0, 0, 0.13), (0.44, 0.22, 0.26), 0.03, WOOD)
+    add_box(t, (0, 0, 0.27), (0.1, 0.02, 0.02), mat=BRS)
 
 
-def build_shoes(coll):
-    rnd = random.Random(4140)
-    tmpl = shoe_templates()
-    weights = [t[2] for t in tmpl]
+def it_photos(t, rnd, n=3, frame=True):
+    """Photographs face down, their backs pale: loose prints and a framed one."""
+    for k in range(n):
+        w, h = rnd.uniform(0.09, 0.14), rnd.uniform(0.07, 0.1)
+        add_box(t, (rnd.uniform(-0.16, 0.16), rnd.uniform(-0.1, 0.1), 0.002 + 0.001 * k), (w, h, 0.003), mat=CREAM,
+                rot=_rz(rnd.uniform(0, 3.14)))
+    if frame:
+        M = Matrix.Translation((rnd.uniform(-0.1, 0.1), rnd.uniform(-0.05, 0.05), 0)) @ _rz(rnd.uniform(0, 3.14))
+        uo.cbox(t, M @ Vector((0, 0, 0.008)), (0.2, 0.25, 0.016), 0.004, WOOD, rot=M)
+        add_box(t, M @ Vector((0, 0, 0.017)), (0.16, 0.21, 0.003), mat=CREAM, rot=M)
+
+
+def it_blanket(t, L, W, mat, seed=0.0):
+    """A blanket dropped in a heap of folds."""
+    rounded_box((L, W, 0.04), (0, 0, 0.02), p=2.2, cuts=3, dents=((0.014, 5.0),), seed=seed, mat=mat, bm=t)
+    rounded_box((L * 0.5, W * 0.8, 0.035), (L * 0.18, W * 0.05, 0.045), p=2.2, cuts=2, dents=((0.01, 6.0),), seed=seed + 1,
+                mat=mat, bm=t, rot=_rz(0.25))
+
+
+def it_broom(t):
+    """A household broom: a long handle into a wooden stock, its bristles worn to one side."""
+    add_cyl(t, (0, 0, 0), (1.15, 0, 0), 0.012, mat=WOOD, seg=6)
+    uo.cbox(t, (-0.02, 0, 0), (0.05, 0.26, 0.05), 0.008, WOOD)
+    rounded_box((0.09, 0.25, 0.045), (-0.085, 0, 0.0), p=3.0, cuts=2, seed=4, mat=COT, bm=t)
+
+
+def _pieces():
+    """What lies where: (item, args, x, y, yaw, pose, z). Pose: a rotation applied before the yaw ('flat' none).
+    In front of the lane (y < 0) nothing stands higher than 0.22; behind it, nothing reaches nearer than y 0.16."""
+    D, L0 = DECK, 0.0
+    back = _rx(math.radians(-90))                                   # a chair on its back, its legs toward -y
+    on_end = _ry(math.radians(90))
+    return [
+        # The porch: what was dropped first, as they came off the balcony.
+        ('blanket', (0.9, 0.42, TOY, 1.0), 117.15, -0.66, 0.2, 'flat', D),
+        ('photos', (3, False), 117.85, -0.72, 0.0, 'flat', D),
+        ('pot', (0.13, 0.05, ENAM, True, False), 118.3, -0.85, 0.3, 'flat', D),
+        ('chair', (), 117.15, 1.15, -1.571, back, D),
+        ('mattress', (0.92, 0.12), 117.75, 0.62, 0.15, 'flat', D),
+        ('bundle', (0.5, 0.38, 0.26, CREAM, 2.0), 118.3, 1.75, 0.5, 'flat', D),
+        # Along the queue line, in front of the lane: thicker toward the gate.
+        ('pot', (0.11, 0.12, STL, False, True), 118.75, -0.6, 0.0, _rx(math.radians(80)), D),
+        ('bundle', (0.5, 0.42, 0.18, CREAM, 3.0), 119.2, -0.72, -0.3, 'flat', D),
+        ('case_flat', (0.56, 0.16, 0.38, LEA), 119.95, -0.66, 0.12, 'flat', D),
+        ('mattress', (0.9, 0.105), 120.75, -0.82, -0.08, 'flat', D),
+        ('clock', (), 121.2, -0.55, 0.6, 'flat', D),
+        ('case_open', (0.46, 0.3, 0.1, CAN), 121.75, -0.8, 0.1, 'flat', D),
+        ('blanket', (0.55, 0.36, COT, 4.0), 122.45, -0.8, -0.25, 'flat', D),
+        ('crockery', (False,), 123.0, -0.64, 0.25, 'flat', D),
+        ('plates', (3,), 123.5, -0.72, 0.0, 'flat', D),
+        ('photos', (2, True), 123.75, -0.5, 0.0, 'flat', D),
+        ('bear', (), 123.95, -0.82, 2.6, 'flat', D),
+        # The crush, in front of the gate: heaped where they stopped.
+        ('bundle', (0.55, 0.42, 0.18, CAN, 5.0), 124.55, -0.66, 0.2, 'flat', D),
+        ('case_flat', (0.5, 0.15, 0.34, LEA), 125.2, -0.55, -0.2, 'flat', D),
+        ('bag', (0.46, 0.1, CAN, True), 125.12, -0.88, 0.0, 'flat', D),
+        ('cage', (), 125.75, -0.62, 0.3, _rx(math.radians(90)), D),
+        ('bundle', (0.42, 0.36, 0.17, TOY, 6.0), 126.15, -0.7, 0.9, 'flat', D),
+        # Behind the lane: the waiting area, round what pass 3 left there.
+        ('mattress', (0.9, 0.13), 121.32, 0.98, 0.0, on_end, D),
+        ('sewing', (), 121.33, 0.6, 0.12, 'flat', D),
+        ('cover', (), 121.36, 0.32, 0.0, _rx(math.radians(90)), D),
+        ('crockery', (True,), 122.32, 0.97, -0.08, 'flat', D),
+        ('bundle', (0.34, 0.3, 0.24, CREAM, 7.0), 122.82, 0.98, 0.3, 'flat', D),
+        ('kettle', (), 122.48, 0.47, 0.8, 'flat', D),
+        # Against the lift front: the broom by the UP button, a case and a bundle on it right of the gate.
+        ('broom', (), 123.63, 0.22, 1.571, _ry(math.radians(-83.5)), D),
+        ('case_up', (0.5, 0.15, 0.36, CAN), 125.93, 0.25, 0.0, 'flat', D),
+        ('bundle_wall', (0.36, 0.16, 0.22, COT, 8.0), 125.9, 0.255, 0.0, 'flat', D + 0.39),
+        # Fallen down the shaft, on ring C's landing at its foot.
+        ('bag', (0.46, 0.1, LEA, True), 128.3, -0.5, 0.3, 'flat', L0),
+        ('blanket', (0.6, 0.4, CREAM, 9.0), 128.4, 0.6, -0.2, 'flat', L0),
+        ('kettle', (), 127.98, 0.45, 1.2, _rx(math.radians(-85)), L0),
+    ]
+
+
+def build_belongings(coll):
+    rnd = random.Random(5140)
     bm = bmesh.new()
-    count = [0]
-
-    def pick(kid_bias=0.0):
-        t = rnd.choices(tmpl, weights=[w * (3 if (i == 3 and kid_bias) else 1) for i, w in enumerate(weights)])[0]
-        variants, mats, _ = t
-        mi = rnd.choice(mats)
-        return dict(variants)[mi]
-
-    def pose(heap=False):
-        r = rnd.random()
-        if r < 0.66:
-            M = I4()
-        elif r < 0.92:
-            M = _rx(math.radians(rnd.choice((-1, 1)) * rnd.uniform(75, 95)))      # on its side
-        else:
-            M = _rx(math.radians(rnd.uniform(165, 195)))                         # sole up
-        if heap:
-            M = _ry(math.radians(rnd.uniform(-35, 35))) @ _rx(math.radians(rnd.uniform(-25, 25))) @ M
-        return M
-
-    def put(x, y, z, heap=False, kid=0.0, scale=1.0):
-        me = pick(kid)
-        s = scale * rnd.uniform(0.92, 1.06)
-        yaw = rnd.choice((0.0, math.pi)) + rnd.gauss(0, 0.5) if rnd.random() < 0.7 else rnd.uniform(0, 2 * math.pi)   # mostly broadside
-        M = Matrix.Translation((x, y, 0)) @ _rz(yaw) @ Matrix.Diagonal((s, s, s, 1)) @ pose(heap)
-        _drop(bm, me, M, z)
-        count[0] += 1
-
-    def clear(x, y):
-        for x0, x1, y0, y1 in KEEP_CLEAR:
-            if x0 <= x <= x1 and y0 <= y <= y1:
-                return False
-        return True
-
-    placed = []
-
-    def scatter(n, x0, x1, y0, y1, z, density=lambda x, y: 1.0, gap=0.13, kid=0.0):
-        tries = 0
-        k = 0
-        while k < n and tries < n * 60:
-            tries += 1
-            x, y = rnd.uniform(x0, x1), rnd.uniform(y0, y1)
-            if rnd.random() > density(x, y) or not clear(x, y):
-                continue
-            if any((x - px) ** 2 + (y - py) ** 2 < gap * gap for px, py in placed):
-                continue
-            placed.append((x, y))
-            put(x, y, z, kid=kid)
-            k += 1
-
-    def heap(n, cx, cy, rx, ry, hmax, z):
-        k = 0
-        tries = 0
-        while k < n and tries < n * 40:
-            tries += 1
-            u, v = rnd.uniform(-1, 1), rnd.uniform(-1, 1)
-            d2 = u * u + v * v
-            if d2 > 1:
-                continue
-            x, y = cx + u * rx, cy + v * ry
-            if not clear(x, y):
-                continue
-            hz = hmax * (1 - d2) * rnd.uniform(0.55, 1.0)
-            put(x, y, z + hz, heap=True)
-            k += 1
-
-    z = DECK
-    # In front of the lane, along the queue line: thicker toward the gate.
-    front = lambda x, y: 0.25 if x < uo.LOBBY_X0 else min(1.0, 0.4 + 0.6 * max(0.0, (x - 120.5) / 3.6)) * (0.75 if x > 125.6 else 1.0)  # noqa: E731
-    scatter(96, 116.8, 126.6, -0.9, -0.42, z, front)
-    heap(24, 124.95, -0.66, 0.42, 0.26, 0.12, z)                    # crushed up in front of the gate
-    # Behind the lane: round the heap of luggage and under the bench, in the waiting area.
-    scatter(40, 118.95, 123.5, 0.38, 1.14, z, lambda x, y: 0.8, gap=0.12, kid=0.5)
-    scatter(9, 116.8, 118.55, 0.35, 2.2, z, lambda x, y: 0.6, gap=0.2)          # strays on the porch
-    # Heaped against the lift front either side of the gate (under the balance gauge), clear of the stands.
-    heap(30, 125.93, 0.28, 0.3, 0.05, 0.22, z)
-    heap(8, 123.66, 0.29, 0.08, 0.04, 0.12, z)
-    # Fallen down the shaft, at ring C's landing by its foot.
-    scatter(8, 127.85, 128.7, -0.62, 0.95, 0.0, lambda x, y: 0.0 if -0.3 < y < 0.32 else 1.0, gap=0.14)
-    mats = [material(n) for n in SHOE_MATS]
-    ob = d17.mesh_object('UOShoes', bm, mats, coll, sharp=75)
-    for t in tmpl:
-        for _, me in t[0]:
-            bpy.data.meshes.remove(me)
-    print(f'story_ringc: {count[0]} shoes')
+    from mathutils.bvhtree import BVHTree
+    bar = bpy.data.objects.get('UOBarrier')
+    bvh = None
+    if bar is not None:
+        tb = bmesh.new()
+        tb.from_mesh(bar.data)
+        tb.transform(bar.matrix_world)
+        bvh = BVHTree.FromBMesh(tb)
+        tb.free()
+    makers = {
+        'bundle': lambda t, a: it_bundle(t, *a), 'bundle_wall': lambda t, a: it_bundle(t, *a),
+        'case_flat': lambda t, a: it_case_flat(t, *a), 'case_up': lambda t, a: uo.suitcase(t, (0, 0, 0), a[:3], I4(), a[3], STL, LEA),
+        'case_open': lambda t, a: it_case_open(t, *a, rnd), 'bag': lambda t, a: it_bag(t, *a, rnd=rnd),
+        'mattress': lambda t, a: it_mattress(t, *a), 'pot': lambda t, a: it_pot(t, *a), 'kettle': lambda t, a: it_kettle(t),
+        'chair': lambda t, a: it_chair(t), 'cage': lambda t, a: it_cage(t), 'clock': lambda t, a: it_clock(t),
+        'bear': lambda t, a: it_bear(t), 'crockery': lambda t, a: it_crockery(t, rnd, *a), 'plates': lambda t, a: it_plates(t, rnd, *a),
+        'sewing': lambda t, a: it_sewing_machine(t), 'cover': lambda t, a: it_cover(t), 'photos': lambda t, a: it_photos(t, rnd, *a),
+        'blanket': lambda t, a: it_blanket(t, *a), 'broom': lambda t, a: it_broom(t),
+    }
+    warn = []
+    for kind, args, x, y, yaw, pose, z in _pieces():
+        t = bmesh.new()
+        makers[kind](t, args)
+        P = I4() if isinstance(pose, str) else pose
+        bmesh.ops.transform(t, matrix=Matrix.Translation((x, y, 0)) @ _rz(yaw) @ P, verts=t.verts)
+        xs = [v.co.x for v in t.verts]
+        ys = [v.co.y for v in t.verts]
+        lo = min(v.co.z for v in t.verts)
+        base = z
+        if bvh is not None and z > 0.5:                              # resting on the flattened barrier where it crosses
+            for fx in (0.1, 0.5, 0.9):
+                for fy in (0.1, 0.5, 0.9):
+                    p = Vector((min(xs) + (max(xs) - min(xs)) * fx, min(ys) + (max(ys) - min(ys)) * fy, z + 0.5))
+                    hit = bvh.ray_cast(p, Vector((0, 0, -1)), 0.6)
+                    if hit[0] is not None and hit[0].z > base:
+                        base = min(hit[0].z, z + 0.05)
+        for v in t.verts:
+            v.co.z += base - lo
+        top = max(v.co.z for v in t.verts) - base
+        x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+        if z > 0.5 and 116.6 < x1 and x0 < 126.85 and y0 < 0.16 and y1 > -0.32:
+            warn.append(f'{kind} at {x:.2f},{y:.2f} reaches the lane: y {y0:.2f}..{y1:.2f}')
+        if y1 < 0 and top > 0.27:
+            warn.append(f'{kind} at {x:.2f},{y:.2f} stands {top:.2f} high in front of the lane')
+        for k, (a0, a1, b0, b1) in enumerate(KEEP_CLEAR[1:]):
+            if z > 0.5 and x0 < a1 and x1 > a0 and y0 < b1 and y1 > b0 and not (kind in ('case_up', 'bundle_wall')):
+                warn.append(f'{kind} at {x:.2f},{y:.2f} overlaps keep-clear {k + 1} {KEEP_CLEAR[k + 1]}')
+        me = bpy.data.meshes.new('_t')
+        t.to_mesh(me)
+        t.free()
+        bm.from_mesh(me)
+        bpy.data.meshes.remove(me)
+    for w in warn:
+        print('story_ringc: WARNING', w)
+    mats = [material(n) for n in BELONG_MATS]
+    ob = d17.mesh_object('UOBelongings', bm, mats, coll, sharp=50)
+    print(f'story_ringc: UOBelongings {len(_pieces())} pieces, {sum(len(p.vertices) - 2 for p in ob.data.polygons)} tris')
     return ob
 
 
@@ -644,9 +812,9 @@ def I4():
     return Matrix.Identity(4)
 
 
-# What the shoes keep clear of (x0, x1, y0, y1, Blender world): the lane, the things already on the floor, the stands.
+# What the belongings keep clear of (x0, x1, y0, y1, Blender world): the lane, the things already on the floor, the stands.
 KEEP_CLEAR = (
-    (116.5, 128.8, -0.4, 0.26),         # the lane (shoe centres: none reaches |y| < 0.2)
+    (116.5, 128.8, -0.4, 0.26),         # the lane
     (118.62, 118.98, 0.5, 2.5),         # the entrance's wall
     (119.0, 121.02, 0.5, 1.22),         # the heap of left luggage
     (121.62, 122.3, 0.26, 0.85),        # the case burst open
@@ -846,8 +1014,8 @@ def build_set(dl01, m, coll):
     bpy.context.view_layer.update()
     make_atlas()
     atlas = atlas_material()
-    build_shoes(coll)
     build_barrier(coll)
+    build_belongings(coll)                 # after the barrier: what lies over its bent posts rests on them
     build_last_car(coll, atlas)
     build_marks(coll, atlas)
     build_way_c114(coll, atlas)

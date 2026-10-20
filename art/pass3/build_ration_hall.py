@@ -1023,6 +1023,258 @@ class Painted:
         return me
 
 
+# --------------------------------------------------------------------------
+# Pass 5 (docs/chapter1_pass5_plan.md): the dead are 76 years dead. Bones, and cloth rotted onto them, for the shrouds
+# here and DL-02's sorters (art/pass4/build_story_depot.py). Low-key and stylised: dry dark-ivory bone, dark hollows
+# for the eyes, nothing that reads as gore.
+# --------------------------------------------------------------------------
+
+def _perp(t):
+    a = Vector((0, 0, 1)) if abs(t.z) < 0.9 else Vector((1, 0, 0))
+    return (a - t * a.dot(t)).normalized()
+
+
+def sweep(bm, pts, radii, seg=6, caps=True, side=None, flat=1.0):
+    """A tube along pts (rings carried along the path), per-point radii, capped with fans. flat < 1 squashes the
+    section along `side` (kept perpendicular to the path)."""
+    pts = [Vector(p) for p in pts]
+    n = len(pts)
+    ts = [(pts[min(n - 1, i + 1)] - pts[max(0, i - 1)]).normalized() for i in range(n)]
+    nrm = _perp(ts[0]) if side is None else (Vector(side) - ts[0] * Vector(side).dot(ts[0])).normalized()
+    rings = []
+    for i, (p, t) in enumerate(zip(pts, ts)):
+        nrm = (nrm - t * nrm.dot(t)).normalized()
+        bi = t.cross(nrm)
+        r = radii[i] if hasattr(radii, '__len__') else radii
+        rings.append([bm.verts.new(p + nrm * (r * flat * math.cos(2 * math.pi * k / seg)) + bi * (r * math.sin(2 * math.pi * k / seg)))
+                      for k in range(seg)])
+    for a, b in zip(rings, rings[1:]):
+        for k in range(seg):
+            bm.faces.new((a[k], a[(k + 1) % seg], b[(k + 1) % seg], b[k]))
+    if caps:
+        for ring, p in ((rings[0], pts[0]), (rings[-1], pts[-1])):
+            c = bm.verts.new(p)
+            for k in range(seg):
+                bm.faces.new((c, ring[(k + 1) % seg], ring[k]))
+    return rings
+
+
+def ellipsoid(bm, c, M, radii, seg=8):
+    """An ellipsoid at c, its axes the columns of the 3x3 M, with the given radii along them."""
+    res = bmesh.ops.create_uvsphere(bm, u_segments=seg, v_segments=max(4, seg // 2), radius=1.0)
+    T = Matrix.Translation(Vector(c)) @ M.to_4x4() @ Matrix.Diagonal((*radii, 1.0))
+    bmesh.ops.transform(bm, matrix=T, verts=res['verts'])
+    return res['verts']
+
+
+def frame3(x, y_hint):
+    """Columns (x, y, z): x along `x`, y as near `y_hint` as can be."""
+    x = Vector(x).normalized()
+    y = Vector(y_hint) - x * Vector(y_hint).dot(x)
+    y = y.normalized() if y.length > 1e-6 else _perp(x)
+    return Matrix((x, y, x.cross(y))).transposed()
+
+
+def long_bone(bm, a, b, r, knob=1.55, seg=6):
+    """A long bone: a shaft with its two ends swollen into joints."""
+    a, b = Vector(a), Vector(b)
+    ts = (0.0, 0.06, 0.2, 0.8, 0.94, 1.0)
+    rs = (r * knob * 0.7, r * knob, r, r * 0.95, r * knob, r * knob * 0.7)
+    return sweep(bm, [a.lerp(b, t) for t in ts], rs, seg=seg)
+
+
+def skull(P, H, face, crown, s=1.0, jaw=0.22, cell='bone'):
+    """A skull at H: the dome, the face, the eye sockets and the nose as dark hollows, the jaw dropped a little.
+    `face` points out of the face, `crown` toward the top of the head."""
+    F = frame3(face, crown)
+    f, u = F.col[0], F.col[1]
+    l = u.cross(f)
+    M = Matrix((f, l, u)).transposed()                       # x: out of the face, y: its left, z: the crown
+
+    def at(x, y, z):
+        return Vector(H) + (f * x + l * y + u * z) * s
+    R = lambda r: tuple(v * s for v in r)                     # noqa: E731
+    P.add(cell, lambda bm: ellipsoid(bm, at(-0.015, 0, 0.025), M, R((0.092, 0.07, 0.075)), seg=12), size=0.12)
+    P.add(cell, lambda bm: ellipsoid(bm, at(0.058, 0, -0.035), M, R((0.035, 0.048, 0.04)), seg=8), size=0.12)
+    for sd in (1, -1):
+        P.add(cell, lambda bm, sd=sd: ellipsoid(bm, at(0.052, sd * 0.05, -0.012), M, R((0.022, 0.018, 0.014)), seg=6), size=0.12)
+        P.add('dark', lambda bm, sd=sd: ellipsoid(bm, at(0.071, sd * 0.027, 0.0), M, R((0.012, 0.019, 0.017)), seg=8))
+    P.add('dark', lambda bm: ellipsoid(bm, at(0.088, 0, -0.03), M, R((0.008, 0.01, 0.014)), seg=6))
+    P.add('dark', lambda bm: ellipsoid(bm, at(0.08, 0, -0.064), M, R((0.012, 0.03, 0.008)), seg=6))
+    # The jaw: a U from under one ear round the chin to the other, hinged open by `jaw` radians.
+    piv = Vector((-0.005, 0, -0.03))
+    Rj = Matrix.Rotation(jaw, 3, 'Y')
+    pts = [(-0.005, 0.05, -0.03), (0.0, 0.048, -0.075), (0.05, 0.036, -0.088), (0.085, 0.0, -0.086),
+           (0.05, -0.036, -0.088), (0.0, -0.048, -0.075), (-0.005, -0.05, -0.03)]
+    pts = [at(*(piv + Rj @ (Vector(p) - piv))) for p in pts]
+    P.add(cell, lambda bm: sweep(bm, pts, [0.008 * s, 0.011 * s, 0.01 * s, 0.012 * s, 0.01 * s, 0.011 * s, 0.008 * s], seg=5), size=0.12)
+
+
+def hand(P, W, hd, hn, s=1.0, curl=0.6, spread=1.0, cell='bone'):
+    """A hand's bones from the wrist W: the carpals, five metacarpals with their fingers curled by `curl` (radians a
+    joint) toward the palm. hd: toward the fingers; hn: out of the back of the hand."""
+    M = frame3(hd, hn)                                       # x: fingers, y: back of the hand, z: across
+    d, n, sd = M.col[0], M.col[1], M.col[2]
+    W = Vector(W)
+    P.add(cell, lambda bm: ellipsoid(bm, W + d * 0.022 * s, M, (0.022 * s, 0.011 * s, 0.026 * s), seg=6), size=0.1)
+    for k in range(5):
+        if k == 0:                                           # the thumb, off the side
+            base = W + (d * 0.02 + sd * 0.022) * s
+            dirn = (d * 0.7 + sd * 0.7 - n * 0.2).normalized()
+            lens = (0.04, 0.03, 0.022)
+        else:
+            base = W + (d * 0.038 + sd * (0.0125 * (k - 2.5) + 0.006)) * s
+            dirn = (d + sd * 0.12 * (k - 2.5) * spread).normalized()
+            lens = (0.062, 0.035, 0.022, 0.017) if k in (2, 3) else (0.056, 0.03, 0.02, 0.015)
+        pts = [base]
+        dv = dirn
+        for j, L in enumerate(lens):
+            if j:
+                dv = (Matrix.Rotation(curl, 3, sd) @ dv).normalized()
+            pts.append(pts[-1] + dv * L * s)
+        rs = [0.0055 * s] + [max(0.0035, 0.0062 - 0.0008 * j) * s for j in range(len(lens))]
+        P.add(cell, lambda bm, pts=pts, rs=rs: sweep(bm, pts, rs, seg=4), size=0.1)
+
+
+def foot(P, A, fd, up, s=1.0, curl=0.25, cell='bone'):
+    """A foot's bones from the ankle A: the heel and the ankle bone, five metatarsals and their toes. fd: toward the
+    toes; up: out of the top of the foot."""
+    M = frame3(fd, up)                                       # x: toes, y: top of the foot, z: across
+    d, n, sd = M.col[0], M.col[1], M.col[2]
+    A = Vector(A)
+    P.add(cell, lambda bm: ellipsoid(bm, A - (d * 0.03 + n * 0.028) * s, M, (0.04 * s, 0.026 * s, 0.022 * s), seg=8), size=0.1)
+    P.add(cell, lambda bm: ellipsoid(bm, A + (d * 0.015 - n * 0.005) * s, M, (0.03 * s, 0.02 * s, 0.024 * s), seg=6), size=0.1)
+    tips = []
+    for k in range(5):
+        base = A + (d * 0.05 + sd * (0.011 * (k - 2) - 0.004) - n * 0.008 * abs(k - 2)) * s
+        dirn = (d + sd * 0.1 * (k - 2)).normalized()
+        lens = (0.075 - 0.006 * k, 0.03 - 0.003 * k, 0.018)
+        pts = [base]
+        dv = dirn
+        for j, L in enumerate(lens):
+            if j:
+                dv = (Matrix.Rotation(curl, 3, sd) @ dv).normalized()
+            pts.append(pts[-1] + dv * L * s)
+        r0 = (0.009 if k == 0 else 0.0065) * s
+        P.add(cell, lambda bm, pts=pts, r0=r0: sweep(bm, pts, [r0, r0 * 0.85, r0 * 0.8, r0 * 0.65], seg=4), size=0.1)
+        tips.append(pts[-1])
+    return tips
+
+
+def ribcage(P, top, bottom, lat, fwd, s=1.0, n=8, cell='bone', sternum=True):
+    """The thoracic spine from `top` to `bottom` (the back of the chest) and its ribs: each pair arcs out and round to
+    the front, the lower ones short (floating), the upper ones joined to a sternum."""
+    top, bottom = Vector(top), Vector(bottom)
+    down = (bottom - top).normalized()
+    lat = (Vector(lat) - down * Vector(lat).dot(down)).normalized()
+    fwd = Vector(fwd)
+    fwd = (fwd - down * fwd.dot(down) - lat * fwd.dot(lat)).normalized()
+    L = (bottom - top).length
+    ends = []
+    for i in range(n):
+        u = (i + 0.5) / n
+        S = top + (bottom - top) * (0.04 + 0.9 * u)
+        a = (0.07 + 0.065 * math.sin(math.pi * (0.25 + 0.7 * u))) * s        # half width
+        b = (0.15 + 0.05 * math.sin(math.pi * (0.2 + 0.6 * u))) * s          # depth to the front
+        drop = (0.04 + 0.03 * u) * s * L / 0.3
+        tmax = math.pi * (0.9 if i < n - 2 else 0.6)
+        for side in (1, -1):
+            pts = []
+            for k in range(7):
+                t = tmax * k / 6
+                pts.append(S + lat * side * a * math.sin(t) + fwd * b * (1 - math.cos(t)) / 2 + down * drop * (1 - math.cos(t)) / 2)
+            P.add(cell, lambda bm, pts=pts: sweep(bm, pts, [0.0085 * s] * 6 + [0.0065 * s], seg=4), size=0.15)
+        if i == 0:
+            ends.append(S + fwd * b + down * drop * 0.95)
+        if i == n - 3:
+            ends.append(S + fwd * b * 0.95 + down * drop)
+    if sternum and len(ends) == 2:
+        P.add(cell, lambda bm: sweep(bm, [ends[0], ends[0].lerp(ends[1], 0.5), ends[1]], [0.016 * s, 0.013 * s, 0.009 * s],
+                                     seg=5, side=fwd, flat=0.45), size=0.15)
+    return ends[0] if ends else top
+
+
+def spine(P, pts, s=1.0, step=0.026, cell='bone'):
+    """The spine as a column of vertebrae along pts: a tube swelling at each one."""
+    pts = [Vector(p) for p in pts]
+    path = []
+    for a, b in zip(pts, pts[1:]):
+        k = max(1, int((b - a).length / (step / 2)))
+        path += [a.lerp(b, i / k) for i in range(k)]
+    path.append(pts[-1])
+    rs = [(0.019 if i % 2 else 0.013) * s for i in range(len(path))]
+    P.add(cell, lambda bm: sweep(bm, path, rs, seg=6), size=0.15)
+
+
+def pelvis(P, c, up, lat, fwd, s=1.0, cell='bone'):
+    """The pelvis: two flared wings, the sacrum between them behind, the ring of the pubis in front."""
+    c = Vector(c)
+    M = frame3(fwd, lat)                                     # x: forward, y: left, z: up
+    f, l, u = M.col[0], M.col[1], M.col[2]
+    for sd in (1, -1):
+        Mw = frame3(f * 0.6 + l * sd * 0.8, u)               # the wing's broad face turned forward and out
+        P.add(cell, lambda bm, sd=sd, Mw=Mw: ellipsoid(bm, c + (l * sd * 0.085 + u * 0.04 - f * 0.01) * s, Mw,
+                                                       (0.018 * s, 0.065 * s, 0.06 * s), seg=8), size=0.15)
+    P.add(cell, lambda bm: ellipsoid(bm, c + (-f * 0.04 + u * 0.02) * s, M, (0.022 * s, 0.045 * s, 0.055 * s), seg=6), size=0.15)
+    P.add(cell, lambda bm: add_torus(bm, c + (f * 0.035 - u * 0.02) * s, (u * 0.55 + f * 0.45).normalized(), 0.058 * s,
+                                     0.013 * s, mat=0, seg=12, rseg=4), size=0.15)
+
+
+def cloth(P, cell, pts, thick=0.0015):
+    """A sheet of cloth both sides out (the game draws one side of a face): pts[i][j], i along u, j along v."""
+    nx, ny = len(pts) - 1, len(pts[0]) - 1
+    nrm = [[None] * (ny + 1) for _ in range(nx + 1)]
+    for i in range(nx + 1):
+        for j in range(ny + 1):
+            du = pts[min(nx, i + 1)][j] - pts[max(0, i - 1)][j]
+            dv = pts[i][min(ny, j + 1)] - pts[i][max(0, j - 1)]
+            c = du.cross(dv)
+            nrm[i][j] = c.normalized() if c.length > 1e-9 else Vector((0, 0, 1))
+    P.grid(cell, [[pts[i][j] + nrm[i][j] * thick for j in range(ny + 1)] for i in range(nx + 1)], nx, ny)
+    P.grid(cell, [[pts[i][j] - nrm[i][j] * thick for i in range(nx + 1)] for j in range(ny + 1)], ny, nx)
+
+
+def rag_tube(P, cell, a, b, r, sag=0.0, seed=0.0, ragged=0.3, flat=1.0, seg=8, rows=3, side=None):
+    """A sleeve or trouser leg rotted onto the bone from a to b: its underside hanging by `sag`, squashed by `flat`,
+    its far end torn ragged (up to `ragged` of its length)."""
+    a, b = Vector(a), Vector(b)
+    t = (b - a).normalized()
+    n0 = _perp(t) if side is None else (Vector(side) - t * Vector(side).dot(t)).normalized()
+    b0 = t.cross(n0)
+    L = (b - a).length
+    rnd = random.Random(int(seed * 1000) + 17)
+    tear = [ragged * L * rnd.random() for _ in range(seg)]
+    pts = []
+    for k in range(seg + 1):
+        ang = 2 * math.pi * k / seg
+        rad = n0 * math.cos(ang) * flat + b0 * math.sin(ang)
+        col = []
+        for i in range(rows + 1):
+            v = i / rows
+            p = a + t * (L - tear[k % seg]) * v + rad * r
+            p.z -= sag * max(0.0, -rad.z) * math.sin(math.pi * min(1.0, v * 1.2 + 0.1))
+            col.append(p)
+        pts.append(col)
+    cloth(P, cell, pts)
+
+
+def rag_strip(P, cell, top, down, across, length, width, seed=0.0, rows=4):
+    """A torn strip of cloth hanging from `top` along `down`, `width` wide along `across`, waving a little."""
+    top, down, across = Vector(top), Vector(down).normalized(), Vector(across).normalized()
+    out = down.cross(across)
+    rnd = random.Random(int(seed * 1000) + 31)
+    ph = rnd.uniform(0, 6.28)
+    pts = []
+    for i in range(2):
+        col = []
+        for j in range(rows + 1):
+            v = j / rows
+            w = width * (1 - 0.55 * v) * (i - 0.5)
+            col.append(top + down * length * v + across * w + out * 0.012 * math.sin(ph + v * 5.0) * v)
+        pts.append(col)
+    cloth(P, cell, pts)
+
+
 def _axes(xdir, ydir):
     """A 4x4 rotation whose local x runs along xdir and local y as near ydir as can be."""
     x = Vector(xdir).normalized()
@@ -1043,83 +1295,113 @@ def _cap_height(x, y, cap):
     return az + (bz - az) * t + rv * math.sqrt(1.0 - (d / rl) ** 2)
 
 
-# The dead under their sheets, lying on the floor. Each: the body's capsules (only the sheet shows them), the
-# sheet's extent and resolution, and the feet left out at its foot end (heel, toe, width, thickness, width axis).
+# The dead under their sheets (pass 5: 76 years dead). Each shape: the skeleton's capsules under the sheet (a, b,
+# plan half-width, height), the ribs' ridges (x0, x1, half-width, pitch, depth), where the sheet is sampled finely along
+# x, the sheet's extent and rows across, how closely it has settled (the slope it tents at), and the bones left out of
+# it: the feet (ankle, toward the toes, out of the top of the foot), a forearm and hand from under its edge.
+_ARM_IN = [((-0.50, 0.20, 0.0), (-0.24, 0.21, 0.0), 0.024, 0.03), ((-0.25, 0.21, 0.0), (-0.23, 0.21, 0.0), 0.03, 0.04),
+           ((-0.24, 0.21, 0.0), (0.0, 0.20, 0.0), 0.024, 0.026), ((0.0, 0.20, 0.0), (0.1, 0.19, 0.0), 0.04, 0.02)]
+_ARM_OUT = [((-0.50, 0.20, 0.0), (-0.26, 0.25, 0.0), 0.024, 0.03), ((-0.27, 0.25, 0.0), (-0.25, 0.25, 0.0), 0.03, 0.04),
+            ((-0.26, 0.25, 0.0), (-0.07, 0.35, 0.0), 0.024, 0.026)]
+
+
+def _mirror(caps):
+    return [((a[0], -a[1], a[2]), (b[0], -b[1], b[2]), rl, rv) for a, b, rl, rv in caps]
+
+
+_ADULT = [((-0.72, 0.0, 0.0), (-0.66, 0.0, 0.0), 0.08, 0.15),                         # the skull, face up
+          ((-0.60, 0.0, 0.0), (-0.54, 0.0, 0.0), 0.03, 0.035),                         # the jaw and the neck
+          ((-0.53, 0.0, 0.0), (-0.45, 0.0, 0.0), 0.125, 0.11),                         # the rib cage
+          ((-0.45, 0.0, 0.0), (-0.32, 0.0, 0.0), 0.15, 0.125),
+          ((-0.31, 0.0, 0.0), (-0.12, 0.0, 0.0), 0.024, 0.035),                        # the spine: the sheet sags to it
+          ((-0.10, 0.11, 0.0), (-0.02, 0.12, 0.0), 0.05, 0.085), ((-0.10, -0.11, 0.0), (-0.02, -0.12, 0.0), 0.05, 0.085),
+          ((-0.10, 0.0, 0.0), (0.0, 0.0, 0.0), 0.04, 0.05), ((0.02, 0.0, 0.0), (0.05, 0.0, 0.0), 0.045, 0.06),  # pelvis
+          ((0.03, 0.10, 0.0), (0.38, 0.09, 0.0), 0.024, 0.032), ((0.03, -0.10, 0.0), (0.38, -0.09, 0.0), 0.024, 0.032),
+          ((0.38, 0.09, 0.0), (0.42, 0.09, 0.0), 0.035, 0.05), ((0.38, -0.09, 0.0), (0.42, -0.09, 0.0), 0.035, 0.05),
+          ((0.42, 0.09, 0.0), (0.66, 0.09, 0.0), 0.024, 0.032), ((0.42, -0.09, 0.0), (0.66, -0.09, 0.0), 0.024, 0.032)]
+_FEET = [((0.645, 0.095, 0.045), (0.25, 0.5, 0.83), (0.95, 0.2, -0.25)),
+         ((0.645, -0.095, 0.045), (0.25, -0.5, 0.83), (0.95, -0.2, -0.25))]
+_BOUND = [((0.645, 0.05, 0.05), (0.12, 0.16, 0.98), (0.99, 0.0, -0.12)),               # tied together, toes up
+          ((0.645, -0.05, 0.05), (0.12, -0.16, 0.98), (0.99, 0.0, -0.12))]
 SHROUDS = {
-    'adult': dict(
-        caps=[((-0.69, 0, 0.11), (-0.69, 0, 0.11), 0.105, 0.11),                  # head
-              ((-0.60, 0, 0.07), (-0.55, 0, 0.075), 0.06, 0.05),                   # neck
-              ((-0.50, 0, 0.11), (-0.32, 0, 0.11), 0.19, 0.11),                    # chest and shoulders
-              ((-0.30, 0, 0.09), (-0.10, 0, 0.065), 0.16, 0.065),                  # the belly, sunk
-              ((-0.08, 0, 0.08), (0.04, 0, 0.08), 0.17, 0.08),                     # pelvis
-              ((-0.46, 0.215, 0.06), (-0.18, 0.225, 0.05), 0.045, 0.05), ((-0.46, -0.215, 0.06), (-0.18, -0.225, 0.05), 0.045, 0.05),
-              ((-0.18, 0.225, 0.05), (0.05, 0.2, 0.045), 0.04, 0.045), ((-0.18, -0.225, 0.05), (0.05, -0.2, 0.045), 0.04, 0.045),
-              ((0.05, 0.2, 0.04), (0.13, 0.19, 0.035), 0.04, 0.035), ((0.05, -0.2, 0.04), (0.13, -0.19, 0.035), 0.04, 0.035),
-              ((0.04, 0.09, 0.07), (0.40, 0.085, 0.065), 0.075, 0.07), ((0.04, -0.09, 0.07), (0.40, -0.085, 0.065), 0.075, 0.07),
-              ((0.40, 0.085, 0.065), (0.66, 0.08, 0.05), 0.055, 0.05), ((0.40, -0.085, 0.065), (0.66, -0.08, 0.05), 0.055, 0.05),
-              ((0.70, 0.09, 0.19), (0.70, 0.09, 0.19), 0.06, 0.055), ((0.70, -0.09, 0.19), (0.70, -0.09, 0.19), 0.06, 0.055)],   # feet, toes up
-        sheet=(-0.86, 0.80, -0.29, 0.29, 42, 16),
-        feet=[((0.62, 0.08, 0.05), (0.70, 0.09, 0.245), 0.075, 0.055, (0, 1, 0)),
-              ((0.62, -0.08, 0.05), (0.70, -0.09, 0.245), 0.075, 0.055, (0, 1, 0))],
-        tag=1, length=1.65),
-    'curled': dict(                                                                   # on its side, knees drawn up
-        caps=[((-0.50, 0.06, 0.10), (-0.50, 0.06, 0.10), 0.10, 0.10),
-              ((-0.42, 0.04, 0.10), (-0.36, 0.03, 0.12), 0.06, 0.06),
-              ((-0.34, 0.03, 0.15), (0.0, 0.06, 0.15), 0.12, 0.16),
-              ((0.0, 0.06, 0.14), (0.06, 0.06, 0.14), 0.13, 0.16),
-              ((0.06, 0.0, 0.13), (0.28, -0.26, 0.12), 0.08, 0.11),
-              ((0.28, -0.26, 0.10), (0.46, -0.04, 0.08), 0.06, 0.09),
-              ((-0.30, -0.10, 0.20), (-0.08, -0.20, 0.17), 0.06, 0.06),
-              ((0.48, -0.03, 0.05), (0.54, -0.12, 0.05), 0.05, 0.05), ((0.49, -0.01, 0.13), (0.55, -0.10, 0.13), 0.05, 0.05)],
-        sheet=(-0.64, 0.62, -0.44, 0.30, 32, 20),
-        feet=[((0.45, -0.02, 0.05), (0.55, -0.12, 0.10), 0.06, 0.045, (0, 0, 1)),
-              ((0.46, 0.0, 0.13), (0.56, -0.10, 0.18), 0.06, 0.045, (0, 0, 1))],
-        tag=1, length=1.2),
+    'adult': dict(caps=_ADULT + _ARM_IN + _mirror(_ARM_IN), ribs=(-0.535, -0.31, 0.15, 0.042, 0.11),
+                  fine=(-0.76, -0.27), sheet=(-0.84, 0.58, -0.29, 0.29, 14), settle=3.2,
+                  feet=_FEET, shins=0.09, hand=None, length=1.65),
+    'curled': dict(caps=[((-0.50, 0.06, 0.0), (-0.47, 0.06, 0.0), 0.085, 0.14),             # on its side, knees drawn up
+                         ((-0.42, 0.04, 0.0), (-0.36, 0.03, 0.0), 0.03, 0.05),
+                         ((-0.34, 0.03, 0.0), (-0.08, 0.05, 0.0), 0.10, 0.2),
+                         ((-0.06, 0.08, 0.0), (0.04, 0.08, 0.0), 0.03, 0.06),
+                         ((0.04, 0.04, 0.0), (0.12, 0.0, 0.0), 0.09, 0.17),
+                         ((0.10, 0.0, 0.08), (0.30, -0.26, 0.08), 0.035, 0.05),
+                         ((0.30, -0.26, 0.06), (0.32, -0.28, 0.06), 0.045, 0.06),
+                         ((0.30, -0.26, 0.05), (0.46, -0.06, 0.04), 0.03, 0.04),
+                         ((-0.30, -0.10, 0.12), (-0.10, -0.22, 0.08), 0.03, 0.04),
+                         ((-0.10, -0.22, 0.05), (0.06, -0.20, 0.04), 0.03, 0.03)],
+                   ribs=(-0.34, -0.08, 0.10, 0.045, 0.1), fine=(-0.6, -0.05), sheet=(-0.64, 0.5, -0.44, 0.30, 18),
+                   settle=3.0, feet=[((0.49, -0.04, 0.05), (0.8, -0.55, 0.15), (0.1, 0.25, 1.0)),
+                                     ((0.50, 0.0, 0.11), (0.8, -0.5, 0.3), (-0.1, 0.4, 0.9))],
+                   shins=None, hand=None, length=1.2),
 }
+SHROUDS['adult_hand'] = dict(SHROUDS['adult'], caps=_ADULT + _ARM_OUT + _mirror(_ARM_IN), hand=1)
+SHROUDS['adult_hand_r'] = dict(SHROUDS['adult'], caps=_ADULT + _ARM_IN + _mirror(_ARM_OUT), hand=-1)
+SHROUDS['bound'] = dict(SHROUDS['adult'], feet=_BOUND, shins=0.05)
 SHROUDS['child'] = dict(SHROUDS['adult'], length=1.02, scale=(0.62, 0.72, 0.72))
 
 
-def _scaled(spec):
-    sx, sy, sz = spec.get('scale', (1, 1, 1))
-    S = lambda p: (p[0] * sx, p[1] * sy, p[2] * sz)           # noqa: E731
-    caps = [(S(a), S(b), rl * sy, rv * sz) for a, b, rl, rv in spec['caps']]
-    x0, x1, y0, y1, nx, ny = spec['sheet']
-    feet = [(S(h), S(t), w * sy, th * sz, ax) for h, t, w, th, ax in spec['feet']]
-    return caps, (x0 * sx, x1 * sx, y0 * sy, y1 * sy, nx, ny), feet
+def _sheet_height(spec):
+    caps = spec['caps']
+    rx0, rx1, rw, pitch, depth = spec['ribs']
+
+    def H(x, y):
+        h = max(_cap_height(x, y, c) for c in caps)
+        if rx0 < x < rx1 and abs(y) < rw and h > 0.02:          # the ribs: ridges the sheet has settled between
+            h *= 1.0 - depth * (0.5 + 0.5 * math.cos(2 * math.pi * (x - rx0) / pitch))
+        return h
+    return H
 
 
 def shroud(kind, seed=0.0, rope=False):
-    """A body under a sheet, as a Painted mesh in the remains atlas, its origin at the centre of its footprint on the
-    floor, lying along x with its feet to +x. A ration tag tied to a toe. With rope: a rope round the ankles to a
-    wooden toggle lying across the toes (D-17's grip). Returns (painted, toggle position or None)."""
+    """A skeleton under a sheet, 76 years on the floor, as a Painted mesh in the remains atlas, its origin at the
+    centre of its footprint on the floor, lying along x with its feet to +x. The sheet has settled onto the bones: a
+    dome over the skull, ridges over the ribs, sunk to the spine below them, the pelvis's wings, the long bones. The
+    feet are bone, out from under the hem, with a ration tag tied to a toe; on some a forearm and hand from under the
+    sheet's edge. With rope: a rope round the ankles to a wooden toggle across the toes (D-17's grip), at BODY_LOOP.
+    Returns (painted, toggle position or None)."""
     spec = SHROUDS[kind]
-    caps, (x0, x1, y0, y1, nx, ny), feet = _scaled(spec)
-    xs = [x0 + (x1 - x0) * i / nx for i in range(nx + 1)]
+    x0, x1, y0, y1, ny = spec['sheet']
+    f0, f1 = spec['fine']
+    xs, x = [], x0
+    while x < x1 - 1e-6:                                     # fine over the skull and the ribs, coarser elsewhere
+        xs.append(x)
+        x += 0.012 if f0 <= x <= f1 else 0.034
+    xs.append(x1)
+    nx = len(xs) - 1
     ys = [y0 + (y1 - y0) * j / ny for j in range(ny + 1)]
-    H = [[max(_cap_height(x, y, c) for c in caps) for y in ys] for x in xs]
-    # Drape: a cone dilation (the sheet tents from the high points), then a blur, then creases.
-    k = 2.4
-    dx, dy = (x1 - x0) / nx, (y1 - y0) / ny
-    rad = 0.1
-    ri, rj = int(rad / dx) + 1, int(rad / dy) + 1
+    Hf = _sheet_height(spec)
+    H = [[Hf(x, y) for y in ys] for x in xs]
+    # Drape: a cone dilation (the sheet tents from the bones it rests on), then a light blur, then creases.
+    k = spec['settle']
+    rad = 0.08
     S = [[0.0] * (ny + 1) for _ in range(nx + 1)]
     for i in range(nx + 1):
         for j in range(ny + 1):
             best = H[i][j]
-            for p in range(max(0, i - ri), min(nx, i + ri) + 1):
-                for q in range(max(0, j - rj), min(ny, j + rj) + 1):
+            for p in range(nx + 1):
+                ddx = abs(xs[p] - xs[i])
+                if ddx > rad:
+                    continue
+                for q in range(max(0, j - 4), min(ny, j + 4) + 1):
                     h = H[p][q]
                     if h > best:
-                        v = h - k * math.hypot((p - i) * dx, (q - j) * dy)
+                        v = h - k * math.hypot(ddx, ys[q] - ys[j])
                         if v > best:
                             best = v
             S[i][j] = best
-    for _ in range(1):
-        T = [row[:] for row in S]
-        for i in range(1, nx):
-            for j in range(1, ny):
-                T[i][j] = (S[i][j] * 4 + S[i - 1][j] + S[i + 1][j] + S[i][j - 1] + S[i][j + 1]) / 8
-        S = T
+    T = [row[:] for row in S]
+    for i in range(1, nx):
+        for j in range(1, ny):
+            T[i][j] = (S[i][j] * 6 + S[i - 1][j] + S[i + 1][j] + S[i][j - 1] + S[i][j + 1]) / 10
+    S = T
     pts = []
     for i, x in enumerate(xs):
         row = []
@@ -1127,69 +1409,88 @@ def shroud(kind, seed=0.0, rope=False):
             z = S[i][j]
             edge = i == 0 or j == 0 or j == ny
             if z > 0.004 and not edge:
-                z += 0.01 + 0.006 * noise.noise(Vector((x * 7.0, y * 9.0, seed * 3.1))) * min(1.0, z * 12)
-            else:
-                z = 0.003
+                z += 0.006 + 0.004 * noise.noise(Vector((x * 7.0, y * 9.0, seed * 3.1))) * min(1.0, z * 12)
             if edge or z < 0.004:
                 z = 0.003 + 0.002 * abs(noise.noise(Vector((x * 11.0, y * 11.0, seed))))
-            row.append(Vector((x, y, z)))
+            # the hem, rotted ragged along the sides
+            yy = y + (0.012 * noise.noise(Vector((x * 9.0, seed, 1.7))) if j in (0, ny) else 0.0)
+            row.append(Vector((x, yy, z)))
         pts.append(row)
-    # The foot end hangs over the shins: a short drop below its edge.
-    drop = [Vector((p.x + 0.012, p.y, max(0.003, p.z - 0.04))) for p in pts[-1]]
+    # The foot end hangs over the shins: a short ragged drop below its edge.
+    drop = [Vector((p.x + 0.012 + 0.008 * noise.noise(Vector((p.y * 13.0, seed, 0.4))), p.y, max(0.003, p.z - 0.035)))
+            for p in pts[-1]]
     pts.append(drop)
     P = Painted()
     P.grid('sheet', pts, nx + 1, ny)
-    # The ration tag: tied to a toe under the sheet, its string out from under the hem at the foot end.
-    tt = Vector(feet[-1][1])
-    side = -1.0 if tt.y <= 0 else 1.0
-    knot = Vector((x1 - 0.01, tt.y, max(0.04, min(tt.z, 0.12))))
-    hang = Vector((x1 + 0.05, tt.y + side * 0.03, knot.z - 0.03))
-    P.add('rope', lambda bm: add_cyl(bm, knot, hang, 0.0025, mat=0, seg=4))
+    # Out from under the hem: the shin bones' ends, the feet, bone.
+    tips = []
+    for (A, fd, up) in spec['feet']:
+        A = Vector(A)
+        if spec['shins'] is not None:
+            sy = math.copysign(spec['shins'], A.y)
+            P.add('bone', lambda bm, A=A, sy=sy: long_bone(bm, (x1 - 0.1, sy, 0.03), A + Vector((-0.012, 0, -0.012)), 0.012, knob=1.4, seg=6))
+        tips.append(foot(P, A, Vector(fd), Vector(up), s=1.0))
+    # A forearm and hand from under the sheet's edge, palm down on the floor, the fingers loose.
+    if spec['hand']:
+        sd = spec['hand']
+        E, W = Vector((-0.17, 0.29 * sd, 0.022)), Vector((-0.07, 0.355 * sd, 0.016))
+        for o in (-0.008, 0.008):
+            P.add('bone', lambda bm, o=o: long_bone(bm, E + Vector((o, 0, 0)), W + Vector((o, 0, 0)), 0.0075, knob=1.3, seg=5))
+        hand(P, W, Vector((0.35, sd * 1.0, -0.12)), Vector((0, 0, 1)), s=1.0, curl=0.28, spread=1.4)
+    # The ration tag: tied round the big toe of one foot, hanging from it on its string.
+    big = tips[-1][0]
+    side = -1.0 if big.y <= 0 else 1.0
+    hang = big + Vector((0.035, side * 0.02, -0.05))
+    P.add('rope', lambda bm: add_cyl(bm, big, hang, 0.0025, mat=0, seg=4))
+    P.add('rope', lambda bm: add_torus(bm, big - Vector((0, 0, 0.012)), (0, 0, 1), 0.011, 0.0025, mat=0, seg=8, rseg=3))
     tw, tl = 0.05, 0.085                                     # the tag, hanging at 45 degrees to the body, two-sided
     nrm = Vector((0.707, side * 0.707, 0.0))
     up = Vector((0, 0, 1))
     for n_ in (nrm, -nrm):
-        r = up.cross(n_)                                     # text right, so the face's normal is r x up = n_
+        r = up.cross(n_)
         c = hang - Vector((0, 0, tl / 2 + 0.002)) + n_ * 0.0008
         P.quads('tag', [[c - r * tw / 2 - up * tl / 2, c + r * tw / 2 - up * tl / 2,
                          c + r * tw / 2 + up * tl / 2, c - r * tw / 2 + up * tl / 2]])
-    grip = None
-    if rope:
-        # Rope bound round the sheet at the ankles (an oval band round both), knotted on top, two strands on to a
-        # wooden toggle lying across the tented toes.
-        ax_ = feet[0][0][0] - 0.05
-        bh = max(_cap_height(ax_, y, c) for y in (-0.08, 0.0, 0.08) for c in caps) + 0.03
-
-        def band(bm):
-            vs = add_torus(bm, (ax_, 0, bh / 2), (1, 0, 0), 0.15, 0.011, mat=0, seg=20, rseg=5)
-            bmesh.ops.scale(bm, vec=(1.0, 1.0, bh / 2 / 0.15), space=Matrix.Translation((-ax_, 0, -bh / 2)), verts=vs)
-        P.add('rope', band)
-        kc = Vector((ax_, 0.0, bh + 0.012))
-        P.add('rope', lambda bm: add_sphere(bm, kc, 0.022, mat=0, seg=8))
-        top = max(_cap_height(feet[0][1][0], f[1][1], c) for f in feet for c in caps) + 0.012
-        grip = Vector((feet[0][1][0] + 0.01, 0.0, top + 0.02))
-        for s in (-1, 1):
-            P.add('rope', lambda bm, s=s: add_cyl(bm, kc, grip + Vector((0, s * 0.075, 0)), 0.008, mat=0, seg=5))
-            P.add('rope', lambda bm, s=s: add_torus(bm, grip + Vector((0, s * 0.075, 0)), (0, 1, 0), 0.022, 0.007, mat=0, seg=10, rseg=4))
-        P.add('wood', lambda bm: add_cyl(bm, grip - Vector((0, 0.13, 0)), grip + Vector((0, 0.13, 0)), 0.016, mat=0, seg=10))
+    if 'scale' in spec:
+        P.transform(Matrix.Diagonal((*spec['scale'], 1.0)))
     # Centre it on its length and stretch it to the spec's length.
     xs_all = [v.co.x for v in P.bm.verts]
     lo, hi = min(xs_all), max(xs_all)
     sx = spec['length'] / (hi - lo)
     M = Matrix.Diagonal((sx, 1, 1, 1)) @ Matrix.Translation((-(lo + hi) / 2, 0, 0))
     P.transform(M)
-    if grip is not None:
-        grip = M @ grip
+    grip = None
+    if rope:
+        # Rope bound round both ankles above the heels, knotted on top, two strands on to a wooden toggle lying
+        # across the toes at BODY_LOOP_AT (the game's grip: keep it there).
+        ax_ = (M @ Vector(spec['feet'][0][0])).x - 0.035
+        P.add('rope', lambda bm: _band(bm, ax_, 0.075, 0.045, 0.045))
+        kc = Vector((ax_, 0.0, 0.098))
+        P.add('rope', lambda bm: add_sphere(bm, kc, 0.02, mat=0, seg=8))
+        grip = Vector((BODY_LOOP_AT[0], 0.0, BODY_LOOP_AT[1]))
+        for s_ in (-1, 1):
+            P.add('rope', lambda bm, s_=s_: add_cyl(bm, kc, grip + Vector((0, s_ * 0.075, 0)), 0.008, mat=0, seg=5))
+            P.add('rope', lambda bm, s_=s_: add_torus(bm, grip + Vector((0, s_ * 0.075, 0)), (0, 1, 0), 0.022, 0.007, mat=0, seg=10, rseg=4))
+        P.add('wood', lambda bm: add_cyl(bm, grip - Vector((0, 0.13, 0)), grip + Vector((0, 0.13, 0)), 0.016, mat=0, seg=10))
     return P, grip
 
+
+def _band(bm, x, ry, rz, zc):
+    """A rope bound round both ankles: an oval loop about x."""
+    vs = add_torus(bm, (x, 0, zc), (1, 0, 0), 0.1, 0.01, mat=0, seg=18, rseg=5)
+    bmesh.ops.scale(bm, vec=(1.0, ry / 0.1, rz / 0.1), space=Matrix.Translation((-x, 0, -zc)), verts=vs)
+    return vs
+
+
+BODY_LOOP_AT = (0.674, 0.277)        # RationBody's toggle (x offset from its origin, height): the game's grip
 
 # Where the dead lie (x, y, z, turn in degrees, shape): feet to +x before the turn.
 FAMINE = [
     ('RationDead01', 48.47, 1.985, 0.0, -90, 'adult'),      # a row, feet to the camera: two by the end wall,
-    ('RationDead02', 49.09, 1.985, 0.002, -90, 'adult'),
+    ('RationDead02', 49.09, 1.985, 0.002, -90, 'adult_hand'),
     ('RationDead03', 50.20, 1.985, 0.0, -90, 'adult'),      # four between the columns, under the vent
-    ('RationDead04', 50.80, 1.985, 0.002, -90, 'adult'),
-    ('RationDead05', 51.40, 1.985, 0.0, -90, 'adult'),
+    ('RationDead04', 50.80, 1.985, 0.002, -90, 'adult_hand_r'),
+    ('RationDead05', 51.40, 1.985, 0.0, -90, 'adult_hand'),
     ('RationDead06', 52.00, 1.985, 0.002, -90, 'adult'),
     ('RationDead07', 48.75, 0.86, 0.004, 0, 'child'),       # in front of the row, by the door: small
     ('RationDead08', 49.25, 3.15, 0.37, 0, 'adult'),        # on the cots
@@ -1198,10 +1499,11 @@ FAMINE = [
 
 
 def build_famine(coll):
-    """The dead under sheets in rows across the canteen floor and on the cots: linked duplicates of three shapes,
-    each one mesh in the remains atlas (sheet, feet, tag). And the one D-17 drags, RationBody."""
+    """The dead under sheets in rows across the canteen floor and on the cots: linked duplicates of a few shapes,
+    each one mesh in the remains atlas (sheet, bones, tag). And the one D-17 drags, RationBody: one mesh, its sheet
+    finely divided along x (its length) so the game can ripple it as it is dragged."""
     meshes = {}
-    for kind, seed in (('adult', 1.0), ('curled', 2.0), ('child', 3.0)):
+    for kind, seed in (('adult', 1.0), ('adult_hand', 1.6), ('adult_hand_r', 2.4), ('curled', 2.0), ('child', 3.0)):
         P, _ = shroud(kind, seed)
         meshes[kind] = P.mesh('RationShroud_' + kind, 'RemainsMat')
     out = []
@@ -1211,7 +1513,7 @@ def build_famine(coll):
         ob.location = (x, y, z)
         ob.rotation_euler = (0, 0, math.radians(turn))
         out.append(ob)
-    P, grip = shroud('adult', 4.0, rope=True)
+    P, grip = shroud('bound', 4.0, rope=True)
     body = P.obj('RationBody', 'RemainsMat', coll)
     body.location = (BODY_START_X, BODY_Y, 0.0)
     BODY_LOOP[:] = [round(grip.x, 3), round(grip.z, 3)]

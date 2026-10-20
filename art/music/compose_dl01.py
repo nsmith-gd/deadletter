@@ -749,16 +749,18 @@ def cue_racks():
     m = Mix(L)
     m.stems['bell'] = Track(L)
     m.wet['bell'], m.gain['bell'] = 0.85, 0.25
-    m['air'].add(wind(L, 0.055, rng) * env_curve(int(L * SR), 6, 12), 0)
+    # The wind is the first thing heard, then it tucks under the cello (the game has its own room tone).
+    air = np.interp(np.arange(int(L * SR)) / SR, [0, 10, 18, 33, 40, 60], [1, 1, 0.6, 0.6, 0.5, 0.5]).astype(np.float32)
+    m['air'].add(wind(L, 0.05, rng) * env_curve(int(L * SR), 6, 12) * air, 0)
 
     # The floor: a low D pedal under everything, never broken, rising a little into the swell.
-    string_note(m['strings'], 'D2', 0.3, 50, 0.28, 'bass', -0.15, 7.0, 8, shape=[0.45, 0.65, 0.75, 0.85, 1, 0.8, 0.6, 0.5], rng=rng)
-    string_note(m['strings'], 'D1', 8.0, 42, 0.12, 'bass', -0.1, 6.0, 8, shape=[0.6, 0.9, 1, 0.7], rng=rng)
+    string_note(m['strings'], 'D2', 0.3, 50, 0.22, 'bass', -0.15, 7.0, 8, shape=[0.35, 0.55, 0.65, 0.75, 1, 0.7, 0.45, 0.3], rng=rng)
+    string_note(m['strings'], 'D1', 8.0, 42, 0.09, 'bass', -0.1, 6.0, 8, shape=[0.6, 0.9, 1, 0.7], rng=rng)
     # Cold and empty: a far bell, an open fifth in the low cellos, and two piano notes a ninth apart.
     m['bell'].add(far_bell('D3', 0.5, rng), 1.2, -0.25)
-    string_note(m['strings'], 'A2', 3.5, 11.5, 0.13, 'cello', -0.3, 5.0, 3.0, rng=rng)
-    m['piano'].add(piano('D2', 0.24, 6, rng), 4.6, -0.3)
-    m['piano'].add(piano('Eb3', 0.17, 5, rng), 5.5, -0.1)
+    string_note(m['strings'], 'A2', 3.5, 11.5, 0.1, 'cello', -0.3, 5.0, 3.0, rng=rng)
+    m['piano'].add(piano('D2', 0.19, 6, rng), 4.6, -0.3)
+    m['piano'].add(piano('Eb3', 0.14, 5, rng), 5.5, -0.1)
 
     # The lament, phrase A at half speed and an octave below the hall's cello: (time, note, beats) from 9 s.
     t0 = 9.0
@@ -766,16 +768,16 @@ def cue_racks():
               (6, 'D3', 4), (10, 'A2', 2),                     # over B-flat
               (12, 'C3', 3), (15, 'Bb2', 1), (16, 'A2', 2),    # over G minor
               (18, 'G2', 6)]                                   # held low, the strings gathering
-    line, off = legato_line(lament, 0, 'cello', 0.38, rng, vib_cents=15, tail=1.2,
+    line, off = legato_line(lament, 0, 'cello', 0.44, rng, vib_cents=15, tail=1.2,
                             shape=[(-0.3, 0.55), (6, 0.7), (12, 0.74), (18, 0.78), (24, 1.0)])
     m['solo'].add(line, t0 + off, -0.05)
     m['bell'].add(far_bell('D3', 0.32, rng), 13.6, -0.3)
     # The section under it, a chord every two bars: B-flat over D, then G minor over D, gathering.
-    for start, names, d in ((15.0, (('Bb2', 'cello', -0.3), ('D3', 'viola', -0.05), ('F3', 'viola', 0.15)), 0.15),
-                            (21.0, (('G2', 'cello', -0.3), ('Bb2', 'viola', -0.05), ('D3', 'viola', 0.15)), 0.16)):
+    for start, names, d in ((15.0, (('Bb2', 'cello', -0.3), ('D3', 'viola', -0.05), ('F3', 'viola', 0.15)), 0.12),
+                            (21.0, (('G2', 'cello', -0.3), ('Bb2', 'viola', -0.05), ('D3', 'viola', 0.15)), 0.13)):
         for j, (name, kind, pan) in enumerate(names):
             string_note(m['strings'], name, start, 6.0, d * (1 if j == 0 else 0.7), kind, pan, 2.5, 2.5, rng=rng)
-    for name, kind, pan, d in (('G2', 'cello', -0.3, 0.18), ('Bb2', 'viola', -0.05, 0.13), ('D3', 'viola', 0.15, 0.12)):
+    for name, kind, pan, d in (('G2', 'cello', -0.3, 0.15), ('Bb2', 'viola', -0.05, 0.11), ('D3', 'viola', 0.15, 0.1)):
         string_note(m['strings'], name, 27.0, 6.0, d, kind, pan, 1.5, 2.0, shape=[0.6, 0.8, 1.0], rng=rng)
     m['piano'].add(piano('G1', 0.2, 5, rng), 21.0 + human(rng), -0.35)
 
@@ -786,7 +788,7 @@ def cue_racks():
                (6, 'D3', 4), (10, 'Bb2', 2),
                (12, 'A2', 9)]
     line2, off2 = legato_line(lament2, 0, 'cello', 0.58, rng, vib_cents=18, tail=3.5,
-                              shape=[(-0.3, 0.55), (1.6, 1.0), (4.0, 0.95), (6.0, 0.72), (10, 0.55), (12, 0.45), (16, 0.3), (21, 0.16)])
+                              shape=[(-0.3, 0.55), (1.6, 1.0), (4.0, 0.95), (6.0, 0.72), (10, 0.55), (12, 0.42), (16, 0.25), (21, 0.1)])
     m['solo'].add(line2, t1 + off2, -0.05)
     vl_notes = [(t, octave(n, 1), b) for t, n, b in lament2[:4]]
     vl, voff = legato_line(vl_notes, 0, 'violin', 0.15, rng, vib_cents=13, tail=2.0,
@@ -799,9 +801,9 @@ def cue_racks():
     for name, kind, pan, d in (('Bb2', 'cello', -0.3, 0.18), ('D3', 'viola', -0.05, 0.12), ('F3', 'viola', 0.15, 0.1)):
         string_note(m['strings'], name, t1 + 6.0, 6.0, d, kind, pan, 1.2, 3.0, shape=[1, 0.8, 0.6], rng=rng)
     # Near silence: the empty fifth again, the piano's E-flat against the cello's A, the bell once more.
-    string_note(m['strings'], 'A2', t1 + 12.0, 9.0, 0.1, 'cello', -0.3, 2.5, 5.0, shape=[1, 0.8, 0.5], rng=rng)
-    m['piano'].add(piano('D2', 0.2, 6, rng), t1 + 14.8, -0.3)
-    m['piano'].add(piano('Eb3', 0.14, 5, rng), t1 + 15.7, -0.1)
+    string_note(m['strings'], 'A2', t1 + 12.0, 9.0, 0.08, 'cello', -0.3, 2.5, 5.0, shape=[1, 0.8, 0.5], rng=rng)
+    m['piano'].add(piano('D2', 0.17, 6, rng), t1 + 14.8, -0.3)
+    m['piano'].add(piano('Eb3', 0.12, 5, rng), t1 + 15.7, -0.1)
     m['bell'].add(far_bell('D3', 0.26, rng), t1 + 18.5, -0.25)
     return m.render()
 
@@ -815,11 +817,13 @@ def cue_kin():
     m['air'].add(wind(70, 0.04, rng) * env_curve(int(70 * SR), 3, 14), 0)
     # He stops and looks along the rows: a low pedal (the one 'racks' was holding) and single piano notes,
     # one for each look, low and dark like the racks cue; the last is its E-flat, which the theme's bar 1
-    # lifts to E. (The looks have their own random stream, so the rest of the cue is as before.)
+    # lifts to E. The looks have their own random stream; the old high looks (A5, F5, D5, E5) are still drawn
+    # from the cue's stream and thrown away, so everything after them renders exactly as before.
     string_note(m['strings'], 'D2', 0.0, 44, 0.24, 'bass', -0.15, 4.0, 10, shape=[0.5, 0.8, 1, 1, 0.6, 0.3], rng=rng)
     string_note(m['strings'], 'D3', 1.0, 6.5, 0.16, 'cello', -0.3, 3.0, 2.5, rng=rng)
     looks = np.random.default_rng(7071)
-    for t, name, dur in ((1.2, 'A4', 3.5), (2.6, 'F4', 3.5), (4.1, 'D4', 3.0), (5.6, 'Eb4', 1.3)):
+    for (t, name, dur), old in zip(((1.2, 'A4', 3.5), (2.6, 'F4', 3.5), (4.1, 'D4', 3.0), (5.6, 'Eb4', 1.3)), ('A5', 'F5', 'D5', 'E5')):
+        piano(old, 0.26, 3.5, rng)
         m['piano'].add(piano(name, 0.28, dur, looks), t + human(rng), pan_for(name))
     # The theme broadens and builds: cello first, then the violins, then everything.
     t0, bl = 7.0, 3.5

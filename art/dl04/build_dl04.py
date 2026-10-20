@@ -417,11 +417,15 @@ def dl04_materials(m):
     m['sheet'] = simple_material('AtriumSheet', (0.075, 0.082, 0.08), 0.6, metallic=0.4)
     m['rust'] = simple_material('AtriumRust', (0.11, 0.048, 0.025), 0.85)
     m['masonry'] = simple_material('AtriumMasonry', (0.15, 0.135, 0.115), 0.85)
-    m['windowglow'] = emission_material('AtriumWindowGlow', (1.0, 0.6, 0.28), 2.5)
-    m['hazelights'] = emission_material('AtriumHazeLights', (0.62, 0.76, 0.95), 1.5)
+    m['windowglow'] = emission_material('AtriumWindowGlow', (1.0, 0.55, 0.24), 1.4)     # pass 5: the few left, dim and warm
+    m['hazelights'] = emission_material('AtriumHazeLights', (0.6, 0.72, 0.9), 0.6)
     m['mist'] = emission_material('AtriumMist', (0.32, 0.4, 0.48), 0.1)
     m['atcloth'] = simple_material('AtriumCloth', (0.2, 0.13, 0.065), 0.9)        # awnings, washing, tarps
     m['atwood'] = simple_material('AtriumWood', (0.085, 0.06, 0.04), 0.88)        # shutters, doors, crates
+    # Pass 5: the city gone dark, overgrown (docs/chapter1_pass5_plan.md, section 3).
+    m['vine'] = simple_material('AtriumVine', (0.03, 0.038, 0.02), 0.9)            # vines and roots, hanging
+    m['moss'] = simple_material('AtriumMoss', (0.06, 0.075, 0.035), 0.95)          # moss and lichen on the ledges
+    m['wet'] = simple_material('AtriumWet', (0.014, 0.016, 0.015), 0.35)           # water stains down the rock
 
 
 def build_goods_hall(m, coll):
@@ -1398,6 +1402,12 @@ def _gallery(b, lip, T, F, length, lamp, rnd, out=1.6):
     balusters and the deck's edge."""
     rot = _rot(T, F)
     c = lip + F * (out / 2 - 0.2)
+    cr = _drnd(lip, 29)
+    if cr.random() < 0.3:                               # pass 5: torn off its brackets, hanging down the face
+        R = rot @ Matrix.Rotation(-cr.uniform(1.0, 1.35), 4, 'X')
+        _abox(b['sheet'], lip + R.to_3x3() @ Vector((0.0, out / 2, -0.08)), (length + 0.05, out + 0.4, 0.14), rot=R)
+        _abox(b['sheet'], lip + R.to_3x3() @ Vector((0.0, out + 0.1, 0.5)), (length * 0.7, 0.05, 0.05), rot=R)
+        return
     _abox(b['sheet'], c - Vector((0, 0, 0.08)), (length + 0.05, out + 0.4, 0.14), rot=rot)
     _abox(b['sheet'], lip + F * (out - 0.2) + Vector((0, 0, 1.05)), (length + 0.05, 0.06, 0.06), rot=rot)
     post = lip + F * (out - 0.2) - T * (length / 2)
@@ -2047,8 +2057,12 @@ def _block(b, c, w, d, h, tier, rnd):
         _octa(b['lamp'], q + Vector((0, 0, hh + 0.2)), 0.22)
 
 
+TOWERS = []                          # (c, r, h) of every tower built: pass 5 topples one
+
+
 def _tower(b, c, r, h, rnd):
     """A tower: a shaft of masonry, a lit band of windows near its top, a pointed or domed cap."""
+    TOWERS.append((c.copy(), r, h))
     add_cyl(b['masonry'], c, c + Vector((0, 0, h)), r, seg=10)
     add_cyl(b['glow'], c + Vector((0, 0, h - 4.0)), c + Vector((0, 0, h - 2.5)), r + 0.05, seg=10)
     if rnd.random() < 0.5:
@@ -2377,6 +2391,20 @@ def _balcony(b, c, T, F, bw, lod, dr, out=0.95):
     """A balcony off a floor, c at the middle of its threshold in the wall's face: a slab on corbels, rails
     and balusters or a sheet parapet; washing on a line, a pot or two."""
     rot = _rot(T, F)
+    cr = _drnd(c, 23)                                   # pass 5: a third of them have fallen, or hang by a corner
+    if cr.random() < 0.34:
+        if lod >= 2:                                    # the corbels' stubs stay
+            for s in (-1, 1):
+                _abox(b['cut'], c + F * 0.12 + T * (s * (bw / 2 - 0.18)) - UP * 0.32, (0.12, 0.22, 0.3), rot=rot)
+        if cr.random() < 0.6:                           # hanging from one corner, its rail dangling
+            s = 1 if cr.random() < 0.5 else -1
+            R = rot @ Matrix.Rotation(-s * cr.uniform(0.9, 1.25), 4, 'Y')
+            pivot = c + T * (s * bw / 2) - UP * 0.07
+            _abox(b['cut'], pivot + R.to_3x3() @ Vector((-s * bw / 2, out / 2, 0.0)), (bw, out, 0.14), rot=R)
+            if lod >= 1:
+                tip = pivot + R.to_3x3() @ Vector((-s * bw, out - 0.05, 0.0))
+                _abox(b['sheet'], tip + Vector((0, 0, -0.45)), (0.05, 0.05, 0.9), rot=rot @ Matrix.Rotation(0.3 * s, 4, 'Y'))
+        return
     _abox(b['cut'], c + F * (out / 2) - UP * 0.07, (bw, out, 0.14), rot=rot)
     if lod < 1:
         return

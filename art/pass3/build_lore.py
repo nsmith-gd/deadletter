@@ -15,7 +15,8 @@ What happened down here, told from the walls (visuals first; the words are for r
   DL-04  LoreMemorial: couriers' tags on a wire over the empty rack with the chalk flowers.
   DL-06  LoreBarricade: sorting crates once stacked across the floor, pulled apart and pushed to the wall;
          LoreUpStencil: "UP IS FOR THEM" stencilled, rollered over, "EVERYONE UP" painted across it.
-  DL-07  LoreEveryoneUp: the same hand on the gallery's return wall by the residential door.
+  DL-07  (pass 5: LoreEveryoneUp, the same hand by the residential door, is cut: EVERYONE UP is kept to DL-06 and
+         ring C's C-106 wall.)
   DL-08  LoreTimetable: the relocation lift timetable, every departure struck through; tallies beside it;
          a stove, a pan and tins by the broom.
   DL-09  LoreBelongings: a pram wheel and a tied bundle left at the lower landing.
@@ -950,8 +951,9 @@ def dress_dl06(coll):
 
 
 def dress_dl07(coll):
-    decal('LoreEveryoneUp', image_mat('LoreEveryoneUpMat', 'everyone'), (79.98, 2.72), (0.56, 0.56), coll)
-    note('LoreEveryoneUp', 79.98, 'DL-07 EVERYONE UP and an arrow on the return wall by the residential door')
+    # Pass 5 (docs/chapter1_pass5_plan.md, section 3): EVERYONE UP is not repeated here; it stays on DL-06's stencil
+    # (LoreUpStencil) and C-106's wall in ring C. make_everyone_up() is kept for the atlas's history only.
+    pass
 
 
 def dress_dl08(coll):
