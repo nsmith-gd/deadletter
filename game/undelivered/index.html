@@ -3079,6 +3079,17 @@ function currentShot() {
     return { name: 'realise', pos: V3(X + 1.7 - 0.8 * k, 0.42 + 0.2 * k, 1.0 + 0.3 * k),
       look: V3(X - 0.1 + 0.1 * k, 0.6 - 0.1 * k, -1.4 + 1.4 * k), focal: 30 + 20 * k, ease: 1.1 };
   }
+  // Pass 4: whenever he checks his label, the camera goes in close enough to read it: for MARA, C-114, RING C, and the
+  // stamp across it, UNDELIVERED. The quest, said plainly.
+  if (a && a.kind === 'quirk' && a.clip === 'CheckLabel' && refs.label && actions.CheckLabel) {
+    const f = actions.CheckLabel.time * FPS;
+    if (f > 2) {
+      refs.label.updateWorldMatrix(true, false);
+      const L = new THREE.Box3().setFromObject(refs.label).getCenter(new THREE.Vector3());
+      const fwd = V3(Math.sin(game.yaw), 0, Math.cos(game.yaw));
+      return { name: 'label', pos: L.clone().addScaledVector(fwd, 0.27).add(V3(0, 0.15, 0.05)), look: L, focal: 50, ease: 3.0 };
+    }
+  }
   if (game.region === 5) {
     // The marks and the tree, held, the first time.
     if (game.clock - game.marksShotAt < 3.6) return { name: 'marks', pos: V3(OFF5 + 113.55, 0.72, 0.9), look: V3(OFF5 + 113.55, 0.68, -1.0), focal: 50, ease: 1.2 };
@@ -3170,7 +3181,10 @@ function updateQuirk(a) {
   const act = actions[a.clip], dur = act.getClip().duration;
   const moving = input.axis || input.left || input.right || input.jumpPressed;
   if (a.cancel && moving && act.time > 0.3) { game.act = null; return; }
-  if (act.time >= dur - 0.05) { game.act = null; setClip('Idle', 0.35); if (a.then) a.then(); }
+  if (act.time >= dur - 0.05) {
+    if (a.clip === 'CheckLabel' && game.clock - (a.endAt ??= game.clock) < 0.8) return;     // held a beat, so the label can be read
+    game.act = null; setClip('Idle', 0.35); if (a.then) a.then();
+  }
 }
 // Edges he peers over if left there a moment: the DL-01 trench, the crate's far edge, the pit rail, Lift 2's shaft.
 const PEEK_SPOTS = [
@@ -3290,10 +3304,11 @@ function buildCh1(setRoot) {
   for (const s of SLOTS) s.obj = R(s.name);
   // Lights: the hall's work lamp and its lit gantry door; the bay, cold; the cage's landing.
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
-  refs.shLights = [P(0xffd6a6, 4.0, 5.5, 20.6, 2.6, 0.3), P(0xffc890, 5.0, 4.0, 24.7, 2.7, 0.1), P(0xd9e6ff, 1.2, 3.0, SH.tubeX, 1.6, -0.3), P(0xffc890, 1.0, 2.0, 24.2, 1.05, -0.25)];   // the sorters under the gantry
+  refs.shLights = [P(0xffd6a6, 4.0, 5.5, 20.6, 2.6, 0.3), P(0xffc890, 5.0, 4.0, 24.7, 2.7, 0.1), P(0xd9e6ff, 1.2, 3.0, SH.tubeX, 1.6, -0.3), P(0xffc890, 1.2, 2.0, 24.2, 1.05, -0.25),
+    P(0xb8c8d4, 1.8, 2.6, 17.6, 1.3, 0.35)];   // the sorters: under the gantry, and at the table and the wall, cold
   refs.bayLights = [P(0xcfe4ff, 3.2, 4.5, RK.bayX, 2.4, -0.2)];
   refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF5 + 90.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF5 + 102.75, 0.9, 0.1),
-    P(0xcfdcf0, 2.6, 5.0, OFF5 + 99.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 91.72, 0.6, -0.2), P(0xa8bccc, 0.7, 2.4, OFF5 + 93.5, 0.9, -2.2)];   // the lair   // the square's lamp; the bell's small amber lamp
+    P(0xcfdcf0, 2.6, 5.0, OFF5 + 99.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 91.72, 0.6, -0.2), P(0xa8bccc, 2.2, 2.8, OFF5 + 93.5, 1.0, -2.0)];   // the lair   // the square's lamp; the bell's small amber lamp
   refs.cageLights = [P(0xffb050, 3.5, 4.5, CG.shaft.x1 + 0.4, DECK + 0.9, -0.3), P(0xd6dde8, 2.0, 5.0, CG.shaft.x0 - 0.6, CG.top + 1.6, -0.4),
     P(0xffc890, 1.6, 2.4, OFF3 + 68.45, CG.top + 0.8, -0.75)];   // the counterweight tray's own lamp, so the tray and its plates read
   // The Ration Hall: the strip tube over the counter (it flickers), the shrine's candles, the vent's grey daylight, the kitchen.
@@ -3329,7 +3344,7 @@ function resetCh1(cp) {
     drum: { x: past(cp, 'hatch') ? RH5.drumPark : RH5.drum0, v: 0, state: past(cp, 'hatch') ? 'set' : 'free' },
     body: { x: past(cp, 'hatch') ? RH5.bodyPlate : RH5.body0, v: 0, state: past(cp, 'hatch') ? 'plate' : 'free' },
     rh: { h: past(cp, 'hatch') ? RH5.onDrum : 0, served: past(cp, 'hatch'), flag: past(cp, 'hatch') ? 1 : 0 },
-    scale: { reading: past(cp, 'hatch') ? 'person' : 'empty', since: 0, needle: past(cp, 'hatch') ? RH5.needle.person : 0, nv: 0, dip: 0 },
+    weigh: { reading: past(cp, 'hatch') ? 'person' : 'empty', since: 0, needle: past(cp, 'hatch') ? RH5.needle.person : 0, nv: 0, dip: 0 },
     duct: { x: past(cp, 'bedroom') ? DIP9.x0 + DUCT9.half : DUCT9.x, v: 0, state: past(cp, 'bedroom') ? 'bridge' : 'free', drop: 0 },
     plates: CW8.plates.map((x) => ({ x, home: x, base: CG.top, state: (persist.cw >= 2 && past(cp, 'cage')) || past(cp, 'landing8') ? 'tray' : 'floor', seat: undefined, blend: 0, drop: null })),
     collapse: past(cp, 'goods') ? 2 : 0, collapseT: 0, sumpShown: false, heapShown: false, shocked: 0,
@@ -3982,7 +3997,7 @@ function updateCh1(dt) {
   updateUpOnly(dt);
   // DL-05: the weigh-in. The plate reads what is on it; a person, held a moment, winds the hatch up to its serving
   // height and drops the SERVED flag, and it stays. He alone barely moves the needle; the drum slams it to OVER.
-  const dr = s.drum, bd = s.body, rh = s.rh, sc = s.scale;
+  const dr = s.drum, bd = s.body, rh = s.rh, sc = s.weigh;
   if (k.drum) k.drum.position.x = dr.x;
   if (k.body) k.body.position.x = bd.x;
   const drumOn = Math.abs(dr.x - RH5.drumPlate) < 0.45, bodyOn = Math.abs(bd.x - RH5.bodyPlate) < 0.13;
@@ -5060,10 +5075,7 @@ function updateCamera(dt, f) {
   if (game.mode === 'opening') {
     const k0 = f > 120 ? smooth((f - 120) / 180) : 0;
     const k = k0 * k0 * (3 - 2 * k0);
-    // Pass 4: it opens hard on his label, close enough to read (for MARA, C-114, RING C, UNDELIVERED), then eases back.
-    const ins = 1 - smooth((f - 95) / 30);
     const near = cam.start.clone().lerp(cam.drift, Math.min(1, f / 120));
-    if (ins > 0) { const close = cam.chest.clone().lerp(cam.start, 0.3 + 0.03 * f / 95); near.lerp(close, ins); }
     const end = cam.end.clone(); end.z = Math.max(5.2, widthFit(35, 4.6));
     const pos = near.lerp(end, k); pos.y += 0.35 * Math.sin(Math.PI * k);
     camera.position.copy(pos);
@@ -5352,6 +5364,7 @@ function startPlay(checkpoint = 'start') {
   Object.values(actions).forEach((a) => { if (a.getClip().name !== current) a.stop(); });
   setClip('Idle', naturalEnd ? 0.5 : 0.25);
   Sound.hum(1);
+  if (fromOpening && checkpoint === 'start') setTimeout(() => { if (game.mode === 'play' && !seen.has('labelWake') && playQuirk('CheckLabel', false)) seen.add('labelWake'); }, naturalEnd ? 600 : 300);
   const fr = frameFor(game.x);
   cam.x = fr.cx; [cam.dist, cam.y, cam.look] = fr.v;
 }
