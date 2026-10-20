@@ -55,6 +55,7 @@
   .controls dd { margin: 0; }
   kbd { font-family: var(--mono); font-size: 0.78rem; border: 1px solid var(--rule); padding: 1px 6px; color: var(--paper); background: rgba(217, 209, 184, 0.06); }
   .opts { display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 14px; }
+  .goal { margin: 0 0 12px; font-size: 0.95rem; line-height: 1.45; color: var(--paper); }
   .opts label { display: flex; gap: 10px; align-items: center; cursor: pointer; font-size: 0.92rem; }
   .opts input { accent-color: #d9d1b8; width: 16px; height: 16px; }
   .status { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); min-height: 1.2em; }
@@ -134,7 +135,7 @@
         <button class="act" id="begin" type="button" disabled>Begin</button>
         <span class="status" id="load-status" role="status">Loading the depot&hellip;</span>
       </div>
-      <p class="note">The nine scenes of chapter 1, from The Wake to The Child at the Address, run as one, with no cut between them. Headphones recommended.</p>
+      <p class="note">The eleven scenes of chapter 1, from The Wake to The Child at the Address, run as one, with no cut between them. Headphones recommended.</p>
     </div>
   </section>
 
@@ -142,6 +143,7 @@
     <div class="card">
       <div class="eyebrow"><span id="pause-scene">DL-01 The Wake</span><span id="pause-time">0:00</span></div>
       <h2>Paused</h2>
+      <p class="goal">Delivering: a birthday parcel for <strong>Mara</strong>, C-114, ring C. Three levels down. 76 years late.</p>
       <p class="note" id="pause-found"></p>
       <div class="opts">
         <label><input type="checkbox" id="opt-autorun-p" checked><span>Auto-run (hold Shift or B to walk)</span></label>
@@ -4011,6 +4013,14 @@ function updateCh1(dt) {
   if (game.region === 2 && x > RATION5.x0 + 0.6 && !past(cp, 'ration')) game.checkpoint = 'ration';
   if (game.region === 2 && x > RH5.crawl[1] + 0.25 && !past(cp, 'hatch')) game.checkpoint = 'hatch';
   if (game.region === 4 && x > UPONLY.x0 + 0.4 && game.grounded && !past(cp, 'uponly')) game.checkpoint = 'uponly';
+  // Pass 4: he checks his label where the journey is said out loud: the child's drawing in the Ration Hall, ring C far
+  // below the balcony, and ring C's street at last.
+  if (!game.act && !game.hold && game.grounded) {
+    const at = (game.region === 2 && x > RATION5.x0 + 4.0 && x < RATION5.x0 + 6) ? 'label5'
+      : (game.region === 4 && game.dl4.awed && x > AWE_X + 1.6 && x < UPONLY.x0) ? 'label9'
+      : (game.region === 5 && x > OFF5 + 83.0 && x < OFF5 + 86) ? 'label11' : null;
+    if (at && !seen.has(at) && playQuirk('CheckLabel')) seen.add(at);
+  }
   if (game.region === 2 && x > OFF2 + 12.6 && game.y < 0.05 && !past(cp, 'weighroom')) game.checkpoint = 'weighroom';
   if (game.region === 2 && x > RK.door.x1 + 0.2 && !past(cp, 'bay')) game.checkpoint = 'bay';
   if (game.region === 3 && game.upper && x > HP.gateX + 0.3 && !past(cp, 'gallery')) game.checkpoint = 'gallery';
@@ -5040,7 +5050,10 @@ function updateCamera(dt, f) {
   if (game.mode === 'opening') {
     const k0 = f > 120 ? smooth((f - 120) / 180) : 0;
     const k = k0 * k0 * (3 - 2 * k0);
+    // Pass 4: it opens hard on his label, close enough to read (for MARA, C-114, RING C, UNDELIVERED), then eases back.
+    const ins = 1 - smooth((f - 95) / 30);
     const near = cam.start.clone().lerp(cam.drift, Math.min(1, f / 120));
+    if (ins > 0) { const close = cam.chest.clone().lerp(cam.start, 0.3 + 0.03 * f / 95); near.lerp(close, ins); }
     const end = cam.end.clone(); end.z = Math.max(5.2, widthFit(35, 4.6));
     const pos = near.lerp(end, k); pos.y += 0.35 * Math.sin(Math.PI * k);
     camera.position.copy(pos);
@@ -5443,7 +5456,7 @@ function frame(now) {
     // Test only: a simulated player drives the game at a fixed 60 Hz, several steps per frame, rendering now and then.
     for (let i = 0; i < sim.steps; i++) { sim.bot?.(1 / 60); step(1 / 60); }
     if (refs.cull) updateCulling();
-    if (mixer && (sim.render || ++sim.frames % 30 === 0)) composer.render();
+    if (mixer && (sim.render || ++sim.frames % 30 === 0)) { updateLightPool(); composer.render(); }
     requestAnimationFrame(frame);
     return;
   }
@@ -5452,7 +5465,7 @@ function frame(now) {
   step(dt);
   grain.uniforms.uTime.value = (now / 1000) % 100;
   if (!dbg.hidden) dbg.textContent = `mode ${game.mode}\nframe ${game.frame.toFixed(0)}  fps ${fpsAvg.toFixed(0)}\nx ${game.x.toFixed(2)}  y ${game.y.toFixed(2)}  vx ${game.vx.toFixed(2)}\nclip ${current}\ncrouch ${game.crouched}  ceiling ${ceilingAt(game.x).toFixed(2)}\ncheckpoint ${game.checkpoint}  released ${game.released}  door ${game.doorOpen.toFixed(2)}\nact ${game.act ? game.act.kind + ':' + game.act.phase : '-'}  autorun ${game.autorun}`;
-  if (mixer) composer.render();
+  if (mixer) { updateLightPool(); composer.render(); }
   requestAnimationFrame(frame);
 }
 // One step of the game.
@@ -5501,14 +5514,81 @@ window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.p
 
 // Compile every shader variant the regions' lights will ask for, and upload every texture, before play. A region's
 // lights switching on changes the light count, and three.js answers that by recompiling shaders: mid-game, a stall.
+// Lights (pass 4): a fixed pool. Every light the scenes build is a proxy, moved to a layer the camera never renders;
+// each frame the lit proxies nearest the camera are copied into the pool, and unused slots go dark. The number of lights
+// never changes, so no shader recompiles when a scene's lights switch on (the stutters), and no pixel pays for more
+// than the pool. Shadowed spots have their own slots; an empty one stops updating its shadow map.
+const LIGHT_POOL = { point: 10, spot: 4, spotShadow: 2, dir: 2, hemi: 2 }, PROXY_LAYER = 31;
+const lightPool = { proxies: [], slots: {} };
+function buildLightPool() {
+  scene.updateMatrixWorld(true);
+  scene.traverse((o) => { if (o.isLight && !o.userData.pool) lightPool.proxies.push(o); });
+  for (const l of lightPool.proxies) l.layers.set(PROXY_LAYER);
+  const add = (l) => { l.userData.pool = true; l.intensity = 0; scene.add(l); if (l.target) scene.add(l.target); return l; };
+  const S = lightPool.slots;
+  S.point = Array.from({ length: LIGHT_POOL.point }, () => add(new THREE.PointLight(0xffffff, 0, 1, 2)));
+  S.spot = Array.from({ length: LIGHT_POOL.spot }, () => add(new THREE.SpotLight(0xffffff, 0, 1, 0.5, 0.5, 2)));
+  S.spotShadow = Array.from({ length: LIGHT_POOL.spotShadow }, () => { const l = add(new THREE.SpotLight(0xffffff, 0, 1, 0.5, 0.5, 2)); l.castShadow = true; l.shadow.mapSize.set(512, 512); return l; });
+  S.dir = Array.from({ length: LIGHT_POOL.dir }, () => add(new THREE.DirectionalLight(0xffffff, 0)));
+  S.hemi = Array.from({ length: LIGHT_POOL.hemi }, () => add(new THREE.HemisphereLight(0xffffff, 0x000000, 0)));
+  updateLightPool();
+}
+function lightOn(l) {
+  if (l.intensity <= 0) return false;
+  for (let o = l; o; o = o.parent) if (!o.visible) return false;
+  return true;
+}
+const _lp = new THREE.Vector3(), _lt = new THREE.Vector3(), _byScore = (a, b) => b.score - a.score;
+function updateLightPool() {
+  const S = lightPool.slots;
+  if (!S.point) return;
+  const cx = camera.position.x, want = { point: [], spot: [], spotShadow: [], dir: [], hemi: [] };
+  for (const l of lightPool.proxies) {
+    if (!lightOn(l)) continue;
+    if (l.isHemisphereLight) { want.hemi.push({ l, score: l.intensity }); continue; }
+    if (l.isDirectionalLight) { want.dir.push({ l, score: l.intensity }); continue; }
+    l.getWorldPosition(_lp);
+    const reach = l.distance > 0 ? l.distance : 30, gap = Math.max(0, Math.abs(_lp.x - cx) - reach);
+    if (gap > 9) continue;                                                      // well out of frame, light and all
+    const score = (l === refs.kick ? 1e6 : 0) + l.intensity * (l.distance || 10) / (1 + gap * gap + 0.05 * (_lp.x - cx) ** 2);
+    (l.isSpotLight ? (l.castShadow ? want.spotShadow : want.spot) : want.point).push({ l, score });
+  }
+  // Shadowed spots beyond the shadow slots still light, without their shadow.
+  want.spotShadow.sort(_byScore); want.spot.push(...want.spotShadow.splice(LIGHT_POOL.spotShadow));
+  for (const k of Object.keys(want)) {
+    const list = want[k].sort(_byScore), slots = S[k];
+    for (let i = 0; i < slots.length; i++) {
+      const slot = slots[i], p = list[i] && list[i].l;
+      if (!p) { slot.intensity = 0; if (slot.castShadow) { slot.shadow.autoUpdate = false; slot.shadow.needsUpdate = false; } continue; }
+      slot.color.copy(p.color); slot.intensity = p.intensity;
+      if (p.isHemisphereLight) { slot.groundColor.copy(p.groundColor); p.getWorldPosition(slot.position); continue; }
+      p.getWorldPosition(slot.position);
+      if (p.isDirectionalLight || p.isSpotLight) { slot.target.position.copy(p.target.getWorldPosition(_lt)); slot.target.updateMatrixWorld(); }
+      if (!p.isDirectionalLight) { slot.distance = p.distance; slot.decay = p.decay; }
+      if (p.isSpotLight) { slot.angle = p.angle; slot.penumbra = p.penumbra; }
+      if (slot.castShadow) {
+        const sh = slot.shadow, ps = p.shadow;
+        if (!sh.mapSize.equals(ps.mapSize)) { sh.mapSize.copy(ps.mapSize); if (sh.map) { sh.map.dispose(); sh.map = null; } }
+        sh.bias = ps.bias; sh.radius = ps.radius; sh.autoUpdate = true;
+        if (sh.camera.far !== ps.camera.far || sh.camera.near !== ps.camera.near) { sh.camera.far = ps.camera.far; sh.camera.near = ps.camera.near; sh.camera.updateProjectionMatrix(); }
+      }
+    }
+  }
+}
 function warmUp() {
   if (!refs.ripplePool) buildRipples();
+  if (!lightPool.slots.point) buildLightPool();
   const shown = [];
   scene.traverse((o) => { if ((o.isMesh || o.isPoints || o.isLine) && !o.visible) { o.visible = true; shown.push(o); } });
   const keys = ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'aoMap'];
   scene.traverse((o) => { for (const m of [].concat(o.material || [])) for (const k of keys) if (m[k]) renderer.initTexture(m[k]); });
   const up = game.upper;
+  // Pass 4: compile into the composer's render target, as every frame is drawn (linear colour, no tone mapping until the
+  // output pass). Compiling for the screen built variants that were never used, and every material compiled again at
+  // first sight during play: the stutters.
+  renderer.setRenderTarget(composer.renderTarget1);
   for (const [r, u, z] of [[1, false], [2, false], [2, false, 'ration'], [3, false], [3, true], [4, true], [4, true, 'uo'], [5, true]]) { game.upper = u; setRegionLights(r, z || null); renderer.compile(scene, camera); }
+  renderer.setRenderTarget(null);
   game.upper = up; setRegionLights(1, null);
   shown.forEach((o) => (o.visible = false));
 }

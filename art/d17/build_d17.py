@@ -959,6 +959,46 @@ def make_label_texture(path):
     hw.crayon(d, [(gx - 10, 444), (gx - 12, 468)], pink, 5, rnd=cr)
     hw.crayon(d, [(gx + 10, 444), (gx + 12, 468)], pink, 5, rnd=cr)
     hw.write(d, 'M', 950, 420, 38, 'child', blue, 6, seed=29)                     # signed with an M
+    # Pass 4: the depot's return stamp, UNDELIVERED, struck hard across the lower half in red ink, below the address
+    # (which stays clear) and over the corner of the drawing: a rubber stamp, boxed, crooked, the ink patchy.
+    from PIL import ImageFont, ImageChops
+    sw, sh = 600, 132
+    us = Image.new('RGBA', (sw, sh), (0, 0, 0, 0))
+    ud = ImageDraw.Draw(us)
+    ured = (168, 26, 22, 255)
+    ud.rectangle((4, 4, sw - 5, sh - 5), outline=ured, width=11)
+    ud.rectangle((20, 20, sw - 21, sh - 21), outline=ured, width=3)
+    size = 96
+    while True:                                                                   # fit the word to the box
+        try:
+            sf = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', size)
+        except OSError:
+            sf = ImageFont.load_default()
+            break
+        tb = ud.textbbox((0, 0), 'UNDELIVERED', font=sf)
+        if tb[2] - tb[0] <= sw - 64 or size < 30:
+            break
+        size -= 2
+    tb = ud.textbbox((0, 0), 'UNDELIVERED', font=sf)
+    ud.text(((sw - (tb[2] - tb[0])) / 2 - tb[0], (sh - (tb[3] - tb[1])) / 2 - tb[1]), 'UNDELIVERED', font=sf, fill=ured)
+    ink_mask = Image.new('L', us.size, 255)                                       # a worn stamp: blotches of thin ink
+    im = ImageDraw.Draw(ink_mask)
+    sr = random.Random(41)
+    for _ in range(70):
+        x, y, rr = sr.uniform(0, sw), sr.uniform(0, sh), sr.uniform(2, 10)
+        im.ellipse((x - rr, y - rr, x + rr, y + rr), fill=sr.randint(30, 170))
+    for _ in range(6):                                                            # the pad ran dry along one edge
+        y = sr.uniform(0, sh)
+        im.line((sw * 0.82, y, sw, y + sr.uniform(-8, 8)), fill=sr.randint(60, 140), width=sr.randint(4, 12))
+    us.putalpha(ImageChops.multiply(us.split()[3], ink_mask.filter(ImageFilter.GaussianBlur(1.5))))
+    us = us.rotate(-6, resample=Image.BICUBIC, expand=True)
+    ox, oy = 404, 292
+    # Ink, not paint: multiply it into the paper so the pen and the crayon show through it.
+    layer = Image.new('RGB', img.size, (255, 255, 255))
+    a = us.split()[3].point(lambda v: int(v * 0.92))
+    tint = Image.new('RGB', us.size, (190, 40, 34))
+    layer.paste(Image.composite(tint, Image.new('RGB', us.size, (255, 255, 255)), a), (ox, oy))
+    img = ImageChops.multiply(img, layer)
     img = img.filter(ImageFilter.GaussianBlur(1.0))
     os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path)
