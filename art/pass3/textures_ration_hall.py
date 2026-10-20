@@ -656,7 +656,243 @@ def make_drum_ring(path):
     _save(img, os.path.basename(path))
 
 
+# --------------------------------------------------------------------------
+# Pass 4 (docs/chapter1_pass4_plan.md): the weigh-in, the famine, the remains
+# --------------------------------------------------------------------------
+
+# The remains atlas: one small painted palette shared by every figure and shroud (DL-02's sorters, DL-05's dead), so
+# each figure is one mesh with one material. Cells in pixels (x0, y0, x1, y1) of a 512 x 512 image.
+ATLAS_CELLS = {
+    'sheet': (0, 0, 256, 256),          # the shroud linen: grey, stained, creased
+    'bone': (256, 0, 384, 128),         # dry bone, dark
+    'cloth': (384, 0, 512, 128),        # shirts and trousers, near black
+    'apron': (256, 128, 384, 256),      # sorters' aprons: faded canvas, a value lighter than the clothes
+    'shoe': (384, 128, 512, 256),       # boots
+    'tag': (0, 256, 128, 384),          # the ration tag: buff card, a grade and a number
+    'rope': (128, 256, 256, 384),       # hemp
+    'bag': (256, 256, 384, 384),        # mailbag canvas
+    'dark': (384, 256, 512, 384),       # hair, shadows
+    'cap': (0, 384, 128, 512),          # a depot cap's cloth
+    'wood': (128, 384, 256, 512),       # the drag toggle
+}
+
+
+def atlas_uv(cell):
+    """UV rectangle (u0, v0, u1, v1) of a cell (Blender's v runs up the image)."""
+    x0, y0, x1, y1 = ATLAS_CELLS[cell]
+    return x0 / 512, 1 - y1 / 512, x1 / 512, 1 - y0 / 512
+
+
+def make_remains_atlas(path):
+    from PIL import Image, ImageDraw, ImageFilter
+    rnd = random.Random(4401)
+    img = Image.new('RGB', (512, 512), (40, 38, 34))
+    d = ImageDraw.Draw(img, 'RGBA')
+
+    def fill(cell, base, blot, n=40, rmax=0.25, speck=40, streaks=0):
+        x0, y0, x1, y1 = ATLAS_CELLS[cell]
+        w, h = x1 - x0, y1 - y0
+        d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=base)
+        for _ in range(n):
+            x, y, r = rnd.uniform(x0, x1), rnd.uniform(y0, y1), rnd.uniform(3, w * rmax)
+            c = tuple(max(0, min(255, b + rnd.randint(-blot, blot))) for b in base)
+            d.ellipse((max(x0, x - r), max(y0, y - r * 0.7), min(x1 - 1, x + r), min(y1 - 1, y + r * 0.7)), fill=(*c, rnd.randint(14, 44)))
+        for _ in range(streaks):
+            x = rnd.uniform(x0, x1)
+            d.line((x, y0, x + rnd.uniform(-6, 6), y1 - 1), fill=(0, 0, 0, rnd.randint(14, 34)), width=rnd.randint(1, 4))
+        for _ in range(w * h // speck):
+            x, y = rnd.randrange(x0, x1), rnd.randrange(y0, y1)
+            c = rnd.randint(0, 255)
+            d.point((x, y), fill=(c, c, c, rnd.randint(8, 30)))
+    # The sheet: grey linen, yellowed and stained where it lay; long creases.
+    fill('sheet', (122, 118, 106), 22, n=90, rmax=0.18, speck=12)
+    x0, y0, x1, y1 = ATLAS_CELLS['sheet']
+    for _ in range(26):                                    # creases
+        y = rnd.uniform(y0, y1)
+        d.line([(x0 + t, y + 6 * math.sin(t * 0.04 + y)) for t in range(0, x1 - x0, 8)], fill=(70, 66, 58, rnd.randint(30, 70)), width=rnd.randint(1, 3))
+    for _ in range(10):                                    # stains: dust and damp, never blood
+        x, y, r = rnd.uniform(x0, x1), rnd.uniform(y0, y1), rnd.uniform(8, 34)
+        d.ellipse((x - r, y - r * 0.6, x + r, y + r * 0.6), fill=(96, 84, 60, rnd.randint(40, 90)))
+    fill('bone', (92, 80, 62), 14, n=30, speck=10, streaks=10)
+    fill('cloth', (34, 33, 31), 8, n=40, speck=14, streaks=6)
+    fill('apron', (78, 70, 56), 14, n=40, speck=12, streaks=4)
+    fill('shoe', (22, 19, 17), 6, n=20, speck=20)
+    fill('rope', (104, 88, 60), 10, n=10, speck=8, streaks=30)
+    fill('bag', (58, 62, 52), 10, n=30, speck=12, streaks=8)
+    fill('dark', (20, 19, 18), 4, n=10, speck=30)
+    fill('cap', (30, 40, 34), 6, n=20, speck=20)
+    fill('wood', (70, 52, 34), 10, n=10, speck=10, streaks=24)
+    # The ration tag: buff card, a reinforced eyelet at its top, the grade and a number.
+    x0, y0, x1, y1 = ATLAS_CELLS['tag']
+    d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(176, 158, 116))
+    d.ellipse((x0 + 54, y0 + 6, x0 + 74, y0 + 26), outline=(120, 100, 66), width=4)
+    d.text((x0 + 20, y0 + 34), 'GR 4', font=_font(30, 'sans-bold'), fill=(40, 34, 30))
+    d.text((x0 + 18, y0 + 74), 'R. %d' % rnd.randint(1000, 9999), font=_font(24, 'mono'), fill=(54, 46, 40))
+    d.line((x0 + 10, y0 + 108, x1 - 12, y0 + 108), fill=(54, 46, 40), width=2)
+    img = img.filter(ImageFilter.GaussianBlur(0.6))
+    _save(img, os.path.basename(path), 96)
+
+
+# The weigh-in atlas (1024 x 512): the dial's face (left half), the post's sign and the SERVED flag (right half).
+WEIGH_CELLS = {
+    'dial': (0, 0, 512, 512),
+    'sign': (512, 0, 1024, 256),
+    'served': (512, 256, 1024, 384),
+    'flagback': (512, 384, 1024, 448),
+    'enamel': (512, 448, 1024, 512),    # plain cream enamel, for the dial's rim
+}
+DIAL_SWEEP = 240.0                       # degrees, clockwise from zero (at -120 from straight up) to the stop
+DIAL_BANDS = ((0.0, 110.0, 'UNDER'), (110.0, 170.0, 'PERSON'), (170.0, 240.0, 'OVER'))
+
+
+def weigh_uv(cell):
+    x0, y0, x1, y1 = WEIGH_CELLS[cell]
+    return x0 / 1024, 1 - y1 / 512, x1 / 1024, 1 - y0 / 512
+
+
+def make_weighin(path):
+    from PIL import Image, ImageDraw, ImageFilter
+    rnd = random.Random(4402)
+    img = Image.new('RGB', (1024, 512), (30, 34, 30))
+    d = ImageDraw.Draw(img, 'RGBA')
+    cream, ink = (206, 196, 164), (26, 24, 22)
+    amber, black = (196, 132, 34), (24, 22, 20)
+    # The dial: cream enamel, the bands round an arc of 240 degrees, zero at lower left.
+    c, R = 256, 244
+    d.ellipse((c - R, c - R, c + R, c + R), fill=cream, outline=ink, width=10)
+
+    def at(sweep, r):
+        a = math.radians(-120 + sweep)                     # clockwise from straight up
+        return c + r * math.sin(a), c - r * math.cos(a)
+
+    def band(s0, s1, r0, r1, colour):
+        pts = [at(s0 + (s1 - s0) * k / 40, r1) for k in range(41)] + [at(s1 - (s1 - s0) * k / 40, r0) for k in range(41)]
+        d.polygon(pts, fill=colour)
+    r0, r1 = 150, 222
+    # UNDER: amber hatching on the cream.
+    band(0, 110, r0, r1, (226, 210, 168))
+    for k in range(0, 110, 6):
+        a, b = at(k, r0), at(k + 7, r1)
+        d.line((a, b), fill=amber, width=7)
+    # PERSON: clean, with a little standing figure in it.
+    band(110, 170, r0, r1, (232, 226, 204))
+    # OVER: amber and black stripes.
+    band(170, 240, r0, r1, black)
+    for k in range(170, 240, 8):
+        pts = [at(k, r0), at(k + 4, r0), at(k + 7, r1), at(k + 3, r1)]
+        d.polygon(pts, fill=amber)
+    for s in (0, 110, 170, 240):                            # band edges
+        d.line((at(s, r0 - 6), at(s, r1 + 6)), fill=ink, width=6)
+    d.arc((c - r1, c - r1, c + r1, c + r1), -210, 30, fill=ink, width=4)
+    d.arc((c - r0, c - r0, c + r0, c + r0), -210, 30, fill=ink, width=4)
+    for k in range(0, 241, 10):                             # ticks
+        d.line((at(k, r0 - 4), at(k, r0 - (22 if k % 30 == 0 else 12))), fill=ink, width=5 if k % 30 == 0 else 3)
+    # The person pictogram, in the PERSON band: head, body, arms, legs.
+    px, py = at(140, (r0 + r1) / 2)
+    d.ellipse((px - 9, py - 30, px + 9, py - 12), fill=ink)
+    d.line((px, py - 12, px, py + 12), fill=ink, width=8)
+    d.line((px - 14, py - 4, px + 14, py - 4), fill=ink, width=6)
+    d.line((px, py + 10, px - 9, py + 32), fill=ink, width=6)
+    d.line((px, py + 10, px + 9, py + 32), fill=ink, width=6)
+    # Labels inside the arc.
+    for s0, s1, name in DIAL_BANDS:
+        f = _font(34 if name != 'PERSON' else 30, 'sans-bold')
+        x, y = at((s0 + s1) / 2, 112)
+        tw = f.getlength(name)
+        d.text((x - tw / 2, y - 18), name, font=f, fill=ink)
+    f = _font(46, 'sans-bold')
+    t = 'WEIGH-IN'
+    d.text((c - f.getlength(t) / 2, c + 92), t, font=f, fill=ink)
+    f = _font(22, 'sans-bold')
+    t = 'ONE RATION PER HEAD'
+    d.text((c - f.getlength(t) / 2, c + 148), t, font=f, fill=ink)
+    d.ellipse((c - 26, c - 26, c + 26, c + 26), fill=(60, 58, 52))   # the hub's shadow
+    for _ in range(60):                                     # chips in the enamel, rust at the rim
+        a = rnd.uniform(0, 2 * math.pi)
+        r = rnd.choice((rnd.uniform(228, 240), rnd.uniform(0, 236)))
+        x, y, rr = c + r * math.cos(a), c + r * math.sin(a), rnd.uniform(2, 7)
+        d.ellipse((x - rr, y - rr, x + rr, y + rr), fill=(70, 46, 26, rnd.randint(90, 200)))
+    _stains(img, rnd, 18, (90, 70, 40), (6, 20), 0.1)
+    # The post's sign: WEIGH-IN / ONE RATION PER HEAD, signwritten on enamel.
+    x0, y0, x1, y1 = WEIGH_CELLS['sign']
+    d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=cream)
+    d.rectangle((x0 + 10, y0 + 10, x1 - 11, y1 - 11), outline=ink, width=8)
+    def fit(t, size, width):
+        f = _font(size, 'sans-bold')
+        while f.getlength(t) > width and size > 10:
+            size -= 2
+            f = _font(size, 'sans-bold')
+        return f
+    t = 'WEIGH-IN'
+    f = fit(t, 110, x1 - x0 - 70)
+    d.text(((x0 + x1) / 2 - f.getlength(t) / 2, y0 + 30), t, font=f, fill=ink)
+    t = 'ONE RATION PER HEAD'
+    f = fit(t, 50, x1 - x0 - 70)
+    d.text(((x0 + x1) / 2 - f.getlength(t) / 2, y0 + 168), t, font=f, fill=ink)
+    for _ in range(40):
+        x, y, r = rnd.uniform(x0, x1), rnd.uniform(y0, y1), rnd.uniform(2, 8)
+        d.ellipse((x - r, y - r, x + r, y + r), fill=(64, 44, 26, rnd.randint(80, 180)))
+    # SERVED: white on black enamel, a flag like a cab meter's.
+    x0, y0, x1, y1 = WEIGH_CELLS['served']
+    d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(22, 22, 20))
+    d.rectangle((x0 + 8, y0 + 8, x1 - 9, y1 - 9), outline=cream, width=5)
+    t = 'SERVED'
+    f = fit(t, 92, x1 - x0 - 80)
+    d.text(((x0 + x1) / 2 - f.getlength(t) / 2, y0 + 10), t, font=f, fill=cream)
+    x0, y0, x1, y1 = WEIGH_CELLS['flagback']
+    d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(36, 34, 30))
+    x0, y0, x1, y1 = WEIGH_CELLS['enamel']
+    d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(150, 142, 118))
+    _grain(img, rnd, 14)
+    img = img.filter(ImageFilter.GaussianBlur(0.6))
+    _save(img, os.path.basename(path), 64)
+
+
+def make_no_rations(path):
+    """NO RATIONS · GRADE 4, slapped on the wall over the counter with a wide brush in whitewash: blunt, running."""
+    from PIL import Image, ImageDraw, ImageFilter
+    rnd = random.Random(4403)
+    w, h = 1024, 384
+    img = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img, 'RGBA')
+    paint = (214, 208, 190)
+
+    def brush_text(text, size, y, x_pad=30):
+        f = _font(size, 'sans-bold')
+        tw = f.getlength(text)
+        scale = min(1.0, (w - 2 * x_pad) / tw)
+        f = _font(int(size * scale), 'sans-bold')
+        tw = f.getlength(text)
+        x = (w - tw) / 2
+        for ch in text:
+            if ch != ' ':
+                for _ in range(3):                         # a wide brush, three loaded passes
+                    d.text((x + rnd.uniform(-3, 3), y + rnd.uniform(-5, 5)), ch, font=f, fill=(*paint, rnd.randint(110, 170)))
+                bb = f.getbbox(ch)
+                for _ in range(rnd.randint(0, 2)):        # runs
+                    dx = x + rnd.uniform(bb[0] + 6, bb[2] - 6)
+                    d.line((dx, y + bb[3] - 6, dx, y + bb[3] + rnd.uniform(12, 70)), fill=(*paint, 150), width=rnd.randint(3, 6))
+            x += f.getlength(ch) + rnd.uniform(-2, 6)
+    brush_text('NO RATIONS', 190, 10)
+    brush_text('GRADE 4', 130, 222, x_pad=200)
+    # Dry brush: knock streaks out of it.
+    px = img.load()
+    for _ in range(900):
+        x, y = rnd.randrange(w), rnd.randrange(h)
+        L = rnd.randint(6, 40)
+        for k in range(L):
+            xx = min(w - 1, x + k)
+            r, g, b, a = px[xx, y]
+            if a:
+                px[xx, y] = (r, g, b, int(a * 0.35))
+    img = img.filter(ImageFilter.GaussianBlur(1.0))
+    _save(img, os.path.basename(path))
+
+
 MAKERS = {
+    'remains_atlas.png': make_remains_atlas,
+    'weighin.png': make_weighin,
+    'no_rations.png': make_no_rations,
     'ration_board.png': make_ration_board,
     'grade_notice.png': make_grade_notice,
     'sky_mural.png': make_sky_mural,

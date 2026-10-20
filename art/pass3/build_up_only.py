@@ -106,6 +106,13 @@ SHAFT_BACK = 1.9                      # the shafts' back wall face
 STAIR_HEAD = (128.0, 128.75)          # the stair's head landing, at the deck's level, behind the lane
 STAIR_FOOT = 130.6                    # where its flight came down to ring C
 STAIR_Y = (0.5, 1.6)
+# Pass 4 (docs/chapter1_pass4_plan.md, section 4): what the lift builds on.
+UO_GAUGE_C = (125.83, 0.27, DECK + 1.48)   # UOBalanceGauge's dial centre, on the lift front right of the gate (face at y - 0.008)
+UO_GAUGE_R = 0.15                     # its dial (DL-09's is 0.14: the same face, a little larger for the wider shot)
+UO_NEEDLE_TOO_LIGHT = 48.0            # UOBalanceNeedle about Blender +Y (game rotation.z = -this); 0 balanced, as DL-09's
+PLATE_LAMPS = (-0.13, 0.0, 0.13)      # CarPlateLamp0..2 across the car's sill (car-local x), facing the camera
+PLATE_LAMP_Y = CAR_Y[0] - CAR_C[1] + 0.012   # car-local y of their faces, just behind where the gate closes
+PLATE_LAMP_Z = 0.026                  # car-local height of their centres (above the car's floor)
 
 
 def service_frame():
@@ -1242,8 +1249,10 @@ def build_car(U, coll):
         bx(B.bm, (x - 0.03, x + 0.03), (py0 + 0.1, py1 - 0.1), (-0.22, -0.16), iron, 0.006)
     add_cyl(B.bm, (px0 + 0.2, 0.0, -0.24), (px1 - 0.05, 0.0, -0.3), 0.018, seg=8, mat=iron)
     add_cyl(B.bm, (px1 - 0.05, 0.0, -0.36), (px1 - 0.05, 0.0, -0.18), 0.05, seg=12, mat=iron)
+    plate_lamp_bar(B.bm, stl)
     B.done('LiftCar', coll, origin=(CAR_C[0], CAR_C[1], DECK), local=True)
     car = bpy.data.objects['LiftCar']
+    build_plate_lamps(coll, car)
 
     # LiftFloorPlate: the weighing plate, chequered, flush with the floor; origin at its top centre. It dips 0.01.
     B = Batch(U)
