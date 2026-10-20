@@ -41,8 +41,8 @@ The local frame: metres, z up, the origin on the floor. A figure faces +x (lying
                   and trouser legs flat over the long bones with the hand bones at the cuffs and the boots fallen
                   outward. The skull turned and rolled a hand's width from the collar, the jaw apart, a few small
                   bones strayed. Origin under the pelvis; head to x -0.85, feet to x +1.0.
-                  opts: arms='side'|'chest'|'out'|'up' (the arms: by the sides, one across the waist, flung out,
-                  over the head), legs='straight'|'bent' (one knee fallen out), coat=cell, trousers=cell, boots=True.
+                  opts: arms='side'|'chest'|'folded'|'out'|'up' (the arms: by the sides, one across the waist, both
+                  across it, flung out, over the head), legs='straight'|'bent' (one knee fallen out), coat=cell, trousers=cell, boots=True.
     'fallen'      'lying' with arms='up', legs='bent' and the skull rolled further: fallen back from a height.
     'curled'      On the side, knees drawn up, the coat slumped over the hips, the skull fallen from the collar.
     'seated'      Sat on the floor, collapsed: the pelvis on the floor, the coat slumped into the lap over the ribs
@@ -51,8 +51,9 @@ The local frame: metres, z up, the origin on the floor. A figure faces +x (lying
                   opts: support=True (the back against something at x -0.16: a wall, a door, a counter, the coat's
                   shoulders still leaning on it), knees=0..1 (legs out .. drawn up), bowl=False (a bowl in the lap,
                   the hand bones round it), coat=cell, trousers=cell, cap=False (a cap fallen beside), boots=True.
-    'pair'        A huddled pair: two lying close on their backs, heads together, one's arm bones across the other.
-                  Origin between them; they lie along x at y +-0.24.
+    'pair'        A huddled pair: two lying close on their backs, heads together, one's arm across the other (its
+                  sleeve over the other's coat, the hand's bones on their chest). Origin between them; they lie along
+                  x at y -0.24 and +0.26. opts: a={...}, b={...} per-figure 'lying' opts; others apply to both.
     'scattered'   A skull, its jaw, a few long bones, a pelvis and a scrap of cloth, strewn over about 0.9 x 0.6.
     'skull'       A skull alone, resting on the floor, its jaw beside it.
     'shrouded'    Under a sheet laid over them by the living, long since settled flat: the sheet's dome over the
@@ -328,24 +329,25 @@ def _tent(caps, x, y, k=2.6, r=(0.035, 0.07)):
     return h
 
 
-def panel(P, cell, line, wl, wr, caps, seed=0.0, nx=None, ny=3, layer=0, thick=0.008, k=2.6, edge_z=0.004,
-          end_drop=(1.0, 0.5), ragged=0.014, floor=0.0):
+def panel(P, cell, line, wl, wr, caps, seed=0.0, nx=None, ny=4, layer=0, thick=0.008, k=2.6, edge_z=0.004,
+          end_drop=(1.0, 0.5), ragged=0.014, floor=0.0, fill=0.014, creases=1.0):
     """A piece of cloth lying over the bones: along the plan polyline `line` [(x, y), ...], reaching wl to its left and
-    wr to its right (per point or one number), its height the bones' (caps) tented, its long edges down on the floor,
-    its ends lowered by end_drop (fraction of the height kept at the start and the end). One-sided, facing up."""
+    wr to its right (per point or one number), its height the bones' (caps) tented, or at least `fill` (the cloth's own
+    folds), rounded across so its long edges come down onto the floor, its ends lowered by end_drop (the fraction of
+    the height kept at the start and the end). One-sided, facing up."""
     line = [Vector((p[0], p[1], 0.0)) for p in line]
     n = len(line)
     wl = wl if hasattr(wl, '__len__') else [wl] * n
     wr = wr if hasattr(wr, '__len__') else [wr] * n
-    # Resample along the line.
     L = [0.0]
     for a, b in zip(line, line[1:]):
         L.append(L[-1] + (b - a).length)
     tot = L[-1]
     if nx is None:
-        nx = max(2, int(tot / 0.06))
+        nx = max(2, int(tot / 0.05))
     rnd = random.Random(int(seed * 977) + 5)
     lift = 0.002 * layer
+    ph = rnd.uniform(0, 6.28)
 
     def sample(t):
         d = t * tot
@@ -355,6 +357,8 @@ def panel(P, cell, line, wl, wr, caps, seed=0.0, nx=None, ny=3, layer=0, thick=0
                 f = max(0.0, min(1.0, f))
                 p = line[i].lerp(line[i + 1], f)
                 tg = (line[i + 1] - line[i]).normalized()
+                if 0 < i and f < 0.3:                          # ease the turn at a joint
+                    tg = (tg + (line[i] - line[i - 1]).normalized() * (0.3 - f) / 0.3).normalized()
                 return p, tg, wl[i] + (wl[i + 1] - wl[i]) * f, wr[i] + (wr[i + 1] - wr[i]) * f
         return line[-1], (line[-1] - line[-2]).normalized(), wl[-1], wr[-1]
     pts = []
@@ -373,14 +377,16 @@ def panel(P, cell, line, wl, wr, caps, seed=0.0, nx=None, ny=3, layer=0, thick=0
             if i in (0, nx):
                 q += tg * (ragged * 0.8 * noise.noise(Vector((q.y * 11.0, seed, q.x * 3.0))) * (1 if i == nx else -1))
             h = _tent(caps, q.x, q.y, k=k)
-            z = h + thick + 0.003 * noise.noise(Vector((q.x * 13.0, q.y * 13.0, seed * 1.7))) if h > 0.002 else 0.0
-            if edge:
-                z = 0.0
+            base = max(h + thick, fill)
+            base += creases * (0.005 * noise.noise(Vector((q.x * 11.0, q.y * 11.0, seed * 1.7)))
+                               + 0.004 * math.sin(ph + t * tot * 38.0 + 3.0 * v))
+            prof = min(1.0, math.sin(math.pi * v) ** 0.5 * 1.12)
+            z = edge_z + max(0.0, base - edge_z) * prof
             if i == 0:
-                z *= end_drop[0]
+                z = edge_z + (z - edge_z) * end_drop[0]
             elif i == nx:
-                z *= end_drop[1]
-            q.z = floor + max(edge_z + lift + 0.001 * rnd.random(), z + lift)
+                z = edge_z + (z - edge_z) * end_drop[1]
+            q.z = floor + lift + max(edge_z + 0.001 * rnd.random(), z)
             col.append(q)
         pts.append(col)
     P.grid(cell, pts, nx, ny)
@@ -404,7 +410,9 @@ def _lying_joints(arms, legs, rnd):
     A = {'side': ((V((-0.27, 0.27)), V((-0.02, 0.29))), (V((-0.27, -0.27)), V((-0.02, -0.29)))),
          'chest': ((V((-0.25, 0.27)), V((-0.16, 0.02))), (V((-0.27, -0.27)), V((-0.02, -0.29)))),
          'out': ((V((-0.62, 0.45)), V((-0.66, 0.73))), (V((-0.3, -0.4)), V((-0.12, -0.6)))),
-         'up': ((V((-0.8, 0.38)), V((-1.05, 0.45))), (V((-0.78, -0.33)), V((-1.03, -0.36))))}[arms]
+         'up': ((V((-0.8, 0.38)), V((-1.05, 0.45))), (V((-0.78, -0.33)), V((-1.03, -0.36)))),
+         'folded': ((V((-0.27, 0.22)), V((-0.12, -0.06))), (V((-0.28, -0.22)), V((-0.09, 0.07)))),
+         'across': ((V((-0.36, 0.33)), V((-0.22, 0.56))), (V((-0.27, -0.27)), V((-0.02, -0.29))))}[arms]
     (J['el'], J['wl']), (J['er'], J['wr']) = A
     for k in list(J):
         J[k] = J[k] + V((rnd.uniform(-0.012, 0.012), rnd.uniform(-0.012, 0.012)))
@@ -412,13 +420,14 @@ def _lying_joints(arms, legs, rnd):
 
 
 def _lying(P, rnd, seed, arms='side', legs='straight', coat='cloth', trousers='cloth', boots=True, skull_far=0.0,
-           detail=1.0, skull=True, cap=False):
+           detail=1.0, skull=True, cap=False, under=()):
     J = _lying_joints(arms, legs, rnd)
     nk = J['neck']
     # The bones under the cloth, as capsules for its height: the ribs fallen in, the spine, the pelvis, the long bones.
     caps = [_cap((-0.55, 0.0), (-0.22, 0.0), 0.15, 0.045), _cap((-0.2, 0.0), (-0.06, 0.0), 0.03, 0.03),
             _cap((-0.04, 0.09), (0.03, 0.1), 0.06, 0.07), _cap((-0.04, -0.09), (0.03, -0.1), 0.06, 0.07),
             _cap((0.0, 0.0), (0.04, 0.0), 0.05, 0.05)]
+    caps += list(under)                                      # whatever else the arms lie over (the other of a pair)
     for s_ in 'lr':
         caps += [_cap(J['s' + s_], J['e' + s_], 0.026, 0.028), _cap(J['e' + s_], J['w' + s_], 0.028, 0.024),
                  _cap(J['h' + s_], J['k' + s_], 0.028, 0.034), _cap(J['k' + s_], J['a' + s_], 0.026, 0.03),
@@ -430,29 +439,33 @@ def _lying(P, rnd, seed, arms='side', legs='straight', coat='cloth', trousers='c
     # The coat: two fronts lying open from the collar to the hem, the ribs between them; the sleeves; the trousers.
     gap = 0.05 + 0.03 * rnd.random()
     for sd in (1, -1):
-        line = [(-0.66, sd * (gap + 0.01)), (-0.38, sd * (gap + 0.005)), (-0.1, sd * gap * 1.3), (0.16, sd * gap * 1.6)]
-        w_out = [0.17, 0.2, 0.19, 0.2]
+        line = [(-0.67, sd * (gap + 0.012)), (-0.55, sd * (gap + 0.01)), (-0.36, sd * (gap + 0.005)), (-0.1, sd * gap * 1.3),
+                (0.17, sd * gap * 1.7)]
+        w_out = [0.11, 0.21, 0.2, 0.17, 0.2]
         if sd > 0:
-            panel(P, coat, line, w_out, 0.0, caps, seed=seed + 1, ny=3, layer=2, end_drop=(0.6, 0.4))
+            panel(P, coat, line, w_out, 0.0, caps, seed=seed + 1, ny=4, layer=2, end_drop=(0.6, 0.4))
         else:
-            panel(P, coat, line, 0.0, w_out, caps, seed=seed + 2, ny=3, layer=2, end_drop=(0.6, 0.4))
+            panel(P, coat, line, 0.0, w_out, caps, seed=seed + 2, ny=4, layer=2, end_drop=(0.6, 0.4))
     for s_ in 'lr':
         S, E, W = J['s' + s_], J['e' + s_], J['w' + s_]
         cuff = W + (W - E).normalized() * -0.03
-        panel(P, coat, [S, E, cuff], 0.065, 0.065, caps, seed=seed + 3 + (s_ == 'l'), ny=2, layer=3, end_drop=(1.0, 0.85))
+        panel(P, coat, [S, E, cuff], [0.07, 0.062, 0.058], [0.07, 0.062, 0.058], caps, seed=seed + 3 + (s_ == 'l'), ny=3, layer=3,
+              end_drop=(1.0, 0.85), fill=0.022)
         hd = (W - E).normalized()
-        hand_lo(P, (W.x, W.y, 0.012), (hd.x, hd.y, 0.0), curl=0.15, spread=1.3)
+        hz = max((_support(under, W.x + hd.x * 0.06, W.y + hd.y * 0.06) if under else 0.0), 0.0) + 0.012
+        hand_lo(P, (W.x, W.y, hz), (hd.x, hd.y, 0.0), curl=0.15 if hz < 0.03 else 0.45, spread=1.3)
         Hp, K, A = J['h' + s_], J['k' + s_], J['a' + s_]
-        panel(P, trousers, [Hp - (K - Hp).normalized() * 0.08, K, A], [0.09, 0.08, 0.07], [0.09, 0.08, 0.07], caps,
-              seed=seed + 5 + (s_ == 'l'), ny=2, layer=1, end_drop=(0.7, 0.8))
-        # The foot fallen outward: a boot on its side, or bare bones.
+        panel(P, trousers, [Hp - (K - Hp).normalized() * 0.08, K, A], [0.08, 0.072, 0.062], [0.08, 0.072, 0.062], caps,
+              seed=seed + 5 + (s_ == 'l'), ny=3, layer=1, end_drop=(0.7, 0.8), fill=0.024)
+        # The foot fallen outward: a boot on its side, its toes up and out, or the bare bones.
         out = 1.0 if s_ == 'l' else -1.0
         lg = (A - K).normalized()
-        fd = Vector((lg.x * 0.3, lg.y * 0.3 + out * 0.6, 0.75)).normalized()
+        lg3 = Vector((lg.x, lg.y, 0.0))
+        po = Vector((-lg.y, lg.x, 0.0)) * out
         if boots:
-            boot(P, Vector((A.x + 0.03, A.y, 0.05)), fd, Vector((-lg.x, -lg.y - out * 0.2, 0.3)), seed=seed + out)
+            boot(P, Vector((A.x, A.y, 0.05)) + lg3 * 0.02, po * 0.8 + Z * 0.6, -lg3, seed=seed + out)
         else:
-            rh.foot(P, Vector((A.x + 0.03, A.y, 0.04)), fd, Vector((0, out * 0.4, 1.0)))
+            rh.foot(P, Vector((A.x, A.y, 0.035)) + lg3 * 0.03, lg3 * 0.5 + po * 0.65 + Z * 0.3, po * 0.8 + Z * 0.35 - lg3 * 0.3)
     # The skull: turned, rolled from the collar; the jaw apart from it. A few small bones strayed.
     if skull:
         side = 1 if rnd.random() < 0.5 else -1
@@ -484,13 +497,13 @@ def _curled(P, rnd, seed, coat='cloth', trousers='cloth', boots=True, detail=1.0
     panel(P, coat, [(-0.62, 0.0), (-0.3, 0.0), (0.08, 0.02), (0.22, 0.08)], [0.2, 0.22, 0.2, 0.16], [0.13, 0.16, 0.15, 0.12],
           caps, seed=seed + 1, ny=4, layer=2, k=2.2, end_drop=(0.5, 0.6))
     for (a, b, c) in (((0.05, 0.05), (0.2, 0.32), (0.45, 0.2)), ((0.02, -0.04), (0.18, 0.26), (0.42, 0.1))):
-        panel(P, trousers, [a, b, c], 0.085, 0.085, caps, seed=seed + a[1], ny=2, layer=1)
+        panel(P, trousers, [a, b, c], 0.08, 0.08, caps, seed=seed + a[1], ny=3, layer=1, fill=0.024)
         A = Vector((c[0] + 0.03, c[1], 0.05))
         if boots:
             boot(P, A, Vector((0.5, -0.3, 0.3)), Vector((-0.3, 0, 1)), seed=seed + a[1])
     # The arms folded in front, the hands' bones out of the cuffs by the knees.
     for (S, E, W) in (((-0.45, 0.12), (-0.25, 0.3), (-0.02, 0.36)), ((-0.42, 0.06), (-0.2, 0.22), (0.0, 0.25))):
-        panel(P, coat, [S, E, W], 0.06, 0.06, caps, seed=seed + E[1], ny=2, layer=3)
+        panel(P, coat, [S, E, W], 0.06, 0.06, caps, seed=seed + E[1], ny=3, layer=3, fill=0.022)
         hd = (Vector(W) - Vector(E)).normalized()
         hand_lo(P, (W[0], W[1], 0.012), hd, curl=0.4)
     skull_on_floor(P, -0.74, 0.12 + rnd.uniform(-0.04, 0.04), yaw=rnd.uniform(1.2, 2.2), roll=rnd.uniform(1.0, 1.4), detail=detail,
@@ -521,17 +534,20 @@ def _seated(P, rnd, seed, support=True, knees=0.3, bowl=False, skull='lap', coat
         line = [(bx - 0.02, sd * 0.05), (0.04, sd * 0.06), (0.2, sd * 0.07), (0.34, sd * 0.08)]
         wo = [0.2, 0.2, 0.18, 0.15]
         if sd > 0:
-            panel(P, coat, line, wo, 0.03, caps, seed=seed + 1, ny=3, layer=2, k=1.8, end_drop=(1.0, 0.7))
+            panel(P, coat, line, wo, 0.03, caps, seed=seed + 1, ny=4, layer=2, k=1.8, end_drop=(1.0, 0.7))
         else:
-            panel(P, coat, line, 0.03, wo, caps, seed=seed + 2, ny=3, layer=2, k=1.8, end_drop=(1.0, 0.7))
+            panel(P, coat, line, 0.03, wo, caps, seed=seed + 2, ny=4, layer=2, k=1.8, end_drop=(1.0, 0.7))
     for s_ in 'lr':
         Hp, K, A = J['h' + s_], J['k' + s_], J['a' + s_]
-        panel(P, trousers, [Hp, K, A], 0.085, 0.085, caps, seed=seed + 5 + (s_ == 'l'), ny=2, layer=1, k=2.2, end_drop=(1.0, 0.7))
+        panel(P, trousers, [Hp, K, A], [0.085, 0.075, 0.065], [0.085, 0.075, 0.065], caps, seed=seed + 5 + (s_ == 'l'), ny=3, layer=1, k=2.2,
+              end_drop=(1.0, 0.7), fill=0.024)
         out = 1.0 if s_ == 'l' else -1.0
+        lg3 = Vector(((A - K).x, (A - K).y, 0.0)).normalized()
+        po = Vector((-lg3.y, lg3.x, 0.0)) * out
         if boots:
-            boot(P, Vector((A.x + 0.04, A.y, 0.05)), Vector((0.45, out * 0.75, 0.45)), Vector((-0.4, -out * 0.3, 0.8)), seed=seed + out)
+            boot(P, Vector((A.x, A.y, 0.05)) + lg3 * 0.02, po * 0.7 + Z * 0.7, -lg3 + Z * 0.3 * knees, seed=seed + out)
         else:
-            rh.foot(P, Vector((A.x + 0.03, A.y, 0.04)), Vector((0.5, out * 0.5, 0.7)), Vector((-0.5, 0, 0.8)))
+            rh.foot(P, Vector((A.x, A.y, 0.035)) + lg3 * 0.03, lg3 * 0.5 + po * 0.6 + Z * 0.35, po * 0.8 + Z * 0.35 - lg3 * 0.3)
     # The arms: the sleeves from the shoulders down over the thighs, the hand bones at the cuffs on the knees (or round
     # the bowl); or one fallen by the hip to the floor.
     H = lambda x, y: _tent(caps, x, y, k=1.8)               # noqa: E731
@@ -543,7 +559,7 @@ def _seated(P, rnd, seed, support=True, knees=0.3, bowl=False, skull='lap', coat
             E, W = V((0.12, sd * 0.21)), V((0.34, sd * 0.12))
         else:                                                # by the hip, on the floor
             E, W = V((0.02, sd * 0.3)), V((0.2, sd * 0.36))
-        panel(P, coat, [S, E, W], 0.06, 0.06, caps, seed=seed + 7 + sd, ny=2, layer=4, k=1.8, end_drop=(1.0, 0.9))
+        panel(P, coat, [S, E, W], 0.06, 0.06, caps, seed=seed + 7 + sd, ny=3, layer=4, k=1.8, end_drop=(1.0, 0.9), fill=0.022)
         hd = (W - E).normalized()
         hz = H(W.x + hd.x * 0.05, W.y + hd.y * 0.05) + 0.02
         hand_lo(P, (W.x, W.y, hz), (hd.x, hd.y, -0.15), curl=0.5)
@@ -595,8 +611,8 @@ def _shroud_specs():
     """art/pass3's sheet machinery, the bones under it long since fallen in: lower, flatter, the skull turned."""
     if SHROUD_SPEC:
         return SHROUD_SPEC
-    flat = [((-0.735, 0.03, 0.0), (-0.665, 0.04, 0.0), 0.075, 0.105),                    # the skull, on its side
-            ((-0.56, 0.0, 0.0), (-0.3, 0.0, 0.0), 0.15, 0.05),                             # the ribs, fallen in
+    flat = [((-0.735, 0.03, 0.0), (-0.665, 0.04, 0.0), 0.075, 0.11),                     # the skull, on its side
+            ((-0.56, 0.0, 0.0), (-0.3, 0.0, 0.0), 0.15, 0.065),                            # the ribs, fallen in
             ((-0.3, 0.0, 0.0), (-0.1, 0.0, 0.0), 0.024, 0.022),
             ((-0.08, 0.1, 0.0), (0.0, 0.11, 0.0), 0.05, 0.06), ((-0.08, -0.1, 0.0), (0.0, -0.11, 0.0), 0.05, 0.06),
             ((-0.05, 0.0, 0.0), (0.02, 0.0, 0.0), 0.05, 0.035),
@@ -605,10 +621,10 @@ def _shroud_specs():
             ((0.42, 0.10, 0.0), (0.66, 0.11, 0.0), 0.022, 0.022), ((0.42, -0.11, 0.0), (0.66, -0.12, 0.0), 0.022, 0.022)]
     arm_in = [((-0.50, 0.21, 0.0), (-0.24, 0.22, 0.0), 0.022, 0.022), ((-0.24, 0.22, 0.0), (0.0, 0.21, 0.0), 0.022, 0.02)]
     arm_out = [((-0.50, 0.21, 0.0), (-0.26, 0.26, 0.0), 0.022, 0.022), ((-0.26, 0.26, 0.0), (-0.07, 0.35, 0.0), 0.022, 0.02)]
-    feet = [((0.645, 0.11, 0.04), (0.3, 0.75, 0.55), (0.75, 0.2, -0.45)),                  # fallen outward, low
-            ((0.645, -0.12, 0.04), (0.3, -0.75, 0.55), (0.75, -0.2, -0.45))]
+    feet = [((0.645, 0.11, 0.035), (0.5, 0.65, 0.3), (-0.3, 0.8, 0.35)),                   # fallen outward, low
+            ((0.645, -0.12, 0.035), (0.5, -0.65, 0.3), (-0.3, -0.8, 0.35))]
     base = dict(rh.SHROUDS['adult'], caps=flat + arm_in + rh._mirror(arm_in), ribs=(-0.55, -0.32, 0.14, 0.045, 0.12),
-                fine=(-0.8, -0.28), settle=4.2, feet=feet, shins=0.1, hand=None, length=1.65)
+                fine=(-0.8, -0.28), settle=3.6, feet=feet, shins=0.1, hand=None, length=1.65)
     SHROUD_SPEC['flat'] = base
     SHROUD_SPEC['flat_hand'] = dict(base, caps=flat + arm_out + rh._mirror(arm_in), hand=1)
     SHROUD_SPEC['flat_hand_r'] = dict(base, caps=flat + arm_in + rh._mirror(arm_out), hand=-1)
@@ -648,8 +664,10 @@ def add(P, pose, M=None, seed=0.0, **opts):
     elif pose == 'pair':
         a = dict(opts.pop('a', {}))
         b = dict(opts.pop('b', {}))
-        a.setdefault('arms', 'chest')
-        b.setdefault('arms', 'side')
+        a.setdefault('arms', 'across')                       # one's arm across the other
+        b.setdefault('arms', 'folded')
+        if a['arms'] == 'across':
+            a.setdefault('under', [_cap((-0.55, 0.5), (-0.1, 0.5), 0.2, 0.075), _cap((-0.1, 0.5), (0.05, 0.5), 0.15, 0.08)])
         A = painted()
         _lying(A, rnd, seed, detail=detail, **dict(opts, **a))
         _merge_into(Q, A, Matrix.Translation((0, -0.24, 0)) @ Matrix.Rotation(math.radians(-4), 4, 'Z'))
