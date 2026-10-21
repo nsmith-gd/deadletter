@@ -785,8 +785,9 @@ const Music = (() => {
   const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.46, dead: 0.62, latch: 0.55, refuge: 0.4, child: 0.6, end: 0.6, lastcar: 0.6, collapse: 0.45 };
   // Each loop file is padded 2 s at each end, so the decoder's priming never lands on the seam. The prologue's loops are
   // mastered against each other and share one gain.
-  const LOOPS = { bed: { loop: [2, 50], level: 0.26 }, lower_works: { loop: [2, 34], level: 0.5 }, order: { loop: [2, 34], level: 0.5 },
-    heaps: { loop: [2, 34], level: 0.5 }, failure: { loop: [2, 34], level: 0.5 } };
+  // (At the composer's 0.5 the loops sat as low as the old bed and went unheard in play; 0.9 is about 5 dB up.)
+  const LOOPS = { bed: { loop: [2, 50], level: 0.26 }, lower_works: { loop: [2, 34], level: 0.9 }, order: { loop: [2, 34], level: 0.9 },
+    heaps: { loop: [2, 34], level: 0.9 }, failure: { loop: [2, 34], level: 0.9 } };
   const raw = {}, decoded = {}, log = [];
   let ctx = null, bus = null, enabled = true, paused = false;
   let cue = null;
