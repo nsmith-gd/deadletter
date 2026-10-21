@@ -1,7 +1,7 @@
 # Play telemetry
 
 The game (`game/undelivered/index.html`, the `Telemetry` module) records anonymous play events: scene and checkpoint
-changes, deaths and their cause, interactions started, button prompts shown, 25-second idles, curiosities found, the
+changes, deaths and their cause, interactions started, button prompts shown, 25-second idles, curiosities found, secret rooms found (`secret`), the
 weigh-in's readings, lift buzzes, cage dips, the White's warning, pauses and checkpoint reloads, frame rate every 10 s
 of play, the end, and leaving the page. Each event has the game clock, the scene, D-17's x and the checkpoint. A
 session starts with coarse device facts (touch, mobile, viewport, pixel ratio, GPU string, language) and the options.

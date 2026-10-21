@@ -1,8 +1,8 @@
-# Undelivered (DL-01 to DL-11): playable prototype
+# Undelivered, the prologue (DL-01 to DL-11): playable prototype
 
 A browser-playable build of chapter 1, eleven scenes played as one continuous level with no cut between them. It
-follows the chapter plan in `docs/chapter1_plan.md`, its pass 2 to 5 plans (`docs/chapter1_pass2_plan.md`,
-`docs/chapter1_pass3_plan.md`, `docs/chapter1_pass4_plan.md`, `docs/chapter1_pass5_plan.md`), the scene plans in `docs/scenes/` and the standing direction in `docs/direction.md`.
+follows the chapter plan in `docs/chapter1_plan.md`, its pass 2 to 6 plans (`docs/chapter1_pass2_plan.md`,
+`docs/chapter1_pass3_plan.md`, `docs/chapter1_pass4_plan.md`, `docs/chapter1_pass5_plan.md`, `docs/chapter1_pass6_plan.md`), the scene plans in `docs/scenes/` and the standing direction in `docs/direction.md`.
 It uses D-17 and the set from Blender, and the gameplay code mirrors the mechanisms planned for the Unity build.
 
 ## Run locally
@@ -108,6 +108,32 @@ counterweight's shaft) replace the goods hall's and the cage's.
 (grips and handles worn bright through tired paint: `HandledSteel`, `HandledBrass`, `WornIron`, `WornStrap`), by the
 scene's light and by motion and sound. Red is kept for what the world itself painted red: the franking press's hazard
 bands. The curiosities' red tags are gone.
+
+## Pass 6: the prologue
+
+The eleven scenes are now the game's **prologue** (`docs/roadmap.md` plans the chapters after it). See
+`docs/chapter1_pass6_plan.md` for the notes and what shipped. In the game:
+- **The opening card** is three lines: *R.Y. 119 · Seventy-six years of dark. · Then, tonight, the lights came on.*
+- **Tableaux, not signs:** the remains have come apart where people were, doing something (`art/pass6`). The game
+  only lights them: DL-02's fan and tea corner, and the pair on DL-11's coal-store roof.
+- **The lip** (`teeter`, `tipOver`): the cart and the duct teeter at a pit's lip while he holds them. Letting go there,
+  or pushing on into the lip for 0.45 s (a last shove, `Nudge`), sends them in.
+- **The reveal** fires when he first crosses DL-04's gate, however it was opened.
+- **The courier** stays in his hands to the bay. **The body** in DL-05 is taken by the foot (`RH5.bodyGap` 1.05).
+- **Two weights in one carrier** (`c.load2`).
+- **Music** cues fade in (`Music.play(name, fadeIn)`).
+- **Up Only's lobby** comes back after the city's crane shot only once it is out of frame (`uoLobbyShown`).
+- **Secret rooms** (`SECRETS`, `secretHere`, `updateSecretAct`):
+  - `reader` in DL-06, the one who stayed;
+  - `den` in DL-09, the children's den.
+
+  How they play:
+  - Use at the gap. He walks in along depth (crouching through the den's vent), and the camera frames the room.
+  - Any move after 2 s brings him back out.
+  - The end card counts the rooms found. Telemetry logs `secret`.
+- **The ending** (`END5`, `updateEnd5`): from C-114's back door onto a landing over a dark well. He stops and looks up,
+  the fog thins, and the camera rises with his look to the one lit window 24 m up and its new cable. He checks his
+  label and climbs the iron stair as the picture fades to the end card: *End of the prologue*.
 
 ## Pass 5: time, cause, and a world gone dark
 
