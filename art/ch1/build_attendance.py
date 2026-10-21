@@ -1,4 +1,4 @@
-"""Chapter 1 Attendance (DL-12 to DL-14): its own set, built and exported apart from the prologue.
+"""Chapter 1 Attendance (DL-12 to DL-17): its own set, built and exported apart from the prologue.
 
 Design: docs/chapter1_attendance_plan.md. Game x from OFF6 = 200, floor at height 0, the lane at Blender y = 0.
 Each scene's module (dl12.py, dl13.py, dl14.py, here) has build_set(dl01, m, coll), called in final world coordinates
@@ -23,7 +23,7 @@ import bpy  # noqa: E402
 import build_dl01 as dl01  # noqa: E402
 
 OFF6 = 200.0
-SCENES = ('dl12', 'dl13', 'dl14')
+SCENES = ('dl12', 'dl13', 'dl14', 'dl15', 'dl16', 'dl17')
 
 
 def main():

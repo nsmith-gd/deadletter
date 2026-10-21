@@ -559,6 +559,54 @@ window.__startBot = function (seed, opts = {}) {
     mark('end');
   }
 
+  // Chapter 1, part 2: DL-15 One Pupil Missing, DL-16 After the Bell, DL-17 A Different Lesson.
+  function* part2() {
+    const S = () => G.att, F = () => G.att.f15, L = 251.9;
+    const pushTo = function* (key, dir, label) {
+      const f = F()[key[3]];
+      yield* useAt(['grabPush:' + key], f.x - (dir > 0 ? 0.6 : -0.6), actIs('grabPush'), label, { hop: false, max: 40 });
+      yield* until(() => G.hold === 'push', 10, 'grip ' + label);
+      yield* walk(dir, () => G.hold !== 'push', label, { hop: false, keepHolding: true, max: 40 });
+      yield* settle();
+    };
+    yield* wait(look(3));
+    // DL-15: the lift won't go unaccompanied; the sick bay figure onto it; ride down with it.
+    if (mistakes) { yield* goTo(L, 'onto the lift alone', { max: 20 }); yield* wait(think(4)); note('the lift buzzes: no pupil'); yield* goTo(249.0, 'back', { max: 20 }); }
+    yield* pushTo('f15B', 1, 'the sick bay figure onto the lift');
+    note('the figure on the lift');
+    yield* goTo(L + 0.1, 'onto the lift beside it', { hop: false, max: 20 });
+    yield* until(() => F().lift < 0.02 && free() && G.grounded, 15, 'down'); note('down the lift with the pupil');
+    yield* goTo(251.25, 'off the lift, behind it', { hop: false, max: 20 });
+    yield* pushTo('f15B', 1, 'B to the first seat');
+    note('B in the first seat');
+    // A, from the board: it stops in Mara's seat first; on to the second.
+    yield* pushTo('f15Ar', -1, 'A from the board');
+    if (Math.abs(F().A.x - 256.0) < 0.05) { note('A in Mara\'s seat'); yield* wait(think(5)); yield* pushTo('f15Ar', -1, 'A on to the second seat'); }
+    yield* useAt(['att:sit'], 256.0, actIs('att'), 'sit in her chair', { max: 30 });
+    yield* until(() => F().dismissed, 15, 'the bell'); note('dismissed, sat in her place');
+    yield* wait(look(5));
+    yield* walk(1, () => G.x > 264.4, 'out of the classroom', { max: 40, keepHolding: true });
+    // DL-16: let them go first; hold the lever until both are over; the rack takes them.
+    yield* wait(look(3));
+    yield* useAt(['att:lever16'], 266.0, actIs('att'), 'the crossing lever', { max: 30 });
+    I.useHeld = true;
+    if (mistakes) { yield* until(() => S().f16.bridge < 0.05, 6, 'bridge down'); yield* wait(1.2); I.useHeld = false; note('let go too soon'); yield* settle(); yield* wait(think(4)); yield* useAt(['att:lever16'], 266.0, actIs('att'), 'hold it again', { max: 30 }); I.useHeld = true; }
+    yield* until(() => S().f16.storedN >= 2, 60, 'both over'); I.useHeld = false;
+    yield* until(() => S().f16.cw > 0.9, 10, 'counterweight up'); note('the rack took them');
+    yield* wait(look(3));
+    yield* walk(1, () => G.x > 281.2, 'over the bridge to the workshop', { max: 60 });
+    // DL-17: the tray off the drawer, the drawer, the drawer's contents.
+    yield* wait(look(4));
+    yield* useAt(['att:tray'], 285.55, actIs('att'), 'the tray', { max: 30 });
+    yield* until(() => G.hold === 'item' && free(), 10, 'carry tray');
+    yield* goTo(283.6, 'out of the way', { max: 20 });
+    yield* useAt(['setdownItem'], G.x, () => G.hold !== 'item' || actIs('setdownItem')(), 'set it down'); yield* settle();
+    yield* useAt(['att:drawer'], 286.0, actIs('att'), 'the drawer', { max: 30 });
+    yield* until(() => S().f17.drawer >= 1 && free(), 10, 'drawer out');
+    yield* useAt(['att:read'], 286.0, actIs('att'), 'read it', { max: 20 });
+    yield* until(() => G.ended || S().ended, 30, 'the end of the chapter');
+  }
+
   // Chapter 1 Attendance (DL-12 to DL-14), started from its own checkpoint.
   function* attendance() {
     const A = D.k2.ATT, S = () => G.att;
@@ -624,12 +672,15 @@ window.__startBot = function (seed, opts = {}) {
     yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank with A jammed'); yield* until(() => free() && S().blinds.b > 0.98 && S().blinds.a > 0.98, 12, 'both down');
     note('both ledges out');
     yield* goTo(A.desk.x0 - 0.5, 'back to the desk', { max: 40 });
-    yield* walk(1, () => G.ended || S().ended, 'up the ledges', { max: 60 });
+    yield* walk(1, () => G.act && G.act.what === 'duct', 'up the ledges into the hatch', { max: 60 });
+    yield* until(() => !G.act && G.checkpoint === 'sickbay', 30, 'along the duct'); note('out of the duct, on the sick bay balcony');
+    yield* part2();
     mark('end');
   }
 
   const script = (function* () {
     if (opts.chapter === 'att') { yield* attendance(); return; }
+    if (opts.chapter === 'att2') { yield* until(() => G.mode === 'play' && G.region === 6 && G.att, 120, 'the sick bay'); mark('play'); yield* part2(); mark('end'); return; }
     yield* opening(); yield* wake(); yield* sortingHall(); yield* weightRoom(); yield* racks(); yield* rationHall();
     yield* returnToSender(); yield* heap(); yield* handbrake(); yield* cage(); yield* childAtTheAddress();
   })();

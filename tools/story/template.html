@@ -1,0 +1,424 @@
+<title>Dead Letter Story Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a dead-letter office's index. A sticky drawer of levels on the left, the open level's cards on the right,
+   the story bible as a reference sheet at the foot. Cards are index cards; the accent is rubber-stamp violet. */
+:root {
+  --paper: #e7ebee;        /* carbon-copy grey-blue */
+  --sheet: #f6f7f8;        /* a card */
+  --ink: #1d2430;
+  --ink-2: #4b5566;
+  --rule: #c5ccd4;
+  --stamp: #5a3ea6;        /* the UNDELIVERED stamp */
+  --stamp-soft: #e6e0f5;
+  --lamp: #b8740f;         /* a lit lamp: built */
+  --lamp-soft: #f6e7cc;
+  --ok: #2f7a4b; --ok-soft: #dcefe2;
+  --warn: #a5650c; --warn-soft: #f7e8cf;
+  --bad: #a83a2c; --bad-soft: #f6dcd7;
+  --era-order: #3d5a80; --era-failure: #9c4a2a; --era-commons: #3f7d4f; --era-protocols: #6c4fa8;
+  --era-rebellion: #b0412f; --era-thinning: #66707c; --era-now: #b8740f;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Literata", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #13171d; --sheet: #1b2129; --ink: #e3e7ec; --ink-2: #a3adba; --rule: #2e3742;
+    --stamp: #a891e6; --stamp-soft: #2b2442; --lamp: #e3a547; --lamp-soft: #3a2c15;
+    --ok: #74c491; --ok-soft: #1c3226; --warn: #e2ab55; --warn-soft: #382a14; --bad: #ec8a7c; --bad-soft: #3d201c;
+    --era-order: #8fb0d8; --era-failure: #df9670; --era-commons: #86c595; --era-protocols: #b49be8;
+    --era-rebellion: #ef8b78; --era-thinning: #a7b0bb; --era-now: #e3a547;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #13171d; --sheet: #1b2129; --ink: #e3e7ec; --ink-2: #a3adba; --rule: #2e3742;
+  --stamp: #a891e6; --stamp-soft: #2b2442; --lamp: #e3a547; --lamp-soft: #3a2c15;
+  --ok: #74c491; --ok-soft: #1c3226; --warn: #e2ab55; --warn-soft: #382a14; --bad: #ec8a7c; --bad-soft: #3d201c;
+  --era-order: #8fb0d8; --era-failure: #df9670; --era-commons: #86c595; --era-protocols: #b49be8;
+  --era-rebellion: #ef8b78; --era-thinning: #a7b0bb; --era-now: #e3a547;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--paper); color: var(--ink); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 20px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: .01em; text-wrap: balance; margin: 0; }
+.mono { font-family: var(--mono); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+
+/* Masthead */
+.mast { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; padding-bottom: 14px; border-bottom: 2px solid var(--ink); }
+.mast h1 { font-size: clamp(30px, 5vw, 46px); line-height: .95; text-transform: uppercase; letter-spacing: .03em; }
+.mast .sub { color: var(--ink-2); max-width: 62ch; margin: 6px 0 0; }
+.stampmark { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--stamp); border: 2.5px solid var(--stamp); border-radius: 4px; padding: 3px 10px; transform: rotate(-4deg); font-size: 15px; white-space: nowrap; }
+.status { font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin-top: 8px; }
+
+/* Grid */
+.grid { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 24px; margin-top: 20px; align-items: start; }
+
+/* The index of levels */
+.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto; padding-right: 4px; }
+.index .picker { display: none; width: 100%; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+.index nav { display: flex; flex-direction: column; gap: 14px; }
+.part h4 { margin: 0 0 4px; font-family: var(--display); font-size: 14px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-2); font-weight: 600; display: flex; justify-content: space-between; }
+.lv { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; text-align: left; background: none; border: 0; border-radius: 4px; padding: 5px 6px; color: var(--ink); }
+.lv:hover { background: var(--sheet); }
+.lv[aria-current="true"] { background: var(--stamp-soft); }
+.lv .id { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.lv .nm { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv .ct { font-family: var(--mono); font-size: 11px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.lv .ct b { color: var(--stamp); font-weight: 500; }
+.lv.unbuilt .nm { color: var(--ink-2); }
+
+/* The open level */
+.level { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.lhead { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 20px; display: grid; gap: 10px; }
+.lhead .kick { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.lhead h2 { font-size: clamp(26px, 3.6vw, 36px); line-height: 1; }
+.lhead dl { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 6px 16px; margin: 4px 0 0; }
+@media (max-width: 560px) { .lhead dl { grid-template-columns: minmax(0, 1fr); } .lhead dt { margin-top: 6px; } }
+.lhead dt { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.lhead dd { margin: 0; max-width: 72ch; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+.era { color: var(--c); }
+.era::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.st-built { color: var(--lamp); background: var(--lamp-soft); border-color: transparent; }
+.st-planned { color: var(--stamp); background: var(--stamp-soft); border-color: transparent; }
+.st-idea { color: var(--ink-2); }
+
+.bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.bar h3 { font-size: 22px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--mono); font-size: 12px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2); }
+.chip[aria-pressed="true"] { border-color: var(--stamp); color: var(--stamp); background: var(--stamp-soft); }
+
+/* Cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; position: relative; }
+.card::before { content: ""; position: absolute; left: 0; right: 0; top: 34px; border-top: 1px dashed var(--rule); }
+.card .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 22px; }
+.kind { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .1em; font-size: 13px; color: var(--ink-2); }
+.card h4 { margin: 4px 0 0; font-family: var(--display); font-size: 20px; font-weight: 600; line-height: 1.15; }
+.card p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.card .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; padding-top: 6px; }
+.card .src { font-family: var(--mono); font-size: 11px; color: var(--ink-2); margin-left: auto; }
+.card.mine { border-left: 3px solid var(--stamp); }
+.acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 14px; border-radius: 4px; padding: 6px 12px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+.btn.small { font-size: 12px; padding: 3px 8px; }
+.btn.danger { color: var(--bad); border-color: var(--bad); background: transparent; }
+.btn:disabled { opacity: .5; cursor: default; }
+.fit { border-radius: 4px; padding: 8px 10px; font-size: 14px; }
+.fit b { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; }
+.fit.fits { background: var(--ok-soft); } .fit.fits b { color: var(--ok); }
+.fit.work { background: var(--warn-soft); } .fit.work b { color: var(--warn); }
+.fit.conflicts { background: var(--bad-soft); } .fit.conflicts b { color: var(--bad); }
+.empty { border: 1.5px dashed var(--rule); border-radius: 6px; padding: 18px; color: var(--ink-2); }
+
+/* The form */
+form.add { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 18px; display: grid; gap: 12px; }
+form.add .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { form.add .row { grid-template-columns: minmax(0, 1fr); } }
+label { display: grid; gap: 4px; font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
+input, select, textarea { font-family: var(--body); text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 400; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 8px 10px; width: 100%; min-width: 0; }
+textarea { min-height: 96px; resize: vertical; }
+.formfoot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.hint { font-size: 13px; color: var(--ink-2); max-width: 60ch; }
+.err { color: var(--bad); font-size: 14px; }
+
+/* The bible */
+.bible { margin-top: 36px; border-top: 2px solid var(--ink); padding-top: 18px; display: grid; gap: 18px; }
+.bible h2 { font-size: 28px; text-transform: uppercase; letter-spacing: .03em; }
+.bgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; }
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; min-width: 0; }
+.sheet h3 { font-size: 18px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.sheet ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.tl { overflow-x: auto; }
+.tl table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 14px; }
+.tl th, .tl td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--rule); }
+.tl th { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.tl td:first-child { font-family: var(--mono); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 820px) { .grid { grid-template-columns: minmax(0, 1fr); } .index { position: static !important; max-height: none !important; } .index nav { display: none; } .index .picker { display: block !important; } }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color .15s; } }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <h1>Dead Letter · Story Board</h1>
+      <p class="sub">Every level's story evidence in one place: what is already in the game, and what you want to add. Each card is a thing the player finds, hears, reads or sees happen. Keep each one true to the story bible at the foot of the page.</p>
+      <div class="status" id="status">Opening the board…</div>
+    </div>
+    <div class="stampmark">R.Y. 119 · Undelivered</div>
+  </header>
+
+  <div class="grid">
+    <aside class="index" aria-label="Levels">
+      <select class="picker" id="picker" aria-label="Choose a level"></select>
+      <nav id="nav"></nav>
+    </aside>
+
+    <main class="level" id="level"></main>
+  </div>
+
+  <section class="bible" aria-labelledby="bible-h">
+    <h2 id="bible-h">The story bible, for reference</h2>
+    <div class="bgrid">
+      <div class="sheet tl" style="grid-column: 1 / -1">
+        <h3>Timeline (refuge years)</h3>
+        <table>
+          <thead><tr><th>R.Y.</th><th>Era</th><th>What happened</th><th>Where the player meets it</th></tr></thead>
+          <tbody id="timeline"></tbody>
+        </table>
+      </div>
+      <div class="sheet">
+        <h3>How to tell it</h3>
+        <ul>
+          <li><b>Two or three cues for every beat.</b> If a player misses the voice card, the room and the signage still tell it.</li>
+          <li><b>Show the change, not the state.</b> The motto painted over. A portrait turned to the wall. A headcount crossed out and written smaller.</li>
+          <li><b>Voices are people, not narrators.</b> They talk about rations, coats, birthdays and rotas. The history is what they take for granted.</li>
+          <li><b>Big truths land on objects.</b> The register's last line. The pale rectangle where a portrait hung.</li>
+          <li><b>Show what people did, not how they died.</b> Tableaux of natural reactions; no cause-of-death signs.</li>
+        </ul>
+      </div>
+      <div class="sheet">
+        <h3>Threads that run through it</h3>
+        <ul>
+          <li><b>The motto,</b> ORDER ABOVE ALL: everywhere in the lower rings, then painted over, then defaced by teenagers, then scratched out on a plate Mara uses as a seedling tray.</li>
+          <li><b>Mara's crooked tree:</b> crayon at nine (prologue), pencil behind the painted sky (chapter 1), graffiti (chapter 2), engineering drawings (chapter 3), a real seedling (the end).</li>
+          <li><b>The vertical gradient:</b> the deeper the ring, the earlier the era and the more dead. The player climbs through history.</li>
+          <li><b>The lights came on:</b> someone turned them on. Every chapter brings D-17 closer to her.</li>
+        </ul>
+      </div>
+      <div class="sheet">
+        <h3>Who's who</h3>
+        <ul>
+          <li><b>D-17,</b> a courier robot with one parcel: a birthday gift for Mara, nine, from a parent on the works. Seventy-six years late.</li>
+          <li><b>Mara D.,</b> born R.Y. 34, the last birth anyone records. A silent pupil who drew trees. Old now, still working above.</li>
+          <li><b>The Steward</b> and the Grade Council: benevolent, harsh, graded every life. Portraits in gilt frames.</li>
+          <li><b>The Den:</b> the last children's club. Password: crooked tree.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const LEVELS = /*LEVELS*/[];
+const TIMELINE = /*TIMELINE*/[];
+const BIBLE = /*BIBLE*/"";
+const KINDS = [['tableau', 'Tableau'], ['voice', 'Voice letter'], ['sign', 'Sign or writing'], ['object', 'Object'], ['secret', 'Secret room'], ['beat', 'Story beat'], ['note', 'Note']];
+const ERAS = [['order', 'Order', 'R.Y. 0–40'], ['failure', 'The Failure', 'R.Y. 41–43'], ['protocols', 'The protocols', 'R.Y. 38 on'], ['commons', 'The Commons', 'R.Y. 43–60'], ['rebellion', 'The rebellion', 'R.Y. 49–52'], ['thinning', 'The thinning', 'R.Y. 52–110'], ['now', 'Now', 'R.Y. 119']];
+const STATUSES = [['idea', 'Idea'], ['planned', 'Planned'], ['built', 'In the game']];
+const kindName = (k) => (KINDS.find((x) => x[0] === k) || [k, k])[1];
+const eraName = (k) => (ERAS.find((x) => x[0] === k) || [k, k])[1];
+const statusName = (k) => (STATUSES.find((x) => x[0] === k) || [k, k])[1];
+
+const $ = (s, el = document) => el.querySelector(s);
+const h = (tag, attrs = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v; else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else if (k === 'style') el.setAttribute('style', v); else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return el;
+};
+
+const state = { items: [], level: null, filter: 'all', db: null, sample: null, canWrite: true, loaded: false, editing: null, confirmDel: null, checking: {} };
+try { const saved = localStorage.getItem('dl-story-level'); if (saved) state.level = saved; } catch (e) {}
+const hash = (location.hash || '').slice(1);
+if (/^DL-\d\d$/.test(hash)) state.level = hash;
+if (!LEVELS.some((l) => l.id === state.level)) state.level = 'DL-15';
+
+function setStatus(t) { $('#status').textContent = t; }
+const itemsFor = (id) => state.items.filter((i) => i.level === id);
+
+function renderNav() {
+  const nav = $('#nav'); nav.replaceChildren();
+  const picker = $('#picker'); picker.replaceChildren();
+  const parts = [...new Set(LEVELS.map((l) => l.part))];
+  for (const p of parts) {
+    const ls = LEVELS.filter((l) => l.part === p);
+    const total = ls.reduce((a, l) => a + itemsFor(l.id).length, 0);
+    const og = h('optgroup', { label: p });
+    const box = h('div', { class: 'part' }, h('h4', {}, h('span', {}, p), h('span', { class: 'mono' }, total ? String(total) : '')));
+    for (const l of ls) {
+      const its = itemsFor(l.id), mine = its.filter((i) => i.source !== 'game').length;
+      box.append(h('button', { class: 'lv' + (l.built ? '' : ' unbuilt'), 'aria-current': String(l.id === state.level), onclick: () => openLevel(l.id) },
+        h('span', { class: 'id' }, l.id), h('span', { class: 'nm', title: l.name }, l.name),
+        h('span', { class: 'ct' }, its.length ? (mine ? h('b', {}, '+' + mine + ' ') : '') : '', its.length ? String(its.length) : '')));
+      og.append(h('option', { value: l.id, selected: l.id === state.level }, `${l.id} ${l.name}`));
+    }
+    nav.append(box); picker.append(og);
+  }
+}
+$('#picker').addEventListener('change', (e) => openLevel(e.target.value));
+
+function openLevel(id) {
+  state.level = id; state.editing = null; state.confirmDel = null;
+  try { localStorage.setItem('dl-story-level', id); } catch (e) {}
+  render();
+  if (window.innerWidth < 820) $('#level').scrollIntoView({ block: 'start' });
+}
+
+function eraPill(e) { return h('span', { class: 'pill era', style: `--c: var(--era-${e})` }, eraName(e)); }
+
+function renderLevel() {
+  const l = LEVELS.find((x) => x.id === state.level), main = $('#level');
+  main.replaceChildren();
+  const head = h('section', { class: 'lhead' },
+    h('div', { class: 'kick' }, h('span', {}, l.part), h('span', {}, l.built ? 'Built' : 'Planned'), ...l.eras.map(eraPill), l.depth ? h('span', {}, l.depth) : null),
+    h('h2', {}, `${l.id} ${l.name}`),
+    h('dl', {},
+      l.says ? [h('dt', {}, 'What it says'), h('dd', {}, l.says)] : null,
+      l.play ? [h('dt', {}, 'Play'), h('dd', {}, l.play)] : null,
+      l.learn ? [h('dt', {}, 'Player comes to see'), h('dd', {}, l.learn)] : null));
+  main.append(head);
+
+  const its = itemsFor(l.id).filter((i) => state.filter === 'all' || (state.filter === 'mine' ? i.source !== 'game' : i.kind === state.filter))
+    .sort((a, b) => (a.source === 'game') - (b.source === 'game') || (b.updatedAt || 0) - (a.updatedAt || 0));
+  const chips = [['all', 'Everything'], ['mine', 'Added here'], ...KINDS.slice(0, 6)];
+  main.append(h('div', { class: 'bar' }, h('h3', {}, 'Story elements'),
+    h('div', { class: 'filters', role: 'group', 'aria-label': 'Show' }, chips.map(([k, n]) => h('button', { class: 'chip', 'aria-pressed': String(state.filter === k), onclick: () => { state.filter = k; renderLevel(); } }, n)))));
+
+  if (!state.loaded) main.append(h('div', { class: 'empty' }, 'Loading this level’s cards…'));
+  else if (!its.length) main.append(h('div', { class: 'empty' }, itemsFor(l.id).length ? 'Nothing of this kind here yet.' : `No story elements on ${l.id} yet. Add the first one below: an object, a voice letter, a sign, a tableau or a secret room.`));
+  else main.append(h('div', { class: 'cards' }, its.map(card)));
+
+  main.append(formFor(l, state.editing ? state.items.find((i) => i.id === state.editing) : null));
+}
+
+function card(i) {
+  const mine = i.source !== 'game';
+  const el = h('article', { class: 'card' + (mine ? ' mine' : '') },
+    h('div', { class: 'top' }, h('span', { class: 'kind' }, kindName(i.kind)), h('span', { class: 'pill st-' + i.status }, statusName(i.status))),
+    h('h4', {}, i.title || 'Untitled'),
+    i.text ? h('p', {}, i.text) : null);
+  if (i.fit) {
+    const cls = i.fit.verdict === 'fits' ? 'fits' : i.fit.verdict === 'conflicts' ? 'conflicts' : 'work';
+    el.append(h('div', { class: 'fit ' + cls }, h('b', {}, i.fit.verdict === 'fits' ? 'Fits' : i.fit.verdict === 'conflicts' ? 'Conflicts' : 'Needs work'), ' ', i.fit.why || '', i.fit.suggestion ? h('div', {}, h('i', {}, i.fit.suggestion)) : null));
+  }
+  const meta = h('div', { class: 'meta' }, ...(i.eras || []).map(eraPill), h('span', { class: 'src' }, mine ? 'added' : 'from the game'));
+  el.append(meta);
+  if (state.canWrite) {
+    const acts = h('div', { class: 'acts' });
+    if (state.confirmDel === i.id) {
+      acts.append(h('span', { class: 'hint' }, 'Delete this card?'), h('button', { class: 'btn small danger', onclick: () => del(i) }, 'Delete'), h('button', { class: 'btn small ghost', onclick: () => { state.confirmDel = null; renderLevel(); } }, 'Keep'));
+    } else {
+      acts.append(h('button', { class: 'btn small ghost', onclick: () => { state.editing = i.id; renderLevel(); $('#f-title').focus(); } }, 'Edit'));
+      if (state.sample) acts.append(h('button', { class: 'btn small ghost', disabled: !!state.checking[i.id], onclick: () => checkFit(i) }, state.checking[i.id] ? 'Checking…' : (i.fit ? 'Check again' : 'Check fit')));
+      acts.append(h('button', { class: 'btn small ghost', onclick: () => { state.confirmDel = i.id; renderLevel(); } }, 'Delete'));
+    }
+    el.append(acts);
+  }
+  return el;
+}
+
+function formFor(l, editing) {
+  const f = h('form', { class: 'add', 'aria-label': editing ? 'Edit story element' : 'Add a story element' });
+  const v = editing || { kind: 'object', status: 'idea', eras: l.eras.slice(0, 1), title: '', text: '' };
+  f.append(h('h3', { style: 'font-size:20px' }, editing ? 'Edit this card' : `Add to ${l.id}`));
+  f.append(h('div', { class: 'row' },
+    h('label', {}, 'Kind', h('select', { id: 'f-kind' }, KINDS.map(([k, n]) => h('option', { value: k, selected: v.kind === k }, n)))),
+    h('label', {}, 'Era it shows', h('select', { id: 'f-era' }, ERAS.map(([k, n, y]) => h('option', { value: k, selected: (v.eras || [])[0] === k }, `${n} (${y})`)))),
+    h('label', {}, 'Status', h('select', { id: 'f-status' }, STATUSES.map(([k, n]) => h('option', { value: k, selected: v.status === k }, n))))));
+  f.append(h('label', {}, 'Title', h('input', { id: 'f-title', maxlength: '120', placeholder: 'A child’s lunch tin, M.D. on the lid', value: v.title || '' })));
+  f.append(h('label', {}, 'What the player finds, hears or sees', h('textarea', { id: 'f-text', maxlength: '4000', placeholder: 'Where it is, what it looks or sounds like, and what it lets the player work out. For a voice letter, the lines.' }, v.text || '')));
+  const err = h('div', { class: 'err', role: 'alert' });
+  f.append(h('div', { class: 'formfoot' },
+    h('span', { class: 'hint' }, state.canWrite ? 'Saved to this board for everyone who can edit it. Claude reads the board when building the level.' : 'This board is read-only for you.'),
+    h('div', { class: 'acts' }, editing ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { state.editing = null; renderLevel(); } }, 'Cancel') : null,
+      h('button', { type: 'submit', class: 'btn', disabled: !state.canWrite || !state.db }, editing ? 'Save changes' : 'Add card'))), err);
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = $('#f-title', f).value.trim(), text = $('#f-text', f).value.trim();
+    if (!title) { err.textContent = 'Give it a title, a few words naming the thing.'; $('#f-title', f).focus(); return; }
+    const body = { level: l.id, kind: $('#f-kind', f).value, eras: [$('#f-era', f).value], status: $('#f-status', f).value, title, text, updatedAt: Date.now() };
+    const btn = $('button[type=submit]', f); btn.disabled = true; err.textContent = '';
+    try {
+      if (editing) {
+        const keep = { source: editing.source || 'director', createdAt: editing.createdAt || Date.now() };
+        if (editing.title !== title || editing.text !== text) keep.fit = null;
+        await state.db.collection('elements').doc(editing.id).update({ ...body, ...keep });
+        state.editing = null; setStatus('Saved.');
+      } else {
+        await state.db.collection('elements').add({ ...body, source: 'director', createdAt: Date.now() });
+        setStatus(`Added to ${l.id}.`);
+      }
+    } catch (x) {
+      btn.disabled = false;
+      if (x && x.code === 'invalid_argument') { state.canWrite = false; err.textContent = 'You can read this board but not change it.'; }
+      else if (x && x.code === 'quota_exceeded') err.textContent = 'The board is full. Delete some old cards first.';
+      else err.textContent = 'That didn’t save. Check your connection and try again.';
+    }
+  });
+  return f;
+}
+
+async function del(i) {
+  try { await state.db.collection('elements').doc(i.id).delete(); state.confirmDel = null; setStatus('Deleted.'); }
+  catch (x) { setStatus('That didn’t delete. Try again.'); }
+}
+
+async function checkFit(i) {
+  const l = LEVELS.find((x) => x.id === i.level);
+  const others = itemsFor(l.id).filter((o) => o.id !== i.id).map((o) => `- [${kindName(o.kind)}] ${o.title}`).join('\n');
+  const prompt = `You are the story editor for "Dead Letter", a wordless 2.5D puzzle game told only through environmental storytelling and found voice recordings. Judge whether one proposed story element fits the world and this level.
+
+THE STORY BIBLE:
+${BIBLE}
+
+THE LEVEL: ${l.id} ${l.name} (${l.part}). Eras shown here: ${l.eras.map(eraName).join(', ')}.${l.says ? '\nWhat the level says: ' + l.says : ''}${l.play ? '\nPlay: ' + l.play : ''}
+Other elements already on this level:
+${others || '(none)'}
+
+THE PROPOSED ELEMENT: [${kindName(i.kind)}, era: ${(i.eras || []).map(eraName).join(', ')}] ${i.title}
+${i.text || ''}
+
+Check: consistency with the timeline and ages (Mara born R.Y. 34, relocated up at nine in R.Y. 43, placed at the Works at fourteen; now R.Y. 119), the era this depth of the refuge shows, the telling rules (people not narrators; show what people did; no cause-of-death signs; not on the nose), and overlap with what is already on the level.
+Reply with only JSON: {"verdict": "fits" | "needs work" | "conflicts", "why": "one or two plain sentences", "suggestion": "one concrete change, or empty if it fits"}`;
+  state.checking[i.id] = true; renderLevel();
+  try {
+    const r = await state.sample.json(prompt);
+    const verdict = ['fits', 'needs work', 'conflicts'].includes(r && r.verdict) ? r.verdict : 'needs work';
+    await state.db.collection('elements').doc(i.id).update({ fit: { verdict, why: String((r && r.why) || '').slice(0, 600), suggestion: String((r && r.suggestion) || '').slice(0, 600), at: Date.now() } });
+  } catch (x) {
+    if (x && (x.code === 'not_granted' || x.code === 'sampling_disabled' || x.code === 'not_declared' || x.code === 'capability_disabled' || x.code === 'capability_removed')) { state.sample = null; setStatus('Checking with Claude isn’t available here.'); }
+    else if (x && x.code === 'rate_limited') setStatus('Too many checks just now. Try again in a little while.');
+    else setStatus('The check didn’t finish. Try again.');
+  } finally { delete state.checking[i.id]; renderLevel(); }
+}
+
+function renderTimeline() {
+  $('#timeline').replaceChildren(...TIMELINE.map((r) => h('tr', {}, h('td', {}, r[0]), h('td', {}, r[1]), h('td', {}, r[2]), h('td', {}, r[3]))));
+}
+
+function render() { renderNav(); renderLevel(); }
+
+renderTimeline();
+render();
+
+(async () => {
+  if (!window.claude) { setStatus('Open this board in Claude to load and add cards.'); state.loaded = true; render(); return; }
+  const [db, sample] = await Promise.all([claude.use('db'), claude.use('sample')]);
+  state.sample = sample;
+  if (!db) { state.canWrite = false; state.loaded = true; setStatus('The board’s cards can’t load here. Sign in to Claude to see them.'); render(); return; }
+  state.db = db;
+  db.collection('elements').onSnapshot((snap) => {
+    state.items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    state.loaded = true;
+    const mine = state.items.filter((i) => i.source !== 'game').length;
+    setStatus(`${state.items.length} cards on ${new Set(state.items.map((i) => i.level)).size} levels · ${mine} added here`);
+    render();
+  }, (e) => { state.loaded = true; setStatus(e && e.code === 'revoked' ? 'The board is no longer available here.' : 'The cards stopped updating. Reload the page.'); render(); });
+})();
+</script>

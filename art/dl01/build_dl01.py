@@ -9,7 +9,7 @@ Writes:
                 latch lever, counterweight, relay lamps, crank wheel, exit door; DL-02's weight,
                 trolley, floor plate, gate and gauge needle, rack row lights)
   d17.glb       D-17 rigged, with clips: Opening, Idle, Walk, Run, CrouchWalk, CrouchIdle, JumpStart,
-                JumpAir, Fall, Land, Mantle, Pull, Flinch, Tug, Crank, Lift, SetDown, SetDownHigh,
+                JumpAir, Fall, Land, Sit, SitIdle, SitUp, AfterYou, Mantle, Pull, Flinch, Tug, Crank, Lift, SetDown, SetDownHigh,
                 CarryIdle, CarryWalk, Grab, PushIdle, PushWalk, Nudge
   couriers.glb  three baked poses of a dormant courier and the rack slots to instance them at
   white.glb     the White (art/white/build_white.py), skinned, with its clips
@@ -1095,6 +1095,56 @@ def clip_jump(arm):
     c.done()
 
 
+
+def clip_sit(arm):
+    """Pass 8 (chapter 1, DL-15): sitting on a child's chair (seat 0.30, at his hips). Sit settles him onto it, SitIdle
+    holds (a slow breath, a look about), SitUp gets him off it. He faces his travel; the game sets the chair beside."""
+    def pose_at(c, frame, k, idle_t=0.0):
+        tau = 2 * math.pi
+        sway = math.sin(tau * idle_t)
+        feet = {side: ((0, -0.15 * k, 0.05 * k), (14 * k, 0, 0)) for side, _ in SIDES}
+        hands = {s: CARRY[s] + Vector((0, -0.03 * k, -0.035 * k + 0.004 * sway)) for _, s in SIDES}
+        c.pose(frame, body=(0, 0.035 * k, -0.035 * k + 0.003 * sway), body_rot=(-7 * k + 0.6 * sway, 0, 0),
+               head=(8 * k + 3 * math.sin(tau * idle_t * 2 + 1) * (1 if idle_t else 0), 9 * math.sin(tau * idle_t) * (1 if idle_t else 0), 0),
+               antenna=[(-6 * k + 2 * math.sin(tau * idle_t - i), 0) for i in range(3)], feet=feet, hands=hands)
+    c = Clip(arm, 'Sit', 16)
+    for frame in range(1, 17):
+        f = frame - 1
+        k = track([(0, 0), (8, 1.08), (13, 0.98), (15, 1)], f)
+        pose_at(c, frame, k)
+    c.done()
+    c = Clip(arm, 'SitIdle', 48)
+    for frame in range(1, 50):
+        pose_at(c, frame, 1.0, (frame - 1) / 48)
+    c.done()
+    c = Clip(arm, 'SitUp', 14)
+    for frame in range(1, 15):
+        f = frame - 1
+        pose_at(c, frame, track([(0, 1), (3, 1.06), (12, 0), (13, 0)], f))
+    c.done()
+
+
+def clip_after_you(arm):
+    """Pass 8 (DL-16): a small courtesy. He steps back a touch, sweeps one claw out toward the way ahead and dips his
+    head, as if letting children go first; then straightens."""
+    frames = 36
+    c = Clip(arm, 'AfterYou', frames)
+    for frame in range(1, frames + 1):
+        f = frame - 1
+        k = track([(0, 0), (8, 1), (24, 1), (34, 0)], f)
+        bow = track([(6, 0), (12, 1), (22, 1), (30, 0)], f)
+        hands = {}
+        for side, s in SIDES:
+            if side == 'L':
+                hands[s] = CARRY[s] + Vector((s * 0.12 * k, -0.1 * k, 0.05 * k))
+            else:
+                hands[s] = CARRY[s] + Vector((0, 0.01 * k, 0))
+        hand_rot = {'L': (-24 - 30 * k, 6, 10 + 40 * k), 'R': (-24, -6, -10)}
+        c.pose(frame, body=(0, 0.02 * k, -0.012 * bow), body_rot=(9 * bow, 0, 8 * k), head=(12 * bow, 18 * k, 0),
+               yaw=0.0, antenna=[(6 * bow - spring(f, 28, 8, decay=5), 0) for _ in range(3)], hands=hands,
+               hand_rot=hand_rot, claws={'L': 35 * k + 20 * (1 - k), 'R': 1.0}, elbows={'L': 0.6 * k})
+    c.done()
+
 def mantle_at(f):
     """Root offset (forward m, fraction of ledge height) at frame f; main.js uses the same keys."""
     for (f0, w0, u0), (f1, w1, u1) in zip(MANTLE_KEYS, MANTLE_KEYS[1:]):
@@ -1439,6 +1489,8 @@ def main():
          head_pitch=-2, antenna_back=-65, carry=CROUCH_CARRY, elbows=CROUCH_ELBOWS)
     clip_crouch_idle(arm)
     clip_jump(arm)
+    clip_sit(arm)
+    clip_after_you(arm)
     clip_mantle(arm)
     clip_pull(arm)
     clip_flinch(arm)

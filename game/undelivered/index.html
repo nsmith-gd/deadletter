@@ -164,7 +164,7 @@
       </div>
       <div class="row scene-pick">
         <label for="scene-select">For testing, start at</label>
-        <select id="scene-select"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option></select>
+        <select id="scene-select"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option><option value="sickbay">DL-15 One Pupil Missing</option><option value="crossing">DL-16 After the Bell</option><option value="workshop">DL-17 A Different Lesson</option></select>
         <button class="act secondary" id="scene-go" type="button" disabled>Start there</button>
       </div>
       <p class="note">The eleven scenes of the prologue, from The Wake to The Child at the Address, run as one, with no cut between them. Headphones recommended.</p>
@@ -192,7 +192,7 @@
       </div>
       <div class="row scene-pick">
         <label for="scene-select-p">Jump to</label>
-        <select id="scene-select-p"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option></select>
+        <select id="scene-select-p"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option><option value="sickbay">DL-15 One Pupil Missing</option><option value="crossing">DL-16 After the Bell</option><option value="workshop">DL-17 A Different Lesson</option></select>
         <button class="act secondary" id="scene-go-p" type="button">Go</button>
         <button class="act secondary" id="export-log" type="button">Save play log</button>
       </div>
@@ -254,9 +254,9 @@ const ATT = {
   gallery: { x0: 227.6, x1: 233.0, h: 2.05 }, cycle: { period: 12, out: [1.0, 2.6, 4.2], fold: [5.6, 6.2, 6.8] },
   stair14: { x0: 233.0, x1: 234.4, steps: 5 }, pole0: 234.4, desk: { x0: 235.4, x1: 236.2, h: 0.62 },
   ledgeA: { x0: 236.4, x1: 237.6, h: 1.1 }, ledgeB: { x0: 237.8, x1: 239.0, h: 1.6 }, hatch: { x0: 239.2, x1: 240.2, h: 2.15 },
-  wheelA: 235.0, wheelR: 0.25, crankX: 242.4, x0: 200.3, x1: 247.6,
+  wheelA: 235.0, wheelR: 0.25, crankX: 242.4, x0: 200.3, x1: 295.6,
 };
-const ATT_CPS = ['school', 'register', 'lesson', 'gallery13', 'window', 'hatch14'];
+const ATT_CPS = ['school', 'register', 'lesson', 'gallery13', 'window', 'hatch14', 'sickbay', 'class6', 'dismissed', 'crossing', 'store', 'workshop'];
 const PLATFORMS = [STEP];                    // the depot cart (DL-01) is a pushable: see the Chapter 1 rework
 const HALL_X = 7.3;
 const CRANK_X = 9.62, CRANK_STROKES = 5;
@@ -275,7 +275,7 @@ const MANTLE_KEYS = [[0, 0, 0], [6, 0, 0], [10, 0.03, 0.12], [14, 0.03, 0.18], [
   [24, 0.05, 0.38], [32, 0.10, 0.78], [38, 0.20, 0.95], [44, 0.33, 1.0], [56, 0.38, 1.0]];   // build_dl01.py matches
 const MANTLE_FRAMES = 56;
 const HINT_LOOK = 5, HINT_LEAN = 10, HINT_GLYPH = 18;
-const LOOP_FRAMES = { Idle: 168, Walk: 11, Run: 10, CrouchWalk: 13, CrouchIdle: 48, JumpAir: 8, Fall: 16, Crank: 24, CageRideLever: 48,
+const LOOP_FRAMES = { Idle: 168, Walk: 11, Run: 10, CrouchWalk: 13, CrouchIdle: 48, JumpAir: 8, Fall: 16, SitIdle: 48, Crank: 24, CageRideLever: 48,
   CarryIdle: 48, CarryWalk: 14, PushIdle: 48, PushWalk: 12, Ride: 48, SadWalk: 16 };
 
 // DL-02 The Weight of the Job (art/dl02/build_dl02.py uses the same numbers).
@@ -1068,13 +1068,13 @@ const input = { left: false, right: false, jumpHeld: false, jumpPressed: false, 
 const keymap = { KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right', Space: 'jump', KeyW: 'jump', ArrowUp: 'jump', KeyE: 'use', Enter: 'use' };
 // Held state comes from what is held now, by each source: the keys down (a set, so releasing A while → is still held
 // keeps him walking), the touch buttons and the pad. Losing focus drops every held key, since its keyup never comes.
-const held = { keys: new Set(), touch: new Set(), padJump: false };
+const held = { keys: new Set(), touch: new Set(), padJump: false, padUse: false };
 function syncHeld() {
   const has = (k) => [...held.keys].some((c) => keymap[c] === k) || held.touch.has(k);
-  input.left = has('left'); input.right = has('right'); input.jumpHeld = has('jump') || held.padJump;
+  input.left = has('left'); input.right = has('right'); input.jumpHeld = has('jump') || held.padJump; input.useHeld = has('use') || held.padUse;
 }
 function releaseAll() {
-  held.keys.clear(); held.touch.clear(); held.padJump = false; input.keyShift = false; input.shift = input.padShift;
+  held.keys.clear(); held.touch.clear(); held.padJump = false; held.padUse = false; input.keyShift = false; input.shift = input.padShift;
   syncHeld(); touchEl.querySelectorAll('button.on').forEach((b) => b.classList.remove('on'));
 }
 addEventListener('blur', releaseAll);
@@ -1101,10 +1101,10 @@ const touchEl = document.getElementById('touch');
 touchEl.querySelectorAll('button').forEach((b) => {
   const k = b.dataset.key;
   const down = (e) => { e.preventDefault(); b.classList.add('on'); Sound.start();
-    if (k !== 'interact') { held.touch.add(k); syncHeld(); }
+    held.touch.add(k === 'interact' ? 'use' : k); syncHeld();
     if (k === 'jump') input.jumpPressed = true; if (k === 'interact') input.usePressed = true;
     input.lastActivity = game.clock; };
-  const up = (e) => { e.preventDefault(); b.classList.remove('on'); held.touch.delete(k); syncHeld(); };
+  const up = (e) => { e.preventDefault(); b.classList.remove('on'); held.touch.delete(k === 'interact' ? 'use' : k); syncHeld(); };
   b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
 });
 const padPrev = {};
@@ -1112,7 +1112,7 @@ function pollGamepad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   const p = pads && pads[0];
   input.axis = 0;
-  if (!p) { if (held.padJump) { held.padJump = false; syncHeld(); } return; }
+  if (!p) { if (held.padJump || held.padUse) { held.padJump = held.padUse = false; syncHeld(); } return; }
   const ax = p.axes[0] || 0;
   input.axis = Math.abs(ax) > 0.22 ? ax : 0;
   if (p.buttons[14]?.pressed) input.axis = -1;
@@ -1120,7 +1120,7 @@ function pollGamepad() {
   const btn = (i) => !!p.buttons[i]?.pressed;
   const edge = (i) => { const now = btn(i); const was = padPrev[i]; padPrev[i] = now; return now && !was; };
   if (edge(0)) { input.jumpPressed = true; }
-  if (held.padJump !== btn(0)) { held.padJump = btn(0); syncHeld(); }
+  if (held.padJump !== btn(0) || held.padUse !== btn(2)) { held.padJump = btn(0); held.padUse = btn(2); syncHeld(); }
   if (edge(2)) input.usePressed = true;
   input.padShift = btn(1) || btn(5); input.shift = input.keyShift || input.padShift;
   if (edge(9)) togglePause();
@@ -3333,14 +3333,14 @@ function drawTerminal(state, t) {
   p.tex.needsUpdate = true;
 }
 // His parcel label gets the forwarding stamp.
-function stampLabel() {
+function stampLabel(text = 'FWD  SCHOOL  RING B', at = [0.62, 0.7], rot = -0.18) {
   const mat = refs.label && refs.label.material; if (!mat || !mat.map || !mat.map.image) return;
   const img = mat.map.image, c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const g = c.getContext('2d'); g.drawImage(img, 0, 0);
-  g.save(); g.translate(c.width * 0.62, c.height * 0.7); g.rotate(-0.18);
+  g.save(); g.translate(c.width * at[0], c.height * at[1]); g.rotate(rot);
   g.strokeStyle = 'rgba(150,40,34,0.85)'; g.lineWidth = c.width * 0.012; g.strokeRect(-c.width * 0.3, -c.height * 0.1, c.width * 0.6, c.height * 0.2);
   g.fillStyle = 'rgba(150,40,34,0.85)'; g.font = `bold ${Math.round(c.height * 0.075)}px monospace`; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText('FWD  SCHOOL  RING B', 0, 0); g.restore();
+  g.fillText(text, 0, 0); g.restore();
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = mat.map.colorSpace; tex.flipY = mat.map.flipY;
   refs.label.material = mat.clone(); refs.label.material.map = tex;
 }
@@ -3513,6 +3513,10 @@ function currentShot() {
     return { name: 'realise', pos: V3(X + 1.7 - 0.8 * k, 0.42 + 0.2 * k, 1.0 + 0.3 * k),
       look: V3(X - 0.1 + 0.1 * k, 0.6 - 0.1 * k, -1.4 + 1.4 * k), focal: 30 + 20 * k, ease: 1.1 };
   }
+  // Chapter 1, DL-15: sat in Mara's place, at child-desk height, the room emptying past him.
+  if (a && a.kind === 'att' && a.what === 'sit' && a.phase === 'act' && a.t > 0.5) return { name: 'sit15', pos: V3(255.15, 0.62, 1.45), look: V3(258.6, 0.72, -0.9), focal: 28, ease: 0.9 };
+  // DL-17: the drawer, close: the drawing beside the mended pot, then the placement card.
+  if (a && a.kind === 'att' && a.what === 'read' && a.phase === 'act') { const k = smooth((a.t - 2.6) / 1.4); return { name: 'drawer17', pos: V3(286.2 + 0.2 * k, 1.05 - 0.15 * k, 0.55), look: V3(286.25 + 0.1 * k, 0.32, -0.15), focal: 40 + 10 * k, ease: 1.2 }; }
   // Pass 6: a secret room, framed from inside once he's in the doorway.
   if (a && a.kind === 'secret' && a.se.cam && (a.phase === 'look' || game.z < a.se.path[0][1] + 0.1)) {
     return { name: 'secret', pos: a.se.cam.clone(), look: a.se.look.clone(), focal: a.se.focal || 30, ease: 1.3 };
@@ -3694,7 +3698,8 @@ const letterState = {};
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const FLAT_LETTER = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);   // flat on the floor, across the lane                                   // kept through respawns and checkpoints; a new game clears it
 const CP_ORDER = ['start', 'shutter', 'hall', 'door', 'room', 'weighroom', 'solved', 'bay', 'ration', 'hatch', 'scanned', 'landing', 'gallery',
-  'goods', 'latched', 'cage', 'landing8', 'tunnel', 'uponly', 'ringc', 'bedroom', 'forwarded', 'school', 'register', 'lesson', 'gallery13', 'window', 'hatch14'];
+  'goods', 'latched', 'cage', 'landing8', 'tunnel', 'uponly', 'ringc', 'bedroom', 'forwarded', 'school', 'register', 'lesson', 'gallery13', 'window', 'hatch14',
+  'sickbay', 'class6', 'dismissed', 'crossing', 'store', 'workshop'];
 const past = (cp, name) => CP_ORDER.indexOf(cp) >= CP_ORDER.indexOf(name);
 
 // Build: find the movable pieces and give each a group to move by.
@@ -3971,6 +3976,7 @@ function itemsHere() {
   if (game.region === 6 && game.att && refs.att) {
     out.push(Object.assign(game.att.coat, { key: 'coat', h: 0.1, r: 0.16, below: 0.16, light: true, g: refs.att.AttCoat }));
     out.push(Object.assign(game.att.pole, { key: 'pole', h: 0.06, r: 0.3, below: 0.08, light: true, g: refs.att.AttPole }));
+    out.push(Object.assign(game.att.f17.tray, { key: 'tray', h: 0.09, r: 0.21, below: 0.12, g: refs.att.Att17Tray }));
   }
   return out;
 }
@@ -4116,7 +4122,7 @@ function updateActCh1(a, dt) {
   }
   if (a.kind === 'setdownItem') {
     const f = actions.SetDown.time * FPS, it = a.it;
-    if (f >= 14 && it.state === 'carried') { it.drop = { from: it.g.position.clone(), t: 0 }; it.state = 'floor'; it.x = a.tx; it.base = a.base ?? game.y; Sound.setDown(false); }
+    if (f >= 14 && it.state === 'carried') { it.drop = { from: it.g ? it.g.position.clone() : new THREE.Vector3(a.tx, game.y + 0.4, 0), t: 0 }; it.state = 'floor'; it.x = a.tx; it.base = a.base ?? game.y; Sound.setDown(false); }
     if (f >= 35) { game.act = null; game.hold = null; game.carry = null; setClip('Idle', 0.3); }
     return;
   }
@@ -4158,7 +4164,7 @@ function updateActCh1(a, dt) {
       setClip('Grab', 0.12); Sound.tap(); return;
     }
     if (a.phase === 'hesitate') { if (a.t > 1.6) { a.phase = 'act'; setClip('Grab', 0.12); Sound.tap(); } return; }
-    if (actions.Grab.time * FPS >= 13) { game.act = null; game.hold = 'push'; game.pushKey = a.p.key; game.holdSide = a.p.side; setClip('PushIdle', 0.15); }
+    if (actions.Grab.time * FPS >= 13) { game.act = null; game.hold = 'push'; game.pushKey = a.p.key; game.holdSide = a.p.side; game.pushFrom = a.p.state().x; setClip('PushIdle', 0.15); }
     return;
   }
   if (a.kind === 'pickLetter') {
@@ -4387,6 +4393,12 @@ function updateHoldCh1(dt, move) {
       if (actions.Nudge) { game.act = { kind: 'shove', phase: 'act', t: 0 }; setClip('Nudge', 0.12); } else setClip('Idle', 0.3);
       tipOver(s);
     }
+    return;
+  }
+  // Pass 8: things with detents (DL-15's figures) stop at the next one either way, and he lets go.
+  if (p.detent) {
+    const moved = Math.abs(s.x - (game.pushFrom ?? s.x)) > 0.02;
+    if (moved && (Math.abs(s.x - p.max()) < 0.005 || Math.abs(s.x - p.min) < 0.005)) { game.hold = null; game.pushKey = null; game.vx = 0; setClip('Idle', 0.3); Sound.clack?.(); Sound.tap(); }
     return;
   }
   // At the end of its travel: the courier is on the bay's plate; the drum and the body are set.
@@ -4801,12 +4813,18 @@ function buildAtt(root) {
   const get = (n) => root.getObjectByName(n);
   for (const n of ['AttFigure', 'AttGate', 'AttCoat', 'AttFigure2', 'AttStep1', 'AttStep2', 'AttStep3', 'AttDialHand', 'AttPawl',
     'AttTreeTrunk', 'AttTreeBranch1', 'AttTreeBranch2', 'AttTreeBranch3', 'AttTreeLeaves', 'AttBlindA', 'AttBlindB', 'AttLedgeA', 'AttLedgeB',
-    'AttPanelPeel', 'AttCrank', 'AttWheelA', 'AttPole']) { k[n] = get(n); if (k[n]) k[n].userData.rest = { p: k[n].position.clone(), q: k[n].quaternion.clone(), s: k[n].scale.clone() }; }
+    'AttPanelPeel', 'AttCrank', 'AttWheelA', 'AttPole', 'Att15FigA', 'Att15FigB', 'Att15Lift', 'Att15LiftGate', 'Att15LiftCW', 'Att15Door', 'Att15Flap',
+    'Att16Lever', 'Att16Bridge', 'Att16Latch', 'Att16CW', 'Att17Drawer', 'Att17Tray']) { k[n] = get(n); if (k[n]) k[n].userData.rest = { p: k[n].position.clone(), q: k[n].quaternion.clone(), s: k[n].scale.clone() }; }
   // Lamps the game switches get their own materials.
   const lamp = (n, color) => { const o = get(n); if (!o) return null; const m = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0 }); o.traverse((q) => { if (q.isMesh) q.material = m; }); return m; };
   const chain = get('AttChain'); chain && chain.traverse((q) => { if (q.isMesh && q.material.map) { k.chainMap = q.material.map; k.chainMap.wrapT = THREE.RepeatWrapping; k.chainMap.needsUpdate = true; } });
   k.lampPresent = lamp('AttLampPresent', 0x8cffa0); k.lampCoat = lamp('AttLampCoat', 0xffad48); k.pegLamp = lamp('AttPegLamp', 0xffad48);   // COAT 7 and peg 7 share the amber: one cause, one effect
   k.lessonLamp = lamp('AttLessonLamp', 0xffd9a0);
+  k.lampPupil = lamp('Att15LampPupil', 0xd8ffe0); k.lampEscort = lamp('Att15LampEscort', 0xffb050);
+  k.lamp15a = lamp('Att15Lamp1', 0xffe2b0); k.lamp15b = lamp('Att15Lamp2', 0xffe2b0); k.lamp15c = lamp('Att15Lamp3', 0xffe2b0);
+  k.hideLamp = lamp('Att15HideLamp', 0xffb060); k.growLamp = lamp('Att17GrowLamp', 0xd8f0ff);
+  // Voice players in the chapter's set whose cranks turn.
+  for (const v of VOICES) if (v.region === 6 && v.crank) { const o = get(v.crank); if (o) refs.voiceCranks[v.id] = { o, axis: new THREE.Vector3(...v.axis).normalize() }; }
   // Lights, as proxies for the pool (region 6 only).
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; l.intensity = i; scene.add(l); l.layers.set(PROXY_LAYER); lightPool.proxies.push(l); return l; };
   const S = (color, i, d, at, to, ang, shadow = false) => { const l = new THREE.SpotLight(color, i, d, ang, 0.6, 2); l.position.set(...at); l.target.position.set(...to); if (shadow && !touchDevice) { l.castShadow = true; l.shadow.mapSize.set(512, 512); l.shadow.bias = -0.001; } scene.add(l, l.target); l.layers.set(PROXY_LAYER); lightPool.proxies.push(l); return l; };
@@ -4840,6 +4858,7 @@ function resetAtt(cp) {
     blinds: { a: p('hatch14') ? 1 : 0, b: p('hatch14') ? 1 : 0, ta: p('hatch14') ? 1 : 0, tb: p('hatch14') ? 1 : 0, winds: p('hatch14') ? 3 : 0 },
     jammed: true, peel: p('hatch14') ? 1 : 0, peeled: p('hatch14'), crank: 0, ended: false,
   };
+  resetAtt2(game.att, p);
 }
 const attOut = (k) => k >= 0.95;
 function floorAtt(x) {
@@ -4848,7 +4867,7 @@ function floorAtt(x) {
     const n = ATT.stair14.steps, k = (x - ATT.stair14.x0) / (ATT.stair14.x1 - ATT.stair14.x0);
     return ATT.gallery.h - 0.3417 * Math.ceil(k * n);                                 // open treads 0.342 apart
   }
-  return 0;
+  return floorAtt2(x);
 }
 function surfaceAtt(x, h) {
   const a = game.att;
@@ -4863,14 +4882,14 @@ function surfaceAtt(x, h) {
   if (attOut(a.blinds.b) && game.y > 1.0 && x >= ATT.ledgeB.x0 && x <= ATT.ledgeB.x1) h = Math.max(h, ATT.ledgeB.h);
   // The hatch is high in the wall: a sill only for someone up on the ledges; the floor below runs on to the crank.
   if (game.y > 1.3 && x >= ATT.hatch.x0 && x <= ATT.hatch.x1) h = Math.max(h, ATT.hatch.h);
-  return h;
+  return surfaceAtt2(x, h);
 }
 function limitsAtt(lo, hi) {
   const x = game.x;
   lo = Math.max(lo, ATT.x0); hi = Math.min(hi, ATT.x1);
   if (x < ATT.gate.x && game.att.gateY < CROUCH_H + 0.02) hi = Math.min(hi, ATT.gate.x - 0.06 - HALF);   // the attendance gate, down
   if (x > ATT.gate.x && game.att.gateY < CROUCH_H + 0.02) lo = Math.max(lo, ATT.gate.x + 0.06 + HALF);
-  return [lo, hi];
+  return limitsAtt2(lo, hi);
 }
 // The coat, the peg and the pole: things he carries, or takes back out of where they were put.
 function nearAttItem() {
@@ -4881,20 +4900,22 @@ function nearAttItem() {
   const atWheel = game.y < 0.05 && Math.abs(x - ATT.wheelA) < ATT.wheelR && !past(game.checkpoint, 'hatch14');
   if (atWheel && game.carry && game.carry === a.pole && !a.jammed) return 'att:jam';
   if (atWheel && !game.hold && a.pole.state === 'jam') return 'att:unjam';
-  return null;
+  return nearAtt2Item();
 }
 function nearAttFixed() {
   const a = game.att, x = game.x;
   if (game.y < 0.05 && Math.abs(x - ATT.pawlX) < 0.32) return a.lesson.on ? 'att:pawl' : 'att:pawlIdle';
   if (game.y < 0.05 && Math.abs(x - ATT.crankX) < 0.36) return 'att:crank';
-  return null;
+  return nearAtt2Fixed();
 }
 function beginAtt(kind) {
+  if (ATT2_STAND[kind] !== undefined) { game.act = { kind: 'att', what: kind, phase: 'approach', t: 0, standX: ATT2_STAND[kind], face: 1 }; return; }
   const stand = { coat: ATT.coat0, hang: ATT.peg.x, jam: ATT.wheelA - 0.22, unjam: ATT.wheelA - 0.22, pawl: ATT.pawlX - 0.2, pawlIdle: ATT.pawlX - 0.2, crank: ATT.crankX - 0.22 }[kind];
   game.act = { kind: 'att', what: kind, phase: 'approach', t: 0, standX: stand, face: 1 };
 }
 function updateAttAct(a, dt) {
   const s = game.att;
+  if (a.what === 'duct' || ATT2_STAND[a.what] !== undefined) { updateAtt2Act(a, dt); return; }
   if (a.phase === 'approach') {
     if (approachCh1(a, dt)) {
       a.phase = 'act'; a.t = 0;
@@ -5046,8 +5067,12 @@ function updateAtt(dt) {
     if (game.x > ATT.gate.x + 0.6 && !past(game.checkpoint, 'register')) game.checkpoint = 'register';
     if (game.x > 216.6 && !past(game.checkpoint, 'lesson')) game.checkpoint = 'lesson';
     if (game.x > 234.6 && game.y < 0.05 && !past(game.checkpoint, 'window')) game.checkpoint = 'window';
-    if (game.x > ATT.hatch.x0 + 0.35 && game.y > 2.1 && !s.ended) { s.ended = true; game.checkpoint = 'hatch14'; finishAtt(); }
+    if (game.x > ATT.hatch.x0 + 0.35 && game.x < ATT.hatch.x1 && game.y > 2.1 && !s.duct && !game.act) {
+      s.duct = true; game.checkpoint = 'hatch14'; game.hold = null; game.vx = 0;
+      game.act = { kind: 'att', what: 'duct', phase: 'in', t: 0 };
+    }
   }
+  updateAtt2(dt);
 }
 const PEEL_AXIS = new THREE.Vector3(0.5437, 0.8392, 0).normalize(), ATT_JAM = new THREE.Vector3(234.78, 1.16, -0.64), ATT_JAM_LEAN = 0.26;
 function placeAttItem(it, g, dt) {
@@ -5066,13 +5091,344 @@ function placeAttItem(it, g, dt) {
   if (g === refs.att.AttPole) { g.rotation.set(0, 0, -Math.PI / 2); if (it.state !== 'carried') g.position.y = it.base + 0.025; }
   if (g === refs.att.AttCoat) { if (it.state === 'carried') g.quaternion.identity(); else g.quaternion.copy(g.userData.rest.q); }
 }
+// ---------------------------------------------------------------------------------------------------------------------
+// Chapter 1, part 2 (docs/chapter1_part2_plan.md): DL-15 One Pupil Missing, DL-16 After the Bell, DL-17 A Different
+// Lesson. In from DL-14's hatch along a duct behind the wall; a class of three kept ready (two stand-in figures and
+// Mara's chair); the dismissal procession into a storage rack; the workshop drawer with her placement.
+// ---------------------------------------------------------------------------------------------------------------------
+const ATT2 = {
+  duct: { x0: 239.7, x1: 248.95, h0: 2.15, h1: 1.6, z: -1.3 },
+  wall: { x0: 247.85, x1: 248.15 },
+  balcony: { x0: 248.15, x1: 251.4, h: 1.6 },
+  lift: { x0: 251.4, x1: 252.4, mid: 251.9, top: 1.6, speed: 0.65 },
+  railZ: -0.55, figHalf: 0.22, figGap: 0.5,
+  stub0: 248.62, seats: [253.2, 254.6, 256.0], chair: { x: 256.0, z: -0.3 },
+  figA0: 259.2, figB0: 249.9, buffer: 263.0,
+  part: { x0: 263.75, x1: 263.9 }, flapX: 263.9,
+  lever: 266.0, pit: { x0: 267.9, x1: 269.9, floor: -1.6 }, edge: 267.62, rackIn: 275.6,
+  hooks: [new THREE.Vector3(275.1, 1.15, -0.95), new THREE.Vector3(276.1, 1.15, -0.95)],
+  cw: { x0: 277.8, x1: 279.2, lift: 2.0 },
+  drawer: { x: 286.0, out: 0.45 }, tray0: 285.7, trayKeepOut: [285.15, 286.85], trayPark: 284.7,
+  x1: 295.6,
+};
+const ATT2_DETENTS = [ATT2.lift.mid, ...ATT2.seats];
+// DL-15's two stand-in pupils, on the floor rail: pushed from either side (an entry each), stopping at each seat.
+Object.assign(PUSHABLES, { f15A: pushable15('A', 1), f15Ar: pushable15('A', -1), f15B: pushable15('B', 1), f15Br: pushable15('B', -1) });
+function resetAtt2(s, p) {
+  const dismissed = p('dismissed'), stored = p('store'), down = p('class6');
+  const fig = (x0, base0, x, base) => ({ x0, base0, x, base, v: 0, state: 'free', lean: 0, stored: null });
+  s.f15 = {
+    A: fig(ATT2.figA0, 0, stored ? ATT2.rackIn : dismissed ? ATT2.edge - 0.8 : ATT2.figA0, 0),
+    B: fig(ATT2.figB0, 1.6, stored ? ATT2.rackIn : dismissed ? ATT2.edge : down ? ATT2.lift.mid : ATT2.figB0, stored || dismissed || down ? 0 : 1.6),
+    lift: down && !dismissed ? 0 : ATT2.lift.top, liftV: 0, buzzAt: -9, escortWas: false,
+    lamps: [0, 0, 0], allSince: null, dismissed, door: dismissed ? 1 : 0, flap: 0, seated: false, pawlIdleAt: -9,
+  };
+  if (dismissed) { s.f15.A.state = s.f15.B.state = 'procession'; }
+  if (stored) {
+    [s.f15.B, s.f15.A].forEach((f, i) => { f.state = 'stored'; f.stored = { t: 1, from: ATT2.hooks[i].clone(), to: ATT2.hooks[i].clone() }; });
+  }
+  s.f16 = { bridge: stored ? 0 : 1, latched: stored, held: false, storedN: stored ? 2 : 0, cw: stored ? 1 : 0, fullAt: stored ? -99 : null, bowed: stored };
+  s.f17 = { tray: { x: ATT2.tray0, base: 0, state: 'wedged', blend: 0, drop: null }, drawer: 0, read: false, done: false };
+  s.duct = false;
+}
+// A figure is on the lift when it stands at the lift's middle (its stub clicks it there).
+const onLift15 = (f) => Math.abs(f.x - ATT2.lift.mid) < 0.05;
+function figRange15(f, other) {
+  const s = game.att.f15, L = ATT2.lift, H = ATT2.figHalf;
+  let lo, hi;
+  if (onLift15(f)) {
+    if (s.lift > L.top - 0.02) { lo = ATT2.stub0; hi = L.mid; }
+    else if (s.lift < 0.02) { lo = L.mid; hi = s.dismissed ? 300 : ATT2.buffer; }
+    else { lo = hi = f.x; }
+  } else if (f.base > 1) { lo = ATT2.stub0; hi = s.lift > L.top - 0.02 ? L.mid : ATT2.balcony.x1 - H; }
+  else { lo = s.lift < 0.02 ? L.mid : L.x1 + H; hi = s.dismissed ? 300 : ATT2.buffer; }
+  if (other && other.state === 'free' && Math.abs(other.base - f.base) < 0.05) {
+    if (other.x > f.x) hi = Math.min(hi, other.x - ATT2.figGap); else lo = Math.max(lo, other.x + ATT2.figGap);
+  }
+  // Each seat, and the lift, is a detent: a push stops at the first one it reaches.
+  const from = game.hold === 'push' ? (game.pushFrom ?? f.x) : f.x;
+  for (const d of ATT2_DETENTS) { if (d > from + 0.02) { hi = Math.min(hi, d); break; } }
+  for (const d of [...ATT2_DETENTS].reverse()) { if (d < from - 0.02) { lo = Math.max(lo, d); break; } }
+  return [lo, Math.max(lo, hi)];
+}
+function pushable15(name, side) {
+  const fig = () => game.att.f15[name], other = () => game.att.f15[name === 'A' ? 'B' : 'A'];
+  return {
+    region: 6, side, gap: 0.6, speed: 0.35, z: ATT2.railZ, detent: true,
+    state: () => fig(),
+    get min() { return game.att ? figRange15(fig(), other())[0] : 0; },
+    max: () => figRange15(fig(), other())[1],
+    get floor() { return game.att ? fig().base : 0; },
+    avail: () => !!game.att && !game.att.f15.dismissed && Math.abs(game.att.f15.liftV) < 1e-3,
+  };
+}
+function surfaceAtt2(x, h) {
+  const s = game.att.f15, L = ATT2.lift;
+  // The balcony and the lift's deck are boards in the air: solid only to someone already up on them.
+  if (game.y > 1.0 && x >= ATT2.balcony.x0 && x <= ATT2.balcony.x1) h = Math.max(h, ATT2.balcony.h);
+  if (x >= L.x0 && x <= L.x1 && game.y > s.lift - 0.3) h = Math.max(h, s.lift);
+  return h;
+}
+function floorAtt2(x) {
+  const b = game.att && game.att.f16;
+  if (b && b.bridge > 0.05 && x > ATT2.pit.x0 && x < ATT2.pit.x1) return ATT2.pit.floor;
+  return 0;
+}
+function limitsAtt2(lo, hi) {
+  const x = game.x, s = game.att, L = ATT2.lift;
+  // The wall between DL-14's corridor and DL-15 (the duct runs behind it).
+  if (x < ATT2.wall.x0) hi = Math.min(hi, ATT2.wall.x0 - HALF); else if (x < 264) lo = Math.max(lo, ATT2.wall.x1 + HALF);
+  // Up on the lift, its far gate is shut until it is down.
+  if (game.y > 0.5 && x >= L.x0 && x <= L.x1 && s.f15.lift > 0.02) hi = Math.min(hi, L.x1 - 0.06 - HALF);
+  // The class door, shut until dismissal.
+  if (s.f15.door < 0.6) { if (x < ATT2.part.x0) hi = Math.min(hi, ATT2.part.x0 - HALF); else lo = Math.max(lo, ATT2.part.x1 + HALF); }
+  // The rack's counterweight across the lane, until it is lifted.
+  if (s.f16.cw < 0.75) { if (x < ATT2.cw.x0) hi = Math.min(hi, ATT2.cw.x0 - HALF); else lo = Math.max(lo, ATT2.cw.x1 + HALF); }
+  // The pit's walls, if he has gone down into it.
+  if (game.y < -0.3) { lo = Math.max(lo, ATT2.pit.x0 + HALF); hi = Math.min(hi, ATT2.pit.x1 - HALF); }
+  return [lo, hi];
+}
+function nearAtt2Item() {
+  const t = game.att.f17.tray, x = game.x;
+  if (!game.hold && t.state === 'wedged' && game.y < 0.05 && Math.abs(x - (ATT2.tray0 - 0.15)) < 0.25) return 'att:tray';
+  return null;
+}
+function nearAtt2Fixed() {
+  const s = game.att, x = game.x, f = s.f15;
+  if (game.y > 0.05) return null;
+  const chairFree = ![f.A, f.B].some((q) => q.base < 0.05 && Math.abs(q.x - ATT2.chair.x) < 0.3);
+  if (!f.dismissed && chairFree && Math.abs(x - ATT2.chair.x) < 0.25) return 'att:sit';
+  if (f.dismissed && !s.f16.latched && Math.abs(x - ATT2.lever) < 0.3) return 'att:lever16';
+  if (s.f17.tray.state !== 'wedged' && s.f17.drawer === 0 && Math.abs(x - ATT2.drawer.x) < 0.3) return 'att:drawer';
+  if (s.f17.drawer >= 1 && !s.f17.read && Math.abs(x - ATT2.drawer.x) < 0.3) return 'att:read';
+  return null;
+}
+const ATT2_STAND = { tray: ATT2.tray0 - 0.15, sit: ATT2.chair.x, lever16: ATT2.lever - 0.25, drawer: ATT2.drawer.x, read: ATT2.drawer.x };
+function updateAtt2Act(a, dt) {
+  const s = game.att;
+  if (a.what === 'duct') {
+    const D = ATT2.duct;
+    if (a.phase === 'in') {
+      game.yawOverride = Math.PI; setClip(actions.CrouchWalk ? 'CrouchWalk' : 'Walk', 0.2, 0.8);
+      game.z = Math.max(D.z, game.z - 0.7 * dt);
+      if (game.z <= D.z + 1e-3) { a.phase = 'along'; d17.visible = false; Sound.servo?.(0.3, 300, 500, 0.02); }
+    } else if (a.phase === 'along') {
+      game.x = Math.min(D.x1, game.x + 1.9 * dt);
+      game.y = THREE.MathUtils.lerp(D.h0, D.h1, smooth((game.x - 241) / 7));
+      if (Math.random() < dt * 3) Sound.tap();
+      if (game.x >= D.x1) { a.phase = 'out'; d17.visible = true; game.facing = 1; }
+    } else if (a.phase === 'out') {
+      game.yawOverride = 0; game.z = Math.min(0, game.z + 0.7 * dt);
+      if (game.z >= -1e-3) {
+        game.z = 0; game.act = null; game.yawOverride = null; game.grounded = true; setClip('Idle', 0.3);
+        if (!past(game.checkpoint, 'sickbay')) game.checkpoint = 'sickbay';
+        Telemetry.event('duct', {});
+      }
+    }
+    return;
+  }
+  if (a.phase === 'approach') {
+    const z = a.what === 'sit' ? ATT2.chair.z : 0;
+    if (approachCh1(a, dt, z)) {
+      a.phase = 'act'; a.t = 0;
+      if (a.what === 'tray') { game.yawOverride = Math.PI; setClip('Lift', 0.15); }
+      if (a.what === 'sit') { game.yawOverride = null; game.facing = 1; setClip(actions.Sit ? 'Sit' : 'CrouchIdle', 0.2); Sound.tap(); }
+      if (a.what === 'lever16') { setClip(actions.Pull ? 'Pull' : 'Tug', 0.15); }
+      if (a.what === 'drawer') { game.yawOverride = Math.PI; setClip(actions.Tug ? 'Tug' : 'Pull', 0.15); }
+      if (a.what === 'read') { game.yawOverride = Math.PI; setClip(actions.ReadRoute ? 'ReadRoute' : 'CheckLabel', 0.2); }
+    }
+    return;
+  }
+  if (a.what === 'tray') {
+    const f = actions.Lift.time * FPS, it = s.f17.tray;
+    if (f >= 13 && !a.s1) { a.s1 = true; Sound.lift(); }
+    if (f >= 22) { if (it.state !== 'carried') { it.state = 'carried'; it.x = game.x; } it.blend = smooth((f - 22) / 4); }
+    if (f >= 39) { game.act = null; game.yawOverride = null; game.hold = 'item'; game.carry = it; it.blend = 1; setClip('CarryIdle', 0.2); }
+    return;
+  }
+  if (a.what === 'sit') {
+    const f15 = s.f15;
+    if (a.phase === 'act') {
+      if (a.t > 0.66 && actions.SitIdle && current !== 'SitIdle') setClip('SitIdle', 0.3);
+      f15.seated = a.t > 0.4;
+      const moving = input.left || input.right || input.axis || input.jumpPressed;
+      if (moving && a.t > 1.0) { a.phase = 'up'; a.t = 0; f15.seated = false; setClip(actions.SitUp ? 'SitUp' : 'Idle', 0.15); }
+    } else if (a.phase === 'up') {
+      if (a.t > 0.6) { game.act = null; setClip('Idle', 0.3); }
+    }
+    return;
+  }
+  if (a.what === 'lever16') {
+    // Held for as long as Use is held. Letting go (or moving) lets the lever spring back.
+    s.f16.held = a.t > 0.25;
+    const moving = input.left || input.right || input.axis || input.jumpPressed;
+    if ((a.t > 0.5 && !input.useHeld) || moving || s.f16.latched) {
+      s.f16.held = false; game.act = null; setClip('Idle', 0.3);
+      if (!s.f16.latched && s.f16.storedN < 2) Sound.clunk();
+    }
+    return;
+  }
+  if (a.what === 'drawer') {
+    if (a.t > 0.35 && !a.done) { a.done = true; Sound.drag?.(0.6); s.f17.pulling = true; Telemetry.event('drawer', {}); }
+    if (a.t > 1.6) { game.act = null; game.yawOverride = null; Sound.drag?.(0); setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'read') {
+    if (a.t > 0.2 && !a.done) { a.done = true; s.f17.readAt = game.clock; Telemetry.event('placement', {}); }
+    if (a.t > 6.0 && !s.f17.read) {
+      s.f17.read = true; s.f17.readDone = game.clock; game.act = null; game.yawOverride = null; setClip('Idle', 0.3);
+    }
+  }
+}
+function updateAtt2(dt) {
+  const s = game.att, k = refs.att, f15 = s.f15, L = ATT2.lift;
+  const figs = [f15.A, f15.B];
+  // DL-15: the pupil lift. It goes down with a pupil AND an escort on it, back up when empty.
+  for (const f of figs) if (f.state === 'free' && f.x >= L.x0 && f.x <= L.x1 + 0.3 && onLift15(f)) f.base = f15.lift;
+  const pupil = figs.some((f) => f.state === 'free' && onLift15(f) && Math.abs(f.base - f15.lift) < 0.05);
+  const escort = game.region === 6 && game.x >= L.x0 + 0.05 && game.x <= L.x1 - 0.05 && Math.abs(game.y - f15.lift) < 0.08 && !game.act;
+  if (escort && !pupil && !f15.escortWas && f15.lift > 1.5) { Sound.buzzShort?.(); f15.buzzAt = game.clock; }
+  f15.escortWas = escort;
+  // It won't leave with a figure still partly over its deck.
+  const occupied = figs.some((f) => f.state === 'free' && Math.abs(f.x - L.mid) < (L.x1 - L.x0) / 2 + ATT2.figHalf && Math.abs(f.base - f15.lift) < 0.05);
+  const want = pupil && escort ? 0 : !occupied && !escort ? L.top : f15.lift;
+  const prev = f15.lift;
+  if (want !== f15.lift) { f15.lift += Math.sign(want - f15.lift) * Math.min(Math.abs(want - f15.lift), L.speed * dt); if (Math.random() < dt * 5) Sound.ratchet(); if (f15.lift === want) { Sound.clunk(); shake(0.12); } }
+  f15.liftV = (f15.lift - prev) / Math.max(dt, 1e-4);
+  if (game.region === 6 && escort && game.grounded && Math.abs(game.y - prev) < 0.08) game.y = f15.lift;   // he rides it
+  // The seats: a figure clicked into one lights its lamp; Mara's lamp lights for whoever sits in her chair.
+  const at = (x) => figs.some((f) => f.state === 'free' && f.base < 0.05 && Math.abs(f.x - x) < 0.03);
+  const lit = [at(ATT2.seats[0]), at(ATT2.seats[1]), at(ATT2.seats[2]) || f15.seated];
+  lit.forEach((v, i) => { if (v && !f15.lamps[i]) { Sound.plate(); Telemetry.event('seat15', { seat: i + 1 }); } f15.lamps[i] = v ? 1 : 0; });
+  if (!f15.dismissed) {
+    if (lit.every(Boolean) && f15.seated) { f15.allSince ??= game.clock; } else f15.allSince = null;
+    if (f15.allSince !== null && game.clock - f15.allSince > 1.6) {
+      f15.dismissed = true; f15.dismissedAt = game.clock; Sound.bell?.(); setTimeout(() => Sound.bell?.(), 700);
+      figs.forEach((f) => { f.state = 'procession'; }); game.checkpoint = 'dismissed'; Telemetry.event('dismissal', {});
+      Music.bed(false); Music.play('child', 3);
+    }
+  }
+  if (f15.dismissed) f15.door = Math.min(1, f15.door + dt / 1.6);
+  // The procession: the figures fold their arms, turn and roll off along the rail, out under the flap, to the bridge.
+  // DL-16: the bridge goes down while the lever is held; a figure on it holds it down; the rack takes them.
+  const b = s.f16;
+  const onBridge = figs.some((f) => f.state === 'procession' && f.x > ATT2.pit.x0 - ATT2.figHalf && f.x < ATT2.pit.x1 + ATT2.figHalf);
+  const bWant = b.latched || b.held || onBridge ? 0 : 1;
+  if (b.bridge !== bWant) { b.bridge += Math.sign(bWant - b.bridge) * Math.min(Math.abs(bWant - b.bridge), dt / 1.3); if (b.bridge === bWant) { Sound.clunk(); shake(0.15); } }
+  const order = figs.filter((f) => f.state === 'procession').sort((p, q) => q.x - p.x);
+  order.forEach((f, i) => {
+    if (game.clock - (f15.dismissedAt ?? -99) < 2.2 + i * 0.6) { f.lean = Math.min(1, f.lean + dt); return; }   // a bow first
+    let target = ATT2.rackIn;
+    if (b.bridge > 0.05 && f.x <= ATT2.edge + 1e-3) target = Math.min(target, ATT2.edge);
+    const ahead = order[i - 1]; if (ahead) target = Math.min(target, ahead.x - 0.8);
+    const speed = f.x < ATT2.pit.x0 - 1.2 ? 0.95 : 0.6;                 // briskly down the corridor; carefully over the well
+    const step = Math.min(speed * dt, Math.max(0, target - f.x));
+    f.x += step; f.v = step / Math.max(dt, 1e-4);
+    if (step > 1e-4 && Math.random() < dt * 4) Sound.squeak?.();
+    if (f.x >= ATT2.rackIn - 1e-3) {
+      const slot = b.storedN++;
+      f.state = 'stored'; f.stored = { t: 0, from: new THREE.Vector3(f.x, 0.03, ATT2.railZ), to: ATT2.hooks[Math.min(slot, 1)].clone() };
+      Sound.ratchet(); Telemetry.event('stored16', { n: b.storedN });
+      if (b.storedN >= 2) b.fullAt = game.clock;
+    }
+  });
+  figs.forEach((f) => { if (f.stored && f.stored.t < 1) f.stored.t = Math.min(1, f.stored.t + dt / 1.8); });
+  if (b.fullAt !== null && !b.latched && game.clock - b.fullAt > 2.0) { b.latched = true; b.held = false; Sound.clank(); Sound.chain(2.5); shake(0.2); game.checkpoint = past(game.checkpoint, 'store') ? game.checkpoint : game.checkpoint; Telemetry.event('rackFull', {}); }
+  if (b.latched) { const was = b.cw; b.cw = Math.min(1, b.cw + dt / 2.6); if (was < 1 && Math.random() < dt * 6) Sound.ratchet(); }
+  // His courtesy: the first time he comes up behind the waiting figures, he lets them go first.
+  if (game.region === 6 && f15.dismissed && !b.bowed && game.x > 264.6 && game.x < ATT2.lever + 0.4 && order.length && !game.act && !game.hold && game.grounded) {
+    if (playQuirk(actions.AfterYou ? 'AfterYou' : 'Idle')) b.bowed = true;
+  }
+  // The balcony framing: up there, or riding the lift down with the pupil.
+  s.k15 = (s.k15 ?? 1) + (((game.y > 1.0 && game.x < ATT2.lift.x1 + 0.3) ? 1 : 0) - (s.k15 ?? 1)) * Math.min(1, dt * 0.9);
+  // DL-17: the drawer slides out once pulled. Read, he checks his label, and it is forwarded again (on the game's
+  // clock, so a pause holds it).
+  const d = s.f17; if (d.pulling && d.drawer < 1) d.drawer = Math.min(1, d.drawer + dt / 1.1);
+  if (d.read && !s.ended) {
+    const t = game.clock - d.readDone;
+    if (t > 0.3 && !d.checked && !game.act) { d.checked = true; if (playQuirk('CheckLabel', false)) Object.assign(game.act, { holdFor: 2.2, start: game.clock }); }
+    if (t > 1.2 && !d.stamped) { d.stamped = true; stampLabel('FWD  WORKS  RING A', [0.42, 0.42], 0.12); Sound.clank(); }
+    if (t > 5.5) { s.ended = true; game.checkpoint = 'workshop'; finishAtt(); }
+  }
+  // Back out to the lane after letting go of a figure.
+  if (game.region === 6 && !game.act && game.hold !== 'push' && game.z < 0 && game.x > 248) game.z = Math.min(0, game.z + 0.45 * dt);
+  // Into the pit (the bridge up): back to the checkpoint.
+  if (game.region === 6 && game.y < -1.0 && !game.respawnAt) { Sound.thud(); respawn(); }
+  // Checkpoints.
+  if (game.region === 6) {
+    const x = game.x, cp = game.checkpoint;
+    if (x > ATT2.lift.x1 + 0.2 && game.y < 0.05 && x < 263 && past(cp, 'sickbay') && !past(cp, 'class6')) game.checkpoint = 'class6';
+    if (x > 265.0 && f15.dismissed && !past(cp, 'crossing')) game.checkpoint = 'crossing';
+    if (x > ATT2.pit.x1 + 0.4 && b.latched && !past(cp, 'store')) game.checkpoint = 'store';
+    if (x > 280.6 && !past(cp, 'workshop')) game.checkpoint = 'workshop';
+  }
+  // The art.
+  if (!k) return;
+  const put = (g, f) => {
+    if (!g) return;
+    const r = g.userData.rest;
+    if (f.stored) {
+      const t = smooth(f.stored.t);
+      g.position.lerpVectors(f.stored.from, f.stored.to, t); g.position.y += Math.sin(Math.PI * t) * 0.25;
+      g.quaternion.copy(r.q); g.rotateZ(-0.35 * t);
+    } else {
+      g.position.set(r.p.x + (f.x - f.x0), r.p.y + (f.base - f.base0), r.p.z);
+      g.quaternion.copy(r.q); g.rotateZ(-0.18 * smooth(f.lean));       // bowed forward for the procession
+    }
+  };
+  put(k.Att15FigA, f15.A); put(k.Att15FigB, f15.B);
+  if (k.Att15Lift) k.Att15Lift.position.y = k.Att15Lift.userData.rest.p.y + (f15.lift - L.top);
+  if (k.Att15LiftGate) { const g = k.Att15LiftGate; g.position.y = g.userData.rest.p.y + (f15.lift - L.top); g.quaternion.copy(g.userData.rest.q); g.rotateY(-1.4 * smooth(1 - f15.lift / 0.25)); }
+  if (k.Att15LiftCW) k.Att15LiftCW.position.y = k.Att15LiftCW.userData.rest.p.y + (L.top - f15.lift);
+  if (k.lampPupil) k.lampPupil.emissiveIntensity = pupil ? 5 : 0.05;
+  if (k.lampEscort) k.lampEscort.emissiveIntensity = escort ? (pupil ? 5 : (Math.sin(game.clock * 14) > 0 ? 5 : 0.3)) : 0.05;
+  const blink = f15.dismissed && game.clock - f15.dismissedAt < 3 ? (Math.sin(game.clock * 10) > 0 ? 1 : 0.2) : 1;
+  [k.lamp15a, k.lamp15b, k.lamp15c].forEach((m, i) => { if (m) m.emissiveIntensity = f15.lamps[i] ? 6 * blink : 0.05; });
+  if (k.Att15Door) { k.Att15Door.quaternion.copy(k.Att15Door.userData.rest.q); k.Att15Door.rotateY(-1.66 * smooth(f15.door)); }
+  const nearFlap = figs.some((f) => !f.stored && f.base < 0.05 && Math.abs(f.x - ATT2.flapX) < 0.4);
+  f15.flap += ((nearFlap ? 1 : 0) - f15.flap) * Math.min(1, dt * 5);
+  if (k.Att15Flap) { k.Att15Flap.quaternion.copy(k.Att15Flap.userData.rest.q); k.Att15Flap.rotateZ(-1.2 * f15.flap); }
+  if (k.Att16Bridge) { k.Att16Bridge.quaternion.copy(k.Att16Bridge.userData.rest.q); k.Att16Bridge.rotateZ(-Math.PI / 2 * smooth(b.bridge)); }
+  if (k.Att16Lever) { k.Att16Lever.quaternion.copy(k.Att16Lever.userData.rest.q); k.Att16Lever.rotateZ(THREE.MathUtils.degToRad(-35) * (b.held || b.latched ? 1 : 0)); }
+  if (k.Att16Latch) { k.Att16Latch.quaternion.copy(k.Att16Latch.userData.rest.q); k.Att16Latch.rotateZ(-1.3 * (b.latched ? 1 : 0)); }
+  if (k.Att16CW) k.Att16CW.position.y = k.Att16CW.userData.rest.p.y + ATT2.cw.lift * smooth(b.cw);
+  if (k.Att17Drawer) k.Att17Drawer.position.z = k.Att17Drawer.userData.rest.p.z + ATT2.drawer.out * smooth(d.drawer);
+  if (k.hideLamp) k.hideLamp.emissiveIntensity = 4;
+  if (k.growLamp) k.growLamp.emissiveIntensity = 5;
+  placeTray17(d.tray, k.Att17Tray, dt);
+}
+function placeTray17(it, g, dt) {
+  if (!g) return;
+  if (it.state === 'wedged') { g.position.copy(g.userData.rest.p); g.quaternion.copy(g.userData.rest.q); return; }
+  // Put down in front of the drawer, it is set aside by the bench leg instead.
+  if (it.state === 'floor' && it.x > ATT2.trayKeepOut[0] && it.x < ATT2.trayKeepOut[1] && !it.drop) it.x = ATT2.trayPark;
+  placeItem(it, g, dt);
+  g.quaternion.identity();
+}
+// The camera for part 2: the balcony and lift, the classroom, the corridor, the workshop.
+function frameAtt2(x, lead, cx, v, fog) {
+  const a = game.att;
+  if (game.act && game.act.kind === 'att' && game.act.what === 'duct') return { cx: x, v: fit([7.0, 2.4, 1.6], 9.0), fog: 0.03 };
+  const k15 = smooth((x - 248.0) / 0.8);
+  const high = a ? smooth(a.k15 ?? 1) : 1;
+  const balc = [THREE.MathUtils.clamp(x + lead * 0.4, 250.2, 251.3), fit([6.2, 2.5, 2.0], 7.2)];
+  const room = [THREE.MathUtils.clamp(x + lead * 0.5, 254.4, 259.0), fit([7.0, 1.7, 1.2], 9.6)];
+  const c15 = room[0] + (balc[0] - room[0]) * high, v15 = lerp3(room[1], balc[1], high);
+  cx += (c15 - cx) * k15; v = lerp3(v, v15, k15);
+  const k16 = smooth((x - 263.4) / 1.4);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.5, 267.4, 275.0) - cx) * k16; v = lerp3(v, fit([7.2, 1.8, 1.2], 10.0), k16);
+  const k17 = smooth((x - 279.4) / 1.4);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 284.2, 290.4) - cx) * k17; v = lerp3(v, fit([6.4, 1.6, 1.1], 8.6), k17);
+  return { cx, v, fog };
+}
+
 function finishAtt() {
   // Through the hatch: the end of what's built of chapter one, for now.
   game.exit = { t: 0, att: true };
-  document.getElementById('end-title').textContent = 'To be continued';
-  document.getElementById('end-sub').textContent = 'Chapter one · Attendance';
-  document.getElementById('end-text').textContent = 'The register took a stand-in. The lesson stopped mid-sentence. Behind the painted sky, a child had drawn her tree, over and over. D-17 climbed on through the window.';
-  document.getElementById('end-next').innerHTML = 'Next: <strong>One Pupil Missing</strong>, being made.';
+  document.getElementById('end-title').textContent = 'End of chapter one';
+  document.getElementById('end-sub').textContent = 'Attendance';
+  document.getElementById('end-text').textContent = 'The register took a stand-in. The lesson stopped mid-sentence. D-17 sat in her place until the bell, and watched the class go to a playground that was a store. In the workshop drawer, her tree had become a plan for water, and her name was down for the Works. His label was forwarded again: ring A.';
+  document.getElementById('end-next').innerHTML = 'Next: chapter two, <strong>Someone Home</strong>, being made.';
   game.ended = true; finish();
 }
 function frameAtt(x, lead) {
@@ -5093,7 +5449,7 @@ function frameAtt(x, lead) {
   // DL-14: the pole, the desk, both blinds and ledges, the hatch and the crank.
   const kw = smooth((x - 232.4) / 1.4);
   cx += (THREE.MathUtils.clamp(x + lead * 0.4, 237.6, 239.0) - cx) * kw; v = lerp3(v, fit([7.0, 1.7, 1.25], 10.0), kw); fog += (0.03 - fog) * kw;
-  return { cx, v, fog };
+  return frameAtt2(x, lead, cx, v, fog);
 }
 
 // Pass 6: secret rooms. A gap in the back wall he can notice; Use, and he goes in (away from the camera, as through
@@ -5119,6 +5475,11 @@ const SECRETS = [
     path: [[234.5, -0.72], [233.5, -0.72], [233.5, -1.45], [233.65, -2.2]], face: Math.atan2(-0.93, -0.45),
     cam: new THREE.Vector3(234.75, 1.3, -1.55), look: new THREE.Vector3(232.7, 0.8, -2.7), focal: 24, cond: () => !game.hold },
 ];
+SECRETS.push(
+  // Chapter 1, DL-15: under the sick bay balcony, where a protected pupil hid from her escorts.
+  { id: 'hide15', name: 'Under the balcony', region: 6, ready: true, voice: 'att_escort', open: [249.75, 249.85], stand: 249.8,
+    path: [[249.8, -0.4], [249.6, -0.9]], face: Math.PI, cam: new THREE.Vector3(251.6, 0.75, 0.9), look: new THREE.Vector3(249.6, 0.6, -1.0), focal: 26,
+    cond: () => game.y < 0.05 && !game.hold });
 const secretFound = {};
 // Pass 7: the voices (docs/voice_script.md, placed per docs/audio_audit.md). Cards play when he winds their player
 // (Use) or, in the secret rooms, when he goes in; tannoys play as he passes. `x` null: not placed in the set yet.
@@ -5146,6 +5507,9 @@ const VOICE_LINES = {
   att_gate_3: { who: 'Register', treat: 'tannoy', lines: [['Thank you. You are present.', 2.4]] },
   att_caretaker: { who: 'Voice card', treat: 'elder', lines: [['Lost property, week forty.', 2.6], ['One mitten, red. One shoe, small, left foot. A lunch tin, M.D. on the lid.', 6], ['I keep it all. Somebody’ll come back for it.', 4], ['Register’s down to one this week. Just the little one with the drawings. Sits at the front, never says a word.', 7], ['Good kid.', 2]] },
   att_lesson: { who: 'Lesson', treat: 'card', lines: [['Good morning, class. Today we will learn how a tree grows.', 4], ['First, the root. Then, the trunk.', 3.2], ['Then the branches reach for the light. And then, the leaves.', 4.4], ['A tree always grows straight, and tall, toward the sun.', 4], ['Let us watch it again.', 2.4]] },
+  att_escort: { who: 'Voice card', treat: 'card_worn', lines: [['Escort log. Fourteen hundred.', 2.6], ['Pupil M.D. not in sick bay at the check. Not in class. Not in the cloakroom.', 5.4], ['Found under the sick bay balcony. Again. Third time this week.', 4.6], ['She says she was listening to the pipes.', 3.4], ['Recommend…', 1.6], ['No recommendation. Let her listen.', 3.4]] },
+  att_bell: { who: 'Tannoy', treat: 'tannoy', lines: [['End of lessons.', 2.0], ['Pupils will walk, not run, to the playground.', 3.6], ['Escorts to the gate, please.', 2.6], ['Order above all.', 2.0]] },
+  att_volunteer: { who: 'Voice card', treat: 'elder', lines: [['Mara. Vance here. The bench.', 3.0], ['Your drawing’s good. Better than mine.', 3.2], ['Water’s patient, love. Give it a slope and it’ll go round anything.', 5.0], ['I’ve put your name down for the Works. Ring A. Water and the growing beds.', 5.4], ['They’ll grumble you’re young. Let them.', 3.4], ['Your tree can be crooked. The channels can’t. Mind the levels.', 4.6]] },
   att_teacher: { who: 'Voice card', treat: 'card', lines: [['To the family of Mara D., class four.', 3.4], ['She’s doing well. She doesn’t speak much in class, but she listens to everything.', 5.6], ['She asked me today why the windows don’t open. I told her the truth. I hope that was right.', 6.4], ['The protocol says she isn’t to be left alone, so I eat my lunch with her. I don’t mind.', 5], ['She’s drawn on the wall behind the window panel. A tree. I haven’t had it cleaned.', 5.6], ['I’ll keep recording these until someone writes back. Take care of yourselves.', 5]] },
 };
 // Cards he winds (Use): where the player is and where he stands. Tannoys: where they hang; they play as he passes.
@@ -5162,6 +5526,8 @@ const VOICES = [
   { id: 'card_queue', kind: 'card', region: 2, x: 51.55, standX: 51.55, z: -0.25, loose: true },
   { id: 'card_heap', kind: 'card', region: 3, upper: false, x: 68.0, standX: 68.0, crank: 'VoicePlayerHeapCrank', axis: [0, 1, 0] },
   { id: 'card_lastcar', kind: 'card', region: 4, x: 121.74, standX: 122.25, loose: true },   // stood clear of the suitcase's grip
+  { id: 'att_bell', kind: 'tannoy', region: 6, x: 265.4, trigger: 1.2, reach: 12, when: () => !!game.att && game.att.f15.dismissed },
+  { id: 'att_volunteer', kind: 'card', region: 6, x: 288.0, standX: 288.0, z: -0.15 },
   { id: 'card_mara_parent', kind: 'card', region: 5, x: 158.07, standX: 158.07, z: -0.2, crank: 'VoicePlayerMaraCrank', axis: [0, 0, 1] },
 ];
 const voiceFound = {};
@@ -6382,6 +6748,12 @@ const CHECKPOINTS = {
   gallery13: { y: 2.05, x: 228.4, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
   window: { y: 0, x: 234.8, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
   hatch14: { y: 0, x: 234.8, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  sickbay: { y: 1.6, x: 249.0, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  class6: { y: 0, x: 252.7, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  dismissed: { y: 0, x: 262.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  crossing: { y: 0, x: 264.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  store: { y: 0, x: 270.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  workshop: { y: 0, x: 281.0, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
 };
 function resetWorld(name = 'start') {
   const c = CHECKPOINTS[name];
@@ -6502,7 +6874,7 @@ function togglePause() {
 // Which of Chapter 1's nine scenes he is in.
 function sceneName() {
   const x = game.x, r = game.region;
-  if (r === 6) return x < 216 ? 'DL-12 Coats Without Children' : x < 232 ? 'DL-13 The Repeated Lesson' : 'DL-14 The Window';
+  if (r === 6) return x < 216 ? 'DL-12 Coats Without Children' : x < 232 ? 'DL-13 The Repeated Lesson' : x < 248 ? 'DL-14 The Window' : x < 264 ? 'DL-15 One Pupil Missing' : x < 280 ? 'DL-16 After the Bell' : 'DL-17 A Different Lesson';
   if (r === 1) return 'DL-01 The Wake';
   if (r === 2) return x < SH.x1 ? 'DL-02 The Sorting Hall' : x < GATE_X ? 'DL-03 The Weight of the Job' : x < RATION5.x0 ? 'DL-04 The Racks' : 'DL-05 The Ration Hall';
   // The heap begins once the belt runs to the exit: the loading on the sorting floor is DL-07's.

@@ -1,0 +1,359 @@
+[
+{
+"n": 1,
+"name": "The Wake",
+"play": "Reach a release latch from beneath a collapsed sorting shutter, open it, and climb over one fallen crate. These safe actions teach movement, jump and interact without a tutorial panel.",
+"evidence": "A new current reaches a long-dead charging cradle through a relay bearing the depot pictogram. Its three-lamp pulse briefly illuminates D17. He checks his sealed parcel before his own casing. A child silhouette and destination mark establish the job; the power source is unexplained.",
+"understanding": "Dormant machine \u2192 a courier with an unfinished assignment."
+},
+{
+"n": 2,
+"name": "The Sorting Hall",
+"play": "A sorting table stands too high to climb, and a fallen pigeonhole wall closes the floor. Carry a parcel box to the table's foot and climb box, table and gantry to the lit doorway. A pneumatic tube coughs out one ancient letter; posting it at a red mail slot stamps it RETURN.",
+"evidence": "Named mugs, a courier-of-the-year board fading to a silhouette, and a notice with a water-drop pictogram: ring C deliveries suspended, R.Y. 42. The first sign of the flood.",
+"understanding": "A dead depot \u2192 a workplace that stopped mid-shift, for a reason."
+},
+{
+"n": 3,
+"name": "The Weight of the Job",
+"play": "Stand on a floor plate to open a gate, discover that leaving closes it, then carry a sorting weight onto a trolley and park it on the plate. Both the plate and gate stay in view.",
+"evidence": "Rows of failed couriers occupy recharge racks beyond the gate. D17 is ordinary equipment that happened to wake, not a purpose-built saviour. His careful handling of a mundane weight establishes his working temperament.",
+"understanding": "Possibly exceptional survivor \u2192 ordinary equipment in an extraordinary situation."
+},
+{
+"n": 4,
+"name": "The Racks",
+"play": "The racks end at a charging bay door whose plate carries a courier pictogram. Standing on it opens the door; stepping off closes it, as in scene 3, and the trolley can't follow him past the gate. D-17 drags a fallen courier onto the plate. The cradle lifts it, its lamps flicker weakly and hold, and the door opens.",
+"evidence": "D-17 is one of many. He leaves another courier on charge, a success that leaves something behind.",
+"understanding": "A solved mechanism \u2192 a choice with feeling in it."
+},
+{
+"n": 5,
+"name": "The Ration Hall",
+"play": "The way on is through a serving hatch whose steel shutter is wound up by a winch on the counter and drops the moment the winch is let go. Wind it and go, and it slams. Push a ration drum under the shutter's line, wind, and let go: the shutter slams onto the drum and leaves a gap to crawl under.",
+"evidence": "The depot workers' canteen, where families slept when ring C flooded: queue barriers folded into a maze, a ration board of chalked halvings, cots between the tables, a RELOCATION BY GRADE notice with Grade 4 suspended, a shrine of names and candles. A child's crayon drawing of a little courier carrying a parcel to a house, signed M: D-17 and Mara, before either is named.",
+"understanding": "A depot that stopped work \u2192 a community left at the bottom."
+},
+{
+"n": 6,
+"name": "Return to Sender",
+"play": "A sorting scanner rejects the obsolete address and directs its carrier toward a storage chute. Stop the belt and switch the track to a manual service exit before boarding it.",
+"evidence": "A visible pile of permanently undeliverable parcels explains the automated response. D17 proceeds because his delivery is unfinished; his persistence begins as professional stubbornness. The parcel stays secured in his chest throughout.",
+"understanding": "An invalid address ends the task \u2192 the task still deserves a physical search."
+},
+{
+"n": 7,
+"name": "The Heap",
+"play": "The ride up the ramp now ends at a gallery gate held shut by a counterweight bucket. Load a sorting weight into an empty carrier at the dock, route it up the ramp and watch it tip into the bucket; the gate rises. Ride the next carrier up. A parcel slide returns him to the floor if he goes up too soon. A letter caught on the gallery rail is the chapter's secret.",
+"evidence": "The day board and the stopped clock above the heap of returns.",
+"understanding": "Machines that refused him \u2192 machines he can direct."
+},
+{
+"n": 8,
+"name": "The Handbrake",
+"play": "Use the weighted trolley to raise a goods platform, engage its mechanical safety pawl, then leave the trolley behind and cross. One slow belt crossing adds a brief execution test after the reasoning.",
+"evidence": "Handmade reinforcement surrounds the original safety catch. People repeatedly repaired this place before it failed. Crossing into the residential access tunnel commits D17 to a journey beyond his familiar depot.",
+"understanding": "Familiar depot \u2192 a much larger inhabited system now gone quiet."
+},
+{
+"n": 9,
+"name": "The Slipping Cage",
+"play": "Beyond the returns belt, climb to an old freight cage and ride it down toward the residential tunnel. Its brake gives: it shudders, then slips. Throw the cage's pawl as it passes the lit landing. Too early or late, it rattles down to the buffers and the counterweight hauls it back up to try again. Then the tunnel, the look back, the hopscotch, and the city reveal.",
+"evidence": "A cargo lift full of furniture climbing toward the lit upper city, and never coming back: moving up was the promise.",
+"understanding": "A depot and its routines \u2192 a city that left its lowest levels behind."
+},
+{
+"n": 10,
+"name": "Up Only",
+"play": "Ring C is below; the relocation lift only goes up, and won't go empty, and the stair beside it has collapsed. Carry the suitcase tagged C-114 into the car, whose floor weighs passengers. Wind open the service door to the counterweight's shaft, stand on the counterweight and press its UP: the car goes up with the suitcase, and D-17 rides the counterweight down.",
+"evidence": "The lobby the lower grades left from: a painted queue line with a shoe, a doll and a birdcage dropped along it, the left luggage, RELOCATION \u2014 GRADES 1\u20132 ONLY with EVERYONE painted across it. The C-114 suitcase goes up without him, the way its family did.",
+"understanding": "A city that left its lowest levels \u2192 the moment they left, and who went."
+},
+{
+"n": 11,
+"name": "The Child at the Address",
+"play": "Slide a fallen low desk clear of a forwarding terminal. Moving it exposes the growth marks and tree carving behind it; presenting the parcel retrieves the school destination.",
+"evidence": "A patched toy, imagined sunlight and the parent-and-child photograph make the addressee concrete. Establish Mara's distinctive crooked tree with a knot in one branch. D17 straightens the toy, then leaves the bedroom undisturbed.",
+"understanding": "Abstract addressee \u2192 a particular child with a home and a parent."
+},
+{
+"n": 12,
+"name": "Coats Without Children",
+"play": "Roll a clearly jointed teaching figure across an occupancy strip. Its light changes and the cloakroom gate opens. Park the figure there and pass into the school.",
+"evidence": "Hundreds of coat hooks are mostly empty. Several carry the same few garments repeatedly repaired. The school was designed for a community that had already begun to shrink.",
+"understanding": "Merely empty school \u2192 an institution built for more children than remained."
+},
+{
+"n": 13,
+"name": "The Repeated Lesson",
+"play": "Use a teaching figure to start a demonstration cycle. Observe its folding boards, stop the apparatus at the raised position, and latch one board into a climbing route.",
+"evidence": "The lesson endlessly assembles a perfect model tree while a neglected real seedling tray sits behind glass. The institution retained the demonstration after losing anyone who might learn from it.",
+"understanding": "Apparently useful lesson \u2192 routine detached from learning."
+},
+{
+"n": 14,
+"name": "The Window",
+"play": "Lower a classroom blind to extend its cleaning ledge, then use the ledge to reach the next opening. A small demonstration shows both motions before the player commits.",
+"evidence": "The apparent outdoor window is a faded landscape panel backed by concrete. Behind its edge are Mara's drawings of an imperfect, crooked tree. Her interest exceeded the tidy version she was taught.",
+"understanding": "A window onto the world \u2192 an inherited image that the child questioned."
+},
+{
+"n": 15,
+"name": "One Pupil Missing",
+"play": "Position two teaching figures at two occupied-seat sensors, then sit in the third place. Three visible lamps trigger dismissal; the cycle remains latched long enough for an unhurried exit.",
+"evidence": "The final desk carries Mara's crooked-tree carving. D17 occupies the place of the child he is following. When the figures retract, he is briefly left alone in the classroom.",
+"understanding": "Observation of an absent pupil \u2192 briefly occupying her place."
+},
+{
+"n": 16,
+"name": "After the Bell",
+"play": "Guide the dismissed figures onto their return rail, lower a crossing section and hold its gate until the last figure clears. Their departure leaves a service passage accessible.",
+"evidence": "The procession feeds into a storage rack instead of a playground. D17 initially gives way as though they were pupils, then notices their destination. His small courtesy is funny before the empty routine becomes sad.",
+"understanding": "Normal dismissal \u2192 a closed loop with nobody to go home."
+},
+{
+"n": 17,
+"name": "A Different Lesson",
+"play": "Move a jammed seedling tray to open the school's workshop drawer and recover the apprenticeship destination. Its mechanism is simple; the discovery supplies the scene's weight.",
+"evidence": "Several pupils' growing experiments surround a volunteer maintenance bench. Mara's crooked tree becomes a rough irrigation drawing beside a repaired pot. People inside the institution also helped her curiosity find practical use.",
+"understanding": "A child who imagined trees \u2192 a learner finding practical support."
+},
+{
+"n": 18,
+"name": "Room for One",
+"play": "Fold the bed into its wall recess so a workbench can extend, then use the bench to reach a shared landing. The two occupy the same space, making the relationship obvious.",
+"evidence": "An apprentice's work coat has replaced the child's coat. The patched toy and tree ornament survived the move. Mara became someone with skills, cramped living conditions and an ordinary working life.",
+"understanding": "A remembered child \u2192 an adult organising a working life."
+},
+{
+"n": 19,
+"name": "A Repair That Held",
+"play": "Roll a maintenance jack beneath a sagging landing, raise it, then seat a safety pin in an old handmade bracket. The jack can now be lowered without the landing falling.",
+"evidence": "The bracket bears Mara's crooked-tree mark; its handhold is polished by years of neighbours passing. This was a modest repair that helped many people, not a grand invention made for the player.",
+"understanding": "Anonymous technician \u2192 a neighbour whose small repair served others."
+},
+{
+"n": 20,
+"name": "Two Hooks",
+"play": "Pull a narrow sleeping platform clear of the shelf obstructing it. Its second section unfolds, providing a step to the next room.",
+"evidence": "The single bed has become a double. Two coats hang above mismatched mugs; the photograph now includes another adult. The familiar tree ornament sits beside somebody else's handmade object. Mara's life widened beyond work.",
+"understanding": "An individual life \u2192 a shared home."
+},
+{
+"n": 21,
+"name": "The Evening Cycle",
+"play": "Set two stools on the dining sensors, start the evening routine, then latch the raised table before it folds away. The table and lowered shutters form a route through a serving hatch.",
+"evidence": "The home once accommodated two people's differing routines: two workstations, shared repairs, practical compromises. The automated arm lays empty bowls; it does not conjure fresh meals decades after abandonment.",
+"understanding": "An abstract relationship \u2192 two people accommodating each other every day."
+},
+{
+"n": 22,
+"name": "The Shared Landing",
+"play": "Open service shutters in sequence to guide a shared trolley onto a balcony lift, then use its empty return tray as a crossing. The route stays visible across the courtyard.",
+"evidence": "Apartments have been converted into a communal workshop and food station. Repairs carry different signatures, including Mara's. Scarcity produced cooperation as well as deterioration; the bunker was never only a cruel machine.",
+"understanding": "Private perseverance \u2192 a community adapting together."
+},
+{
+"n": 23,
+"name": "The Second Place",
+"play": "In Mara's later home, reach the rear service recess, retrieve a disconnected chair coupling and reconnect it so the dining table locks at balcony height. Restarting the cycle sets a second empty bowl.",
+"evidence": "One chair is worn; the other has been deliberately withdrawn. A shared portrait and carefully stored cardigan make the absence personal. The player's practical solution briefly reinstates a routine Mara had chosen to stop.",
+"understanding": "A dinner routine \u2192 evidence of a consequential absence."
+},
+{
+"n": 24,
+"name": "What She Kept",
+"play": "Fold down a small workbench to clear the balcony exit. Its underside reveals a familiar two-person repair jig adapted for use by one pair of hands.",
+"evidence": "The second mug is wrapped safely beside the childhood ornament, while the tools remain in use. Mara kept a relationship's traces without leaving every part of her life frozen around them. We need no explanation of how her partner died.",
+"understanding": "A life frozen by loss \u2192 a person who kept both memories and useful work."
+},
+{
+"n": 25,
+"name": "Leaving a Light",
+"play": "Park the serving arm in its safe position, then move its local power coupling to the service lift. A separate small lamp remains lit over the keepsakes.",
+"evidence": "D17 stops preserving an empty routine when it obstructs a useful task. The lift carries him toward Mara's work address. It is his first clear practical departure from treating every functioning process as something to perpetuate.",
+"understanding": "Functioning routines should continue \u2192 some should be stopped to make progress."
+},
+{
+"n": 26,
+"name": "The Intake",
+"play": "Turn a valve and watch water lift a float connected to a gate. Let it drain once, then refill and cross. A small inspection tank keeps the entire cause and effect visible.",
+"evidence": "Huge pipes disappear upward while the surrounding industrial level is dark. The first impression is that a failing population spent its remaining resources feeding an unseen destination.",
+"understanding": "Unexplained industry \u2192 a question about where scarce resources went."
+},
+{
+"n": 27,
+"name": "A Share of the Water",
+"play": "Fill a reserve tank from an abandoned wash line, close its retaining gate, then use the stored water to raise a service platform while the main circulation continues.",
+"evidence": "Improvised branch connections show successive residents extending the system with whatever was available. Resource pressure is visible, but the puzzle never requires stealing water from an occupied ward.",
+"understanding": "Resources simply consumed \u2192 scarcity managed through adaptations."
+},
+{
+"n": 28,
+"name": "Other Hands",
+"play": "Switch a maintenance carrier onto a repaired track, stop it beneath a broken ladder and latch it before climbing. Apply familiar actions while machinery moves on a much larger scale.",
+"evidence": "Different welding, repairs and makers' marks accumulate along the route. Mara's work belongs to a collective effort spanning generations. Damaged surface instruments suggest the world outside needed deliberate help.",
+"understanding": "One person's project \u2192 many people's accumulated work."
+},
+{
+"n": 29,
+"name": "The Root Lift",
+"play": "Fill a counterweight reservoir, ride its lift to the brake, secure the mechanism, then release water through a second channel. Early draining merely lowers the lift and allows a quick retry.",
+"evidence": "Following the outflow reveals the structure from Mara's drawings at enormous scale. The destination is beginning to look biological. The player discovers purpose by making the system work.",
+"understanding": "A personal drawing \u2192 a functioning structure on an immense scale."
+},
+{
+"n": 30,
+"name": "The First Leaf",
+"play": "Crank open an inspection shutter. Its task lamp reveals established roots receiving the water, and small leaves moving high beyond the machinery.",
+"evidence": "The bunker was helping restore the surface. Growth was already underway; D17 has reopened one neglected branch. At the midpoint, apparent industrial futility becomes evidence of care for a future its workers might never see.",
+"understanding": "Apparently futile industry \u2192 a restoration effort already sustaining life."
+},
+{
+"n": 31,
+"name": "The Broken Branch",
+"play": "Guide overflow into a holding basin, use its float to reach a failed branch coupling, replace the coupling, then reopen the nursery channel while preserving the trunk's flow.",
+"evidence": "Mara completed most of the repair before losing access to the high connection. Her work was tangible, unfinished and useful. The wider restoration system keeps operating regardless of this local repair.",
+"understanding": "A finished legacy \u2192 a specific useful task still awaiting completion."
+},
+{
+"n": 32,
+"name": "What She Could Reach",
+"play": "Carry a small valve link across slow phased service platforms, latch the carrier at a handrail, and install the link through a narrow access gap. No new rule is introduced under pressure.",
+"evidence": "Mara's repairs become lower, grips become larger, and two-handed controls acquire one-handed adaptations. She continued working as her body changed. The final inaccessible gap explains why D17 can complete something she could not.",
+"understanding": "A repair left undone \u2192 physical limits met with continued ingenuity."
+},
+{
+"n": 33,
+"name": "The Upward Line",
+"play": "Park the ascending service carrier beside the medical balcony and release its bridge. A local forwarding terminal identifies the ward as Mara's next recorded address.",
+"evidence": "From the quiet ascent, see living growth continuing beyond the repaired branch. Then the view narrows into clinical architecture. The question changes from what Mara built to what happened to her afterward.",
+"understanding": "What did Mara build \u2192 what happened to her afterward."
+},
+{
+"n": 34,
+"name": "Please Remain",
+"play": "An attendant gently retrieves D17 from a marked active hazard zone and puts him on a powered safe bay. A rolling transport dummy demonstrates the same sequence before the next crossing.",
+"evidence": "The machine is enormous and frightening, yet its padding and careful deposit are unmistakably protective. Its instructions outlived the community they served. Capture is information rather than a death penalty.",
+"understanding": "Predatory machine \u2192 frightening equipment with a protective rule."
+},
+{
+"n": 35,
+"name": "An Empty Bed",
+"play": "Send the transport dummy rolling into one hazard zone. Cross a second while the attendant completes its visible retrieval trip. Safe islands allow observation without a strict reaction test.",
+"evidence": "Entire ward rows are empty, with equipment consolidated near one maintained room. The player can see how a system designed for many inhabitants contracted around fewer people.",
+"understanding": "Abandoned medical system \u2192 care concentrated around fewer occupants."
+},
+{
+"n": 36,
+"name": "A Handrail for One",
+"play": "Lower a patient-transfer platform, brake its supports and cross a damaged floor outside the active retrieval zones. Familiar load transfer creates a breather within the ward.",
+"evidence": "The familiar grip modifications and tree mark appear beside a patient bed. Mara was both a user and repairer of this equipment. The maintained room is becoming personal, but these traces do not yet establish that she is alive.",
+"understanding": "Unknown patient \u2192 someone connected to Mara's repair history."
+},
+{
+"n": 37,
+"name": "The Safe Place",
+"play": "Move a service coupling so an elevated bay becomes the nearest powered destination. Test the route with the dummy, then deliberately enter the hazard zone and let the attendant lift D17.",
+"evidence": "The same behaviour that felt like imprisonment becomes assistance. Nothing about the attendant's intentions changes; the player has learned how its limited definition of help works.",
+"understanding": "Capture prevents progress \u2192 the same transport can provide a route."
+},
+{
+"n": 38,
+"name": "The Long Watch",
+"play": "Turn a bedside task lamp to find a manual release behind a folded privacy screen. Opening it reveals a service recess connected to the next corridor.",
+"evidence": "Human wire repairs and machine-made braces reinforce the same bed. Through the recess, the attendant replaces one of its worn lifting pads. Its persistent care helped somebody survive even as its rules restricted them.",
+"understanding": "Care only as confinement \u2192 care also as prolonged survival."
+},
+{
+"n": 39,
+"name": "The Care Circuit",
+"play": "Use two service couplings to route the attendant between a low bay and an elevated maintenance bay, carrying a replacement bridge pin upward with D17. Seat the pin before changing bay power again.",
+"evidence": "Bedside ventilation remains on an explicitly separate protected circuit. D17 gains passage by working around care that is still needed. A familiar hand-built bypass leads toward the upper residence.",
+"understanding": "Escape may require disruption \u2192 passage can preserve essential care."
+},
+{
+"n": 40,
+"name": "The Broken Reach",
+"play": "Secure the crossing, send the dummy through a lower retrieval zone to clear the rail, then route D17 to the final upper bay. Telegraph the damaged machinery along the transfer with sparks and motion.",
+"evidence": "After the player's successful transfer, a brief authored landing failure makes D17's old knee buckle; the attendant's support prevents the fall. He is left on a safe landing, damaged but intact. His supposed enemy has just protected him.",
+"understanding": "D17 only helps others \u2192 he is also vulnerable and can be helped."
+},
+{
+"n": 41,
+"name": "Still Warm",
+"play": "Release a recently repaired latch and enter a workshop antechamber. A short safe approach lets D17 move carefully on the damaged knee.",
+"evidence": "Fresh shavings, a steaming mug, a living plant and light moving beneath an inner door provide independent signs of recent habitation. An optional cough supports the visual evidence. For the first time, hope of finding someone is well grounded.",
+"understanding": "Historical traces \u2192 credible evidence of someone here now."
+},
+{
+"n": 42,
+"name": "The Wrong Delivery",
+"play": "An outstretched hand beneath a lift assembly wants a spanner. D17 first offers the parcel; Mara nudges it aside. Move a small tool trolley within reach and give her the matching tool.",
+"evidence": "The recipient is busy, practical and faintly impatient. Her ordinary humour breaks the dread. The shared motifs identify her workshop, but her response immediately exceeds the personality we inferred from her belongings.",
+"understanding": "An imagined recipient \u2192 a busy person with her own immediate intention."
+},
+{
+"n": 43,
+"name": "The Receiver",
+"play": "Sit on a service stool when Mara notices the bad knee. She repairs it with the same bracket technique seen earlier. Present the parcel close enough for her to inspect its old address.",
+"evidence": "She recognises her parent's markings and touches the crooked tree on the wrapper, then the matching keepsake. D17 accepts care. Mara holds the parcel for a moment, then lets him secure it while they finish opening the route outside.",
+"understanding": "D17 as giver \u2192 D17 as a willing recipient of care."
+},
+{
+"n": 44,
+"name": "Two at the Bench",
+"play": "D17 braces a counterweight while Mara seats its safety pin; she then holds the release while he passes through a narrow service duct and reconnects the lift coupling. Each partner waits until the other is ready.",
+"evidence": "Neither can finish alone. Behind the panel, a fresh bypass feeds the depot branch and repeats the opening relay pulse: Mara's earlier repairs woke D17. Now his help finishes hers. Their cooperation adds a new relationship without pretending to replace the partner she lost.",
+"understanding": "A chance meeting \u2192 a reciprocal chain set in motion by Mara's earlier work."
+},
+{
+"n": 45,
+"name": "The Window Test",
+"play": "Raise a blocked sampling shutter using a latched counterweight. Mara operates the analyser while D17 connects the exterior intake, then returns to let her inspect the result.",
+"evidence": "The exterior reading moves into an acceptable band; the hospital still flags the physical risks of her departure. Mara considers both, takes her walking support and releases the manual exit latch herself. D17 does not decide for her.",
+"understanding": "A person to extract \u2192 a person assessing and choosing departure."
+},
+{
+"n": 46,
+"name": "What to Take",
+"play": "Park the unfinished work safely, bring Mara her walking support and place the portable rest seat on the lift trolley. She pockets the small tree keepsake. No inventory selection screen is needed.",
+"evidence": "D17 begins arranging more tools; she gently redirects him toward the exit. Mara leaves a noncritical repair for another day. Her change is accepting that she may experience the world she helped prepare before every task is complete.",
+"understanding": "Every job must be finished first \u2192 safe unfinished work can wait."
+},
+{
+"n": 47,
+"name": "The Open Door",
+"play": "Reach a release lever in a narrow side recess and hold the heavy door open for Mara. She crosses, takes over the manual hold on the far side, and lets D17 release his lever and follow.",
+"evidence": "The assistance immediately goes both ways. D17 no longer interprets an outstretched hand as a request for the parcel; at the next support point he offers his own.",
+"understanding": "One companion assists the other \u2192 both take responsibility in turn."
+},
+{
+"n": 48,
+"name": "The Last Lift",
+"play": "With Mara holding the brake, position the counterweight, latch it and route power to the passenger platform. Lower its boarding bridge, bring the seat trolley aboard, then join her on the occupancy plate so she can start the car.",
+"evidence": "Occupancy finally refers to actual people who intend to travel. The school required D17 to impersonate an absent child; here the system works because both companions are ready.",
+"understanding": "Occupancy as compliance \u2192 occupancy as shared readiness."
+},
+{
+"n": 49,
+"name": "The Threshold",
+"play": "Use a maintenance bar to brace the wind-loaded outer shutter while Mara turns its handle. Open it together and cross onto stable ground. Let the player control the walk into daylight.",
+"evidence": "Leaves move without a motor. The outside is weathered and uneven, with surviving infrastructure still visible. Mara sees a real landscape after spending her life imagining and preparing for one.",
+"understanding": "An imagined future \u2192 an imperfect living place they can enter."
+},
+{
+"n": 50,
+"name": "Somewhere to Sit",
+"play": "Move the portable seat onto a level patch Mara indicates and place a flat support beneath its short leg. Clear the immediate approach, then let her choose when to sit.",
+"evidence": "D17 starts to straighten an irrelevant crooked stone; Mara rests a hand on his wrist and looks toward the view. He stops. A slightly imperfect arrangement can be sufficient for somebody's comfort.",
+"understanding": "Correct arrangement \u2192 sufficient comfort for this particular person."
+},
+{
+"n": 51,
+"name": "Delivered",
+"play": "Present the parcel when Mara reaches for it. She opens the children's outdoor boots, compares one with her own foot and sets them nearby. Delivery completes; the player can move in the safe vista and choose to sit beside her.",
+"evidence": "The parent's hope arrives too late in one sense and in time in another. Mara accepts the present without erasing her losses. D17 has no next address and stays anyway. The credits begin on the shared rest, with no death scene or threat sting.",
+"understanding": "Complete the delivery and proceed \u2192 complete it and freely remain."
+}
+]

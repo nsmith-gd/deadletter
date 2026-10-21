@@ -240,6 +240,31 @@ Treatment `card`. About 35 s.
 > She's drawn on the wall behind the window panel. A tree. I haven't had it cleaned. *[pause]*
 > I'll keep recording these until someone writes back. *[pause]* Take care of yourselves.
 
+### `att_escort`: an escort's log (DL-15, under the sick bay balcony)
+
+Treatment `card_worn`. About 22 s. A tired attendant recording a report for the file, and stopping short of filing it.
+> Escort log. Fourteen hundred. *[pause]*
+> Pupil M.D. not in sick bay at the check. Not in class. Not in the cloakroom.
+> Found under the sick bay balcony. Again. Third time this week.
+> She says she was listening to the pipes. *[pause]*
+> Recommend… *[long pause]* No recommendation. Let her listen.
+
+### `att_bell`: end of lessons (DL-16, the corridor tannoy)
+
+Treatment `tannoy`, small and bright, the register's voice. About 10 s. Plays as he comes into the dismissal corridor.
+> End of lessons. *[pause]* Pupils will walk, not run, to the playground.
+> Escorts to the gate, please. *[pause]* Order above all.
+
+### `att_volunteer`: Mr Vance, to Mara (DL-17, the stool by the bench)
+
+Treatment `elder`. About 25 s. An old volunteer who mends things, fond and plain.
+> Mara. Vance here. The bench. *[pause]*
+> Your drawing's good. Better than mine.
+> Water's patient, love. Give it a slope and it'll go round anything.
+> I've put your name down for the Works. Ring A. Water and the growing beds.
+> They'll grumble you're young. Let them. *[pause]*
+> Your tree can be crooked. The channels can't. Mind the levels.
+
 ## Recording checklist
 
 | File | Treatment | About |
@@ -264,5 +289,8 @@ Treatment `card`. About 35 s.
 | `att_caretaker` | elder | 30 s |
 | `att_lesson` | card | 20 s |
 | `att_teacher` | card | 35 s |
+| `att_escort` | card_worn | 22 s |
+| `att_bell` | tannoy | 10 s |
+| `att_volunteer` | elder | 25 s |
 
 **Total:** about 7 minutes of recording.
