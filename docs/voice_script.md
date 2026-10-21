@@ -5,8 +5,8 @@
 ## The motto
 
 The order-era tannoys all end the same way: **"Order above all."** Say it flatly, as a sign-off nobody hears any
-more. The player hears it often enough that it stops meaning anything; later chapters paint it over, deface it and
-finally scratch it out (`docs/story_bible.md`).
+more. The player hears it often enough that it stops meaning anything; later chapters paint it over, then put
+names and repairs in its place, and at the end the old sign is a work surface, face down (`docs/full_game_plan.md`).
 
 ## The idea
 

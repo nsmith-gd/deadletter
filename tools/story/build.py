@@ -1,10 +1,9 @@
 import json, re
 # The story and the puzzles after the school come from the director's plan (docs/full_game_plan.md, revision 0.3):
 # section 6 for the prologue's story direction, section 7 per level after it, section 5 for the ladder and the
-# permanent rules, section 4 for each chapter's turn. The gameplay of the levels already built (DL-01 to DL-17) comes
-# from docs/gameplay_breakdown.md, and scenes.json keeps what the built game shows.
+# permanent rules, section 4 for each chapter's turn and the beats. The gameplay of the levels already built (DL-01 to
+# DL-17) comes from docs/gameplay_breakdown.md; what the built game shows is on the board's cards.
 PLAN = open('../../docs/full_game_plan.md', encoding='utf-8').read()
-scenes = {s['n']: s for s in json.load(open('scenes.json'))}
 BUILT = 17
 
 
@@ -68,8 +67,9 @@ cap = lambda t: t[0].upper() + t[1:] if t else t
 dlrefs = lambda t: re.sub(r'DL-(\d\d)/(\d\d)', r'DL-\1 and DL-\2', re.sub(r'DL-(\d\d)[–-](\d\d)', r'DL-\1 to DL-\2', t))
 
 GAMEPLAY = read_gameplay()
-PLAN_LEVELS = plan_levels('7. Full post-prologue plan')
-DIRECTION = {m.group(1): m.group(3).strip() for m in re.finditer(r'^\| (DL-\d\d) ([^|]+)\| ([^|]+)\| ([^|]+)\|$', PLAN, re.M)}
+PLAN_LEVELS = plan_levels('7. Full post-prologue plan') | plan_levels('Appendix A')
+# Section 6's table: | DL-nn Name | mistaken approach → insight | story direction |
+DIRECTION = {m.group(1): m.group(4).strip() for m in re.finditer(r'^\| (DL-\d\d) ([^|]+)\| ([^|]+)\| ([^|]+)\|$', PLAN, re.M)}
 # Each chapter's turn from section 4: (changed belief, emotional movement).
 TURNS = [[c.strip() for c in l.strip('|').split('|')][1:3] for l in plan_section('4. Save the Cat').splitlines() if re.match(r'^\| [A-Z][^|]*, DL-', l)]
 # (first, last, part, eras, where, its idea, changed belief, emotional movement)
@@ -81,12 +81,6 @@ PARTS = [(1, 11, 'Prologue', ['order', 'failure'], 'The lower rings', 'You are a
          (42, 46, 'Ch 5 Recipient Found', ['now'], 'The workshop', 'Someone particular is here'),
          (47, 51, 'Ch 6 First Delivery', ['now'], 'The surface', 'Life continues beyond our ownership')]
 PARTS = [p + tuple(TURNS[i]) for i, p in enumerate(PARTS)]
-# What the built game shows where it differs from scenes.json.
-GAME = {
- 15: 'D-17 takes the place of the child he is following. Three seats kept ready in a class built for forty; the third is Mara’s, her tree carved in the lid, her chair pulled out as if she got up in a hurry. Under the sick bay balcony, her hiding place.',
- 16: 'The dismissal procession goes where the PLAYGROUND arrow points: into a storage rack of folded figures, dozens of them. D-17 steps aside for them as if they were children.',
- 17: 'The school’s workshop, the most lived-in room: pupils’ growing experiments with names on them, a volunteer’s bench. Mara’s crooked tree has become an irrigation drawing, and the drawer holds her placement at the Works.',
-}
 PUZZLE = {'Disposition', 'Builds on', 'Goal / evidence', 'Goal / play', 'Obvious wrong solution', 'Apparent wrong approach', 'Apparent wrong approach / play', 'Play', 'Recovery / forward'}
 STORY = {'Aha / story': 'Story', 'Insight / story': 'Insight and story'}
 
@@ -94,17 +88,16 @@ levels = []
 for n in range(1, 52):
     lid = 'DL-%02d' % n
     p = next(p for p in PARTS if p[0] <= n <= p[1])
-    s, bd = scenes[n], GAMEPLAY.get(lid)
+    name, fields = PLAN_LEVELS[lid]
+    bd = GAMEPLAY.get(lid)
     rows, disp, game = [], 'Preserve', None
     if bd and n <= BUILT:  # as built: the breakdown's panel
         none = re.match(r'none\b', bd['new'], re.I)
         game = dict(type=bd['type'], builds=bd['builds'], box=['Nothing new' if none else 'New here', cap(bd['new']), bool(none)],
                     steps=bd['steps'], pairs=[['Wrong first try', cap(bd['wrong'])], ['The aha', cap(bd['aha'])], ['Carries forward', bd['carries']]])
     if n <= 11:
-        name = s['name']
-        rows = [['Story direction', cap(DIRECTION[lid])], ['What it says', s['evidence']], ['Player comes to see', s['understanding']]]
+        rows = [['Story direction', cap(DIRECTION[lid])]]
     else:
-        name, fields = PLAN_LEVELS[lid]
         f = {k: dlrefs(cap(v)) for k, v in fields}
         disp, aha = f['Disposition'], ''
         for k, _ in fields:
@@ -114,7 +107,6 @@ for n in range(1, 52):
                 aha, _, v = v.partition('. ')
                 aha, v = aha + '.', cap(v)
             if v: rows.append([STORY.get(k, k), v])
-        if n <= BUILT: rows.append(['In the game now', GAME.get(n, s['evidence'])])
         wrong = f.get('Obvious wrong solution') or f.get('Apparent wrong approach') or f.get('Apparent wrong approach / play', '')
         steps = [cap(x.strip().rstrip('.')) + '.' for x in f.get('Play', '').split('; ') if x.strip()]
         plan = dict(type='Planned · ' + disp, builds=f.get('Builds on', ''), box=['Goal', f.get('Goal / evidence') or f.get('Goal / play', ''), False],

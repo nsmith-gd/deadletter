@@ -169,7 +169,7 @@ Fixes from the director's Version 19 playthrough (play log, 21 October):
 
 ## Pass 6: the prologue
 
-The eleven scenes are now the game's **prologue** (`docs/roadmap.md` plans the chapters after it). See
+The eleven scenes are now the game's **prologue** (`docs/full_game_plan.md` plans the chapters after it). See
 `docs/chapter1_pass6_plan.md` for the notes and what shipped. In the game:
 - **The opening card** is three lines: *P.A. 387 · Seventy-six years of dark. · Then, tonight, the lights came on.*
 - **Tableaux, not signs:** the remains have come apart where people were, doing something (`art/pass6`). The game

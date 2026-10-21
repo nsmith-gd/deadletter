@@ -1,4 +1,4 @@
-"""Prologue pass 7 (docs/story_bible.md, "What changes in what's built: the prologue"): the Order era's institutional
+"""Prologue pass 7 (docs/full_game_plan.md, the motto thread: enamel authority in the lower rings): the Order era's institutional
 furniture, sparingly. Built in FINAL world coordinates after every other set builder (art/dl01/build_dl01.py appends
 this module to its PASS6 list, after art/pass7/build_audio_props.py); other builders' objects are only read here (ray
 casts against the built scene to find the wall faces), never changed.

@@ -1,4 +1,4 @@
-"""Prologue pass 6 (docs/chapter1_pass6_plan.md, docs/roadmap.md): the ending reveal and the prologue's two secret rooms.
+"""Prologue pass 6 (docs/chapter1_pass6_plan.md): the ending reveal and the prologue's two secret rooms.
 Built in FINAL world coordinates (game x = Blender x), after every other set builder; other builders' objects are only
 changed here, by name.
 

@@ -7,7 +7,7 @@ with `python3 build.py` here: `template.html` plus the levels, timeline and bibl
 turn (section 4 and the environmental gradient), the prologue's story direction (section 6), and each level's story
 after it (section 7: the aha's first sentence goes to the gameplay panel, the rest is the level's story). The
 timeline, the bible notes and the reference sheets in `build.py` and `template.html` condense the plan's sections 1 to
-3 and 8. `scenes.json` (from `docs/scene_overview.md`) still supplies what the built levels say in the game.
+3 and 8.
 
 **Gameplay:** DL-01 to DL-17 show their puzzles as built, from `docs/gameplay_breakdown.md` (keep its field names and
 `### DL-nn Name` headings when editing). DL-12 to DL-17 also show what the plan proposes for them, and DL-18 to DL-51
