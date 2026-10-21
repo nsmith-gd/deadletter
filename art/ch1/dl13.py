@@ -39,7 +39,7 @@ import sys
 
 import bpy
 import bmesh
-from mathutils import Matrix, Vector
+from mathutils import Euler, Matrix, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEX = os.path.join(HERE, 'textures')
@@ -51,7 +51,8 @@ FONT = '/usr/share/fonts/truetype/crosextra/Carlito-Bold.ttf'
 # --------------------------------------------------------------------------------------------------------------------
 X0, X1 = 216.0, 232.0
 CEIL = 4.3                          # the classroom's ceiling (the case reaches 3.6 and the gallery door 3.98)
-FRONT_Y = -0.6                      # the cut toward the camera: floor, ceiling and lintels stop here or before
+FRONT_Y = -0.6                      # the cut toward the camera: the ceiling and the gallery's deck and front stop here
+LINTEL_Y = -0.5                     # the door lintels stop here (nothing stands in front of the lane but the low rail)
 ALCOVE = (216.15, 220.4)            # where the desks are, the room runs back to ALCOVE_Y
 ALCOVE_Y = 4.0
 BACK_Y = 1.6                        # the wall behind the apparatus and the gallery
@@ -76,7 +77,8 @@ CASE_Y = (1.0, 1.55)
 TREE = (225.0, 1.27, 2.78)          # the trunk's foot in the case
 GALLERY = (227.6, 232.0, 2.05)
 DOOR_OUT = 230.6
-DOOR_OUT_H = 1.93
+DOOR_OUT_H = 1.85
+VEST = (230.7, 0.9, 3.95)           # past the door out: DL-14's back wall face (y) and ceiling, so the seam at 232 meets
 RAIL_Y = -0.52
 SHOOT = (229.42, 1.16)
 
@@ -84,6 +86,10 @@ SHOOT = (229.42, 1.16)
 CYCLE = 12.0
 MARKS = (1.0, 2.6, 4.2)
 RED = (4.2, 5.6)
+
+# The seated figures are linked duplicates of one mesh (LessonFigureSeated), as asked: 10 objects, 2 draw calls each
+# unless the game instances them. True merges them into AttLessonRoom instead (one more material there, 19 fewer calls).
+MERGE_SEATED = False
 
 I4 = Matrix.Identity(4)
 
@@ -123,8 +129,6 @@ KNOWN_WORN = {
                        metallic=0, dust=(.1, .09, .08), grime_scale=6, chip_scale=30, chip_amount=.75, dust_amount=.6),
     'CastIron': dict(base=(.035, .034, .032), dirt=(.05, .03, .018), chip=(.13, .12, .1), rough=.75, chip_rough=.45,
                      metallic=.5, dust=(.08, .075, .065), grime_scale=9, chip_scale=50, chip_amount=.72, dust_amount=.5),
-    'HandledBrass': dict(base=(.2, .14, .06), dirt=(.08, .06, .03), chip=(.62, .46, .2), rough=.5, chip_rough=.2,
-                         metallic=.85, dust=(.12, .1, .07), grime_scale=8, chip_scale=26, chip_amount=.5, dust_amount=.2),
 }
 KNOWN_PLAIN = {'Brass': ((.45, .32, .12), .45, .8), 'GaugeNeedle': ((.02, .018, .016), .4, .3)}
 
@@ -233,13 +237,11 @@ def make_atlas(path):
         d.line((sx + 30 * math.cos(r), sy + 30 * math.sin(r), sx + 48 * math.cos(r), sy + 48 * math.sin(r)), fill=(214, 176, 80), width=4)
     d.ellipse((sx - 24, sy - 24, sx + 24, sy + 24), fill=(222, 184, 84))
     d.text((905, 96), 'TOWARD THE SUN', font=font(15), fill=(60, 50, 34), anchor='mm')
-    for k, (word, cx) in enumerate((('1  ROOT', 80), ('2  TRUNK', 190), ('3  BRANCHES', 310))):
-        d.rounded_rectangle((cx - 52, 18, cx + 52, 44), radius=6, fill=(196, 186, 156))
-        d.text((cx, 31), word, font=font(16), fill=ink, anchor='mm')
-    d.rounded_rectangle((690 - 52, 18, 690 + 52, 44), radius=6, fill=(196, 186, 156))
-    d.text((690, 31), '4  LEAVES', font=font(16), fill=ink, anchor='mm')
-    for cx in (80, 190, 310):                               # pointers from the cards toward the middle
-        d.line((cx + 52, 31, cx + 64, 31), fill=(120, 96, 50), width=3)
+    for k, word in enumerate(('1  ROOT', '2  TRUNK', '3  BRANCHES', '4  LEAVES')):   # the stages, bottom to top
+        cy = y1 - 32 - 26 * k
+        d.rounded_rectangle((24, cy - 11, 150, cy + 11), radius=5, fill=(196, 186, 156))
+        d.text((87, cy), word, font=font(16), fill=ink, anchor='mm')
+        d.line((150, cy, 168, cy), fill=(120, 96, 50), width=3)
 
     # --- the blackboard: the lesson in chalk, half wiped, and the line written out in rows ------------------------
     x0, y0, x1, y1 = R_BOARD
@@ -330,7 +332,7 @@ def make_atlas(path):
     cols = [(150, 80, 60), (70, 110, 140), (90, 130, 80), (180, 150, 70)]
     for k, ch in enumerate('ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
         lx = x0 + 6 + k * 39.1
-        d.rectangle((lx, y0 + 6, lx + 34, y1 - 6), fill=tuple(int(c * 0.8) for c in cols[k % 4]))
+        d.rectangle((lx, y0 + 6, lx + 34, y1 - 6), fill=tuple(int(c * 0.55 + 60) for c in cols[k % 4]))
         d.text((lx + 17, (y0 + y1) / 2), ch + ch.lower(), font=font(22), fill=(232, 224, 200), anchor='mm')
 
     # --- the poster: the parts of a tree -------------------------------------------------------------------------------
@@ -339,7 +341,7 @@ def make_atlas(path):
     d.rectangle((x0 + 6, y0 + 6, x1 - 6, y1 - 6), outline=(80, 70, 50), width=3)
     d.text(((x0 + x1) / 2, y0 + 30), 'THE PARTS', font=font(30), fill=(50, 70, 50), anchor='mm')
     d.text(((x0 + x1) / 2, y0 + 62), 'OF A TREE', font=font(30), fill=(50, 70, 50), anchor='mm')
-    straight_tree((x0 + x1) / 2, y0 + 270, 150, (70, 60, 40), w=4)
+    straight_tree((x0 + x1) / 2 - 26, y0 + 270, 130, (70, 60, 40), w=4)
     for k, word in enumerate(('leaves', 'branches', 'trunk', 'root')):
         d.text((x1 - 14, y0 + 110 + 52 * k), word, font=font(18), fill=(50, 40, 30), anchor='rm')
 
@@ -457,12 +459,24 @@ def disc_decal(K, center, r, rect, mat, seg=32):
 # --------------------------------------------------------------------------------------------------------------------
 # The teaching figures: a child-sized jointed wooden pupil model (a lay figure: egg head, ball joints, no face)
 # --------------------------------------------------------------------------------------------------------------------
-def pupil(bm, w, j, st, pose='stand'):
+def pupil(bm, w, j, st, pose='stand', low=False):
     """DL-12's pupil model (art/ch1/dl12.py figure(): the same parts, sizes and materials), in its frame: the floor at
     z 0, centred, facing -y. 'stand': on its four-castor stand, 0.95 tall overall. 'seat': without the stand, sat on a
-    chair whose seat is at 0.30, forearms on a desk top at 0.50 ahead of it (hands 0.25 forward)."""
-    from build_d17 import add_box, add_cyl, add_sphere, add_torus, rounded_box
+    chair whose seat is at 0.30, forearms on a desk top at 0.50 ahead of it (hands 0.25 forward). low: fewer
+    segments, for the figures sat at the desks behind the lane."""
+    import build_d17 as d17
+    from build_d17 import add_box, add_torus
     V = Vector
+    sg = (lambda n: max(5, n * 2 // 3)) if low else (lambda n: n)
+
+    def add_cyl(bm, a, b, r1, r2=None, mat=0, seg=8):
+        return d17.add_cyl(bm, a, b, r1, r2, mat=mat, seg=sg(seg))
+
+    def add_sphere(bm, c, r, mat=0, seg=8, scale=(1, 1, 1)):
+        return d17.add_sphere(bm, c, r, mat=mat, seg=sg(seg), scale=scale)
+
+    def rounded_box(size, center, p=3.0, cuts=3, bm=None, mat=0, rot=None):
+        return d17.rounded_box(size, center, p=p, cuts=(2 if low else cuts), bm=bm, mat=mat, rot=rot)
     if pose == 'stand':
         for sx in (-1, 1):
             for sy in (-1, 1):
@@ -528,9 +542,9 @@ def figure_meshes(M):
     desks'). Both turned to face +x (toward the apparatus)."""
     turn = _rz(math.radians(90))
     out = []
-    for name, pose in (('LessonFigureStand', 'stand'), ('LessonFigureSeated', 'seat')):
+    for name, pose, low in (('LessonFigureStand', 'stand', False), ('LessonFigureSeated', 'seat', True)):
         K = Kit()
-        pupil(K.bm, K(M['PupilWood']), K(M['CrateWood']), K(M['WornIron']), pose)
+        pupil(K.bm, K(M['PupilWood']), K(M['CrateWood']), K(M['WornIron']), pose, low)
         bmesh.ops.transform(K.bm, matrix=turn, verts=K.bm.verts)
         out.append(K.mesh(name))
     return out
@@ -585,19 +599,21 @@ def room(S, M):
     add_box(bm, (ALCOVE[1] + 0.075, (BACK_Y + ALCOVE_Y) / 2, 0.5), (0.15, ALCOVE_Y - BACK_Y, 1.0), mat=da)
     add_box(bm, (ALCOVE[1] + 0.075, (BACK_Y + ALCOVE_Y) / 2, (1.0 + CEIL) / 2), (0.15, ALCOVE_Y - BACK_Y, CEIL - 1.0), mat=pl)
     add_box(bm, ((APP_X[0] + GALLERY[0]) / 2, BACK_Y + 0.1, CEIL / 2), (GALLERY[0] - APP_X[0], 0.2, CEIL), mat=pl)
-    dado_wall(GALLERY[0], X1, BACK_Y, BACK_Y + 0.2, GALLERY[2], CEIL, rail=0.95)
-    # The ceiling, with a deep plaster cornice along the back.
-    add_box(bm, ((X0 + X1) / 2, (FRONT_Y + ALCOVE_Y + 0.2) / 2, CEIL + 0.1), (X1 - X0, ALCOVE_Y + 0.2 - FRONT_Y, 0.2), mat=pl)
+    dado_wall(GALLERY[0], VEST[0], BACK_Y, BACK_Y + 0.2, GALLERY[2], CEIL, rail=0.95)
+    dado_wall(VEST[0], X1, VEST[1], VEST[1] + 0.2, GALLERY[2], VEST[2], rail=0.95)
+    # The ceiling, with a deep plaster cornice along the back; lower past the door out, as DL-14's.
+    add_box(bm, ((X0 + VEST[0]) / 2, (FRONT_Y + ALCOVE_Y + 0.2) / 2, CEIL + 0.1), (VEST[0] - X0, ALCOVE_Y + 0.2 - FRONT_Y, 0.2), mat=pl)
+    add_box(bm, ((VEST[0] + X1) / 2, (FRONT_Y + BACK_Y + 0.2) / 2, (VEST[2] + CEIL + 0.2) / 2), (X1 - VEST[0], BACK_Y + 0.2 - FRONT_Y, CEIL + 0.2 - VEST[2]), mat=pl)
     prism(bm, [(ALCOVE_Y, CEIL), (ALCOVE_Y - 0.14, CEIL), (ALCOVE_Y, CEIL - 0.14)], 'x', ALCOVE[0], ALCOVE[1], mat=pl)
     # The door in: the cross wall at x 216 behind the lane, the lintel over it, an architrave on the room side.
     dx0, dx1, dh = DOOR_IN
     jamb = 0.62
     add_box(bm, ((dx0 + dx1) / 2, (jamb + ALCOVE_Y) / 2, 0.5), (dx1 - dx0, ALCOVE_Y - jamb, 1.0), mat=da)
     add_box(bm, ((dx0 + dx1) / 2, (jamb + ALCOVE_Y) / 2, (1.0 + CEIL) / 2), (dx1 - dx0, ALCOVE_Y - jamb, CEIL - 1.0), mat=pl)
-    add_box(bm, ((dx0 + dx1) / 2, (FRONT_Y + jamb) / 2, (dh + CEIL) / 2), (dx1 - dx0, jamb - FRONT_Y, CEIL - dh), mat=pl)
+    add_box(bm, ((dx0 + dx1) / 2, (LINTEL_Y + jamb) / 2, (dh + CEIL) / 2), (dx1 - dx0, jamb - LINTEL_Y, CEIL - dh), mat=pl)
     cbox(bm, (dx1 + 0.02, jamb + 0.05, dh / 2 + 0.04), (0.04, 0.1, dh + 0.08), 0.008, wd)
-    cbox(bm, (dx1 + 0.02, (FRONT_Y + jamb + 0.1) / 2, dh + 0.04), (0.04, jamb + 0.1 - FRONT_Y, 0.08), 0.008, wd)
-    cbox(bm, (dx0 + 0.075, (FRONT_Y + jamb) / 2, dh - 0.01), (0.17, jamb - FRONT_Y, 0.03), 0.006, wd)                   # the head jamb
+    cbox(bm, (dx1 + 0.02, (LINTEL_Y + jamb + 0.1) / 2, dh + 0.04), (0.04, jamb + 0.1 - LINTEL_Y, 0.08), 0.008, wd)
+    cbox(bm, (dx0 + 0.075, (LINTEL_Y + jamb) / 2, dh - 0.01), (0.17, jamb - LINTEL_Y, 0.03), 0.006, wd)                   # the head jamb
     # Its leaf, open into the room flat against the jamb's line: panelled, a glazed upper light, the class's plate.
     lx0, lx1, ly = dx1 + 0.03, dx1 + 0.86, jamb + 0.03
     for (za, zb) in ((0.0, 0.12), (0.12, 1.0), (1.0, 1.1), (1.86, 2.04)):
@@ -687,7 +703,18 @@ def desks(S, M, seated, coll):
     k = 0
     for o, sat in DESKS:
         desk_unit(S, M, o)
-        if sat:
+        if sat and MERGE_SEATED:
+            rot = (rnd.uniform(-0.04, 0.04), rnd.uniform(-0.05, 0.03), rnd.uniform(-0.12, 0.12))
+            tmp = bmesh.new()
+            pupil(tmp, S(M['PupilWood']), S(M['CrateWood']), S(M['WornIron']), 'seat', True)
+            R = Matrix.Translation((o[0], o[1], 0.0)) @ Euler(rot).to_matrix().to_4x4() @ _rz(math.radians(90))
+            bmesh.ops.transform(tmp, matrix=R, verts=tmp.verts)
+            me = bpy.data.meshes.new('_dl13_tmp')
+            tmp.to_mesh(me)
+            tmp.free()
+            S.bm.from_mesh(me)
+            bpy.data.meshes.remove(me)
+        elif sat:
             # Linked duplicates of one seated figure; a little turn and lean so they aren't stamped.
             place(seated, f'AttClassFigure.{k:02d}', (o[0], o[1], 0.0), coll,
                   rot=(rnd.uniform(-0.04, 0.04), rnd.uniform(-0.05, 0.03), rnd.uniform(-0.12, 0.12)))
@@ -731,7 +758,7 @@ def front_seat(S, M, coll):
     stand to slot under), the LESSON lamp on its stalk, and the chair pushed back off the lane."""
     bm = S.bm
     wd, ir, br, at, dk = S(M['CrateWood']), S(M['CastIron']), S(M['Brass']), S(M['LessonAtlas']), S(M['PigeonWood'])
-    hb = S(M['HandledBrass'])
+    hb = S(M['Brass'])
     p0, p1 = PAD
     cbox(bm, ((p0 + p1) / 2, 0.0, 0.004), (p1 - p0, 0.44, 0.012), 0.003, hb)
     quad(S, ((p0 + p1) / 2, 0.0, 0.0105), (0.15, 0, 0), (0, 0.0375, 0), R_PUPIL, at)          # read from the camera
@@ -745,7 +772,7 @@ def front_seat(S, M, coll):
         add_box(bm, ((x0 + x1) / 2 + 0.05, yy, 0.25), (0.04, 0.025, 0.48), mat=ir)
         add_box(bm, ((x0 + x1) / 2, yy, top - 0.045), (x1 - x0 - 0.02, 0.025, 0.03), mat=ir)
     add_cyl(bm, (x1 - 0.06, -0.2, top), (x1 - 0.06, -0.2, top + 0.01), 0.018, mat=br, seg=8)  # the inkwell
-    cbox(bm, ((x0 + x1) / 2 - 0.04, -0.06, top + 0.008), (0.17, 0.22, 0.014), 0.003, S(M['PupilWood']))  # an exercise book
+    cbox(bm, ((x0 + x1) / 2 - 0.04, -0.06, top + 0.008), (0.17, 0.22, 0.014), 0.003, S(M['LessonDado']))  # an exercise book
     # The lamp: a stalk from the desk's back corner, a brass cup and its glass (AttLessonLamp), the label under it.
     lx, ly, lz = LAMP
     add_cyl(bm, (lx, ly + 0.06, top), (lx, ly + 0.06, lz - 0.05), 0.012, mat=ir, seg=8)
@@ -780,7 +807,7 @@ def apparatus(S, M, coll):
     rod to the dial; the dial with its ratchet rim; the case for the model tree; the cornice and the title."""
     bm = S.bm
     dk, wd, br, ir, at = S(M['PigeonWood']), S(M['CrateWood']), S(M['Brass']), S(M['CastIron']), S(M['LessonAtlas'])
-    gl, hb = S(M['Window']), S(M['HandledBrass'])
+    gl, hb = S(M['Window']), S(M['Brass'])
     a0, a1 = APP_X
     # The plinth and the body behind the face.
     cbox(bm, ((a0 + a1) / 2, (0.82 + BACK_Y) / 2, 0.11), (a1 - a0 + 0.06, BACK_Y - 0.82, 0.22), 0.012, dk)
@@ -944,13 +971,19 @@ def tree(M, coll):
     lf = K(M['LessonLeaf'])
     rnd = random.Random(1325)
     # Leaves: flat painted wooden lozenges in a symmetric dome over the branches (mirrored, as the lesson wants it).
-    for i in range(28):
+    def lozenge(c, rx, ry, rz, tilt):
+        R = _ry(tilt)
+        vs = [K.bm.verts.new(Vector(c) + R @ Vector(p)) for p in ((rx, 0, 0), (-rx, 0, 0), (0, ry, 0), (0, -ry, 0), (0, 0, rz), (0, 0, -rz))]
+        for a, b, cc in ((0, 2, 4), (2, 1, 4), (1, 3, 4), (3, 0, 4), (2, 0, 5), (1, 2, 5), (3, 1, 5), (0, 3, 5)):
+            K.bm.faces.new((vs[a], vs[b], vs[cc])).material_index = lf
+    for i in range(46):
         a = rnd.uniform(0, 1)
         x = 0.74 * math.sqrt(a)
         z = rnd.uniform(-0.14, 0.12) * (1 - 0.5 * a) + 0.1 * (1 - a)
         y = rnd.uniform(-0.1, 0.1)
+        t = rnd.uniform(-0.6, 0.6)
         for s in ((-1, 1) if x > 0.04 else (1,)):
-            add_sphere(K.bm, (s * x, y, z), 1.0, mat=lf, seg=8, scale=(0.07, 0.012, 0.05))
+            lozenge((s * x, y, z), 0.07, 0.012, 0.045, s * t)
     K.obj('AttTreeLeaves', coll).location = (tx, ty, tz + 0.42)
 
 
@@ -995,28 +1028,31 @@ def gallery(S, M, coll):
         add_box(bm, (x, (sy0 + sy1) / 2, (bz + hz) / 2), (0.006, sy1 - sy0 - 0.04, hz - bz), mat=gl)
     # The seedlings: three rows, dead and bent over, dry; one place, the pale living shoot (AttShoot).
     rnd = random.Random(2290)
-    sw = S(M['CrateWood'])
-    for r, y in enumerate((1.16, 1.27, 1.38)):
+    sw = S(M['LessonPlaster'])                                                # dried to straw
+    for r, y in enumerate((1.16, 1.26, 1.36, 1.44)):
         x = s0 + 0.14
         while x < s1 - 0.12:
             if abs(x - SHOOT[0]) < 0.05 and r == 0:
                 x += 0.11
                 continue
-            h = rnd.uniform(0.04, 0.09)
+            h = rnd.uniform(0.06, 0.12)
             a = rnd.uniform(0, 2 * math.pi)
             lean = rnd.uniform(0.5, 1.3)
             p0 = Vector((x + rnd.uniform(-0.01, 0.01), y + rnd.uniform(-0.01, 0.01), soil))
             p1 = p0 + Vector((0.2 * h * math.cos(a), 0.2 * h * math.sin(a), h))
             p2 = p1 + Vector((h * lean * 0.7 * math.cos(a), h * lean * 0.7 * math.sin(a), -h * lean * 0.6))
-            add_cyl(bm, p0, p1, 0.0035, 0.003, mat=sw, seg=3)
-            add_cyl(bm, p1, p2, 0.003, 0.002, mat=sw, seg=3)
-            add_box(bm, p2 + Vector((0, 0, -0.004)), (0.018, 0.01, 0.003), mat=sw, rot=_rz(a))
+            add_cyl(bm, p0, p1, 0.005, 0.004, mat=sw, seg=3)
+            add_cyl(bm, p1, p2, 0.004, 0.003, mat=sw, seg=3)
+            add_box(bm, p2 + Vector((0, 0, -0.004)), (0.026, 0.012, 0.004), mat=sw, rot=_rz(a))
             x += rnd.uniform(0.1, 0.12)
     K = Kit()
     sh = K(M['AttShoot'])
     add_cyl(K.bm, (0, 0, 0), (0.006, 0, 0.11), 0.005, 0.0035, mat=sh, seg=6)
-    for s in (-1, 1):
-        add_sphere(K.bm, (0.006 + s * 0.02, 0, 0.114), 1.0, mat=sh, seg=8, scale=(0.022, 0.01, 0.005))
+    for s in (-1, 1):                                                         # two seed leaves, lifted toward the light
+        vs = [K.bm.verts.new(Vector((0.006, 0, 0.11)) + _ry(s * math.radians(-35)) @ Vector(p))
+              for p in ((0, 0, 0), (s * 0.022, 0.009, 0.002), (s * 0.04, 0, 0), (s * 0.022, -0.009, 0.002), (s * 0.022, 0, -0.003))]
+        for a, b, c in ((0, 1, 2), (0, 2, 3), (0, 4, 1), (1, 4, 2), (2, 4, 3), (3, 4, 0)):
+            K.bm.faces.new((vs[a], vs[b], vs[c])).material_index = sh
     K.obj('AttShoot', coll).location = (SHOOT[0], SHOOT[1], soil)
     # The watering can, dry, on the shelf under the bench.
     wx, wy = 229.75, 1.26
@@ -1030,10 +1066,10 @@ def gallery(S, M, coll):
     dtop = gz + DOOR_OUT_H
     add_box(bm, (DOOR_OUT, (jamb + BACK_Y) / 2, (gz + gz + 0.95) / 2), (d1 - d0, BACK_Y - jamb, 0.95), mat=da)
     add_box(bm, (DOOR_OUT, (jamb + BACK_Y) / 2, (gz + 0.95 + CEIL) / 2), (d1 - d0, BACK_Y - jamb, CEIL - gz - 0.95), mat=pl)
-    add_box(bm, (DOOR_OUT, (FRONT_Y + jamb) / 2, (dtop + CEIL) / 2), (d1 - d0, jamb - FRONT_Y, CEIL - dtop), mat=pl)
+    add_box(bm, (DOOR_OUT, (LINTEL_Y + jamb) / 2, (dtop + CEIL) / 2), (d1 - d0, jamb - LINTEL_Y, CEIL - dtop), mat=pl)
     for s in (-1, 1):
         cbox(bm, (DOOR_OUT + s * 0.12, jamb + 0.05, (gz + dtop) / 2 + 0.04), (0.04, 0.1, DOOR_OUT_H + 0.08), 0.008, wd)
-        cbox(bm, (DOOR_OUT + s * 0.12, (FRONT_Y + jamb + 0.1) / 2, dtop + 0.04), (0.04, jamb + 0.1 - FRONT_Y, 0.08), 0.008, wd)
+        cbox(bm, (DOOR_OUT + s * 0.12, (LINTEL_Y + jamb + 0.1) / 2, dtop + 0.04), (0.04, jamb + 0.1 - LINTEL_Y, 0.08), 0.008, wd)
     lx0, lx1, ly = d1 + 0.03, d1 + 0.84, jamb + 0.03
     for za, zb in ((gz, gz + 0.12), (gz + 0.12, dtop - 0.02)):
         cbox(bm, ((lx0 + lx1) / 2, ly, (za + zb) / 2), (lx1 - lx0, 0.04, zb - za), 0.006, dk)

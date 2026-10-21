@@ -130,11 +130,14 @@ KNOWN_WORN = {
                        dust=(.09, .085, .075), grime_scale=6, chip_scale=40, chip_amount=.74, dust_amount=.6),
     'ChildPaint': dict(base=(.12, .24, .42), dirt=(.06, .09, .12), chip=(.20, .14, .08), rough=.6, chip_rough=.8, metallic=0,
                        grime_scale=8, chip_scale=40, chip_amount=.7),
+    'ParcelBrown': dict(base=(.3, .22, .13), dirt=(.15, .11, .07), chip=(.4, .33, .24), rough=.9, chip_rough=.85, metallic=0,
+                        dust=(.2, .18, .15), grime_scale=10, chip_scale=40, chip_amount=.75, dust_amount=.7),
     'ToyFabric': dict(base=(.36, .33, .30), dirt=(.18, .15, .12), chip=(.42, .40, .36), rough=.95, chip_rough=.95, metallic=0,
                       grime_scale=20, chip_scale=60, chip_amount=.8),
 }
 KNOWN_PLAIN = {
     'Brass': ((0.45, 0.32, 0.12), 0.45, 0.8),
+    'TeaEnamel': ((0.58, 0.55, 0.47), 0.35, 0.0),
     'Cable': ((0.014, 0.013, 0.012), 0.55, 0.0),
 }
 MATERIALS = ('CrateWood', 'PigeonWood', 'Brass', 'HandledBrass', 'DarkMetal', 'HandWorn', 'ParcelPaper', 'LetterPaper',

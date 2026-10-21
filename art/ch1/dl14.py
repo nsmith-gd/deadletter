@@ -73,14 +73,15 @@ LEDGE_B = (237.8, 239.0, 1.6)
 LEDGE_Y = (-0.3, WALL_Y)
 ROLLER_Y, ROLLER_Z, ROLLER_R = 0.76, 3.15, 0.035
 BLIND_FACE_Y = ROLLER_Y - ROLLER_R
-BLIND_A = (236.70, 237.58, 1.22)             # fabric x0, x1, hem bottom when down
+BLIND_A = (236.48, 237.56, 1.22)             # fabric x0, x1, hem bottom when down
 BLIND_B = (237.82, 238.93, 1.72)
 CHAIN_Y = 0.68
-WHEEL_A = (236.6, CHAIN_Y, 0.32, 0.15)       # x, y, z, r
+WHEEL_A = (235.0, CHAIN_Y, 0.32, 0.15)       # x, y, z, r (moved from 236.6 by the lead: between the pole and the desk)
 CRANK = (242.4, 0.32, 0.5, 0.19)             # handwheel: x, y, z, r
 S0 = (242.4, 0.95, 0.10)                     # the crank's chain sprocket (x, z, r) above the gearbox
-POLE_BASE, POLE_TOP, POLE_Y = (234.8, 0.0), (234.0, 2.05), 0.3
-JAM = (236.6, 0.62, 0.41)                    # the jammed pole's axis: through both lugs, along x
+POLE_BASE, POLE_TOP, POLE_Y = (234.8, 0.0), (234.0, 2.05), -0.3   # leaning on the stair's front newel
+JAM = (235.0, 0.62, 0.41)                    # the jammed pole's axis: through both lugs, along x
+LUG_DX = 0.2                                 # the lugs stand this far either side of the wheel
 PEEL = ((238.44, 0.55), (238.90, 0.55), (238.90, 1.26))   # H1, corner C, H2 of B's lower-right pane (x, z)
 LAMPS = (234.6, 240.75)                      # globe pendants (lit); a dead one at 245.2
 
@@ -128,7 +129,20 @@ def mat(name):
         nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
         bsdf.inputs['Roughness'].default_value = rough
         return mt
+    vp = _voice_props()
+    if vp is not None:
+        return vp.material(name)
     raise KeyError(name)
+
+
+def _voice_props():
+    import sys
+    if not os.path.exists(os.path.join(COMMON, 'VOICE_PROPS_READY')):
+        return None
+    if COMMON not in sys.path:
+        sys.path.insert(0, COMMON)
+    import voice_props
+    return voice_props
 
 
 # =====================================================================================================================
@@ -534,6 +548,9 @@ class MB:
         self.flat = self.bm.faces.layers.int.new('flat')
         self.names = []
 
+    def __call__(self, name):                 # voice_props' target protocol: name -> slot index, and .bm
+        return self.m(name)
+
     def m(self, name):
         if name not in self.names:
             self.names.append(name)
@@ -754,6 +771,8 @@ def build_stair(B):
         B.prism_xz('PigeonWood', poly, y0, y1)
     # Newel at the foot, rail and spindles on the wall side (behind the lane: they hide nothing).
     B.box('PigeonWood', 234.32, 234.40, 0.34, 0.42, 0.0, 1.2)
+    B.box('PigeonWood', 234.32, 234.40, -0.42, -0.335, 0.0, 1.2)            # the front newel: the pole leans on it
+    B.box('PigeonWood', 234.30, 234.42, -0.44, -0.32, 1.2, 1.26)
     B.box('PigeonWood', 234.30, 234.42, 0.32, 0.44, 1.2, 1.26)
     rail = lambda x: 1.26 + (234.36 - x) * (1.6 / 1.36)
     B.cyl('PigeonWood', (234.36, 0.38, 1.25), (233.0, 0.38, rail(233.0)), 0.024, seg=8)
@@ -788,15 +807,13 @@ def build_windows(B):
         for tz in TRANSOMS:
             B.box('PigeonWood', x0, x1, fy0 + 0.01, fy1, tz - 0.02, tz + 0.02)
         B.box('PigeonWood', x0 - 0.04, x1 + 0.04, WALL_Y - 0.06, PANEL_Y, SILL - 0.04, SILL)
-        # Pelmet over the roller (A's leaves room on its left for the chain sprocket).
-        px0, px1 = {'A': (236.78, 237.62), 'B': (237.80, 238.93)}.get(name, (x0 - 0.05, x1 + 0.05))
+        # Pelmet over the roller (each leaves the chain's runs clear).
+        px0, px1 = {'A': (236.40, 237.58), 'B': (237.82, 238.93), 'W0': (235.2, 236.2)}.get(name, (x0 - 0.05, x1 + 0.05))
         B.box('PigeonWood', px0, px1, 0.66, WALL_Y, 3.06, 3.28)
         B.box('PigeonWood', px0 - 0.01, px1 + 0.01, 0.65, 0.67, 3.24, 3.29)
         # Hinge leaves on the wall for the ledge (the knuckle goes with the ledge).
         hz = {'A': LEDGE_A[2], 'B': LEDGE_B[2]}.get(name, 1.1)
         for hx in (x0 + 0.2, xc, x1 - 0.2):
-            if name == 'A' and hx < 236.85:
-                continue
             B.box('WornIron', hx - 0.035, hx + 0.035, WALL_Y - 0.006, WALL_Y, hz - 0.14, hz - 0.02)
         if name in ('A', 'B'):
             continue
@@ -913,16 +930,16 @@ def build_props(B):
     # Ceiling pulleys and the rollers' sprockets (static), each on an axle from the wall.
     for x, z, r in PULLEYS:
         pulley(B, x, z, r)
-    for gx0, gx1 in ((236.62, 236.80), (238.90, 239.0)):           # the rollers' right-angle drives
+    for gx0, gx1 in ((237.6, 237.72), (238.90, 239.0)):            # the rollers' right-angle drives
         B.box('WornIron', gx0, gx1, 0.70, 0.82, ROLLER_Z - 0.07, ROLLER_Z + 0.07)
-    for x0, x1 in ((236.62, 237.62), (237.80, 238.93)):            # the rollers themselves, in their pelmets
+    for x0, x1 in ((236.45, 237.62), (237.82, 238.93)):            # the rollers themselves, in their pelmets
         B.cyl('WinAtlas', (x0, ROLLER_Y, ROLLER_Z), (x1, ROLLER_Y, ROLLER_Z), ROLLER_R, seg=10, cell='sw_wood')
     # A's chain wheel's bracket: a wall plate, the axle, and two lugs with slots the pole slides through (along x).
     wx, wy, wz, wr = WHEEL_A
-    B.box('WornIron', wx - 0.3, wx + 0.3, WALL_Y - 0.015, WALL_Y, wz - 0.2, wz + 0.23)
+    B.box('WornIron', wx - 0.25, wx + 0.25, WALL_Y - 0.015, WALL_Y, wz - 0.2, wz + 0.13)
     B.cyl('WornIron', (wx, WALL_Y, wz), (wx, wy - 0.04, wz), 0.018, seg=10)
     jx, jy, jz = JAM
-    for lx in (jx - 0.24, jx + 0.24):
+    for lx in (jx - LUG_DX, jx + LUG_DX):
         B.box('WornIron', lx - 0.012, lx + 0.012, jy + 0.035, WALL_Y, jz - 0.04, jz + 0.04)         # the arm
         B.box('WornIron', lx - 0.0125, lx + 0.0125, jy - 0.05, jy + 0.035, jz + 0.03, jz + 0.045)  # the eye: top
         B.box('WornIron', lx - 0.0125, lx + 0.0125, jy - 0.05, jy + 0.035, jz - 0.045, jz - 0.03)  # bottom
@@ -950,15 +967,16 @@ def pulley(B, x, z, r, axle_to=WALL_Y):
 # The chain's wheels (x, z, r): crank sprocket S0 (in build_props), ceiling pulleys, the rollers' sprockets.
 P1, P1b = (242.40, 3.62, 0.10), (242.20, 3.42, 0.10)
 Q1, Q2 = (239.25, 3.42, 0.10), (238.85, 3.42, 0.10)
-R1, R2 = (236.85, 3.42, 0.10), (236.55, 3.62, 0.10)
-SA, SB = (236.60, ROLLER_Z, 0.15), (239.05, ROLLER_Z, 0.10)
-PULLEYS = [P1, P1b, Q1, Q2, R1, R2, SA, SB]
+R1, R2 = (235.25, 3.42, 0.10), (234.95, 3.62, 0.10)           # over A's wheel at 235.0
+R3, R4 = (237.50, 3.42, 0.10), (237.90, 3.42, 0.10)           # either side of A's roller sprocket
+SA, SB = (237.70, ROLLER_Z, 0.10), (239.05, ROLLER_Z, 0.10)
+PULLEYS = [P1, P1b, Q1, Q2, R1, R2, R3, R4, SA, SB]
 
 
 def chain_path():
     """The endless loop (x, z), in order: up from the crank's right side, over P1 and left along the upper run, down
-    round A's wheel low on the wall, up and right along the lower run, down round B's sprocket, right to P1', and down
-    round the crank's sprocket. A's roller sprocket SA sits inside the loop, the chain passing it on both sides."""
+    the wall round A's wheel low at 235.0 and up again, right along the lower run, down round A's roller sprocket
+    (between A and B), on round B's sprocket, right to P1', and down round the crank's sprocket."""
     pts = []
 
     def arc(c, a0, a1, n=8):
@@ -972,6 +990,9 @@ def chain_path():
     arc(R2, 90, 180)
     arc(w, 180, 360, 12)
     arc(R1, 180, 90)
+    arc(R3, 90, 0)
+    arc(SA, 180, 360, 10)
+    arc(R4, 180, 90)
     arc(Q2, 90, 0)
     arc(SB, 180, 360, 10)
     arc(Q1, 180, 90)
@@ -1053,8 +1074,8 @@ def build_blind(coll, name, x0, x1, bottom, cell='blindA'):
 
 
 def build_ledge(coll, name, x0, x1, h, notch=None):
-    """A window-cleaner's ledge, built OUT: a board lane-deep (y -0.3 .. 0.9) with its top at h, a lip, two iron knee
-    brackets under it and the hinge's knuckle at the wall. Origin on the hinge line (y WALL_Y, z h). It folds UP flat
+    """A window-cleaner's ledge, built OUT: a board lane-deep (y -0.3 .. 0.9) with its top at h, a lip, two dark wooden
+    knee brackets under it and the hinge's knuckle at the wall. Origin on the hinge line (y WALL_Y, z h). It folds UP flat
     against the wall by rotating -90 degrees about x. `notch` (x0, x1) leaves the chain's path clear by the wall."""
     B = MB()
     y0, y1 = LEDGE_Y
@@ -1067,11 +1088,11 @@ def build_ledge(coll, name, x0, x1, h, notch=None):
     for x in (x0 + 0.06, x1 - 0.06):
         B.box('CrateWood', x - 0.02, x + 0.02, y0 + 0.04, (notch[0] if notch and x < notch[1] else y1) - 0.02, h - 0.075, h - 0.045)
     kx0 = notch[1] if notch else x0
-    B.cyl('WornIron', (kx0 + 0.02, y1 - 0.012, h - 0.02), (x1 - 0.02, y1 - 0.012, h - 0.02), 0.014, seg=8)
+    B.cyl('PigeonWood', (kx0 + 0.02, y1 - 0.012, h - 0.02), (x1 - 0.02, y1 - 0.012, h - 0.02), 0.014, seg=8)
     for hx in (kx0 + 0.2, (kx0 + x1) / 2, x1 - 0.2):
-        B.box('WornIron', hx - 0.03, hx + 0.03, y1 - 0.25, y1 - 0.012, h, h + 0.004)
+        B.box('PigeonWood', hx - 0.03, hx + 0.03, y1 - 0.25, y1 - 0.012, h, h + 0.004)
     for bx in ((x0 + 0.55, x1 - 0.12) if notch else (x0 + 0.18, x1 - 0.18)):
-        B.prism_yz('WornIron', [(y1 - 0.015, h - 0.045), (y1 - 0.015, h - 0.36), (y1 - 0.06, h - 0.36),
+        B.prism_yz('PigeonWood', [(y1 - 0.015, h - 0.045), (y1 - 0.015, h - 0.36), (y1 - 0.06, h - 0.36),
                                 (-0.12, h - 0.06), (-0.12, h - 0.045)], bx - 0.008, bx + 0.008)
     return B.obj(name, coll, origin=((x0 + x1) / 2, WALL_Y, h))
 
@@ -1132,7 +1153,7 @@ def build_wheel(coll):
     for k in range(6):
         a = 2 * math.pi * k / 6 + 0.2
         px, pz = x + 0.09 * math.cos(a), z + 0.09 * math.sin(a)
-        B.cyl('HandledBrass', (px, y - 0.005, pz), (px, y - 0.06, pz), 0.008, seg=6)
+        B.cyl('WornIron', (px, y - 0.005, pz), (px, y - 0.06, pz), 0.008, seg=6)
     return B.obj('AttWheelA', coll, origin=(x, y, z))
 
 
@@ -1265,17 +1286,18 @@ def build_cupboard(coll):
         B.cyl('WinAtlas', (tx1 - 0.19 + k * 0.03, ty0 + 0.12, th + 0.032), (tx1 - 0.13 + k * 0.03, ty0 + 0.13, th + 0.032), 0.006, seg=6, cell='sw_chalk')
     B.tbox('WinAtlas', tx1 - 0.24, tx1 - 0.04, ty0 + 0.24, ty0 + 0.4, th, th + 0.006, {'+z': 'openbook', 'all': 'sw_pages'})
     sx0, sy0_ = tx1 - 0.24, ty1 - 0.2
-    B.tbox('WinAtlas', sx0, sx0 + 0.16, sy0_, sy0_ + 0.105, th, th + 0.075, {'+z': 'card', '-y': 'sw_pages', 'all': 'sw_pages'})
-    for (a, b, c, d) in ((sx0 + 0.075, sx0 + 0.085, sy0_ - 0.002, sy0_ + 0.107), (sx0 - 0.002, sx0 + 0.162, sy0_ + 0.048, sy0_ + 0.056)):
+    B.tbox('WinAtlas', sx0, sx0 + 0.14, sy0_, sy0_ + 0.14, th, th + 0.075, {'+z': 'card', 'all': 'sw_cardboard'})
+    for (a, b, c, d) in ((sx0 + 0.065, sx0 + 0.075, sy0_ - 0.002, sy0_ + 0.142), (sx0 - 0.002, sx0 + 0.142, sy0_ + 0.065, sy0_ + 0.075)):
         B.box('WinAtlas', a, b, c, d, th + 0.074, th + 0.078, cell='sw_string')
-    B.box('WinAtlas', sx0 + 0.07, sx0 + 0.09, sy0_ - 0.004, sy0_ + 0.002, th, th + 0.078, cell='sw_string')
-    B.torus('WinAtlas', (sx0 + 0.068, sy0_ + 0.052, th + 0.08), (0, 0, 1), 0.012, 0.003, seg=10, rseg=4, cell='sw_string')
-    B.torus('WinAtlas', (sx0 + 0.094, sy0_ + 0.052, th + 0.08), (0, 0, 1), 0.012, 0.003, seg=10, rseg=4, cell='sw_string')
+    B.torus('WinAtlas', (sx0 + 0.058, sy0_ + 0.07, th + 0.08), (0, 0, 1), 0.012, 0.003, seg=10, rseg=4, cell='sw_string')
+    B.torus('WinAtlas', (sx0 + 0.084, sy0_ + 0.07, th + 0.08), (0, 0, 1), 0.012, 0.003, seg=10, rseg=4, cell='sw_string')
     # more of them, unsent, in a shoebox on the shelf's lowest level by the table
     B.box('WinAtlas', x0 + 0.1, x0 + 0.42, y1 - 0.32, y1 - 0.1, 0.06, 0.2, cell='sw_cardboard')
     for k in range(14):
         B.tbox('WinAtlas', x0 + 0.12 + k * 0.02, x0 + 0.13 + k * 0.02, y1 - 0.3, y1 - 0.14, 0.06, 0.22 + 0.01 * math.sin(k),
                {'-x': 'card2', 'all': 'sw_pages'})
+    global PLAYER_INFO
+    PLAYER_INFO = place_card_player(B)
     ob = B.obj('AttCupboard', coll)
     L = MB()
     L.sphere('AttCupboardLamp', (LAMP_BULB[0], LAMP_BULB[1], 0.71 + 0.27), 0.03, seg=10)
@@ -1284,22 +1306,20 @@ def build_cupboard(coll):
 
 
 LAMP_BULB = (232.62, 2.7)              # the cupboard lamp's bulb (x, y); its height is 0.98
-CARD_PLAYER = (232.66, 2.44, 0.71)     # on the teacher's table, facing her chair (+x)
+CARD_PLAYER = (232.66, 2.42, 0.71)     # on the teacher's table, facing her chair (+x)
+PLAYER_INFO = None
 
 
-def place_card_player(coll):
-    """The voice-card player, from art/common/voice_props.py once VOICE_PROPS_READY exists; att_teacher in it."""
-    import sys
-    if not os.path.exists(os.path.join(COMMON, 'VOICE_PROPS_READY')):
+def place_card_player(B):
+    """The voice-card player (art/common/voice_props.py), merged into the cupboard: on the teacher's table, its front
+    to her chair (+x), its lid shut, a card (att_teacher) standing in its slot."""
+    vp = _voice_props()
+    if vp is None:
         print('dl14: voice props not ready; no card player placed')
-        return []
-    if COMMON not in sys.path:
-        sys.path.insert(0, COMMON)
-    import voice_props
-    before = set(bpy.data.objects)
-    x, y, z = CARD_PLAYER
-    voice_props.card_player(coll, 'AttTeacherPlayer', (x, y, z), yaw=math.radians(90), card='att_teacher')
-    return [o for o in bpy.data.objects if o not in before]
+        return None
+    info = vp.card_player(B, vp.xform(loc=CARD_PLAYER, turn=90.0), lid='closed', horn=-30.0, card=True)
+    print('dl14: card player', {k: v for k, v in info.items() if k in ('card', 'top', 'mouth', 'height', 'crank_pivot')})
+    return info
 
 
 def build_globes(coll):
@@ -1330,14 +1350,13 @@ def build_set(dl01, m, coll):
     objs.append(build_chain(coll)[0])
     objs.append(build_blind(coll, 'AttBlindA', BLIND_A[0], BLIND_A[1], BLIND_A[2]))
     objs.append(build_blind(coll, 'AttBlindB', BLIND_B[0], BLIND_B[1], BLIND_B[2]))
-    objs.append(build_ledge(coll, 'AttLedgeA', LEDGE_A[0], LEDGE_A[1], LEDGE_A[2], notch=(0.55, 236.84)))
+    objs.append(build_ledge(coll, 'AttLedgeA', LEDGE_A[0], LEDGE_A[1], LEDGE_A[2]))
     objs.append(build_ledge(coll, 'AttLedgeB', LEDGE_B[0], LEDGE_B[1], LEDGE_B[2]))
     objs.append(build_peel(coll))
     objs.append(build_crank(coll))
     objs.append(build_wheel(coll))
     objs.append(build_pole(coll))
     objs.extend(build_cupboard(coll))
-    objs.extend(place_card_player(coll))
     bpy.context.view_layer.update()
     total_t, total_p = 0, 0
     for ob in objs:

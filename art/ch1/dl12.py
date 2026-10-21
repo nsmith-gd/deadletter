@@ -268,9 +268,9 @@ def make_atlas(path):
             continue
         d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(70, 50, 32))
         tone = rnd.randint(-14, 8)
-        d.rounded_rectangle((x0 + 2, y0 + 2, x1 - 3, y1 - 3), radius=4, fill=(green[0] + tone, green[1] + tone, green[2] + tone),
-                            outline=(176, 168, 140), width=1)
-        d.text(((x0 + x1) / 2, (y0 + y1) / 2), str(n), font=f, fill=(206, 198, 170), anchor='mm')
+        d.rounded_rectangle((x0 + 2, y0 + 2, x1 - 3, y1 - 3), radius=4, fill=(212 + tone, 204 + tone, 178 + tone),
+                            outline=(40, 40, 36), width=1)
+        d.text(((x0 + x1) / 2, (y0 + y1) / 2), str(n), font=f, fill=(24, 24, 22), anchor='mm')
         if rnd.random() < 0.25:                               # chipped enamel
             cx, cy = rnd.uniform(x0 + 4, x1 - 4), rnd.uniform(y0 + 4, y1 - 4)
             d.ellipse((cx - 2, cy - 1.5, cx + 2, cy + 1.5), fill=(20, 20, 18))
@@ -735,6 +735,7 @@ def figure(B, M, wood='PupilWood', joint='CrateWood', stand='WornIron', pose=Non
 def build_shell(B):
     # Floor (wood boards on a slab), the room's left end, the ceiling and its beams.
     B.box((X0 - 1.0, X1), (FLOOR_Y0, WALL_Y + WALL_T), (-0.2, -0.004), 'Concrete')
+    B.box((X0 - 1.0, X1), (FLOOR_Y0, FLOOR_Y0 + 0.3), (-3.2, -0.2), 'Concrete')        # the foundation's cut face
     for k in range(int((WALL_Y - FLOOR_Y0) / 0.16)):                          # the boards, along the room
         y0 = FLOOR_Y0 + k * 0.16
         B.box((X0, X1), (y0 + 0.003, y0 + 0.157), (-0.01, 0.0), 'PigeonWood')
@@ -811,8 +812,8 @@ def build_hooks(B, rnd):
             n += 1
             x = HOOK_X[0] + k * HOOK_PITCH
             # the tag over the hook, the hook below it
-            B.quad([(x - 0.026, yf - 0.0235, z + 0.012), (x + 0.026, yf - 0.0235, z + 0.012), (x + 0.026, yf - 0.0235, z + 0.042),
-                    (x - 0.026, yf - 0.0235, z + 0.042)], ATLAS, cell_uv(tag_cell(n)))
+            B.quad([(x - 0.03, yf - 0.0235, z + 0.008), (x + 0.03, yf - 0.0235, z + 0.008), (x + 0.03, yf - 0.0235, z + 0.044),
+                    (x - 0.03, yf - 0.0235, z + 0.044)], ATLAS, cell_uv(tag_cell(n)))
             bent = rnd.random() < 0.03
             B.quad([(x - 0.01, yf - 0.0235, z - 0.046), (x + 0.01, yf - 0.0235, z - 0.046), (x + 0.01, yf - 0.0235, z - 0.004),
                     (x - 0.01, yf - 0.0235, z - 0.004)], 'Brass')
@@ -1137,7 +1138,7 @@ def _thing(B, kind, M, rnd):
                                       rounded_box((0.06, 0.07, 0.05), (0, 0.035, 0.045), p=2.6, cuts=2, bm=bm, mat=0)), M)
         return 0.07
     if kind == 'scarf':
-        B.painted('scarf', lambda bm: rounded_box((0.17, 0.11, 0.035), (0, 0, 0.0175), p=3.0, cuts=2, bm=bm, mat=0), M)
+        B.painted('scarf', lambda bm: rounded_box((0.15, 0.1, 0.035), (0, 0, 0.0175), p=3.0, cuts=2, bm=bm, mat=0), M)
         return 0.035
     if kind == 'tin':
         B.painted('tin', lambda bm: rounded_box((0.17, 0.11, 0.065), (0, 0, 0.0325), p=8.0, cuts=2, bm=bm, mat=0), M)
@@ -1147,7 +1148,7 @@ def _thing(B, kind, M, rnd):
                                      bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < -0.001], context='VERTS')), M)
         return 0.07
     if kind == 'jumper':
-        B.painted('jumper', lambda bm: rounded_box((0.22, 0.17, 0.055), (0, 0, 0.0275), p=2.6, cuts=2, bm=bm, mat=0,
+        B.painted('jumper', lambda bm: rounded_box((0.18, 0.15, 0.055), (0, 0, 0.0275), p=2.6, cuts=2, bm=bm, mat=0,
                                                    dents=((0.004, 12.0),), seed=rnd.random()), M)
         return 0.055
     if kind == 'ball':
@@ -1166,10 +1167,12 @@ def _thing(B, kind, M, rnd):
     return 0.0
 
 
-def _tag(B, M, k, w=0.07, h=0.044):
-    """A brown paper tag stood leaning against the thing's front, facing M's -y."""
-    Mt = M @ Matrix.Translation((0.0, -0.06, h / 2 + 0.002)) @ Matrix.Rotation(math.radians(-12), 4, 'X')
-    pts = [Mt @ Vector(p) for p in ((-w / 2, 0, -h / 2), (w / 2, 0, -h / 2), (w / 2, 0, h / 2), (-w / 2, 0, h / 2))]
+def _tag(B, c, normal, k, w=0.09, h=0.056):
+    """A brown paper tag hung from the shelf's front edge under its thing, facing out, a little askew."""
+    n = Vector(normal)
+    side = Vector((0, 0, 1)).cross(n).normalized()
+    tilt = Matrix.Rotation(math.radians(((k * 37) % 13) - 6), 3, n)
+    pts = [Vector(c) + tilt @ (side * a + Vector((0, 0, b))) for a, b in ((-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2))]
     B.quad(pts, ATLAS, cell_uv('ltag%d' % (k % 16)))
 
 
@@ -1229,24 +1232,25 @@ def build_room(B, rnd):
                 _thing(B, 'box', M_at(lx0 + 0.16, y, z, -90 + rnd.uniform(-3, 3)), rnd)
                 y += 0.34
             continue
-        x = bx0 + 0.12
-        while x < bx1 - 0.1:
+        S = Matrix.Diagonal((1.3, 1.3, 1.3, 1.0))
+        x = bx0 + 0.15
+        while x < bx1 - 0.12:
             kind = kinds[rnd.randrange(len(kinds))]
-            if si == 1 and abs(x - 211.9) < 0.12:
-                kind = 'tin'                                    # M.D.'s lunch tin, at eye level, by the door
-            M = M_at(x, by0 + 0.15 + rnd.uniform(-0.02, 0.02), z, rnd.uniform(-10, 10))
+            if si == 2 and abs(x - 212.25) < 0.14:
+                kind = 'tin'                                    # M.D.'s lunch tin, at eye level, toward the desk
+            M = M_at(x, by0 + 0.15 + rnd.uniform(-0.02, 0.02), z, rnd.uniform(-10, 10)) @ S
             _thing(B, kind, M, rnd)
-            _tag(B, M_at(x, by0 + 0.15, z, 0), 15 if kind == 'tin' and si == 1 else k_tag)
+            _tag(B, (x, by0 - 0.004, z - 0.05), (0, -1, 0), 15 if kind == 'tin' and si == 2 else k_tag)
             k_tag += 1
-            x += 0.24 + rnd.uniform(0, 0.03)
-        y = ly0 + 0.12
-        while y < ly1 - 0.1:
+            x += 0.27 + rnd.uniform(0, 0.03)
+        y = ly0 + 0.15
+        while y < ly1 - 0.12:
             kind = kinds[rnd.randrange(len(kinds))]
-            M = M_at(lx0 + 0.16 + rnd.uniform(-0.02, 0.02), y, z, -90 + rnd.uniform(-10, 10))
+            M = M_at(lx0 + 0.16 + rnd.uniform(-0.02, 0.02), y, z, -90 + rnd.uniform(-10, 10)) @ S
             _thing(B, kind, M, rnd)
-            _tag(B, M_at(lx0 + 0.16, y, z, -90), k_tag)
+            _tag(B, (lx1 + 0.004, y, z - 0.05), (1, 0, 0), k_tag)
             k_tag += 1
-            y += 0.24 + rnd.uniform(0, 0.03)
+            y += 0.27 + rnd.uniform(0, 0.03)
     # The caretaker's desk: the register open (one tick on the last page), the older volumes, a lamp, a mug, keys.
     dx0, dx1, dy0, dy1, dt = DESK
     B.box((dx0, dx1), (dy0, dy1), (dt - 0.035, dt), 'CrateWood')
@@ -1256,7 +1260,7 @@ def build_room(B, rnd):
     B.box((dx1 - 0.42, dx1 - 0.03), (dy0 + 0.02, dy1 - 0.02), (0.08, dt - 0.035), 'CrateWood')            # the drawers
     for z in (0.22, 0.42, 0.6):
         B.box((dx1 - 0.25, dx1 - 0.19), (dy0 + 0.005, dy0 + 0.02), (z - 0.01, z + 0.01), 'Brass')
-    rx, ry = 213.1, 3.18
+    rx, ry = 213.27, 3.2
     for s in (-1, 1):                                                            # the register's covers and its two pages
         B.painted('leather', lambda bm, s=s: add_box(bm, (s * 0.125, 0, 0.006), (0.25, 0.34, 0.012), mat=0), M_at(rx, ry, dt, 4))
     Mr = M_at(rx, ry, dt + 0.014, 4)
@@ -1269,22 +1273,22 @@ def build_room(B, rnd):
     B.cyl((rx + 0.31, ry - 0.06, dt + 0.006), (rx + 0.42, ry - 0.11, dt + 0.006), 0.005, 'WornIron', seg=5)     # his pen
     for k in range(5):                                                           # the old registers, stacked
         z = dt + k * 0.045
-        Mk = M_at(dx1 - 0.2, dy1 - 0.17, z, rnd.uniform(-4, 4))
+        Mk = M_at(dx0 + 0.16, dy1 - 0.19, z, rnd.uniform(-4, 4))
         B.painted('leather', lambda bm: add_box(bm, (0, 0, 0.0215), (0.26, 0.34, 0.043), mat=0), Mk)
         c = Mk @ Vector((0, -0.171, 0.0215))
         B.face_quad(c, 0.08, 0.04, (Mk.to_3x3() @ Vector((0, -1, 0))).normalized(), 'spine%d' % k)
-    lx, ly = dx0 + 0.13, dy1 - 0.12                                              # the lamp (lit: SecretLampGlow)
+    lx, ly = dx1 - 0.13, dy1 - 0.08                                              # the lamp (lit: AttBulbGlow)
     B.cyl((lx, ly, dt), (lx, ly, dt + 0.02), 0.07, 'DepotGreen', seg=12)
-    sweep(B.bm, [(lx, ly, dt + 0.02), (lx, ly, dt + 0.24), (lx + 0.04, ly - 0.08, dt + 0.36)], 0.008, B('DepotGreen'), seg=5)
-    B.cyl((lx + 0.04, ly - 0.08, dt + 0.39), (lx + 0.06, ly - 0.14, dt + 0.28), 0.03, 'DepotGreen', r2=0.085, seg=14)
-    add_sphere(B.bm, (lx + 0.058, ly - 0.13, dt + 0.29), 0.026, mat=B('AttBulbGlow'), seg=10)
-    B.cyl((dx0 + 0.36, dy0 + 0.12, dt), (dx0 + 0.36, dy0 + 0.12, dt + 0.09), 0.04, 'DepotGreen', seg=10)      # his mug
-    add_torus(B.bm, (dx0 + 0.405, dy0 + 0.12, dt + 0.045), (0, 1, 0), 0.022, 0.006, mat=B('DepotGreen'), seg=8, rseg=4)
+    sweep(B.bm, [(lx, ly, dt + 0.02), (lx, ly, dt + 0.26), (lx - 0.06, ly - 0.07, dt + 0.4)], 0.008, B('DepotGreen'), seg=5)
+    B.cyl((lx - 0.06, ly - 0.07, dt + 0.43), (lx - 0.1, ly - 0.13, dt + 0.32), 0.03, 'DepotGreen', r2=0.085, seg=14)
+    add_sphere(B.bm, (lx - 0.097, ly - 0.125, dt + 0.33), 0.026, mat=B('AttBulbGlow'), seg=10)
+    B.cyl((dx0 + 0.1, dy0 + 0.1, dt), (dx0 + 0.1, dy0 + 0.1, dt + 0.09), 0.04, 'DepotGreen', seg=10)      # his mug
+    add_torus(B.bm, (dx0 + 0.145, dy0 + 0.1, dt + 0.045), (0, 1, 0), 0.022, 0.006, mat=B('DepotGreen'), seg=8, rseg=4)
     for k in range(4):                                                           # his keys, on a ring
-        add_torus(B.bm, (dx0 + 0.55 + k * 0.025, dy0 + 0.1, dt + 0.004), (0, 0, 1), 0.012, 0.0025, mat=B('Brass'), seg=6, rseg=3)
-    add_torus(B.bm, (dx0 + 0.58, dy0 + 0.1, dt + 0.004), (0, 0, 1), 0.035, 0.003, mat=B('Brass'), seg=12, rseg=3)
-    # his chair, pulled out, turned a little to the door
-    cx, cy, ca = 213.25, 2.6, 20.0
+        add_torus(B.bm, (dx0 + 0.21 + k * 0.025, dy0 + 0.07, dt + 0.004), (0, 0, 1), 0.012, 0.0025, mat=B('Brass'), seg=6, rseg=3)
+    add_torus(B.bm, (dx0 + 0.24, dy0 + 0.07, dt + 0.004), (0, 0, 1), 0.035, 0.003, mat=B('Brass'), seg=12, rseg=3)
+    # his chair, pulled out and turned toward the door, as if he had just got up
+    cx, cy, ca = 213.95, 2.55, -45.0
     R = Matrix.Rotation(math.radians(ca), 4, 'Z')
     C = Vector((cx, cy, 0))
     for v in B.box((-0.21, 0.21), (-0.2, 0.2), (0.43, 0.46), 'CrateWood'):
@@ -1309,7 +1313,7 @@ def build_room(B, rnd):
 # Voice props (art/common/voice_props.py)
 # =====================================================================================================================
 SPEAKER = (209.0, WALL_Y, 2.32)             # the gate's speaker, on the back wall over the lamp post, facing the camera
-CARD_PLAYER = (213.55, 3.28, DESK[4])       # the caretaker's card player, on his desk
+CARD_PLAYER = (213.7, 3.27, DESK[4])       # the caretaker's card player, on his desk
 
 
 def _vp():
