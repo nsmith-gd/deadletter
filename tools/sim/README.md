@@ -56,3 +56,6 @@ bounds move.
 every checkpoint in turn and sweeps D-17 along the stretch to the next one, on the floor and on whatever he could
 stand on, asking each category of interaction alone. Any spot where two answer Use is a priority clash and is listed;
 the script exits non-zero if there are any. Run it after moving anything he can use.
+- **`results_pass9_attendance_mechanical.jsonl`** and **`results_pass9_attendance_first_playthrough.jsonl`:** the whole
+  of Chapter 1 (DL-12 to DL-17): 4:45 mechanical; three first-time runs at 6:52 to 7:21, of which DL-15 to DL-17 take
+  2:28 to 2:48. `CHAPTER=att2` starts at DL-15.

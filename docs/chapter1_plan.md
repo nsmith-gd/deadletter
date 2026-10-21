@@ -190,7 +190,7 @@ A proposal for the lower levels' history, told only through the world.
 | 0 to about 30 | The refuge is dug downward as the city grows. The lowest levels (the depot, the works, ring C) house the people who keep it running. | The scale of the depot, the courier board, the busy day board in DL-03 (1,240 deliveries a day). |
 | about 30 to 41 | Births slow. The city starts to pull upward into homes left empty above. Moving up is the promise. | Painted UP arrows; lift timetables; the cargo lift background event. |
 | 42 | Water breaks into ring C. The depot's power to the ring is cut mid-shift. D-17 was carrying a birthday parcel to a six-year-old in C-114, and stops where he stands. | D-17's wake in the dark; the "deliveries suspended" notice; the tideline; the parcel's stamp date. |
-| 43 | Ring C is evacuated and sealed. The families go up. The returns belt keeps bringing ring C's post back down. | RING C SEALED · R.Y. 43; the queue line to the lift with dropped belongings; the heap of dead letters. |
+| 43 | Ring C is evacuated and sealed. The families go up. The returns belt keeps bringing ring C's post back down. | RING C SEALED · P.A. 311; the queue line to the lift with dropped belongings; the heap of dead letters. |
 | 43 to 109 | The lower levels run on by themselves: belts, scanners, charging bays, empty routines. | The scanner's refusal; the bay that charges a dead courier. Chapter 2's school continues this. |
 | 118 (now) | Someone above has restored power. It reaches the depot, and D-17 wakes. | The opening. Paid off by the workshop relay later (the overview's continuity note). |
 
@@ -250,7 +250,7 @@ game README.
 
 ## 8. Decisions (director, 18 October 2026)
 
-1. **The flood is canon.** Water broke into ring C in R.Y. 42; the ring was sealed in R.Y. 43.
+1. **The flood is canon.** Water broke into ring C in P.A. 310; the ring was sealed in P.A. 311.
 2. **The fallen courier is the right tone.** D-17 drags one of his own onto the bay, and leaves it there.
 3. **Renumber.** The game is now 49 scenes (section 6).
 4. **Letters can change the epilogue, but the story must be understood without them.**

@@ -37,7 +37,7 @@ window.__startBot = function (seed, opts = {}) {
     try {
       while (!pred()) {
         if (G.clock - t0 > (o.max ?? 240)) throw new Error('stuck walking: ' + label + ' x=' + G.x.toFixed(2));
-        move(G.act && !o.keepHolding ? 0 : dir);
+        move(G.act && !o.keepHolding && !(G.act.kind === 'quirk' && G.act.cancel) ? 0 : dir);   // a player's move cancels a quirk
         const moved = Math.abs(G.x - last) > 0.0008; last = G.x;
         if (!moved && G.grounded && !G.mantle && !G.act && !G.riding) still += 1 / 60; else still = 0;
         if (o.stall && still > o.stall) return 'stalled';
@@ -571,7 +571,7 @@ window.__startBot = function (seed, opts = {}) {
     };
     yield* wait(look(3));
     // DL-15: the lift won't go unaccompanied; the sick bay figure onto it; ride down with it.
-    if (mistakes) { yield* goTo(L, 'onto the lift alone', { max: 20 }); yield* wait(think(4)); note('the lift buzzes: no pupil'); yield* goTo(249.0, 'back', { max: 20 }); }
+    if (mistakes) { yield* goTo(L, 'onto the lift alone', { max: 20 }); yield* wait(think(4)); note('the lift buzzes: no pupil'); yield* goTo(249.3, 'back', { max: 20 }); yield* settle(); }
     yield* pushTo('f15B', 1, 'the sick bay figure onto the lift');
     note('the figure on the lift');
     yield* goTo(L + 0.1, 'onto the lift beside it', { hop: false, max: 20 });

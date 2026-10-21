@@ -20,7 +20,7 @@
 | Then leave the trolley behind and cross | The trolley stays on the pan, against its buffer stop. D-17 pats it goodbye (`Pat`) and walks across the latched platform. |
 | One slow belt crossing adds a brief execution test | Beyond the far landing, the access route runs up the returns belt: a broad conveyor that brings crates of returned post down from the rings to Dead Letters. It carries D-17 back toward the landing, and its crates are obstacles to hop or climb. There is no failure state: at worst he is carried back to the landing. |
 | Warn before the moving hazard; checkpoint after the puzzle, before the crossing | The belt is still when he reaches the far landing. Then a bell, an amber beacon and the klaxon start it, and the first crate slides down its chute in full view before he can step on. The checkpoint `latched` is on the far landing. |
-| Handmade reinforcement surrounds the original safety catch | The pawl housing is patched with welded plates, extra bolts, a strap clamp and a wired-on spare spring. Six brass repair tags are wired to it, each stamped with a refuge year and initials. Lift 1, beside it, failed: its platform lies broken at the bottom of its shaft. |
+| Handmade reinforcement surrounds the original safety catch | The pawl housing is patched with welded plates, extra bolts, a strap clamp and a wired-on spare spring. Six brass repair tags are wired to it, each stamped with a year (P.A.) and initials. Lift 1, beside it, failed: its platform lies broken at the bottom of its shaft. |
 | Crossing into the residential access tunnel commits D-17 to a journey beyond his depot | At the tunnel mouth he stops and looks back at the depot (`LookBack`). The depot's three-lamp relay pulse, heard since the first second of DL-01, fades out behind him. |
 | Familiar depot → a much larger inhabited system now gone quiet | The tunnel has children's chalk on its floor and walls. It opens onto a balcony over the refuge itself: a city dug into a chasm in the rock. The poorest, most industrial levels are at the bottom, near-dark and abandoned; the levels climb the cliffs, lit more and more toward the upper city in the haze. A larger world lies ahead and above. |
 | The latch has a distinct mechanical click | The pawl gets its own sound (a ratchet, then a hard double click), a close-up insert on the dog dropping home, a small shake and `Proud`. |
@@ -96,8 +96,8 @@ Everything here is read from the world.
 | Where | What it says | What it means |
 |---|---|---|
 | Lift 2 sign | GOODS LIFT 2: load the pan to raise the platform; SET PAWL BEFORE BOARDING (pictograms) | How the lift worked, and the one rule. |
-| Lift 1 plate | LIFT 1 OUT OF SERVICE · R.Y. 97 | It failed, and nobody replaced it. |
-| Repair tags on the pawl | R.Y. 58 J.O., 71 T.M., 84 J.O., 96 A.K., 103 M., 107 M. | The catch was kept going by hand for fifty years. The last two tags are the same single initial, ten years after the others stop. |
+| Lift 1 plate | LIFT 1 OUT OF SERVICE · P.A. 365 | It failed, and nobody replaced it. |
+| Repair tags on the pawl | P.A. 326 J.O., 71 T.M., 84 J.O., 96 A.K., 103 M., 107 M. | The catch was kept going by hand for fifty years. The last two tags are the same single initial, ten years after the others stop. |
 | Returns belt sign | RETURNS FROM THE RINGS → DEAD LETTERS | The rings' post still comes down by itself, to the pit he has just left. |
 | Chalk in the tunnel | Hopscotch 1 to 8, a big sun, houses, stick figures | Children played here, in a tunnel, under a sun they had to draw. |
 | The chasm city | Ring letters A, B and C painted metres high; ring C barricaded, dark and failing; light growing level by level up to the upper city; one lit home window on ring A, far across | The bottom of a class system, abandoned first. A larger world above, and perhaps one person left nearby. |
@@ -178,7 +178,7 @@ From `docs/chapter1_pass3_plan.md`. This was DL-07.
 |---|---|---|
 | By the residential door he comes through (79.98), `LoreEveryoneUp` | EVERYONE UP, with an arrow | The last word on the depot's walls before the lift hall. |
 | On the far landing (89.35), `LoreStove08` | A stove with a pan, ration tins and a blanket by the broom; soot up the wall | People camped here, by the lift, waiting. |
-| Along the belt (92.5), `LoreTimetable`, with chalk tallies beside it (93.12) | RELOCATION · LIFT 1 · UP: every departure struck through in pencil; the last, R.Y. 43, ringed and crossed: LAST | The lift that took people up ran to a timetable, and the timetable ran out. Lift 1 is the one lying broken in its shaft. |
+| Along the belt (92.5), `LoreTimetable`, with chalk tallies beside it (93.12) | RELOCATION · LIFT 1 · UP: every departure struck through in pencil; the last, P.A. 311, ringed and crossed: LAST | The lift that took people up ran to a timetable, and the timetable ran out. Lift 1 is the one lying broken in its shaft. |
 
 - **Checkpoints:** `goods` at 81.9 and `latched` at 89.2; otherwise unchanged.
 

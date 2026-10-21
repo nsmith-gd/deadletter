@@ -879,7 +879,7 @@ def build_limbs(arm, mats, coll):
 def make_label_texture(path):
     """Parcel label (docs/chapter1_pass3_plan.md, section 5): "for MARA · C-114 · RING C" in a parent's careful
     hand, a crayon drawing in the corner by the child (a girl under a crooked tree, the sun), the postmark
-    "R.Y. 42", a "BIRTHDAY - DO NOT OPEN" stamp and the sender's initials, I.V. Drawn bold so it reads at
+    "P.A. 310", a "BIRTHDAY - DO NOT OPEN" stamp and the sender's initials, I.V. Drawn bold so it reads at
     handheld size. The hand is art/pass3/handwriting.py."""
     import sys
     from PIL import Image, ImageDraw, ImageFilter
@@ -910,13 +910,13 @@ def make_label_texture(path):
     # The sender, small: initials and a little crooked tree, the family's mark.
     hw.write(d, 'I.V.', 540, 404, 40, 'parent', pen, 6, seed=24)
     hw.crooked_tree(d, 676, 470, 84, pen, random.Random(4), width=5)
-    # The postmark, top right: R.Y. 42, with wavy cancel lines off to the left.
+    # The postmark, top right: P.A. 310, with wavy cancel lines off to the left.
     pm = (52, 46, 74)
     cx, cy, r = 880, 112, 78
     d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=pm, width=8)
     d.ellipse((cx - r + 18, cy - r + 18, cx + r - 18, cy + r - 18), outline=pm, width=3)
-    hw.write(d, 'R.Y.', cx - 42, cy - 48, 32, 'clerk', pm, 6, seed=25)
-    hw.write(d, '42', cx - 30, cy - 6, 48, 'clerk', pm, 8, seed=26)
+    hw.write(d, 'P.A.', cx - 42, cy - 48, 32, 'clerk', pm, 6, seed=25)
+    hw.write(d, '310', cx - 44, cy - 6, 48, 'clerk', pm, 8, seed=26)
     for k in range(4):
         y0 = cy - 36 + k * 24
         d.line([(cx - r - 120 + t, y0 + 6 * math.sin(t * 0.07)) for t in range(0, 120, 6)], fill=pm, width=5)

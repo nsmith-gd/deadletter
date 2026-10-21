@@ -19,21 +19,23 @@ the **Steward**, and a council that graded every life and rationed air, food and
 
 Humanity withers, one empty ring at a time. Mara keeps working anyway, so that life can spring up again outside.
 
-## The timeline (refuge years, R.Y.)
+## The timeline (P.A.)
 
-| R.Y. | Era | What happened | Where the player meets it |
+Years are P.A. Now, when D-17 wakes, is P.A. 387. (Earlier drafts counted refuge years, R.Y.; P.A. = R.Y. + 268.)
+
+| P.A. | Era | What happened | Where the player meets it |
 |---|---|---|---|
-| 0 | Sealing | The refuge is sealed, overcrowded by design. The Steward rules through the Grade Council. Grades 1 to 6; the lower the ring, the higher the grade number. | The prologue's signage, grades, ration rules. |
-| 0–40 | **Order** | Everything is allocated: shifts, rations, air, births (licensed). The motto is everywhere. Life is cramped, ruled and safe. | The prologue: the depot, the ration hall, the relocation lobby. |
-| ~30–34 | | Births fall. Mara is born R.Y. 34, the last birth anyone records. Nobody knows yet that she is the last. | Chapter 4: the birth register. |
-| ~38 | | The **protection protocols** begin: every remaining child is a Protected Pupil, never alone, retrieved by attendants. | Chapter 1, Attendance: the school's headcount, its notices. Chapter 4, Protective Custody: the machinery itself. |
-| 41–43 | **The Failure** | The systems fail, and order triages by grade. Air is cut to the lower works, rations are suspended for grade 4, the relocation lift takes grades 1 and 2, the bridge is cut, and ring C floods. The lower rings die in heaps. Mara, nine, is relocated up; her parent's birthday parcel is never delivered. | The prologue (all of it). |
-| 43–60 | **The Commons** | Above, the few left rebuild as equals. The Steward dies, and the portraits come down (pale rectangles where they hung). Grades are painted over with names. Shared kitchens, rotas, a council of everyone, minutes on voice cards. The dead are fewer, laid out in rows, and named. | Chapter 2, Someone Home; Chapter 3, The Work Above. |
-| ~49–52 | **The rebellion** | The last children, now teenagers and smothered by the protocols, rebel: graffiti over the old motto, nights out of bounds, the Den grown into a gang. One night they force a sealed hatch to the old surface works. The air that comes in kills the people in that ward, among them the last man. | Chapter 2 and Chapter 3 (signs of it); Chapter 4 (the ward). |
-| 52 | | With the last man dead, there can be no more births. The register's last line is Mara's. | Chapter 4: the all-hope-is-lost moment. |
-| 52–110 | **The thinning** | One by one the rest die. The rings go dark from the top of the population down. Mara works on the restoration, Commons-style, alone at the end. | Chapters 3 to 5. |
-| 110 | | The last other resident dies, nine years before the game. | Chapter 5. |
-| 119 | Now | Mara's work brings power back to the depot. D-17 wakes. | The prologue's opening card. |
+| 268 | Sealing | The refuge is sealed, overcrowded by design. The Steward rules through the Grade Council. Grades 1 to 6; the lower the ring, the higher the grade number. | The prologue's signage, grades, ration rules. |
+| 268–308 | **Order** | Everything is allocated: shifts, rations, air, births (licensed). The motto is everywhere. Life is cramped, ruled and safe. | The prologue: the depot, the ration hall, the relocation lobby. |
+| ~298–302 | | Births fall. Mara is born P.A. 302, the last birth anyone records. Nobody knows yet that she is the last. | Chapter 4: the birth register. |
+| ~306 | | The **protection protocols** begin: every remaining child is a Protected Pupil, never alone, retrieved by attendants. | Chapter 1, Attendance: the school's headcount, its notices. Chapter 4, Protective Custody: the machinery itself. |
+| 309–311 | **The Failure** | The systems fail, and order triages by grade. Air is cut to the lower works, rations are suspended for grade 4, the relocation lift takes grades 1 and 2, the bridge is cut, and ring C floods. The lower rings die in heaps. Mara, nine, is relocated up; her parent's birthday parcel is never delivered. | The prologue (all of it). |
+| 311–328 | **The Commons** | Above, the few left rebuild as equals. The Steward dies, and the portraits come down (pale rectangles where they hung). Grades are painted over with names. Shared kitchens, rotas, a council of everyone, minutes on voice cards. The dead are fewer, laid out in rows, and named. | Chapter 2, Someone Home; Chapter 3, The Work Above. |
+| ~317–320 | **The rebellion** | The last children, now teenagers and smothered by the protocols, rebel: graffiti over the old motto, nights out of bounds, the Den grown into a gang. One night they force a sealed hatch to the old surface works. The air that comes in kills the people in that ward, among them the last man. | Chapter 2 and Chapter 3 (signs of it); Chapter 4 (the ward). |
+| 320 | | With the last man dead, there can be no more births. The register's last line is Mara's. | Chapter 4: the all-hope-is-lost moment. |
+| 320–378 | **The thinning** | One by one the rest die. The rings go dark from the top of the population down. Mara works on the restoration, Commons-style, alone at the end. | Chapters 3 to 5. |
+| 378 | | The last other resident dies, nine years before the game. | Chapter 5. |
+| 387 | Now | Mara's work brings power back to the depot. D-17 wakes. | The prologue's opening card. |
 
 ## The vertical story: a gradient the player walks up
 
@@ -100,4 +102,4 @@ The DL-12 and DL-13 art agents have these as of 21 October. Mara, a silent pupil
 | `ward_intercom` | the ward's automatic recorder | A door alarm, someone counting the people in the ward out loud, the count going down, a seal closing. No screams. |
 | `last_man` | the last man, an ordinary older man | A card to nobody in particular, recorded in the ward the day before, about fixing a radio. He doesn't know he matters. |
 | `mara_night` | Mara, 18 | Recorded that night, alone: she can't say what happened. She says "I told them not to." Then nothing for a long time. Then: "I'm going to fix it. I don't know how. I'm going to fix something." |
-| `register` | (an object, not a voice) | The birth register's last page: one line, "MARA D., R.Y. 34". Below it, ruled lines, empty to the end of the book. |
+| `register` | (an object, not a voice) | The birth register's last page: one line, "MARA D., P.A. 302". Below it, ruled lines, empty to the end of the book. |

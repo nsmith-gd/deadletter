@@ -285,7 +285,7 @@ def make_notices(path):
     d.line((a[0] + 20, 360, a[2] - 20, 300), fill=(150, 40, 34), width=10)
     for k in range(4):
         d.line((a[0] + 24, 396 + k * 18, a[2] - 24 - (k % 2) * 60, 396 + k * 18), fill=(120, 116, 104), width=5)
-    d.text((a[0] + 20, 446 - 4), 'R.Y. 41', font=_font(FONT_M, 18), fill=ink)
+    d.text((a[0] + 20, 446 - 4), 'P.A. 309', font=_font(FONT_M, 18), fill=ink)
     for px, py in ((a[0] + 14, a[1] + 8), (a[2] - 14, a[1] + 8)):
         d.ellipse((px - 8, py - 8, px + 8, py + 8), fill=pin)
     # GRADE 3 TRANSFERS SUSPENDED
@@ -304,7 +304,7 @@ def make_notices(path):
     d.polygon([(b[0] + 186, by + 116), (b[0] + 216, by + 86), (b[0] + 246, by + 116)], fill=ink)
     d.line((b[0] + 160, by + 96, b[0] + 272, by + 190), fill=(150, 40, 34), width=14)   # crossed out
     d.line((b[0] + 272, by + 96, b[0] + 160, by + 190), fill=(150, 40, 34), width=14)
-    d.text((b[0] + 16, b[3] - 36), 'BY ORDER · R.Y. 42', font=_font(FONT_M, 18), fill=ink)
+    d.text((b[0] + 16, b[3] - 36), 'BY ORDER · P.A. 310', font=_font(FONT_M, 18), fill=ink)
     for px, py in ((b[0] + 14, b[1] + 8), (b[2] - 14, b[1] + 8)):
         d.ellipse((px - 8, py - 8, px + 8, py + 8), fill=pin)
     # The torn one: a corner left under a pin.
@@ -438,7 +438,7 @@ def make_everyone_up(path):
 
 def make_timetable(path):
     """RELOCATION · LIFT 1 · UP: a departures sheet, eight rows (date, time, grades, a lift pictogram), every row
-    struck through in pencil; the last, R.Y. 43, ringed and crossed: LAST."""
+    struck through in pencil; the last, P.A. 311, ringed and crossed: LAST."""
     from PIL import Image, ImageDraw
     w, h = 512, 704
     img = Image.new('RGBA', (w, h), (212, 204, 178, 255))
@@ -448,8 +448,8 @@ def make_timetable(path):
     d.text((20, 10), 'RELOCATION', font=_font(FONT, 52), fill=(214, 206, 180, 255))
     d.text((20, 66), 'LIFT 1  ·  UP', font=_font(FONT_C, 34), fill=(214, 206, 180, 255))
     d.polygon([(440, 30), (470, 80), (410, 80)], fill=(214, 206, 180, 255))
-    rows = [('R.Y. 42', '06.00', '3'), ('R.Y. 42', '18.00', '3'), ('R.Y. 42', '06.00', '4'), ('R.Y. 42', '18.00', '4'),
-            ('R.Y. 43', '06.00', '4'), ('R.Y. 43', '12.00', '4'), ('R.Y. 43', '18.00', '4'), ('R.Y. 43', '06.00', 'ALL')]
+    rows = [('P.A. 310', '06.00', '3'), ('P.A. 310', '18.00', '3'), ('P.A. 310', '06.00', '4'), ('P.A. 310', '18.00', '4'),
+            ('P.A. 311', '06.00', '4'), ('P.A. 311', '12.00', '4'), ('P.A. 311', '18.00', '4'), ('P.A. 311', '06.00', 'ALL')]
     rnd = random.Random(12)
     for i, (dte, tm, gr) in enumerate(rows):
         y = 140 + i * 66

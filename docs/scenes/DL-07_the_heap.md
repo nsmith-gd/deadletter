@@ -90,7 +90,7 @@ jump on the move is just a jump (a running jump), so hopping over the weights ne
 
 | Where | What it says | What it means |
 |---|---|---|
-| The letter's front | Addressed to C-114, postmarked R.Y. 43, a heart pictogram | Post for the same room as his parcel, sent after the seal. |
+| The letter's front | Addressed to C-114, postmarked P.A. 311, a heart pictogram | Post for the same room as his parcel, sent after the seal. |
 | The letter's back | In wax crayon: a little courier carrying a parcel to a house under a big sun, a child waving at the window, a row of hearts | A child drew a courier like him delivering to her. |
 | MailSlot6's plate | An envelope going into a slot, and a stamp | How to post, without words. |
 | The heap below, the desk, the clock, the day board | As DL-06 | The service ran down, and the post kept coming. |
@@ -143,7 +143,7 @@ jump on the move is just a jump (a running jump), so hopping over the weights ne
 - **Two puzzles in a row.** DL-06's routing and this one share a room and a camera. Does the slide down read as a
   new beat, or should something new (the chair, a sound from the heap) sit between them?
 - **Two weights.** One is enough, and a lost one comes back. Is the second one needed?
-- **The letter's sender.** C-114 in R.Y. 43, with a courier drawn on the back: who sent it is left open. Is that the
+- **The letter's sender.** C-114 in P.A. 311, with a courier drawn on the back: who sent it is left open. Is that the
   right amount of mystery for the chapter's major secret?
 
 ## Pass 2 (built 19 October 2026)

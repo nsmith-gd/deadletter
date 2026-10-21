@@ -173,7 +173,7 @@ def make_textures():
                  'Couriers: do not attempt', 'delivery past the seal.'):
         d.text((48, y), line, font=_font(30, 'mono-bold' if line.isupper() else 'mono'), fill=ink)
         y += 46
-    d.text((48, 770), 'Depot office  -  Refuge Year 43', font=_font(26, 'mono'), fill=ink)
+    d.text((48, 770), 'Depot office  -  P.A. 311', font=_font(26, 'mono'), fill=ink)
     _age(img, 1).save(os.path.join(TEX, 'notice_ring_c.png'))
 
     # The day board: deliveries per day, chalked up year after year, then left.
@@ -183,12 +183,12 @@ def make_textures():
     chalk = (206, 210, 196)
     d.rectangle((10, 10, 890, 630), outline=(120, 96, 64), width=18)
     d.text((60, 44), 'DELIVERED PER DAY', font=_font(46), fill=chalk)
-    d.text((60, 104), 'refuge year', font=_font(26, 'sans'), fill=(160, 166, 150))
+    d.text((60, 104), 'year, P.A.', font=_font(26, 'sans'), fill=(160, 166, 150))
     for _ in range(260):                                        # chalk dust and old rubbings
         x, y = rnd.uniform(20, 880), rnd.uniform(20, 620)
         d.line((x, y, x + rnd.uniform(-60, 60), y + rnd.uniform(-8, 8)), fill=(48, 55, 50), width=rnd.randint(4, 14))
-    rows = [('30', '1 240'), ('42', '540'), ('55', '210'), ('68', '96'), ('80', '41'), ('95', '12'),
-            ('104', '5'), ('109', '2'), ('110', '')]
+    rows = [('298', '1 240'), ('310', '540'), ('323', '210'), ('336', '96'), ('348', '41'), ('363', '12'),
+            ('372', '5'), ('377', '2'), ('378', '')]
     for i, (yr, n) in enumerate(rows):
         x, y = 60 + (i // 5) * 420, 160 + (i % 5) * 88
         jit = lambda: rnd.uniform(-3, 3)  # noqa: E731

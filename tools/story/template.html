@@ -147,6 +147,20 @@ textarea { min-height: 96px; resize: vertical; }
 .tl th { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
 .tl td:first-child { font-family: var(--mono); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 @media (max-width: 820px) { .grid { grid-template-columns: minmax(0, 1fr); } .index { position: static !important; max-height: none !important; } .index nav { display: none; } .index .picker { display: block !important; } }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.filebtn { position: relative; overflow: hidden; display: inline-flex; align-items: center; cursor: pointer; }
+.filebtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.filebtn:focus-within { outline: 2px solid var(--stamp); outline-offset: 2px; }
+.import { margin-top: 18px; background: var(--sheet); border: 1.5px solid var(--stamp); border-radius: 6px; padding: 16px 18px; display: grid; gap: 12px; }
+.import h3 { font-size: 22px; }
+.import ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; max-height: 320px; overflow-y: auto; }
+.import .tag { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 99px; margin-right: 6px; }
+.tag.new { background: var(--ok-soft); color: var(--ok); } .tag.chg { background: var(--warn-soft); color: var(--warn); } .tag.del { background: var(--bad-soft); color: var(--bad); }
+.import textarea { min-height: 180px; font-family: var(--mono); font-size: 13px; }
+.import .row2 { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.check { display: inline-flex; flex-direction: row; gap: 8px; align-items: center; text-transform: none; letter-spacing: 0; font-family: var(--body); font-size: 14px; font-weight: 400; color: var(--ink); }
+.check input { width: auto; }
+.notes { white-space: pre-wrap; font-size: 14px; max-height: 360px; overflow-y: auto; }
 @media (prefers-reduced-motion: no-preference) { .card { transition: border-color .15s; } }
 </style>
 
@@ -156,9 +170,17 @@ textarea { min-height: 96px; resize: vertical; }
       <h1>Dead Letter · Story Board</h1>
       <p class="sub">Every level's story evidence in one place: what is already in the game, and what you want to add. Each card is a thing the player finds, hears, reads or sees happen. Keep each one true to the story bible at the foot of the page.</p>
       <div class="status" id="status">Opening the board…</div>
+      <div class="tools" role="group" aria-label="Markdown">
+        <button class="btn small ghost" id="exp-all" type="button">Export all as Markdown</button>
+        <button class="btn small ghost" id="exp-level" type="button">Export this level</button>
+        <label class="btn small ghost filebtn" for="imp-file">Import Markdown<input type="file" id="imp-file" accept=".md,.markdown,.txt,text/markdown,text/plain"></label>
+        <button class="btn small ghost" id="imp-paste-btn" type="button">Paste Markdown</button>
+      </div>
     </div>
-    <div class="stampmark">R.Y. 119 · Undelivered</div>
+    <div class="stampmark">P.A. 387 · Undelivered</div>
   </header>
+
+  <section class="import" id="import" hidden aria-live="polite"></section>
 
   <div class="grid">
     <aside class="index" aria-label="Levels">
@@ -173,11 +195,15 @@ textarea { min-height: 96px; resize: vertical; }
     <h2 id="bible-h">The story bible, for reference</h2>
     <div class="bgrid">
       <div class="sheet tl" style="grid-column: 1 / -1">
-        <h3>Timeline (refuge years)</h3>
+        <h3>Timeline (P.A.)</h3>
         <table>
-          <thead><tr><th>R.Y.</th><th>Era</th><th>What happened</th><th>Where the player meets it</th></tr></thead>
+          <thead><tr><th>P.A.</th><th>Era</th><th>What happened</th><th>Where the player meets it</th></tr></thead>
           <tbody id="timeline"></tbody>
         </table>
+      </div>
+      <div class="sheet" style="grid-column: 1 / -1">
+        <h3>Story bible notes</h3>
+        <div class="notes" id="bible-notes"></div>
       </div>
       <div class="sheet">
         <h3>How to tell it</h3>
@@ -202,7 +228,7 @@ textarea { min-height: 96px; resize: vertical; }
         <h3>Who's who</h3>
         <ul>
           <li><b>D-17,</b> a courier robot with one parcel: a birthday gift for Mara, nine, from a parent on the works. Seventy-six years late.</li>
-          <li><b>Mara D.,</b> born R.Y. 34, the last birth anyone records. A silent pupil who drew trees. Old now, still working above.</li>
+          <li><b>Mara D.,</b> born P.A. 302, the last birth anyone records. A silent pupil who drew trees. Old now, still working above.</li>
           <li><b>The Steward</b> and the Grade Council: benevolent, harsh, graded every life. Portraits in gilt frames.</li>
           <li><b>The Den:</b> the last children's club. Password: crooked tree.</li>
         </ul>
@@ -215,8 +241,8 @@ textarea { min-height: 96px; resize: vertical; }
 const LEVELS = /*LEVELS*/[];
 const TIMELINE = /*TIMELINE*/[];
 const BIBLE = /*BIBLE*/"";
-const KINDS = [['tableau', 'Tableau'], ['voice', 'Voice letter'], ['sign', 'Sign or writing'], ['object', 'Object'], ['secret', 'Secret room'], ['beat', 'Story beat'], ['note', 'Note']];
-const ERAS = [['order', 'Order', 'R.Y. 0–40'], ['failure', 'The Failure', 'R.Y. 41–43'], ['protocols', 'The protocols', 'R.Y. 38 on'], ['commons', 'The Commons', 'R.Y. 43–60'], ['rebellion', 'The rebellion', 'R.Y. 49–52'], ['thinning', 'The thinning', 'R.Y. 52–110'], ['now', 'Now', 'R.Y. 119']];
+const KINDS = [['room', 'Plot room'], ['music', 'Musical moment'], ['tableau', 'Tableau'], ['voice', 'Voice letter'], ['sign', 'Sign or writing'], ['object', 'Object'], ['secret', 'Secret room'], ['beat', 'Story beat'], ['note', 'Note']];
+const ERAS = [['order', 'Order', 'P.A. 268–308'], ['failure', 'The Failure', 'P.A. 309–311'], ['protocols', 'The protocols', 'P.A. 306 on'], ['commons', 'The Commons', 'P.A. 311–328'], ['rebellion', 'The rebellion', 'P.A. 317–320'], ['thinning', 'The thinning', 'P.A. 320–378'], ['now', 'Now', 'P.A. 387']];
 const STATUSES = [['idea', 'Idea'], ['planned', 'Planned'], ['built', 'In the game']];
 const kindName = (k) => (KINDS.find((x) => x[0] === k) || [k, k])[1];
 const eraName = (k) => (ERAS.find((x) => x[0] === k) || [k, k])[1];
@@ -233,7 +259,7 @@ const h = (tag, attrs = {}, ...kids) => {
   return el;
 };
 
-const state = { items: [], level: null, filter: 'all', db: null, sample: null, canWrite: true, loaded: false, editing: null, confirmDel: null, checking: {} };
+const state = { meta: {}, downloads: null, items: [], level: null, filter: 'all', db: null, sample: null, canWrite: true, loaded: false, editing: null, confirmDel: null, checking: {} };
 try { const saved = localStorage.getItem('dl-story-level'); if (saved) state.level = saved; } catch (e) {}
 const hash = (location.hash || '').slice(1);
 if (/^DL-\d\d$/.test(hash)) state.level = hash;
@@ -286,7 +312,7 @@ function renderLevel() {
 
   const its = itemsFor(l.id).filter((i) => state.filter === 'all' || (state.filter === 'mine' ? i.source !== 'game' : i.kind === state.filter))
     .sort((a, b) => (a.source === 'game') - (b.source === 'game') || (b.updatedAt || 0) - (a.updatedAt || 0));
-  const chips = [['all', 'Everything'], ['mine', 'Added here'], ...KINDS.slice(0, 6)];
+  const chips = [['all', 'Everything'], ['mine', 'Added here'], ...KINDS.slice(0, 8)];
   main.append(h('div', { class: 'bar' }, h('h3', {}, 'Story elements'),
     h('div', { class: 'filters', role: 'group', 'aria-label': 'Show' }, chips.map(([k, n]) => h('button', { class: 'chip', 'aria-pressed': String(state.filter === k), onclick: () => { state.filter = k; renderLevel(); } }, n)))));
 
@@ -375,7 +401,10 @@ async function checkFit(i) {
   const prompt = `You are the story editor for "Dead Letter", a wordless 2.5D puzzle game told only through environmental storytelling and found voice recordings. Judge whether one proposed story element fits the world and this level.
 
 THE STORY BIBLE:
-${BIBLE}
+${bibleText()}
+
+THE TIMELINE (P.A.):
+${timelineRows().map((r) => r.join(' | ')).join('\n')}
 
 THE LEVEL: ${l.id} ${l.name} (${l.part}). Eras shown here: ${l.eras.map(eraName).join(', ')}.${l.says ? '\nWhat the level says: ' + l.says : ''}${l.play ? '\nPlay: ' + l.play : ''}
 Other elements already on this level:
@@ -384,7 +413,7 @@ ${others || '(none)'}
 THE PROPOSED ELEMENT: [${kindName(i.kind)}, era: ${(i.eras || []).map(eraName).join(', ')}] ${i.title}
 ${i.text || ''}
 
-Check: consistency with the timeline and ages (Mara born R.Y. 34, relocated up at nine in R.Y. 43, placed at the Works at fourteen; now R.Y. 119), the era this depth of the refuge shows, the telling rules (people not narrators; show what people did; no cause-of-death signs; not on the nose), and overlap with what is already on the level.
+Check: consistency with the timeline and ages (Mara born P.A. 302, relocated up at nine in P.A. 311, placed at the Works at fourteen; now P.A. 387), the era this depth of the refuge shows, the telling rules (people not narrators; show what people did; no cause-of-death signs; not on the nose), and overlap with what is already on the level.
 Reply with only JSON: {"verdict": "fits" | "needs work" | "conflicts", "why": "one or two plain sentences", "suggestion": "one concrete change, or empty if it fits"}`;
   state.checking[i.id] = true; renderLevel();
   try {
@@ -398,9 +427,185 @@ Reply with only JSON: {"verdict": "fits" | "needs work" | "conflicts", "why": "o
   } finally { delete state.checking[i.id]; renderLevel(); }
 }
 
+const timelineRows = () => (Array.isArray(state.meta.timeline?.rows) && state.meta.timeline.rows.length ? state.meta.timeline.rows : TIMELINE);
+const bibleText = () => (typeof state.meta.bible?.text === 'string' && state.meta.bible.text.trim() ? state.meta.bible.text : BIBLE);
 function renderTimeline() {
-  $('#timeline').replaceChildren(...TIMELINE.map((r) => h('tr', {}, h('td', {}, r[0]), h('td', {}, r[1]), h('td', {}, r[2]), h('td', {}, r[3]))));
+  $('#timeline').replaceChildren(...timelineRows().map((r) => h('tr', {}, h('td', {}, r[0] || ''), h('td', {}, r[1] || ''), h('td', {}, r[2] || ''), h('td', {}, r[3] || ''))));
+  $('#bible-notes').textContent = bibleText();
 }
+
+// ---- Markdown: the board's interchange format ------------------------------------------------------------------
+// ## Timeline (a table), ## Story bible (free text), then ## DL-nn Name per level, ### Kind · Title per card, an
+// optional <!-- id: ... --> line, - Era: / - Status: / - Source: lines, then the card's text.
+const MD_HEAD = `<!-- Dead Letter story board, Markdown v1. Years are P.A. (now: P.A. 387). Edit freely and import it back.
+Format: "## Timeline" table; "## Story bible" free text; "## DL-15 One Pupil Missing" per level; under it one
+"### Kind · Title" per card, with optional "- Era: …", "- Status: Idea | Planned | In the game" lines, then its text.
+Kinds: ${KINDS.map((k) => k[1]).join(', ')}. Eras: ${ERAS.map((e) => e[1]).join(', ')}. Keep each card's id line to update it in place; leave it out for a new card. -->`;
+const esc = (t) => String(t ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+function toMarkdown(levelIds) {
+  const out = ['# Dead Letter · Story Board', '', MD_HEAD, ''];
+  if (!levelIds) {
+    out.push('## Timeline', '', '| P.A. | Era | What happened | Where the player meets it |', '|---|---|---|---|');
+    for (const r of timelineRows()) out.push(`| ${esc(r[0])} | ${esc(r[1])} | ${esc(r[2])} | ${esc(r[3])} |`);
+    out.push('', '## Story bible', '', bibleText().trim(), '');
+  }
+  for (const l of LEVELS) {
+    if (levelIds && !levelIds.includes(l.id)) continue;
+    const its = itemsFor(l.id).slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    if (!its.length && !levelIds) continue;
+    out.push(`## ${l.id} ${l.name}`, '');
+    for (const i of its) {
+      out.push(`### ${kindName(i.kind)} · ${i.title || 'Untitled'}`, `<!-- id: ${i.id} -->`);
+      out.push(`- Era: ${(i.eras || []).map(eraName).join(', ')}`, `- Status: ${statusName(i.status)}`, `- Source: ${i.source === 'game' ? 'game' : 'added'}`, '');
+      if (i.text) out.push(String(i.text).trim(), '');
+    }
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
+}
+const byName = (list, name) => { const n = String(name || '').trim().toLowerCase(); const hit = list.find((x) => x[1].toLowerCase() === n || x[0] === n); return hit && hit[0]; };
+function parseMarkdown(md) {
+  const res = { timeline: null, bible: null, cards: [], unknown: [] };
+  const lines = String(md).replace(/\r\n?/g, '\n').replace(/<!--(?!\s*id:)[^]*?-->/g, '').split('\n');
+  let sec = null, level = null, card = null, buf = [];
+  const flush = () => {
+    if (card) { card.text = buf.join('\n').trim(); res.cards.push(card); card = null; }
+    else if (sec === 'bible') res.bible = buf.join('\n').trim();
+    buf = [];
+  };
+  for (const raw of lines) {
+    const line = raw.replace(/\s+$/, '');
+    let m;
+    if ((m = line.match(/^##\s+(?!#)(.*)$/))) {
+      flush(); const t = m[1].trim(); level = null;
+      if (/^timeline\b/i.test(t)) { sec = 'timeline'; res.timeline = []; }
+      else if (/^(story\s+)?bible\b/i.test(t)) sec = 'bible';
+      else if ((m = t.match(/^(DL-?\s?(\d{1,2}))\b/i))) {
+        const id = 'DL-' + String(+m[2]).padStart(2, '0');
+        sec = 'level'; level = LEVELS.some((l) => l.id === id) ? id : null;
+        if (!level) res.unknown.push(t);
+      } else sec = null;
+      continue;
+    }
+    if (sec === 'level' && level && (m = line.match(/^###\s+(.*)$/))) {
+      flush();
+      const head = m[1].trim(), parts = head.match(/^(.+?)\s*(?:·|:|\||–|—|\s-)\s+(.+)$/);
+      const kind = parts ? byName(KINDS, parts[1]) : null;
+      card = { level, kind: kind || 'note', title: (kind ? parts[2] : head).trim(), eras: null, status: null, id: null, meta: true };
+      continue;
+    }
+    if (sec === 'timeline') {
+      if (/^\|/.test(line) && !/^\|\s*-/.test(line)) {
+        const cells = line.replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map((c) => c.replace(/\\\|/g, '|').trim());
+        if (!/^p\.?a\.?$/i.test(cells[0])) res.timeline.push([cells[0] || '', cells[1] || '', cells[2] || '', cells[3] || '']);
+      }
+      continue;
+    }
+    if (card) {
+      if ((m = line.match(/^<!--\s*id:\s*([A-Za-z0-9_\-.~:@+]+)\s*-->$/))) { card.id = m[1]; continue; }
+      if (card.meta && (m = line.match(/^[-*]\s*(Era|Eras|Status|Source)\s*:\s*(.*)$/i))) {
+        const k = m[1].toLowerCase();
+        if (k.startsWith('era')) card.eras = m[2].split(/[,;]/).map((e) => byName(ERAS, e)).filter(Boolean);
+        if (k === 'status') card.status = byName(STATUSES, m[2]) || (/game|built/i.test(m[2]) ? 'built' : null);
+        if (k === 'source') card.source = /game/i.test(m[2]) ? 'game' : 'director';
+        continue;
+      }
+      if (line.trim()) card.meta = false;
+      buf.push(line);
+    } else if (sec === 'bible') buf.push(line);
+  }
+  flush();
+  if (res.timeline && !res.timeline.length) res.timeline = null;
+  return res;
+}
+function planImport(parsed, removeMissing) {
+  const plan = { creates: [], updates: [], same: 0, deletes: [], timeline: false, bible: false, unknown: parsed.unknown };
+  const used = new Set();
+  for (const c of parsed.cards) {
+    let cur = c.id && state.items.find((i) => i.id === c.id);
+    if (!cur) cur = state.items.find((i) => i.level === c.level && !used.has(i.id) && (i.title || '').trim().toLowerCase() === c.title.toLowerCase());
+    const body = { level: c.level, kind: c.kind, title: c.title, text: c.text, eras: c.eras && c.eras.length ? c.eras : (cur ? cur.eras : (LEVELS.find((l) => l.id === c.level).eras.slice(0, 1))), status: c.status || (cur ? cur.status : 'idea') };
+    if (cur) {
+      used.add(cur.id);
+      const changed = ['level', 'kind', 'title', 'text', 'status'].some((k) => (cur[k] || '') !== (body[k] || '')) || JSON.stringify(cur.eras || []) !== JSON.stringify(body.eras);
+      if (changed) plan.updates.push({ id: cur.id, before: cur, body }); else plan.same++;
+    } else plan.creates.push({ id: c.id, body: { ...body, source: c.source || 'director' } });
+  }
+  if (removeMissing) {
+    const levels = new Set(parsed.cards.map((c) => c.level));
+    for (const i of state.items) if (levels.has(i.level) && !used.has(i.id)) plan.deletes.push(i);
+  }
+  if (parsed.timeline && JSON.stringify(parsed.timeline) !== JSON.stringify(timelineRows())) plan.timeline = parsed.timeline;
+  if (parsed.bible && parsed.bible !== bibleText().trim()) plan.bible = parsed.bible;
+  return plan;
+}
+const importUI = { text: null, name: '', removeMissing: false, busy: false, pasting: false };
+function renderImport() {
+  const box = $('#import');
+  if (!importUI.pasting && importUI.text == null) { box.hidden = true; box.replaceChildren(); return; }
+  box.hidden = false; box.replaceChildren();
+  if (importUI.pasting) {
+    const ta = h('textarea', { id: 'imp-text', 'aria-label': 'Markdown to import', placeholder: '## DL-18 Room for One\n\n### Plot room · The kitchen with two places\n- Era: The Commons\n- Status: Idea\n\nWhat the player finds there…' });
+    box.append(h('h3', {}, 'Paste Markdown to import'), ta,
+      h('div', { class: 'row2' }, h('span', { class: 'hint' }, 'Paste a whole export, or just the levels and cards you worked on elsewhere.'),
+        h('div', { class: 'acts' }, h('button', { class: 'btn ghost', type: 'button', onclick: () => { importUI.pasting = false; renderImport(); } }, 'Cancel'),
+          h('button', { class: 'btn', type: 'button', onclick: () => { const t = $('#imp-text').value; if (!t.trim()) return; importUI.text = t; importUI.name = 'pasted text'; importUI.pasting = false; renderImport(); } }, 'Preview import'))));
+    setTimeout(() => ta.focus(), 0);
+    return;
+  }
+  const parsed = parseMarkdown(importUI.text), plan = planImport(parsed, importUI.removeMissing);
+  const nothing = !plan.creates.length && !plan.updates.length && !plan.deletes.length && !plan.timeline && !plan.bible;
+  const li = (cls, tag, txt) => h('li', {}, h('span', { class: 'tag ' + cls }, tag), txt);
+  const list = h('ul', {},
+    plan.timeline ? li('chg', 'timeline', `${plan.timeline.length} rows replace the timeline`) : null,
+    plan.bible ? li('chg', 'bible', 'the story bible notes are replaced') : null,
+    plan.creates.map((c) => li('new', 'new', `${c.body.level} · ${kindName(c.body.kind)} · ${c.body.title}`)),
+    plan.updates.map((u) => li('chg', 'changed', `${u.body.level} · ${kindName(u.body.kind)} · ${u.body.title}`)),
+    plan.deletes.map((d) => li('del', 'removed', `${d.level} · ${kindName(d.kind)} · ${d.title}`)));
+  box.append(h('h3', {}, `Import from ${importUI.name}`),
+    h('p', { class: 'hint' }, `${parsed.cards.length} cards read: ${plan.creates.length} new, ${plan.updates.length} changed, ${plan.same} unchanged${plan.deletes.length ? `, ${plan.deletes.length} to remove` : ''}.` + (plan.unknown.length ? ` Skipped sections with no level on this board: ${plan.unknown.join('; ')}.` : '')),
+    nothing ? h('p', {}, 'Nothing would change.') : list,
+    h('div', { class: 'row2' },
+      h('label', { class: 'check' }, h('input', { type: 'checkbox', id: 'imp-remove', checked: importUI.removeMissing, onchange: (e) => { importUI.removeMissing = e.target.checked; renderImport(); } }), 'Also remove cards on these levels that the file leaves out'),
+      h('div', { class: 'acts' }, h('button', { class: 'btn ghost', type: 'button', onclick: () => { importUI.text = null; renderImport(); } }, 'Cancel'),
+        h('button', { class: 'btn', type: 'button', disabled: nothing || importUI.busy || !state.db || !state.canWrite, onclick: () => applyImport(plan) }, importUI.busy ? 'Importing\u2026' : 'Apply import'))));
+}
+async function applyImport(plan) {
+  importUI.busy = true; renderImport();
+  const now = Date.now(); let done = 0;
+  try {
+    for (const c of plan.creates) {
+      const ok = c.id && /^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(c.id) && !state.items.some((i) => i.id === c.id);
+      if (ok) await state.db.collection('elements').doc(c.id).set({ ...c.body, createdAt: now + done, updatedAt: now });
+      else await state.db.collection('elements').add({ ...c.body, createdAt: now + done, updatedAt: now });
+      done++;
+    }
+    for (const u of plan.updates) { await state.db.collection('elements').doc(u.id).update({ ...u.body, fit: null, updatedAt: now }); done++; }
+    for (const d of plan.deletes) { await state.db.collection('elements').doc(d.id).delete(); done++; }
+    if (plan.timeline) await state.db.doc('meta/timeline').set({ rows: plan.timeline, updatedAt: now });
+    if (plan.bible) await state.db.doc('meta/bible').set({ text: plan.bible, updatedAt: now });
+    importUI.text = null; setStatus(`Imported: ${plan.creates.length} new, ${plan.updates.length} changed${plan.deletes.length ? `, ${plan.deletes.length} removed` : ''}.`);
+  } catch (x) {
+    setStatus(x && x.code === 'invalid_argument' ? 'You can read this board but not change it.' : `The import stopped after ${done} cards. Check your connection and import the same file again; finished cards are matched, not duplicated.`);
+  } finally { importUI.busy = false; renderImport(); }
+}
+async function exportMd(levelIds) {
+  const md = toMarkdown(levelIds), name = levelIds ? `dead-letter-${levelIds[0].toLowerCase()}.md` : 'dead-letter-story-board.md';
+  if (state.downloads) {
+    try { await state.downloads.save({ filename: name, data: md }); setStatus(`Saved ${name}.`); return; }
+    catch (x) { if (x && x.code === 'declined') { setStatus('Export cancelled.'); return; } }
+  }
+  try { await navigator.clipboard.writeText(md); setStatus('Copied the Markdown to the clipboard (saving a file isn\u2019t available here).'); }
+  catch (e) { importUI.pasting = false; importUI.text = null; setStatus('Saving isn\u2019t available here. Select the text below and copy it.'); const box = $('#import'); box.hidden = false; box.replaceChildren(h('h3', {}, 'Markdown export'), h('textarea', { readonly: true, 'aria-label': 'Exported Markdown' }, md), h('div', { class: 'acts' }, h('button', { class: 'btn ghost', type: 'button', onclick: () => { box.hidden = true; } }, 'Close'))); }
+}
+$('#exp-all').addEventListener('click', () => exportMd(null));
+$('#exp-level').addEventListener('click', () => exportMd([state.level]));
+$('#imp-paste-btn').addEventListener('click', () => { importUI.text = null; importUI.pasting = true; renderImport(); });
+$('#imp-file').addEventListener('change', async (e) => {
+  const f = e.target.files && e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try { importUI.text = await f.text(); importUI.name = f.name; importUI.pasting = false; renderImport(); $('#import').scrollIntoView({ block: 'nearest' }); }
+  catch (x) { setStatus('That file couldn\u2019t be read. Try saving it as plain text (.md).'); }
+});
 
 function render() { renderNav(); renderLevel(); }
 
@@ -409,8 +614,8 @@ render();
 
 (async () => {
   if (!window.claude) { setStatus('Open this board in Claude to load and add cards.'); state.loaded = true; render(); return; }
-  const [db, sample] = await Promise.all([claude.use('db'), claude.use('sample')]);
-  state.sample = sample;
+  const [db, sample, downloads] = await Promise.all([claude.use('db'), claude.use('sample'), claude.use('downloads')]);
+  state.sample = sample; state.downloads = downloads;
   if (!db) { state.canWrite = false; state.loaded = true; setStatus('The board’s cards can’t load here. Sign in to Claude to see them.'); render(); return; }
   state.db = db;
   db.collection('elements').onSnapshot((snap) => {
@@ -418,7 +623,11 @@ render();
     state.loaded = true;
     const mine = state.items.filter((i) => i.source !== 'game').length;
     setStatus(`${state.items.length} cards on ${new Set(state.items.map((i) => i.level)).size} levels · ${mine} added here`);
-    render();
+    render(); if (importUI.text != null) renderImport();
   }, (e) => { state.loaded = true; setStatus(e && e.code === 'revoked' ? 'The board is no longer available here.' : 'The cards stopped updating. Reload the page.'); render(); });
+  db.collection('meta').onSnapshot((snap) => {
+    state.meta = {}; for (const d of snap.docs) state.meta[d.id] = d.data();
+    renderTimeline(); if (importUI.text != null) renderImport();
+  }, () => {});
 })();
 </script>

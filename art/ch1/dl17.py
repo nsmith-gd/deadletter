@@ -589,7 +589,7 @@ def make_card(w, h, entries, number, seed, stamp=True, sign=True):
         ds.rounded_rectangle((12, 12, 224, 96), radius=8, outline=V, width=2)
         ds.text((118, 40), 'ACCEPTED', font=_font(40, 'carlito'), fill=V, anchor='mm')
         ds.text((118, 70), 'WORKS DEPT \u00b7 RING A', font=_font(18, 'carlito'), fill=V, anchor='mm')
-        ds.text((118, 88), 'R.Y. 48', font=_font(17, 'carlito'), fill=V, anchor='mm')
+        ds.text((118, 88), 'P.A. 316', font=_font(17, 'carlito'), fill=V, anchor='mm')
         st = _grain(st, seed + 7, lo=0.3).rotate(7, resample=Image.BICUBIC, expand=True)
         card.alpha_composite(st, (W - st.width - 16, H - st.height - 6))
     dd = ImageDraw.Draw(card)

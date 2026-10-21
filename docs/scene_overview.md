@@ -94,7 +94,7 @@ Revised 18 October 2026: nine scenes, not five. See `docs/chapter1_plan.md` for 
 
 **Learning and connection:** Introduce carrying, and the chapter's optional letters, on the path and without risk. Carrying returns in scenes 3, 4, 7 and 10.
 
-**Story evidence:** Named mugs, a courier-of-the-year board fading to a silhouette, and a notice with a water-drop pictogram: ring C deliveries suspended, R.Y. 42. The first sign of the flood.
+**Story evidence:** Named mugs, a courier-of-the-year board fading to a silhouette, and a notice with a water-drop pictogram: ring C deliveries suspended, P.A. 310. The first sign of the flood.
 
 **Player understanding:** A dead depot → a workplace that stopped mid-shift, for a reason.
 

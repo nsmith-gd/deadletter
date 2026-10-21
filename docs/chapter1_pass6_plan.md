@@ -76,7 +76,7 @@ The weigh-in body stays a tied shroud, since it has to drag as one piece.
 
 | Note | Fix |
 |---|---|
-| The opening card is too on the nose, with no mystery. | Three lines: *R.Y. 119 · Seventy-six years of dark. · Then, tonight, the lights came on.* Nothing says why. |
+| The opening card is too on the nose, with no mystery. | Three lines: *P.A. 387 · Seventy-six years of dark. · Then, tonight, the lights came on.* Nothing says why. |
 | The cart slips out of his hands into the pit. | The cart and the duct stop at the lip with their front wheels over, teetering. They go in when he lets go there, or when he keeps pushing into the lip for a moment: he gives a last shove (`Nudge`). |
 | DL-02 has a struggle, but the sorters still sit at their desks. | Every remains in DL-02 is part of the struggle. One climbed to the stopped fan and fell. Two are at the shut stair door with a pry bar. The rest lay down together in the tea corner. |
 | The couriers reveal comes late. | It fires the moment he is through the gate, however the gate was opened. A half-open gate can be crawled under, and then it never fired until later. |

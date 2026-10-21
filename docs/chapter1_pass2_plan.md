@@ -79,7 +79,7 @@ and the atrium in `art/dl04/build_dl04.py`). The scene docs in `docs/scenes/` ea
 **What it is:**
 - A pale, blind cave animal, like a giant olm.
 - About 2.5 m long: eel-bodied, with four small limbs and feathery pink gills, and no eyes, only pits.
-- The flood of R.Y. 42 came up from the deep cave river, and it came with the water. That is why ring C stayed
+- The flood of P.A. 310 came up from the deep cave river, and it came with the water. That is why ring C stayed
   sealed, and why nobody came back for the post.
 - **Name:** the children of ring C drew it and called it "the White". Their drawings carry the name; the game never
   says it in words.

@@ -109,6 +109,31 @@ counterweight's shaft) replace the goods hall's and the cage's.
 scene's light and by motion and sound. Red is kept for what the world itself painted red: the franking press's hazard
 bands. The curiosities' red tags are gone.
 
+## Chapter 1, part 2: DL-15 to DL-17 (pass 9)
+
+The rest of Chapter 1, Attendance (design: `docs/chapter1_part2_plan.md`; art: `art/ch1/dl15.py` to `dl17.py`, built by
+`art/ch1/build_attendance.py` into `assets/attendance.json` and `attendance.1.json`):
+- **The way in:** DL-14's hatch is now a duct. He crawls in, the camera follows him behind the wall, and he comes out
+  onto DL-15's sick bay balcony. No cut.
+- **DL-15 One Pupil Missing:** a class of three kept ready.
+  - The sick bay figure rides down the pupil lift only with an escort (NO PUPIL UNACCOMPANIED).
+  - The two stand-in figures roll on a floor rail in either direction and stop at each seat. The one from the board
+    stops in Mara's seat first.
+  - D-17 sits in Mara's chair (her tree carved in the lid). Three lamps, the bell, dismissal: the figures bow and roll
+    away, and he is left at child-desk height in the empty room.
+  - Secret room: under the sick bay balcony, her hiding place (`att_escort`).
+- **DL-16 After the Bell:** the procession waits at the raised bridge over a light well. He steps aside for them (the
+  `AfterYou` clip), then holds the crossing lever until both are over. The rack, where the PLAYGROUND arrow points,
+  takes them; its counterweight lifts out of the lane and the bridge latches down. The tannoy plays `att_bell`.
+- **DL-17 A Different Lesson:** the workshop. Lift the tray wedged against the PLACEMENTS drawer, pull the drawer, read
+  it. A close-up shows Mara's irrigation drawing beside a mended pot, then her placement card (Works Dept., ring A).
+  His label is stamped again, FWD WORKS RING A, and Chapter 1 ends. `att_volunteer` is on the stool.
+- **New D-17 clips:** `Sit`, `SitIdle`, `SitUp`, `AfterYou`. **Held Use** (keys, pad, touch) drives the lever.
+- **Sims:** `CHAPTER=att2` starts at DL-15. The whole chapter plays from DL-12 to the end.
+
+**Years are P.A.** Now is P.A. 387 (the old refuge years plus 268). In-world dates, the opening card, the docs and the
+story board all use it.
+
 ## Pass 8: the Version 19 play test
 
 Fixes from the director's Version 19 playthrough (play log, 21 October):
@@ -146,7 +171,7 @@ Fixes from the director's Version 19 playthrough (play log, 21 October):
 
 The eleven scenes are now the game's **prologue** (`docs/roadmap.md` plans the chapters after it). See
 `docs/chapter1_pass6_plan.md` for the notes and what shipped. In the game:
-- **The opening card** is three lines: *R.Y. 119 · Seventy-six years of dark. · Then, tonight, the lights came on.*
+- **The opening card** is three lines: *P.A. 387 · Seventy-six years of dark. · Then, tonight, the lights came on.*
 - **Tableaux, not signs:** the remains have come apart where people were, doing something (`art/pass6`). The game
   only lights them: DL-02's fan and tea corner, and the pair on DL-11's coal-store roof.
 - **The lip** (`teeter`, `tipOver`): the cart and the duct teeter at a pit's lip while he holds them. Letting go there,
@@ -226,7 +251,7 @@ Each has at most one light of its own (the sorters, the wreck, the lair).
 1. **Opening, 20 s.**
    - D-17 wakes in the cradle. The parcel lamp, the relay pulses he answers, sparks, the work lamp, grit, then the camera move.
    - The parcel's label behind his chest window: "for MARA · C-114 · RING C" in a parent's hand, initials I.V. with a small
-     crooked tree, the postmark R.Y. 42, a BIRTHDAY / DO NOT OPEN stamp, the child's crayon drawing, and (pass 4) the
+     crooked tree, the postmark P.A. 310, a BIRTHDAY / DO NOT OPEN stamp, the child's crayon drawing, and (pass 4) the
      depot's UNDELIVERED stamp across it.
    - Skip appears after 1.5 s.
    - As play begins, he checks his label and the camera goes in close on it (see *The quest*).
@@ -289,7 +314,7 @@ side, 35° up or down; a target behind him is let go.
    steps on (see Undelivered letters).
 4. **The tea corner.** Mugs on numbered hooks, one gone, with the night shift's names (ODA, TOMAS, IVO with a crooked
    tree, RUTH); the courier-of-the-year board, its last frame a pale silhouette; a wordless notice that ring C
-   deliveries stopped in R.Y. 42, with a water drop; a notice board, NIGHT SHIFT CUT and GRADE 3 TRANSFERS SUSPENDED;
+   deliveries stopped in P.A. 310, with a water drop; a notice board, NIGHT SHIFT CUT and GRADE 3 TRANSFERS SUSPENDED;
    a bedroll. On the couriers' shelf, his own mug (optional): he lifts it as if to drink, can't, and puts it back
    carefully.
 5. **The table.**
@@ -503,7 +528,7 @@ New in pass 3 (`docs/scenes/DL-10_up_only.md`).
 ## DL-11 The Child at the Address (plan estimate 3:30)
 
 1. **Ring C.**
-   - From the bottom landing to ring C's ledge. The lane is sealed (RING C SEALED · R.Y. 43), "C-114 →" painted on
+   - From the bottom landing to ring C's ledge. The lane is sealed (RING C SEALED · P.A. 311), "C-114 →" painted on
      the barricade; crouch under it. On the street he checks his label.
    - Ring C is a street he walks through, abandoned and nearly dark. Behind the lane: C-102 and C-104 (split, a plank
      door 104A cut into it), both chalked GONE UP; a cross alley with the neighbourhood's standpipe, the ration queue's

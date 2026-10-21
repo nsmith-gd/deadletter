@@ -13,7 +13,7 @@ What happened here, said plainly, in the depot's scenes (DL-01 to DL-05):
          What killed them: the air was cut. On the back wall between the tea corner and the pigeonholes, the
          bulkhead to the stairs, welded shut (StoryWeldedDoor), hand marks and nail scratches at its foot; pasted on
          it, the order: AIR / RINGS A-B PRIORITY / LOWER WORKS ON RESERVE / BY ORDER OF THE GRADE COUNCIL, stamped
-         R.Y. 42 (StoryAirNotice); over it the depot's air gauge, its needle on zero in the red NO AIR, and over that
+         P.A. 310 (StoryAirNotice); over it the depot's air gauge, its needle on zero in the red NO AIR, and over that
          the fan's grille, the fan stopped behind it (StoryAirGauge). One atlas, story_air.png (StoryAirMat).
   DL-05  The famine and the weigh-in are art/pass3/build_ration_hall.py's (this module only reports them).
   Quest  RING C with an arrow down-and-on, stencilled at each scene's way on (WayRingC01 to WayRingC05); the DL-01
@@ -358,7 +358,7 @@ def make_story_air(path):
     sd.rounded_rectangle((6, 6, 294, 114), radius=10, outline=255, width=6)
     fs = _cond(34)
     sd.text((24, 14), 'GRADE COUNCIL', font=fs, fill=255)
-    sd.text((70, 60), 'R.Y. 42', font=_cond(44), fill=255)
+    sd.text((70, 60), 'P.A. 310', font=_cond(44), fill=255)
     holes = Image.effect_noise((300, 120), 90).point(lambda v: 255 if v > 90 else 120)
     st = Image.composite(st, Image.new('L', st.size, 0), holes).rotate(-8, expand=True, resample=Image.BICUBIC)
     st = st.point(lambda v: int(v * 0.72))

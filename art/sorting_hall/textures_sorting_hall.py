@@ -101,11 +101,11 @@ def _stamp(d, x, y, colour, glyph, rnd):
 
 
 def _postmark(d, cx, cy, year, rnd, ink=(48, 44, 60)):
-    """A round postmark, 'R.Y. 42', with wavy cancel lines running off it."""
+    """A round postmark, 'P.A. 310', with wavy cancel lines running off it."""
     r = 30
     d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=ink, width=3)
     d.ellipse((cx - r + 7, cy - r + 7, cx + r - 7, cy + r - 7), outline=ink, width=1)
-    d.text((cx, cy - 7), 'R.Y.', font=_font(12), fill=ink, anchor='mm')
+    d.text((cx, cy - 7), 'P.A.', font=_font(12), fill=ink, anchor='mm')
     d.text((cx, cy + 8), str(year), font=_font(17), fill=ink, anchor='mm')
     for k in range(4):
         y = cy - 15 + k * 10
@@ -208,7 +208,7 @@ def make_letter(name, room, year, stamp, glyph, seed, back='plain', pictogram='h
 
 def make_mara_letter(name='letter_tube.png'):
     """The tube letter (pass 3): Mara's own letter to the post office, in a six-year-old's pencil capitals,
-    "DEAR POST, MY BIRTHDAY PARCEL HASNT COME. IS D-17 LOST? LOVE MARA C-114", stamped and postmarked R.Y. 42.
+    "DEAR POST, MY BIRTHDAY PARCEL HASNT COME. IS D-17 LOST? LOVE MARA C-114", stamped and postmarked P.A. 310.
     On the back, in crayon, what it says without words: a girl crying at the door of her house beside a crooked
     tree, and far off in the dark, a little courier with a parcel and a question mark over it, its dotted path
     looping. Drawn at twice the other letters' size so the hand reads (the UVs are fractions of the atlas)."""
@@ -226,7 +226,7 @@ def make_mara_letter(name='letter_tube.png'):
     tmp = Image.new('RGB', (130, 90), (214, 204, 178))
     td = ImageDraw.Draw(tmp)
     _stamp(td, 74, 10, (60, 90, 120), 'lamp', rnd)
-    _postmark(td, 40, 48, 42, rnd)
+    _postmark(td, 40, 48, 310, rnd)
     img.paste(tmp.resize((195, 135)), (fw - 205, 8))
     pencil = (58, 58, 66)
     lines = [('DEAR POST,', 42, 0.5), ('MY BIRTHDAY', 40, 0.4), ('PARCEL HASNT', 46, 0.42),
@@ -310,8 +310,8 @@ def make_mara_letter(name='letter_tube.png'):
 
 def make_letters():
     make_mara_letter('letter_tube.png')                    # pass 3: Mara's own letter (was C-106's)
-    make_letter('letter_heap.png', 'C-114', 43, (70, 110, 70), 'tree', 12, back='drawing', pictogram='heart')
-    make_letter('letter_c110.png', 'C-110', 42, (130, 96, 50), 'arch', 13, pictogram='house')
+    make_letter('letter_heap.png', 'C-114', 311, (70, 110, 70), 'tree', 12, back='drawing', pictogram='heart')
+    make_letter('letter_c110.png', 'C-110', 310, (130, 96, 50), 'arch', 13, pictogram='house')
 
 
 # --------------------------------------------------------------------------
@@ -329,7 +329,7 @@ def make_ring_c_notice():
     d.rectangle((8, 8, w - 9, 96), fill=navy)
     d.regular_polygon((59, 53, 38), 6, rotation=30, outline=CREAM, width=6)   # the ring plate, as on the ring signs
     d.text((59, 54), 'C', font=_font(44), fill=CREAM, anchor='mm')
-    d.text((200, 54), 'R.Y. 42', font=_font(34), fill=CREAM, anchor='mm')
+    d.text((200, 54), 'P.A. 310', font=_font(34), fill=CREAM, anchor='mm')
     # The water drop.
     cx, cy = w / 2, 186
     d.polygon([(cx, cy - 66), (cx - 44, cy + 6), (cx + 44, cy + 6)], fill=navy)
@@ -350,7 +350,7 @@ def make_ring_c_notice():
 
 def make_courier_board():
     """Courier of the year: six photographs of couriers (each one a D-unit with its number and a
-    rosette), R.Y. 37 to 41, and a sixth frame for R.Y. 42 left pale, only a silhouette."""
+    rosette), P.A. 305 to 41, and a sixth frame for P.A. 310 left pale, only a silhouette."""
     from PIL import Image, ImageDraw
     w, h = 704, 448
     rnd = random.Random(31)
@@ -395,7 +395,7 @@ def make_courier_board():
             d.ellipse((cx - 8, base - 46, cx + 8, base - 30), fill=gold)
         if i < 5:
             d.text((x0 + 50, y0 + 118), units[i], font=_font(18, 'mono'), fill=INK, anchor='mm')
-        d.text((x0 + 132, y0 + 118), f'R.Y. {37 + i}', font=_font(16), fill=INK if not pale else (150, 144, 126), anchor='mm')
+        d.text((x0 + 132, y0 + 118), f'P.A. {305 + i}', font=_font(16), fill=INK if not pale else (150, 144, 126), anchor='mm')
     img = _age(img, 32, 0.5)
     _save(img, 'courier_board.png', 40)
 

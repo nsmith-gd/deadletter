@@ -16,8 +16,8 @@
 | Requirement (from the overview) | How the build meets it |
 |---|---|
 | Slide a fallen low desk clear of a forwarding terminal | In the child's bedroom of home C-114, a small desk has fallen against the back wall, in front of the forwarding terminal. D-17 grabs it, as he did the trolleys, and drags it clear. It scrapes, heavy for him. |
-| Moving it exposes the growth marks and tree carving behind it | Behind the desk, pencil lines climb the wall, one per year: M 2 (R.Y. 38) to M 6 (R.Y. 42). Beside them, scratched into the plaster, is a crooked tree with a knot in one branch. |
-| Presenting the parcel retrieves the school destination | Use at the terminal. D-17 leans his chest window to its reader, and his three lamps answer its three: the handshake again. The screen reads C-114, then NO ONE AT THIS ADDRESS, then FORWARD TO SCHOOL with the school's mark, RING B, and the class of R.Y. 42. |
+| Moving it exposes the growth marks and tree carving behind it | Behind the desk, pencil lines climb the wall, one per year: M 2 (P.A. 306) to M 6 (P.A. 310). Beside them, scratched into the plaster, is a crooked tree with a knot in one branch. |
+| Presenting the parcel retrieves the school destination | Use at the terminal. D-17 leans his chest window to its reader, and his three lamps answer its three: the handshake again. The screen reads C-114, then NO ONE AT THIS ADDRESS, then FORWARD TO SCHOOL with the school's mark, RING B, and the class of P.A. 310. |
 | A patched toy, imagined sunlight, and the parent-and-child photograph make the addressee concrete | A patched rabbit slumps on the bed. Over the bed, a window painted on the wall, lit warm from behind, with a sun. On a shelf, a photograph of a parent kneeling beside a small child. |
 | Establish Mara's crooked tree with a knot in one branch | The carving, revealed by the desk. The photograph shows the same tree, chalked on a wall behind them. |
 | D-17 straightens the toy, then leaves the bedroom undisturbed | Passing the bed, he stops to sit the rabbit upright and pats its head (`Straighten`). It is brief, and any move cancels it. He leaves by the back door; nothing else is touched. |
@@ -30,7 +30,7 @@
 | Beat | What happens |
 |---|---|
 | **Down to ring C** | The stair off the DL-08 balcony brings him down to ring C's ledge. The cave city rises behind him. |
-| **The seal** | A barricade of sheet metal across the lane: RING C SEALED · R.Y. 43, and tape. There is a gap under it; he crouches through. |
+| **The seal** | A barricade of sheet metal across the lane: RING C SEALED · P.A. 311, and tape. There is a gap under it; he crouches through. |
 | **Ring C** | Abandoned and nearly dark: shuttered homes (C-108 to C-112), dead bulbs on a cable, two still burning, one of them failing. A fallen duct to hop. |
 | **C-114** | The last door stands open. He steps up beside it, knocks on the jamb twice and waits (`Knock`): nobody. He goes in. |
 | **The hall** | A small pair of shoes beside a large pair. A lamp still on. |

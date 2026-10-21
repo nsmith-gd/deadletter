@@ -170,17 +170,17 @@ def make_textures():
     d = ImageDraw.Draw(img)
     d.rectangle((10, 10, 630, 230), outline=ink, width=10)
     d.text((34, 26), 'LIFT 1', font=_font(64), fill=ink)
-    d.text((34, 112), 'OUT OF SERVICE  R.Y. 97', font=_font(36, 'mono-bold'), fill=(150, 36, 30))
+    d.text((34, 112), 'OUT OF SERVICE  P.A. 365', font=_font(36, 'mono-bold'), fill=(150, 36, 30))
     d.text((34, 166), 'USE LIFT 2', font=_font(34, 'mono'), fill=ink)
     _age(img, 42, 0.8).save(os.path.join(TEX, 'lift1_plate.png'))
 
-    # Brass repair tags wired to the pawl: a refuge year and initials, stamped by hand.
-    for k, (yr, who) in enumerate((('58', 'J.O.'), ('71', 'T.M.'), ('84', 'J.O.'), ('96', 'A.K.'), ('103', 'M.'), ('107', 'M.'))):
+    # Brass repair tags wired to the pawl: a year (P.A.) and initials, stamped by hand.
+    for k, (yr, who) in enumerate((('326', 'J.O.'), ('339', 'T.M.'), ('352', 'J.O.'), ('364', 'A.K.'), ('371', 'M.'), ('375', 'M.'))):
         img = Image.new('RGB', (200, 128), (150, 112, 52))
         d = ImageDraw.Draw(img)
         d.rounded_rectangle((4, 4, 196, 124), radius=18, outline=(92, 66, 28), width=6)
         d.ellipse((14, 52, 34, 72), fill=(40, 32, 20))
-        d.text((44, 14), 'R.Y.' + yr, font=_font(40, 'mono-bold'), fill=(58, 40, 18))
+        d.text((44, 14), 'P.A.' + yr, font=_font(40, 'mono-bold'), fill=(58, 40, 18))
         d.text((44, 66), who, font=_font(40, 'mono-bold'), fill=(58, 40, 18))
         rnd = random.Random(60 + k)
         for _ in range(30):

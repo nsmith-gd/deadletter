@@ -95,17 +95,17 @@ Everything here is read from the world; there are no logs.
 
 | Where | What it says | What it means |
 |---|---|---|
-| Notice by the scanner | Ring C is sealed; rooms C-100 to C-160 are out of service; their post is held at Dead Letters; couriers must not attempt delivery past the seal. Refuge Year 43. | Room 114 is in ring C. The ring was sealed a year after the parcel was posted (R.Y. 42). |
+| Notice by the scanner | Ring C is sealed; rooms C-100 to C-160 are out of service; their post is held at Dead Letters; couriers must not attempt delivery past the seal. P.A. 311. | Room 114 is in ring C. The ring was sealed a year after the parcel was posted (P.A. 310). |
 | Poster on the sorting floor | REFUGE POSTAL SERVICE: "Every parcel finds its door." | The service's old promise. D-17 is the last thing keeping it. |
 | The heap and its stamps | RETURN TO SENDER · ADDRESS NOT IN SERVICE | What the system has done with every such parcel since. |
 | The enamel sign | UNDELIVERABLE · HELD FOR CLAIM · DO NOT SORT | What the pit is for. (The playtest found the title on it too on the nose, so it is gone.) |
-| The day board | Deliveries per day by refuge year: 1,240 in year 30, 540 in 42, then 210, 96, 41, 12, 5, 2 in 109, and nothing chalked against 110. | The community shrank to nothing. The last other resident died in year 109, nine years before the game (R.Y. 118). |
+| The day board | Deliveries per day by year: 1,240 in P.A. 298, 540 in 310, then 210, 96, 41, 12, 5, 2 in 377, and nothing chalked against 378. | The community shrank to nothing. The last other resident died around P.A. 378, nine years before the game (P.A. 387). |
 | The stopped clock, the desk left mid-shift | | Work ended without anyone deciding it should. |
 | Residential access sign | Rings A, B and C, with tape across C. | Where he is going anyway. |
 
 The dates are proposals that fit the GDD:
 - The refuge has stood about 118 years.
-- Mara was born 82 years ago, and the parcel was posted when she was six (R.Y. 42).
+- Mara was born 82 years ago, and the parcel was posted when she was six (P.A. 310).
 - The last other resident died 9 years ago.
 
 ## 6. Checkpoints

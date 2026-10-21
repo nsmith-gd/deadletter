@@ -514,7 +514,7 @@ def make_dispatch_board(path):
     def tick(x, y):
         stroke([(x - 10, y), (x - 2, y + 10), (x + 14, y - 14)], width=5)
     d.text((40, 30), 'D-17', font=font(64), fill=chalk)
-    d.text((250, 46), 'R.Y. 42', font=font(40), fill=soft)
+    d.text((250, 46), 'P.A. 310', font=font(40), fill=soft)
     stroke([(36, 108), (w - 40, 112)], soft, 3)
     stops = [('DEPOT', None), ('B-21', True), ('B-40', True), ('C-102', True), ('C-109', True), ('C-114', False)]
     pts = [(80, 420), (190, 330), (310, 380), (430, 270), (560, 320), (668, 190)]

@@ -119,7 +119,7 @@
   <canvas id="view" aria-label="Dead Letter, the prologue, scenes DL-01 to DL-11, playable"></canvas>
   <div id="fade"></div>
   <div id="intertitle" hidden>
-    <p class="year">R.Y. 119</p>
+    <p class="year">P.A. 387</p>
     <p>Seventy-six years of dark.</p>
     <p>Then, tonight, the lights came on.</p>
   </div>
@@ -429,7 +429,7 @@ const PLAIN = { NewCable: [[.016, .016, .018], .28, 0], NewSteel: [[.26, .27, .2
   AtriumCloth: [[.2, .13, .065], .9, 0], AtriumWood: [[.085, .06, .04], .88, 0],
   Barricade: [[.4, .06, .04], .7, 0], AtriumVine: [[.055, .068, .036], .9, 0], AtriumMoss: [[.085, .1, .05], .95, 0], AtriumWet: [[.014, .016, .015], .35, 0], CandleWax: [[.55, .5, .4], .6, 0], GaugeNeedle: [[.02, .018, .016], .4, .3], BrassPolished: [[.8, .62, .32], .22, 1], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
-const EMIT = { Att16PitGlow: [1, .42, .14, 2.2], Att17GrowLamp: [.78, .84, 1, 3], Att17Bulb: [1, .78, .5, 5], AttBulbGlow: [1, .82, .58, 4], AttLessonLamp: [1, .78, .42, 0], AttShoot: [.78, .92, .62, .35], AttGlobeLamp: [1, .86, .62, 3], AttCupboardLamp: [1, .72, .42, 6], EndWindowGlow: [1, .64, .32, 9], EndCurtainGlow: [1, .42, .16, 3.2], EndPilotLamp: [1, .6, .18, 6], SecretLampGlow: [1, .78, .5, 6], DenLanternGlow: [1, .55, .22, 2.5],   // pass 6
+const EMIT = { Att15HideLamp: [1, .7, .4, 5], Att16PitGlow: [1, .42, .14, 2.2], Att17GrowLamp: [.78, .84, 1, 3], Att17Bulb: [1, .78, .5, 5], AttBulbGlow: [1, .82, .58, 4], AttLessonLamp: [1, .78, .42, 0], AttShoot: [.78, .92, .62, .35], AttGlobeLamp: [1, .86, .62, 3], AttCupboardLamp: [1, .72, .42, 6], EndWindowGlow: [1, .64, .32, 9], EndCurtainGlow: [1, .42, .16, 3.2], EndPilotLamp: [1, .6, .18, 6], SecretLampGlow: [1, .78, .5, 6], DenLanternGlow: [1, .55, .22, 2.5],   // pass 6
   Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
   CradleStatus: [.35, 1, .45, 0], Spark: [.7, .85, 1, 0], FarGlow: [.45, .55, .6, .09], RelayA: [.75, 1, .82, 0],
@@ -3331,7 +3331,7 @@ function drawTerminal(state, t) {
     for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; g.beginPath(); g.moveTo(180 + Math.cos(a) * 14, 114 + Math.sin(a) * 14); g.lineTo(180 + Math.cos(a) * 21, 114 + Math.sin(a) * 21); g.stroke(); }
     g.beginPath(); g.moveTo(180, 168); g.lineTo(148, 158); g.lineTo(148, 138); g.lineTo(180, 146); g.lineTo(212, 138); g.lineTo(212, 158); g.closePath(); g.stroke();
     g.beginPath(); g.moveTo(180, 146); g.lineTo(180, 168); g.stroke();
-    g.font = 'bold 22px monospace'; g.fillText('SCHOOL', 20, 124); g.font = '16px monospace'; g.fillText('RING B', 20, 154); g.fillText('CLASS R.Y.42', 20, 172);
+    g.font = 'bold 22px monospace'; g.fillText('SCHOOL', 20, 124); g.font = '16px monospace'; g.fillText('RING B', 20, 154); g.fillText('CLASS P.A.310', 20, 172);
   }
   p.tex.needsUpdate = true;
 }
@@ -4826,8 +4826,8 @@ function buildAtt(root) {
   const chain = get('AttChain'); chain && chain.traverse((q) => { if (q.isMesh && q.material.map) { k.chainMap = q.material.map; k.chainMap.wrapT = THREE.RepeatWrapping; k.chainMap.needsUpdate = true; } });
   k.lampPresent = lamp('AttLampPresent', 0x8cffa0); k.lampCoat = lamp('AttLampCoat', 0xffad48); k.pegLamp = lamp('AttPegLamp', 0xffad48);   // COAT 7 and peg 7 share the amber: one cause, one effect
   k.lessonLamp = lamp('AttLessonLamp', 0xffd9a0);
-  k.lampPupil = lamp('Att15LampPupil', 0xd8ffe0); k.lampEscort = lamp('Att15LampEscort', 0xffb050);
-  k.lamp15a = lamp('Att15Lamp1', 0xffe2b0); k.lamp15b = lamp('Att15Lamp2', 0xffe2b0); k.lamp15c = lamp('Att15Lamp3', 0xffe2b0);
+  k.lampPupil = lamp('Att15LampPupil', 0xb8ffc8); k.lampEscort = lamp('Att15LampEscort', 0xffa848);
+  k.lamp15a = lamp('Att15Lamp1', 0xffdca0); k.lamp15b = lamp('Att15Lamp2', 0xffdca0); k.lamp15c = lamp('Att15Lamp3', 0xffdca0);
   k.hideLamp = lamp('Att15HideLamp', 0xffb060); k.growLamp = lamp('Att17GrowLamp', 0xd8f0ff);
   // Voice players in the chapter's set whose cranks turn.
   for (const v of VOICES) if (v.region === 6 && v.crank) { const o = get(v.crank); if (o) refs.voiceCranks[v.id] = { o, axis: new THREE.Vector3(...v.axis).normalize() }; }
@@ -4844,6 +4844,12 @@ function buildAtt(root) {
     // DL-14: the globes, the hatch, the stair's top, the cupboard's lamp (the cue to it), and pools on the desk and the crank.
     P(0xffdcaa, 1.6, 5, 234.6, 3.1, 0), P(0xffdcaa, 1.6, 5, 240.75, 3.1, 0), P(0xbcd0e8, 0.8, 3, 239.7, 2.9, 0.3), P(0xffdcaa, 0.8, 3.5, 233.4, 3.4, 0.4),
     P(0xffb870, 2.0, 3.5, 232.62, 0.98, -2.78), S(0xffd8a8, 6, 7, [237.4, 3.7, 1.4], [237.4, 0.8, -0.6], 0.75), S(0xffe0b8, 4, 5, [242.4, 2.4, 1.6], [242.4, 0.5, -0.32], 0.5),
+    // DL-15 (art/ch1/dl15.py REPORT): the sick bay pendant, the duct mouth, the lift's sign and lamps, the front row, Mara's place, the
+    // attendance board, the blackboard and figure A, the door end, the dim alcove of empty desks, the hiding place's lamp and its slit.
+    P(0xffd8b0, 1.8, 4.5, 250.2, 2.95, -0.45), P(0xbcd0e8, 0.5, 2.0, 248.95, 2.0, -1.3), S(0xffe0b8, 5, 5, [252.0, 3.2, 1.2], [252.0, 2.1, -0.8], 0.45),
+    S(0xffd8a8, 7, 6, [254.6, 3.0, 0.6], [254.6, 0.35, -0.9], 0.75, true), S(0xffe0b8, 5, 5, [256.0, 2.9, 0.9], [256.0, 0.45, -0.7], 0.4, true),
+    S(0xffe2c0, 4.5, 5, [258.1, 3.2, 1.0], [258.1, 2.1, -1.38], 0.4), S(0xffe6c8, 8, 7, [260.3, 3.3, 1.4], [260.3, 1.4, -1.38], 0.6, true),
+    P(0xffd8b0, 1.0, 3.5, 262.9, 2.6, 0.0), P(0xb8c8dc, 0.35, 4, 254.8, 2.6, -2.6), P(0xffb870, 1.8, 2.4, 250.62, 0.25, -0.95), P(0xffb873, 0.5, 1.4, 249.8, 0.15, -0.25),
     // DL-16 (art/ch1/dl16.py REPORT): the two lit globes, the lever, the rack (shadowed), the counterweight, the boiler's glow down the well, a wash on the mural.
     P(0xffdcaa, 1.6, 5, 265.0, 2.45, 0), P(0xffdcaa, 1.6, 5, 270.05, 2.45, 0), S(0xffe0b8, 4, 4, [266.0, 2.4, 1.4], [266.0, 0.4, -0.35], 0.5),
     S(0xffd8a8, 7, 6, [275.3, 2.9, 1.6], [275.6, 1.2, -1.0], 0.7, true), S(0xffd8a8, 4, 5, [278.5, 2.7, 1.6], [278.5, 0.8, 0], 0.6),
@@ -5393,19 +5399,19 @@ function updateAtt2(dt) {
   };
   put(k.Att15FigA, f15.A); put(k.Att15FigB, f15.B);
   if (k.Att15Lift) k.Att15Lift.position.y = k.Att15Lift.userData.rest.p.y + (f15.lift - L.top);
-  if (k.Att15LiftGate) { const g = k.Att15LiftGate; g.position.y = g.userData.rest.p.y + (f15.lift - L.top); g.quaternion.copy(g.userData.rest.q); g.rotateY(-1.4 * smooth(1 - f15.lift / 0.25)); }
+  if (k.Att15LiftGate) { const g = k.Att15LiftGate; g.position.y = g.userData.rest.p.y + (f15.lift - L.top); g.quaternion.copy(g.userData.rest.q); g.rotateY(-Math.PI / 2 * smooth(1 - f15.lift / 0.25)); }   // folds back along the lift at the bottom
   if (k.Att15LiftCW) k.Att15LiftCW.position.y = k.Att15LiftCW.userData.rest.p.y + (L.top - f15.lift);
   if (k.lampPupil) k.lampPupil.emissiveIntensity = pupil ? 5 : 0.05;
   if (k.lampEscort) k.lampEscort.emissiveIntensity = escort ? (pupil ? 5 : (Math.sin(game.clock * 14) > 0 ? 5 : 0.3)) : 0.05;
   const blink = f15.dismissed && game.clock - f15.dismissedAt < 3 ? (Math.sin(game.clock * 10) > 0 ? 1 : 0.2) : 1;
   [k.lamp15a, k.lamp15b, k.lamp15c].forEach((m, i) => { if (m) m.emissiveIntensity = f15.lamps[i] ? 6 * blink : 0.05; });
-  if (k.Att15Door) { k.Att15Door.quaternion.copy(k.Att15Door.userData.rest.q); k.Att15Door.rotateY(-1.66 * smooth(f15.door)); }
+  if (k.Att15Door) { k.Att15Door.quaternion.copy(k.Att15Door.userData.rest.q); k.Att15Door.rotateY(THREE.MathUtils.degToRad(95) * smooth(f15.door)); }
   const nearFlap = figs.some((f) => !f.stored && f.base < 0.05 && Math.abs(f.x - ATT2.flapX) < 0.4);
   f15.flap += ((nearFlap ? 1 : 0) - f15.flap) * Math.min(1, dt * 5);
-  if (k.Att15Flap) { k.Att15Flap.quaternion.copy(k.Att15Flap.userData.rest.q); k.Att15Flap.rotateZ(-1.2 * f15.flap); }
+  if (k.Att15Flap) { k.Att15Flap.quaternion.copy(k.Att15Flap.userData.rest.q); k.Att15Flap.rotateZ(THREE.MathUtils.degToRad(80) * f15.flap); }
   if (k.Att16Bridge) { k.Att16Bridge.quaternion.copy(k.Att16Bridge.userData.rest.q); k.Att16Bridge.rotateZ(-Math.PI / 2 * smooth(b.bridge)); }
   if (k.Att16Lever) { k.Att16Lever.quaternion.copy(k.Att16Lever.userData.rest.q); k.Att16Lever.rotateZ(THREE.MathUtils.degToRad(-35) * (b.held || b.latched ? 1 : 0)); }
-  if (k.Att16Latch) { k.Att16Latch.quaternion.copy(k.Att16Latch.userData.rest.q); k.Att16Latch.rotateZ(Math.PI / 2 * (b.latched ? 1 : 0));   // dropped onto the deck's eye }
+  if (k.Att16Latch) { k.Att16Latch.quaternion.copy(k.Att16Latch.userData.rest.q); k.Att16Latch.rotateZ(Math.PI / 2 * (b.latched ? 1 : 0)); }   // dropped onto the deck's eye
   if (k.Att16CW) k.Att16CW.position.y = k.Att16CW.userData.rest.p.y + ATT2.cw.lift * smooth(b.cw);
   if (k.Att17Drawer) k.Att17Drawer.position.z = k.Att17Drawer.userData.rest.p.z + ATT2.drawer.out * smooth(d.drawer);
   if (k.hideLamp) k.hideLamp.emissiveIntensity = 4;
@@ -5493,7 +5499,7 @@ const SECRETS = [
 SECRETS.push(
   // Chapter 1, DL-15: under the sick bay balcony, where a protected pupil hid from her escorts.
   { id: 'hide15', name: 'Under the balcony', region: 6, ready: true, voice: 'att_escort', open: [249.75, 249.85], stand: 249.8,
-    path: [[249.8, -0.4], [249.6, -0.9]], face: Math.PI, cam: new THREE.Vector3(251.6, 0.75, 0.9), look: new THREE.Vector3(249.6, 0.6, -1.0), focal: 26,
+    path: [[249.8, -0.45], [249.8, -0.62]], face: Math.PI, cam: new THREE.Vector3(251.7, 0.7, 0.9), look: new THREE.Vector3(249.9, 0.4, -1.0), focal: 26,
     cond: () => game.y < 0.05 && !game.hold });
 const secretFound = {};
 // Pass 7: the voices (docs/voice_script.md, placed per docs/audio_audit.md). Cards play when he winds their player

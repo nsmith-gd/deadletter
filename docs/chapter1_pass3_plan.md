@@ -160,7 +160,7 @@ DL-07 The Heap, and its DL-08 is DL-09 The Slipping Cage.
   (118.8 to ring C's level at 127.9, `art/pass3/build_up_only.py`), each with its own light zone. The offsets are
   `OFF3` 33, `OFF4` 42 and, new, `OFF5` 54 for ring C.
 - **Section 5:** the lore across scenes 1 to 9 (`art/pass3/build_lore.py`); the parcel label in a parent's hand
-  ("for MARA · C-114 · RING C", initials I.V., R.Y. 42, BIRTHDAY / DO NOT OPEN, Mara's drawing); Mara's own letter in
+  ("for MARA · C-114 · RING C", initials I.V., P.A. 310, BIRTHDAY / DO NOT OPEN, Mara's drawing); Mara's own letter in
   the tube; MARA on the route card; ring C's longer street; the photograph of her father in his sorter's apron with her
   on his shoulders.
 

@@ -274,7 +274,7 @@ def make_textures():
     d.rectangle((10, 10, 758, 290), outline=ink, width=12)
     d.text((384, 104), 'RING C SEALED', font=_font(84), fill=ink, anchor='mm')
     d.line((60, 170, 708, 170), fill=ink, width=6)
-    d.text((384, 226), 'R.Y. 43', font=_font(64, 'mono-bold'), fill=ink, anchor='mm')
+    d.text((384, 226), 'P.A. 311', font=_font(64, 'mono-bold'), fill=ink, anchor='mm')
     for x in (34, 734):
         d.ellipse((x - 9, 140, x + 9, 158), fill=(60, 52, 40))
     _save(_age(img, 510, 1.0), 'ringc_sealed.png', 32)
@@ -444,14 +444,14 @@ def make_growth_marks():
     # The pencil: ticks and labels, on a graphite-coloured transparent ground (so blurring cannot darken it).
     pencil = Image.new('RGBA', (W, H), (34, 32, 38, 0))
     d = ImageDraw.Draw(pencil)
-    for k, (age, year, z) in enumerate(zip((2, 3, 4, 5, 6), (38, 39, 40, 41, 42), MARK_Z)):
+    for k, (age, year, z) in enumerate(zip((2, 3, 4, 5, 6), (306, 307, 308, 309, 310), MARK_Z)):
         a, b = px(x0 + 0.2, z), px(x0 + 0.32, z + rnd.uniform(-0.004, 0.004))
         _line(d, [a, b], graphite, 6, rnd, 1.0, passes=2)
         # The label, in a grown-up's pencil, each written a little askew.
         lab = Image.new('RGBA', (110, 54), (34, 32, 38, 0))                  # the name over the year, kept narrow so the
         ld = ImageDraw.Draw(lab)                                             # fallen hutch's left side covers it
         ld.text((4, 26), f'M {age}', font=_font(32, 'serif'), fill=graphite, anchor='ls')
-        ld.text((6, 48), f'R.Y. {year}', font=_font(20, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
+        ld.text((6, 48), f'P.A. {year}', font=_font(20, 'sans'), fill=(34, 32, 38, 225), anchor='ls')
         lab = lab.rotate(rnd.uniform(-4, 4), resample=Image.BICUBIC)
         pencil.alpha_composite(lab, (int(a[0] - 98), int(a[1] - 44)))
     sx, sy = px(x0 + 0.32, MARK_Z[-1])                                          # a child's star by the last one
@@ -784,11 +784,11 @@ def make_lore9():
                               'Leave doors unlocked.')):
         nd.text((36, 188 + k * 34), line, font=_font(25, 'mono'), fill=ink, anchor='lm')
     nd.text((210, 382), 'KEEP OUT OF THE WATER', font=_font(27, 'mono-bold'), fill=ink, anchor='mm')
-    nd.text((210, 430), 'R.Y. 42', font=_font(30, 'mono-bold'), fill=ink, anchor='mm')
+    nd.text((210, 430), 'P.A. 310', font=_font(30, 'mono-bold'), fill=ink, anchor='mm')
     stamp = Image.new('RGBA', (300, 90), (0, 0, 0, 0))                     # SEALED, stamped over it a year later
     sd = ImageDraw.Draw(stamp)
     sd.rectangle((4, 4, 296, 86), outline=(40, 52, 96, 200), width=6)
-    sd.text((150, 46), 'SEALED R.Y. 43', font=_font(34, 'mono-bold'), fill=(40, 52, 96, 200), anchor='mm')
+    sd.text((150, 46), 'SEALED P.A. 311', font=_font(34, 'mono-bold'), fill=(40, 52, 96, 200), anchor='mm')
     stamp = stamp.rotate(16, resample=Image.BICUBIC, expand=True)
     note.paste(stamp, (70, 230), stamp)
     note = _age(note, 9101, 1.2)
@@ -799,7 +799,7 @@ def make_lore9():
     cd.text((115, 34), 'LOST', font=_font(40), fill=ink, anchor='mm')
     cd.text((115, 84), 'grey cat, "Button"', font=_font(19, 'sans'), fill=ink, anchor='mm')
     cd.text((115, 116), 'please ask at C-110', font=_font(19, 'sans'), fill=ink, anchor='mm')
-    cd.text((115, 146), 'R.Y. 42', font=_font(17, 'mono'), fill=ink, anchor='mm')
+    cd.text((115, 146), 'P.A. 310', font=_font(17, 'mono'), fill=ink, anchor='mm')
     paste(_age(cat, 9102, 0.9), 500, 40, -4)
     # The children's drawings, low down, at their height; one has slipped and hangs by a corner.
     for k, (x, y, ang, kw) in enumerate(((470, 300, 6, {}), (740, 250, -5, {'child': True}), (90, 476, -8, {'house': True}),
@@ -904,7 +904,7 @@ def make_lore3():
     img = Image.new('RGBA', (W3, H3), (236, 232, 222, 0))
     d = ImageDraw.Draw(img)
     chalk = (236, 232, 222, 225)
-    for k, (date, n) in enumerate((('R.Y. 41', 4), ('R.Y. 42', 3), ('41  -  6th', 5))):
+    for k, (date, n) in enumerate((('P.A. 309', 4), ('P.A. 310', 3), ('309  -  6th', 5))):
         rnd = random.Random(5810 + k)
         ox = 256 * k
         _brush_text(img, 'GONE UP', ox + 18, 64, 52, chalk, rnd, jitter=3, spacing=0.86, kind='sans', wobble=4)

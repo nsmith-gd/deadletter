@@ -74,7 +74,7 @@ them. Numbers are metres.
 - **Materials:** use the shared `m[...]` palette where it fits, for example `steel`, `concrete`, `wall`, `wood`,
   `red`, `yellow`, `paper`, `pigeon`, `plaster`, `rust`, `sheet`, `stone`, `rock`, `water` and the bulb emissives.
   Report any new material names, so the game can map them (WORN, PLAIN, EMIT or image).
-- **Text:** wordless where possible; pictograms, numbers, refuge years (R.Y.) and ring and room numbers.
+- **Text:** wordless where possible; pictograms, numbers, years (P.A.) and ring and room numbers.
 - **Budget:** keep each new scene's meshes and textures under about 0.8 MB in `set.glb`. Use quads for distant
   detail, and no shadows on decals.
 
@@ -88,7 +88,7 @@ Undelivered letters are Chapter 1's secret. D-17 finds a letter, picks it up, an
 it is stamped. Story first: **the main story must read without them**; they add depth for those who look.
 
 **Props:**
-- Each letter is an envelope, 0.16 × 0.11, with a front texture: a ring and room address, an R.Y. 42 or 43
+- Each letter is an envelope, 0.16 × 0.11, with a front texture: a ring and room address, an P.A. 310 or 43
   postmark, a stamp and a small pictogram.
 - `HeldLetter`: a single envelope mesh with its origin at its centre. The game attaches it to his right claw
   during `PickUpLetter` and `PostLetter`.
@@ -126,7 +126,7 @@ it is stamped. Story first: **the main story must read without them**; they add 
 | 13.2 | Emerge doorway, in the back wall at y ≈ 1.0. |
 | 14.0 to 15.2 | **The tube station.** A pneumatic tube terminal on the back wall: brass tubes from the ceiling into a delivery cup at x 14.6, 0.9 high, y ≈ 0.85. `TubeCup` (static), and `TubeLetter`, an envelope in the cup with its origin at its centre. When he first passes, the game drops it from the cup to the floor at x 14.6. |
 | 16.0 | **`MailSlot2`**: a post pillar on the lane's back edge (y ≈ 0.45) with a red rimmed slot at 0.55 high, and `SlotLamp2`. |
-| 15.0 to 17.0 (background) | Tea corner: a small table with mugs and a kettle. "Courier of the year" board on the back wall with faded photographs; the last frame is a pale silhouette. The notice `RingCNotice`: ring C, a water-drop pictogram and "R.Y. 42", with a crossed-out envelope (deliveries suspended). |
+| 15.0 to 17.0 (background) | Tea corner: a small table with mugs and a kettle. "Courier of the year" board on the back wall with faded photographs; the last frame is a pale silhouette. The notice `RingCNotice`: ring C, a water-drop pictogram and "P.A. 310", with a crossed-out envelope (deliveries suspended). |
 | 17.4 | **The box**, `CarryBox`: a parcel box 0.40 (x) × 0.34 (y) × 0.32 (z) with a red strap and a handle on top. Origin at its base centre. Carried like the weight. |
 | 18.6 to 22.6 | **The sorting table**, `SortTable` (static, a solid surface). Top at **0.75**, too high to climb from the floor, front face closed with drawers so nothing passes underneath. Sorting trays and a few parcels on top, at the back half only, so the walking strip along the front of the top stays clear. |
 | 22.6 to 23.5 | **The collapse:** a fallen pigeonhole wall across the lane, 2.2 high, blocking the floor route. It is static and reads clearly as impassable. |

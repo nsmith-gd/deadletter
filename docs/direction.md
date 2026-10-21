@@ -145,7 +145,7 @@ The light is warm amber against that haze. The first reveal from DL-09's balcony
 Lore is read from the world, never from a log.
 
 - **What carries it:** signs, notices, chalk boards, stamps, pigeonholes and parcels.
-- **Text:** short, original and in-world (refuge years, ring and room numbers).
+- **Text:** short, original and in-world (years P.A., ring and room numbers).
 - **The history it must stay true to (GDD):**
   - The refuge was built over a century ago.
   - Births stopped, and the last other resident died nine years ago.

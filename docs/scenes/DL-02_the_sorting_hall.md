@@ -17,7 +17,7 @@ the differences.
 | The tube coughs out the first undelivered letter | The first time he passes the tube station, its cup drops an old letter onto the floor in front of him. |
 | Teach the chapter's secret verb at a red mail slot | A post pillar with a red rimmed slot stands two steps further on. He picks up the letter (`PickUpLetter`), turns to the slot and posts it (`PostLetter`). The slot's stamp lamp blinks, with a knock and a chirp, and he bobs, pleased. Optional, and never in the way. |
 | A workplace that stopped mid-shift | A tea corner with mugs on numbered hooks, one hook empty, a kettle and a dead bulb; the courier-of-the-year board; sorting trays still half full on the table. |
-| The first sign of the flood | A wordless notice by the tube: ring C, a water drop, R.Y. 42, a crossed-out envelope. Water seeps out from under the wreck below the gantry. |
+| The first sign of the flood | A wordless notice by the tube: ring C, a water drop, P.A. 310, a crossed-out envelope. Water seeps out from under the wreck below the gantry. |
 | The goal reads at once | The gantry doorway's lamp is the brightest point in the hall from the moment he steps out of the passage. |
 
 ## 2. Beats
@@ -89,9 +89,9 @@ later slot.
 
 | Where | What it says | What it means |
 |---|---|---|
-| The tube letter | Addressed to C-106, postmarked R.Y. 42, a star pictogram | Post for ring C, from the year it stopped. |
-| The ring C notice | Ring C, a water drop over waves, R.Y. 42, an envelope crossed out | Deliveries to ring C stopped because of water. |
-| The courier-of-the-year board | Five photographs, R.Y. 37 to 41, each a D-unit with a rosette and a hand on its shoulder: D-04, D-11, D-02, D-09, and **D-17** for R.Y. 41. The frame for R.Y. 42 is pale, a silhouette. | The staff were proud of their couriers, and of him. The year after, nobody was chosen. |
+| The tube letter | Addressed to C-106, postmarked P.A. 310, a star pictogram | Post for ring C, from the year it stopped. |
+| The ring C notice | Ring C, a water drop over waves, P.A. 310, an envelope crossed out | Deliveries to ring C stopped because of water. |
+| The courier-of-the-year board | Five photographs, P.A. 305 to 41, each a D-unit with a rosette and a hand on its shoulder: D-04, D-11, D-02, D-09, and **D-17** for P.A. 309. The frame for P.A. 310 is pale, a silhouette. | The staff were proud of their couriers, and of him. The year after, nobody was chosen. |
 | The tea corner | Mugs on numbered hooks, one gone; the kettle; a dead bulb | People worked here, and left. |
 | The water under the wreck | | The flood reached the depot too. |
 
@@ -137,7 +137,7 @@ later slot.
 
 ## 12. Open questions
 
-- **D-17 on the board.** Is "courier of the year, R.Y. 41" right for him, and does it need to read without zooming?
+- **D-17 on the board.** Is "courier of the year, P.A. 309" right for him, and does it need to read without zooming?
   At the game's distance the unit numbers are too small to read.
 - **The stamp.** Show a RETURN stamp landing on the letter, or keep it to the lamp?
 - **The jump.** The table is 3 cm above a jump's reach. Playtests should show whether players read that as "nearly"
@@ -178,13 +178,13 @@ From `docs/chapter1_pass3_plan.md`. Positions are game x.
   kills. The red tags on the franker and the mugs are gone; their light pools and the glance stay.
 - **The tube letter is Mara's** (`art/sorting_hall/textures_sorting_hall.py`): a six-year-old's pencil capitals to the
   post office, "DEAR POST, MY BIRTHDAY PARCEL HASNT COME. IS D-17 LOST? LOVE MARA C-114", stamped and postmarked
-  R.Y. 42. On the back, in crayon, what it says without words: a girl crying at the door of her house beside a
+  P.A. 310. On the back, in crayon, what it says without words: a girl crying at the door of her house beside a
   crooked tree, and far off in the dark a little courier with a parcel and a question mark over it.
 - **Lore** (`art/pass3/build_lore.py`):
 
 | Where | What it says | What it means |
 |---|---|---|
-| The tea corner (17.86), `LoreNoticeBoard` | NIGHT SHIFT CUT and GRADE 3 TRANSFERS SUSPENDED (an up arrow, crossed out), BY ORDER · R.Y. 42 | The year the parcel was posted, the work below was cut and the way up was shut. |
+| The tea corner (17.86), `LoreNoticeBoard` | NIGHT SHIFT CUT and GRADE 3 TRANSFERS SUSPENDED (an up arrow, crossed out), BY ORDER · P.A. 310 | The year the parcel was posted, the work below was cut and the way up was shut. |
 | The hanging mugs (15.89), `LoreMugNames` | The night shift's names in enamel paint: ODA, TOMAS, IVO (with a crooked tree), RUTH. D-17's mug is untouched. | IVO is Mara's father; the parcel's sender signs I.V. under the same tree. |
 | The tea corner (17.0), `LoreBedroll02` | A bedroll and a ration tin | Someone slept here. |
 

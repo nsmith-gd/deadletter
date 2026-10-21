@@ -259,7 +259,7 @@ From `docs/chapter1_pass3_plan.md`. Positions are game x.
   worn steel, bright where hands went (`HandledSteel`). The early curiosities lose their red tags and keep their
   light pools and the glance.
 - **The parcel label** (`art/d17/build_d17.py`), behind his chest window: "for MARA · C-114 · RING C" in a parent's
-  careful hand, the postmark R.Y. 42, a BIRTHDAY / DO NOT OPEN stamp, the sender's initials I.V. with a small crooked
+  careful hand, the postmark P.A. 310, a BIRTHDAY / DO NOT OPEN stamp, the sender's initials I.V. with a small crooked
   tree, and the child's crayon drawing in the corner (a girl under a crooked tree, a sun). This settles decision D3:
   the tree is on the label from the start, and DL-11 pays it off.
 - **His route card** in the rack under the dispatch board (`art/pass2/build_curios.py`): D-17 · ROUTE C · C-114, with
