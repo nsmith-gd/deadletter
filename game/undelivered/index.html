@@ -789,7 +789,7 @@ const Music = (() => {
   // The scene cues' handovers (prologue_music.json, scene_cues): at `hand` seconds in, a bar line, the scene's loop starts
   // from its loop_start under the cue's ringing tail (or the queued cue starts); `intro` bars at the head share the
   // outgoing loop's texture, so the loop fades out across them (4 s a bar, or 2 s with none).
-  const HAND = { wake: [44, 0], hall: [32, 1], threshold: [24, 1], racks: [36, 1], kin: [40, 1], dead: [40, 0], latch: [8, 0], refuge: [32, 0], childP: [40, 1], end: [60, 0] };
+  const HAND = { wake: [48, 0], hall: [32, 1], threshold: [24, 1], racks: [36, 1], kin: [40, 1], dead: [40, 0], latch: [8, 0], refuge: [32, 0], childP: [40, 1], end: [60, 0] };
   // Each loop file is padded 2 s at each end, so the decoder's priming never lands on the seam. The prologue's loops are
   // mastered against each other and share one gain.
   // (At the composer's 0.5 the loops sat as low as the old bed and went unheard in play; 0.9 is about 5 dB up.)
