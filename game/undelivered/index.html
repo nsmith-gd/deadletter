@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Dead Letter: Undelivered</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -80,6 +81,11 @@
   }
   #found { position: absolute; right: calc(16px + env(safe-area-inset-right, 0px)); top: calc(14px + env(safe-area-inset-top, 0px));
     font: 500 0.85rem var(--mono); letter-spacing: 0.08em; color: var(--amber); opacity: 0; transition: opacity 0.8s; pointer-events: none; }
+  #subs { position: absolute; left: 50%; bottom: calc(9% + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(86vw, 46rem);
+    text-align: center; font: italic 400 clamp(0.95rem, 2.2vw, 1.2rem)/1.45 var(--display); color: var(--paper); text-shadow: 0 1px 6px #000, 0 0 2px #000;
+    opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 4; }
+  #subs.on { opacity: 0.92; }
+  #subs .who { display: block; font: 500 0.7rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-style: normal; margin-bottom: 2px; }
   #intertitle { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 18px; padding: 24px; text-align: center; z-index: 5; transition: opacity 1.4s ease; }
   #intertitle[hidden] { display: none; }
   #intertitle p { font-family: var(--display); font-size: clamp(1.05rem, 2.6vw, 1.5rem); color: var(--paper); max-width: 34ch; opacity: 0; animation: titleLine 1.6s ease forwards; }
@@ -119,6 +125,7 @@
   </div>
   <div id="keycap" hidden></div>
   <div id="found" aria-live="polite"></div>
+  <div id="subs" aria-live="polite"></div>
   <div id="debug" hidden></div>
   <button id="skip" type="button" hidden>Skip intro</button>
   <div id="touch" hidden>
@@ -722,7 +729,8 @@ const Music = (() => {
     if (!decoded[name]) decoded[name] = raw[name].then((ab) => (ab ? ctx.decodeAudioData(ab.slice(0)) : null)).catch(() => null);
     return decoded[name];
   }
-  function level() { return enabled ? (paused ? 0.45 : 1) : 0; }
+  let duck = 1;
+  function level() { return enabled ? (paused ? 0.45 : 1) * duck : 0; }
   function init() {
     if (bus || !Sound.context()) return;
     ctx = Sound.context();
@@ -777,9 +785,234 @@ const Music = (() => {
     bed(on) { bedWanted = on; updateBed(); },
     setEnabled(on) { enabled = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
     setPaused(on) { paused = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
+    // Under a voice the music steps back.
+    duck(on) { duck = on ? 0.4 : 1; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, on ? 0.4 : 1.5); },
   };
 })();
 Music.prefetch();
+
+// ---------------------------------------------------------------------------
+// Voices (pass 7): voice cards, tannoys and the radio. The director's raw recordings go through an old-recording chain
+// per treatment (docs/voice_script.md): speed and pitch, wow and flutter, saturation, a band-pass, crackle under it and
+// a room. Files are assets/voice/<id>.mp3 (or .wav); until one exists a placeholder murmur plays, shaped to its lines,
+// with the subtitles either way. One voice at a time; the music steps back under it.
+// ---------------------------------------------------------------------------
+const Voice = (() => {
+  const TREAT = {
+    tannoy: { rate: 1, pitch: 0, lo: 400, hi: 3000, drive: 4, crackle: 0.012, wow: 4, room: 2.4 },
+    card: { rate: 1, pitch: 0, lo: 250, hi: 3500, drive: 1.6, crackle: 0.02, wow: 9, room: 0.5 },
+    card_worn: { rate: 0.97, pitch: 0, lo: 300, hi: 3000, drive: 2.2, crackle: 0.045, wow: 18, room: 0.5, drops: true },
+    child: { rate: 1.06, pitch: 4, lo: 250, hi: 3800, drive: 1.6, crackle: 0.02, wow: 9, room: 0.6 },
+    elder: { rate: 0.95, pitch: -1.5, lo: 250, hi: 3300, drive: 1.6, crackle: 0.025, wow: 12, room: 0.5, tremble: true },
+    machine: { rate: 1, pitch: 0, lo: 600, hi: 2600, drive: 6, crackle: 0.006, wow: 0, room: 0.9, ring: 31 },
+    radio: { rate: 1, pitch: 0, lo: 500, hi: 2800, drive: 3, crackle: 0.08, wow: 6, room: 0.2, staticSwell: true },
+  };
+  const raw = {}, decoded = {};
+  let ctx = null, bus = null, current = null;
+  const subsEl = document.getElementById('subs');
+  function init() {
+    if (bus || !Sound.context()) return;
+    ctx = Sound.context();
+    bus = ctx.createGain(); bus.gain.value = 1; bus.connect(Sound.output());
+  }
+  // A recording if there is one: .mp3 first, then .wav. Null means the placeholder.
+  function fetchVoice(id) {
+    raw[id] ||= fetch(`assets/voice/${id}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : fetch(`assets/voice/${id}.wav`).then((q) => (q.ok ? q.arrayBuffer() : null)))).catch(() => null);
+    return raw[id];
+  }
+  function get(id) {
+    decoded[id] ||= fetchVoice(id).then((ab) => (ab ? ctx.decodeAudioData(ab.slice(0)) : null)).catch(() => null);
+    return decoded[id];
+  }
+  function noise(sec) {
+    const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * sec), ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return b;
+  }
+  function crackleBuffer(sec, amount) {
+    const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * sec), ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) { d[i] = (Math.random() * 2 - 1) * 0.08; if (Math.random() < amount * 0.02) d[i] = (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.6); }
+    return b;
+  }
+  function impulse(sec) {
+    const n = Math.max(1, Math.floor(ctx.sampleRate * sec)), b = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+    return b;
+  }
+  function shaper(drive) {
+    const ws = ctx.createWaveShaper(), n = 1024, c = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(x * drive) / Math.tanh(drive); }
+    ws.curve = c; return ws;
+  }
+  // The chain: src -> shaper -> band-pass -> (ring) -> gain -> dry + room -> out (positional gain) -> bus.
+  function chain(t) {
+    const out = ctx.createGain(), dry = ctx.createGain(), wet = ctx.createGain(), mix = ctx.createGain();
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = t.lo; hp.Q.value = 0.7;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = t.hi; lp.Q.value = 0.9;
+    const sh = shaper(t.drive), head = ctx.createGain(); head.gain.value = 0.9;
+    head.connect(sh); sh.connect(hp); hp.connect(lp);
+    let tail = lp;
+    if (t.ring) { const rg = ctx.createGain(), osc = ctx.createOscillator(); osc.frequency.value = t.ring; rg.gain.value = 0.75; const depth = ctx.createGain(); depth.gain.value = 0.25; osc.connect(depth); depth.connect(rg.gain); osc.start(); lp.connect(rg); tail = rg; out.userData = { osc }; }
+    tail.connect(mix);
+    mix.connect(dry); dry.gain.value = 1;
+    if (t.room > 0) { const cv = ctx.createConvolver(); cv.buffer = impulse(t.room); mix.connect(cv); cv.connect(wet); wet.gain.value = Math.min(0.6, 0.18 + t.room * 0.12); wet.connect(out); }
+    dry.connect(out); out.connect(bus);
+    return { head, out };
+  }
+  function showLine(who, text) {
+    subsEl.innerHTML = '';
+    if (!text) { subsEl.classList.remove('on'); return; }
+    if (who) { const w = document.createElement('span'); w.className = 'who'; w.textContent = who; subsEl.appendChild(w); }
+    subsEl.appendChild(document.createTextNode(text));
+    subsEl.classList.add('on');
+  }
+  function stop(fade = 0.6) {
+    const c = current; if (!c) return;
+    current = null; Music.duck(false);
+    c.timers.forEach(clearTimeout); showLine();
+    const now = ctx.currentTime;
+    c.out.gain.cancelScheduledValues(now); c.out.gain.setTargetAtTime(0, now, fade / 4);
+    setTimeout(() => { c.nodes.forEach((n) => { try { n.stop(); } catch (e) { /* stopped */ } }); try { c.out.disconnect(); } catch (e) { /* gone */ } }, fade * 1000 + 300);
+  }
+  // Play a voice: v = { id, files?, who, treat, lines: [[text, sec], ...], x?, reach?, level?, stick? }.
+  async function play(v, opts = {}) {
+    init(); if (!ctx) return;
+    stop(0.3);
+    const t = TREAT[v.treat] || TREAT.card, rate = t.rate * Math.pow(2, t.pitch / 12);
+    const c = { v, timers: [], nodes: [], out: null, x: v.x, reach: v.reach || 0, level: opts.level ?? v.level ?? 1, started: ctx.currentTime, onEnd: opts.onEnd };
+    current = c; Music.duck(true);
+    const ch = chain(t); c.out = ch.out; c.out.gain.value = 0;
+    if (ch.out.userData) c.nodes.push(ch.out.userData.osc);
+    // The recordings (several files for one card mix in turn, e.g. the den's three children).
+    const ids = v.files || [v.id];
+    const bufs = await Promise.all(ids.map(get));
+    if (current !== c) return;
+    const real = bufs.filter(Boolean);
+    let dur = 0;
+    if (real.length) {
+      let at = ctx.currentTime + 0.25;
+      for (const b of real) {
+        const src = ctx.createBufferSource(); src.buffer = b; src.playbackRate.value = rate;
+        if (t.wow) { const lfo = ctx.createOscillator(), g = ctx.createGain(); lfo.frequency.value = 0.55; g.gain.value = t.wow; lfo.connect(g); g.connect(src.detune); lfo.start(at); lfo.stop(at + b.duration / rate + 0.1); c.nodes.push(lfo);
+          const fl = ctx.createOscillator(), fg = ctx.createGain(); fl.frequency.value = 7.3; fg.gain.value = t.wow * 0.25; fl.connect(fg); fg.connect(src.detune); fl.start(at); fl.stop(at + b.duration / rate + 0.1); c.nodes.push(fl); }
+        if (t.tremble) { const tr = ctx.createOscillator(), tg = ctx.createGain(); tr.frequency.value = 5.2; tg.gain.value = 14; tr.connect(tg); tg.connect(src.detune); tr.start(at); tr.stop(at + b.duration / rate + 0.1); c.nodes.push(tr); }
+        if (opts.stickAt) { src.loop = true; src.loopStart = opts.stickAt; src.loopEnd = opts.stickAt + 0.35; }
+        src.connect(ch.head); src.start(at); c.nodes.push(src);
+        at += b.duration / rate + 0.15; dur += b.duration / rate + 0.15;
+      }
+    } else {
+      // The placeholder: a murmur in the voice's band, its syllables and pauses shaped to the lines.
+      dur = v.lines.reduce((a, l) => a + l[1], 0);
+      const n = ctx.createBufferSource(); n.buffer = noise(2); n.loop = true;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = v.treat === 'child' ? 1100 : v.treat === 'elder' ? 520 : 700; bp.Q.value = 3.5;
+      const env = ctx.createGain(); env.gain.value = 0;
+      n.connect(bp); bp.connect(env); env.connect(ch.head);
+      let at = ctx.currentTime + 0.25;
+      for (const [text, sec] of v.lines) {
+        const words = Math.max(1, text.split(/\s+/).length), syl = Math.max(2, Math.round(words * 1.4)), span = Math.max(0.6, sec - 0.45);
+        for (let i = 0; i < syl; i++) {
+          const s0 = at + i * span / syl, len = span / syl * (0.55 + Math.random() * 0.3), peak = 0.35 + Math.random() * 0.35;
+          env.gain.setValueAtTime(0.0001, s0); env.gain.linearRampToValueAtTime(peak, s0 + len * 0.3); env.gain.linearRampToValueAtTime(0.0001, s0 + len);
+        }
+        at += sec;
+      }
+      n.start(); n.stop(at + 0.2); c.nodes.push(n);
+    }
+    // Crackle and hiss under it all.
+    const cr = ctx.createBufferSource(); cr.buffer = crackleBuffer(3, t.crackle * 40); cr.loop = true;
+    const cg = ctx.createGain(); cg.gain.value = t.crackle * 2.2; const chp = ctx.createBiquadFilter(); chp.type = 'highpass'; chp.frequency.value = 900;
+    cr.connect(chp); chp.connect(cg); cg.connect(c.out); cr.start(); c.nodes.push(cr);
+    if (t.staticSwell) { const st = ctx.createBufferSource(); st.buffer = noise(2); st.loop = true; const sg = ctx.createGain(), sb = ctx.createBiquadFilter(); sb.type = 'bandpass'; sb.frequency.value = 2200; sb.Q.value = 0.6;
+      sg.gain.setValueAtTime(0.12, ctx.currentTime); sg.gain.linearRampToValueAtTime(0.05, ctx.currentTime + dur * 0.3); sg.gain.linearRampToValueAtTime(0.55, ctx.currentTime + dur + 0.6);
+      st.connect(sb); sb.connect(sg); sg.connect(c.out); st.start(); c.nodes.push(st); }
+    c.out.gain.setTargetAtTime(c.level, ctx.currentTime, 0.08);
+    // Subtitles spread over the real length (or the placeholder's).
+    const total = v.lines.reduce((a, l) => a + l[1], 0), k = dur / total;
+    let tt = 0.25;
+    for (const [text, sec, who] of v.lines) { c.timers.push(setTimeout(() => { if (current === c) showLine(who ?? v.who, text); }, tt * 1000)); tt += sec * k; }
+    c.timers.push(setTimeout(() => { if (current === c && !opts.stickAt) { stop(1.2); c.onEnd && c.onEnd(); } }, (tt + 0.6) * 1000));
+    Telemetry.event('voice', { id: v.id, recorded: real.length > 0 });
+  }
+  return {
+    play, stop, init, prefetch(list) { list.forEach((v) => (v.files || [v.id]).forEach(fetchVoice)); },
+    playing: () => (current ? current.v.id : null),
+    // Positional voices (tannoys, a card left playing) fade with his distance from them.
+    update(px) {
+      const c = current; if (!c || c.x === undefined || !c.reach || !c.out) return;
+      const g = c.level * Math.max(0, 1 - Math.abs(px - c.x) / c.reach);
+      c.out.gain.setTargetAtTime(g, ctx.currentTime, 0.15);
+      if (g <= 0.001 && ctx.currentTime - c.started > 1) stop(0.2);
+    },
+  };
+})();
+
+// Ambient emitters (pass 7): sounds that live in a place, mixed by his distance from them. All synthesized.
+// { region, x, kind, level, reach, upper? } kinds: drip, tick, buzz, lap, wind, fan, machine, static, hum, musicbox.
+const Ambience = (() => {
+  let ctx = null, bus = null;
+  const live = new Map();
+  function init() { if (bus || !Sound.context()) return; ctx = Sound.context(); bus = ctx.createGain(); bus.gain.value = 0.9; bus.connect(Sound.output()); }
+  function noiseSrc(sec = 2) {
+    const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * sec), ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const s = ctx.createBufferSource(); s.buffer = b; s.loop = true; return s;
+  }
+  // Continuous kinds build a node graph once; the event kinds schedule blips while in reach.
+  function make(e) {
+    const g = ctx.createGain(); g.gain.value = 0; g.connect(bus);
+    const n = { g, next: 0, stopAll: [] };
+    const lfo = (hz, depth, target) => { const o = ctx.createOscillator(), og = ctx.createGain(); o.frequency.value = hz; og.gain.value = depth; o.connect(og); og.connect(target); o.start(); n.stopAll.push(o); };
+    if (e.kind === 'buzz' || e.kind === 'hum') {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = e.kind === 'buzz' ? 100 : 50;
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = e.kind === 'buzz' ? 1800 : 160; f.Q.value = e.kind === 'buzz' ? 4 : 1.2;
+      const a = ctx.createGain(); a.gain.value = e.kind === 'buzz' ? 0.05 : 0.12; o.connect(f); f.connect(a); a.connect(g); o.start(); n.stopAll.push(o);
+      if (e.kind === 'buzz') lfo(0.13, 0.03, a.gain);
+    } else if (e.kind === 'lap' || e.kind === 'wind' || e.kind === 'static' || e.kind === 'machine') {
+      const s = noiseSrc(), f = ctx.createBiquadFilter(), a = ctx.createGain();
+      f.type = e.kind === 'static' ? 'bandpass' : 'lowpass'; f.frequency.value = { lap: 520, wind: 380, static: 2400, machine: 90 }[e.kind]; f.Q.value = e.kind === 'static' ? 0.5 : 0.8;
+      a.gain.value = { lap: 0.16, wind: 0.2, static: 0.05, machine: 0.35 }[e.kind];
+      s.connect(f); f.connect(a); a.connect(g); s.start(); n.stopAll.push(s);
+      if (e.kind === 'lap') lfo(0.31, 0.1, a.gain);
+      if (e.kind === 'wind') { lfo(0.07, 0.12, a.gain); lfo(0.05, 160, f.frequency); }
+      if (e.kind === 'machine') lfo(0.9, 0.08, a.gain);
+    }
+    return n;
+  }
+  function blip(e, n, at) {
+    const o = ctx.createOscillator(), a = ctx.createGain(); o.connect(a); a.connect(n.g);
+    if (e.kind === 'drip') { o.type = 'sine'; o.frequency.setValueAtTime(1400 + Math.random() * 700, at); o.frequency.exponentialRampToValueAtTime(380, at + 0.07); a.gain.setValueAtTime(0.25, at); a.gain.exponentialRampToValueAtTime(0.001, at + 0.12); o.start(at); o.stop(at + 0.14); return 0.7 + Math.random() * 2.2; }
+    if (e.kind === 'tick') { o.type = 'square'; o.frequency.value = 2400; a.gain.setValueAtTime(0.06, at); a.gain.exponentialRampToValueAtTime(0.001, at + 0.02); o.start(at); o.stop(at + 0.03); return e.period || 1.0; }
+    if (e.kind === 'fan') { o.type = 'triangle'; o.frequency.value = 220 + Math.random() * 30; a.gain.setValueAtTime(0.05, at); a.gain.exponentialRampToValueAtTime(0.001, at + 0.05); o.start(at); o.stop(at + 0.06); return 0.9 + Math.random() * 2.5; }
+    if (e.kind === 'musicbox') {
+      const tune = [0, 4, 7, 9, 7, 4, 2, 4, 0, -3, 0];
+      n.i = ((n.i ?? -1) + 1) % (tune.length + 4);
+      if (n.i >= tune.length) { o.disconnect(); return 0.6; }                  // a breath between the turns of the tune
+      o.type = 'sine'; o.frequency.value = 1046.5 * Math.pow(2, tune[n.i] / 12);
+      const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = o.frequency.value * 3.01; const a2 = ctx.createGain(); o2.connect(a2); a2.connect(n.g);
+      a.gain.setValueAtTime(0.12, at); a.gain.exponentialRampToValueAtTime(0.001, at + 1.4); a2.gain.setValueAtTime(0.03, at); a2.gain.exponentialRampToValueAtTime(0.001, at + 0.5);
+      o.start(at); o.stop(at + 1.5); o2.start(at); o2.stop(at + 0.6);
+      return (e.slow || 1) * (0.42 + Math.random() * 0.06);
+    }
+    o.disconnect(); return 1;
+  }
+  return {
+    // Every frame: each emitter in his region and reach sounds, scaled by distance; the rest are silent and freed.
+    update(list, px, region, upper) {
+      init(); if (!ctx) return;
+      const now = ctx.currentTime;
+      for (const e of list) {
+        const on = e.region === region && (e.upper === undefined || !!e.upper === !!upper) && (!e.when || e.when());
+        const k = on ? Math.max(0, 1 - Math.abs(px - e.x) / e.reach) : 0;
+        let n = live.get(e);
+        if (k <= 0) { if (n && now > n.offAt) { n.g.gain.setTargetAtTime(0, now, 0.3); n.stopAll.forEach((o) => { try { o.stop(now + 1.5); } catch (er) { /* stopped */ } }); setTimeout(() => n.g.disconnect(), 2000); live.delete(e); } else if (n) n.g.gain.setTargetAtTime(0, now, 0.4); continue; }
+        if (!n) { n = make(e); live.set(e, n); }
+        n.offAt = now + 3;
+        n.g.gain.setTargetAtTime(e.level * k * k, now, 0.25);
+        if (['drip', 'tick', 'fan', 'musicbox'].includes(e.kind) && now >= n.next) n.next = now + blip(e, n, Math.max(now, n.next));
+      }
+    },
+  };
+})();
 
 // ---------------------------------------------------------------------------
 // Input: keyboard, gamepad, touch
@@ -2282,7 +2515,7 @@ function updateScan(dt) {
     }
     drawScreen(t < SCAN.READ ? (t > SCAN.SWEEP ? 'scan' : 'idle') : t < SCAN.REJECT ? 'read' : 'reject', t);
     if (t >= SCAN.READ && !sc.read) { sc.read = true; Sound.chirp(); }
-    if (t >= SCAN.REJECT && !sc.rejected) { sc.rejected = true; Sound.reject(); Music.play('dead', 0.15); }
+    if (t >= SCAN.REJECT && !sc.rejected) { sc.rejected = true; Sound.reject(); Music.play('dead', 0.15); setTimeout(() => Voice.play(Object.assign(voiceById('tan_scanner'), { x: SCANNER_X, reach: 6 }), { level: 0.8 }), 350); }
     if (t >= SCAN.HATCH && !refs.carriers.length) spawnCarrier();
     if (t >= SCAN.REVEAL) { sc.phase = 'reveal'; game.act = null; input.lastActivity = game.clock; game.lookAt = 'heap'; }
   } else if (sc.phase === 'reveal') {
@@ -3496,7 +3729,7 @@ function resetCh1(cp) {
     if (c110.obj && c110.rest) { c110.obj.position.copy(c110.rest); c110.obj.quaternion.copy(c110.restQ); }
   }
 }
-function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; for (const k of Object.keys(secretFound)) delete secretFound[k]; persist.cw = 0; persist.shockedOnce = false; persist.warned = false; }
+function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; for (const k of Object.keys(secretFound)) delete secretFound[k]; for (const k of Object.keys(voiceFound)) delete voiceFound[k]; persist.cw = 0; persist.shockedOnce = false; persist.warned = false; }
 
 // Collision ---------------------------------------------------------------------------------
 function floorCh1(x) {
@@ -3581,6 +3814,8 @@ function nearCh1() {
   if (cu) return 'curio:' + cu.id;
   const se = secretHere();
   if (se) return 'secret:' + se.id;
+  const vc = voiceHere();
+  if (vc) return 'voice:' + vc.id;
   // DL-10: the lift's UP, the service door's crank, and the counterweight's own UP.
   if (game.region === 4 && x > UPONLY.x0) {
     const uo = s.uo, deck = Math.abs(game.y - DECK) < 0.05;
@@ -3634,7 +3869,7 @@ function pushHere() {
   }
   return out;
 }
-const ACT_CH1 = new Set(['loadCar', 'up10', 'crank10', 'ride10', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck', 'shove', 'secret']);
+const ACT_CH1 = new Set(['loadCar', 'up10', 'crank10', 'ride10', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck', 'shove', 'secret', 'voice']);
 function beginCh1(kind) {
   const [k, arg] = kind.split(':');
   game.vx = 0;
@@ -3650,6 +3885,11 @@ function beginCh1(kind) {
   if (k === 'crank10') { game.act = { kind: 'crank10', phase: 'approach', t: 0, standX: UO.crankStand, face: 1, strokes: Math.round(game.ch1.uo.door * UO.strokes), lastF: 0 }; return; }
   if (k === 'bell9') { game.act = { kind: 'bell9', phase: 'approach', t: 0, standX: BELL9.x, face: 1 }; return; }
   if (k === 'junction9') { game.act = { kind: 'junction9', phase: 'approach', t: 0, standX: JUNCTION9.x - 0.25, face: 1 }; return; }
+  if (k === 'voice') {
+    const v = VOICES.find((q) => q.id === arg);
+    game.act = { kind: 'voice', v, phase: 'approach', t: 0, standX: v.standX, face: v.face || 1 };
+    return;
+  }
   if (k === 'secret') {
     const se = SECRETS.find((q) => q.id === arg);
     game.act = { kind: 'secret', se, phase: 'approach', t: 0, standX: se.stand, face: Math.sign(se.stand - game.x) || 1 };
@@ -3718,6 +3958,7 @@ function updateActCh1(a, dt) {
   if (a.kind === 'death') { updateDeath(a, dt); return; }
   if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
   if (a.kind === 'secret') { updateSecretAct(a, dt); return; }
+  if (a.kind === 'voice') { updateVoiceAct(a, dt); return; }
   if (['loadCar', 'up10', 'crank10', 'ride10'].includes(a.kind)) { updateAct10(a, dt); return; }
   if (a.kind === 'bell9' || a.kind === 'junction9') {
     // He turns to the wall to press the bell (or pull the lever), then back to the lane.
@@ -4400,16 +4641,64 @@ const curioCount = () => CURIOS.filter((c) => curioFound[c.id]).length;
 const SECRETS = [
   // DL-06, behind a panel in the sorting floor's back wall: the one who stayed, and read the dead letters. He crosses the
   // carriers' rails to get there, so not while one is passing.
-  { id: 'reader', name: 'The one who stayed', region: 3, upper: false, ready: true, open: [66.52, 67.22], stand: 66.87,
+  { id: 'reader', name: 'The one who stayed', region: 3, upper: false, ready: true, voice: 'card_reader', open: [66.52, 67.22], stand: 66.87,
     path: [[66.87, -1.2], [66.95, -2.4]], face: Math.atan2(0.65, -0.76),
     cam: new THREE.Vector3(67.55, 1.15, -1.85), look: new THREE.Vector3(67.6, 0.75, -4.0), focal: 24,
     cond: () => !(refs.carriers || []).some((c) => Math.abs(c.root.position.x - 66.87) < 1.0 && c.root.position.y < 0.3) },
   // DL-09, through a vent in the tunnel by the hopscotch: the children's den, with Mara's tree on the wall.
-  { id: 'den', name: 'The den', region: 4, ready: true, open: [106.86, 107.48], stand: 107.17, crouchTo: -1.9,
+  { id: 'den', name: 'The den', region: 4, ready: true, voice: 'card_den', open: [106.86, 107.48], stand: 107.17, crouchTo: -1.9,
     path: [[107.17, -1.9], [107.6, -2.35]], face: Math.atan2(-0.6, -1.25),
     cam: new THREE.Vector3(109.55, 2.45, -1.75), look: new THREE.Vector3(108.0, 2.0, -3.8), focal: 24 },
 ];
 const secretFound = {};
+// Pass 7: the voices (docs/voice_script.md, placed per docs/audio_audit.md). Cards play when he winds their player
+// (Use) or, in the secret rooms, when he goes in; tannoys play as he passes. `x` null: not placed in the set yet.
+const VOICE_LINES = {
+  tan_depot_1: { who: 'Tannoy', treat: 'tannoy', lines: [['Night shift, to your stations.', 2.6], ['Night shift, to your stations.', 2.6], ['Sorting will run until oh-six-hundred. Couriers, report to dispatch.', 4.6], ['Thank you for your work. The refuge depends on it.', 4.0]] },
+  card_sorter: { who: 'Voice card', treat: 'card', lines: [['Hello, little bird. It’s Mum.', 3], ['I’m on nights again, so you’ll be asleep when this comes. Gran will play it for you at breakfast.', 6], ['It’s warm in here tonight. Stuffy. They’ve turned the fans down to save power, so we’re all yawning over the letters.', 7], ['Ruth fell asleep on the franking machine.', 3], ['Be good for Gran. I’ll be home when the shift’s done.', 4], ['Love you. Bye-bye. Bye.', 3]] },
+  tan_racks: { who: 'Tannoy', treat: 'tannoy', lines: [['Couriers to dispatch.', 2.2], ['D-12.', 1.4], ['D-13.', 1.4], ['D-14.', 1.4], ['D-15.', 1.4], ['D-16.', 3.2]] },
+  tan_rations: { who: 'Tannoy', treat: 'tannoy', lines: [['Attention, grade four. Rations are suspended until further notice.', 5], ['Distribution will resume at oh-eight-hundred.', 3.6], ['Please remain in the hall. Please keep the aisles clear for the weigh-in.', 5]] },
+  card_queue: { who: 'Voice card', treat: 'card_worn', lines: [['If someone finds this.', 2.6], ['We waited for them to open the hatch. They said eight o’clock.', 4.6], ['That was the eleventh. I’ve lost count since.', 3.6], ['There are a lot of us here. We’re keeping our places.', 4.2], ['If you’re from upstairs… there are children here. Please.', 5]] },
+  tan_scanner: { who: 'Scanner', treat: 'machine', lines: [['Return to sender. Return to sender.', 3]] },
+  card_reader: { who: 'Voice card', treat: 'elder', lines: [['Number two thousand and eleven.', 3], ['“Dear Tomas. The rain on ring A is only the pipes, they say, but it sounds like rain, and I stand under it some evenings.', 8], ['I hope you are eating. Your sister sends her love…”', 4.5], ['I read them all, in the end. Somebody ought to.', 4.5], ['Tomas, if you’re out there, she sent her love.', 4.5], ['Number two thousand and twelve.', 3]] },
+  card_heap: { who: 'Voice card', treat: 'card', lines: [['Hello, love, it’s your dad. We’re fine. Your mother’s fine.', 5], ['The ration’s short this month, but we’re fine. Don’t send any of yours, I mean it.', 5.5], ['The lift’s still not running to your level, but they say soon.', 4], ['Write when you can. We play your last one every night.', 4], ['We’re fine.', 2.5]] },
+  card_den: { who: 'Voice card', treat: 'child', files: ['card_den_1', 'card_den_2', 'card_den_3'], lines: [['Is it on? Is it going?', 2.2], ['It’s going! Say it!', 1.8], ['Okay. This is the Den. If you found this, you are in the club.', 4], ['You have to say the password.', 2], ['The password is crooked tree.', 2.5], ['That’s Mara’s. She drew it.', 2.2], ['Mara, say something!', 2], ['She won’t, she’s shy. Okay. Club rules: no grown-ups. No telling.', 5], ['And whoever finds this has to come back.', 3.5]] },
+  tan_bridge: { who: 'Tannoy', treat: 'tannoy', lines: [['Grades one and two only beyond this point. Grades one and two only.', 5], ['All other residents, return to your rings. Thank you for your patience.', 5.5]] },
+  tan_relocation: { who: 'Tannoy', treat: 'tannoy', lines: [['Relocation. This car is for grades one and two. Please have your papers ready.', 5.5], ['One case per person. Do not push.', 3.4], ['This is the last scheduled car. This is the last scheduled car.', 5]] },
+  card_lastcar: { who: 'Voice card', treat: 'card', lines: [['Sweetheart. You did so well getting on.', 3.6], ['I’m sorry I let go of your hand so fast. They were shouting, and I wanted you on before the gate.', 6], ['You go with Aunt Ila now. Do what she tells you.', 3.6], ['We’ll be on the next one. We’ll be on the next one, and I’ll find you.', 5.5], ['Keep your coat on. It’s cold up there, they say.', 3.8]] },
+  radio_above: { who: 'Radio', treat: 'radio', lines: [['…feed to C, test four.', 2.4], ['Load’s holding.', 1.8], ['Well. Not that there’s anyone down there to…', 4.2], ['…logging it anyway.', 2.4]] },
+  card_mara_parent: { who: 'Voice card', treat: 'card', lines: [['Happy birthday, my Mara. Nine!', 3.6], ['I’m sorry I can’t be there. They need the couriers’ parents on the works this month, and the lift’s slow.', 6.4], ['So I’ve sent you something with the post. Don’t open it till the day. I mean it.', 5.2], ['It’s for outside. One day there’ll be an outside, and you’ll need them.', 5.4], ['Keep drawing your trees. Don’t let them tell you they have to be straight.', 5], ['I love you. I’ll see you soon. Happy birthday.', 4.4]] },
+  att_gate_1: { who: 'Register', treat: 'tannoy', lines: [['Good morning. Please hang your coat on your peg.', 3.2]] },
+  att_gate_2: { who: 'Register', treat: 'tannoy', lines: [['Coat seven, please.', 2]] },
+  att_gate_3: { who: 'Register', treat: 'tannoy', lines: [['Thank you. You are present.', 2.4]] },
+  att_caretaker: { who: 'Voice card', treat: 'elder', lines: [['Lost property, week forty.', 2.6], ['One mitten, red. One shoe, small, left foot. A lunch tin, M.D. on the lid.', 6], ['I keep it all. Somebody’ll come back for it.', 4], ['Register’s down to one this week. Just the little one with the drawings. Sits at the front, never says a word.', 7], ['Good kid.', 2]] },
+  att_lesson: { who: 'Lesson', treat: 'card', lines: [['Good morning, class. Today we will learn how a tree grows.', 4], ['First, the root. Then, the trunk.', 3.2], ['Then the branches reach for the light. And then, the leaves.', 4.4], ['A tree always grows straight, and tall, toward the sun.', 4], ['Let us watch it again.', 2.4]] },
+  att_teacher: { who: 'Voice card', treat: 'card', lines: [['To the family of Mara D., class four.', 3.4], ['She’s doing well. She doesn’t speak much in class, but she listens to everything.', 5.6], ['She asked me today why the windows don’t open. I told her the truth. I hope that was right.', 6.4], ['She’s drawn on the wall behind the window panel. A tree. I haven’t had it cleaned.', 5.6], ['I’ll keep recording these until someone writes back. Take care of yourselves.', 5]] },
+};
+// Cards he winds (Use): where the player is and where he stands. Tannoys: where they hang; they play as he passes.
+const VOICES = [
+  // filled from the art (art/pass7/build_audio_props.py): { id, kind: 'card'|'tannoy', region, upper?, x, standX, face, z?, reach }
+];
+const voiceFound = {};
+const voiceById = (id) => Object.assign({ id }, VOICE_LINES[id]);
+// Ambient emitters (docs/audio_audit.md): positions from the sets.
+const EMITTERS = [
+  { region: 1, x: 1.0, kind: 'tick', period: 0.9, level: 0.45, reach: 3 },                 // the dispatch board's lit line
+  { region: 1, x: 7.3, kind: 'drip', level: 0.7, reach: 4.5 },                               // into the trench
+  { region: 2, x: 19.8, kind: 'fan', level: 0.6, reach: 4.5 },                               // the stopped fan's loose blade
+  { region: 2, x: 23.4, kind: 'buzz', level: 0.5, reach: 4 },                                // under the gantry
+  { region: 2, x: 36.0, kind: 'buzz', level: 0.35, reach: 5, when: () => game.revealed },  // a failing tube in the racks
+  { region: 2, x: 56.2, kind: 'drip', level: 0.55, reach: 4 },                               // the ration hall's tap
+  { region: 3, x: SCANNER_X, kind: 'hum', level: 0.5, reach: 3.5, upper: false },           // the scanner's mains
+  { region: 3, x: OFF3 + 37.8, kind: 'lap', level: 0.35, reach: 4, upper: false },          // the heap's water
+  { region: 4, x: (SHAFT.x0 + SHAFT.x1) / 2, kind: 'lap', level: 0.8, reach: 4.5 },          // the sump
+  { region: 4, x: 107.17, kind: 'musicbox', level: 0.5, reach: 3.2 },                        // the den's music box, the cue to the vent
+  { region: 4, x: 114.5, kind: 'wind', level: 0.6, reach: 6 },                               // the balcony
+  { region: 5, x: OFF5 + 94.3, kind: 'lap', level: 0.6, reach: 5 },                          // the flooded lane
+  { region: 5, x: 150.0, kind: 'lap', level: 0.45, reach: 6 },
+  { region: 5, x: 170.85, kind: 'hum', level: 0.45, reach: 3 },                              // the new splice box: the only fresh sound in ring C
+  { region: 5, x: 174.5, kind: 'wind', level: 0.7, reach: 4.5 },                             // the well
+];
 function secretHere() {
   if (game.mode !== 'play') return null;
   for (const se of SECRETS) {
@@ -4441,12 +4730,13 @@ function updateSecretAct(a, dt) {
     if (a.i >= se.path.length) {
       a.phase = 'look'; a.t = 0; setClip('Idle', 0.5); game.yawOverride = nearAngle(se.face ?? Math.PI);
       if (!secretFound[se.id]) { secretFound[se.id] = true; Telemetry.event('secret', { id: se.id }); }
+      if (se.voice) setTimeout(() => { if (game.act === a && a.phase === 'look') { Voice.play(voiceById(se.voice)); voiceFound[se.voice] = true; } }, 1400);   // pass 7: the room's card
     }
     return;
   }
   if (a.phase === 'look') {
     // He stays as long as the player likes; any move, jump or Use takes him back out.
-    if (a.t > 2.0 && (input.axis || input.left || input.right || input.jumpPressed || input.usePressed)) a.phase = 'out';
+    if (a.t > 2.0 && (input.axis || input.left || input.right || input.jumpPressed || input.usePressed)) { a.phase = 'out'; if (se.voice && Voice.playing() === se.voice) Voice.stop(1.5); }
     return;
   }
   if (a.phase === 'out') {
@@ -4455,6 +4745,38 @@ function updateSecretAct(a, dt) {
     a.o ??= 0;
     if (a.o < back.length && walkTo(...back[a.o])) a.o++;
     if (a.o >= back.length) { game.yaw = Math.atan2(Math.sin(game.yaw), Math.cos(game.yaw)); game.z = 0; game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+  }
+}
+// Pass 7: a voice-card player he can wind, here; and the tannoys, which play as he passes.
+function voiceHere() {
+  if (game.mode !== 'play') return null;
+  for (const v of VOICES) {
+    if (v.kind !== 'card' || v.x == null || v.region !== game.region || (v.upper !== undefined && !!v.upper !== !!game.upper)) continue;
+    if (Math.abs(game.x - v.standX) < 0.3 && Voice.playing() !== v.id) return v;
+  }
+  return null;
+}
+function updateVoiceAct(a, dt) {
+  const v = a.v;
+  if (a.phase === 'approach') { if (approachCh1(a, dt, v.z || 0)) { a.phase = 'act'; a.t = 0; setClip(actions.Crank ? 'Crank' : 'Idle', 0.2); } return; }
+  // A few turns of the crank, then the card plays and he listens; he is free to go and it plays on behind him.
+  if (a.t > 0.25 && !a.r1) { a.r1 = true; Sound.ratchet(); }
+  if (a.t > 0.7 && !a.r2) { a.r2 = true; Sound.ratchet(); }
+  if (a.t > 1.2) {
+    game.act = null; setClip('Idle', 0.4); input.lastActivity = game.clock;
+    Voice.play(Object.assign(voiceById(v.id), { x: v.x, reach: v.reach || 6 }));
+    if (!voiceFound[v.id]) { voiceFound[v.id] = true; Sound.found?.(); }
+  }
+}
+function updateTannoys() {
+  if (game.mode !== 'play') return;
+  for (const v of VOICES) {
+    if (v.kind !== 'tannoy' || v.x == null || v.region !== game.region || (v.upper !== undefined && !!v.upper !== !!game.upper)) continue;
+    const near = Math.abs(game.x - v.x) < (v.trigger || 2.5);
+    if (!near || Voice.playing()) continue;
+    const t = game.clock - (v.last ?? -1e9);
+    // The first time he passes, at full; then now and then, fainter, while he lingers.
+    if (v.last === undefined || t > (v.every || 75)) { v.last = game.clock; Voice.play(Object.assign(voiceById(v.id), { x: v.x, reach: v.reach || 9 }), { level: v.played ? 0.55 : 0.9 }); v.played = true; voiceFound[v.id] = true; }
   }
 }
 function curioHere() {
@@ -4486,7 +4808,7 @@ function updateCurioAct(a, dt) {
     findCurio(c.id);
     if (c.id === 'viewer') game.viewerAt = game.clock;
     if (c.id === 'switch') game.hallLitAt = game.clock;
-    if (c.id === 'radio') game.radioAt = game.clock;
+    if (c.id === 'radio') { game.radioAt = game.clock; setTimeout(() => { if (game.mode === 'play' && game.region === 5) Voice.play(voiceById('radio_above'), { level: 0.9 }); }, 1600); }   // pass 7: for a moment, a living voice
     return;
   }
   if (a.phase === 'out') {          // stepping back out to the lane from a wall he reached into
@@ -5618,6 +5940,7 @@ function startPlay(checkpoint = 'start') {
   const fromOpening = game.mode === 'opening';
   const naturalEnd = fromOpening && game.frame >= OPENING_FRAMES;
   resetWorld(checkpoint);
+  Voice.stop(0.4);
   // The wake plays on into the first steps; any other cue gives way to the bed.
   if (!fromOpening && Music.playing() !== 'wake') Music.stop(2);
   game.heardHall = !['start', 'shutter'].includes(checkpoint);
@@ -5669,7 +5992,8 @@ const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(
 const tally = () => {
   const rooms = SECRETS.filter((q) => q.ready);
   return `Curiosities ${curioCount()} of ${CURIOS.length} \u00B7 letters posted ${letterState.posted || 0} of ${LETTERS.length}` +
-    (rooms.length ? ` \u00B7 secret rooms ${rooms.filter((q) => secretFound[q.id]).length} of ${rooms.length}` : '');
+    (rooms.length ? ` \u00B7 secret rooms ${rooms.filter((q) => secretFound[q.id]).length} of ${rooms.length}` : '') +
+    ` \u00B7 voices heard ${Object.keys(voiceFound).length}`;
 };
 function finish() {
   // The picture goes slowly to black as he climbs away into the dark; then the prologue's card.
@@ -5776,7 +6100,7 @@ document.getElementById('export-log').addEventListener('click', () => Telemetry.
 Telemetry.canSave.then((ok) => { if (!ok) document.getElementById('export-log').hidden = true; });
 syncOpts();
 
-beginBtn.addEventListener('click', () => { Telemetry.event('begin'); Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); titleEl.hidden = true; startOpening(); });
+beginBtn.addEventListener('click', () => { Telemetry.event('begin'); Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); Voice.init(); Voice.prefetch(Object.keys(VOICE_LINES).map(voiceById)); titleEl.hidden = true; startOpening(); });
 skipBtn.addEventListener('click', () => { Telemetry.event('skipIntro', { frame: Math.round(game.frame) }); startPlay('start'); });
 document.getElementById('resume').addEventListener('click', togglePause);
 document.getElementById('checkpoint').addEventListener('click', loadCheckpoint);
@@ -5785,7 +6109,7 @@ document.getElementById('again').addEventListener('click', () => { endEl.hidden 
 // Testing (pass 5): start at any scene's first checkpoint, from the title card or the pause card.
 function startAt(cp) {
   Telemetry.event('startAt', { cp });
-  Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music'));
+  Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); Voice.init(); Voice.prefetch(Object.keys(VOICE_LINES).map(voiceById));
   titleEl.hidden = true; pauseEl.hidden = true; endEl.hidden = true;
   seen.clear(); clearLetters(); game.playStart = 0;
   startPlay(cp);
@@ -5901,13 +6225,14 @@ function step(dt) {
     updateQuirkTriggers();
     applyLights(f);
     updateCamera(dt, f);
+    if (game.mode === 'play') { Ambience.update(EMITTERS, game.x, game.region, game.upper); Voice.update(game.x); updateTannoys(); }
   }
   input.jumpPressed = false; input.usePressed = false;
 }
 
 // Test hook for automated traversal checks.
 window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR, UO, UPONLY, CG }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
-  clip: () => current, renderer, limits: () => [leftLimit(), rightLimit()], carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
+  clip: () => current, renderer, limits: () => [leftLimit(), rightLimit()], playVoice: (id) => Voice.play(voiceById(id)), voice: () => Voice.playing(), carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
   crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), offsets: { OFF2, OFF3, OFF4, OFF5 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
   k: { CART1, PIT, SH, RK, HP, RAIL7, CG, DIP9, DUCT9, GATE_X, DOCK_X, PAWL_X, GALLERY, T4_HALF, PUSH_GAP4, GRIP_FWD, SLOTS, LETTERS: LETTERS.map((l) => ({ id: l.id, x: l.x })) } };
 
