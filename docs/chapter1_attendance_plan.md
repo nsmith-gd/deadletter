@@ -155,7 +155,7 @@ goes up.
 | 236.4–237.6 | **Blind A** and its ledge: out, at height 1.1, lane-deep, when A is down. |
 | 237.8–239.0 | **Blind B** and its ledge: out, at height 1.6, when B is down. |
 | 239.2–240.2 | The **way on**: a high hatch in the wall at height 2.15 (one mantle from ledge B), to DL-15. |
-| 236.6 (floor) | **A's chain wheel**: a sprocket in a bracket low on the wall, with a slot the pole fits through to jam it. |
+| 235.0 (floor) | **A's chain wheel**: a sprocket in a bracket low on the wall, between the pole and the desk, with a slot the pole fits through to jam it. Its chain runs up the wall and along the ceiling to A's roller. (Moved from 236.6 after the first play test: under ledge A it could only be reached by circling back from the far side.) |
 | 242.4 | The **crank**, with the chain running up from it over the ceiling pulleys to both blinds: visible all the way. |
 | 233.2–233.8 | The **secret room's door**: the stock cupboard under the stair. |
 

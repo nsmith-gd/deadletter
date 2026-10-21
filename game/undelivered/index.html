@@ -244,6 +244,19 @@ const PULL_ROOT_X = 3.0;
 const STEP = { x0: 3.6, x1: 4.4, h: 0.22 };     // fallen conveyor: the first hop
 const CRATE = { x0: 5.6, x1: 6.2, h: 0.45 };    // too high to hop: climb it
 const PIT = { x0: 6.6, x1: 8.0, y: -0.8 };      // drain trench: too wide to jump, too deep to climb out of
+// Chapter 1 Attendance's layout (see its code, further down).
+const OFF6 = 200;
+const ATT = {
+  coat0: 202.9, bench: { x0: 204.9, x1: 205.9, h: 0.42 }, peg: new THREE.Vector3(205.4, 1.18, -0.3),
+  fig: { x: 207.0, z: -0.4, strip: 208.4 }, strip: { x0: 208.0, x1: 208.8 }, gate: { x: 209.4, open: 1.3 },
+  fig2: { x: 217.6, z: -0.4, seat: 219.55 }, pawlX: 220.6, speakerX: 224.0,
+  steps: [{ x0: 224.6, x1: 225.4, h: 0.55 }, { x0: 225.6, x1: 226.4, h: 1.05 }, { x0: 226.6, x1: 227.4, h: 1.55 }],
+  gallery: { x0: 227.6, x1: 233.0, h: 2.05 }, cycle: { period: 12, out: [1.0, 2.6, 4.2], fold: [5.6, 6.2, 6.8] },
+  stair14: { x0: 233.0, x1: 234.4, steps: 5 }, pole0: 234.4, desk: { x0: 235.4, x1: 236.2, h: 0.62 },
+  ledgeA: { x0: 236.4, x1: 237.6, h: 1.1 }, ledgeB: { x0: 237.8, x1: 239.0, h: 1.6 }, hatch: { x0: 239.2, x1: 240.2, h: 2.15 },
+  wheelA: 235.0, crankX: 242.4, x0: 200.3, x1: 247.6,
+};
+const ATT_CPS = ['school', 'register', 'lesson', 'gallery13', 'window', 'hatch14'];
 const PLATFORMS = [STEP];                    // the depot cart (DL-01) is a pushable: see the Chapter 1 rework
 const HALL_X = 7.3;
 const CRANK_X = 9.62, CRANK_STROKES = 5;
@@ -1689,7 +1702,7 @@ function updatePlayer(dt) {
     if (game.region === 4 && beltRunning4() && game.x > BELT4.x0 && game.x < BELT4.x1) m.x0 -= BELT4.speed * dt;   // climbing a crate as it rides
     game.x = m.x0 + m.dir * (fwd + m.extra * approach);
     game.y = m.y0 + frac * (m.top - m.y0);
-    if (f >= MANTLE_FRAMES) { game.mantle = null; game.grounded = true; game.y = m.top; setClip('Idle', 0.25); }
+    if (f >= MANTLE_FRAMES) { game.mantle = null; game.grounded = true; game.y = m.top; setClip(game.hold === 'item' ? 'CarryIdle' : 'Idle', 0.25); }
     return;
   }
   if (game.transit) { updateTransit(dt); return; }
@@ -2055,6 +2068,11 @@ function updateHold(dt, move) {
   const t = four ? game.trolley4 : desk ? game.desk5 : game.trolley;
   const pushing = game.hold === 'trolley' || four || desk;
   if (pushing && input.jumpPressed) { game.hold = null; setClip('Idle', 0.25); return; }
+  // Something light (chapter 1's coat and pole) he can carry up a low climb.
+  if (!pushing && game.carry && game.carry.light && input.jumpPressed && game.grounded) {
+    const l = ledgeAhead(game.facing, 0.5);
+    if (l && l.top - game.y > MANTLE_MIN && l.top - game.y <= MANTLE_MAX && l.dist < FACE_D + 0.3) { startMantle(l); return; }
+  }
   const top = four ? PUSH_HEAVY : desk ? DRAG_SPEED : pushing ? (w.state === 'trolley' ? PUSH_LOADED : PUSH_SPEED) : CARRY_WALK;
   if (pushing) game.facing = game.holdSide; else if (move) game.facing = Math.sign(move);
   const target = Math.sign(move) * top * Math.min(1, Math.abs(move) * 1.15), acc = four || desk ? 1.3 : 3;   // the heavy ones are slow to get going
@@ -3858,8 +3876,8 @@ function itemsHere() {
   if (game.region === 4) out.push(Object.assign(s.uo.case, { key: 'case', h: 0.2, r: UO.caseHalf, below: 0.24, g: refs.ch1.suitcase }));
   if (game.region === 4) s.plates.forEach((p, i) => out.push(Object.assign(p, { key: 'p' + i, h: 0.21, r: 0.05, below: BAIL_BELOW_WRIST, g: refs.ch1.plates[i] })));
   if (game.region === 6 && game.att && refs.att) {
-    out.push(Object.assign(game.att.coat, { key: 'coat', h: 0.1, r: 0.16, below: 0.16, g: refs.att.AttCoat }));
-    out.push(Object.assign(game.att.pole, { key: 'pole', h: 0.06, r: 0.3, below: 0.08, g: refs.att.AttPole }));
+    out.push(Object.assign(game.att.coat, { key: 'coat', h: 0.1, r: 0.16, below: 0.16, light: true, g: refs.att.AttCoat }));
+    out.push(Object.assign(game.att.pole, { key: 'pole', h: 0.06, r: 0.3, below: 0.08, light: true, g: refs.att.AttPole }));
   }
   return out;
 }
@@ -4659,18 +4677,6 @@ const curioCount = () => CURIOS.filter((c) => curioFound[c.id]).length;
 // DL-12: a gate that wants a pupil present and their coat on the peg; a stand-in pupil. DL-13: a lesson whose steps come
 // out in turn; brake it in the moment they are all out. DL-14: one chain, two blinds; jam one with the window pole.
 // =====================================================================================================================
-const OFF6 = 200;
-const ATT = {
-  coat0: 202.9, bench: { x0: 204.9, x1: 205.9, h: 0.42 }, peg: new THREE.Vector3(205.4, 1.18, -0.3),
-  fig: { x: 207.0, z: -0.4, strip: 208.4 }, strip: { x0: 208.0, x1: 208.8 }, gate: { x: 209.4, open: 1.3 },
-  fig2: { x: 217.6, z: -0.4, seat: 219.55 }, pawlX: 220.6, speakerX: 224.0,
-  steps: [{ x0: 224.6, x1: 225.4, h: 0.55 }, { x0: 225.6, x1: 226.4, h: 1.05 }, { x0: 226.6, x1: 227.4, h: 1.55 }],
-  gallery: { x0: 227.6, x1: 233.0, h: 2.05 }, cycle: { period: 12, out: [1.0, 2.6, 4.2], fold: [5.6, 6.2, 6.8] },
-  stair14: { x0: 233.0, x1: 234.4, steps: 5 }, pole0: 234.4, desk: { x0: 235.4, x1: 236.2, h: 0.62 },
-  ledgeA: { x0: 236.4, x1: 237.6, h: 1.1 }, ledgeB: { x0: 237.8, x1: 239.0, h: 1.6 }, hatch: { x0: 239.2, x1: 240.2, h: 2.15 },
-  wheelA: 236.6, crankX: 242.4, x0: 200.3, x1: 247.6,
-};
-const ATT_CPS = ['school', 'register', 'lesson', 'gallery13', 'window', 'hatch14'];
 let attLoading = null;
 function loadAttendance() {
   attLoading ||= loadModel('assets/attendance.json').then((g) => {
