@@ -4727,10 +4727,13 @@ function floorAtt(x) {
 function surfaceAtt(x, h) {
   const a = game.att;
   if (x >= ATT.bench.x0 && x <= ATT.bench.x1) h = Math.max(h, ATT.bench.h);
-  ATT.steps.forEach((s, i) => { if (attOut(a.lesson.steps[i]) && x >= s.x0 && x <= s.x1) h = Math.max(h, s.h); });
+  // The steps and ledges are boards in the air, not columns: each is solid only to someone already up at the level below
+  // it (above a jump's reach from the floor), so he can walk under them to the crank and the chain wheel.
+  const up = [0, 0.5, 1.0];
+  ATT.steps.forEach((s, i) => { if (attOut(a.lesson.steps[i]) && game.y > up[i] - 0.01 && x >= s.x0 && x <= s.x1) h = Math.max(h, s.h); });
   if (x >= ATT.desk.x0 && x <= ATT.desk.x1) h = Math.max(h, ATT.desk.h);
-  if (attOut(a.blinds.a) && x >= ATT.ledgeA.x0 && x <= ATT.ledgeA.x1) h = Math.max(h, ATT.ledgeA.h);
-  if (attOut(a.blinds.b) && x >= ATT.ledgeB.x0 && x <= ATT.ledgeB.x1) h = Math.max(h, ATT.ledgeB.h);
+  if (attOut(a.blinds.a) && game.y > 0.5 && x >= ATT.ledgeA.x0 && x <= ATT.ledgeA.x1) h = Math.max(h, ATT.ledgeA.h);
+  if (attOut(a.blinds.b) && game.y > 1.0 && x >= ATT.ledgeB.x0 && x <= ATT.ledgeB.x1) h = Math.max(h, ATT.ledgeB.h);
   // The hatch is high in the wall: a sill only for someone up on the ledges; the floor below runs on to the crank.
   if (game.y > 1.3 && x >= ATT.hatch.x0 && x <= ATT.hatch.x1) h = Math.max(h, ATT.hatch.h);
   return h;
@@ -6544,7 +6547,7 @@ function step(dt) {
 }
 
 // Test hook for automated traversal checks.
-window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR, UO, UPONLY, CG }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
+window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR, UO, UPONLY, CG, ATT }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
   clip: () => current, renderer, limits: () => [leftLimit(), rightLimit()], playVoice: (id) => Voice.play(voiceById(id)), voice: () => Voice.playing(), carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
   crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), offsets: { OFF2, OFF3, OFF4, OFF5 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
   k: { CART1, PIT, SH, RK, HP, RAIL7, CG, DIP9, DUCT9, GATE_X, DOCK_X, PAWL_X, GALLERY, T4_HALF, PUSH_GAP4, GRIP_FWD, SLOTS, LETTERS: LETTERS.map((l) => ({ id: l.id, x: l.x })) } };

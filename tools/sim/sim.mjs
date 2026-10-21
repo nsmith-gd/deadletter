@@ -17,8 +17,9 @@ for (let n = 0; n < +count; n++) {
   await page.goto((process.env.GAME || 'http://127.0.0.1:8765') + '/index.html' + (process.env.QUERY || ''));
   await page.waitForFunction(() => !document.getElementById('begin').disabled, null, { timeout: 300000 });
   await page.addScriptTag({ content: BOT });
-  await page.evaluate(([s, m, s0]) => window.__startBot(s, { mechanical: m === 'mechanical', steps: 10, trace: s0 }), [seed, mode, process.env.TRACE || '']);
-  await page.click('#begin');
+  await page.evaluate(([s, m, s0, ch]) => window.__startBot(s, { mechanical: m === 'mechanical', steps: 10, trace: s0, chapter: ch }), [seed, mode, process.env.TRACE || '', process.env.CHAPTER || '']);
+  // CHAPTER=att plays Chapter 1 Attendance from its first checkpoint instead of the prologue.
+  if (process.env.CHAPTER === 'att') { await page.selectOption('#scene-select', 'school'); await page.click('#scene-go'); } else await page.click('#begin');
   const t0 = Date.now();
   let out;
   while (Date.now() - t0 < 40 * 60000) {

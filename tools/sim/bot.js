@@ -559,7 +559,69 @@ window.__startBot = function (seed, opts = {}) {
     mark('end');
   }
 
+  // Chapter 1 Attendance (DL-12 to DL-14), started from its own checkpoint.
+  function* attendance() {
+    const A = D.k2.ATT, S = () => G.att;
+    yield* until(() => G.mode === 'play' && G.region === 6 && G.att, 120, 'the school'); mark('play');
+    yield* wait(look(3));
+    // DL-12: tries the strip first, hears it wants a coat; the coat; the bench and peg 7; a stand-in on the strip.
+    if (mistakes) { yield* walk(1, () => G.x > A.strip.x0 + 0.3, 'onto the strip', { max: 40 }); note('on the strip: wants a coat'); yield* wait(think(5)); }
+    yield* useAt(['liftItem:coat'], A.coat0, () => G.hold === 'item' || actIs('liftItem')(), 'the coat');
+    yield* until(() => G.hold === 'item' && free(), 10, 'carry coat'); note('has the coat');
+    yield* walk(Math.sign(A.peg.x - G.x) || 1, () => D.near() === 'att:hang', 'onto the bench', { max: 30 });
+    use(); yield* until(() => S().coat.state === 'peg', 8, 'hang'); yield* settle(); note('coat on peg 7');
+    if (mistakes) { yield* walk(1, () => G.x > A.strip.x0 + 0.3, 'strip again', { max: 30 }); yield* wait(think(4)); note('the gate drops when he steps off'); }
+    yield* useAt(['grabPush:fig'], S().fig.x - 0.6, actIs('grabPush'), 'figure', { hop: false });
+    yield* until(() => G.hold === 'push', 10, 'grip figure');
+    yield* walk(1, () => Math.abs(S().fig.x - A.fig.strip) < 0.01, 'push the figure', { hop: false, keepHolding: true, max: 30 });
+    if (G.hold === 'push') { use(); yield* until(() => !G.hold, 5, 'let go'); }
+    yield* until(() => S().gateY > 1.0, 15, 'gate up'); note('a stand-in pupil');
+    yield* walk(1, () => G.x > 217.0, 'to the classroom', { max: 60 });
+    // DL-13: a pupil in the front seat starts the lesson; brake it with all three steps out; climb.
+    yield* wait(look(4));
+    yield* useAt(['grabPush:fig2'], S().fig2.x - 0.6, actIs('grabPush'), 'figure 2', { hop: false });
+    yield* until(() => G.hold === 'push', 10, 'grip figure 2');
+    yield* walk(1, () => Math.abs(S().fig2.x - A.fig2.seat) < 0.01, 'to the seat', { hop: false, keepHolding: true, max: 30 });
+    if (G.hold === 'push') { use(); yield* until(() => !G.hold, 5, 'let go 2'); }
+    yield* until(() => S().lesson.on, 5, 'lesson'); note('the lesson starts');
+    yield* wait(look(8));
+    if (mistakes) {
+      // Tries to climb it while it runs, and falls.
+      yield* walk(1, () => G.y > 0.5 || G.x > A.steps[0].x1, 'try the steps', { max: 20 });
+      yield* wait(2.5); note('the steps fold under him');
+    }
+    for (let tries = 0; tries < 8; tries++) {
+      yield* goTo(A.pawlX - 0.05, 'to the brake', { max: 30 });
+      const early = mistakes && tries === 0 && chance(0.6) ? 1.2 : 0;
+      yield* until(() => { const t = S().lesson.t; return t > 4.35 - early && t < 4.9 - early; }, 20, 'the moment');
+      yield* useAt(['att:pawl'], A.pawlX, actIs('att'), 'brake', { hop: false });
+      yield* until(() => free(), 5, 'brake done');
+      if (S().lesson.steps.every((v) => v >= 0.95)) { note('braked with the steps out'); break; }
+      note('braked at the wrong moment'); yield* wait(think(3));
+      yield* useAt(['att:pawl'], A.pawlX, actIs('att'), 'release', { hop: false }); yield* until(() => free(), 5, 'released');
+    }
+    yield* walk(1, () => G.y > 2.0 && G.x > A.gallery.x0 + 0.2, 'climb the steps', { max: 60 });
+    note('on the gallery'); yield* wait(look(4));
+    yield* walk(1, () => G.x > 234.6 && G.y < 0.05, 'down into the corridor', { max: 40 });
+    // DL-14: the crank; back for the pole; jam A's wheel; the crank again; desk, ledges, hatch.
+    yield* wait(look(4));
+    yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank', { hop: false }); yield* until(() => free() && Math.abs(S().blinds.a - S().blinds.ta) < 0.01, 10, 'blinds');
+    note('A down, ledge A out');
+    if (mistakes) { yield* wait(think(4)); yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank back', { hop: false }); yield* until(() => free() && Math.abs(S().blinds.b - S().blinds.tb) < 0.01, 10, 'blinds 2'); note('B down, A up'); yield* wait(think(6));
+      yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank A down again', { hop: false }); yield* until(() => free() && Math.abs(S().blinds.a - S().blinds.ta) < 0.01, 10, 'blinds 3'); }
+    yield* useAt(['liftItem:pole'], A.pole0, () => G.hold === 'item' || actIs('liftItem')(), 'the pole', { max: 60 });
+    yield* until(() => G.hold === 'item' && free(), 10, 'carry pole');
+    yield* walk(Math.sign(A.wheelA - G.x) || 1, () => D.near() === 'att:jam', 'to the wheel', { max: 40 });
+    use(); yield* until(() => S().jammed, 8, 'jam'); yield* settle(); note('the pole jams A');
+    yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank with A jammed', { hop: false }); yield* until(() => free() && S().blinds.b > 0.98 && S().blinds.a > 0.98, 12, 'both down');
+    note('both ledges out');
+    yield* goTo(A.desk.x0 - 0.5, 'back to the desk', { max: 40 });
+    yield* walk(1, () => G.ended || S().ended, 'up the ledges', { max: 60 });
+    mark('end');
+  }
+
   const script = (function* () {
+    if (opts.chapter === 'att') { yield* attendance(); return; }
     yield* opening(); yield* wake(); yield* sortingHall(); yield* weightRoom(); yield* racks(); yield* rationHall();
     yield* returnToSender(); yield* heap(); yield* handbrake(); yield* cage(); yield* childAtTheAddress();
   })();
