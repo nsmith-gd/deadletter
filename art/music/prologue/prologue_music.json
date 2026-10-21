@@ -4,6 +4,7 @@
   "tempo_bpm": 60,
   "meter": "4/4",
   "bar_seconds": 4.0,
+  "master_gain": 1.1809841430288188,
   "theme": {
     "file": "prologue_theme.mp3",
     "sections": [
@@ -112,5 +113,164 @@
       "use": "DL-10: riding the counterweight down, he looks down at ring C. The chime alone, the climb, the collapse, and the first bar of the lament."
     }
   ],
-  "crossfade": "Every loop and every section sits on the same D pedal, tempo and bar grid. Crossfade on a bar line (a multiple of 4 s from a section or loop start) over 2 to 4 s. Loop each file from loop_start to loop_end."
+  "crossfade": "Every loop and every section sits on the same D pedal, tempo and bar grid. Crossfade on a bar line (a multiple of 4 s from a section or loop start) over 2 to 4 s. Loop each file from loop_start to loop_end.",
+  "scene_cues": [
+    {
+      "name": "wake",
+      "file": "prologue_cue_wake.mp3",
+      "beat": "Opening: power returns, he answers, stands, play begins.",
+      "seconds": 50.0,
+      "handover": 44.0,
+      "hands_to": "lower_works",
+      "intro_bars": 0,
+      "starts_from": "silence",
+      "hits": {
+        "power_on": 8.0,
+        "parcel_notes": 11.6,
+        "stands": 12.5,
+        "lament": 16.0,
+        "play_begins": 20.0
+      },
+      "old_seconds": 58,
+      "level": 0.9
+    },
+    {
+      "name": "hall",
+      "file": "prologue_cue_hall.mp3",
+      "beat": "DL-01: the dark depot hall, under the night-shift tannoy.",
+      "seconds": 38.0,
+      "handover": 32.0,
+      "hands_to": "lower_works",
+      "intro_bars": 1,
+      "starts_from": "loop",
+      "hits": {},
+      "old_seconds": 60,
+      "level": 0.9
+    },
+    {
+      "name": "threshold",
+      "file": "prologue_cue_threshold.mp3",
+      "beat": "DL-01: the bulkhead cranks open; through into the sorting hall.",
+      "seconds": 30.0,
+      "handover": 24.0,
+      "hands_to": "lower_works",
+      "intro_bars": 1,
+      "starts_from": "loop",
+      "hits": {},
+      "old_seconds": 44,
+      "level": 0.9
+    },
+    {
+      "name": "racks",
+      "file": "prologue_cue_racks.mp3",
+      "beat": "DL-03: the gate opens; the rack lights come on row by row over the couriers.",
+      "seconds": 42.0,
+      "handover": 36.0,
+      "hands_to": "heaps",
+      "intro_bars": 1,
+      "starts_from": "loop",
+      "hits": {
+        "first_row": 4.0,
+        "rows_every": 2.0
+      },
+      "old_seconds": 60,
+      "level": 0.9
+    },
+    {
+      "name": "kin",
+      "file": "prologue_cue_kin.mp3",
+      "beat": "DL-04: among the couriers he touches his chest.",
+      "seconds": 46.0,
+      "handover": 40.0,
+      "hands_to": "heaps",
+      "intro_bars": 1,
+      "starts_from": "loop",
+      "hits": {
+        "peak": 24.0
+      },
+      "old_seconds": 70,
+      "level": 0.9
+    },
+    {
+      "name": "dead",
+      "file": "prologue_cue_dead.mp3",
+      "beat": "DL-06: the scanner refuses his label; the pit; the label check; purpose.",
+      "seconds": 46.0,
+      "handover": 40.0,
+      "hands_to": "lower_works",
+      "intro_bars": 0,
+      "starts_from": "loop",
+      "hits": {
+        "refusal": 0.0,
+        "label_check": 16.0,
+        "turn": 20.0
+      },
+      "old_seconds": 78,
+      "level": 0.9
+    },
+    {
+      "name": "latch",
+      "file": "prologue_cue_latch.mp3",
+      "beat": "DL-08: the pawl drops home.",
+      "seconds": 14.0,
+      "handover": 8.0,
+      "hands_to": "lower_works",
+      "intro_bars": 0,
+      "starts_from": "loop",
+      "hits": {
+        "click": 0.0
+      },
+      "old_seconds": 11,
+      "level": 0.9
+    },
+    {
+      "name": "refuge",
+      "file": "prologue_cue_refuge.mp3",
+      "beat": "DL-09: the balcony over the dark city, into DL-10 lobby.",
+      "seconds": 38.0,
+      "handover": 32.0,
+      "hands_to": "order",
+      "intro_bars": 0,
+      "starts_from": "silence",
+      "hits": {
+        "widest": 8.0
+      },
+      "old_seconds": 40,
+      "level": 0.9
+    },
+    {
+      "name": "child",
+      "file": "prologue_cue_child.mp3",
+      "beat": "DL-11: the desk clears; the growth marks and the tree; no one at this address.",
+      "seconds": 46.0,
+      "handover": 40.0,
+      "hands_to": null,
+      "intro_bars": 1,
+      "starts_from": "loop",
+      "hits": {
+        "true_e": 5.1,
+        "tree": 24.0,
+        "terminal": 30.0
+      },
+      "old_seconds": 50,
+      "level": 0.9
+    },
+    {
+      "name": "end",
+      "file": "prologue_cue_end.mp3",
+      "beat": "The prologue's end card.",
+      "seconds": 66.0,
+      "handover": 60.0,
+      "hands_to": null,
+      "intro_bars": 0,
+      "starts_from": "silence",
+      "hits": {
+        "birthday_tune": 38.0,
+        "tune_stops": 52.7
+      },
+      "old_seconds": 100,
+      "level": 0.9
+    }
+  ],
+  "scene_cue_notes": "Play each scene cue at the loops' gain (level 0.9 at the game's current loop gain), since they are mastered together. Start it at once (its first bar is the incoming loop's texture; fade the loop out over intro_bars, or 2 s). At `handover` s into the cue, start hands_to from its loop_start with a 1 to 2 s fade-in while the cue rings out (its notes have ended; only tails and the pedal remain, and the pedal fades over 2 s). hands_to null means silence follows."
 }

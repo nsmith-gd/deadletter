@@ -72,6 +72,37 @@ These are cut from the theme master at the theme's gain, so they match the loops
 
 DL-10 is where the Failure is told most directly: "the moment they left, and who went". So the theme's climax lives there.
 
+## Scene cues: the prologue's moments, in the theme's language
+
+Ten new cues replace the chapter 1 score's cues in the prologue. The old files stay, because chapter 1 still uses
+`child`. Source: `art/music/prologue_cues.py`. Files: `art/music/prologue/prologue_cue_<name>.mp3`.
+
+**How they join the loops:**
+- The cues are mastered with the loops, so they play at the same gain (0.9 in the game today).
+- Each cue starts in the texture of the loop it interrupts, on the same D pedal, and changes nothing in its first
+  `intro_bars`.
+- Its notes end at `handover`, a bar line. The game starts the next loop there from its `loop_start`, and the cue's
+  last bar leads into that loop's first bar.
+- The cue then rings out for 6 s under the loop. Only tails and its pedal remain, and the pedal fades over 2 s.
+- The dynamics are moderate throughout. The loudest second of any cue is about −21 dBFS, about 5 dB above the heaps
+  and order loops.
+
+| Cue | Length (handover) | Grows out of → hands to | What it does |
+|---|---|---|---|
+| `wake` | 50 s (44) | silence → lower_works | Black until the power returns at 8 s. Then the pedal and a breath of choir rise, and the machinery turns over. The parcel's three notes play on the old music box at 11.6 s; its E sags flat, because the box can't hold it. Low piano plays as he stands (12.5 s). From 16 s a cello carries the lament (the cascade flattened) under dispatch's second line. |
+| `hall` | 38 s (32) | lower_works → lower_works | The Steward's anthem, heard from far up the building: its first phrase on a distant organ and horns, with the march barely beneath it. Then it thins back to the machinery. |
+| `threshold` | 30 s (24) | lower_works → lower_works | A rise through B-flat and C minor to an open D, with a soft choir and horns as the bulkhead opens. Then it settles. |
+| `racks` | 42 s (36) | lower_works → heaps (or `kin`) | The machinery stops. As the rows light (from 4 s, every 2 s), a stack of low strings builds one row at a time: D, A, D, then the E-flat against it. A cello begins the lament, and it settles into the heaps' choir. |
+| `kin` | 46 s (40) | heaps → heaps | Four low piano notes (A, F, D, E-flat). The lament broadens and violins in octaves take it up. The choir grows into one moderate peak on B-flat over D at 24 s, with a timpani roll and cymbal swell. It lets go to D minor, and the music box plays the parcel's notes. |
+| `dead` | 46 s (40) | order → lower_works | A blow at the refusal (0 s). Carriers rise over trembling strings and a choir on E-flat over D. Near silence and the music box at the label check (16 s). Then the turn (20 s): F major, and the cascade turned upward on a violin. |
+| `latch` | 14 s (8) | lower_works → lower_works | The pawl drops home: a warm rolled F major and a horn's A. The music box answers F and D and leaves out the E. |
+| `refuge` | 38 s (32) | silence → order | Air, a high string light and a far choir. The anthem drifts in from the city above, cresting gently at 8 s (the widest shot). It is moderate throughout, the quietest of the reveals. The march comes in quietly to hand to the lobby. |
+| `child` | 46 s (40) | heaps (low) → silence | The music box finds the parcel's notes and, for the first time, **holds the true E** (5.1 s). They become the lullaby's cascade over soft strings, warming to F at the tree (24 s). At the terminal (30 s) it thins to one high note and silence. |
+| `end` | 66 s (60) | silence → silence | The lament for the dead below; the music box answers with the cascade and its true E; D-17 hops once. Then the birthday tune on the music box, winding down and stopping one phrase short (38 to 53 s). The tannoy chime sounds faintly, the order still running. |
+
+The per-cue data is in `prologue_music.json` under `scene_cues`: file, level, handover, hands_to, intro_bars,
+starts_from and hit points.
+
 ## The beat map: when the music moves between loops and the big moments
 
 The loops replace `bed` in the prologue. The rule is simple:

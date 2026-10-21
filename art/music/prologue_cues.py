@@ -26,7 +26,7 @@ import numpy as np
 from compose_dl01 import (SR, cymbal_swell, env_curve, far_bell, hiss, human, legato_line, master, music_box,
                           piano, string_note, timp_roll, wind, write_wav)
 from compose_prologue import (ANTHEM, ANTHEM_CHORDS, BAR, LAMENT, MARCH, PrologueMix, anvil, at, choir, drone, line,
-                              machine_thud, march_bar, organ, tannoy_chime)
+                              machine_thud, march_bar, organ, snare_march, tannoy_chime)
 from sketch_identity import horn, pizz, taiko
 
 RING = 6.0       # how long a cue rings on past its handover
@@ -174,10 +174,10 @@ def cue_racks(m, rng):
     for k, (name, kind) in enumerate(rows):
         t = at(1) + k * 2.0
         m['metal'].add(anvil(0.12, rng, f0=1900), t, 0.35 - 0.1 * k)          # each row's lights clunk on
-        string_note(m['strings'], name, t, at(7) - t, 0.13 + 0.01 * k, kind, -0.35 + 0.1 * k, 1.5, 3, rng=rng)
+        string_note(m['strings'], name, t, at(7) - t, 0.11 + 0.01 * k, kind, -0.35 + 0.1 * k, 1.5, 3, rng=rng)
     ln, l0 = legato_line(line(LAMENT[:5], at(5)), 0, 'cello', 0.4, rng, vib_cents=14, tail=2.0)
     m['lament'].add(ln, l0, -0.15)
-    m['choir'].add(choir(['D3', 'A3', 'F4'], 2 * BAR, 0.45, rng, attack=2.0, release=2.0), at(7), 0.0)
+    m['choir'].add(choir(['D3', 'A3', 'F4'], 2 * BAR, 0.75, rng, attack=2.0, release=2.0), at(7), 0.0)
     return dict(handover=L, hands_to='heaps', intro_bars=1, hits={'first_row': at(1), 'rows_every': 2.0})
 
 
@@ -189,7 +189,7 @@ def cue_kin(m, rng):
     sagging. Back into the heaps."""
     L = at(10)
     pedal(m, L + RING, rng, fade_out=L)
-    m['choir'].add(choir(['D3', 'A3', 'F4'], 2 * BAR, 0.45, rng, attack=1.0, release=2.0), 0.0, 0.0)
+    m['choir'].add(choir(['D3', 'A3', 'F4'], 2 * BAR, 0.75, rng, attack=1.0, release=2.0), 0.0, 0.0)
     for k, name in enumerate(('A2', 'F2', 'D2', 'Eb2')):
         m['piano'].add(piano(name, 0.36 - 0.03 * k, 4, rng), at(1) + 1.2 * k, -0.3)
     ln, l0 = legato_line(line([(n, b * 1.2) for n, b in LAMENT], at(2)), 0, 'cello', 0.42, rng, vib_cents=16, tail=2.0,
@@ -213,7 +213,7 @@ def cue_kin(m, rng):
     chord(m, ['D2', 'G2', 'D3', 'Bb3', 'G4'], at(7), BAR, 0.18, rng, attack=1.0, release=2.0)
     chord(m, ['D2', 'A2', 'F3', 'A3'], at(8), 2 * BAR, 0.12, rng, attack=1.5, release=2.5)
     parcel(m, at(8) + 0.5, rng, vel=0.3, gaps=(1.1, 1.4))
-    m['choir'].add(choir(['D3', 'A3', 'F4'], BAR + 1, 0.4, rng, attack=2.0, release=2.0), at(9), 0.0)
+    m['choir'].add(choir(['D3', 'A3', 'F4'], BAR + 1, 0.7, rng, attack=2.0, release=2.0), at(9), 0.0)
     return dict(handover=L, hands_to='heaps', intro_bars=1, hits={'peak': peak})
 
 
@@ -285,7 +285,9 @@ def cue_refuge(m, rng):
         m['horns'].add(horn(name, beats * 0.95, 0.3, rng, attack=0.2, release=0.5), t + human(rng, 5), 0.15)
         t += beats
     for bar in (6, 7):
-        march_bar(m, bar, MARCH[bar % 2], 0.08 + 0.03 * (bar - 6), rng)
+        march_bar(m, bar, MARCH[bar % 2], 0.12 + 0.05 * (bar - 6), rng)
+    snare_march(m, 7, 0.22, rng)
+    thuds(m, at(6), L, rng, level=0.6)
     return dict(handover=L, hands_to='order', intro_bars=0, starts_from='silence', hits={'widest': 8.0})
 
 
@@ -296,7 +298,7 @@ def cue_child(m, rng):
     at this address): it thins to one high note over D, and to silence."""
     L = at(10)
     pedal(m, L + RING, rng, level=0.6, fade_out=at(8), fade_len=8.0)
-    m['choir'].add(choir(['D3', 'A3', 'F4'], BAR, 0.3, rng, attack=1.0, release=2.0), 0.0, 0.0)
+    m['choir'].add(choir(['D3', 'A3', 'F4'], BAR, 0.42, rng, attack=1.0, release=2.0), 0.0, 0.0)
     parcel(m, at(1), rng, vel=0.32, gaps=(1.1, 1.4), true_e=True)
     box_line(m, CASCADE, at(2, 2), 0.28, rng, stretch=1.6)
     for bar, names in ((2, ['D3', 'A3', 'E4', 'F4']), (3, ['Bb2', 'F3', 'A3', 'D4']), (4, ['A2', 'F3', 'C4', 'F4']),
@@ -345,7 +347,7 @@ def cue_end(m, rng):
         beat *= 1.022
     chord(m, ['F2', 'C3', 'A3'], at(9, 2), t - at(9, 2), 0.06, rng, attack=2.5, release=3.0)
     m['chime'].add(tannoy_chime(0.3, rng), t + 2.0, 0.4)
-    return dict(handover=L, hands_to=None, intro_bars=0, hits={'birthday_tune': at(9, 2), 'tune_stops': round(t, 1)})
+    return dict(handover=L, hands_to=None, intro_bars=0, starts_from='silence', hits={'birthday_tune': at(9, 2), 'tune_stops': round(t, 1)})
 
 
 CUE_LIST = [  # name, builder, the old cue's length (s), the beat
