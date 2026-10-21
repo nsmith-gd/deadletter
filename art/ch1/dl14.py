@@ -306,7 +306,6 @@ def make_panels(path):
         for _ in range(12):
             cx, r = x0 + rnd.uniform(0, PANEL_W), rnd.uniform(40, 110)
             d.ellipse((cx - r, 1024 - r * 0.6, cx + r, 1024 + r * 0.6), fill=(96, 78, 46, 22))
-            d.arc((cx - r, 1024 - r * 0.6, cx + r, 1024 + r * 0.6), 180, 360, fill=(70, 54, 30, 60), width=3)
     img = img.filter(ImageFilter.GaussianBlur(0.6))
     img.save(path, optimize=True)
 
@@ -431,7 +430,14 @@ def make_atlas(path):
         img.paste(_fade(p, sum(map(ord, name)), k=0.12, dust=0.15), (x0, y0))
     plate('stock', 'STOCK', 40)
     plate('class5', 'CLASS 5', 40)
-    plate('blindsplate', 'BLINDS   A ▼▲ B', 34, bg=(150, 116, 56), fg=(40, 30, 16))
+    plate('blindsplate', 'BLINDS   A         B', 34, bg=(150, 116, 56), fg=(40, 30, 16))
+    bx0, by0 = CELLS['blindsplate'][:2]
+    dpl = ImageDraw.Draw(img)
+    for cx_, up in ((172, False), (196, True)):                  # A goes down as B goes up
+        cy_ = by0 + 33
+        tri_ = [(bx0 + cx_ - 9, cy_ + 9), (bx0 + cx_ + 9, cy_ + 9), (bx0 + cx_, cy_ - 9)] if up else \
+               [(bx0 + cx_ - 9, cy_ - 9), (bx0 + cx_ + 9, cy_ - 9), (bx0 + cx_, cy_ + 9)]
+        dpl.polygon(tri_, fill=(40, 30, 16))
 
     for name, rgb in SWATCH.items():
         x0, y0, x1, y1 = CELLS[name]
