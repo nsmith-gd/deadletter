@@ -60,6 +60,9 @@ for _name in ('build_tableaux_depot', 'build_tableaux_ringc', 'build_ending_secr
 # Pass 7: the voice-card players, cards, tannoys and the den's music box (docs/audio_audit.md), after the tableaux.
 if os.path.exists(os.path.join(HERE, '..', 'pass7', 'build_audio_props.py')):
     PASS6.append(__import__('build_audio_props'))
+# Pass 7: the Order era's furniture: the Steward's portrait and ORDER ABOVE ALL (docs/story_bible.md), after the voices.
+if os.path.exists(os.path.join(HERE, '..', 'pass7', 'build_order_era.py')):
+    PASS6.append(__import__('build_order_era'))
 import build_white as white  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,

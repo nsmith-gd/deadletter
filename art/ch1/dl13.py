@@ -51,7 +51,7 @@ FONT = '/usr/share/fonts/truetype/crosextra/Carlito-Bold.ttf'
 # --------------------------------------------------------------------------------------------------------------------
 X0, X1 = 216.0, 232.0
 CEIL = 4.3                          # the classroom's ceiling (the case reaches 3.6 and the gallery door 3.98)
-FRONT_Y = -0.6                      # the cut toward the camera: the ceiling and the gallery's deck and front stop here
+FRONT_Y = -0.6                      # the cut toward the camera: the ceiling stops here
 LINTEL_Y = -0.5                     # the door lintels stop here (nothing stands in front of the lane but the low rail)
 ALCOVE = (216.15, 220.4)            # where the desks are, the room runs back to ALCOVE_Y
 ALCOVE_Y = 4.0
