@@ -207,6 +207,7 @@ textarea { min-height: 96px; resize: vertical; }
       <div class="tools" role="group" aria-label="Markdown">
         <button class="btn small ghost" id="exp-all" type="button">Export all as Markdown</button>
         <button class="btn small ghost" id="exp-level" type="button">Export this level</button>
+        <button class="btn small ghost" id="exp-game" type="button">Export gameplay</button>
         <label class="btn small ghost filebtn" for="imp-file">Import Markdown<input type="file" id="imp-file" accept=".md,.markdown,.txt,text/markdown,text/plain"></label>
         <button class="btn small ghost" id="imp-paste-btn" type="button">Paste Markdown</button>
       </div>
@@ -487,7 +488,8 @@ function renderTimeline() {
 const MD_HEAD = `<!-- Dead Letter story board, Markdown v1. Years are P.A. (now: P.A. 387). Edit freely and import it back.
 Format: "## Timeline" table; "## Story bible" free text; "## DL-15 One Pupil Missing" per level; under it one
 "### Kind · Title" per card, with optional "- Era: …", "- Status: Idea | Planned | In the game" lines, then its text.
-Kinds: ${KINDS.map((k) => k[1]).join(', ')}. Eras: ${ERAS.map((e) => e[1]).join(', ')}. Keep each card's id line to update it in place; leave it out for a new card. -->`;
+Kinds: ${KINDS.map((k) => k[1]).join(', ')}. Eras: ${ERAS.map((e) => e[1]).join(', ')}. Keep each card's id line to update it in place; leave it out for a new card.
+"## Gameplay" at the end is for reading: it comes from docs/gameplay_breakdown.md, and importing skips it. -->`;
 const esc = (t) => String(t ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 function toMarkdown(levelIds) {
   const out = ['# Dead Letter · Story Board', '', MD_HEAD, ''];
@@ -507,7 +509,31 @@ function toMarkdown(levelIds) {
       if (i.text) out.push(String(i.text).trim(), '');
     }
   }
+  if (!levelIds) out.push('## Gameplay', '', ...gameplayLines(1));
   return out.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
+}
+// The gameplay breakdown in docs/gameplay_breakdown.md's own format. With shift 0 it is that file's layout (## per
+// chapter, ### per level), so it can go back into the repo; with shift 1 it nests under the board export's ## Gameplay.
+function gameplayLines(shift) {
+  const hd = (n) => '#'.repeat(n + shift) + ' ', out = [];
+  out.push(hd(2) + 'The ladder', '', '| Relationship | Introduce (safe) | Develop | Twist | Combine | Reframed |', '|---|---|---|---|---|---|');
+  for (const r of LADDER) out.push(`| ${r.join(' | ')} |`);
+  out.push('');
+  for (const c of CHAPTERS) {
+    out.push(hd(2) + c.name, '');
+    for (const n of c.notes) out.push(n, '');
+    for (const l of LEVELS.filter((x) => x.game && x.game.chapter === c.name)) {
+      const g = l.game;
+      out.push(hd(3) + `${l.id} ${l.name}`, `*${g.type}*`, '', `- **Builds on:** ${g.builds}`, `- **New:** ${g.new}`, '- **Play:**',
+        ...g.steps.map((t, i) => `  ${i + 1}. ${t}`), `- **Wrong first try:** ${g.wrong}`, `- **The aha:** ${g.aha}`, `- **Carries forward:** ${g.carries}`, '');
+    }
+  }
+  return out;
+}
+function gameplayMarkdown() {
+  return ['# Dead Letter: the gameplay ladder, puzzle by puzzle', '',
+    '<!-- Exported from the Dead Letter story board. Same format as docs/gameplay_breakdown.md, which tools/story/build.py reads: keep the ### DL-nn headings and the - **Builds on:** fields. -->', '',
+    ...gameplayLines(0)].join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
 }
 const byName = (list, name) => { const n = String(name || '').trim().toLowerCase(); const hit = list.find((x) => x[1].toLowerCase() === n || x[0] === n); return hit && hit[0]; };
 function parseMarkdown(md) {
@@ -636,7 +662,9 @@ async function applyImport(plan) {
   } finally { importUI.busy = false; renderImport(); }
 }
 async function exportMd(levelIds) {
-  const md = toMarkdown(levelIds), name = levelIds ? `dead-letter-${levelIds[0].toLowerCase()}.md` : 'dead-letter-story-board.md';
+  await saveMd(toMarkdown(levelIds), levelIds ? `dead-letter-${levelIds[0].toLowerCase()}.md` : 'dead-letter-story-board.md');
+}
+async function saveMd(md, name) {
   if (state.downloads) {
     try { await state.downloads.save({ filename: name, data: md }); setStatus(`Saved ${name}.`); return; }
     catch (x) { if (x && x.code === 'declined') { setStatus('Export cancelled.'); return; } }
@@ -646,6 +674,7 @@ async function exportMd(levelIds) {
 }
 $('#exp-all').addEventListener('click', () => exportMd(null));
 $('#exp-level').addEventListener('click', () => exportMd([state.level]));
+$('#exp-game').addEventListener('click', () => saveMd(gameplayMarkdown(), 'dead-letter-gameplay.md'));
 $('#imp-paste-btn').addEventListener('click', () => { importUI.text = null; importUI.pasting = true; renderImport(); });
 $('#imp-file').addEventListener('change', async (e) => {
   const f = e.target.files && e.target.files[0]; e.target.value = '';

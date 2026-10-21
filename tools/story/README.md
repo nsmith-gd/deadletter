@@ -21,4 +21,8 @@ and `meta/bible` once a Markdown import has set them. Claude reads and writes th
 - An exported card carries `<!-- id: ... -->`. Keep it to update that card in place; without it a card is matched by
   its title within its level, or added.
 
+**Gameplay in exports:** Export all ends with a `## Gameplay` section (the ladder, each chapter's summary, each level's
+fields), and **Export gameplay** saves the breakdown alone in `docs/gameplay_breakdown.md`'s own format, so it can
+replace that file. Importing skips the gameplay: edit it in the repo and rebuild.
+
 Imports show a preview (new, changed, unchanged, removed) before anything is written.
