@@ -3,9 +3,9 @@
 A corridor whose back wall is a row of tall classroom windows, each glazed over a painted panel of blue sky, a field,
 a sun and one straight, tall tree (PIL-painted, naive, faded). Each window has a roller blind in a pelmet and a hinged
 window-cleaner's ledge folded up under it. Blinds A and B hang on one endless chain that runs from the crank at 242.4
-up over the ceiling pulleys to both rollers, and down to A's chain wheel low on the wall at 236.6. Behind B's painted
-panel, in its lower right pane, the corner peels back to show concrete, and on it Mara's crooked tree in pencil, drawn
-over and over. Under the stair, the stock cupboard: the last teacher's corner.
+up over the ceiling pulleys to both rollers, and down the wall to A's chain wheel low at 235.0 (the lead moved it there
+from 236.6, between the pole and the desk). Behind B's painted panel, in its lower right pane, the corner peels back
+to show concrete, and on it Mara's crooked tree in pencil, drawn over and over. Under the stair, the stock cupboard: the last teacher's corner.
 
 Called by build_attendance.py as build_set(dl01, m, coll), in final world coordinates.
 Blender (x, y, z) is the game's (x, z, -y): +y is away from the camera, z is up. The lane is y = 0, the floor z = 0.
@@ -15,7 +15,7 @@ What the game moves (origin = pivot, world coordinates; see REPORT at the bottom
     AttLedgeA, AttLedgeB   window-cleaner's ledges, built OUT (lane-deep, y -0.3..0.9); origin on the wall hinge
     AttPanelPeel           the corner of B's painted panel, built flat (closed); origin on its diagonal hinge
     AttCrank               the handwheel at 242.4; origin on its axle
-    AttWheelA              A's chain wheel at 236.6, low on the wall; origin on its axle
+    AttWheelA              A's chain wheel at 235.0 (between the pole and the desk), low on the wall; origin on its axle
     AttPole                the window pole (carried); origin at its middle grip; built along local z, leaned by rotation
     AttChain               the endless chain, static (its UV v runs along the loop for a texture scroll)
 Static: AttWinSet (the corridor), AttGlobeLamps (EMIT AttGlobeLamp), AttCupboard (the secret room),
@@ -89,8 +89,8 @@ LAMPS = (234.6, 240.75)                      # globe pendants (lit); a dead one 
 # Materials
 # =====================================================================================================================
 NEW_WORN = {     # the game's WORN table format is in REPORT
-    'WinPlaster': dict(base=(.36, .33, .26), dirt=(.18, .16, .115), chip=(.24, .22, .18), rough=.9, chip_rough=.85,
-                       metallic=0, grime_scale=3, chip_scale=18, chip_amount=.7, streaks=.6, dust=(.30, .28, .23), dust_amount=.5),
+    'WinPlaster': dict(base=(.29, .27, .21), dirt=(.15, .13, .095), chip=(.2, .185, .15), rough=.9, chip_rough=.85,
+                       metallic=0, grime_scale=3, chip_scale=18, chip_amount=.7, streaks=.6, dust=(.24, .22, .18), dust_amount=.5),
     'WinDado': dict(base=(.12, .16, .135), dirt=(.065, .075, .06), chip=(.30, .27, .21), rough=.55, chip_rough=.85,
                     metallic=0, grime_scale=4, chip_scale=22, chip_amount=.68, streaks=.5, dust=(.16, .17, .15), dust_amount=.4),
     'WinLino': dict(base=(.115, .085, .05), dirt=(.06, .045, .03), chip=(.075, .07, .062), rough=.7, chip_rough=.9,
@@ -316,7 +316,7 @@ def _graphite_tree(d, ox, oy, s, rnd, alpha=210, width=3.2, passes=2):
     def stroke(pts, weight):
         for _ in range(passes):
             q = [(x + rnd.uniform(-1.6, 1.6), y + rnd.uniform(-1.6, 1.6)) for x, y in pts]
-            d.line(q, fill=(44, 44, 52, int(alpha * rnd.uniform(0.75, 1.0))), width=max(2, int(width * (0.6 + weight * 0.6))), joint='curve')
+            d.line(q, fill=(34, 34, 42, int(alpha * rnd.uniform(0.85, 1.0))), width=max(3, int(width * (0.7 + weight * 0.7))), joint='curve')
     dl05._crooked_tree(stroke, ox, oy, s, sx=s * rnd.uniform(0.7, 0.85))
 
 
@@ -345,19 +345,19 @@ def make_pencil(img, rnd):
     d = ImageDraw.Draw(pen)
     placed = 0
     tries = 0
-    big = [(400, 742, 300, 3, 230), (300, 740, 230, 2, 200), (460, 520, 200, 2, 210)]   # the most-traced ones by the corner
+    big = [(390, 742, 380, 3, 245), (285, 744, 250, 2, 220), (462, 470, 190, 2, 225)]   # the most-traced ones by the corner
     for ox, oy, s, passes, al in big:
-        _graphite_tree(d, ox, oy, s, rnd, alpha=al, width=3.6, passes=passes + 1)
+        _graphite_tree(d, ox, oy, s, rnd, alpha=al, width=5.5, passes=passes + 1)
         placed += 1
-    while placed < 22 and tries < 4000:                          # and again, and again, smaller, all over the corner
+    while placed < 18 and tries < 4000:                          # and again, and again, smaller, all over the corner
         tries += 1
-        s = rnd.uniform(70, 190)
+        s = rnd.uniform(90, 200)
         ox, oy = rnd.uniform(40, 480), rnd.uniform(140, 760)
         pts = [(ox, oy), (ox - 0.05 * s, oy - 0.93 * s), (ox - 0.36 * s, oy - 0.66 * s), (ox + 0.45 * s, oy - 0.8 * s),
                (ox - 0.13 * s, oy), (ox + 0.14 * s, oy)]
         if not all(_visible(px, py) for px, py in pts):
             continue
-        _graphite_tree(d, ox, oy, s, rnd, alpha=rnd.choice((120, 170, 210)), width=rnd.uniform(2.2, 3.4), passes=rnd.choice((1, 2, 2, 3)))
+        _graphite_tree(d, ox, oy, s, rnd, alpha=rnd.choice((150, 200, 235)), width=rnd.uniform(3.2, 4.6), passes=rnd.choice((1, 2, 2, 3)))
         placed += 1
     conc.alpha_composite(pen)
     img.paste(conc.convert('RGB'), (x0, y0))
@@ -1094,11 +1094,11 @@ def build_ledge(coll, name, x0, x1, h, notch=None):
     for x in (x0 + 0.06, x1 - 0.06):
         B.box('CrateWood', x - 0.02, x + 0.02, y0 + 0.04, (notch[0] if notch and x < notch[1] else y1) - 0.02, h - 0.075, h - 0.045)
     kx0 = notch[1] if notch else x0
-    B.cyl('PigeonWood', (kx0 + 0.02, y1 - 0.012, h - 0.02), (x1 - 0.02, y1 - 0.012, h - 0.02), 0.014, seg=8)
+    B.cyl('CrateWood', (kx0 + 0.02, y1 - 0.012, h - 0.02), (x1 - 0.02, y1 - 0.012, h - 0.02), 0.014, seg=8)
     for hx in (kx0 + 0.2, (kx0 + x1) / 2, x1 - 0.2):
-        B.box('PigeonWood', hx - 0.03, hx + 0.03, y1 - 0.25, y1 - 0.012, h, h + 0.004)
+        B.box('CrateWood', hx - 0.03, hx + 0.03, y1 - 0.25, y1 - 0.012, h, h + 0.004)
     for bx in ((x0 + 0.55, x1 - 0.12) if notch else (x0 + 0.18, x1 - 0.18)):
-        B.prism_yz('PigeonWood', [(y1 - 0.015, h - 0.045), (y1 - 0.015, h - 0.36), (y1 - 0.06, h - 0.36),
+        B.prism_yz('CrateWood', [(y1 - 0.015, h - 0.045), (y1 - 0.015, h - 0.36), (y1 - 0.06, h - 0.36),
                                 (-0.12, h - 0.06), (-0.12, h - 0.045)], bx - 0.008, bx + 0.008)
     return B.obj(name, coll, origin=((x0 + x1) / 2, WALL_Y, h))
 
@@ -1261,13 +1261,13 @@ def build_cupboard(coll):
     B.box('WinAtlas', 234.32, 234.92, 1.55, 1.56, 0.36, 0.52, cell='sw_cardboard')
     B.tbox('WinAtlas', 234.40, 234.84, 1.62, 1.92, 0.3, 0.355, {'+z': 'book2', 'all': 'sw_pages'})
     # The teacher's corner: a small table by the left wall, a chair, a lamp, chalk, the tied stack of cards.
-    tx0, tx1, ty0, ty1, th = x0 + 0.02, x0 + 0.62, 2.22, 2.95, 0.71
+    tx0, tx1, ty0, ty1, th = x0 + 0.02, x0 + 0.62, 2.3, 3.0, 0.71
     B.box('PigeonWood', tx0, tx1, ty0, ty1, th - 0.03, th)
     for lx in (tx0 + 0.03, tx1 - 0.03):
         for ly in (ty0 + 0.03, ty1 - 0.03):
             B.box('PigeonWood', lx - 0.02, lx + 0.02, ly - 0.02, ly + 0.02, 0.0, th - 0.03)
     B.box('PigeonWood', tx0 + 0.03, tx1 - 0.03, ty0 + 0.02, ty0 + 0.04, th - 0.12, th - 0.03)
-    cx, cy = 233.15, 2.52                                              # the chair, turned to the table
+    cx, cy = 233.2, 2.1                                                # the chair, pushed back from the table as she got up
     n0 = B.mark()
     B.box('PigeonWood', -0.21, 0.21, -0.2, 0.2, 0.43, 0.46)
     for dx in (-0.18, 0.18):
@@ -1279,7 +1279,7 @@ def build_cupboard(coll):
     # her cardigan over the chair's back
     B.box('WinAtlas', 0.13, 0.25, -0.19, 0.19, 0.6, 0.94, cell='sw_wool')
     B.box('WinAtlas', 0.1, 0.13, -0.12, 0.08, 0.5, 0.82, cell='sw_wool')
-    B.xform(n0, Matrix.Translation((cx, cy, 0.0)) @ Matrix.Rotation(math.radians(-8), 4, 'Z'))
+    B.xform(n0, Matrix.Translation((cx, cy, 0.0)) @ Matrix.Rotation(math.radians(-38), 4, 'Z'))
     # the lamp (its bulb is AttCupboardLamp)
     lx, ly = tx0 + 0.12, ty1 - 0.12
     B.cyl('WinAtlas', (lx, ly, th), (lx, ly, th + 0.025), 0.065, seg=14, cell='sw_brass')
@@ -1311,8 +1311,8 @@ def build_cupboard(coll):
     return ob, lamp
 
 
-LAMP_BULB = (232.62, 2.7)              # the cupboard lamp's bulb (x, y); its height is 0.98
-CARD_PLAYER = (232.66, 2.42, 0.71)     # on the teacher's table, facing her chair (+x)
+LAMP_BULB = (232.62, 2.78)              # the cupboard lamp's bulb (x, y); its height is 0.98
+CARD_PLAYER = (232.66, 2.52, 0.71)     # on the teacher's table, facing her chair (+x)
 PLAYER_INFO = None
 
 

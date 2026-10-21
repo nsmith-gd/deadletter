@@ -626,7 +626,7 @@ def coat_body(bm, s=1.0, hanger=True, hood=False, wide=1.0, length=1.0):
     if hanger:
         L = [(-0.074, .05, .03), (-0.09, .148, .046), (-0.17, .146, .052), (-0.33, .138, .05), (-0.56, .158, .046)]
     else:   # hung by its loop: the shoulders slump, the collar peaks
-        L = [(-0.03, .036, .03), (-0.1, .108, .05), (-0.19, .134, .056), (-0.34, .136, .052), (-0.56, .152, .048)]
+        L = [(-0.03, .036, .03), (-0.075, .118, .048), (-0.17, .136, .055), (-0.34, .136, .052), (-0.56, .152, .048)]
     seg = 12
     rings = []
     for z, w, dd in L:
@@ -645,8 +645,9 @@ def coat_body(bm, s=1.0, hanger=True, hood=False, wide=1.0, length=1.0):
     bm.faces.new(rings[-1][::-1]).material_index = mi
     zs, ws = L[1][0] * s, L[1][1] * s * wide
     for sx in (-1, 1):
-        pts = [(sx * (ws - 0.018 * s), 0.0, zs - 0.012 * s), (sx * (ws + 0.006 * s), -0.004 * s, zs - 0.09 * s),
-               (sx * (ws + 0.012 * s), -0.014 * s, (zs - 0.2 * s * length)), (sx * (ws + 0.008 * s), -0.022 * s, zs - 0.33 * s * length)]
+        wb = L[2][1] * s * wide
+        pts = [(sx * (ws - 0.012 * s), 0.0, zs - 0.012 * s), (sx * (wb + 0.02 * s), -0.004 * s, zs - 0.09 * s),
+               (sx * (wb + 0.03 * s), -0.012 * s, (zs - 0.2 * s * length)), (sx * (wb + 0.028 * s), -0.02 * s, zs - 0.33 * s * length)]
         sweep(bm, pts, [0.036 * s, 0.04 * s, 0.037 * s, 0.034 * s], mi, seg=6)
     rounded_box((0.125 * s * wide, 0.082 * s, 0.032 * s), (0, 0.002, L[0][0] * s - 0.006 * s), p=3.0, cuts=2, bm=bm, mat=mi)
     if hood:
@@ -777,26 +778,22 @@ def build_shell(B):
     for k in range(9):                                                            # treads, open risers, going down and away
         y0 = LANDING_Y1 + k * 0.28
         z = -0.2 * (k + 1)
-        B.box((a0 + 0.04, a1 - 0.04), (y0, y0 + 0.3), (z - 0.03, z), 'WornIron')
-    for x in (a0 + 0.04, a1 - 0.04):
+        B.box((a0 + 0.1, a1 - 0.1), (y0, y0 + 0.3), (z - 0.03, z), 'WornIron')
+    for x in (a0 + 0.12, a1 - 0.12):
         B.cyl((x, LANDING_Y1, -0.05), (x, LANDING_Y1 + 9 * 0.28, -1.85), 0.03, 'WornIron', seg=4)       # stringers
         top = [(x, yl + 0.05, 0.92), (x, LANDING_Y1, 0.92), (x, LANDING_Y1 + 9 * 0.28, 0.92 - 1.8)]
-        sweep(B.bm, top, 0.02, B('WornIron'), seg=6)                                                     # the handrail
+        sweep(B.bm, top, 0.026, B('WornIron'), seg=6)                                                    # the handrail
         for k, yy in enumerate((yl + 0.05, LANDING_Y1, LANDING_Y1 + 0.84, LANDING_Y1 + 1.68)):
             ztop = 0.92 if yy <= LANDING_Y1 else 0.92 - (yy - LANDING_Y1) / 0.28 * 0.2
             zbot = 0.0 if yy <= LANDING_Y1 else ztop - 0.92
-            B.cyl((x, yy, zbot), (x, yy, ztop), 0.016, 'WornIron', seg=5)
+            B.cyl((x, yy, zbot), (x, yy, ztop), 0.02, 'WornIron', seg=5)
         B.cyl((x, LANDING_Y1, 0.92), (x, LANDING_Y1, 1.0), 0.03, 'WornIron', seg=6)                     # the newel's knob
     for x in (a0 - 0.3, a1 + 0.3):                                                                       # the well's walls
         B.box((x - 0.12 if x < cx else x, x if x < cx else x + 0.12), (yl, 4.6), (-3.0, CEIL), 'Concrete')
     B.quad([(a0 - 0.3, 4.5, -3.0), (a1 + 0.3, 4.5, -3.0), (a1 + 0.3, 4.5, CEIL), (a0 - 0.3, 4.5, CEIL)], 'AtriumDark')
     B.box((a0 - 0.42, a1 + 0.42), (yl, 4.6), (2.45, 2.6), 'Concrete')
-    # The door, open back against the platform's left side: a panelled leaf with a small wired window.
-    Md = Matrix.Translation((a0 + 0.03, yl + 0.02, 0.0))
-    for v in B.box((0.0, 0.04), (0.0, 0.84), (0.02, 1.96), 'CrateWood'):
-        v.co = Md @ v.co
-    for v in B.box((-0.006, 0.046), (0.18, 0.66), (1.3, 1.7), 'AtriumDark'):
-        v.co = Md @ v.co
+    # The door, swung right back flat against the wall's far side (its edge shows at the left jamb).
+    B.box((a0 - 0.86, a0 + 0.01), (yl, yl + 0.045), (0.02, 1.96), 'CrateWood')
 
 
 def build_hooks(B, rnd):
@@ -1001,15 +998,15 @@ def build_strip_and_post(B, coll):
     B.cyl((px, py, 0.05), (px, py, 0.14), 0.05, 'DepotGreen', r2=0.036, seg=10)
     B.cyl((px, py, 0.14), (px, py, 1.17), 0.032, 'DepotGreen', seg=10)
     pf = py - 0.05
-    B.box((px - 0.155, px + 0.155), (pf, py + 0.03), (1.15, 1.74), 'DepotGreen')
-    B.box((px - 0.175, px + 0.175), (pf - 0.03, py + 0.05), (1.74, 1.78), 'DepotGreen')
+    B.box((px - 0.19, px + 0.19), (pf, py + 0.03), (1.13, 1.74), 'DepotGreen')
+    B.box((px - 0.21, px + 0.21), (pf - 0.03, py + 0.05), (1.74, 1.78), 'DepotGreen')
     for z, lname, cell in ((LAMP_Z[0], 'AttLampPresent', 'present'), (LAMP_Z[1], 'AttLampCoat', 'coat7')):
         B.cyl((px, pf, z), (px, pf - 0.018, z), 0.056, 'Brass', seg=16)
         L = Batch()
         c = Vector((px, pf - 0.018, z))
         add_sphere(L.bm, c, 0.045, mat=L(lname), seg=14, scale=(1, 0.7, 1))
         L.done(lname, coll, origin=c)
-        B.face_quad((px, pf - 0.002, z - 0.095), 0.27, 0.051, (0, -1, 0), cell)
+        B.face_quad((px, pf - 0.002, z - 0.1), 0.35, 0.066, (0, -1, 0), cell)
     # the post's lead up the wall to the gate's winding box
     B.cyl((px + 0.08, py + 0.02, 1.7), (px + 0.08, WALL_Y - 0.02, 1.7), 0.011, 'WornIron', seg=5)
     B.cyl((px + 0.08, WALL_Y - 0.02, 1.7), (px + 0.08, WALL_Y - 0.02, 2.74), 0.011, 'WornIron', seg=5)
@@ -1260,7 +1257,7 @@ def build_room(B, rnd):
     B.box((dx1 - 0.42, dx1 - 0.03), (dy0 + 0.02, dy1 - 0.02), (0.08, dt - 0.035), 'CrateWood')            # the drawers
     for z in (0.22, 0.42, 0.6):
         B.box((dx1 - 0.25, dx1 - 0.19), (dy0 + 0.005, dy0 + 0.02), (z - 0.01, z + 0.01), 'Brass')
-    rx, ry = 213.27, 3.2
+    rx, ry = 213.22, 3.2
     for s in (-1, 1):                                                            # the register's covers and its two pages
         B.painted('leather', lambda bm, s=s: add_box(bm, (s * 0.125, 0, 0.006), (0.25, 0.34, 0.012), mat=0), M_at(rx, ry, dt, 4))
     Mr = M_at(rx, ry, dt + 0.014, 4)
@@ -1270,23 +1267,23 @@ def build_room(B, rnd):
         if s < 0:
             pts = [pts[1], pts[0], pts[3], pts[2]]
         B.quad(pts, ATLAS, cell_uv(cell))
-    B.cyl((rx + 0.31, ry - 0.06, dt + 0.006), (rx + 0.42, ry - 0.11, dt + 0.006), 0.005, 'WornIron', seg=5)     # his pen
+    B.cyl((rx + 0.12, ry - 0.21, dt + 0.006), (rx + 0.24, ry - 0.24, dt + 0.006), 0.005, 'WornIron', seg=5)     # his pen
     for k in range(5):                                                           # the old registers, stacked
         z = dt + k * 0.045
-        Mk = M_at(dx0 + 0.16, dy1 - 0.19, z, rnd.uniform(-4, 4))
+        Mk = M_at(dx1 - 0.17, dy1 - 0.19, z, rnd.uniform(-4, 4))
         B.painted('leather', lambda bm: add_box(bm, (0, 0, 0.0215), (0.26, 0.34, 0.043), mat=0), Mk)
         c = Mk @ Vector((0, -0.171, 0.0215))
         B.face_quad(c, 0.08, 0.04, (Mk.to_3x3() @ Vector((0, -1, 0))).normalized(), 'spine%d' % k)
-    lx, ly = dx1 - 0.13, dy1 - 0.08                                              # the lamp (lit: AttBulbGlow)
+    lx, ly = 213.08, dy1 - 0.07                                                  # the lamp (lit: AttBulbGlow)
     B.cyl((lx, ly, dt), (lx, ly, dt + 0.02), 0.07, 'DepotGreen', seg=12)
     sweep(B.bm, [(lx, ly, dt + 0.02), (lx, ly, dt + 0.26), (lx - 0.06, ly - 0.07, dt + 0.4)], 0.008, B('DepotGreen'), seg=5)
     B.cyl((lx - 0.06, ly - 0.07, dt + 0.43), (lx - 0.1, ly - 0.13, dt + 0.32), 0.03, 'DepotGreen', r2=0.085, seg=14)
     add_sphere(B.bm, (lx - 0.097, ly - 0.125, dt + 0.33), 0.026, mat=B('AttBulbGlow'), seg=10)
-    B.cyl((dx0 + 0.1, dy0 + 0.1, dt), (dx0 + 0.1, dy0 + 0.1, dt + 0.09), 0.04, 'DepotGreen', seg=10)      # his mug
-    add_torus(B.bm, (dx0 + 0.145, dy0 + 0.1, dt + 0.045), (0, 1, 0), 0.022, 0.006, mat=B('DepotGreen'), seg=8, rseg=4)
+    B.cyl((dx1 - 0.1, dy0 + 0.1, dt), (dx1 - 0.1, dy0 + 0.1, dt + 0.09), 0.04, 'DepotGreen', seg=10)      # his mug
+    add_torus(B.bm, (dx1 - 0.055, dy0 + 0.1, dt + 0.045), (0, 1, 0), 0.022, 0.006, mat=B('DepotGreen'), seg=8, rseg=4)
     for k in range(4):                                                           # his keys, on a ring
-        add_torus(B.bm, (dx0 + 0.21 + k * 0.025, dy0 + 0.07, dt + 0.004), (0, 0, 1), 0.012, 0.0025, mat=B('Brass'), seg=6, rseg=3)
-    add_torus(B.bm, (dx0 + 0.24, dy0 + 0.07, dt + 0.004), (0, 0, 1), 0.035, 0.003, mat=B('Brass'), seg=12, rseg=3)
+        add_torus(B.bm, (dx1 - 0.3 + k * 0.025, dy0 + 0.07, dt + 0.004), (0, 0, 1), 0.012, 0.0025, mat=B('Brass'), seg=6, rseg=3)
+    add_torus(B.bm, (dx1 - 0.27, dy0 + 0.07, dt + 0.004), (0, 0, 1), 0.035, 0.003, mat=B('Brass'), seg=12, rseg=3)
     # his chair, pulled out and turned toward the door, as if he had just got up
     cx, cy, ca = 213.95, 2.55, -45.0
     R = Matrix.Rotation(math.radians(ca), 4, 'Z')
@@ -1313,7 +1310,7 @@ def build_room(B, rnd):
 # Voice props (art/common/voice_props.py)
 # =====================================================================================================================
 SPEAKER = (209.0, WALL_Y, 2.32)             # the gate's speaker, on the back wall over the lamp post, facing the camera
-CARD_PLAYER = (213.7, 3.27, DESK[4])       # the caretaker's card player, on his desk
+CARD_PLAYER = (212.84, 3.2, DESK[4])       # the caretaker's card player, on his desk
 
 
 def _vp():
