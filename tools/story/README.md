@@ -15,6 +15,10 @@ show the plan's puzzles (goal, play, wrong first try, aha, recovery and forward)
 ladder and permanent rules; the chapter sheets beneath it are each chapter's turn, the plan's prototype chains and its
 puzzle rules. Every DL-nn becomes a link on the board.
 
+**The story arc** at the top of the board plots tension scene by scene (0 calm to 10 most tense), with the Save the
+Cat beats on a lane beneath. The beats and their wording are the plan's (section 4); which scenes carry each beat
+(`SPANS`) and every scene's tension and moment (`ARC`) are the writer's estimates in `build.py`. Change them there.
+
 Its cards live in the artifact's database (`elements`), with the timeline and the story-bible notes in `meta/timeline`
 and `meta/bible` once a Markdown import has set them. Claude reads and writes them with the ArtifactData tool.
 

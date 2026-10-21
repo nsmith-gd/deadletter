@@ -86,8 +86,8 @@ button { cursor: pointer; }
 @media (max-width: 560px) { .lhead dl { grid-template-columns: minmax(0, 1fr); } .lhead dt { margin-top: 6px; } }
 .lhead dt { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
 .lhead dd { margin: 0; max-width: 72ch; }
-.lhead .arc { margin: 0; color: var(--ink-2); font-size: 14px; max-width: 80ch; }
-.lhead .arc b { color: var(--ink); font-weight: 600; }
+.lhead .turn { margin: 0; color: var(--ink-2); font-size: 14px; max-width: 80ch; }
+.lhead .turn b { color: var(--ink); font-weight: 600; }
 .pill { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
 .era { color: var(--c); }
 .era::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
@@ -184,6 +184,47 @@ textarea { min-height: 96px; resize: vertical; }
 .gp-prop h4 { margin: 0; font-family: var(--display); font-size: 17px; font-weight: 600; color: var(--stamp); }
 .dlref.here { background: var(--stamp); color: var(--sheet); border-color: var(--stamp); }
 
+/* The story arc: tension scene by scene, Save the Cat beats on the same axis beneath it */
+.arc { margin-top: 20px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }
+.arc h2 { font-size: 26px; text-transform: uppercase; letter-spacing: .03em; }
+.arc h3 { font-size: 20px; margin-top: 6px; }
+.arc .lede { margin: 0; color: var(--ink-2); max-width: 80ch; font-size: 14px; }
+.arc-plot { position: relative; min-width: 0; }
+.arc-scroll { overflow-x: auto; }
+#arc-svg { display: block; font-family: var(--mono); font-size: 11px; touch-action: pan-x; cursor: pointer; }
+#arc-svg:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+.arc-band { fill: var(--paper); }
+.arc-chap { fill: var(--ink-2); font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: .08em; }
+.arc-grid { stroke: var(--rule); stroke-width: 1; }
+.arc-axis { fill: var(--ink-2); }
+.arc-axis.cur { fill: var(--ink); font-weight: 500; }
+.arc-area { fill: var(--stamp); fill-opacity: .1; }
+.arc-line { fill: none; stroke: var(--stamp); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.arc-dot { fill: var(--stamp); stroke: var(--sheet); stroke-width: 2; }
+.arc-dot.focus { stroke: var(--ink); }
+.arc-cur { fill: var(--stamp-soft); }
+.arc-cross { stroke: var(--ink-2); stroke-width: 1; }
+.arc-note { fill: var(--ink); font-family: var(--body); font-size: 12px; }
+.arc-beat { fill: var(--stamp-soft); }
+.arc-beat.thread { fill: var(--paper); }
+.arc-beat.here { fill: var(--stamp); }
+.arc-beat-t { fill: var(--ink); pointer-events: none; }
+.arc-beat-t.here { fill: var(--sheet); }
+.arc-tip { position: absolute; z-index: 2; pointer-events: none; background: var(--ink); color: var(--paper); border-radius: 4px; padding: 6px 9px; font-size: 13px; line-height: 1.4; width: max-content; max-width: 260px; }
+.arc-tip b { display: block; font-family: var(--display); font-size: 15px; font-weight: 600; letter-spacing: .02em; }
+.arc-tip span { display: block; font-family: var(--mono); font-size: 11px; opacity: .8; }
+.arc-table summary { cursor: pointer; font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.arc-table .lad { margin-top: 8px; max-height: 420px; overflow: auto; }
+.arc-table .lad table { min-width: 640px; }
+.arc-table td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+.arc-table tr.here > * { background: var(--stamp-soft); }
+.beats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 10px; }
+.beats li { border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; display: grid; gap: 4px; align-content: start; background: var(--sheet); }
+.beats li.here { border-color: var(--stamp); background: var(--stamp-soft); }
+.beats .bn { font-family: var(--mono); font-size: 11px; color: var(--ink-2); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.beats h4 { margin: 0; font-family: var(--display); font-size: 17px; font-weight: 600; }
+.beats p { margin: 0; font-size: 14px; }
+
 /* The ladder: every relationship's arc across the game */
 .ladder { margin-top: 36px; border-top: 2px solid var(--ink); padding-top: 18px; display: grid; gap: 14px; }
 .ladder h2 { font-size: 28px; text-transform: uppercase; letter-spacing: .03em; }
@@ -220,6 +261,18 @@ textarea { min-height: 96px; resize: vertical; }
   </header>
 
   <section class="import" id="import" hidden aria-live="polite"></section>
+
+  <section class="arc" aria-labelledby="arc-h">
+    <h2 id="arc-h">The story arc</h2>
+    <p class="lede">Tension scene by scene, from 0 (calm) to 10 (most tense): the writer's estimate from the plan's emotional sequence. The Save the Cat beats run beneath on the same scenes. Hover or use the arrow keys to follow it; click a scene to open it below.</p>
+    <div class="arc-plot"><div class="arc-scroll" id="arc-scroll"><svg id="arc-svg" tabindex="0" role="img" aria-label="Tension across the 51 scenes, rising through the prologue, easing in the school and the homes, climbing through the Works and the ward to the knee at DL-40, then to the threshold at DL-49 and settling at the end. The table below lists every value."></svg></div><div class="arc-tip" id="arc-tip" hidden></div></div>
+    <details class="arc-table"><summary>Scene by scene, as a table</summary><div class="lad"><table>
+      <thead><tr><th scope="col">Scene</th><th scope="col">Beat</th><th scope="col">Tension</th><th scope="col">The moment</th></tr></thead>
+      <tbody id="arc-rows"></tbody>
+    </table></div></details>
+    <h3>Save the Cat beats</h3>
+    <ol class="beats" id="beats"></ol>
+  </section>
 
   <div class="grid">
     <aside class="index" aria-label="Levels">
@@ -304,6 +357,7 @@ const TIMELINE = /*TIMELINE*/[];
 const BIBLE = /*BIBLE*/"";
 const LADDER = /*LADDER*/[];
 const RULES = /*RULES*/[];
+const BEATS = /*BEATS*/[];
 const CHAPTERS = /*CHAPTERS*/[];
 const KINDS = [['room', 'Plot room'], ['music', 'Musical moment'], ['tableau', 'Tableau'], ['voice', 'Voice letter'], ['sign', 'Sign or writing'], ['object', 'Object'], ['secret', 'Secret room'], ['beat', 'Story beat'], ['note', 'Note']];
 // The fourth entry lists older names an imported Markdown file may still use.
@@ -369,7 +423,7 @@ function renderLevel() {
   const head = h('section', { class: 'lhead' },
     h('div', { class: 'kick' }, h('span', {}, l.part), h('span', {}, l.built ? 'Built' : 'Planned'), ...l.eras.map(eraPill)),
     h('h2', {}, `${l.id} ${l.name}`),
-    h('p', { class: 'arc' }, h('b', {}, `${l.depth}: ${l.idea}${/[?.!]$/.test(l.idea) ? '' : '.'}`), ` The chapter’s turn: ${l.arc}`),
+    h('p', { class: 'turn' }, h('b', {}, `${l.depth}: ${l.idea}${/[?.!]$/.test(l.idea) ? '' : '.'}`), ` The chapter’s turn: ${l.arc}`),
     h('dl', {}, l.rows.flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, ...rich(v))])));
   main.append(head);
   if (l.game) main.append(gameplay(l));
@@ -752,7 +806,136 @@ function renderLadder() {
     ...c.notes.map((n) => h('p', {}, ...rich(n))))));
 }
 
-function render() { renderNav(); renderLevel(); renderLadder(); }
+// ---- The story arc ----------------------------------------------------------------------------------------------
+// B Story and the two early markers (Opening Image, Theme Stated) run on a second lane under the main sequence.
+const THREADS = ['Opening Image', 'Theme Stated', 'B Story'];
+const beatsAt = (n) => BEATS.filter((b) => b.first <= n && n <= b.last && !(b.name === 'Set-Up' && n === 11));
+const beatRef = (b) => b.first === b.last ? `DL-${String(b.first).padStart(2, '0')}` : `DL-${String(b.first).padStart(2, '0')} to DL-${String(b.last).padStart(2, '0')}`;
+const svg = (tag, attrs = {}, text) => {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) if (v != null) el.setAttribute(k, v);
+  if (text != null) el.textContent = text;
+  return el;
+};
+const SHORT = { 'Prologue': 'Prologue', 'Ch 1 Attendance': 'Ch 1 Attendance', 'Ch 2 Someone Home': 'Ch 2 Someone Home', 'Ch 3 The Work Above': 'Ch 3 The Work Above',
+  'Ch 4 Protective Custody': 'Ch 4 Custody', 'Ch 5 Recipient Found': 'Ch 5 Recipient', 'Ch 6 First Delivery': 'Ch 6 First Delivery' };
+const LABELLED = ['Catalyst', 'Break into Two', 'Midpoint', 'All Is Lost', 'Final Image'];
+const arc = { focus: null, geo: null };
+function renderArc() {
+  const el = $('#arc-svg'), wrap = $('#arc-scroll');
+  const W = Math.max(wrap.clientWidth, 760), padL = 40, padR = 14, top = 26, PH = 210, bottom = top + PH;
+  const lane1 = bottom + 26, lane2 = lane1 + 28, H = lane2 + 22, step = (W - padL - padR) / LEVELS.length;
+  const cx = (n) => padL + (n - 0.5) * step, cy = (v) => top + PH * (1 - v / 10), colX = (n) => padL + (n - 1) * step;
+  arc.geo = { cx, cy, step, padL };
+  el.setAttribute('width', W); el.setAttribute('height', H); el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  el.replaceChildren();
+  const cur = LEVELS.find((l) => l.id === state.level);
+  // Chapter bands, alternating, with their names.
+  const parts = [...new Set(LEVELS.map((l) => l.part))];
+  parts.forEach((p, i) => {
+    const ls = LEVELS.filter((l) => l.part === p);
+    if (i % 2) el.append(svg('rect', { class: 'arc-band', x: colX(ls[0].n), y: top - 22, width: ls.length * step, height: PH + 22 }));
+  });
+  if (cur) el.append(svg('rect', { class: 'arc-cur', x: colX(cur.n), y: top - 22, width: step, height: lane2 + 18 - (top - 22) }));
+  parts.forEach((p) => {
+    const ls = LEVELS.filter((l) => l.part === p), x = colX(ls[0].n), w = ls.length * step;
+    const label = svg('text', { class: 'arc-chap', x: x + 6, y: top - 8 }, SHORT[p].toUpperCase());
+    el.append(label);
+    if (label.getComputedTextLength() > w - 10) label.textContent = p.split(' ').slice(0, 2).join(' ').toUpperCase();
+    if (label.getComputedTextLength() > w - 10) label.remove();
+  });
+  // Gridlines and the y axis.
+  for (const v of [0, 5, 10]) {
+    el.append(svg('line', { class: 'arc-grid', x1: padL, x2: W - padR, y1: cy(v), y2: cy(v) }));
+    el.append(svg('text', { class: 'arc-axis', x: padL - 8, y: cy(v) + 4, 'text-anchor': 'end' }, String(v)));
+  }
+  el.append(svg('text', { class: 'arc-axis', transform: `translate(11 ${top + PH / 2}) rotate(-90)`, 'text-anchor': 'middle' }, 'TENSION'));
+  // The scene axis: every fifth scene, and the open one.
+  for (const l of LEVELS) {
+    const isCur = cur && l.n === cur.n;
+    if (!isCur && (l.n % 5 && l.n !== 1 || (cur && Math.abs(l.n - cur.n) < 3))) continue;
+    el.append(svg('text', { class: 'arc-axis' + (isCur ? ' cur' : ''), x: cx(l.n), y: bottom + 16, 'text-anchor': 'middle' }, l.id));
+  }
+  // The line, its wash, and a dot per scene.
+  const pts = LEVELS.map((l) => [cx(l.n), cy(l.tension)]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  el.append(svg('path', { class: 'arc-area', d: `${d} L${pts[pts.length - 1][0].toFixed(1)} ${bottom} L${pts[0][0].toFixed(1)} ${bottom} Z` }));
+  el.append(svg('path', { class: 'arc-line', d }));
+  LEVELS.forEach((l, i) => el.append(svg('circle', { class: 'arc-dot', cx: pts[i][0], cy: pts[i][1], r: cur && l.n === cur.n ? 5.5 : 4 })));
+  // The turning points, named on the line.
+  for (const b of BEATS.filter((x) => LABELLED.includes(x.name))) {
+    const l = LEVELS[b.first - 1], x = cx(l.n), prev = LEVELS[l.n - 2], next = LEVELS[l.n];
+    const below = [prev, next].some((o) => o && o.tension > l.tension);
+    // Below the dot, the text leans away from the side where the line drops further.
+    const anchor = l.n > 47 ? 'end' : l.n < 4 ? 'start' : below && next && next.tension < l.tension ? 'end' : below && prev && prev.tension < l.tension ? 'start' : 'middle';
+    el.append(svg('text', { class: 'arc-note', x: anchor === 'end' ? x + 4 : x, y: below ? Math.min(cy(l.tension) + 20, bottom - 4) : Math.max(cy(l.tension) - 12, top + 10), 'text-anchor': anchor }, b.name));
+  }
+  // The beat lanes: the main sequence, then the threads.
+  for (const b of BEATS) {
+    const thread = THREADS.includes(b.name), first = b.name === 'Set-Up' ? 1 : b.first, last = b.name === 'Set-Up' ? 10 : b.last;
+    const x = colX(first) + 1, w = (last - first + 1) * step - 2, y = thread ? lane2 : lane1, hgt = thread ? 18 : 22;
+    const here = cur && cur.n >= first && cur.n <= last, i = BEATS.indexOf(b) + 1;
+    const r = svg('rect', { class: 'arc-beat' + (thread ? ' thread' : '') + (here ? ' here' : ''), x, y, width: Math.max(w, 2), height: hgt, rx: 3 });
+    r.append(svg('title', {}, `${i}. ${b.name} (${beatRef(b)})`));
+    el.append(r);
+    const tx = svg('text', { class: 'arc-beat-t' + (here ? ' here' : ''), x: x + w / 2, y: y + hgt / 2 + 4, 'text-anchor': 'middle' }, `${i} ${b.name}`);
+    el.append(tx);
+    if (tx.getComputedTextLength() > w - 6) tx.textContent = String(i);
+    if (tx.getComputedTextLength() > w - 2) tx.remove();
+  }
+  // The hover layer: only it changes as the pointer or the arrow keys move.
+  arc.geo.pts = pts; arc.geo.y1 = top - 22; arc.geo.y2 = lane2 + 18;
+  el.append(svg('g', { id: 'arc-hover', 'pointer-events': 'none' }));
+  setArcFocus(arc.focus);
+  // The table and the beat cards.
+  $('#arc-rows').replaceChildren(...LEVELS.map((l) => h('tr', { class: cur && l.n === cur.n ? 'here' : null },
+    h('th', { scope: 'row' }, ...rich(`${l.id} `), l.name), h('td', {}, beatsAt(l.n).map((b) => b.name).join(', ')),
+    h('td', { class: 'num' }, String(l.tension)), h('td', {}, l.moment))));
+  $('#beats').replaceChildren(...BEATS.map((b, i) => h('li', { class: cur && cur.n >= b.first && cur.n <= b.last ? 'here' : null },
+    h('div', { class: 'bn' }, h('span', {}, String(i + 1)), h('span', {}, ...rich(beatRef(b)))), h('h4', {}, b.name), h('p', {}, b.text))));
+}
+function setArcFocus(i) {
+  arc.focus = i;
+  const g = $('#arc-hover');
+  if (!g) return;
+  g.replaceChildren();
+  if (i != null) {
+    const [x, y] = arc.geo.pts[i];
+    g.append(svg('line', { class: 'arc-cross', x1: x, x2: x, y1: arc.geo.y1, y2: arc.geo.y2 }), svg('circle', { class: 'arc-dot focus', cx: x, cy: y, r: 5.5 }));
+  }
+  showTip(i);
+}
+function showTip(i) {
+  const tip = $('#arc-tip');
+  if (i == null || !arc.geo) { tip.hidden = true; return; }
+  const l = LEVELS[i], { cx, cy } = arc.geo, sc = $('#arc-scroll');
+  tip.replaceChildren(h('b', {}, `${l.id} ${l.name}`), h('span', {}, `Tension ${l.tension} of 10 · ${beatsAt(l.n).map((b) => b.name).join(', ')}`), l.moment);
+  tip.hidden = false;
+  const x = cx(l.n) - sc.scrollLeft, half = tip.offsetWidth / 2, maxX = sc.clientWidth - tip.offsetWidth;
+  tip.style.left = Math.min(Math.max(x - half, 0), Math.max(maxX, 0)) + 'px';
+  tip.style.top = Math.max(cy(l.tension) - tip.offsetHeight - 14, 0) + 'px';
+}
+function arcIndexAt(evt) {
+  const r = $('#arc-svg').getBoundingClientRect(), { step, padL } = arc.geo;
+  return Math.min(LEVELS.length - 1, Math.max(0, Math.floor((evt.clientX - r.left - padL) / step)));
+}
+$('#arc-svg').addEventListener('pointermove', (e) => { if (!arc.geo) return; const i = arcIndexAt(e); if (i !== arc.focus) setArcFocus(i); });
+$('#arc-svg').addEventListener('pointerleave', () => setArcFocus(null));
+const arcOpen = (i) => { openLevel(LEVELS[i].id); $('#level').scrollIntoView({ block: 'start' }); };
+$('#arc-svg').addEventListener('click', (e) => { if (arc.geo) arcOpen(arcIndexAt(e)); });
+$('#arc-svg').addEventListener('focus', () => { if (arc.focus == null) setArcFocus(Math.max(0, LEVELS.findIndex((l) => l.id === state.level))); });
+$('#arc-svg').addEventListener('blur', () => setArcFocus(null));
+$('#arc-svg').addEventListener('keydown', (e) => {
+  if (arc.focus == null) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); setArcFocus(Math.min(LEVELS.length - 1, Math.max(0, arc.focus + (e.key === 'ArrowRight' ? 1 : -1))));
+    const sc = $('#arc-scroll'), x = arc.geo.pts[arc.focus][0];
+    if (x < sc.scrollLeft + 40 || x > sc.scrollLeft + sc.clientWidth - 40) sc.scrollLeft = x - sc.clientWidth / 2; }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); arcOpen(arc.focus); }
+});
+$('#arc-scroll').addEventListener('scroll', () => showTip(arc.focus));
+if (window.ResizeObserver) new ResizeObserver(() => renderArc()).observe($('#arc-scroll'));
+
+function render() { renderNav(); renderLevel(); renderLadder(); renderArc(); }
 
 renderTimeline();
 render();

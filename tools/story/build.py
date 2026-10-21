@@ -125,6 +125,43 @@ for n in range(1, 52):
     levels.append(dict(id=lid, n=n, name=name, part=p[2], eras=p[3], depth=p[4], idea=p[5], built=n <= BUILT, disp=disp,
                        arc=f'{p[6]}. {p[7]}.', rows=[[k, v] for k, v in rows if v], game=game))
 
+# The story arc. Tension per scene, 0 calm to 10 most tense: the writer's estimate from the plan's emotional
+# sequence (section 4), with the moment that carries it.
+ARC = {
+ 1: (2, 'A tiny courier wakes with one job.'), 2: (2.5, 'A workplace stopped mid-shift; the first letter.'),
+ 3: (3, 'A substitute can hold the gate for him.'), 4: (3.5, 'He leaves another courier on charge.'),
+ 5: (5.5, 'The weigh-in wants a person, and the dead are the weight.'), 6: (4.5, 'The address is dead; the procedure carries on.'),
+ 7: (5, 'He sends the weight where he can’t go.'), 8: (6, 'Something pale moves in the water.'),
+ 9: (7.5, 'The cage slips toward the dark.'), 10: (6.5, 'The last car went up without them.'),
+ 11: (8, 'Past the White to an empty room, and a parent’s birthday card.'),
+ 12: (4, 'Coats without children.'), 13: (3.5, 'The lesson repeats; the friends drew beyond the paper.'),
+ 14: (3, 'Behind the painted sky, a refuge for three.'), 15: (4.5, 'He sits in her place.'),
+ 16: (5, 'The pupils are folded into a storage rack.'), 17: (3.5, 'She chose the Works: a life beyond the address.'),
+ 18: (2.5, 'A cramped room that was hers.'), 19: (3.5, 'Her old repair, two witness taps.'), 20: (2.5, 'Room for two: Rowan.'),
+ 21: (3.5, 'Two bowls, one evening.'), 22: (4, 'The ration track carries seedlings.'), 23: (6, 'The second place, set for no one.'),
+ 24: (5, 'The jig adapted for one; the other shelters fall silent.'), 25: (4.5, 'He parks the routine; the keepsake lamp stays lit.'),
+ 26: (4, 'Water as weight.'), 27: (4.5, 'Nursery first.'), 28: (3.5, 'Other hands built this.'),
+ 29: (6, 'The water that lifted him runs on into the roots.'), 30: (5.5, 'Roots, daylight, a leaf: work they will never inherit.'),
+ 31: (6, 'Her labels grow shakier; the branch is under pressure.'), 32: (6.5, 'The repair she could no longer reach.'),
+ 33: (5.5, 'A ward address, but a fresh scrape and a far light.'), 34: (6.5, 'The attendant catches him.'),
+ 35: (7, 'He lures the attendant away.'), 36: (7, 'The survey’s wound, and the rescue line.'), 37: (7.5, 'He lets himself be carried.'),
+ 38: (6, 'The attendant mends its own pad.'), 39: (8, 'Passage and care, in the right order.'),
+ 40: (8.5, 'The knee gives; the stair is out of reach.'), 41: (8, 'A light under a door: someone is working.'),
+ 42: (6, 'Mara, her hand out for a spanner.'), 43: (7, 'She repairs him, then reads the label.'),
+ 44: (8, 'Her knowledge, his reach; three pulses.'), 45: (7.5, 'The air reading, and her choice.'),
+ 46: (6.5, 'She leaves the work unfinished.'), 47: (7.5, 'Hands in turn.'), 48: (9, 'The last lift, together.'),
+ 49: (9.5, 'The shutter opens on the woodland.'), 50: (5, 'Her place under the tree.'), 51: (3, 'The boots. He sits because he wants to.'),
+}
+for l in levels: l['tension'], l['moment'] = ARC[l['n']]
+# Save the Cat (section 4's table), each beat placed on the scenes that carry it. B Story runs under the others.
+SPANS = {'Opening Image': (1, 1), 'Theme Stated': (6, 6), 'Set-Up': (1, 11), 'Catalyst': (11, 11), 'Debate': (12, 16),
+         'Break into Two': (17, 17), 'B Story': (18, 43), 'Fun and Games': (18, 28), 'Midpoint': (29, 30),
+         'Bad Guys Close In': (31, 39), 'All Is Lost': (40, 40), 'Dark Night': (41, 41), 'Break into Three': (42, 43),
+         'Finale': (44, 50), 'Final Image': (51, 51)}
+BEAT_ROWS = plan_section('4. Save the Cat').split('| Beat |', 1)[1].split('\n\n', 1)[0].splitlines()[2:]
+BEATS = [dict(name=c[0], first=SPANS[c[0]][0], last=SPANS[c[0]][1], text=c[1])
+         for c in ([x.strip() for x in r.strip('|').split('|')] for r in BEAT_ROWS)]
+
 # The ladder: the plan's learning ladder, and its permanent rules.
 LADDER = [[r[0]] + [dlrefs(c) for c in r[1:]] for r in table('5. Puzzle architecture', 'Learning ladder')]
 RULES = [[r[0]] + [dlrefs(c) for c in r[1:]] for r in table('5. Puzzle architecture', 'Permanent rules')]
@@ -166,7 +203,7 @@ The gradient, low to high: the lower rings (you are an allocation: graded bodies
 
 Protected decisions: preserve the prologue's puzzles and solutions, its live voice and lit window (a living person is hinted early). Mara appears in person late. D-17 has no hidden human soul. The parcel holds boots, not seeds or a power source. Mara is alive at the end: no death reveal, sacrificial outing or fade on a final breath. No last-second survivor tease."""
 t = open('template.html').read()
-for k, v in [('LEVELS', levels), ('TIMELINE', TIMELINE), ('LADDER', LADDER), ('RULES', RULES), ('CHAPTERS', CHAPTERS)]:
+for k, v in [('LEVELS', levels), ('TIMELINE', TIMELINE), ('LADDER', LADDER), ('RULES', RULES), ('CHAPTERS', CHAPTERS), ('BEATS', BEATS)]:
     assert f'/*{k}*/[]' in t, k
     t = t.replace(f'/*{k}*/[]', json.dumps(v, ensure_ascii=False))
 t = t.replace('/*BIBLE*/""', json.dumps(BIBLE, ensure_ascii=False))
