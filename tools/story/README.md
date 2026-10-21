@@ -1,13 +1,19 @@
 # The story board
 
 `docs/story_board.html` is the published story board (https://claude.ai/artifact/CRnFEUpGbxb4LEPzfTATuM). Build it
-with `python3 build.py` here: `template.html` plus the level list from `scenes.json` (extracted from
-`docs/scene_overview.md`), the timeline and the condensed bible.
+with `python3 build.py` here: `template.html` plus the levels, timeline and bible below.
 
-**Gameplay** comes from `docs/gameplay_breakdown.md`: each level's panel (type, builds on, new here, the steps, the
-wrong first try, the aha, carries forward), the ladder table and each chapter's summary. Every DL-nn in it becomes a
-link on the board. Keep its field names (`- **Builds on:**` and the rest) and its `### DL-nn Name` headings when
-editing, then rebuild. A level with steps there shows them as its play, and the old one-line play is dropped.
+**The story** comes from the director's plan, `docs/full_game_plan.md` (revision 0.3): each chapter's place, idea and
+turn (section 4 and the environmental gradient), the prologue's story direction (section 6), and each level's story
+after it (section 7: the aha's first sentence goes to the gameplay panel, the rest is the level's story). The
+timeline, the bible notes and the reference sheets in `build.py` and `template.html` condense the plan's sections 1 to
+3 and 8. `scenes.json` (from `docs/scene_overview.md`) still supplies what the built levels say in the game.
+
+**Gameplay:** DL-01 to DL-17 show their puzzles as built, from `docs/gameplay_breakdown.md` (keep its field names and
+`### DL-nn Name` headings when editing). DL-12 to DL-17 also show what the plan proposes for them, and DL-18 to DL-51
+show the plan's puzzles (goal, play, wrong first try, aha, recovery and forward). The ladder is the plan's learning
+ladder and permanent rules; the chapter sheets beneath it are each chapter's turn, the plan's prototype chains and its
+puzzle rules. Every DL-nn becomes a link on the board.
 
 Its cards live in the artifact's database (`elements`), with the timeline and the story-bible notes in `meta/timeline`
 and `meta/bible` once a Markdown import has set them. Claude reads and writes them with the ArtifactData tool.
@@ -21,8 +27,8 @@ and `meta/bible` once a Markdown import has set them. Claude reads and writes th
 - An exported card carries `<!-- id: ... -->`. Keep it to update that card in place; without it a card is matched by
   its title within its level, or added.
 
-**Gameplay in exports:** Export all ends with a `## Gameplay` section (the ladder, each chapter's summary, each level's
-fields), and **Export gameplay** saves the breakdown alone in `docs/gameplay_breakdown.md`'s own format, so it can
-replace that file. Importing skips the gameplay: edit it in the repo and rebuild.
+**Gameplay in exports:** Export all ends with a `## Gameplay` section, and **Export gameplay** saves it alone: the
+ladder, the rules, each chapter's notes and each level's panel, as the board shows them. It is for reading; importing
+skips it. Edit the plan or the breakdown and rebuild.
 
 Imports show a preview (new, changed, unchanged, removed) before anything is written.

@@ -20,7 +20,7 @@
   --warn: #a5650c; --warn-soft: #f7e8cf;
   --bad: #a83a2c; --bad-soft: #f6dcd7;
   --era-order: #3d5a80; --era-failure: #9c4a2a; --era-commons: #3f7d4f; --era-protocols: #6c4fa8;
-  --era-rebellion: #b0412f; --era-thinning: #66707c; --era-now: #b8740f;
+  --era-survey: #b0412f; --era-purpose: #2f7a78; --era-thinning: #66707c; --era-now: #b8740f;
   --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --body: "Literata", Georgia, "Times New Roman", serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -31,7 +31,7 @@
     --stamp: #a891e6; --stamp-soft: #2b2442; --lamp: #e3a547; --lamp-soft: #3a2c15;
     --ok: #74c491; --ok-soft: #1c3226; --warn: #e2ab55; --warn-soft: #382a14; --bad: #ec8a7c; --bad-soft: #3d201c;
     --era-order: #8fb0d8; --era-failure: #df9670; --era-commons: #86c595; --era-protocols: #b49be8;
-    --era-rebellion: #ef8b78; --era-thinning: #a7b0bb; --era-now: #e3a547;
+    --era-survey: #ef8b78; --era-purpose: #79c6c2; --era-thinning: #a7b0bb; --era-now: #e3a547;
     color-scheme: dark;
   }
 }
@@ -40,7 +40,7 @@
   --stamp: #a891e6; --stamp-soft: #2b2442; --lamp: #e3a547; --lamp-soft: #3a2c15;
   --ok: #74c491; --ok-soft: #1c3226; --warn: #e2ab55; --warn-soft: #382a14; --bad: #ec8a7c; --bad-soft: #3d201c;
   --era-order: #8fb0d8; --era-failure: #df9670; --era-commons: #86c595; --era-protocols: #b49be8;
-  --era-rebellion: #ef8b78; --era-thinning: #a7b0bb; --era-now: #e3a547;
+  --era-survey: #ef8b78; --era-purpose: #79c6c2; --era-thinning: #a7b0bb; --era-now: #e3a547;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -86,6 +86,8 @@ button { cursor: pointer; }
 @media (max-width: 560px) { .lhead dl { grid-template-columns: minmax(0, 1fr); } .lhead dt { margin-top: 6px; } }
 .lhead dt { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
 .lhead dd { margin: 0; max-width: 72ch; }
+.lhead .arc { margin: 0; color: var(--ink-2); font-size: 14px; max-width: 80ch; }
+.lhead .arc b { color: var(--ink); font-weight: 600; }
 .pill { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
 .era { color: var(--c); }
 .era::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
@@ -178,6 +180,8 @@ textarea { min-height: 96px; resize: vertical; }
 .gp-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px 20px; padding-top: 12px; border-top: 1px dashed var(--rule); }
 .dlref { font-family: var(--mono); font-size: 12px; padding: 0 5px; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper); color: var(--stamp); white-space: nowrap; }
 .dlref:hover { border-color: var(--stamp); }
+.gp-prop { border: 1.5px dashed var(--stamp); border-radius: 6px; padding: 12px 14px; display: grid; gap: 12px; }
+.gp-prop h4 { margin: 0; font-family: var(--display); font-size: 17px; font-weight: 600; color: var(--stamp); }
 .dlref.here { background: var(--stamp); color: var(--sheet); border-color: var(--stamp); }
 
 /* The ladder: every relationship's arc across the game */
@@ -202,7 +206,7 @@ textarea { min-height: 96px; resize: vertical; }
   <header class="mast">
     <div>
       <h1>Dead Letter · Story Board</h1>
-      <p class="sub">Every level's story evidence in one place: what is already in the game, and what you want to add. Each card is a thing the player finds, hears, reads or sees happen. Keep each one true to the story bible at the foot of the page.</p>
+      <p class="sub">Every level's story evidence in one place: what is already in the game, and what you want to add. Each card is a thing the player finds, hears, reads or sees happen. Keep each one true to the story bible at the foot of the page (the director's plan, revision 0.3).</p>
       <div class="status" id="status">Opening the board…</div>
       <div class="tools" role="group" aria-label="Markdown">
         <button class="btn small ghost" id="exp-all" type="button">Export all as Markdown</button>
@@ -228,10 +232,14 @@ textarea { min-height: 96px; resize: vertical; }
 
   <section class="ladder" aria-labelledby="ladder-h">
     <h2 id="ladder-h">The gameplay ladder</h2>
-    <p>Each relationship the game teaches, from its safe first use to the room that gives it a new meaning. The open level is highlighted. Every level uses something the player already knows and adds one new thing at most. Source: <span class="mono">docs/gameplay_breakdown.md</span>.</p>
+    <p>Each relationship the game teaches, from its first use to the room that gives it a new meaning, then the physical rules that never change. The open level is highlighted. Source: the director's plan, <span class="mono">docs/full_game_plan.md</span>; the built levels' panels come from <span class="mono">docs/gameplay_breakdown.md</span>.</p>
     <div class="lad"><table>
-      <thead><tr><th scope="col">Relationship</th><th scope="col">Introduce</th><th scope="col">Develop</th><th scope="col">Twist</th><th scope="col">Combine</th><th scope="col">Reframed</th></tr></thead>
+      <thead><tr><th scope="col">Relationship</th><th scope="col">Introduce</th><th scope="col">Develop or twist</th><th scope="col">Combine</th><th scope="col">Reframe</th></tr></thead>
       <tbody id="ladder"></tbody>
+    </table></div>
+    <div class="lad"><table>
+      <thead><tr><th scope="col">System</th><th scope="col">Physical truth</th><th scope="col">Development</th></tr></thead>
+      <tbody id="rules"></tbody>
     </table></div>
     <div class="kits" id="kits"></div>
   </section>
@@ -253,29 +261,37 @@ textarea { min-height: 96px; resize: vertical; }
       <div class="sheet">
         <h3>How to tell it</h3>
         <ul>
-          <li><b>Two or three cues for every beat.</b> If a player misses the voice card, the room and the signage still tell it.</li>
-          <li><b>Show the change, not the state.</b> The motto painted over. A portrait turned to the wall. A headcount crossed out and written smaller.</li>
-          <li><b>Voices are people, not narrators.</b> They talk about rations, coats, birthdays and rotas. The history is what they take for granted.</li>
-          <li><b>Big truths land on objects.</b> The register's last line. The pale rectangle where a portrait hung.</li>
-          <li><b>Show what people did, not how they died.</b> Tableaux of natural reactions; no cause-of-death signs.</li>
+          <li><b>Action, consequence, corroboration.</b> Every essential inference comes from something the player does, a visible result, and other evidence agreeing. Optional words deepen; they never carry the only proof.</li>
+          <li><b>Show the change, not the state.</b> The motto painted over. A second chair folded away. A rota where one hand signs more and more lines. Labels growing larger and shakier.</li>
+          <li><b>Voices are people, not narrators.</b> They talk about coats, bowls, rotas and fittings. The history is what they take for granted.</li>
+          <li><b>Show what people did, not how they died.</b> No cause-of-death signs, no corpse reveal once the dead become few.</li>
+          <li><b>No villains, no saints.</b> Order could be privately kind; the Commons stubborn and inefficient; the attendant constrains and later catches. No patient loses air to grow a tree.</li>
+          <li><b>Don't end every shot on the green flag.</b> Alternate inference, short confident application and quiet consequence. Music need not swell at every reveal; let wind survive the finale's score.</li>
         </ul>
       </div>
       <div class="sheet">
         <h3>Threads that run through it</h3>
         <ul>
-          <li><b>The motto,</b> ORDER ABOVE ALL: everywhere in the lower rings, then painted over, then defaced by teenagers, then scratched out on a plate Mara uses as a seedling tray.</li>
-          <li><b>Mara's crooked tree:</b> crayon at nine (prologue), pencil behind the painted sky (chapter 1), graffiti (chapter 2), engineering drawings (chapter 3), a real seedling (the end).</li>
-          <li><b>The vertical gradient:</b> the deeper the ring, the earlier the era and the more dead. The player climbs through history.</li>
-          <li><b>The lights came on:</b> someone turned them on. Every chapter brings D-17 closer to her.</li>
+          <li><b>The crooked tree:</b> a child's imagination, then a workable engineering approximation, then Rowan's reminder about roots, then irregular growth of its own. Not a quest arrow.</li>
+          <li><b>Two places:</b> desks, dinner, the withdrawn chair, the shared jig adapted for one, the joint repair, the final seat.</li>
+          <li><b>Hands:</b> the tow loop, the empty place, the worn handrail, the cradle, working human hands, mutual support, bark.</li>
+          <li><b>Water:</b> the feared sump, rationed supply, stored surplus, roots, an ordinary stream.</li>
+          <li><b>The motto:</b> enamel authority, a partial paint-over, names and practical repairs, the old sign reused face down as a work surface. Never an increasingly explicit slogan.</li>
+          <li><b>Light:</b> the assignment lamp, the painted sun, the keepsake lamp, nursery daylight, the occupied workshop, open air.</li>
+          <li><b>Two witness taps:</b> Mara's repairs carry two small taps; when she repairs D-17 she makes the same two taps with her spanner.</li>
         </ul>
       </div>
       <div class="sheet">
         <h3>Who's who</h3>
         <ul>
-          <li><b>D-17,</b> a courier robot with one parcel: a birthday gift for Mara, nine, from a parent on the works. Seventy-six years late.</li>
-          <li><b>Mara D.,</b> born P.A. 302, the last birth anyone records. A silent pupil who drew trees. Old now, still working above.</li>
-          <li><b>The Steward</b> and the Grade Council: benevolent, harsh, graded every life. Portraits in gilt frames.</li>
-          <li><b>The Den:</b> the last children's club. Password: crooked tree.</li>
+          <li><b>D-17,</b> a courier with one parcel, seventy-six years late. Wants to deliver it; understands help as correct execution; needs to learn that care includes attention, receiving help, and staying after the job ends. Precise and earnest from the start. No hidden human soul.</li>
+          <li><b>Mara,</b> born P.A. 302, about 85 now, an irrigation technician and the last human alive. Practical: a feel for pressure, an ugly repair that works, no patience for inaccessible bolts. Amused, sometimes curt, quietly playful. Wants to finish her bypass; has always wanted to touch a real tree.</li>
+          <li><b>Her parent,</b> who sent the boots: hopeful for one child's ordinary future, not a prophet.</li>
+          <li><b>Vance,</b> the school volunteer. Helped her test an idea; his corrections sit beside her drawing. She asked for the placement.</li>
+          <li><b>Abel and Orme,</b> her friends. One adds extravagant creatures to drawings; the other corrects impossible mechanisms, then adds jokes. Their marks grow into adult work.</li>
+          <li><b>Rowan</b> (proposed), Mara's partner, a propagation worker who insists roots won't obey her tidy diagrams. A chipped bowl, a coat, handwriting, failed experiments. Dies before the game.</li>
+          <li><b>The attendant,</b> a protective machine with stable rules. It constrains and supports; never a villain or a philosopher.</li>
+          <li><b>The Steward</b> and the Grade Council, the Order era: graded every life. Portraits in gilt frames.</li>
         </ul>
       </div>
     </div>
@@ -287,9 +303,11 @@ const LEVELS = /*LEVELS*/[];
 const TIMELINE = /*TIMELINE*/[];
 const BIBLE = /*BIBLE*/"";
 const LADDER = /*LADDER*/[];
+const RULES = /*RULES*/[];
 const CHAPTERS = /*CHAPTERS*/[];
 const KINDS = [['room', 'Plot room'], ['music', 'Musical moment'], ['tableau', 'Tableau'], ['voice', 'Voice letter'], ['sign', 'Sign or writing'], ['object', 'Object'], ['secret', 'Secret room'], ['beat', 'Story beat'], ['note', 'Note']];
-const ERAS = [['order', 'Order', 'P.A. 268–308'], ['failure', 'The Failure', 'P.A. 309–311'], ['protocols', 'The protocols', 'P.A. 306 on'], ['commons', 'The Commons', 'P.A. 311–328'], ['rebellion', 'The rebellion', 'P.A. 317–320'], ['thinning', 'The thinning', 'P.A. 320–378'], ['now', 'Now', 'P.A. 387']];
+// The fourth entry lists older names an imported Markdown file may still use.
+const ERAS = [['order', 'Order', 'P.A. 268–308', ['sealing']], ['protocols', 'The last childhoods', 'P.A. 302–316', ['the protocols']], ['failure', 'The Failure', 'P.A. 309–311'], ['commons', 'The Commons', 'P.A. 311–328'], ['survey', 'The failed survey', 'P.A. 319', ['the rebellion', 'rebellion']], ['purpose', 'Change of purpose', 'P.A. 320s on'], ['thinning', 'The final thinning', 'to P.A. 378', ['the thinning']], ['now', 'Now', 'P.A. 387']];
 const STATUSES = [['idea', 'Idea'], ['planned', 'Planned'], ['built', 'In the game']];
 const kindName = (k) => (KINDS.find((x) => x[0] === k) || [k, k])[1];
 const eraName = (k) => (ERAS.find((x) => x[0] === k) || [k, k])[1];
@@ -349,12 +367,10 @@ function renderLevel() {
   const l = LEVELS.find((x) => x.id === state.level), main = $('#level');
   main.replaceChildren();
   const head = h('section', { class: 'lhead' },
-    h('div', { class: 'kick' }, h('span', {}, l.part), h('span', {}, l.built ? 'Built' : 'Planned'), ...l.eras.map(eraPill), l.depth ? h('span', {}, l.depth) : null),
+    h('div', { class: 'kick' }, h('span', {}, l.part), h('span', {}, l.built ? 'Built' : 'Planned'), ...l.eras.map(eraPill)),
     h('h2', {}, `${l.id} ${l.name}`),
-    h('dl', {},
-      l.says ? [h('dt', {}, 'What it says'), h('dd', {}, l.says)] : null,
-      l.play && !l.game ? [h('dt', {}, 'Play'), h('dd', {}, l.play)] : null,
-      l.learn ? [h('dt', {}, 'Player comes to see'), h('dd', {}, l.learn)] : null));
+    h('p', { class: 'arc' }, h('b', {}, `${l.depth}: ${l.idea}${/[?.!]$/.test(l.idea) ? '' : '.'}`), ` The chapter’s turn: ${l.arc}`),
+    h('dl', {}, l.rows.flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, ...rich(v))])));
   main.append(head);
   if (l.game) main.append(gameplay(l));
 
@@ -454,14 +470,15 @@ ${bibleText()}
 THE TIMELINE (P.A.):
 ${timelineRows().map((r) => r.join(' | ')).join('\n')}
 
-THE LEVEL: ${l.id} ${l.name} (${l.part}). Eras shown here: ${l.eras.map(eraName).join(', ')}.${l.says ? '\nWhat the level says: ' + l.says : ''}${l.play ? '\nPlay: ' + l.play : ''}
+THE LEVEL: ${l.id} ${l.name} (${l.part}, ${l.depth}: ${l.idea}). Eras shown here: ${l.eras.map(eraName).join(', ')}.
+${l.rows.map(([k, v]) => k + ': ' + v).join('\n')}${l.game ? '\nPlay: ' + l.game.box[1] + ' ' + l.game.steps.join(' ') : ''}
 Other elements already on this level:
 ${others || '(none)'}
 
 THE PROPOSED ELEMENT: [${kindName(i.kind)}, era: ${(i.eras || []).map(eraName).join(', ')}] ${i.title}
 ${i.text || ''}
 
-Check: consistency with the timeline and ages (Mara born P.A. 302, relocated up at nine in P.A. 311, placed at the Works at fourteen; now P.A. 387), the era this depth of the refuge shows, the telling rules (people not narrators; show what people did; no cause-of-death signs; not on the nose), and overlap with what is already on the level.
+Check: consistency with the timeline and ages (Mara born P.A. 302, relocated up at nine in P.A. 311, placed at the Works at fourteen; now P.A. 387 and about 85), the era this depth of the refuge shows, the telling rules (people not narrators; show what people did; no cause-of-death signs; optional words deepen but never carry the only proof; no explicit slogans explaining the theme; humanity's end is not a punishment and no one mistake caused it), and overlap with what is already on the level.
 Reply with only JSON: {"verdict": "fits" | "needs work" | "conflicts", "why": "one or two plain sentences", "suggestion": "one concrete change, or empty if it fits"}`;
   state.checking[i.id] = true; renderLevel();
   try {
@@ -489,7 +506,7 @@ const MD_HEAD = `<!-- Dead Letter story board, Markdown v1. Years are P.A. (now:
 Format: "## Timeline" table; "## Story bible" free text; "## DL-15 One Pupil Missing" per level; under it one
 "### Kind · Title" per card, with optional "- Era: …", "- Status: Idea | Planned | In the game" lines, then its text.
 Kinds: ${KINDS.map((k) => k[1]).join(', ')}. Eras: ${ERAS.map((e) => e[1]).join(', ')}. Keep each card's id line to update it in place; leave it out for a new card.
-"## Gameplay" at the end is for reading: it comes from docs/gameplay_breakdown.md, and importing skips it. -->`;
+"## Gameplay" at the end is for reading: it comes from docs/full_game_plan.md and docs/gameplay_breakdown.md, and importing skips it. -->`;
 const esc = (t) => String(t ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 function toMarkdown(levelIds) {
   const out = ['# Dead Letter · Story Board', '', MD_HEAD, ''];
@@ -512,30 +529,33 @@ function toMarkdown(levelIds) {
   if (!levelIds) out.push('## Gameplay', '', ...gameplayLines(1));
   return out.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
 }
-// The gameplay breakdown in docs/gameplay_breakdown.md's own format. With shift 0 it is that file's layout (## per
-// chapter, ### per level), so it can go back into the repo; with shift 1 it nests under the board export's ## Gameplay.
+// The gameplay as the board shows it: the ladder, the permanent rules, each chapter's notes, each level's panel. With
+// shift 0 it is a document of its own (## per section, ### per level); with shift 1 it nests under Export all's ## Gameplay.
 function gameplayLines(shift) {
   const hd = (n) => '#'.repeat(n + shift) + ' ', out = [];
-  out.push(hd(2) + 'The ladder', '', '| Relationship | Introduce (safe) | Develop | Twist | Combine | Reframed |', '|---|---|---|---|---|---|');
-  for (const r of LADDER) out.push(`| ${r.join(' | ')} |`);
+  const panel = (g) => [...(g.builds ? [`- **Builds on:** ${g.builds}`] : []), `- **${g.box[0]}:** ${g.box[1]}`,
+    ...(g.steps.length ? ['- **Play:**', ...g.steps.map((s, i) => `  ${i + 1}. ${s}`)] : []), ...g.pairs.map(([k, v]) => `- **${k}:** ${v}`)];
+  out.push(hd(2) + 'The ladder', '', '| Relationship | Introduce | Develop or twist | Combine | Reframe |', '|---|---|---|---|---|');
+  for (const r of LADDER) out.push(`| ${r.map(esc).join(' | ')} |`);
+  out.push('', hd(2) + 'Permanent rules', '', '| System | Physical truth | Development |', '|---|---|---|');
+  for (const r of RULES) out.push(`| ${r.map(esc).join(' | ')} |`);
   out.push('');
   for (const c of CHAPTERS) {
-    out.push(hd(2) + c.name, '');
-    for (const n of c.notes) out.push(n, '');
-    for (const l of LEVELS.filter((x) => x.game && x.game.chapter === c.name)) {
-      const g = l.game;
-      out.push(hd(3) + `${l.id} ${l.name}`, `*${g.type}*`, '', `- **Builds on:** ${g.builds}`, `- **New:** ${g.new}`, '- **Play:**',
-        ...g.steps.map((t, i) => `  ${i + 1}. ${t}`), `- **Wrong first try:** ${g.wrong}`, `- **The aha:** ${g.aha}`, `- **Carries forward:** ${g.carries}`, '');
+    out.push(hd(2) + c.name, '', ...c.notes.flatMap((n) => [n, '']));
+    const m = /DL-(\d\d) to DL-(\d\d)/.exec(c.name);
+    for (const l of m ? LEVELS.filter((x) => x.n >= +m[1] && x.n <= +m[2] && x.game) : []) {
+      out.push(hd(3) + `${l.id} ${l.name}`, `*${l.game.type}*`, '', ...panel(l.game), '');
+      if (l.game.proposal) out.push('**The plan proposes** (' + l.game.proposal.type.replace(/^Planned · /, '') + '):', '', ...panel(l.game.proposal), '');
     }
   }
   return out;
 }
 function gameplayMarkdown() {
-  return ['# Dead Letter: the gameplay ladder, puzzle by puzzle', '',
-    '<!-- Exported from the Dead Letter story board. Same format as docs/gameplay_breakdown.md, which tools/story/build.py reads: keep the ### DL-nn headings and the - **Builds on:** fields. -->', '',
+  return ['# Dead Letter: the gameplay, puzzle by puzzle', '',
+    '<!-- Exported from the Dead Letter story board, for reading. Its sources are docs/full_game_plan.md (the plan: DL-12 to DL-51, the ladder, the rules) and docs/gameplay_breakdown.md (the levels as built); edit those and rebuild. -->', '',
     ...gameplayLines(0)].join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
 }
-const byName = (list, name) => { const n = String(name || '').trim().toLowerCase(); const hit = list.find((x) => x[1].toLowerCase() === n || x[0] === n); return hit && hit[0]; };
+const byName = (list, name) => { const n = String(name || '').trim().toLowerCase(); const hit = list.find((x) => x[1].toLowerCase() === n || x[0] === n || (x[3] || []).includes(n)); return hit && hit[0]; };
 function parseMarkdown(md) {
   const res = { timeline: null, bible: null, cards: [], unknown: [] };
   const lines = String(md).replace(/\r\n?/g, '\n').replace(/<!--(?!\s*id:)[^]*?-->/g, '').split('\n');
@@ -683,7 +703,7 @@ $('#imp-file').addEventListener('change', async (e) => {
   catch (x) { setStatus('That file couldn\u2019t be read. Try saving it as plain text (.md).'); }
 });
 
-// ---- Gameplay: docs/gameplay_breakdown.md, read by build.py ----------------------------------------------------
+// ---- Gameplay: docs/full_game_plan.md and docs/gameplay_breakdown.md, read by build.py ----------------------------------------------------
 // Inline text: **bold**, and every DL-nn becomes a link to that level.
 function rich(text) {
   const out = [];
@@ -699,26 +719,35 @@ function refs(text) {
     : t);
 }
 const cap = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
+function gpBody(g) {
+  return [
+    h('div', { class: 'gp-links' },
+      g.builds ? h('div', {}, h('span', { class: 'gp-label' }, 'Builds on'), h('p', {}, ...rich(cap(g.builds)))) : null,
+      h('div', { class: 'gp-new' + (g.box[2] ? ' none' : '') }, h('span', { class: 'gp-label' }, g.box[0]), h('p', {}, ...rich(g.box[1])))),
+    g.steps.length ? h('ol', { class: 'gp-steps' }, g.steps.map((s) => h('li', {}, ...rich(s)))) : null,
+    g.pairs.length ? h('div', { class: 'gp-pair' }, g.pairs.map(([k, v]) => h('div', {}, h('span', { class: 'gp-label' }, k), h('p', {}, ...rich(v))))) : null];
+}
 function gameplay(l) {
-  const g = l.game, none = /^none\b/i.test(g.new || '');
+  const g = l.game, p = g.proposal;
   return h('section', { class: 'gp', 'aria-labelledby': 'gp-h' },
     h('div', { class: 'gp-head' }, h('h3', { id: 'gp-h' }, 'Gameplay'), h('span', { class: 'gp-type' }, g.type)),
-    h('div', { class: 'gp-links' },
-      h('div', {}, h('span', { class: 'gp-label' }, 'Builds on'), h('p', {}, ...rich(g.builds))),
-      h('div', { class: 'gp-new' + (none ? ' none' : '') }, h('span', { class: 'gp-label' }, none ? 'Nothing new' : 'New here'), h('p', {}, ...rich(cap(g.new))))),
-    g.steps.length ? h('ol', { class: 'gp-steps' }, g.steps.map((t) => h('li', {}, ...rich(t)))) : null,
-    h('div', { class: 'gp-pair' },
-      h('div', {}, h('span', { class: 'gp-label' }, 'Wrong first try'), h('p', {}, ...rich(cap(g.wrong)))),
-      h('div', {}, h('span', { class: 'gp-label' }, 'The aha'), h('p', {}, ...rich(cap(g.aha)))),
-      h('div', {}, h('span', { class: 'gp-label' }, 'Carries forward'), h('p', {}, ...rich(g.carries)))));
+    ...gpBody(g),
+    p ? h('div', { class: 'gp-prop' }, h('div', { class: 'gp-head' }, h('h4', {}, 'The plan proposes'), h('span', { class: 'gp-type' }, p.type.replace(/^Planned · /, ''))), ...gpBody(p)) : null);
+}
+// The levels a ladder cell names, ranges included: "DL-27 to DL-31" covers DL-28 to DL-30 too.
+function cellLevels(c) {
+  const out = new Set();
+  for (const m of c.matchAll(/DL-(\d\d)(?: to DL-(\d\d))?/g)) for (let n = +m[1]; n <= +(m[2] || m[1]); n++) out.add('DL-' + String(n).padStart(2, '0'));
+  return out;
 }
 function renderLadder() {
   const l = LEVELS.find((x) => x.id === state.level);
   $('#ladder').replaceChildren(...LADDER.map((r) => {
     const m = /^\*\*(.+?)\*\*\s*(.*)$/.exec(r[0]) || [null, r[0], ''];
     return h('tr', {}, h('th', { scope: 'row' }, m[1], m[2] ? h('small', {}, m[2].replace(/^\(|\)$/g, '')) : null),
-      ...r.slice(1, 6).map((c) => h('td', { class: c.includes(state.level) ? 'here' : null }, ...rich(c))));
+      ...r.slice(1).map((c) => h('td', { class: cellLevels(c).has(state.level) ? 'here' : null }, ...rich(c))));
   }));
+  $('#rules').replaceChildren(...RULES.map((r) => h('tr', {}, h('th', { scope: 'row' }, r[0]), ...r.slice(1).map((c) => h('td', { class: cellLevels(c).has(state.level) ? 'here' : null }, ...rich(c))))));
   $('#kits').replaceChildren(...CHAPTERS.map((c) => h('div', { class: 'sheet' }, h('h3', {}, c.name.replace(/\s*\(DL-.*$/, '')),
     ...c.notes.map((n) => h('p', {}, ...rich(n))))));
 }
