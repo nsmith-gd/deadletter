@@ -59,3 +59,7 @@ the script exits non-zero if there are any. Run it after moving anything he can 
 - **`results_pass9_attendance_mechanical.jsonl`** and **`results_pass9_attendance_first_playthrough.jsonl`:** the whole
   of Chapter 1 (DL-12 to DL-17): 4:45 mechanical; three first-time runs at 6:52 to 7:21, of which DL-15 to DL-17 take
   2:28 to 2:48. `CHAPTER=att2` starts at DL-15.
+- **`results_pass10_mechanical.jsonl`** and **`results_pass10_first_playthrough.jsonl`:** the prologue after pass 10
+  (glints and prompts, two-sided pushables, the cot, weight lamps): 7:56 mechanical; three first-time runs at 15:02 to
+  16:29 of play. The overlap audit is clean, including the twin pushables and the cot (the cart's grip reaches less far
+  back to leave it room). `CONTINUE=1` (prologue end into chapter one through the end card's button) passes.

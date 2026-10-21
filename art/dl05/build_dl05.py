@@ -636,7 +636,7 @@ def make_drop_mark():
     phi = math.acos(r / (cy - top))
     arc = [(cx + r * math.sin(t), cy - r * math.cos(t)) for t in [phi + (2 * math.pi - 2 * phi) * k / 28 for k in range(29)]]
     d.line([(cx, top)] + arc + [(cx, top)], fill=paint, width=10, joint='curve')
-    d.text((206, 112), '42', font=_font(46, 'mono-bold'), fill=paint, anchor='mm')   # the year, stencilled
+    d.text((206, 112), '310', font=_font(40, 'mono-bold'), fill=paint, anchor='mm')   # the year, stencilled
     for k in range(3):                                                         # waves under it
         y = 184 + k * 20
         wave = [(40 + i * 8, y + 6 * math.sin(i * 0.9 + k)) for i in range(23)]

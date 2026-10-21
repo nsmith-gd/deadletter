@@ -65,3 +65,11 @@ way before the next is built.
 | Date | Player | What | Time | Notes |
 |---|---|---|---|---|
 | 21 October 2026 | First-time player, rarely plays this kind of game | Prologue, cold | 26:47 | Above the roadmap's 15–20 min target and the simulated first-time players (19:15 in pass 5), which is the direction we wanted: the simulation is optimistic, and real first-time play runs longer. |
+
+### After the first cold playtest (pass 10)
+
+Her notes and what we saw are answered in `docs/prologue_pass10_plan.md`. In the next cold playtest also watch for:
+whether the player uses the cot or the dispatch board in DL-01 (depth learned early), whether they notice the E on
+far-back objects, whether they pull things from the "wrong" side and carry on, whether the weight lamps are read, and
+whether either of the first two secret rooms is found. Ask afterwards whether anything was too dark (and whether they
+found the brightness setting).

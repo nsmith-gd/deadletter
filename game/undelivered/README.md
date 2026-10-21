@@ -109,6 +109,39 @@ counterweight's shaft) replace the goods hall's and the cage's.
 scene's light and by motion and sound. Red is kept for what the world itself painted red: the franking press's hazard
 bands. The curiosities' red tags are gone.
 
+## Pass 10: teaching it clearly (the first cold playtest)
+
+The design is in `docs/prologue_pass10_plan.md`. What changed:
+
+- **Glints and prompts.** Four times a second the game sweeps 3 m either side of him, asking what Use would do at
+  each step, and puts a soft warm glint where each answer really is (often deep in the set). The two nearest get a
+  real lamp from the light pool, so levers and switches are lit. The one Use would do now carries the E (USE on
+  touch). Option: "Light up things I can use, and show the button" (on by default).
+- **Either side.** The courier, the drum, the body and chapter one's figures can be pushed or pulled from either side
+  (twin pushables, `<key>Alt`, sharing the original's state; the nearest grip wins).
+- **Depth, early.** The dispatch board takes him a step back into the set; a new curiosity, the night-shift cot at the
+  back of the DL-01 depot floor (x 4.6, z -2.3), has a lamp and walks him deep into the room.
+- **Secrets.** The secret rooms' leak lamps, the voice players' lamps and the ending's lamps were built in passes 6
+  and 7 but never switched on; they are now. The first two rooms (the reader, the den) also spill a pool of light
+  across the lane, and he turns his head to their gaps until he has been in.
+- **Weight lamps.** Amber pips beside the DL-06 bucket gate, over the DL-09 balance gauge and over DL-10's UP: one
+  lights per weight with a click, all go green when it is enough, and the unlit ones flash with a buzz when the
+  machine is tried too light.
+- **Balance gauges.** A new face (drawn in the game): ADD WEIGHT with an arrow down to a weight in the needle's start
+  zone, OK in green at the top. The old face put "too light" on the cage's side and read as "make it lighter".
+- **Letters.** Picking a letter up scans it: front and back, close, with a line of what it says (sealed ones are read
+  from the outside). The pause card lists the scanned letters. Images: `assets/letters/`.
+- **Music.** A gentle limiter on the score; the refuge (city) and kin cues brought down.
+- **Brightness.** A slider on the title and pause cards (scales the exposure).
+- **C-110's letter** now flutters over the dip to the far kerb, out of the White's reach (it landed on the duct over
+  the water, where stopping to pick it up was a death).
+- **Crashes and resume.** Models decode straight into one buffer (no joined strings); each checkpoint is saved on the
+  device and the title card offers **Continue**; the end card says it is loading chapter one; a lost graphics
+  context shows a card that reloads into the saved place.
+- **Years.** The letters, dispatch boards, lore notices, timetable, ring C notice, courier board, story wall,
+  parcel label and DL-09's drop mark were still printing R.Y. years (their generators skip existing files);
+  regenerated, and the prologue set rebuilt.
+
 ## Chapter 1, part 2: DL-15 to DL-17 (pass 9)
 
 The rest of Chapter 1, Attendance (design: `docs/chapter1_part2_plan.md`; art: `art/ch1/dl15.py` to `dl17.py`, built by

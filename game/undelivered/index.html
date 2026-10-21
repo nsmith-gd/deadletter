@@ -86,6 +86,17 @@
     opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 4; }
   #subs.on { opacity: 0.92; }
   #subs .who { display: block; font: 500 0.7rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-style: normal; margin-bottom: 2px; }
+  /* Pass 10: a letter he picks up, close, front and back; the pause card lists the ones he has scanned. */
+  #letter { position: absolute; left: 50%; bottom: calc(7% + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(92vw, 40rem); z-index: 6;
+    background: rgba(8, 9, 10, 0.88); border: 1px solid var(--rule); padding: 12px 14px 10px; display: grid; gap: 8px; color: var(--paper); }
+  #letter[hidden] { display: none; }
+  #letter .faces { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #letter .face { aspect-ratio: 320 / 224; background-size: 200% 100%; background-repeat: no-repeat; border-radius: 2px; box-shadow: 0 1px 6px #000; }
+  #letter .face.back { background-position: 100% 0; }
+  #letter p { margin: 0; font: 400 clamp(0.9rem, 2vw, 1.02rem)/1.45 var(--display); }
+  #letter .note { font: 500 0.7rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .letters-list { display: flex; gap: 8px; flex-wrap: wrap; }
+  .letters-list button { font: 500 0.75rem var(--mono); letter-spacing: 0.06em; color: var(--paper); background: rgba(255,255,255,0.04); border: 1px solid var(--rule); padding: 6px 10px; cursor: pointer; }
   #intertitle { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 18px; padding: 24px; text-align: center; z-index: 5; transition: opacity 1.4s ease; }
   #intertitle[hidden] { display: none; }
   #intertitle p { font-family: var(--display); font-size: clamp(1.05rem, 2.6vw, 1.5rem); color: var(--paper); max-width: 34ch; opacity: 0; animation: titleLine 1.6s ease forwards; }
@@ -126,6 +137,12 @@
   <div id="keycap" hidden></div>
   <div id="found" aria-live="polite"></div>
   <div id="subs" aria-live="polite"></div>
+  <div id="letter" hidden role="dialog" aria-label="A letter">
+    <div class="eyebrow"><span id="letter-head">Scanned</span><span id="letter-n"></span></div>
+    <div class="faces"><div class="face" id="letter-front"></div><div class="face back" id="letter-back"></div></div>
+    <p id="letter-text"></p>
+    <p class="note" id="letter-hint">E to put it away</p>
+  </div>
   <div id="debug" hidden></div>
   <button id="skip" type="button" hidden>Skip intro</button>
   <div id="touch" hidden>
@@ -153,13 +170,16 @@
         <label><input type="checkbox" id="opt-autorun" checked><span>Auto-run (hold Shift or B to walk)</span></label>
         <label><input type="checkbox" id="opt-sound" checked><span>Sound</span></label>
         <label><input type="checkbox" id="opt-music" checked><span>Music</span></label>
+        <label><input type="checkbox" id="opt-prompts" checked><span>Light up things I can use, and show the button</span></label>
         <label><input type="checkbox" id="opt-assist"><span>Show a button prompt if I'm stuck</span></label>
+        <label><span>Brightness</span><input type="range" id="opt-bright" min="0.8" max="1.8" step="0.05" value="1" aria-label="Brightness"></label>
         <label><input type="checkbox" id="opt-calm"><span>Reduce flicker and flashes</span></label>
         <label><input type="checkbox" id="opt-telemetry" checked><span>Share anonymous play data</span></label>
       </div>
       <p class="note">This test build records how the game is played (scenes reached, timings, deaths, hints, frame rate, device type) to help improve it. Nothing personal is recorded. You can turn it off above.</p>
       <div class="row">
         <button class="act" id="begin" type="button" disabled>Begin</button>
+        <button class="act secondary" id="resume-save" type="button" hidden>Continue</button>
         <span class="status" id="load-status" role="status">Loading the depot&hellip;</span>
       </div>
       <div class="row scene-pick">
@@ -177,11 +197,14 @@
       <h2>Paused</h2>
       <p class="goal">Delivering: a birthday parcel for <strong>Mara</strong>, C-114, ring C. Three levels down. 76 years late.</p>
       <p class="note" id="pause-found"></p>
+      <div id="pause-letters-wrap" hidden><p class="note">Letters scanned (select to read again)</p><div class="letters-list" id="pause-letters"></div></div>
       <div class="opts">
         <label><input type="checkbox" id="opt-autorun-p" checked><span>Auto-run (hold Shift or B to walk)</span></label>
         <label><input type="checkbox" id="opt-sound-p" checked><span>Sound</span></label>
         <label><input type="checkbox" id="opt-music-p" checked><span>Music</span></label>
+        <label><input type="checkbox" id="opt-prompts-p" checked><span>Light up things I can use, and show the button</span></label>
         <label><input type="checkbox" id="opt-assist-p"><span>Show a button prompt if I'm stuck</span></label>
+        <label><span>Brightness</span><input type="range" id="opt-bright-p" min="0.8" max="1.8" step="0.05" value="1" aria-label="Brightness"></label>
         <label><input type="checkbox" id="opt-calm-p"><span>Reduce flicker and flashes</span></label>
         <label><input type="checkbox" id="opt-telemetry-p" checked><span>Share anonymous play data</span></label>
       </div>
@@ -199,13 +222,23 @@
     </div>
   </section>
 
+  <section id="lost" class="layer" hidden>
+    <div class="card">
+      <div class="eyebrow"><span>Dead Letter</span><span></span></div>
+      <h2>The picture stopped</h2>
+      <p>Your browser took the game's graphics away, which can happen when a computer runs short of memory. Your place is saved.</p>
+      <p class="note" id="lost-where"></p>
+      <div class="row"><button class="act" id="lost-reload" type="button">Reload and continue</button></div>
+    </div>
+  </section>
+
   <section id="end" class="layer" hidden>
     <div class="card">
       <div class="eyebrow"><span>Dead Letter</span><span id="end-time"></span></div>
       <h1 id="end-title">End of the prologue</h1>
       <h2 class="sub" id="end-sub">Undelivered</h2>
       <p id="end-text">Behind a fallen desk, nine pencil marks climb the wall, one a year, and a crooked tree is drawn beside them. The terminal says nobody is home, and forwards the parcel up, to a school on ring B. D-17 sat the rabbit up and left the room as he found it.</p>
-      <p class="note" id="end-next">Chapter one, <strong>Attendance</strong>: its first three scenes are here.</p>
+      <p class="note" id="end-next">Chapter one, <strong>Attendance</strong>: all six of its scenes are here.</p>
       <p class="note" id="end-found"></p>
       <div class="row">
         <button class="act" id="continue-att" type="button">Continue to chapter one</button>
@@ -745,7 +778,7 @@ const Sound = (() => {
 const Music = (() => {
   const FILES = { wake: 'dl01_wake', bed: 'dl01_bed', hall: 'dl01_hall', threshold: 'dl01_threshold', racks: 'dl01_racks', kin: 'dl01_kin',
     dead: 'dl01_dead', latch: 'dl04_latch', refuge: 'dl04_refuge', child: 'dl05_child', end: 'dl01_end' };
-  const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.62, dead: 0.62, latch: 0.55, refuge: 0.64, child: 0.6, end: 0.6 }, BED_LEVEL = 0.26;
+  const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.46, dead: 0.62, latch: 0.55, refuge: 0.4, child: 0.6, end: 0.6 }, BED_LEVEL = 0.26;
   const BED_LOOP = [2, 50];            // one 48 s period, padded by 2 s on each side
   const raw = {}, decoded = {};
   let ctx = null, bus = null, enabled = true, paused = false;
@@ -764,7 +797,10 @@ const Music = (() => {
   function init() {
     if (bus || !Sound.context()) return;
     ctx = Sound.context();
-    bus = ctx.createGain(); bus.gain.value = level(); bus.connect(Sound.output());
+    // Pass 10: a gentle limiter on the score, so no cue swells past the rest (the refuge's did, at the city).
+    const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -24; lim.knee.value = 12; lim.ratio.value = 4; lim.attack.value = 0.25; lim.release.value = 1.2;
+    bus = ctx.createGain(); bus.gain.value = level(); bus.connect(lim); lim.connect(Sound.output());
     bedGain = ctx.createGain(); bedGain.gain.value = 0; bedGain.connect(bus);
     Object.keys(FILES).forEach(get);
   }
@@ -1176,18 +1212,33 @@ const beginBtn = document.getElementById('begin');
 const loader = new GLTFLoader();
 let loaded = 0;
 // The models ship as base64-wrapped GLB inside JSON (a type the artifact host serves).
+// Pass 10: each part is decoded straight into one buffer, in place. The old way joined the parts into one string and
+// went through atob's binary string, three copies of a 33 MB model alive at once; a low-memory machine could crash
+// loading chapter one on top of the depot.
+const B64 = (() => { const t = new Uint8Array(128); const a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'; for (let i = 0; i < 64; i++) t[a.charCodeAt(i)] = i; return t; })();
+const b64Bytes = (s) => { let n = s.length; while (n && s.charCodeAt(n - 1) === 61) n--; return Math.floor(n * 3 / 4); };
+function b64Into(s, out, at) {
+  let n = s.length; while (n && s.charCodeAt(n - 1) === 61) n--;
+  let i = 0, o = at;
+  for (; i + 4 <= n; i += 4) {
+    const v = (B64[s.charCodeAt(i)] << 18) | (B64[s.charCodeAt(i + 1)] << 12) | (B64[s.charCodeAt(i + 2)] << 6) | B64[s.charCodeAt(i + 3)];
+    out[o++] = v >> 16; out[o++] = (v >> 8) & 255; out[o++] = v & 255;
+  }
+  if (n - i === 2) out[o++] = (B64[s.charCodeAt(i)] << 2) | (B64[s.charCodeAt(i + 1)] >> 4);
+  else if (n - i === 3) { const v = (B64[s.charCodeAt(i)] << 10) | (B64[s.charCodeAt(i + 1)] << 4) | (B64[s.charCodeAt(i + 2)] >> 2); out[o++] = v >> 8; out[o++] = v & 255; }
+  return o;
+}
 async function loadModel(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
   const head = await res.json();
-  let data = head.data;
-  // A large model comes in parts (art/dl01/build_dl01.py pack_for_web): url, url.1, url.2, ...
-  if (head.parts > 1) {
-    const rest = await Promise.all(Array.from({ length: head.parts - 1 }, (_, k) => fetch(url.replace(/\.json$/, `.${k + 1}.json`)).then((r) => r.json())));
-    data += rest.map((r) => r.data).join('');
-  }
-  const bin = atob(data), bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  // A large model comes in parts (art/dl01/build_dl01.py pack_for_web): url, url.1, url.2, ... Parts split on whole
+  // base64 quanta (10,000,000 characters), so each decodes on its own.
+  const parts = [head.data]; head.data = null;
+  if (head.parts > 1) parts.push(...(await Promise.all(Array.from({ length: head.parts - 1 }, (_, k) => fetch(url.replace(/\.json$/, `.${k + 1}.json`)).then((r) => r.json())))).map((r) => r.data));
+  const bytes = new Uint8Array(parts.reduce((n, s) => n + b64Bytes(s), 0));
+  let at = 0;
+  for (let k = 0; k < parts.length; k++) { at = b64Into(parts[k], bytes, at); parts[k] = null; }
   const gltf = await loader.parseAsync(bytes.buffer, '');
   if (++loaded <= 3) loadStatus.textContent = `Loading the depot\u2026 ${loaded} of 3`;   // the White loads after, quietly
   return gltf;
@@ -1290,6 +1341,9 @@ async function load() {
   // Pass 7: the voice-card players' cranks, turned by the game while he winds them.
   refs.voiceCranks = {};
   for (const v of VOICES) if (v.crank) { const o = setG.scene.getObjectByName(v.crank); if (o) refs.voiceCranks[v.id] = { o, axis: new THREE.Vector3(...v.axis).normalize() }; }
+  Glints.build();
+  Pips.build();
+  rewriteGauges(setG.scene);
   buildCulling(setG.scene);
   resize();
 }
@@ -1798,6 +1852,7 @@ function updatePlayer(dt) {
     if (once('realise')) { game.kinSlow = true; game.vx = 0; game.act = { kind: 'realise', phase: 'act', t: 0 }; setClip('Realise', 0.4); if (game.clock - game.revealTime < 45) Music.queue('kin'); else Music.play('kin'); return; }   // pass 5: the lament plays through; kin follows it
   }
 
+  Letters.update();
   const use = input.usePressed ? nearUse() : null;
   if (use) { beginUse(use); return; }
   // A standing jump beside a carrier hops on; a running jump is just a jump, so hopping over the sorting weights by the dock
@@ -2478,6 +2533,8 @@ function setRegionLights(r, zone = lightZoneFor(r)) {
   (refs.rcLights || []).forEach((l) => (l.visible = r === 5 || uo));
   (refs.secretLights || []).forEach((l, i) => (l.visible = i === 0 ? r === 3 : r === 4 && !uo));
   (refs.endLights || []).forEach((l) => (l.visible = r === 5));
+  (refs.spillLights || []).forEach((l, i) => (l.visible = i === 0 ? r === 3 && !game.upper : r === 4 && !uo));
+  if (refs.cotLight) refs.cotLight.visible = r === 1;
   (refs.attLights || []).forEach((l) => (l.visible = r === 6));
   (refs.voiceLights || []).forEach((l, i) => (l.visible = [r === 2 && !ration, r === 3 && !game.upper, r === 5][i]));
   game.lightRegion = r;
@@ -3697,7 +3754,7 @@ const DUCT9 = { x: OFF5 + 94.0, half: 0.75, h: 0.26, gap: 1.10 };          // it
 const LETTERS = [
   { id: 'tube', name: 'TubeLetter', region: 2, x: SH.tubeX, start: 'cup' },
   { id: 'heap', name: 'HeapLetter', region: 3, x: OFF3 + 43.4, start: 'rail', upper: true },
-  { id: 'c110', name: 'C110Letter', region: 5, x: OFF5 + 95.9, start: 'slot' },
+  { id: 'c110', name: 'C110Letter', region: 5, x: OFF5 + 97.05, start: 'slot' },     // pass 10: it lands on the far kerb, out of the White's reach
 ];
 const SLOTS = [
   { id: 2, name: 'MailSlot2', lamp: 'SlotLamp2', region: 2, x: SH.slotX },
@@ -3705,6 +3762,52 @@ const SLOTS = [
   { id: 9, name: 'MailSlot9', lamp: 'SlotLamp9', region: 5, x: OFF5 + 102.75 },
 ];
 const letterState = {};
+// Pass 10: he scans each letter as he picks it up, and it shows close, front and back, with what it says. A courier
+// doesn't open the post: sealed ones are read from the outside. The pause card keeps the ones he has scanned.
+const LETTER_TEXT = {
+  tube: { img: 'letter_tube.png', head: 'From Mara, to the post office', text: '\u201CDEAR POST, MY BIRTHDAY PARCEL HASNT COME. IS D-17 LOST? LOVE MARA \u2665 C-114.\u201D On the back, in crayon: a girl crying at her door by a crooked tree, and far off in the dark, a little courier with a parcel and a question mark over him.' },
+  heap: { img: 'letter_heap.png', head: 'To C-114, ring C', text: 'Postmarked P.A. 311, a heart in the corner. Sealed. On the back, in crayon: a courier bringing a parcel to a house, a flower in its window, the sun out.' },
+  c110: { img: 'letter_c110.png', head: 'To C-110, ring C', text: 'Postmarked P.A. 310. Sealed, and never delivered.' },
+};
+const Letters = (() => {
+  const el = document.getElementById('letter'), read = [];
+  let openAt = -1, at = null;
+  function show(id) {
+    const L = LETTER_TEXT[id]; if (!L) return;
+    const url = `url("assets/letters/${L.img}")`;
+    document.getElementById('letter-front').style.backgroundImage = url;
+    document.getElementById('letter-back').style.backgroundImage = url;
+    document.getElementById('letter-head').textContent = 'Scanned \u00B7 ' + L.head;
+    document.getElementById('letter-n').textContent = `${read.indexOf(id) + 1} of ${LETTERS.length}`;
+    document.getElementById('letter-text').textContent = L.text;
+    document.getElementById('letter-hint').textContent = game.mode === 'paused' ? 'Select to close' : touchDevice ? 'USE to put it away' : 'E to put it away';
+    el.hidden = false; openAt = game.clock; at = game.x;
+  }
+  function scan(id) {
+    if (!read.includes(id)) { read.push(id); Telemetry.event('letterRead', { id }); }
+    Sound.servo?.(0.35, 900, 1500, 0.02);
+    show(id);
+  }
+  function close() { el.hidden = true; openAt = -1; }
+  // In play: E puts it away (once he has stood a moment), so does walking off or ten seconds.
+  function update() {
+    if (el.hidden || game.mode === 'paused') return;
+    if (game.mode !== 'play') { close(); return; }
+    const t = game.clock - openAt;
+    if ((t > 0.6 && !game.act && input.usePressed) || t > 12 || Math.abs(game.x - at) > 1.6) { if (input.usePressed && !game.act) input.usePressed = false; close(); }
+  }
+  function list() {
+    const wrap = document.getElementById('pause-letters-wrap'), box = document.getElementById('pause-letters');
+    wrap.hidden = !read.length; box.textContent = '';
+    for (const id of read) {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = LETTER_TEXT[id].head;
+      b.addEventListener('click', () => (el.hidden ? show(id) : close()));
+      box.append(b);
+    }
+  }
+  el.addEventListener('click', () => { if (game.mode === 'paused') close(); });
+  return { scan, show, close, update, list, read: () => read.slice(), restore(ids) { read.length = 0; read.push(...ids.filter((i) => LETTER_TEXT[i])); }, clear() { read.length = 0; close(); }, get open() { return !el.hidden; } };
+})();
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const FLAT_LETTER = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);   // flat on the floor, across the lane                                   // kept through respawns and checkpoints; a new game clears it
 const CP_ORDER = ['start', 'shutter', 'hall', 'door', 'room', 'weighroom', 'solved', 'bay', 'ration', 'hatch', 'scanned', 'landing', 'gallery',
@@ -3793,6 +3896,10 @@ function buildCh1(setRoot) {
   refs.voiceLights = [P(0xffcc8c, 1.2, 2.5, 16.6, 1.3, -0.4), P(0xffcc8c, 1.2, 2.5, 68.0, 1.2, -0.2), P(0xffd9a0, 1.0, 2.0, 158.07, 1.5, -0.6)];   // pass 7: over the sorter's, the heap's and C-114's players
   refs.secretLights = [P(0xffcf8a, 2.2, 3.5, 67.42, 1.86, -3.15), P(0xffa860, 2.0, 3.5, 107.7, 2.1, -2.85)];
   refs.endLights = [P(0xffb066, 2.5, 8, 173.6, 24.2, -9.3), P(0xa8b8cc, 0.7, 3.5, 172.4, 1.4, -0.3)];
+  // Pass 10: the first two secret rooms spill warm light out of their gaps onto the lane, so the gap reads as a way in;
+  // and the night-shift cot at the back of the depot floor (DL-01's curiosity in depth) has a lamp of its own.
+  refs.spillLights = [P(0xffcf8a, 1.3, 2.6, 66.9, 0.75, -0.95), P(0xffa860, 1.2, 2.6, 107.17, DECK + 0.7, -1.45)];
+  refs.cotLight = P(0xffc890, 1.1, 2.6, 4.75, 1.15, -2.2);
   refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF5 + 90.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF5 + 102.75, 0.9, 0.1),
     P(0xcfdcf0, 2.6, 5.0, OFF5 + 99.75, 2.1, -0.62), P(0xffa040, 0.25, 1.0, OFF5 + 91.72, 0.6, -0.2), P(0xa8bccc, 2.2, 2.8, OFF5 + 93.5, 1.0, -2.0)];   // the lair   // the square's lamp; the bell's small amber lamp
   refs.cageLights = [P(0xffb050, 3.5, 4.5, CG.shaft.x1 + 0.4, DECK + 0.9, -0.3), P(0xd6dde8, 2.0, 5.0, CG.shaft.x0 - 0.6, CG.top + 1.6, -0.4),
@@ -3810,7 +3917,9 @@ function buildCh1(setRoot) {
   if (c.liftCar) { c.liftCar.add(carLamp); carLamp.position.set(0, 2.0, -0.05); } else scene.add(carLamp);
   refs.uoLights = [P(0xffd29a, 1.4, 5, OFF5 + 67.35, 3.98, -0.2), P(0xff9a3c, 0.35, 1.2, OFF5 + 70.07, 2.29, -0.12), P(0xff9a3c, 0.3, 1.2, OFF5 + 73.55, 2.29, 0.2),
     P(0xffdcae, 0.6, 2.2, OFF5 + 72.48, 3.08, -0.12), carLamp, shaft, P(0xd8c8a8, 0.5, 3.0, OFF5 + 70.6, 2.6, 0.9)];   // the crush at the gate
-  [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights, ...refs.rationLights, ...refs.uoLights].forEach((l) => (l.intensity = l.userData.base));
+  // Pass 10: the secret rooms', the voice players' and the ending's lamps were built in passes 6 and 7 but never lit.
+  [...refs.shLights, ...refs.bayLights, ...refs.cageLights, ...refs.rcLights, ...refs.rationLights, ...refs.uoLights,
+    ...refs.secretLights, ...refs.voiceLights, ...refs.endLights, ...refs.spillLights, refs.cotLight].forEach((l) => (l.intensity = l.userData.base));
 }
 
 // State, set from the checkpoint (resetWorld calls this).
@@ -3856,7 +3965,7 @@ function resetCh1(cp) {
     if (c110.obj && c110.rest) { c110.obj.position.copy(c110.rest); c110.obj.quaternion.copy(c110.restQ); }
   }
 }
-function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; for (const k of Object.keys(secretFound)) delete secretFound[k]; for (const k of Object.keys(voiceFound)) delete voiceFound[k]; persist.cw = 0; persist.shockedOnce = false; persist.warned = false; }
+function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; for (const k of Object.keys(secretFound)) delete secretFound[k]; for (const k of Object.keys(voiceFound)) delete voiceFound[k]; persist.cw = 0; persist.shockedOnce = false; persist.warned = false; Letters.clear(); }
 
 // Collision ---------------------------------------------------------------------------------
 function floorCh1(x) {
@@ -3974,7 +4083,12 @@ function nearCh1() {
     if (letterState.held > 0) for (const sl of SLOTS) if (sl.region === game.region && (sl.region !== 3 || !!sl.upper === !!game.upper) && Math.abs(x - sl.x) < 0.42) return 'postLetter:' + sl.id;
   }
   // Things he pushes or drags.
-  if (nearOn('push')) for (const p of pushHere()) if (Math.abs(x - p.stand()) < 0.34 && Math.abs(game.y - p.floor) < 0.05) return 'grabPush:' + p.key;
+  if (nearOn('push')) {
+    let best = null;                                  // the nearest grip wins, so a twin never hides its neighbour's
+    // (The cart's grip reaches less far back, leaving room for DL-01's cot behind it.)
+    for (const p of pushHere()) { const dx = x - p.stand(), d = Math.abs(dx); if (d < (dx * p.side < 0 ? p.back ?? 0.34 : 0.34) && Math.abs(game.y - p.floor) < 0.05 && (!best || d < best.d)) best = { p, d }; }
+    if (best) return 'grabPush:' + best.p.key;
+  }
   return null;
 }
 function itemsHere() {
@@ -3991,7 +4105,7 @@ function itemsHere() {
   return out;
 }
 const PUSHABLES = {
-  cart: { region: 1, side: 1, state: () => game.ch1.cart, gap: CART1.gap, speed: PUSH_SPEED, min: CART1.x, max: () => PIT.x0 - CART1.half + 0.38, floor: 0, z: 0 },
+  cart: { region: 1, side: 1, back: 0.2, state: () => game.ch1.cart, gap: CART1.gap, speed: PUSH_SPEED, min: CART1.x, max: () => PIT.x0 - CART1.half + 0.38, floor: 0, z: 0 },
   courier: { region: 2, side: -1, state: () => game.ch1.courier, gap: RK.gap, speed: 0.22, min: RK.courierX, max: () => RK.bayX, floor: 0, z: RK.courierZ },
   // The drum stops on the plate; pushed again, it goes on past it to the wall by the hatch.
   drum: { region: 2, side: 1, state: () => game.ch1.drum, gap: RH5.gap, speed: 0.3, min: RH5.drum0, max: () => (game.ch1.drum.x < RH5.drumPlate - 0.01 ? RH5.drumPlate : RH5.drumPark), floor: 0, z: 0 },
@@ -4004,6 +4118,15 @@ const PUSHABLES = {
   fig2: { region: 6, side: 1, state: () => game.att.fig2, gap: 0.6, speed: 0.4, min: 217.3, max: () => ATT.fig2.seat, floor: 0, z: ATT.fig2.z },
   duct: { region: 5, side: 1, state: () => game.ch1.duct, gap: DUCT9.gap, speed: 0.45, min: DUCT9.x, max: () => DIP9.x0 - DUCT9.half + 0.4, floor: 0, z: 0 },
 };
+// Pass 10: either side. The playtest's player pushed a body that had to be pulled, and decided the idea was wrong;
+// logic says it should move either way, so it does. Each twin shares its original's state and travel, taken from the
+// other side (`base` names the original). Pulled into a wall, it stops where he meets the wall. Not the cart or the
+// duct: they tip into pits, and only make sense pushed.
+for (const key of ['courier', 'drum', 'body', 'fig', 'fig2']) {
+  const b = PUSHABLES[key];
+  PUSHABLES[key + 'Alt'] = Object.assign(Object.create(b), { side: -b.side, base: key });
+}
+const pushBase = (key = game.pushKey) => (PUSHABLES[key] && PUSHABLES[key].base) || key;
 function pushHere() {
   const out = [];
   for (const [key, p] of Object.entries(PUSHABLES)) {
@@ -4087,10 +4210,10 @@ function beginCh1(kind) {
   }
 }
 // Walk to the standing spot (and step in, for the courier), then the action.
-function approachCh1(a, dt, z = 0) {
+function approachCh1(a, dt, z = 0, zSpeed = 0.45) {
   game.facing = a.face;
   const dx = a.standX - game.x, dz = z - game.z;
-  if (dz) game.z += Math.sign(dz) * Math.min(Math.abs(dz), 0.45 * dt);
+  if (dz) game.z += Math.sign(dz) * Math.min(Math.abs(dz), zSpeed * dt);
   if (Math.abs(dx) < 0.012 && Math.abs(dz) < 0.004) { game.x = a.standX; a.phase = 'act'; a.t = 0; return true; }
   game.x += Math.sign(dx) * Math.min(Math.abs(dx), WALK * 0.8 * dt);
   setClip('Walk', 0.15, WALK * 0.8 / CLIP_SPEED.Walk);
@@ -4170,7 +4293,7 @@ function updateActCh1(a, dt) {
     if (a.phase === 'approach') {
       if (!approachCh1(a, dt, a.p.z)) return;
       // The first time, he stands over the body a moment before he takes hold.
-      if (a.p.key === 'body' && !seen.has('bodyGrab')) { seen.add('bodyGrab'); a.phase = 'hesitate'; a.t = 0; setClip('Idle', 0.4); return; }
+      if (pushBase(a.p.key) === 'body' && !seen.has('bodyGrab')) { seen.add('bodyGrab'); a.phase = 'hesitate'; a.t = 0; setClip('Idle', 0.4); return; }
       setClip('Grab', 0.12); Sound.tap(); return;
     }
     if (a.phase === 'hesitate') { if (a.t > 1.6) { a.phase = 'act'; setClip('Grab', 0.12); Sound.tap(); } return; }
@@ -4180,7 +4303,7 @@ function updateActCh1(a, dt) {
   if (a.kind === 'pickLetter') {
     if (a.phase === 'approach') { if (approachCh1(a, dt)) setClip('PickUpLetter', 0.15); return; }
     const f = actions.PickUpLetter ? actions.PickUpLetter.time * FPS : a.t * FPS;
-    if (f >= 12 && !a.got) { a.got = true; letterState[a.L.id] = 'held'; letterState.held = (letterState.held || 0) + 1; if (a.L.obj) a.L.obj.visible = false; Sound.tap(); }
+    if (f >= 12 && !a.got) { a.got = true; Letters.scan(a.L.id); letterState[a.L.id] = 'held'; letterState.held = (letterState.held || 0) + 1; if (a.L.obj) a.L.obj.visible = false; Sound.tap(); }
     holdLetter(f >= 12 && f < 26);
     if (f >= 29) { holdLetter(false); game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
     return;
@@ -4292,7 +4415,7 @@ function updateAct10(a, dt) {
     if (f >= 16 && !a.pressed) {
       a.pressed = true; Sound.click();
       if (uo.loaded && uo.gate >= 1 && uo.phase === 'idle') { uo.phase = 'up'; uo.t = 0; uo.riding = a.kind === 'ride10'; Sound.clunk(); Sound.chain(2.0); shake(0.15); }
-      else { uo.buzz = game.clock; Sound.buzzShort(); Telemetry.event('liftBuzz', { from: a.kind }); }
+      else { uo.buzz = game.clock; Sound.buzzShort(); Telemetry.event('liftBuzz', { from: a.kind }); if (!uo.loaded) Pips.flash('car10'); }
     }
     if (f >= 34) {
       if (uo.riding && a.kind === 'ride10') { a.phase = 'ride'; a.t = 0; setClip('RideCounterweight', 0.3); return; }
@@ -4309,6 +4432,7 @@ function updateAct10(a, dt) {
 }
 function updateUpOnly(dt) {
   const uo = game.ch1.uo, k = refs.ch1, it = uo.case;
+  Pips.set('car10', uo.loaded ? 1 : 0);
   uo.t += dt;
   // The floor plate feels a passenger: the needle swings over and the gate draws shut.
   if (uo.loaded && uo.gate < 1 && game.clock - uo.loadedAt > 0.8) {
@@ -4391,7 +4515,7 @@ function updateHoldCh1(dt, move) {
   const speed = Math.abs(game.vx);
   if (speed > 0.03) setClip('PushWalk', 0.2, (Math.sign(game.vx) === game.holdSide ? 1 : -1) * Math.max(0.4, speed / CLIP_SPEED2.PushWalk));
   else setClip('PushIdle', 0.25);
-  if (game.pushKey === 'courier' || game.pushKey === 'body') Sound.drag(Math.min(1, speed / 0.22)); else if (speed > 0.05 && Math.random() < dt * 0.8) Sound.squeak();
+  if (pushBase() === 'courier' || pushBase() === 'body') Sound.drag(Math.min(1, speed / 0.22)); else if (speed > 0.05 && Math.random() < dt * 0.8) Sound.squeak();
   stepSounds();
   // The cart and the duct stop at a pit's lip with their front wheels over, teetering. He keeps hold of them; pushing on
   // into the lip a moment, he gives them a last shove and lets go, and they go in (so does letting go there).
@@ -4414,13 +4538,14 @@ function updateHoldCh1(dt, move) {
   // At the end of its travel: the courier is on the bay's plate; the drum and the body are set.
   if (Math.abs(s.x - p.max()) < 0.005) {
     game.hold = null; game.pushKey = null; game.vx = 0; setClip('Idle', 0.3);
-    if (p === PUSHABLES.courier) { s.state = 'cradle'; s.t = 0; Sound.drag(0); }
-    if (p === PUSHABLES.drum) { if (Math.abs(s.x - RH5.drumPark) < 0.01) s.state = 'set'; Sound.thud(); shake(0.15); }
-    if (p === PUSHABLES.body && Math.abs(s.x - RH5.bodyPlate) < 0.01) {
+    const base = pushBase(p.key);
+    if (base === 'courier') { s.state = 'cradle'; s.t = 0; Sound.drag(0); }
+    if (base === 'drum') { if (Math.abs(s.x - RH5.drumPark) < 0.01) s.state = 'set'; Sound.thud(); shake(0.15); }
+    if (base === 'body' && Math.abs(s.x - RH5.bodyPlate) < 0.01) {
       s.state = 'plate'; Sound.drag(0);
       setTimeout(() => { if (game.region === 2 && !game.act && !game.hold) playQuirk(actions.Pat ? 'Pat' : 'Idle'); }, 1600);   // he pats the sheet
     }
-    if (p === PUSHABLES.body) Sound.drag(0);
+    if (base === 'body') Sound.drag(0);
   }
 }
 
@@ -4476,7 +4601,7 @@ function updateCh1(dt) {
   const dOnPlate = game.region === 2 && game.x > RK.plate.x0 && game.x < RK.plate.x1 && game.y < 0.1;
   // He drags it all the way onto the plate himself. Let go of it near the bay and the cradle reaches out and draws in
   // the rest (no need to land it exactly), but never out of his hands.
-  const dragging = game.hold === 'push' && game.pushKey === 'courier';
+  const dragging = game.hold === 'push' && pushBase() === 'courier';
   if (cr.state === 'free' && !dragging && cr.x > RK.bayX - 0.6) { cr.state = 'drawn'; cr.t = 0; Sound.drag(0); Sound.servo(0.5, 260, 520, 0.03); }
   if (cr.state === 'drawn') {
     cr.t += dt;
@@ -4515,9 +4640,10 @@ function updateCh1(dt) {
   // Pass 2: the gate wants both weights. One lifts it a little, where it stalls with a strain; pass 8: well under
   // his crouch (0.58), so it never looks like a gap he could duck through.
   const gTarget = gate6Target(s.bucket);
+  Pips.set('bucket6', s.bucket);
   if (s.gate6 < gTarget) {
     s.gate6 = Math.min(gTarget, s.gate6 + 0.45 * dt); if (Math.random() < dt * 6) Sound.gateTick();
-    if (s.gate6 >= gTarget && gTarget < 1.4) { Sound.strain(); Sound.creak(0.6); shake(0.15); }
+    if (s.gate6 >= gTarget && gTarget < 1.4) { Sound.strain(); Sound.creak(0.6); shake(0.15); Pips.flash('bucket6'); }
   }
   if (k.gate6) k.gate6.position.y = k.gate6.userData.rest.p.y + s.gate6;
   s.bucketDrop = (s.bucketDrop ?? 0) + ((s.gate6 / 1.4) * 0.4 - (s.bucketDrop ?? 0)) * Math.min(1, dt * 6);
@@ -4552,8 +4678,10 @@ function updateCh1(dt) {
   const cl = LETTERS[2];
   if (letterState.c110 === 'slot' && du.state === 'bridge' && game.region === 5 && game.x > DIP9.x0 - 0.3) { letterState.c110 = 'slipping'; s.c110T = 0; Sound.tap(); }
   if (letterState.c110 === 'slipping') {
-    s.c110T = (s.c110T || 0) + dt; const t = Math.min(1, s.c110T / 0.7);
-    if (cl.obj) { cl.obj.position.set(cl.rest.x, cl.rest.y - (cl.rest.y - (DIP9.floor + DUCT9.h + 0.004)) * t * t, cl.rest.z + (0.05 - cl.rest.z) * t); cl.obj.quaternion.copy(cl.restQ).slerp(FLAT_LETTER, smooth(t)); }
+    // Pass 10: it used to land on the duct over the White's water, where stopping to pick it up was a death (the
+    // playtest's "buggy" eel and letter). Now it flutters over the dip and lands on the far kerb.
+    s.c110T = (s.c110T || 0) + dt; const t = Math.min(1, s.c110T / 1.3);
+    if (cl.obj) { cl.obj.position.set(cl.rest.x + (cl.x - cl.rest.x) * smooth(t), cl.rest.y - (cl.rest.y - 0.004) * t * t + 0.25 * Math.sin(Math.PI * t), cl.rest.z + (0.05 - cl.rest.z) * t); cl.obj.quaternion.copy(cl.restQ).slerp(FLAT_LETTER, smooth(t)); }
     if (t >= 1) letterState.c110 = 'floor';
   }
   if (cl.obj) cl.obj.visible = !/held|posted/.test(letterState.c110);
@@ -4568,7 +4696,7 @@ function updateCh1(dt) {
   if (k.drum) k.drum.position.x = dr.x;
   if (k.body) k.body.position.x = bd.x;
   if (refs.bodyRipple) {
-    const moving = game.hold === 'push' && game.pushKey === 'body' ? Math.min(1, Math.abs(game.vx) / 0.12) : 0;
+    const moving = game.hold === 'push' && pushBase() === 'body' ? Math.min(1, Math.abs(game.vx) / 0.12) : 0;
     refs.bodyRipple.uAmp.value += (moving - refs.bodyRipple.uAmp.value) * Math.min(1, dt * 4);
     refs.bodyRipple.uTime.value += dt;
   }
@@ -4702,10 +4830,11 @@ function updateCage(dt) {
   // Pass 2: the counterweight is too light until both plates are in its tray. Step in and the cage drops a
   // hand's breadth, the brake squeals and holds, and it hauls itself back up; he has to step out and try again.
   const loaded = game.ch1.plates.filter((p) => p.state === 'tray').length;
+  Pips.set('tray9', loaded);
   if (!inside) c.needExit = false;
   if (c.phase === 'top' && inside && game.grounded && !game.act && !game.hold && game.clock > c.readyAt && !c.needExit && loaded < 2) {
     Telemetry.event('cageDip', { plates: loaded });
-    c.phase = 'dip'; c.t = 0; game.act = { kind: 'cage', phase: 'act', t: 0 }; game.vx = 0; Sound.lurch(); Sound.groan(); shake(0.5);
+    c.phase = 'dip'; c.t = 0; game.act = { kind: 'cage', phase: 'act', t: 0 }; game.vx = 0; Sound.lurch(); Sound.groan(); shake(0.5); Pips.flash('tray9');
   }
   if (c.phase === 'dip') {
     c.y = CG.top - (loaded ? 0.22 : 0.38) * smooth(c.t / 0.35);
@@ -4789,7 +4918,10 @@ function updateCageAct(a, dt) {
 const CURIOS = [
   { id: 'scale', region: 1, x: SCALE1_X, standX: 1.27, face: 1, early: true, first: true, clip: ['WeighSelf', 'PeekDown'], dur: 2.6, cues: [[30, 'scale']] },
   { id: 'cord', region: 1, x: 0.59, early: true, builtIn: true },             // the cord lamp: its own interaction
-  { id: 'dispatch', region: 1, x: 1.0, r: 0.18, standX: 1.18, face: -1, early: true, clip: ['ReadRoute', 'CheckLabel'], dur: 3.0, cues: [[19, 'paper'], [62, 'paper']] },
+  { id: 'dispatch', region: 1, x: 1.0, r: 0.18, standX: 1.18, z: -0.5, face: -1, early: true, clip: ['ReadRoute', 'CheckLabel'], dur: 3.0, cues: [[19, 'paper'], [62, 'paper']] },
+  // Pass 10: depth, taught early. A camp cot at the back of the depot floor, a lamp over it: he walks back into the set to it.
+  { id: 'cot', region: 1, x: 4.6, r: 0.11, standX: 4.65, z: -2.3, glintZ: -2.7, lookY: 0.4, turn: true, deep: true, early: true, cond: () => game.y < 0.05,
+    clip: ['Pat', 'PeekDown'], dur: 3.0, cues: [] },
   { id: 'franker', region: 2, x: SH.x0 + 0.8, standX: SH.x0 + 0.8, face: -1, early: true, clip: ['FrankHand', 'Present'], dur: 2.8, cues: [[30, 'stamp']] },
   { id: 'mug', region: 2, x: 15.2, standX: 15.2, face: 1, early: true, clip: ['HoldMug', 'Pat'], dur: 3.2, cues: [[26, 'mug'], [76, 'mugDown']] },
   { id: 'rack', region: 2, x: 41.08, standX: 41.08, face: 1, cond: () => game.ch1.courier.state === 'seated', clip: ['SitRack', 'Straighten'], dur: 4.5, cues: [[50, 'sit']] },
@@ -5695,11 +5827,13 @@ function findCurio(id) {
 function updateCurioAct(a, dt) {
   const c = a.c;
   if (a.phase === 'approach') {
-    if (!approachCh1(a, dt, c.z || 0)) return;
+    if (c.deep) game.yawOverride = Math.PI;                          // he walks back into the room, not sideways
+    if (!approachCh1(a, dt, c.z || 0, c.deep ? 0.9 : 0.45)) return;
     a.phase = 'act'; a.t = 0;
     if (c.id === 'hopscotch') { game.act = null; startHopscotch(); findCurio(c.id); return; }
     a.clip = c.clip.find((n) => actions[n]) || 'Idle';
     setClip(a.clip, 0.2);
+    if (c.turn) game.yawOverride = Math.PI;
     findCurio(c.id);
     if (c.id === 'viewer') game.viewerAt = game.clock;
     if (c.id === 'switch') game.hallLitAt = game.clock;
@@ -5707,8 +5841,9 @@ function updateCurioAct(a, dt) {
     return;
   }
   if (a.phase === 'out') {          // stepping back out to the lane from a wall he reached into
-    game.z += Math.sign(-game.z) * Math.min(Math.abs(game.z), 0.45 * dt); setClip('Walk', 0.15, 0.5);
-    if (Math.abs(game.z) < 0.004) { game.z = 0; game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
+    if (c.deep) game.yawOverride = 0;
+    game.z += Math.sign(-game.z) * Math.min(Math.abs(game.z), (c.deep ? 0.9 : 0.45) * dt); setClip('Walk', 0.15, c.deep ? 0.9 : 0.5);
+    if (Math.abs(game.z) < 0.004) { game.z = 0; game.act = null; game.yawOverride = null; setClip('Idle', 0.3); input.lastActivity = game.clock; }
     return;
   }
   const f = actions[a.clip] ? actions[a.clip].time * FPS : a.t * FPS;
@@ -5732,6 +5867,7 @@ function updateCurioAct(a, dt) {
   const len = actions[a.clip] ? actions[a.clip].getClip().duration : c.dur;
   if ((a.viewed ? f >= len * FPS - 1 : a.t >= Math.min(8, Math.max(len, a.clip === c.clip[0] ? 0 : c.dur || 0)))) {
     curioProps(c.id, -1);
+    if (c.turn) game.yawOverride = null;
     if (game.z) { a.phase = 'out'; return; }
     game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock;
   }
@@ -5777,12 +5913,17 @@ function updateClockHands(dt) {
   if (k.hourHand) { k.hourHand.quaternion.copy(k.hourHand.userData.rest.q); k.hourHand.rotateZ(-THREE.MathUtils.degToRad(tick * 0.5)); }
 }
 // The early ones he glances at as he passes, until he has used them: the nearest one within reach of a look.
-function curioPoint(c) { return tv4.set(c.x, (c.upper ? DECK : 0) + (c.lookY ?? 0.45), -0.3); }
+function curioPoint(c) { return tv4.set(c.x, (c.upper ? DECK : 0) + (c.lookY ?? 0.45), c.deep ? c.glintZ ?? c.z : -0.3); }
+// Pass 10: and the first two secret rooms' gaps, until he has been in.
+const SECRET_GLANCES = [
+  { id: 'reader', region: 3, x: 66.87, lookY: 0.7, deep: true, z: -1.3, early: true, found: () => secretFound.reader },
+  { id: 'den', region: 4, x: 107.17, upper: true, lookY: 0.5, deep: true, z: -1.9, early: true, found: () => secretFound.den },
+];
 function glanceCurio() {
   if (game.act || game.hold) return null;
   let best = null;
-  for (const c of CURIOS) {
-    if (!c.early || curioFound[c.id] || (c.glanceT || 0) > 2.2 || c.region !== game.region || (c.region === 3 && !!c.upper !== !!game.upper) || (c.cond && !c.cond())) continue;
+  for (const c of [...CURIOS, ...SECRET_GLANCES]) {
+    if (!c.early || (c.found ? c.found() : curioFound[c.id]) || (c.glanceT || 0) > 2.2 || c.region !== game.region || (c.region === 3 && !!c.upper !== !!game.upper) || (c.cond && !c.cond())) continue;
     const d = Math.abs(game.x - c.x);
     if (d < 1.8 && d > 0.15 && (!best || d < best.d)) best = { c, d };
   }
@@ -5800,18 +5941,210 @@ function buildCurioPools() {
   for (const c of CURIOS) {
     if (!c.early || c.id === 'cord') continue;
     const y = c.upper ? DECK : 0;
+    const pz = c.deep ? c.z : -0.15;
     const pool = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.8), mat.clone());
-    pool.rotation.x = -Math.PI / 2; pool.position.set(c.x, y + 0.006, -0.15);
+    pool.rotation.x = -Math.PI / 2; pool.position.set(c.deep ? c.standX : c.x, y + 0.006, pz);
+    if (c.deep) { pool.userData.curio = c; scene.add(pool); refs.curioPools.push(pool); continue; }     // no glow on the wall: it is out in the room
     const back = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.3), mat.clone());
-    back.position.set(c.x, y + 0.75, -0.95); back.material.opacity = 0.5;
+    back.position.set(c.x, y + 0.75, c.deep ? c.glintZ - 0.9 : -0.95); back.material.opacity = 0.5;
     pool.userData.curio = back.userData.curio = c;
     scene.add(pool, back); refs.curioPools.push(pool, back);
   }
+  // Pass 10: a long pool of the room's light out of the first two secret rooms' gaps, across the lane.
+  for (const id of ['reader', 'den']) {
+    const se = SECRETS.find((q) => q.id === id), y = se.region === 4 ? DECK : 0, [px, pz] = se.path[0];
+    const pool = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.6), mat.clone());
+    pool.rotation.x = -Math.PI / 2; pool.position.set(px, y + 0.006, pz + 0.55);
+    pool.userData.curio = { id, region: se.region, upper: false }; pool.userData.secret = true;
+    scene.add(pool); refs.curioPools.push(pool);
+  }
 }
+// Pass 10: weight lamps. The playtest's player added weights and waited for the machine to say so. Beside each
+// weighing device, a brass plate of round lamps: dim amber unlit, one lit per weight with a click, all green when it
+// is enough; when the machine is tried and it isn't, the unlit ones flash with a buzz.
+const Pips = (() => {
+  const all = [];
+  const AMBER = new THREE.Color(1, 0.55, 0.16), GREEN = new THREE.Color(0.3, 1, 0.42), RED = new THREE.Color(1, 0.22, 0.08);
+  function make(id, region, at, n, when = () => true) {
+    const g = new THREE.Group(); g.position.copy(at); scene.add(g);
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.07 * n + 0.05, 0.08, 0.014), materialFor({ name: 'HandledBrass' }));
+    g.add(plate);
+    const lamps = [];
+    for (let i = 0; i < n; i++) {
+      const m = new THREE.MeshStandardMaterial({ color: 0x141210, roughness: 0.4, emissive: AMBER.clone(), emissiveIntensity: 0.15 });
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.023, 14, 8), m); b.position.set((i - (n - 1) / 2) * 0.07, 0, 0.011); g.add(b); lamps.push(m);
+    }
+    g.traverse((o) => { o.userData.noCull = true; });
+    const p = { id, region, when, g, lamps, n, count: 0, flashAt: -9 };
+    all.push(p); return p;
+  }
+  function set(id, count) {
+    const p = all.find((q) => q.id === id); if (!p) return;
+    count = Math.max(0, Math.min(p.n, count));
+    if (count > p.count && game.mode === 'play') { Sound.lampClick(); if (count === p.n) setTimeout(() => Sound.servo(0.22, 700, 1250, 0.025), 120); Telemetry.event('weighLamp', { id, count }); }
+    p.count = count;
+  }
+  function flash(id) { const p = all.find((q) => q.id === id); if (p) { p.flashAt = game.clock; Sound.buzzShort(); } }
+  function update() {
+    for (const p of all) {
+      p.g.visible = game.region === p.region && p.when();
+      if (!p.g.visible) continue;
+      const full = p.count >= p.n, ft = game.clock - p.flashAt, blink = ft < 1.4 && Math.sin(ft * 18) > 0;
+      p.lamps.forEach((m, i) => {
+        const lit = i < p.count;
+        m.emissive.copy(lit ? (full ? GREEN : AMBER) : blink ? RED : AMBER);
+        m.emissiveIntensity = lit ? 3.2 : blink ? 3 : 0.15;
+      });
+    }
+  }
+  function build() {
+    make('bucket6', 3, V3(72.0, 1.78, -1.05), 2);                                   // over the gate's bucket (DL-06)
+    make('tray9', 4, V3(100.3, 4.68, -0.42), 2, () => game.x < UPONLY.x0);           // over the landing's balance gauge (DL-09)
+    make('car10', 4, V3(124.07, 2.31, -0.29), 1, () => game.x > UPONLY.x0 - 2);      // over the car's UP (DL-10)
+  }
+  return { build, set, flash, update };
+})();
+// Pass 10: the balance gauges (DL-09's cage, DL-10's lift) read the wrong way to the playtest's player: "too light" was
+// drawn on the cage's side, and the needle leaning toward the cage looked like a tipped scale saying the cage was heavy.
+// A new face, drawn here: the needle's start zone says ADD WEIGHT with an arrow down to a weight; the top says OK.
+function gaugeFace() {
+  const S = 512, cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const g = cv.getContext('2d'), c = S / 2, R = S * 0.47;
+  g.fillStyle = '#d8d0b6'; g.fillRect(0, 0, S, S);
+  g.beginPath(); g.arc(c, c, R, 0, Math.PI * 2); g.fillStyle = '#e9e1c8'; g.fill();
+  g.lineWidth = 6; g.strokeStyle = '#2c2a26'; g.stroke();
+  const ang = (deg) => -Math.PI / 2 + THREE.MathUtils.degToRad(deg);          // degrees clockwise from straight up
+  const band = (d0, d1, col, r0, r1) => { g.beginPath(); g.arc(c, c, r1, ang(d0), ang(d1)); g.arc(c, c, r0, ang(d1), ang(d0), true); g.closePath(); g.fillStyle = col; g.fill(); };
+  band(8, 58, '#e0962e', R * 0.62, R * 0.92);                                   // add weight: amber
+  band(-8, 8, '#3f9a52', R * 0.62, R * 0.92);                                   // ok: green
+  band(-58, -8, '#b9b19a', R * 0.62, R * 0.92);
+  g.strokeStyle = '#2c2a26';
+  for (const [d, len, w] of [[0, 0.3, 7], [24, 0.22, 5], [48, 0.3, 7], [-24, 0.16, 3], [-48, 0.16, 3]]) {
+    g.beginPath(); g.moveTo(c + Math.cos(ang(d)) * R * 0.92, c + Math.sin(ang(d)) * R * 0.92); g.lineTo(c + Math.cos(ang(d)) * R * (0.92 - len), c + Math.sin(ang(d)) * R * (0.92 - len)); g.lineWidth = w; g.stroke();
+  }
+  g.fillStyle = '#1e1c19'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = 'bold 54px sans-serif'; g.fillStyle = '#21522b'; g.fillText('OK', c, c - R * 0.42);
+  // ADD WEIGHT, lower right, with an arrow down into a weight marked +.
+  g.fillStyle = '#1e1c19'; g.font = 'bold 40px sans-serif';
+  g.fillText('ADD', c + R * 0.46, c + R * 0.06); g.fillText('WEIGHT', c + R * 0.38, c + R * 0.26);
+  const wx = c - R * 0.2, wy = c + R * 0.6;
+  g.beginPath(); g.moveTo(wx - 48, wy + 40); g.lineTo(wx + 48, wy + 40); g.lineTo(wx + 34, wy - 16); g.lineTo(wx - 34, wy - 16); g.closePath(); g.fillStyle = '#2c2a26'; g.fill();
+  g.beginPath(); g.arc(wx, wy - 26, 14, 0, Math.PI * 2); g.lineWidth = 7; g.strokeStyle = '#2c2a26'; g.stroke();
+  g.fillStyle = '#e9e1c8'; g.font = 'bold 46px sans-serif'; g.fillText('+', wx, wy + 13);
+  g.strokeStyle = '#2c2a26'; g.lineWidth = 9; g.beginPath(); g.moveTo(wx, wy - 120); g.lineTo(wx, wy - 52); g.stroke();
+  g.beginPath(); g.moveTo(wx - 22, wy - 74); g.lineTo(wx, wy - 46); g.lineTo(wx + 22, wy - 74); g.stroke();
+  const tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  return tex;
+}
+function rewriteGauges(root) {
+  let tex = null;
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m && /BalanceGaugeMat/.test(m.name)) { tex ||= gaugeFace(); m.map = tex; m.needsUpdate = true; }
+  });
+}
+// Pass 10: glints. The cold playtest missed levers and switches that weren't lit, and never learned that Use reaches
+// into the set. Four times a second the game sweeps 3 m either side of him asking what Use would do at each step (the
+// overlap audit's sweep); each answer gets an anchor where the thing really is, often deep in the set, and a soft warm
+// glint there, brighter as he nears. The two nearest get a real lamp from the light pool. The one Use would do now is
+// brightest and carries the E prompt. An option turns it all off.
+const Glints = (() => {
+  const N = 10, sprites = [], lamps = [], SKIP = /^(release|setdown|setdownItem)$/, SHOWN_SECRETS = ['reader', 'den'];
+  let runs = [], sweptAt = -9, cost = 0, current = null;
+  const box = new THREE.Box3(), centres = new Map(), named = new Map();
+  const centre = (o, fresh) => { if (!o) return null; if (!fresh && centres.has(o)) return centres.get(o).clone(); const c = box.setFromObject(o).getCenter(new THREE.Vector3()); centres.set(o, c); return c.clone(); };
+  const byName = (n) => { if (!named.has(n)) named.set(n, scene.getObjectByName(n) || null); return named.get(n); };
+  const FIXED = {
+    cord: () => V3(0.42, 0.7, 0.04), latch: () => V3(3.21, 0.33, 0.02), crank: () => V3(CRANK_X, 0.45, -0.2),
+    lift: () => V3(game.weight.x, 0.25, 0), grabL: () => V3(game.trolley.x - TROLLEY_HALF, 0.44, 0), grabR: () => V3(game.trolley.x + TROLLEY_HALF, 0.44, 0),
+    nudge: () => refs.nudgeAt && refs.nudgeAt.clone().setY(0.45),
+    leverStop: () => V3(STOP_LEVER_X, 0.6, LEVER_Z), leverPoints: () => V3(POINTS_LEVER_X, 0.55, LEVER_Z), board: () => V3(DOCK_X, 0.35, RAIL_Z),
+    pawl: () => V3(PAWL_X, DECK + 0.62, PAWL_Z), grab4L: () => V3(game.trolley4.x - T4_HALF - 0.02, DECK + 0.46, 0), grab4R: () => V3(game.trolley4.x + T4_HALF + 0.02, DECK + 0.46, 0),
+    present: () => V3(TERM5_X, 0.95, WALL5_Z), grabDeskL: () => V3(game.desk5.x - 0.585, 0.62, DESK5.z), toy: () => V3(TOY5_X, 0.3, -0.3),
+    up10: () => centre(refs.ch1.liftUp) || V3(UO.upStand, DECK + 0.9, -0.85), crank10: () => centre(refs.ch1.serviceCrank) || V3(UO.crankStand, DECK + 0.45, -0.2),
+    ride10: () => centre(refs.ch1.serviceUp) || V3(UO.cw.x1 - 0.08, DECK + 0.56, 0.12), loadCar: () => V3(UO.car.mid, DECK + 0.4, -0.7),
+    loadTray: () => V3(CW8.trayX, CG.top + 0.3, -0.6), bell9: () => centre(refs.ch1.bell) || V3(BELL9.x, 0.6, -0.35),
+    junction9: () => centre(refs.ch1.junction) || V3(JUNCTION9.x, 0.75, -0.6),
+  };
+  function anchor(k, run) {
+    const i = k.indexOf(':'), kind = i < 0 ? k : k.slice(0, i), arg = i < 0 ? '' : k.slice(i + 1), y = run.y;
+    if (kind === 'curio') { const c = CURIOS.find((q) => q.id === arg); return c && V3(c.x, (c.upper ? DECK : 0) + (c.lookY ?? 0.5), c.glintZ ?? c.z ?? -0.3); }
+    if (kind === 'secret') { const se = SECRETS.find((q) => q.id === arg); return se && SHOWN_SECRETS.includes(arg) ? V3(se.path[0][0], y + 0.5, se.path[0][1] - 0.2) : null; }
+    if (kind === 'voice') { const v = VOICES.find((q) => q.id === arg); return v && V3(v.x, y + 0.7, (v.z ?? 0) - 0.45); }
+    if (kind === 'pickLetter') { const L = LETTERS.find((q) => q.id === arg); return L && (L.obj ? centre(L.obj, true).setY(Math.max(y + 0.04, 0)) : V3(L.x, y + 0.05, 0)); }
+    if (kind === 'postLetter') { const sl = SLOTS.find((q) => String(q.id) === arg); return sl && (centre(byName(sl.name)) || V3(sl.x, y + 0.55, -0.3)); }
+    if (kind === 'liftItem') { const it = itemsHere().find((q) => q.key === arg); return it && V3(it.x, it.base + (it.h || 0.2) + 0.06, it.z ?? 0); }
+    if (kind === 'grabPush') { const p = PUSHABLES[arg]; if (!p) return null; const st = p.state(); return V3(st.x - p.side * Math.max(0.12, p.gap - 0.38), y + 0.45, p.z ?? 0); }
+    if (FIXED[kind]) { try { return FIXED[kind](); } catch (e) { return null; } }
+    return V3((run.x0 + run.x1) / 2, y + 0.55, -0.35);
+  }
+  function build() {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+    const g = cv.getContext('2d'), grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grd.addColorStop(0, 'rgba(255,240,210,1)'); grd.addColorStop(0.16, 'rgba(255,205,140,0.6)'); grd.addColorStop(0.5, 'rgba(255,170,95,0.12)'); grd.addColorStop(1, 'rgba(255,150,80,0)');
+    g.fillStyle = grd; g.fillRect(0, 0, 64, 64);
+    g.strokeStyle = 'rgba(255,242,220,0.55)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(32, 10); g.lineTo(32, 54); g.moveTo(10, 32); g.lineTo(54, 32); g.stroke();
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    for (let i = 0; i < N; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0, fog: false }));
+      sp.visible = false; sp.renderOrder = 5; sp.userData.noCull = true; scene.add(sp); sprites.push({ sp, w: 0, key: null, at: new THREE.Vector3() });
+    }
+    // Two lamps, given a slot ahead of the set's own lights (updateLightPool), so a lever is lit when it can be used.
+    for (let i = 0; i < 2; i++) { const l = new THREE.PointLight(0xffc896, 0, 1.7, 2); l.userData.boost = true; scene.add(l); lamps.push(l); }
+  }
+  function sweep() {
+    runs = [];
+    if (game.mode !== 'play' || game.act || !game.grounded || game.transit || game.exit || game.riding || game.mantle) return;
+    const t0 = performance.now(), keep = { x: game.x, y: game.y, grounded: game.grounded }, map = new Map();
+    try {
+      for (let x = keep.x - 3; x <= keep.x + 3.001; x += 0.1) {
+        game.x = x;
+        for (const y of new Set([floorAt(x), supportAt(x)])) {
+          if (y > keep.y + 1.3 || y < keep.y - 1.6) continue;
+          game.y = y; game.grounded = true;
+          for (const k of nearAll()) { if (SKIP.test(k)) continue; const r = map.get(k); if (r) r.x1 = x; else map.set(k, { key: k, x0: x, x1: x, y }); }
+        }
+      }
+    } finally { Object.assign(game, keep); }
+    for (const r of map.values()) { const at = anchor(r.key, r); if (at) runs.push(Object.assign(r, { at })); }
+    cost = cost * 0.8 + (performance.now() - t0) * 0.2;
+  }
+  function update(dt) {
+    const on = game.mode === 'play' && game.prompts;
+    if (on && game.clock - sweptAt > 0.25) { sweptAt = game.clock; sweep(); }
+    const want = on ? runs : [];
+    const free = game.grounded && !game.act && !game.transit && !game.exit;
+    const now = on && free ? nearUse() : null;
+    current = now && !SKIP.test(now) ? want.find((r) => r.key === now) || null : null;
+    // Sprites follow keys: a key keeps its sprite while it lasts, and fades out when it goes.
+    for (const s of sprites) { const r = s.key && want.find((q) => q.key === s.key); s.target = r ? r : null; }
+    for (const r of want) if (!sprites.some((s) => s.target === r)) { const s = sprites.find((q) => !q.target && q.w < 0.02) || sprites.find((q) => !q.target); if (s) { s.key = r.key; s.target = r; } }
+    const pulse = game.calm ? 1 : 0.85 + 0.15 * Math.sin(game.clock * 2.6);
+    for (const s of sprites) {
+      const r = s.target;
+      let goal = 0;
+      if (r) { s.at.copy(r.at); const d = Math.abs(r.at.x - game.x); goal = r === current ? 1.25 : THREE.MathUtils.clamp(1 - (d - 0.6) / 2.6, 0.3, 0.9); }
+      s.w += (goal - s.w) * Math.min(1, dt * 4);
+      if (!r && s.w < 0.02) { s.key = null; s.sp.visible = false; continue; }
+      s.sp.visible = true; s.sp.position.copy(s.at);
+      s.sp.material.opacity = Math.min(1, 0.55 * s.w * pulse);
+      s.sp.scale.setScalar(0.16 + 0.12 * s.w);
+    }
+    // The lamps: the one Use would do, then the nearest.
+    const near = want.slice().sort((a, b) => (b === current) - (a === current) || Math.abs(a.at.x - game.x) - Math.abs(b.at.x - game.x));
+    lamps.forEach((l, i) => {
+      const r = near[i], goal = r ? (r === current ? 1.3 : 0.75) : 0;
+      if (r) l.position.set(r.at.x, r.at.y + 0.22, r.at.z + 0.35);
+      l.intensity += (goal - l.intensity) * Math.min(1, dt * 3);
+      if (l.intensity < 0.01) l.intensity = 0;
+    });
+  }
+  return { build, update, sweep, prompt: () => current && current.at, get runs() { return runs; }, get cost() { return cost; } };
+})();
 function updateCurios(dt) {
   for (const m of refs.curioPools || []) {
-    const c = m.userData.curio, on = curioFound[c.id] ? 0.25 : 1;
-    m.visible = c.region === game.region;
+    const c = m.userData.curio, on = (m.userData.secret ? secretFound[c.id] : curioFound[c.id]) ? 0.25 : 1;
+    m.visible = c.region === game.region && (c.region !== 3 || !!c.upper === !!game.upper);
     m.material.opacity += ((on * (0.85 + 0.15 * Math.sin(game.clock * 2.2))) - m.material.opacity) * Math.min(1, dt * 2);
   }
 }
@@ -6402,12 +6735,15 @@ function updateCharacter(dt, playing) {
   // The very first curiosity shows its prompt at once: that is how the player learns props can be used.
   const firstCue = CURIOS[0].region === game.region && !curioFound[CURIOS[0].id] && Math.abs(game.x - CURIOS[0].x) < 0.9 && free;
   if (firstCue) { hint = { at: curioPoint(CURIOS[0]), key: 'use' }; }
-  if ((firstCue || (game.assist && hint && hint.key !== 'move' && !looking && idle > HINT_GLYPH)) && free) {
+  // Pass 10: with prompts on, the E sits on whatever Use would do now, where it is in the set.
+  const gp = game.prompts && free && !firstCue && Glints.prompt();
+  if (gp) hint = { at: tv5.copy(gp).setY(gp.y + 0.12), key: 'use' };
+  if ((gp || firstCue || (game.assist && hint && hint.key !== 'move' && !looking && idle > HINT_GLYPH)) && free) {
     const s = hint.at.clone().project(camera);
     cap.style.left = `${(s.x * 0.5 + 0.5) * canvas.clientWidth}px`;
     cap.style.top = `${(-s.y * 0.5 + 0.5) * canvas.clientHeight}px`;
     cap.textContent = hint.key === 'use' ? (touchDevice ? 'USE' : 'E') : (touchDevice ? 'JUMP' : 'Space');
-    if (cap.hidden) Telemetry.event('prompt', { key: hint.key, first: !!firstCue });
+    if (cap.hidden && !gp) Telemetry.event('prompt', { key: hint.key, first: !!firstCue });
     cap.hidden = false;
   } else cap.hidden = true;
 }
@@ -6893,8 +7229,9 @@ function togglePause() {
     document.getElementById('pause-scene').textContent = sceneName();
     document.getElementById('pause-time').textContent = game.playStart ? fmt(Math.max(0, game.clock - game.playStart)) : '0:00';
     document.getElementById('pause-found').textContent = tally();
+    Letters.close(); Letters.list();
     document.getElementById('resume').focus();
-  } else if (game.mode === 'paused') { game.mode = prevMode; pauseEl.hidden = true; Music.setPaused(false); }
+  } else if (game.mode === 'paused') { game.mode = prevMode; pauseEl.hidden = true; Music.setPaused(false); Letters.close(); }
 }
 // Which of Chapter 1's nine scenes he is in.
 function sceneName() {
@@ -6919,6 +7256,7 @@ const END_CARD = Object.fromEntries(['end-title', 'end-sub', 'end-text', 'end-ne
 function finish() {
   // The picture goes slowly to black as he climbs away into the dark; then the prologue's card.
   game.endTime = game.clock - game.playStart;
+  if (game.region !== 6) Resume.save('school', 'DL-12 Coats Without Children');     // a crash after this carries on into chapter one
   fadeEl.style.transition = 'opacity 4s ease';
   Telemetry.event('end', { time: Math.round(game.endTime), deaths: game.deaths, found: Object.keys(curioFound).length }); Telemetry.flush();
   fadeEl.style.opacity = 1;
@@ -6940,7 +7278,7 @@ function finish() {
 // and a summariser.
 // ---------------------------------------------------------------------------
 const Telemetry = (() => {
-  const BUILD = 'chapter1-pass9';
+  const BUILD = 'prologue-pass10';
   const url = (() => { try { return new URLSearchParams(location.search).get('telemetry') || window.DL_TELEMETRY_URL || ''; } catch (e) { return ''; } })();
   const sid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)) ;
   let enabled = true, queue = [], log = [], seq = 0, sent = 0, chap = null;
@@ -7017,12 +7355,13 @@ const Telemetry = (() => {
 })();
 
 // Options shared between the title and pause cards.
-const OPTS = { sound: true, music: true, assist: false, calm: false, autorun: true, telemetry: true };
+const OPTS = { sound: true, music: true, prompts: true, assist: false, calm: false, autorun: true, telemetry: true };
 function setOpt(name, value) {
   try { localStorage.setItem('dl01-' + name, value ? '1' : '0'); } catch (e) { /* storage unavailable */ }
   if (name === 'sound') Sound.setEnabled(value);
   if (name === 'music') Music.setEnabled(value);
   if (name === 'assist') game.assist = value;
+  if (name === 'prompts') game.prompts = value;
   if (name === 'calm') { game.calm = value; bloom.strength = value ? 0.35 : 0.55; }
   if (name === 'autorun') game.autorun = value;
   if (name === 'telemetry') Telemetry.setEnabled(value);
@@ -7037,8 +7376,22 @@ for (const n of Object.keys(OPTS)) {
   document.getElementById('opt-' + n).addEventListener('change', (e) => setOpt(n, e.target.checked));
   document.getElementById('opt-' + n + '-p').addEventListener('change', (e) => setOpt(n, e.target.checked));
 }
-game.assist = getOpt('assist'); game.calm = getOpt('calm'); game.autorun = getOpt('autorun'); Telemetry.setEnabled(getOpt('telemetry'));
+game.assist = getOpt('assist'); game.prompts = getOpt('prompts'); game.calm = getOpt('calm'); game.autorun = getOpt('autorun'); Telemetry.setEnabled(getOpt('telemetry'));
 Telemetry.event('session', { device: Telemetry.device(), opts: Object.fromEntries(Object.keys(OPTS).map((n) => [n, getOpt(n)])), referrer: document.referrer ? new URL(document.referrer).hostname : '' });
+// Pass 10: brightness, for darker screens (the playtest's): the exposure, scaled.
+function setBright(v, log = true) {
+  v = THREE.MathUtils.clamp(+v || 1, 0.8, 1.8);
+  renderer.toneMappingExposure = 1.4 * v;
+  try { localStorage.setItem('dl01-bright', String(v)); } catch (e) { /* storage unavailable */ }
+  for (const id of ['opt-bright', 'opt-bright-p']) document.getElementById(id).value = v;
+  if (log) Telemetry.event('option', { name: 'bright', value: v });
+}
+for (const id of ['opt-bright', 'opt-bright-p']) {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => setBright(el.value, false));
+  el.addEventListener('change', () => setBright(el.value));
+}
+setBright((() => { try { return localStorage.getItem('dl01-bright') || 1; } catch (e) { return 1; } })(), false);
 document.getElementById('export-log').addEventListener('click', () => Telemetry.save());
 // The end card's: just this chapter's play, for a playtester to send back.
 document.getElementById('end-log').addEventListener('click', async () => {
@@ -7052,6 +7405,52 @@ document.getElementById('end-log').addEventListener('click', async () => {
 Telemetry.canSave.then((ok) => { if (!ok) { document.getElementById('export-log').hidden = true; document.getElementById('end-log').hidden = true; } });
 syncOpts();
 
+// Pass 10: the last checkpoint, kept on this device. After a crash, a reload or a closed tab, the title card offers to
+// carry on from it, with what he had found so far.
+const Resume = (() => {
+  const KEY = 'dl01-resume';
+  let last = null;
+  const read = () => { try { const r = JSON.parse(localStorage.getItem(KEY) || 'null'); return r && CP_ORDER.includes(r.cp) ? r : null; } catch (e) { return null; } };
+  function save(cp, scene = sceneName()) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ cp, scene, at: Date.now(), found: { curio: Object.keys(curioFound), secret: Object.keys(secretFound), voice: Object.keys(voiceFound) }, read: Letters.read() }));
+    } catch (e) { /* storage full or off */ }
+  }
+  function tick() {
+    if (game.mode !== 'play' || game.checkpoint === last) return;
+    last = game.checkpoint; save(last);
+  }
+  function offer() {
+    const r = read(), btn = document.getElementById('resume-save');
+    if (!r || r.cp === 'start') return;
+    btn.textContent = `Continue: ${r.scene}`; btn.hidden = false;
+  }
+  async function go() {
+    const r = read(); if (!r) return;
+    Telemetry.event('resume', { cp: r.cp });
+    if (!(await startAt(r.cp))) return;
+    last = r.cp;
+    for (const id of r.found?.curio || []) curioFound[id] = true;
+    for (const id of r.found?.secret || []) secretFound[id] = true;
+    for (const id of r.found?.voice || []) voiceFound[id] = true;
+    Letters.restore(r.read || []);
+  }
+  return { save, tick, offer, go, read, set last(v) { last = v; } };
+})();
+document.getElementById('resume-save').addEventListener('click', () => Resume.go());
+// The browser can take the graphics away (short of memory, a driver reset). Say so, and reload into the saved place.
+canvas.addEventListener('webglcontextlost', (e) => {
+  e.preventDefault();
+  Telemetry.event('contextLost', {}); Telemetry.flush(true);
+  if (game.mode === 'play') Resume.save(game.checkpoint);
+  const r = Resume.read();
+  document.getElementById('lost-where').textContent = r ? `Saved at ${r.scene}.` : '';
+  Music.setPaused(true);
+  for (const id of ['title', 'pause', 'end']) document.getElementById(id).hidden = true;
+  document.getElementById('lost').hidden = false;
+});
+document.getElementById('lost-reload').addEventListener('click', () => location.reload());
+
 beginBtn.addEventListener('click', () => { Telemetry.event('begin'); Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); Voice.init(); Voice.prefetch(Object.keys(VOICE_LINES).map(voiceById)); titleEl.hidden = true; startOpening(); });
 skipBtn.addEventListener('click', () => { Telemetry.event('skipIntro', { frame: Math.round(game.frame) }); startPlay('start'); });
 document.getElementById('resume').addEventListener('click', togglePause);
@@ -7064,15 +7463,27 @@ async function startAt(cp) {
   // Chapter 1's set loads the first time it's wanted.
   if (ATT_CPS.includes(cp) && !refs.att) {
     const st = document.getElementById('load-status'); st.textContent = 'Loading the school\u2026'; st.classList.remove('ok');
-    try { await loadAttendance(); } catch (e) { console.error(e); st.textContent = 'The school files did not load.'; return; }
+    try { await loadAttendance(); } catch (e) { console.error(e); st.textContent = 'The school files did not load.'; attLoading = null; Telemetry.event('loadFail', { what: 'attendance', msg: String(e && e.message || e).slice(0, 120) }); return false; }
     st.textContent = 'Ready'; st.classList.add('ok');
   }
   Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); Voice.init(); Voice.prefetch(Object.keys(VOICE_LINES).map(voiceById));
   titleEl.hidden = true; pauseEl.hidden = true; endEl.hidden = true;
   seen.clear(); clearLetters(); game.playStart = 0;
   startPlay(cp);
+  return true;
 }
-document.getElementById('continue-att').addEventListener('click', () => { Telemetry.event('continue', {}); startAt('school'); });
+// Pass 10: the school takes a while to load, and the end card used to sit there with no sign of it (the playtest's
+// "crash" may have been this). The button says so, and a failure says what to do.
+document.getElementById('continue-att').addEventListener('click', async (e) => {
+  const btn = e.currentTarget, note = document.getElementById('end-log-note');
+  if (btn.disabled) return;
+  Telemetry.event('continue', {});
+  const label = btn.textContent; btn.disabled = true; btn.textContent = 'Loading chapter one\u2026';
+  note.textContent = refs.att ? '' : 'Loading the school. This can take a little while.';
+  const ok = await startAt('school');
+  btn.disabled = false; btn.textContent = label;
+  if (!ok) note.textContent = 'Chapter one did not load. Your place is saved: reload the page and choose Continue.';
+});
 document.getElementById('scene-go').addEventListener('click', () => startAt(document.getElementById('scene-select').value));
 document.getElementById('scene-go-p').addEventListener('click', () => startAt(document.getElementById('scene-select-p').value));
 document.getElementById('again-skip').addEventListener('click', () => { endEl.hidden = true; game.playStart = 0; Telemetry.chapter('prologue'); seen.clear(); clearLetters(); startPlay('start'); });
@@ -7144,8 +7555,10 @@ function frame(now) {
   if (refs.cull && (Math.floor(now / 100) !== frame.lastCull)) { frame.lastCull = Math.floor(now / 100); updateCulling(); }
   step(dt);
   Telemetry.tick(rawDt);
+  Resume.tick();
   grain.uniforms.uTime.value = (now / 1000) % 100;
   if (!dbg.hidden) dbg.textContent = `mode ${game.mode}\nframe ${game.frame.toFixed(0)}  fps ${fpsAvg.toFixed(0)}\nx ${game.x.toFixed(2)}  y ${game.y.toFixed(2)}  vx ${game.vx.toFixed(2)}\nclip ${current}\ncrouch ${game.crouched}  ceiling ${ceilingAt(game.x).toFixed(2)}\ncheckpoint ${game.checkpoint}  released ${game.released}  door ${game.doorOpen.toFixed(2)}\nact ${game.act ? game.act.kind + ':' + game.act.phase : '-'}  autorun ${game.autorun}`;
+  if (window.__camOverride) window.__camOverride(camera);       // testing: a fixed look at something
   if (mixer) { updateLightPool(); composer.render(); }
   requestAnimationFrame(frame);
 }
@@ -7177,7 +7590,7 @@ function step(dt) {
         if (k > 0.02) [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, k * Math.max(0.25, 0.8 - Math.abs(game.x - 2) / 8)), i * 500));
       }
     }
-    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); updateAtt(dt); updateRingC(dt); updateHazards(dt); updateClockHands(dt); } updateSparks(dt); updateCurios(dt); updateWhite(dt); }
+    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); updateAtt(dt); updateRingC(dt); updateHazards(dt); updateClockHands(dt); } updateSparks(dt); updateCurios(dt); Glints.update(dt); Pips.update(); updateWhite(dt); }
     if (game.mode === 'play') syncRide();
     updateCharacter(dt, game.mode === 'play');
     placeWeight(dt);
@@ -7190,7 +7603,7 @@ function step(dt) {
 }
 
 // Test hook for automated traversal checks.
-window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR, UO, UPONLY, CG, ATT }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
+window.__dl01 = { game, world: scene, THREE, Glints, Letters, Pips, Resume, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR, UO, UPONLY, CG, ATT }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
   clip: () => current, renderer, limits: () => [leftLimit(), rightLimit()], playVoice: (id) => Voice.play(voiceById(id)), voice: () => Voice.playing(), carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
   crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), nearAll, auditNear, startAt, cps: CHECKPOINTS, cpOrder: CP_ORDER, offsets: { OFF2, OFF3, OFF4, OFF5 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
   k: { CART1, PIT, SH, RK, HP, RAIL7, CG, DIP9, DUCT9, GATE_X, DOCK_X, PAWL_X, GALLERY, T4_HALF, PUSH_GAP4, GRIP_FWD, SLOTS, LETTERS: LETTERS.map((l) => ({ id: l.id, x: l.x })) } };
@@ -7233,7 +7646,7 @@ function updateLightPool() {
     l.getWorldPosition(_lp);
     const reach = l.distance > 0 ? l.distance : 30, gap = Math.max(0, Math.abs(_lp.x - cx) - reach);
     if (gap > 9) continue;                                                      // well out of frame, light and all
-    const score = (l === refs.kick ? 1e6 : 0) + l.intensity * (l.distance || 10) / (1 + gap * gap + 0.05 * (_lp.x - cx) ** 2);
+    const score = (l === refs.kick ? 1e6 : l.userData.boost ? 1e5 : 0) + l.intensity * (l.distance || 10) / (1 + gap * gap + 0.05 * (_lp.x - cx) ** 2);
     (l.isSpotLight ? (l.castShadow ? want.spotShadow : want.spot) : want.point).push({ l, score });
   }
   // Shadowed spots beyond the shadow slots still light, without their shadow.
@@ -7282,6 +7695,7 @@ function boot() {
     warmUp();
     loadStatus.textContent = 'Ready'; loadStatus.classList.add('ok');
     beginBtn.disabled = false; document.getElementById('scene-go').disabled = false; beginBtn.focus();
+    Resume.offer();
     captureChest(); camera.position.copy(cam.start); camera.lookAt(cam.chest); camera.setFocalLength(50); applyLights(0);
   }).catch((err) => {
     console.error(err);
