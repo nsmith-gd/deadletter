@@ -62,14 +62,16 @@ GRILLE_AT = (20.62, -0.92, 0.0, 28.0)             # the torn-off grille on the f
 CLIMBER = ((19.95, -1.05, 0.0), 172.0)            # fallen back off the table: (loc, turn)
 KNOCKED = ((19.32, -0.72, 0.0), 0.6)              # the stool they climbed from, on its side: (loc, its turn)
 STOOL_GONE = (18.14, 0.40)                        # art/pass4's stool at the table's end: taken to climb from
-DOOR_SITTERS = [((18.06, 0.775, 0.0), -78.0, 0.85, 'floor', 'rag', True),     # against the bulkhead: (loc, turn, knees,
-                ((17.6, 0.79, 0.0), -104.0, 0.7, 'chest', 'apron', False)]    #  skull, coat, cap)
+DOOR_SITTERS = [((18.06, 0.775, 0.0), -78.0, 0.85, 'floor', 'rag', True, 0.0),       # against the bulkhead: (loc, turn,
+                ((17.6, 0.79, 0.0), -104.0, 0.55, 'lap', 'apron', False, 0.6)]      #  knees, skull, coat, cap, lean)
 PRY_BAR = ((18.36, 0.30, 0.012), (18.92, 0.12, 0.012))
-TEA_PAIR = ((16.37, 1.2, 0.035), 180.0)           # lying together on mailbags in the alcove, heads to its right end
-TEA_CURLED = ((14.86, 0.72, 0.035), 180.0)        # curled at their feet, in front of the tube station
+TEA_SEATED = [((16.97, 1.54, 0.04), -96.0, 0.5, 'floor', 'cloth', 0.0),   # sat down together against the alcove's
+              ((16.45, 1.54, 0.04), -84.0, 0.3, 'lap', 'apron', 0.75)]  # back wall, on mailbags, one slumped onto the other
+                                                                        # (loc, turn, knees, skull, coat, lean)
+TEA_LYING = ((15.66, 0.9, 0.035), 200.0)          # lying with their head in the other's lap, out under the tea table
 CRATE_GONE = (16.55, 1.25)                        # art/sorting_hall's upturned crate (in TeaTable): taken for a pillow
-MAILBAGS = [(15.72, 1.0, 0.1), (15.78, 1.45, -0.08), (16.42, 0.98, -0.05), (16.45, 1.44, 0.07), (17.0, 1.02, 0.12),
-            (17.0, 1.45, -0.1), (14.62, 0.74, 0.25), (15.25, 0.8, -0.2)]
+MAILBAGS = [(16.95, 1.42, 0.05, 0.0), (16.42, 1.44, -0.06, 0.0), (16.2, 1.12, 0.35, 0.0), (15.6, 0.9, 0.3, 0.0),
+            (15.0, 0.68, 0.4, 0.0), (15.9, 1.0, 0.25, 0.05)]      # (x, y, turn, z): emptied and laid down for a bed
 CANDLES = [(21.05, 0.615), (21.2, 0.62), (21.36, 0.612), (21.5, 0.62), (21.66, 0.616), (21.82, 0.62)]
 LORE_SCALE = 0.6
 
@@ -77,11 +79,12 @@ LORE_SCALE = 0.6
 # y 0.68; the drag line y 0.35 from x 51.47 to 55.63; the drum y 0.38 up to x 56.25; the hatch 56.6).
 SHROUD_OF = {'RationDead01': 'flat', 'RationDead02': 'flat_hand', 'RationDead03': 'flat', 'RationDead04': 'flat_hand_r',
              'RationDead05': 'flat_hand', 'RationDead07': 'flat_child', 'RationDead08': 'flat', 'RationDead09': 'flat'}
-LAST = ((52.02, 1.86, 0.0), -90.0)                # RationDead06: the last one, uncovered, feet to the camera
-FOLDED = (52.62, 2.42, 0.0, 6.0)                  # the folded sheet beside them: x, y, z, turn
-QUEUE = [((50.02, 0.9, 0.0), 3.0, 1.0), ((50.8, 0.9, 0.0), -2.0, 2.0), ((51.57, 0.92, 0.0), 4.0, 3.0),
-         ((52.36, 0.9, 0.0), -3.0, 4.0)]           # seated in line toward the counter's end: (loc, turn, seed)
-TALLY = (55.25, 56.35, 1.02, 1.6)                 # x0, x1, z0, z1 on the servery's back wall, by the hatch
+ROW_Y = 2.12                                      # the row moved back from 1.985 to clear room in front for the queue
+LAST = ((52.02, 2.1, 0.0), -90.0)                 # RationDead06: the last one, uncovered, feet to the camera
+FOLDED = (52.6, 2.55, 0.0, 6.0)                   # the folded sheet beside them: x, y, z, turn
+QUEUE = [((50.38, 0.95, 0.0), 2.0, 1.0), ((51.32, 0.94, 0.0), -3.0, 2.0), ((52.26, 0.95, 0.0), 3.0, 3.0)]
+                                                  # seated in line toward the counter's end: (loc, turn, seed)
+TALLY = (55.28, 56.3, 1.12, 1.62)                # x0, x1, z0, z1 on the servery's back wall, by the hatch
 
 FOOT_GRIP = []                                    # filled by rebuild_body: RationBody's foot (x, y, z from its origin)
 
@@ -274,16 +277,17 @@ def build_dl02(coll):
     P = R.painted()
     (loc, turn) = CLIMBER
     R.add(P, 'fallen', R.xform(loc, turn), seed=21.0, coat='apron', trousers='cloth')
-    for k, (loc, turn, knees, skull, coat, cap) in enumerate(DOOR_SITTERS):
-        R.add(P, 'seated', R.xform(loc, turn), seed=22.0 + k, support=True, knees=knees, skull=skull, arms='hip', coat=coat, cap=cap)
-    (loc, turn) = TEA_PAIR
-    R.add(P, 'pair', R.xform(loc, turn), seed=24.0, coat='cloth', b=dict(coat='apron'))
-    (loc, turn) = TEA_CURLED
-    R.add(P, 'curled', R.xform(loc, turn), seed=25.0, coat='apron')
-    for (x, y, a) in MAILBAGS:                       # mailbags emptied and laid down for a bed
-        P.add('bag', lambda bm, x=x, y=y, a=a: rounded_box((0.74, 0.46, 0.05), Vector((x, y, 0.022)), p=2.2, cuts=4,
-                                                           dents=((0.01, 5.0), (0.004, 12.0)), seed=x + y, bm=bm, mat=0,
-                                                           rot=Matrix.Rotation(a, 4, 'Z')), size=0.5)
+    for k, (loc, turn, knees, skull, coat, cap, lean) in enumerate(DOOR_SITTERS):
+        R.add(P, 'seated', R.xform(loc, turn), seed=22.0 + k, support=True, knees=knees, skull=skull, arms='hip', coat=coat, cap=cap,
+              lean=lean)
+    for k, (loc, turn, knees, skull, coat, lean) in enumerate(TEA_SEATED):
+        R.add(P, 'seated', R.xform(loc, turn), seed=24.0 + k, support=True, knees=knees, skull=skull, coat=coat, lean=lean)
+    (loc, turn) = TEA_LYING
+    R.add(P, 'lying', R.xform(loc, turn), seed=26.0, arms='chest', coat='rag', legs='bent')
+    for (x, y, a, z) in MAILBAGS:
+        P.add('bag', lambda bm, x=x, y=y, a=a, z=z: rounded_box((0.74, 0.46, 0.05), Vector((x, y, 0.022 + z)), p=2.2, cuts=4,
+                                                                  dents=((0.01, 5.0), (0.004, 12.0)), seed=x + y, bm=bm, mat=0,
+                                                                  rot=Matrix.Rotation(a, 4, 'Z')), size=0.5)
     # The stool they climbed from, knocked over in front of the table.
     (kx, ky, kz), ka = KNOCKED
     Rk = Matrix.Translation((kx, ky, 0.15)) @ Matrix.Rotation(ka, 4, 'Z') @ Matrix.Rotation(math.radians(-88), 4, 'Y') @ \
@@ -389,6 +393,8 @@ def build_dl05(coll):
             meshes[kind] = P.mesh('RationShroudFlat_' + kind, 'RemainsMat')
         old = ob.data
         ob.data = meshes[kind]
+        if abs(ob.location.y - 1.985) < 0.01:
+            ob.location.y = ROW_Y
         if old.users == 0:
             bpy.data.meshes.remove(old)
     gone += delete(['RationDead06'])
@@ -397,8 +403,8 @@ def build_dl05(coll):
     R.add(P, 'lying', R.xform(loc, turn), seed=41.0, arms='chest', coat='cloth', trousers='cloth', boots=False)
     _folded_sheet(P, *FOLDED)
     for (loc, turn, seed) in QUEUE:
-        R.add(P, 'seated', R.xform(loc, turn), seed=50.0 + seed, support=False, bowl=True,
-              skull=('chest' if int(seed) % 2 else 'lap'), coat=('cloth' if int(seed) % 3 else 'rag'), knees=0.6)
+        R.add(P, 'seated', R.xform(loc, turn), seed=50.0 + seed, support=False, bowl=True, detail=0.8,
+              skull=('floor' if int(seed) == 3 else 'chest' if int(seed) == 2 else 'lap'), lean=[0.0, 0.3, -0.25][int(seed) - 1], coat=('cloth' if int(seed) % 3 else 'rag'), knees=0.6)
     ob = P.obj('TableauDL05Remains', 'RemainsMat', coll)
     build_tally(coll)
     rebuild_body()

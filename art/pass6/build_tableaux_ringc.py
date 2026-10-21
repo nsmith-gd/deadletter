@@ -277,13 +277,14 @@ def draped(P, pose, M2, ground, seed, **opts):
 # DL-10: the queue
 # =====================================================================================================================
 
-QUEUE_Y = 0.47                         # the line they sat in, behind the lane (the lane: y -0.32 .. 0.16)
+QUEUE_Y = 0.5                          # the line they sat in, behind the lane
+LANE_BACK = 0.16                       # the lane's back edge in DL-10 (y -0.32 .. 0.16)
 # Who sat where, from the head of the queue: (x of the seat's centre, seat, the remains' opts, seed).
 # Seats: ('flat', L, W, H, body) a suitcase lying flat; ('stack', ...) two; ('trunk', L, W, H); ('crate', L, W, H).
 QUEUE = [
-    (122.72, ('trunk', 0.62, 0.42, 0.4), dict(support=True, skull='lap', arms='lap', coat='cloth'), 1.0),
-    (121.86, ('stack', 0.58, 0.38, 0.19, 'LuggageLeather'), dict(support=True, skull='floor', arms='lap', coat='cloth'), 2.0),
-    (121.0, ('flat', 0.6, 0.38, 0.22, 'LuggageCanvas'), dict(support=True, skull='chest', arms='hip', coat='rag'), 3.0),
+    (122.72, ('trunk', 0.6, 0.42, 0.4), dict(support=True, skull='lap', arms='lap', coat='cloth'), 1.0),
+    (121.86, ('stack', 0.56, 0.38, 0.19, 'LuggageLeather'), dict(support=True, skull='floor', arms='lap', coat='cloth'), 2.0),
+    (121.0, ('flat', 0.56, 0.38, 0.22, 'LuggageCanvas'), dict(support=True, skull='chest', arms='hip', coat='rag'), 3.0),
     (120.12, ('crate', 0.5, 0.4, 0.34), dict(support=True, skull='lap', arms='lap', coat='cloth', cap=True), 4.0),
     (119.3, ('flat', 0.56, 0.36, 0.2, 'LuggageLeather'), dict(support=False, skull='floor', arms='lap', coat='rag', knees=0.15), 5.0),
 ]
@@ -393,17 +394,23 @@ def build_queue(coll):
     P = R.painted()
     coat = bmesh.new()
     for k, (x, seat, opts, seed) in enumerate(QUEUE):
-        y = QUEUE_Y + rnd.uniform(-0.03, 0.03)
+        y = QUEUE_Y + rnd.uniform(0.0, 0.03)
         build_seat(cases, x, y, seat, rnd)
         h = seat_height(seat)
         turn = rnd.uniform(-8, 8)                               # facing the gate (+x), each a little askew
-        M = Matrix.Translation((x - 0.02, y, DECK)) @ _rz(math.radians(turn))
-        if k % 2:
-            M = M @ Matrix.Diagonal((1, -1, 1, 1))
         o = dict(opts)
         if k == COAT_ON:
             o['skull'] = 'floor'
-        seated_on(P, M, h, seed, **o)
+        for flip in ((k % 2 == 1), (k % 2 == 0)):               # mirrored so nothing strays toward the lane
+            M = Matrix.Translation((x - 0.02, y, DECK)) @ _rz(math.radians(turn))
+            if flip:
+                M = M @ Matrix.Diagonal((1, -1, 1, 1))
+            Pk = R.painted()
+            seated_on(Pk, M, h, seed, **o)
+            if min(v.co.y for v in Pk.bm.verts) > LANE_BACK + 0.04:
+                break
+            print(f'tableaux_ringc: queue {k}: mirrored, it reached the lane')
+        P._merge(Pk.bm)
         if k == COAT_ON:
             child_coat(coat, (x + 0.22, y), math.radians(turn), DECK + h + 0.13, rnd)
     build_beside(cases, rnd)
@@ -554,6 +561,14 @@ WATER_Z = -0.1
 BANK = ((1.05, -0.9), (1.45, -0.66), (1.85, -0.42), (2.12, -0.22), (2.3, -0.1), (2.42, -0.05))   # (y, z): out of the water at the steps
 
 
+def lair_ground(y):
+    """The bank, and past its top the alley's steps (art/dl05: from y 2.4, 0.18 a step, tops at -0.1 + 0.2 (k + 1))."""
+    if y < 2.4:
+        return bank_z(y)
+    k = int((y - 2.4) / 0.18)
+    return -0.1 + 0.2 * (k + 1)
+
+
 def bank_z(y):
     pts = BANK
     if y <= pts[0][0]:
@@ -588,14 +603,14 @@ def build_lair(coll):
 
     P = R.painted()
     xc = (x0 + x1) / 2
-    ground = lambda x, y: bank_z(y)                                                     # noqa: E731
+    ground = lambda x, y: lair_ground(y)                                                # noqa: E731
     # One lying head up the bank, the skull out of the water at the steps' foot, the legs down into the deep.
-    draped(P, 'lying', Matrix.Translation((xc + 0.02, 1.62, 0.0)) @ _rz(math.radians(-90 + 6)), ground, 11.0, arms='folded',
+    draped(P, 'lying', Matrix.Translation((xc + 0.02, 1.76, 0.0)) @ _rz(math.radians(-90 + 6)), ground, 11.0, arms='folded',
            coat='rag', trousers='cloth', boots=True)
     # Strewn down into the water: a skull and its jaw, long bones, a pelvis, a rag.
     draped(P, 'scattered', Matrix.Translation((xc - 0.04, 2.05, 0.0)) @ _rz(math.radians(80)) @ Matrix.Diagonal((0.62, 0.55, 1, 1)),
            ground, 12.0, cloth_cell='rag')
-    draped(P, 'scattered', Matrix.Translation((xc + 0.03, 1.28, 0.0)) @ _rz(math.radians(-70)) @ Matrix.Diagonal((0.6, 0.6, 1, 1)),
+    draped(P, 'scattered', Matrix.Translation((xc + 0.03, 1.42, 0.0)) @ _rz(math.radians(-70)) @ Matrix.Diagonal((0.6, 0.6, 1, 1)),
            ground, 13.0, cloth_cell='cloth')
     # A skull on the first step, its jaw on the next one down (the bank); long bones across the step's edge.
     R.skull_on_floor(P, xc + 0.12, 2.5, yaw=math.radians(-120), roll=0.9, z=0.1, jaw=None)
@@ -603,7 +618,7 @@ def build_lair(coll):
     R.bone_on_floor(P, (xc - 0.2, 2.47), (xc + 0.02, 2.56), 0.013, z=0.1)
     R.bone_on_floor(P, (xc - 0.05, 2.28), (xc + 0.2, 2.2), 0.012, z=bank_z(2.24))
     for v in P.bm.verts:                                                                 # keep it inside the alley's walls
-        v.co.x = max(x0 - 0.12, min(x1 + 0.12, v.co.x))
+        v.co.x = max(x0 + 0.01, min(x1 - 0.01, v.co.x))
     ob = painted_obj('D5LairRemains', P, coll)
     report(ob, "DL-11: remains come apart on the lair's bank, half out of the water")
 
@@ -668,16 +683,15 @@ def build_outshot(coll):
         Mr = Matrix.Translation((cx, (y0 + y1) / 2 - 0.06, (z0 + z1) / 2 - 0.035 + 0.012 * (k % 2))) @ _rx(ang) @ _rz(math.radians((k - 1) * 1.2))
         tmp = bmesh.new()
         ribs = 7
-        verts = []
-        for i in range(ribs * 4 + 1):
-            xx = -w / 2 - 0.01 + (w + 0.02) * i / (ribs * 4)
-            zz = 0.012 * math.sin(i * math.pi / 2)
-            verts.append((tmp.verts.new((xx, -L / 2, zz)), tmp.verts.new((xx, L / 2, zz))))
-        for (a0, a1), (b0, b1) in zip(verts, verts[1:]):
-            tmp.faces.new((a0, b0, b1, a1)).material_index = TIN
-        for (a0, a1), (b0, b1) in zip(verts, verts[1:]):                                # its underside
-            tmp.faces.new((a1, b1, b0, a0)).material_index = TIN
-        bmesh.ops.translate(tmp, vec=(0, 0, 0.0), verts=tmp.verts)
+        for side, dz in ((1, 0.0), (-1, -0.004)):                                       # its top, and its underside
+            verts = []
+            for i in range(ribs * 4 + 1):
+                xx = -w / 2 - 0.01 + (w + 0.02) * i / (ribs * 4)
+                zz = 0.012 * math.sin(i * math.pi / 2) + dz
+                verts.append((tmp.verts.new((xx, -L / 2, zz)), tmp.verts.new((xx, L / 2, zz))))
+            for (a0, a1), (b0, b1) in zip(verts, verts[1:]):
+                f = tmp.faces.new((a0, b0, b1, a1) if side > 0 else (a1, b1, b0, a0))
+                f.material_index = TIN
         merge_bm(bm, tmp, Mr)
     for yy in (y0 + 0.05, y1 - 0.06):
         add_box(bm, ((x0 + x1) / 2, yy, roof_z(yy) - 0.06), (x1 - x0, 0.06, 0.06), mat=WD, rot=_rx(ang))
