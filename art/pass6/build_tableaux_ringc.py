@@ -4,8 +4,9 @@ pass 4 modules (art/dl01/build_dl01.py imports it once it exists). Every human r
 DL-10 Up Only. The last car went up and didn't come back.
   UOQueueRemains  They waited for it: five sets of remains seated on their cases in the waiting area behind the lane,
                   in a line facing the lift gate, in the order they queued (the head of the queue at the lift front).
-                  Collapsed where they sat: the coats slumped into the laps, the skulls dropped, the trouser legs
-                  over the cases' edges, the boots on the floor. One static object, RemainsMat.
+                  Collapsed where they sat, knees drawn up: the coats slumped, the skulls come to rest on the knees
+                  the heads were bowed onto, the jaws fallen to the floor, the boots on the floor; the last in line
+                  fallen sideways, the skull rolled off. One static object, RemainsMat.
   UOQueueCases    What they sat on: suitcases lying flat, a pair stacked, a trunk, a crate; a bundle or a holdall
                   beside some. Static; LuggageLeather, LuggageCanvas, DepotSteel, CrateWood.
   UOQueueCoat     A child's coat across the lap of the third in line: small, blue wool, its sleeves hanging either side,
@@ -15,9 +16,10 @@ DL-10 Up Only. The last car went up and didn't come back.
   (UOHandMarks) are removed (the director: they confused more than they told).
 DL-11 ring C. The water rose.
   D5Outshot112    They went up: C-112's lean-to coal store against its front, a ladder up to its sloping tin roof.
-  D5RoofRemains   On the roof, two together against the house wall, under one blanket, among what they carried up:
-                  bundles, a case, a lamp, a kettle; the high water's line on the wall above them (the water came
-                  over them). RemainsMat (the bundles, the blanket and the case are in its atlas too).
+  D5RoofRemains   On the roof, two together, side by side with their backs to the house wall, knees drawn up, the
+                  skulls fallen forward onto them, among what they carried up: a bundle, a holdall, a case, a lamp,
+                  a kettle. The roof stands just under the high water's line (1.4). RemainsMat (the bundles and the
+                  case are in its atlas too).
   D5RaftEmpty     The lashed table raft (pass 4's D5Raft, cut out of D5Street), empty, caught against the slot's
                   front wall, one edge riding up it.
   D5LairBank      The White's lair (pass 4's D5Lair, cut out of D5Street): the bank of silt at the alley's flooded
@@ -210,15 +212,19 @@ def _islands(bm):
     return out
 
 
-def seated_on(P, M, h, seed, half_y=0.27, knee=0.42, **opts):
+def seated_on(P, M, h, seed, half_y=0.27, head='knees', jaw_dx=0.3, **opts):
     """remains.py's 'seated' (on the floor, facing +x), lifted onto a seat h high: what lay on the floor round the
     figure (a skull rolled off, small bones) stays on the floor; the rest is raised; past the knee the shins and boots
     swing down over the seat's front edge onto the floor; the coat's skirts beyond the seat's sides (half_y) hang down
-    them. Then placed by M."""
+    them. head='knees': the skull has come to rest on the drawn-up knees, the head bowed onto them as it was, the jaw
+    fallen to the floor in front of the seat (pass skull='none'). Then placed by M. Returns the knees' top (local)."""
     Q = R.painted()
     o = dict(knees=0.0)
     o.update(opts)
+    if head == 'knees':
+        o['skull'] = 'none'
     R.add(Q, 'seated', None, seed, **o)
+    rnd = random.Random(int(seed * 31) + 7)
     bm = Q.bm
     bm.verts.index_update()
     floor = set()
@@ -228,6 +234,7 @@ def seated_on(P, M, h, seed, half_y=0.27, knee=0.42, **opts):
         cy = sum(v.co.y for v in isl) / len(isl)
         if max(zs) < 0.16 and (abs(cy) > half_y - 0.02 or cx < -0.24) and len(isl) < 400:
             floor.update(v.index for v in isl)
+    knee = 0.42 - 0.1 * o['knees']                           # remains.py's knee (x, z)
     kz = 0.06 + 0.2 * o['knees']
     piv = Vector((knee, 0.0, kz + h))
 
@@ -258,7 +265,13 @@ def seated_on(P, M, h, seed, half_y=0.27, knee=0.42, **opts):
     ang = lo
     for v in lifted:
         v.co = place(v.co, ang)
+    top = max([v.co.z for v in lifted if abs(v.co.x - knee) < 0.1 and abs(v.co.y) < 0.16] or [h + kz])
+    if head == 'knees':
+        R.skull_on_floor(Q, knee - 0.05 + rnd.uniform(-0.02, 0.02), rnd.uniform(-0.04, 0.04), yaw=rnd.uniform(-0.5, 0.5),
+                         roll=rnd.uniform(-0.35, 0.35), pitch=rnd.uniform(0.5, 0.9), z=top - 0.035)
+        R.jaw_on_floor(Q, knee + jaw_dx + rnd.uniform(0, 0.08), rnd.uniform(-0.12, 0.12), rnd.uniform(0, 6.28))
     R._merge_into(P, Q, M)
+    return top
 
 
 def draped(P, pose, M2, ground, seed, **opts):
@@ -282,11 +295,11 @@ LANE_BACK = 0.16                       # the lane's back edge in DL-10 (y -0.32 
 # Who sat where, from the head of the queue: (x of the seat's centre, seat, the remains' opts, seed).
 # Seats: ('flat', L, W, H, body) a suitcase lying flat; ('stack', ...) two; ('trunk', L, W, H); ('crate', L, W, H).
 QUEUE = [
-    (122.72, ('trunk', 0.6, 0.42, 0.4), dict(support=True, skull='lap', arms='lap', coat='cloth'), 1.0),
-    (121.86, ('stack', 0.56, 0.38, 0.19, 'LuggageLeather'), dict(support=True, skull='floor', arms='lap', coat='cloth'), 2.0),
-    (121.0, ('flat', 0.56, 0.38, 0.22, 'LuggageCanvas'), dict(support=True, skull='chest', arms='hip', coat='rag'), 3.0),
-    (120.12, ('crate', 0.5, 0.4, 0.34), dict(support=True, skull='lap', arms='lap', coat='cloth', cap=True), 4.0),
-    (119.3, ('flat', 0.56, 0.36, 0.2, 'LuggageLeather'), dict(support=False, skull='floor', arms='lap', coat='rag', knees=0.15), 5.0),
+    (122.74, ('trunk', 0.6, 0.42, 0.4), dict(head='knees', support=False, knees=1.0, arms='lap', coat='cloth'), 1.0),
+    (121.88, ('stack', 0.56, 0.38, 0.19, 'LuggageLeather'), dict(head='knees', support=False, knees=0.9, arms='lap', coat='bag'), 2.0),
+    (121.02, ('flat', 0.56, 0.38, 0.24, 'LuggageCanvas'), dict(head='knees', support=False, knees=1.0, arms='lap', coat='apron'), 3.0),
+    (120.16, ('crate', 0.5, 0.4, 0.34), dict(head='knees', support=False, knees=1.0, arms='lap', coat='cloth', cap=True), 4.0),
+    (119.3, ('flat', 0.56, 0.36, 0.22, 'LuggageLeather'), dict(head='none', support=False, knees=0.7, arms='hip', coat='rag', skull='floor'), 5.0),
 ]
 COAT_ON = 1                            # the child's coat is across the lap of QUEUE[1]
 LEA, CAN, STL, WOOD = range(4)
@@ -399,20 +412,25 @@ def build_queue(coll):
         h = seat_height(seat)
         turn = rnd.uniform(-8, 8)                               # facing the gate (+x), each a little askew
         o = dict(opts)
-        if k == COAT_ON:
-            o['skull'] = 'floor'
+        head = o.pop('head')
         for flip in ((k % 2 == 1), (k % 2 == 0)):               # mirrored so nothing strays toward the lane
             M = Matrix.Translation((x - 0.02, y, DECK)) @ _rz(math.radians(turn))
             if flip:
                 M = M @ Matrix.Diagonal((1, -1, 1, 1))
             Pk = R.painted()
-            seated_on(Pk, M, h, seed, **o)
+            top = seated_on(Pk, M, h, seed, head=head, **o)
             if min(v.co.y for v in Pk.bm.verts) > LANE_BACK + 0.04:
                 break
-            print(f'tableaux_ringc: queue {k}: mirrored, it reached the lane')
+        for isl in _islands(Pk.bm):                             # a bone strayed toward the lane: back behind its edge
+            lo = min(v.co.y for v in isl)
+            if lo < LANE_BACK + 0.04:
+                for v in isl:
+                    v.co.y += LANE_BACK + 0.04 - lo
         P._merge(Pk.bm)
-        if k == COAT_ON:
-            child_coat(coat, (x + 0.22, y), math.radians(turn), DECK + h + 0.13, rnd)
+        if k == COAT_ON:                                        # over the thighs, under the bowed head
+            knee = 0.42 - 0.1 * o.get('knees', 0.0)
+            c = M @ Vector((knee - 0.16, 0.0, 0.0))
+            child_coat(coat, (c.x, c.y), math.radians(turn), DECK + top - 0.05, rnd)
     build_beside(cases, rnd)
     oc = obj('UOQueueCases', cases, QUEUE_MATS, coll, sharp=40)
     orr = painted_obj('UOQueueRemains', P, coll)
@@ -605,8 +623,8 @@ def build_lair(coll):
     xc = (x0 + x1) / 2
     ground = lambda x, y: lair_ground(y)                                                # noqa: E731
     # One lying head up the bank, the skull out of the water at the steps' foot, the legs down into the deep.
-    draped(P, 'lying', Matrix.Translation((xc + 0.02, 1.76, 0.0)) @ _rz(math.radians(-90 + 6)), ground, 11.0, arms='folded',
-           coat='rag', trousers='cloth', boots=True)
+    draped(P, 'lying', Matrix.Translation((xc + 0.02, 1.64, 0.0)) @ _rz(math.radians(-90 + 6)), lambda x, y: min(lair_ground(y), 0.1),
+           11.0, arms='folded', coat='rag', trousers='cloth', boots=True)
     # Strewn down into the water: a skull and its jaw, long bones, a pelvis, a rag.
     draped(P, 'scattered', Matrix.Translation((xc - 0.04, 2.05, 0.0)) @ _rz(math.radians(80)) @ Matrix.Diagonal((0.62, 0.55, 1, 1)),
            ground, 12.0, cloth_cell='rag')
@@ -629,9 +647,9 @@ def build_lair(coll):
 
 C112 = (151.05, 153.5)
 OUT_X = (152.3, 153.42)                 # the lean-to against C-112's front (over its boarded window's lower half)
-OUT_Y = (0.46, 0.995)                   # its front wall's face .. the house's face
-OUT_Z = (1.06, 1.46)                    # its roof: at the eave (front) .. at the house wall
-LADDER = ((152.5, 0.24, 0.0), (152.43, 0.47, 1.4))   # foot, top (against the eave and up past it)
+OUT_Y = (0.33, 0.995)                   # its front wall's face .. the house's face
+OUT_Z = (1.0, 1.42)                     # its roof: at the eave (front) .. at the house wall
+LADDER = ((152.52, 0.19, 0.0), (152.46, 0.33, 1.3))   # foot, top (against the eave and up past it)
 
 
 def roof_z(y):
@@ -645,7 +663,7 @@ def roof_drape(y):
     """The roof, and past its eave a fall (what hangs over the edge hangs down)."""
     if y >= OUT_Y[0]:
         return roof_z(y)
-    return OUT_Z[0] - (OUT_Y[0] - y) * 2.5
+    return OUT_Z[0] - (OUT_Y[0] - y) * 1.2
 
 
 def build_outshot(coll):
@@ -660,7 +678,7 @@ def build_outshot(coll):
     T = 0.1
     uo.bx(bm, (x0, x0 + 0.3), (y0, y0 + T), (0.0, z0 - 0.02), PL, 0.01)
     uo.bx(bm, (x1 - 0.12, x1), (y0, y0 + T), (0.0, z0 - 0.02), PL, 0.01)
-    uo.bx(bm, (x0 + 0.3, x1 - 0.12), (y0, y0 + T), (0.92, z0 - 0.02), PL, 0.01)
+    uo.bx(bm, (x0 + 0.3, x1 - 0.12), (y0, y0 + T), (0.62, z0 - 0.02), PL, 0.01)
     for xa, xb in ((x0, x0 + T), (x1 - T, x1)):
         prof = [(y0, 0.0), (y1, 0.0), (y1, z1 - 0.02), (y0, z0 - 0.02)]
         vs = [[bm.verts.new((xx, yy, zz)) for yy, zz in prof] for xx in (xa, xb)]
@@ -669,11 +687,11 @@ def build_outshot(coll):
         for i in range(4):
             j = (i + 1) % 4
             bm.faces.new((vs[0][i], vs[0][j], vs[1][j], vs[1][i])).material_index = PL
-    # The plank door, shut, in the front.
+    # The coal hatch, low in the front: planks in a frame, its bolt.
     for k in range(4):
-        uo.bx(bm, (x0 + 0.3 + 0.002 + k * 0.1, x0 + 0.3 + 0.098 + k * 0.1), (y0 + 0.03, y0 + 0.06), (0.02, 0.9), WD, 0.004)
-    uo.bx(bm, (x0 + 0.32, x1 - 0.14), (y0 + 0.01, y0 + 0.03), (0.6, 0.66), WD, 0.004)
-    add_cyl(bm, (x1 - 0.2, y0 - 0.0, 0.5), (x1 - 0.2, y0 - 0.03, 0.5), 0.012, seg=6, mat=STL)
+        uo.bx(bm, (x0 + 0.3 + 0.002 + k * 0.1, x0 + 0.3 + 0.098 + k * 0.1), (y0 - 0.02, y0 + 0.01), (0.08, 0.6), WD, 0.004)
+    uo.bx(bm, (x0 + 0.32, x1 - 0.14), (y0 - 0.03, y0 - 0.015), (0.3, 0.36), WD, 0.004)
+    add_cyl(bm, (x1 - 0.2, y0 - 0.03, 0.4), (x1 - 0.2, y0 - 0.06, 0.4), 0.012, seg=6, mat=STL)
     # The roof: corrugated tin sheets on two purlins, lapped, overhanging the front; a batten along the wall.
     L = (y1 - y0 + 0.12) / math.cos(ang)
     n = 3
@@ -717,21 +735,21 @@ def build_roof_remains(coll):
     P = R.painted()
     ground = lambda x, y: roof_drape(y)                                                 # noqa: E731
     yb = OUT_Y[1] - 0.16
-    # Seated with their backs to the wall, facing the street (-y), close: the second's shoulder against the first's.
-    for k, (x, seed, o) in enumerate(((152.66, 21.0, dict(support=True, skull='lap', knees=1.0, coat='cloth', arms='lap')),
-                                      (153.07, 22.0, dict(support=True, skull='chest', knees=0.9, coat='rag', arms='lap', boots=True)))):
-        M2 = Matrix.Translation((x, yb, 0.0)) @ _rz(math.radians(-90 + (6 if k else -6)))
+    # Seated with their backs to the wall, facing the street (-y), close: knees drawn up, heads bowed onto them.
+    for k, (x, seed, o) in enumerate(((152.7, 21.0, dict(head='knees', support=True, knees=1.0, coat='cloth', arms='lap')),
+                                      (153.04, 22.0, dict(head='knees', support=True, knees=1.0, coat='bag', arms='lap')))):
+        M2 = Matrix.Translation((x, yb, 0.0)) @ _rz(math.radians(-90 + (5 if k else -5)))
         if k:
             M2 = M2 @ Matrix.Diagonal((1, -1, 1, 1))
-        draped(P, 'seated', M2, ground, seed, **o)
-    # One blanket over both laps, its edge hanging over the eave.
-    caps = []
-    line = [(152.42, yb - 0.32), (152.86, yb - 0.35), (153.3, yb - 0.31)]
-    Q = R.painted()
-    R.panel(Q, 'sheet', line, 0.18, 0.16, caps, seed=3.0, ny=4, fill=0.03)
-    for v in Q.bm.verts:
-        v.co.z += roof_z(v.co.y) + 0.12 + 0.05 * math.exp(-((v.co.y - (yb - 0.33)) / 0.08) ** 2)
-    P._merge(Q.bm)
+        Q = R.painted()
+        head = o.pop('head')
+        seated_on(Q, Matrix.Identity(4), 0.0, seed, head=head, jaw_dx=-0.02, **o)
+        bmesh.ops.transform(Q.bm, matrix=M2, verts=Q.bm.verts[:])
+        if M2.to_3x3().determinant() < 0:
+            bmesh.ops.reverse_faces(Q.bm, faces=Q.bm.faces[:])
+        for v in Q.bm.verts:
+            v.co.z += ground(v.co.x, v.co.y)
+        P._merge(Q.bm)
     # What they carried up: a bundle in a sheet, a holdall, a case on its side, a lamp, a kettle.
     def at(x, y, dz=0.0):
         return Vector((x, y, roof_z(y) + dz))
@@ -750,10 +768,6 @@ def build_roof_remains(coll):
     k0 = at(152.36, 0.6, 0.0)
     P.add('paper', lambda bm: add_cyl(bm, k0, k0 + Vector((0, 0, 0.11)), 0.08, 0.06, mat=0, seg=10), size=0.2)          # a kettle
     P.add('dark', lambda bm: add_cyl(bm, k0 + Vector((0.07, 0, 0.03)), k0 + Vector((0.14, 0, 0.09)), 0.015, 0.008, mat=0, seg=5), size=0.1)
-    # A rope from the case's handle round them both: they tied themselves to what they had.
-    pts = [at(152.87, 0.86, 0.36), at(152.5, 0.78, 0.3), at(152.42, 0.66, 0.24), at(152.7, 0.58, 0.22), at(153.1, 0.6, 0.2),
-           at(153.28, 0.72, 0.3), at(152.87, 0.86, 0.36)]
-    P.add('rope', lambda bm: __import__('build_ration_hall').sweep(bm, pts, 0.008, seg=4), size=0.1)
     ob = painted_obj('D5RoofRemains', P, coll)
     report(ob, "DL-11: two together on the coal store's roof, among what they carried up")
 
@@ -765,7 +779,7 @@ def build_roof_remains(coll):
 def build_seal_floor(coll):
     """The ledge's paving ends at the barricade's front (x 134.25) and the street's lane starts behind it (135.0): the
     crawl gap had nothing under it. A slab of the same paving, its sill worn, and grit swept against the posts."""
-    x0, x1 = 134.2, 135.06
+    x0, x1 = 134.25, 135.0                    # the ledge's paving ends at 134.25, the lane begins at 135.0
     bm = bmesh.new()
     add_box(bm, ((x0 + x1) / 2, 0.25, -0.15), (x1 - x0, 2.0, 0.3), mat=0)
     add_box(bm, (134.62, 0.25, -0.004), (0.012, 2.0, 0.012), mat=0)                       # a paving joint
@@ -796,8 +810,8 @@ def remove_namecards():
 # The stair: up the hall's back wall, from beside the living room's doorway (its foot) to the upper floor over the
 # front door (its top, out of the frame's top), steep, as cramped houses' are; the coats, the photograph and the
 # switch stay clear under it.
-STAIR_X = (158.3, 159.86)                  # top (left) .. foot (right)
-STAIR_Y = (0.4, 0.985)                     # its open side (the banister) .. the back wall
+STAIR_X = (158.3, 159.8)                  # top (left) .. foot (right)
+STAIR_Y = (0.44, 0.985)                    # its open side (the banister) .. the back wall
 STAIR_TOP = 2.62                           # the upper floor (art/dl05 UPPER[0])
 
 

@@ -80,9 +80,9 @@ NEW_BOX = (170.72, 170.98, 1.30, 1.62)  # the new splice box beside it
 
 # Secret room A: behind the sorting floor's back wall (SortingWall: x 63..69.4, y 1.56..1.68, z 0..5).
 SORT_WALL = (1.56, 1.68)
-HOLE_A = (66.50, 67.30, 0.95)           # the hole: x0, x1, height
+HOLE_A = (66.52, 67.22, 0.8)            # the hole: x0, x1, height
 ROOM_A = (65.30, 68.70, 1.68, 4.35, 2.45)   # x0, x1, y0 (the wall's back face), y1 (back wall face), ceiling
-CHAIR_A = (67.55, 3.52, 8.0)            # x, y, turn (degrees from facing +y, toward -x)
+CHAIR_A = (67.72, 3.35, -72.0)          # x, y, turn (degrees from facing +y, toward -x): he faces the right wall's unfinished row
 
 # Secret room B: behind the tunnel's back wall (G4TunnelBack: x 106.6..112, y 1.37..1.47, z 1.6..4.0; tiles at 1.36).
 DECK = 1.6
@@ -98,14 +98,14 @@ TUN_FLOOR_Y1 = 1.8                      # G4TunnelFloor runs back to here under 
 # New materials the game needs entries for (see the report): as index.html's tables.
 NEW_PLAIN = {
     'NewCable': ((0.016, 0.016, 0.018), 0.28, 0.0),      # new rubber-sheathed cable: blacker and glossier than 'Cable'
-    'NewSteel': ((0.46, 0.48, 0.5), 0.32, 0.85),         # galvanised: the new clips, saddles and splice box
+    'NewSteel': ((0.26, 0.27, 0.28), 0.4, 0.8),          # galvanised: the new clips, saddles and splice box
 }
 NEW_EMIT = {       # name: (colour, strength), as index.html EMIT
     'EndWindowGlow': ((1.0, 0.64, 0.32), 9.0),
     'EndCurtainGlow': ((1.0, 0.42, 0.16), 3.2),
     'EndPilotLamp': ((1.0, 0.6, 0.18), 6.0),
     'SecretLampGlow': ((1.0, 0.78, 0.5), 6.0),
-    'DenLanternGlow': ((1.0, 0.58, 0.26), 4.0),
+    'DenLanternGlow': ((1.0, 0.55, 0.22), 2.5),
 }
 # Fallbacks for a lone run (the full build has them all, made by the earlier builders).
 FALLBACK_WORN = {
@@ -364,7 +364,7 @@ def atlas_image():
     d.rectangle((x0, y0, x1, y1), fill=(120, 112, 92))
     for i in range(0, 256, 6):
         d.line((x0 + i, y0, x0 + i, y1), fill=(100, 92, 74, 90))
-    d.rectangle((x0 + 50, y0 + 100, x1 - 50, y0 + 150), outline=(40, 40, 40, 160), width=5)
+    d.line((x0, y0 + 128, x1, y0 + 128), fill=(90, 84, 66), width=4)
     x0, y0, x1, y1 = ACELLS['paper']
     d.rectangle((x0, y0, x1, y1), fill=(196, 170, 120))
     x0, y0, x1, y1 = ACELLS['dark']
@@ -704,8 +704,9 @@ def build_landing(B):
             B.box((x0 + i * step, x0 + (i + 1) * step), (FY0 + start * step, FY0 + (prev + 1) * step), (-0.35, 0.0), 'Concrete')
             if j is not None:
                 start = prev = j
-    # The landing's front edge (a kerb, under his knee) and the drop in front of it to the lower lane.
-    B.box((x0 + 0.02, x1), (yf - 0.08, yf), (0.0, 0.07), 'Concrete')
+    # The street's kerb runs on to the end wall (dl05's stops at 174.9), and the slab's edge goes down into the dark.
+    B.box((174.9, x1), (-0.99, -0.85), (0.0, 0.16), 'Concrete')
+    B.box((x0, x1), (yf, yf + 0.35), (-2.8, -0.35), 'Concrete')
     # The parapet over the well: a low concrete upstand and an iron rail on posts (behind the lane).
     B.box((WELL[0], STAIR_X0 + 0.3), (RAIL_Y - 0.06, RAIL_Y + 0.1), (-0.35, 0.22), 'Concrete')
     x = WELL[0] + 0.15
@@ -739,7 +740,12 @@ def build_well(B):
     B.box((wx1, wx1 + T + 2.0), (LAND[2] - 0.1, wy1 + T), (3.6, WELL_TOP), 'RingPlasterA')
     B.box((wx0, wx1), (wy1, wy1 + T), (WELL_FLOOR - 0.3, WELL_TOP), 'RingPlasterA')
     B.box((lx0, lx1), (yb, wy1 + T), (WELL_FLOOR - 0.3, -0.35), 'Concrete')
-    B.box((lx0, wx1 + T + 2.0), (LAND[2] - 1.0, wy1 + T + 1.0), (WELL_TOP, WELL_TOP + 1.5), 'Concrete')      # the rock over all
+    B.box((lx0 - 0.3, wx1 + T + 2.0), (LAND[2] - 1.0, wy1 + T + 1.0), (WELL_TOP, WELL_TOP + 1.5), 'Concrete')      # the rock over all
+    # Over the landing the well goes up too, closed on the camera's side above what the side view sees (from 3.8 m), and on
+    # the left over C-114's roof: from the landing it is a shaft all round.
+    B.box((lx0 - 0.3, wx1 + T + 2.0), (LAND[2] - 0.75, LAND[2] - 0.35), (3.8, WELL_TOP), 'RingPlasterA')
+    B.box((lx0 - 0.3, lx0), (LAND[2] - 0.35, yb), (3.6, WELL_TOP), 'RingPlasterA')
+    B.box((lx0 - 0.3, wx1), (LAND[2] - 0.35, LAND[2] - 0.13), (3.62, 3.8), 'Concrete')        # its lintel over the landing
     # Under the landing, its slab end facing the well.
     B.box((wx0, wx1), (RAIL_Y - 0.06, RAIL_Y + 0.1), (WELL_FLOOR, -0.35), 'Concrete')
 
@@ -825,12 +831,12 @@ def build_window(B, coll):
     y = WELL[3]
     # The glass and the curtain: their own object, so the game can set the glow.
     G = Batch()
-    e = 0.12                                                   # set back in its reveal
-    G.quad([(cx - w / 2, y - 0.006 + e, z0), (cx + w / 2, y - 0.006 + e, z0), (cx + w / 2, y - 0.006 + e, z1),
-            (cx - w / 2, y - 0.006 + e, z1)], 'EndWindowGlow')
-    G.quad([(cx - w / 2 + 0.03, y - 0.02 + e, z0 + 0.06), (cx - w / 2 + 0.42, y - 0.02 + e, z0 + 0.06),
-            (cx - w / 2 + 0.36, y - 0.02 + e, z1 - 0.08), (cx - w / 2 + 0.03, y - 0.02 + e, z1 - 0.08)], 'EndCurtainGlow')
+    G.quad([(cx - w / 2, y - 0.004, z0), (cx + w / 2, y - 0.004, z0), (cx + w / 2, y - 0.004, z1), (cx - w / 2, y - 0.004, z1)], 'EndWindowGlow')
+    G.quad([(cx - w / 2 + 0.03, y - 0.012, z0 + 0.06), (cx - w / 2 + 0.42, y - 0.012, z0 + 0.06),
+            (cx - w / 2 + 0.36, y - 0.012, z1 - 0.08), (cx - w / 2 + 0.03, y - 0.012, z1 - 0.08)], 'EndCurtainGlow')
     G.done('EndWindowGlow', coll)
+    y -= 0.16                                                  # the reveal stands proud of the wall; the glass is set back in it
+    e = 0.16
     # The reveal, the frame and its cross, the sill, the plant on it.
     B.box((cx - w / 2 - 0.08, cx - w / 2), (y - 0.04, y + e), (z0, z1), 'HomePlaster')
     B.box((cx + w / 2, cx + w / 2 + 0.08), (y - 0.04, y + e), (z0, z1), 'HomePlaster')
@@ -1065,7 +1071,6 @@ def cut_sorting_wall():
         zs = [(M @ v.co).z for v in vs]
         ys = [(M @ v.co).y for v in vs]
         bmesh.ops.delete(bm, geom=gone, context='FACES')
-        mi = gone[0].material_index if gone else 0
         return wall_with_hole(bm, (min(xs), max(xs)), (min(ys), max(ys)), (min(zs), max(zs)), HOLE_A, 0)
     edit_world(ob, fn)
 
@@ -1125,8 +1130,8 @@ def _remains_in_chair(coll, x, y, turn, seat=0.44):
     lap's pile on the seat, the legs folded down over the seat's front edge, the boots fallen on the floor."""
     import remains as R
     Q = R.painted()
-    R.add(Q, 'seated', None, seed=3.7, support=True, knees=0.0, skull='lap', arms='lap', coat='cloth', trousers='cloth')
-    xf = 0.2                                                   # the seat's front edge, in the pose's frame
+    R.add(Q, 'seated', None, seed=3.7, support=True, knees=0.0, skull='chest', arms='lap', coat='cloth', trousers='cloth')
+    xf = 0.25                                                  # the seat's front edge, in the pose's frame
     ang = math.radians(78)
     for v in Q.bm.verts:
         if v.co.x > xf:
@@ -1138,7 +1143,7 @@ def _remains_in_chair(coll, x, y, turn, seat=0.44):
         if v.co.z < 0.012:
             v.co.z = 0.012 + (v.co.z - 0.012) * 0.05
     P = R.painted()
-    R._merge_into(P, Q, M_at(x, y, 0.0, turn + 90.0) @ Matrix.Translation((0.02, 0.0, 0.0)))
+    R._merge_into(P, Q, M_at(x, y, 0.0, turn + 90.0) @ Matrix.Translation((-0.05, 0.0, 0.0)))
     # A letter in the lap, the hand bones on it.
     import build_ration_hall as rh
     ob = P.obj('SecretARemains', 'RemainsMat', coll)
@@ -1159,11 +1164,14 @@ def build_room_a(coll):
     # The hole's reveal (the wall's cut edges are the rebuilt wall's), dust on the floor inside it.
     hx0, hx1, hz = HOLE_A
     # The panel: pulled off and leant back against the wall, over the hole's right side.
-    pw, ph = hx1 - hx0, hz
-    lean = math.radians(9)
-    Mp = Matrix.Translation((hx1 - 0.16 + pw / 2, SORT_WALL[0] - 0.17, 0.0)) @ Matrix.Rotation(lean, 4, 'X') @ Matrix.Rotation(math.radians(-4), 4, 'Z')
-    xform(B.box((-pw / 2, pw / 2), (-0.02, 0.0), (0.0, ph), 'WallPanel'), Mp)
-    xform(B.box((-pw / 2 + 0.04, pw / 2 - 0.04), (-0.026, -0.02), (ph * 0.45, ph * 0.5), 'WallPanel'), Mp)
+    # (a sheet 2 cm thick; leant on its long edge against the wall, foot out, turned so its edge shows)
+    pw, ph = hx1 - hx0 + 0.06, hz + 0.06
+    lean = math.radians(14)
+    Mp = Matrix.Translation((hx1 - 0.12, SORT_WALL[0] - 0.015 - ph * math.sin(lean), 0.0)) @ Matrix.Rotation(-lean, 4, 'X')
+    xform(B.box((0.0, pw), (-0.02, 0.0), (0.0, ph), 'WallPanel'), Mp)
+    xform(B.box((0.03, pw - 0.03), (-0.026, -0.02), (ph * 0.46, ph * 0.5), 'WallPanel'), Mp)       # its stiffener
+    for xx in (0.03, pw - 0.03):                                                                   # its bent screw tabs
+        xform(B.box((xx - 0.012, xx + 0.012), (-0.024, -0.02), (ph - 0.05, ph - 0.02), 'DepotSteel'), Mp)
     # Two envelopes dropped by the gap.
     for (ex, ey, a, c) in ((hx0 + 0.15, SORT_WALL[0] - 0.25, 20, 'env3'), (hx0 - 0.25, SORT_WALL[0] - 0.42, -35, 'env6')):
         M = M_at(ex, ey, 0.004, a)
@@ -1189,26 +1197,35 @@ def build_room_a(coll):
     B.painted('SecretAtlasMat', 'sack', lambda bm: rounded_box((0.46, 0.3, 0.12), ((cx0 + cx1) / 2, cy0 + 0.2, ct + 0.05),
                                                                 p=3.0, cuts=6, bm=bm, mat=0), size=0.5)
     # Ration tins in a neat pyramid by the way in (the right front corner), empty, labels long gone.
-    tx, ty = x1 - 0.3, y0 + 0.28
+    tx, ty = x1 - 0.32, y1 - 0.3
     for row, k in enumerate((4, 3, 2, 1)):
         for i in range(k):
             xx = tx - (k - 1) * 0.048 + i * 0.096
             add_cyl(B.bm, (xx, ty, row * 0.105), (xx, ty, row * 0.105 + 0.1), 0.044, seg=10, mat=B('DepotSteel'))
     for i in range(3):                                                   # a second row behind, done
         xx = tx - 0.096 + i * 0.096
-        add_cyl(B.bm, (xx, ty + 0.1, 0.0), (xx, ty + 0.1, 0.1), 0.044, seg=10, mat=B('DepotSteel'))
+        add_cyl(B.bm, (xx, ty - 0.1, 0.0), (xx, ty - 0.1, 0.1), 0.044, seg=10, mat=B('DepotSteel'))
     # Two mail sacks of the unread by the right wall, letters spilling from one.
-    for (sx, sy, s) in ((x1 - 0.28, y0 + 0.95, 1.0), (x1 - 0.3, y0 + 1.45, 0.85)):
+    for (sx, sy, s) in ((x1 - 0.26, y0 + 0.3, 0.9), (x1 - 0.68, y0 + 0.28, 0.75)):
         B.painted('SecretAtlasMat', 'sack', lambda bm, sx=sx, sy=sy, s=s: rounded_box((0.42 * s, 0.4 * s, 0.6 * s), (sx, sy, 0.3 * s), p=2.6,
                                                                                       cuts=8, bm=bm, mat=0, dents=((0.03, 4.0),), seed=sx), size=0.6)
     for k in range(7):
-        M = M_at(x1 - 0.55 + rnd.uniform(-0.15, 0.15), y0 + 1.15 + rnd.uniform(-0.2, 0.2), 0.004 + k * 0.002, rnd.uniform(0, 360))
+        M = M_at(x1 - 0.55 + rnd.uniform(-0.2, 0.15), y0 + 0.62 + rnd.uniform(-0.12, 0.2), 0.004 + k * 0.002, rnd.uniform(0, 360))
         pts = [M @ Vector(p) for p in ((-0.075, -0.05, 0), (0.075, -0.05, 0), (0.075, 0.05, 0), (-0.075, 0.05, 0))]
         B.quad(pts, 'SecretAtlasMat', cell_uv('env%d' % rnd.randrange(8)))
     # The chair, turned to face the wall of letters; a crate beside it for a table: a stack of opened letters, a mug.
     chx, chy, cturn = CHAIR_A
     _chair(B, chx, chy, cturn)
-    kx, ky = chx + 0.6, chy + 0.1
+    # The letter he was reading, in his lap; another fallen by his feet.
+    fwd = Vector((-math.sin(math.radians(cturn)), math.cos(math.radians(cturn)), 0.0))
+    side = Vector((-fwd.y, fwd.x, 0.0))
+    for (c, k, z, tilt, yaw) in ((Vector((chx, chy, 0)) + fwd * 0.1 + side * 0.04, 'page3', 0.44 + 0.2, 0.35, 0.0),
+                                 (Vector((chx, chy, 0)) + fwd * 0.5 - side * 0.22, 'page6', 0.006, 0.0, 0.7)):
+        M = Matrix.Translation((c.x, c.y, z)) @ Matrix.Rotation(math.atan2(fwd.y, fwd.x) + yaw, 4, 'Z') @ Matrix.Rotation(tilt, 4, 'Y')
+        pts = [M @ Vector(p) for p in ((-0.075, -0.055, 0), (0.075, -0.055, 0), (0.075, 0.055, 0), (-0.075, 0.055, 0))]
+        B.quad(pts, 'SecretAtlasMat', cell_uv(k))
+        B.quad(pts[::-1], 'SecretAtlasMat', cell_uv(k))
+    kx, ky = chx - 0.3, chy + 0.62
     B.box((kx - 0.22, kx + 0.22), (ky - 0.17, ky + 0.17), (0.0, 0.42), 'CrateWood')
     for k in range(9):
         M = M_at(kx - 0.06 + rnd.uniform(-0.01, 0.01), ky + rnd.uniform(-0.01, 0.01), 0.42 + 0.004 + k * 0.006, rnd.uniform(-6, 6))
@@ -1217,7 +1234,7 @@ def build_room_a(coll):
     add_cyl(B.bm, (kx + 0.12, ky + 0.05, 0.42), (kx + 0.12, ky + 0.05, 0.5), 0.035, seg=10, mat=B('DepotSteel'))
     add_torus(B.bm, (kx + 0.16, ky + 0.05, 0.46), (0, 1, 0), 0.022, 0.006, seg=8, rseg=4, mat=B('DepotSteel'))
     # The bulb he wired from the depot's supply: a cord from a hook in the ceiling, a tin shade; lit again tonight.
-    bx, by, bz = chx - 0.15, chy - 0.45, 1.92
+    bx, by, bz = chx - 0.3, chy - 0.2, 1.92
     add_cyl(B.bm, (bx, by, zc), (bx, by, bz + 0.1), 0.004, seg=4, mat=B('Rubber'))
     add_cyl(B.bm, (bx, by, bz + 0.1), (bx, by, bz - 0.02), 0.025, 0.14, seg=14, mat=B('DepotSteel'))
     add_sphere(B.bm, (bx, by, bz - 0.04), 0.032, seg=10, mat=B('SecretLampGlow'))
@@ -1245,7 +1262,8 @@ def cut_tunnel_wall():
     if ob is not None:
         def fn2(bm, M):
             uvl = bm.loops.layers.uv.active
-            f = bm.faces[0] if bm.faces else None
+            bm.faces.ensure_lookup_table()
+            f = bm.faces[0] if len(bm.faces) else None
             if f is None or uvl is None:
                 return []
             # the plane's UV as a linear function of world x and z, from its corners
@@ -1303,20 +1321,27 @@ def build_room_b(coll):
     for k in range(7):
         yy = -gd / 2 + 0.07 + k * (gd - 0.14) / 6
         xform(B.box((-gw / 2, gw / 2), (yy - 0.012, yy + 0.012), (-0.004, 0.012), 'DepotSteel'), Mg)
-    # The fort: two stacks of crates, a broom across them, a check blanket over it down to the back wall, a striped one
-    # hung over its far end; cushions, a rug in front of its mouth.
-    fx0, fx1 = x0 + 0.18, x0 + 1.95
-    fy = y1 - 1.25
-    ridge = z0 + 0.92
-    for xx in (fx0 + 0.18, fx1 - 0.18):
-        B.box((xx - 0.2, xx + 0.2), (fy - 0.15, fy + 0.15), (z0, z0 + 0.3), 'CrateWood')
-        B.box((xx - 0.18, xx + 0.18), (fy - 0.14, fy + 0.14), (z0 + 0.3, z0 + 0.6), 'CrateWood', rot=None)
-        B.box((xx - 0.16, xx + 0.16), (fy - 0.13, fy + 0.13), (z0 + 0.6, ridge - 0.02), 'CrateWood')
-    add_cyl(B.bm, (fx0 - 0.1, fy, ridge), (fx1 + 0.25, fy, ridge), 0.014, seg=6, mat=B('CrateWood'))       # the broom handle
-    add_cyl(B.bm, (fx1 + 0.25, fy, ridge), (fx1 + 0.5, fy + 0.05, ridge - 0.04), 0.05, 0.08, seg=6, mat=B('CotCanvas'))   # its head
+    # The fort, in the back left corner: a check blanket hooked to the back wall, over a broom laid across the backs of
+    # two little chairs, its front edge hanging down and caught up in the middle for a door; a striped blanket closes
+    # its left end against the wall. Cushions inside, the lantern hung in its door, a rag rug in front.
+    fx0, fx1 = x0 + 0.1, x0 + 1.75                    # its ends
+    fy = y1 - 1.0                                     # the broom, on the chairs' backs
+    ridge = z0 + 0.62
+    hook = z0 + 1.12                                  # the blanket's top edge, hooked on the back wall
+    for xx in (fx0 + 0.2, fx1 - 0.2):                 # the chairs, facing into the fort, their backs at the front
+        yb_ = fy + 0.02
+        B.box((xx - 0.15, xx + 0.15), (yb_, yb_ + 0.28), (z0 + 0.26, z0 + 0.29), 'CrateWood')
+        for sx in (-1, 1):
+            B.box((xx + sx * 0.13 - 0.015, xx + sx * 0.13 + 0.015), (yb_ - 0.015, yb_ + 0.015), (z0, ridge - 0.01), 'CrateWood')
+            B.box((xx + sx * 0.13 - 0.015, xx + sx * 0.13 + 0.015), (yb_ + 0.25, yb_ + 0.28), (z0, z0 + 0.27), 'CrateWood')
+        B.box((xx - 0.14, xx + 0.14), (yb_ - 0.012, yb_ + 0.012), (ridge - 0.12, ridge - 0.04), 'CrateWood')
+    add_cyl(B.bm, (fx0 - 0.08, fy, ridge + 0.012), (fx1 + 0.3, fy - 0.02, ridge + 0.012), 0.013, seg=6, mat=B('CrateWood'))   # the broom
+    add_cyl(B.bm, (fx1 + 0.3, fy - 0.02, ridge + 0.012), (fx1 + 0.42, fy - 0.03, ridge - 0.0), 0.022, 0.03, seg=6, mat=B('CotCanvas'))
+    for xx in (fx0 + 0.25, (fx0 + fx1) / 2, fx1 - 0.25):        # the hooks on the back wall
+        add_cyl(B.bm, (xx, y1, hook + 0.02), (xx, y1 - 0.05, hook + 0.03), 0.008, seg=4, mat=B('DepotSteel'))
 
     def drape(bm, pts):
-        """A blanket as a sheet over a grid of points pts[i][j] (i across x, j from the ridge outward)."""
+        """A blanket as a sheet over a grid of points pts[i][j]."""
         for lay, dz in ((0, 0.0), (1, -0.006)):              # two layers, wound opposite, so it shows from both sides
             vs = [[bm.verts.new(p + Vector((0, 0, dz))) for p in row] for row in pts]
             for i in range(len(vs) - 1):
@@ -1327,77 +1352,78 @@ def build_room_b(coll):
     def blanket(cell, pts, size=0.9):
         B.painted('SecretAtlasMat', cell, lambda bm: drape(bm, pts), size=size)
 
-    nx_, nj = 8, 6
-    back = []
+    nx_ = 10
+    roof = []                                          # from the wall's hooks down over the broom
     for i in range(nx_ + 1):
-        x = fx0 - 0.15 + (fx1 - fx0 + 0.3) * i / nx_
+        x = fx0 - 0.12 + (fx1 - fx0 + 0.24) * i / nx_
+        sag = 0.05 * math.sin(math.pi * i / nx_ * 2) ** 2
         row = []
-        for j in range(nj + 1):
-            t = j / nj
-            yy = fy + (y1 - 0.02 - fy) * t
-            zz = ridge + 0.02 - (ridge - z0 - 0.01) * (t ** 0.8) + 0.04 * math.sin(math.pi * t) * math.sin(i * 1.3)
-            row.append(Vector((x, yy, max(z0 + 0.01, zz))))
-        back.append(row)
-    blanket('check', back)
-    front = []                                                           # the front: a short flap, rolled up in the middle
+        for j in range(6):
+            t = j / 5
+            yy = y1 - 0.03 + (fy - y1 + 0.03) * t
+            zz = hook + (ridge + 0.03 - hook) * t - 0.07 * math.sin(math.pi * t) - sag * math.sin(math.pi * t)
+            if j == 0:
+                zz = hook - 0.04 * (1 - math.cos(math.pi * 2 * i / (nx_ / 3)))      # scalloped between the hooks
+            row.append(Vector((x, yy, zz)))
+        roof.append(row)
+    blanket('check', roof)
+    front = []                                         # over the broom and down, caught up in the middle for a door
     for i in range(nx_ + 1):
-        x = fx0 - 0.15 + (fx1 - fx0 + 0.3) * i / nx_
-        mid = 1.0 - math.exp(-((x - (fx0 + fx1) / 2) / 0.5) ** 2)
-        drop = 0.18 + 0.6 * mid
-        row = [Vector((x, fy - 0.01 - 0.12 * (j / 3) * drop, ridge + 0.02 - drop * (j / 3))) for j in range(4)]
+        x = fx0 - 0.12 + (fx1 - fx0 + 0.24) * i / nx_
+        door = math.exp(-((x - (fx0 + fx1) / 2) / 0.4) ** 2)
+        drop = (ridge - z0 - 0.02) * (1 - 0.82 * door)
+        row = [Vector((x, fy - 0.025 - 0.07 * (j / 4) * (1 - door) - 0.04 * math.sin(math.pi * j / 4), ridge + 0.03 - drop * (j / 4))) for j in range(5)]
         front.append(row)
     blanket('check', front)
-    side = []
-    for j in range(5):
-        t = j / 4
-        row = []
-        for k in range(5):
-            s = k / 4
-            yy = fy - 0.35 + (y1 - fy + 0.3) * s
-            zz = ridge + 0.04 - (ridge - z0 - 0.01) * t
-            row.append(Vector((fx0 - 0.17 - 0.06 * t * math.sin(s * 3.1), yy, zz)))
-        side.append(row)
-    blanket('stripe', [list(r) for r in zip(*side)])
-    for (cx_, cy_, s, a) in ((fx0 + 0.55, fy + 0.35, 1.0, 10), (fx0 + 0.95, fy + 0.5, 0.9, -20), (fx0 + 1.3, fy + 0.3, 0.8, 35)):
+    side = []                                          # the left end, closed with the striped blanket
+    for k in range(6):
+        s_ = k / 5
+        yy = fy - 0.04 + (y1 - fy) * s_
+        top = hook + (ridge - hook) * (1 - s_) if False else ridge + (hook - ridge) * s_
+        side.append([Vector((fx0 - 0.1 - 0.03 * math.sin(math.pi * t), yy, top - (top - z0 - 0.01) * t)) for t in (0, 0.25, 0.5, 0.75, 1.0)])
+    blanket('stripe', side)
+    for (cx_, cy_, s, a) in ((fx0 + 0.45, fy + 0.45, 1.0, 10), (fx0 + 0.9, fy + 0.6, 0.9, -20), (fx0 + 1.25, fy + 0.38, 0.8, 35)):
         B.painted('SecretAtlasMat', 'cushion', lambda bm, cx_=cx_, cy_=cy_, s=s, a=a: rounded_box(
             (0.42 * s, 0.36 * s, 0.13 * s), (cx_, cy_, z0 + 0.07 * s), p=2.4, cuts=6, bm=bm, mat=0,
             rot=Matrix.Rotation(math.radians(a), 4, 'Z')), size=0.5)
-    rx, ry = (fx0 + fx1) / 2 + 0.1, fy - 0.55
-    B.quad([(rx - 0.75, ry - 0.45, z0 + 0.006), (rx + 0.75, ry - 0.45, z0 + 0.006), (rx + 0.75, ry + 0.45, z0 + 0.006),
-            (rx - 0.75, ry + 0.45, z0 + 0.006)], 'SecretAtlasMat', cell_uv('rug'))
-    # The paper lantern hanging from the broom inside the fort's mouth, lit.
-    lx, ly, lz = (fx0 + fx1) / 2 - 0.15, fy - 0.08, ridge - 0.3
-    add_cyl(B.bm, (lx, ly, ridge), (lx, ly, lz + 0.12), 0.003, seg=4, mat=B('Rubber'))
-    B.painted('SecretAtlasMat', 'paper', lambda bm: add_cyl(bm, (lx, ly, lz + 0.12), (lx, ly, lz - 0.12), 0.1, 0.09, seg=12, mat=0), size=0.4)
-    add_sphere(B.bm, (lx, ly, lz), 0.075, seg=10, mat=B('DenLanternGlow'))
-    # Tins of treasures open at the fort's mouth, their lids beside them.
-    for k, (tx, ty, r_, h_) in enumerate(((fx0 + 0.25, fy - 0.42, 0.09, 0.11), (fx0 + 0.62, fy - 0.62, 0.075, 0.13), (fx1 - 0.15, fy - 0.45, 0.1, 0.08))):
+    rx, ry = (fx0 + fx1) / 2 + 0.25, fy - 0.62
+    B.quad([(rx - 0.8, ry - 0.48, z0 + 0.006), (rx + 0.8, ry - 0.48, z0 + 0.006), (rx + 0.8, ry + 0.48, z0 + 0.006),
+            (rx - 0.8, ry + 0.48, z0 + 0.006)], 'SecretAtlasMat', cell_uv('rug'))
+    # The paper lantern hanging from the broom in the fort's door, lit.
+    lx, ly, lz = (fx0 + fx1) / 2 + 0.05, fy - 0.16, ridge - 0.17
+    add_cyl(B.bm, (lx, fy - 0.02, ridge), (lx, ly, lz + 0.1), 0.003, seg=4, mat=B('Rubber'))
+    rounded_box((0.15, 0.15, 0.17), (lx, ly, lz), p=2.2, cuts=8, bm=B.bm, mat=B('DenLanternGlow'))
+    for dz in (0.085, -0.085):
+        add_cyl(B.bm, (lx, ly, lz + dz), (lx, ly, lz + dz * 1.18), 0.05, seg=10, mat=B('DepotSteel'))
+    for k in range(4):                                                  # its paper's ribs
+        a = k * math.pi / 4
+        add_torus(B.bm, (lx, ly, lz), (math.cos(a), math.sin(a), 0), 0.08, 0.0025, seg=14, rseg=3, mat=B('CrateWood'))
+    # Tins of treasures open at the fort's door, their lids beside them.
+    for k, (tx, ty, r_, h_) in enumerate(((fx0 + 0.55, fy - 0.3, 0.09, 0.11), (fx0 + 1.02, fy - 0.42, 0.075, 0.13), (fx1 + 0.1, fy - 0.25, 0.1, 0.08))):
         B.painted('SecretAtlasMat', 'tin%d' % k, lambda bm, tx=tx, ty=ty, r_=r_, h_=h_: add_cyl(bm, (tx, ty, z0), (tx, ty, z0 + h_), r_, seg=14, mat=0), size=0.6)
-        B.quad([(tx - r_ * 0.9, ty - r_ * 0.9, z0 + h_ - 0.01), (tx + r_ * 0.9, ty - r_ * 0.9, z0 + h_ - 0.01),
-                (tx + r_ * 0.9, ty + r_ * 0.9, z0 + h_ - 0.01), (tx - r_ * 0.9, ty + r_ * 0.9, z0 + h_ - 0.01)],
+        B.quad([(tx - r_ * 0.7, ty - r_ * 0.7, z0 + h_ + 0.003), (tx + r_ * 0.7, ty - r_ * 0.7, z0 + h_ + 0.003),
+                (tx + r_ * 0.7, ty + r_ * 0.7, z0 + h_ + 0.003), (tx - r_ * 0.7, ty + r_ * 0.7, z0 + h_ + 0.003)],
                'SecretAtlasMat', cell_uv('treasure'))
-        a = k * 2.1 + 0.4
+        a = k * 2.1 + 3.6
         lid = (tx + math.cos(a) * (r_ * 2.2), ty + math.sin(a) * (r_ * 2.2))
         B.painted('SecretAtlasMat', 'tin%d' % k, lambda bm, lid=lid, r_=r_: add_cyl(bm, (lid[0], lid[1], z0), (lid[0], lid[1], z0 + 0.018), r_ + 0.005,
                                                                                seg=14, mat=0), size=0.6)
     for _ in range(8):                                                    # marbles strayed on the floor
-        add_sphere(B.bm, (fx0 + rnd.uniform(0.0, 1.6), fy - rnd.uniform(0.3, 1.1), z0 + 0.008), 0.008, seg=6, mat=B('TeaEnamel'))
-    # A doll's tea party on a crate by the right wall: a cloth, a teapot, four cups.
-    tcx, tcy = x1 - 0.42, y0 + 1.05
-    B.box((tcx - 0.24, tcx + 0.24), (tcy - 0.2, tcy + 0.2), (z0, z0 + 0.3), 'CrateWood')
-    B.painted('SecretAtlasMat', 'cushion', lambda bm: add_box(bm, (tcx, tcy, z0 + 0.305), (0.5, 0.42, 0.01), mat=0), size=0.6)
-    add_sphere(B.bm, (tcx, tcy, z0 + 0.36), 0.05, seg=10, mat=B('TeaEnamel'))
-    add_cyl(B.bm, (tcx + 0.04, tcy, z0 + 0.35), (tcx + 0.1, tcy, z0 + 0.39), 0.01, 0.006, seg=5, mat=B('TeaEnamel'))
+        add_sphere(B.bm, (fx0 + rnd.uniform(0.3, 2.0), fy - rnd.uniform(0.5, 1.3), z0 + 0.008), 0.008, seg=6, mat=B('TeaEnamel'))
+    # A doll's tea party laid on the rug: a tray, a teapot, four cups, a cup on its side.
+    tcx, tcy = rx + 0.45, ry + 0.05
+    add_sphere(B.bm, (tcx, tcy, z0 + 0.05), 0.034, seg=10, mat=B('TeaEnamel'))
+    add_cyl(B.bm, (tcx + 0.03, tcy, z0 + 0.05), (tcx + 0.075, tcy, z0 + 0.075), 0.008, 0.005, seg=5, mat=B('TeaEnamel'))
     for k in range(4):
         a = k * math.pi / 2 + 0.4
-        add_cyl(B.bm, (tcx + math.cos(a) * 0.15, tcy + math.sin(a) * 0.12, z0 + 0.31), (tcx + math.cos(a) * 0.15, tcy + math.sin(a) * 0.12, z0 + 0.345),
-                0.018, 0.022, seg=8, mat=B('TeaEnamel'))
-    # Books in a stack by the fort, one open face down.
+        add_cyl(B.bm, (tcx + math.cos(a) * 0.2, tcy + math.sin(a) * 0.17, z0 + 0.006), (tcx + math.cos(a) * 0.2, tcy + math.sin(a) * 0.17, z0 + 0.034),
+                0.015, 0.019, seg=8, mat=B('TeaEnamel'))
+    # Books in a stack by the fort's right end, one open face down beside them.
     for k in range(5):
-        B.painted('SecretAtlasMat', 'books', lambda bm, k=k: add_box(bm, (fx1 + 0.35 + rnd.uniform(-0.01, 0.01), fy - 0.15, z0 + 0.018 + k * 0.036),
+        B.painted('SecretAtlasMat', 'books', lambda bm, k=k: add_box(bm, (fx1 + 0.3 + rnd.uniform(-0.01, 0.01), fy + 0.35, z0 + 0.018 + k * 0.036),
                                                                          (0.2, 0.15, 0.034), mat=0, rot=Matrix.Rotation(rnd.uniform(-0.2, 0.2), 4, 'Z')), size=0.3)
     # Bunting across the room, corner to corner, under the ceiling.
-    a, b = Vector((x0 + 0.05, y0 + 0.4, zc - 0.12)), Vector((x1 - 0.05, y1 - 0.1, zc - 0.18))
+    a, b = Vector((x0 + 0.05, y1 - 0.1, zc - 0.15)), Vector((x1 - 0.05, y0 + 0.5, zc - 0.12))
     line = [a.lerp(b, i / 16) - Vector((0, 0, 0.22 * math.sin(math.pi * i / 16))) for i in range(17)]
     tube(B, line, 0.003, 'Rubber', seg=3)
     for i in range(16):
@@ -1428,11 +1454,11 @@ def build_room_b(coll):
     def left(cell, ya, yb, za, zb):                                        # the left wall faces +x: u runs along +y
         C.quad([(x0 + e, ya, za), (x0 + e, yb, za), (x0 + e, yb, zb), (x0 + e, ya, zb)], 'SecretChalkMat', cell_uv(cell, CCELLS))
 
-    back('muralA', fx1 + 0.05, x1 - 0.05, z0 + 0.42, z0 + 0.42 + (x1 - 0.05 - fx1 - 0.05) / 4.0)
-    back('muralB', fx0 + 0.1, fx0 + 1.6, ridge + 0.1, ridge + 0.85)
-    back('hands', fx1 + 0.12, fx1 + 0.12 + 1.0, z0 + 0.06, z0 + 0.56)
-    right('muralC', y0 + 0.3, y1 - 0.1, z0 + 0.35, z0 + 0.35 + (y1 - 0.4 - y0) / 3.0)
-    left('muralD', y0 + 0.25, y1 - 0.2, z0 + 0.95, z0 + 0.95 + (y1 - 0.45 - y0) / 4.0)
+    back('hands', fx1 + 0.2, x1 - 0.1, z0 + 0.3, z0 + 0.3 + (x1 - 0.3 - fx1) / 2.0)          # the prints at 0.45 to 0.8 m
+    back('tree', fx1 + 0.14, fx1 + 0.66, z0 + 0.92, z0 + 1.44)                              # Mara's tree, big, by them
+    back('muralB', fx0, fx1 + 0.1, hook + 0.25, hook + 0.25 + (fx1 + 0.1 - fx0) / 2.0)
+    left('muralC', y0 + 0.4, fy - 0.1, z0 + 0.55, z0 + 0.55 + (fy - 0.5 - y0) / (768 / 256))
+    right('muralA', y0 + 0.15, y1 - 0.12, z0 + 0.62, z0 + 0.62 + (y1 - 0.27 - y0) / 4.0)
     # outside, on the tiles beside the vent (the tiles' face is TUN_WALL[0] - 0.01)
     yt = TUN_WALL[0] - 0.01 - e
     C.quad([(hx1 + 0.04, yt, z0 + 0.08), (hx1 + 0.26, yt, z0 + 0.08), (hx1 + 0.26, yt, z0 + 0.3), (hx1 + 0.04, yt, z0 + 0.3)],

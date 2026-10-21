@@ -488,15 +488,14 @@ def curtain(P, cell, x, w, top, seed=0.0, lean=0.0, nu=10, nv=6, folds=0.012):
     pts = []
     for i in range(nu + 1):
         u = -1 + 2 * i / nu
-        t = top * (1 - 0.4 * u ** 4) * (1 + 0.06 * noise.noise(Vector((u * 3.0, seed, 0.5))))
+        t = top * max(0.0, 1 - u * u) ** 0.45 * (1 + 0.06 * noise.noise(Vector((u * 3.0, seed, 0.5))))
         col = []
         for j in range(nv + 1):
             v = j / nv
             z = t * v
-            xx = x + lean * z + 0.035 * math.sin(math.pi * v) * (1 - u * u) + folds * math.sin(u * 9.0 + seed * 3.0) * (1 - 0.5 * v)
-            if j == nv:
-                xx += 0.02
-            yy = u * w * (1 + 0.18 * (1 - v))
+            xx = x + lean * z + 0.04 * math.sin(math.pi * v) * (1 - u * u) + folds * math.sin(u * 9.0 + seed * 3.0) * (1 - 0.5 * v)
+            xx += 0.06 * v * v                               # the collar fallen forward onto the pile
+            yy = u * w * (1 + 0.45 * (1 - v) ** 2)          # spread wide where it meets the floor
             col.append(Vector((xx, yy, max(0.004, z))))
         pts.append(col)
     P.grid(cell, pts, nu, nv)
@@ -645,7 +644,7 @@ def _seated(P, rnd, seed, support=True, knees=0.3, bowl=False, skull='lap', coat
     rh.pelvis(P, V((0.02, 0.0, 0.07)), Z, V((0, 1, 0)), V((1, 0, 0.3)).normalized())
     # The coat: its back still up against the support, slumped over the pile, its fronts fallen open into the lap
     # (the ribs between them); the trousers over the leg bones.
-    curtain(P, coat, bx - 0.02, 0.22, back + 0.02, seed=seed, lean=0.0 if support else 0.45)
+    curtain(P, coat, bx - 0.02, 0.22, back + 0.02, seed=seed, lean=0.0 if support else 0.45, folds=0.022)
     garment(P, coat, [((bx + 0.04, 0.0), (0.3, 0.0), 0.25, 0.17)], caps, seed=seed + 1,
             layer=2, cuts=[((0.04, 0.0), (0.5, 0.0), 0.04)], soft=0.12, k=1.4, ragged=0.006)
     legs = []
@@ -677,7 +676,7 @@ def _seated(P, rnd, seed, support=True, knees=0.3, bowl=False, skull='lap', coat
             E, W = V((0.02, sd * 0.3)), V((0.2, sd * 0.36))
         hands.append((E, W))
         # The sleeve: from the shoulder, still up against the support, down over the thigh (or to the floor).
-        S3 = Vector((bx + 0.03, sd * 0.21, (back + 0.02) * 0.86))
+        S3 = Vector((bx + 0.04, sd * 0.15, (back + 0.02) * 0.74))
         E3 = Vector((E.x, E.y, H(E.x, E.y) + 0.035))
         W3 = Vector((W.x, W.y, H(W.x, W.y) + 0.03))
         rh.rag_tube(P, coat, S3, E3, 0.046, sag=0.01, seed=seed * 3 + sd, ragged=0.0, flat=0.75, seg=6, rows=2, side=Z)
@@ -691,7 +690,7 @@ def _seated(P, rnd, seed, support=True, knees=0.3, bowl=False, skull='lap', coat
         c = V((0.36, 0.0, 0.0))
         c.z = H(c.x, c.y) + 0.005
         prof = [(0.01, 0.0), (0.05, 0.0), (0.07, 0.025), (0.085, 0.05), (0.08, 0.052), (0.064, 0.026), (0.042, 0.006), (0.01, 0.006)]
-        P.add('bag', lambda bm: rh.lathe(bm, prof, _seg(detail, 14, 10), center=c), size=0.2, closed=False)
+        P.add('paper', lambda bm: rh.lathe(bm, prof, _seg(detail, 14, 10), center=c), size=0.2, closed=False)
     # The skull: dropped into the lap, rolled to the floor beside the hip, or still on the chest (sunk on the pile).
     if skull == 'lap':
         x, y = 0.3 + rnd.uniform(-0.03, 0.03), rnd.uniform(-0.05, 0.05)

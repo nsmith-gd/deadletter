@@ -7,9 +7,13 @@ DL-02  The fans stopped. Every one of them is part of it:
            they lie on the floor in front of the table, arms flung back, the grille on the floor by them, the fan's
            housing open over the table, the blades stopped in the dark (TableauFan, TableauFanGrille);
          - two went for the stairs and found the bulkhead shut (art/pass4's StoryWeldedDoor, its hand prints and
-           nail scratches kept): one sits against it, the pry bar dropped beside, its gouges bright at the seam
-           (TableauPryMarks); the other lies at its foot, an arm up the door;
-         - the rest lay down together in the tea corner, on mailbags spread on the floor;
+           nail scratches kept): they sit against it, one slumped onto the other, the pry bar dropped beside them, its
+           gouges bright at the seam (TableauPryMarks);
+         - the rest gave up together in the tea corner, on mailbags emptied and laid down: two sat against the
+           alcove's back wall, one slumped onto the other, the third lying with their head in a lap; the crate they
+           sat on at tea is gone from the alcove;
+         - the stool the climber stood on lies knocked over in front of the table (art/pass4's stool at the table's
+           end is gone from there);
          - a row of candles on the sorting table's back edge, gone out barely burned (TableauCandles).
        Goes: art/pass4's sorters at their posts (Sorter1 to Sorter5, SorterMailbag), the AIR order (StoryAirNotice) and
        the air gauge with its NO AIR dial and the fan over the door (StoryAirGauge). The pass 3 notice board (NIGHT SHIFT
@@ -19,8 +23,10 @@ DL-05  The food ran out.
            (RationDead01 to 09 keep their names and places, new linked meshes);
          - at the row's end the last one lies uncovered beside a folded sheet: no one was left to cover them
            (RationDead06 is now that one, in TableauDL05Remains);
-         - the queue that never moved: remains seated in line toward the counter, bowls in their laps;
-         - tally marks scratched by the hatch, many days (TableauTally).
+         - the queue that never moved: three seated in line toward the counter's end, bowls in their laps (in
+           front of the rows, behind the drag line: the counter's own front is the weigh-in's);
+         - the rows moved back a little (y 1.985 to ROW_Y) to make room for the queue;
+         - tally marks scratched into the counter's front by the hatch (TableauTally).
        Goes: NO RATIONS / GRADE 4 (RationNoRations).
        RationBody (the one D-17 drags): same name, origin and length; no rope or toggle now. Its bare foot bones
        stand out of the hem at its +x end, where he takes hold (FOOT_GRIP, reported by report()).
@@ -64,7 +70,7 @@ KNOCKED = ((19.32, -0.72, 0.0), 0.6)              # the stool they climbed from,
 STOOL_GONE = (18.14, 0.40)                        # art/pass4's stool at the table's end: taken to climb from
 DOOR_SITTERS = [((18.06, 0.775, 0.0), -78.0, 0.85, 'floor', 'rag', True, 0.0),       # against the bulkhead: (loc, turn,
                 ((17.6, 0.79, 0.0), -104.0, 0.55, 'lap', 'apron', False, 0.6)]      #  knees, skull, coat, cap, lean)
-PRY_BAR = ((18.36, 0.30, 0.012), (18.92, 0.12, 0.012))
+PRY_BAR = ((18.31, 0.7, 0.012), (18.5, 0.24, 0.012))    # dropped by the right-hand one's hip, short of the table
 TEA_SEATED = [((16.97, 1.54, 0.04), -96.0, 0.5, 'floor', 'cloth', 0.0),   # sat down together against the alcove's
               ((16.45, 1.54, 0.04), -84.0, 0.3, 'lap', 'apron', 0.75)]  # back wall, on mailbags, one slumped onto the other
                                                                         # (loc, turn, knees, skull, coat, lean)
@@ -84,7 +90,8 @@ LAST = ((52.02, 2.1, 0.0), -90.0)                 # RationDead06: the last one, 
 FOLDED = (52.6, 2.55, 0.0, 6.0)                   # the folded sheet beside them: x, y, z, turn
 QUEUE = [((50.38, 0.95, 0.0), 2.0, 1.0), ((51.32, 0.94, 0.0), -3.0, 2.0), ((52.26, 0.95, 0.0), 3.0, 3.0)]
                                                   # seated in line toward the counter's end: (loc, turn, seed)
-TALLY = (55.28, 56.3, 1.12, 1.62)                # x0, x1, z0, z1 on the servery's back wall, by the hatch
+TALLY = (55.06, 55.8, 0.3, 0.81)                 # x0, x1, z0, z1 scratched into the counter's front by the hatch, clear
+                                                  # of the drum both on the plate (to 55.03) and parked (from 55.8)
 
 FOOT_GRIP = []                                    # filled by rebuild_body: RationBody's foot (x, y, z from its origin)
 
@@ -135,8 +142,6 @@ def build_fan(coll):
     # The lip of the front frame (where the grille was screwed on), and the dark inside.
     P.quads('hole', [[Vector((x0 + t, fy + dp - 0.025, z0 + t)), Vector((x1 - t, fy + dp - 0.025, z0 + t)),
                       Vector((x1 - t, fy + dp - 0.025, z1 - t)), Vector((x0 + t, fy + dp - 0.025, z1 - t))]])
-    for (a, b), (c, d) in (((x0 + t, x1 - t), (z0 + t, z0 + t + 0.004)), ((x0 + t, x1 - t), (z1 - t - 0.004, z1 - t))):
-        pass
     # The fan: the motor's drum on a spider, four blades, stopped.
     hc = Vector((cx, fy + 0.16, z0 + h / 2))
     P.add('fan', lambda bm: add_cyl(bm, hc + Vector((0, 0.16, 0)), hc - Vector((0, 0.03, 0)), 0.075, mat=0, seg=14), size=0.12)
@@ -279,11 +284,11 @@ def build_dl02(coll):
     R.add(P, 'fallen', R.xform(loc, turn), seed=21.0, coat='apron', trousers='cloth')
     for k, (loc, turn, knees, skull, coat, cap, lean) in enumerate(DOOR_SITTERS):
         R.add(P, 'seated', R.xform(loc, turn), seed=22.0 + k, support=True, knees=knees, skull=skull, arms='hip', coat=coat, cap=cap,
-              lean=lean)
+              lean=lean, detail=0.85)
     for k, (loc, turn, knees, skull, coat, lean) in enumerate(TEA_SEATED):
-        R.add(P, 'seated', R.xform(loc, turn), seed=24.0 + k, support=True, knees=knees, skull=skull, coat=coat, lean=lean)
+        R.add(P, 'seated', R.xform(loc, turn), seed=24.0 + k, support=True, knees=knees, skull=skull, coat=coat, lean=lean, detail=0.85)
     (loc, turn) = TEA_LYING
-    R.add(P, 'lying', R.xform(loc, turn), seed=26.0, arms='chest', coat='rag', legs='bent')
+    R.add(P, 'lying', R.xform(loc, turn), seed=26.0, arms='chest', coat='rag', legs='bent', detail=0.8)
     for (x, y, a, z) in MAILBAGS:
         P.add('bag', lambda bm, x=x, y=y, a=a, z=z: rounded_box((0.74, 0.46, 0.05), Vector((x, y, 0.022 + z)), p=2.2, cuts=4,
                                                                   dents=((0.01, 5.0), (0.004, 12.0)), seed=x + y, bm=bm, mat=0,
@@ -321,6 +326,7 @@ def rebuild_body():
     ob.data = me
     if old.users == 0:
         bpy.data.meshes.remove(old)
+    me.name = 'RationBody'
     vs = [v.co for v in me.vertices]
     nx = [v.x for v in vs]
     feet = [v for v in vs if v.x > 0.55 and v.z > 0.12]
@@ -340,31 +346,42 @@ def _folded_sheet(P, x, y, z, turn):
 
 
 def tally_texture(path):
-    """Tally marks scratched into the servery wall's paint with something sharp: rows of fives, many days, the later
-    ones shakier and shallower; the paint's grey-green showing pale where cut."""
+    """Tally marks scratched deep into the counter's paint with something sharp: rows of fives, many days, the rows
+    drifting, the later ones shakier and shallower, the last group unfinished; pale where the paint is cut through."""
     from PIL import Image, ImageDraw, ImageFilter
     rnd = random.Random(6205)
-    W, H = 1024, 512
+    W, H = 1024, 704
     img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    rows = 6
+    rows = 4
     for r in range(rows):
-        y0 = 30 + r * 78
-        x = 24 + rnd.uniform(0, 10)
-        n = 9 if r < rows - 1 else 4
+        y0 = 22 + r * 172 + rnd.uniform(-8, 8)
+        slope = rnd.uniform(-0.06, 0.06)
+        x = 16 + rnd.uniform(0, 24)
+        n = 7 if r < rows - 1 else 4
         for g in range(n):
-            shaky = 0.5 + 1.8 * (r * 9 + g) / (rows * 9)
-            fade = max(110, 230 - int(14 * r) - 4 * g)
-            for k in range(5 if not (r == rows - 1 and g == n - 1) else 3):
+            k_ = (r * 7 + g) / (rows * 7)
+            shaky = 1.0 + 6.0 * k_
+            fade = max(120, 245 - int(120 * k_))
+            yy = y0 + slope * (x - 16)
+            strokes = 5 if not (r == rows - 1 and g == n - 1) else 2
+            for k in range(strokes):
+                L = rnd.uniform(118, 140)
                 if k < 4:
-                    xx = x + k * 15 + rnd.uniform(-2, 2)
-                    pts = [(xx + rnd.uniform(-shaky, shaky), y0 + t * 56 + rnd.uniform(-1, 1)) for t in (0, 0.33, 0.66, 1)]
+                    xx = x + k * rnd.uniform(24, 30)
+                    lean = rnd.uniform(-8, 8) * (1 + k_)
+                    pts = [(xx + lean * t + rnd.uniform(-shaky, shaky), yy + t * L) for t in (0, 0.33, 0.66, 1)]
                 else:
-                    pts = [(x - 8, y0 + 46 + rnd.uniform(-4, 4)), (x + 30, y0 + 28), (x + 60, y0 + 8 + rnd.uniform(-4, 4))]
-                d.line(pts, fill=(196, 198, 182, fade), width=4)
-                d.line([(p[0] + 2, p[1] + 2) for p in pts], fill=(20, 22, 18, fade // 2), width=2)
-            x += 104 + rnd.uniform(-6, 6)
-    img = img.filter(ImageFilter.GaussianBlur(0.7))
+                    pts = [(x - 16, yy + L * 0.82 + rnd.uniform(-8, 8)), (x + 50, yy + L * 0.45), (x + 116, yy + 12 + rnd.uniform(-8, 8))]
+                wd = rnd.choice((7, 8, 9))
+                d.line([(p[0] + 3, p[1] + 3) for p in pts], fill=(10, 12, 10, fade * 3 // 4), width=wd)
+                d.line(pts, fill=(214, 216, 200, fade), width=wd)
+                if rnd.random() < 0.5:                                  # gone over twice
+                    d.line([(p[0] + rnd.uniform(-3, 3), p[1] + 2) for p in pts], fill=(230, 230, 216, fade // 2), width=4)
+            x += rnd.uniform(140, 158)
+            if x > W - 120:
+                break
+    img = img.filter(ImageFilter.GaussianBlur(0.8))
     img.save(path)
 
 
@@ -376,7 +393,7 @@ def build_tally(coll):
     if bpy.data.materials.get('TallyScratchMat') is None:
         rh.NEW['TallyScratchMat'] = lambda: rh._image_material('TallyScratchMat', path, 0.9, alpha=True)
     x0, x1, z0, z1 = TALLY
-    return rh.decal('TableauTally', 'TallyScratchMat', x0, x1, z0, z1, rh.SERVERY_Y - 0.012, coll)
+    return rh.decal('TableauTally', 'TallyScratchMat', x0, x1, z0, z1, rh.COUNTER_Y[0] - 0.004, coll)
 
 
 def build_dl05(coll):
@@ -434,7 +451,23 @@ def report():
             tris += sum(len(p.vertices) - 2 for p in ob.data.polygons)
             mats.update(mm.name for mm in ob.data.materials)
         print('REPORT %s objects %d tris %d materials %s' % (pre, n, tris, sorted(mats)))
-    print('REPORT FOOT_GRIP', FOOT_GRIP)
+    body = bpy.data.objects.get('RationBody')
+    if body is not None:
+        vs = [v.co for v in body.data.vertices]
+        feet = [v for v in vs if v.x > 0.55 and v.z > 0.12]
+        xs = [v.x for v in vs]
+        if feet:
+            c = sum(feet, Vector()) / len(feet)
+            print('REPORT RationBody origin %s, local x %.3f..%.3f; foot bones (x > 0.55, z > 0.12): centre (%.3f, %.3f, %.3f), '
+                  'x %.3f..%.3f, y %.3f..%.3f, top z %.3f' % (tuple(round(v, 3) for v in body.location), min(xs), max(xs), c.x, c.y, c.z,
+                                                              min(v.x for v in feet), max(v.x for v in feet), min(v.y for v in feet),
+                                                              max(v.y for v in feet), max(v.z for v in feet)))
+    for nm in ('TableauDL02Remains', 'TableauFan', 'TableauFanGrille', 'TableauPryMarks', 'TableauCandles', 'TableauDL05Remains',
+               'TableauTally', 'RationBody') + tuple(sorted(SHROUD_OF)):
+        ob = bpy.data.objects.get(nm)
+        if ob is not None:
+            print('REPORT  %-20s tris %6d loc %s mesh %s' % (nm, sum(len(p.vertices) - 2 for p in ob.data.polygons),
+                                                            tuple(round(v, 3) for v in ob.location), ob.data.name))
 
 
 def add_clips(dl01, arm):

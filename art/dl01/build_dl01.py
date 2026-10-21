@@ -54,7 +54,7 @@ import build_story_shafts as story_shafts  # noqa: E402
 import build_story_ringc as story_ringc  # noqa: E402
 # Pass 6: the tableaux (docs/chapter1_pass6_plan.md), each module owning its scenes; built only once it exists.
 PASS6 = []
-for _name in ('build_tableaux_depot', 'build_tableaux_ringc'):
+for _name in ('build_tableaux_depot', 'build_tableaux_ringc', 'build_ending_secrets'):
     if os.path.exists(os.path.join(HERE, '..', 'pass6', _name + '.py')):
         PASS6.append(__import__(_name))
 import build_white as white  # noqa: E402
