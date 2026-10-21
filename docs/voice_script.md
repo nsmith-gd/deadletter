@@ -56,9 +56,20 @@ had a card player: a small wooden box with a brass horn and a crank. Some cards 
 
 ## The depot
 
-### `tan_depot_1`: the start-of-shift announcement (DL-01, by the dispatch board)
+### `dispatch_wake` and `dispatch_item`: dispatch comes back on (DL-01, the opening)
 
-Treatment `tannoy`. About 14 s.
+Treatment `dispatch` (pass 8): a flat, synthetic voice on the depot's horns. Record it level and unhurried, like a
+machine reading a queue; the treatment adds the ring. This is the reason for the wake: the power comes back, dispatch
+picks up where it stopped, and the one courier still on its cradle has one parcel aboard. `dispatch_wake` plays as the
+relays come on; `dispatch_item` plays over his look at his label, at the end of the opening.
+> *(dispatch_wake, about 5 s)* Supply restored. *[pause]* Resuming dispatch.
+>
+> *(dispatch_item, about 7 s)* Courier D-17. One item outstanding. *[pause]* Deliver to: Mara. C-114, ring C.
+
+### `tan_depot_1`: the start-of-shift announcement (DL-01, heard from the hall)
+
+Treatment `tannoy`. About 14 s. Pass 8: not at the wake any more. The old night-shift loop starts up as he comes into
+the hall, from the speaker behind him, and plays once.
 > Night shift, to your stations. *[pause]* Night shift, to your stations.
 > Sorting will run until oh-six-hundred. Couriers, report to dispatch.
 > *[pause]* Thank you for your work. The refuge depends on it. *[pause]* Order above all.
@@ -233,6 +244,8 @@ Treatment `card`. About 35 s.
 
 | File | Treatment | About |
 |---|---|---|
+| `dispatch_wake` | dispatch | 5 s |
+| `dispatch_item` | dispatch | 7 s |
 | `tan_depot_1` | tannoy | 14 s |
 | `card_sorter` | card | 30 s |
 | `tan_racks` | tannoy | 12 s |

@@ -150,25 +150,29 @@ goes up.
 | x | What |
 |---|---|
 | 232.0–233.0 | In from the classroom's gallery: the floor here is the gallery level, height 2.05. A stair down, 233.0 to 234.4, to the corridor floor at 0. |
-| 234.0–234.8 | The **window pole**, a long brass-hooked pole for high windows, leaning by the stair foot (carriable item `pole`). |
+| 235.0 (wall) | The **window pole**, a long brass-hooked pole for high windows, starts laid through A's wheel bracket (carriable item `pole`). |
 | 235.4–236.2 | A **teacher's desk** across the lane, top 0.62. |
 | 236.4–237.6 | **Blind A** and its ledge: out, at height 1.1, lane-deep, when A is down. |
 | 237.8–239.0 | **Blind B** and its ledge: out, at height 1.6, when B is down. |
 | 239.2–240.2 | The **way on**: a high hatch in the wall at height 2.15 (one mantle from ledge B), to DL-15. |
 | 235.0 (floor) | **A's chain wheel**: a sprocket in a bracket low on the wall, between the pole and the desk, with a slot the pole fits through to jam it. Its chain runs up the wall and along the ceiling to A's roller. (Moved from 236.6 after the first play test: under ledge A it could only be reached by circling back from the far side.) |
 | 242.4 | The **crank**, with the chain running up from it over the ceiling pulleys to both blinds: visible all the way. |
-| 233.2–233.8 | The **secret room's door**: the stock cupboard under the stair. |
+| 233.2–233.8 | The **secret room's door**: the stock cupboard under the stair. Entered from the stair's foot (Use at 234.3–234.7; pass 8, clear of the wheel's 234.75–235.25). |
 
-**The puzzle:**
-1. **Wind the crank.** A comes down, the painted sky drops behind a blind, and A's ledge swings out at 1.1. Desk,
-   then ledge A: but ledge B is up and the hatch is out of reach.
-2. **Wind it back.** B comes down and its ledge swings out at 1.6, while A goes up and its ledge folds. Now the first
-   step is missing.
-3. **The aha:** stop A going back up. With A down, he carries the window pole to A's chain wheel and jams it through
-   the bracket (Use). The wheel locks, a latch made of an object.
-4. **Wind the crank again.** A can't rise, so the chain slips on A's locked wheel and B comes down alone. Both ledges are
-   out.
-5. **Climb:** desk, ledge A, ledge B, the hatch.
+**The puzzle** (reworked in pass 8, after the Version 19 play test: the pole had never been introduced, and the
+player didn't know what it was for):
+1. **The pole starts in A's wheel**, laid through both lugs of the bracket, where the teacher left it, holding A up.
+2. **Wind the crank.** A can't move, so the chain slips on its locked wheel: B comes down alone, its ledge swings out at
+   1.6, and the pole rattles in A's wheel. He looks round at the rattle. The jam is shown before it is needed.
+   Ledge B alone is out of reach from the desk.
+3. **Take the pole out** (Use at the wheel), put it down, and wind the crank: now the pair runs free. A comes down
+   (ledge A at 1.1) and B goes up.
+4. **The aha:** put the pole back while A is down (Use at the wheel, carrying it). The pole holds A wherever A is.
+5. **Wind the crank again.** B comes down alone; both ledges are out.
+6. **Climb:** desk, ledge A, ledge B, the hatch.
+
+The pole can go in and come out as often as he likes; whatever A is doing when it goes in, A stays. The peel (below)
+no longer takes the camera: it happens in the room's frame, with the music, and doesn't pull attention off the wheel.
 
 **What the room says:** as B comes down, its blind catches the corner of its painted panel and peels it back. Behind
 the panel is concrete, not sky, and a child has drawn on it in pencil, over and over, a crooked tree with a knot in one

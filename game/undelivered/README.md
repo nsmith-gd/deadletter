@@ -109,6 +109,39 @@ counterweight's shaft) replace the goods hall's and the cage's.
 scene's light and by motion and sound. Red is kept for what the world itself painted red: the franking press's hazard
 bands. The curiosities' red tags are gone.
 
+## Pass 8: the Version 19 play test
+
+Fixes from the director's Version 19 playthrough (play log, 21 October):
+- **Interaction overlaps can't ship.** Each source of interactions (items, curiosities, secret rooms, voices,
+  letters, pushables, each scene's fixed controls) is a category. `auditNear` sweeps D-17 along the level and lists any
+  spot where two answer Use at once; `tools/sim/audit_near.mjs` runs it from every checkpoint and fails if the list
+  isn't empty. It found three (the DL-14 cupboard over the pole, the DL-01 cord against the dispatch board, the DL-10
+  suitcase against the last-car card), all fixed. Things he carries now win over everything else, so an item put down
+  on top of another interaction can always be picked back up.
+- **DL-14, the pole.** It starts through A's wheel, holding A up, so the first wind of the crank shows the jam working
+  (B comes down alone, the pole rattles, he looks at it). Use at the wheel takes it out or puts it back, whatever A is
+  doing. The peel no longer takes the camera.
+- **Stuck inputs.** Held keys are tracked as a set and dropped when the page loses focus (keyup never arrives then);
+  the gamepad's jump no longer sticks on once pressed.
+- **The opening ends on the label, without a cut.** The side view starts where the opening's camera is and eases to
+  its frame beneath a slow push in to his label.
+- **A reason for the wake.** Dispatch speaks as the relays come on (`dispatch_wake`: *Supply restored. Resuming
+  dispatch.*), then over the label (`dispatch_item`: *Courier D-17. One item outstanding. Deliver to: Mara. C-114,
+  ring C.*). The old night-shift tannoy now plays once, from the hall.
+- **The tannoys.** A two-note chime, a cleaner horn, and the next speaker along answering late. The placeholder for
+  unrecorded lines is a voiced murmur (a buzz through moving vowel formants), not filtered noise. Tannoys play once
+  as he passes; again only if he leaves earshot and comes back, and not within 150 s.
+- **DL-05, the weigh-in.** The plate weighs the share of each thing on it, so the needle climbs, ticking, as the body
+  comes on.
+- **DL-06, the bucket gate.** One weight lifts the gate 0.38, well under his crouch: never a gap that looks passable.
+- **DL-09, the cage.** With a plate in his hands, the tray's lamp beats and he looks at the tray.
+- **DL-11, the desk.** He lets go himself once the marks are uncovered; Use anywhere between the toy and the terminal
+  walks him to it; the held look at the marks is shorter and ends as soon as the player does anything.
+- **DL-13, the classroom.** The camera first frames the figure, the seat and the brake together (eased in over the
+  doorway); it steps back to the dial and the steps once the lesson runs. Use on the brake with no lesson running
+  clunks, and the empty seat's lamp blinks. (The seat lamp had never lit: its setup line was lost inside a comment.)
+- **A fall.** D-17 has a `Fall` clip (arms up, legs paddling, antenna streaming) for any real drop.
+
 ## Pass 6: the prologue
 
 The eleven scenes are now the game's **prologue** (`docs/roadmap.md` plans the chapters after it). See

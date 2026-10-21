@@ -548,7 +548,7 @@ window.__startBot = function (seed, opts = {}) {
     yield* useAt(['grabDeskL'], G.desk5.x - 0.9, () => G.hold === 'desk', 'grab desk');
     yield* walk(-1, () => G.dl5.revealed, 'drag the desk', { hop: false, keepHolding: true, max: 60 });
     note('desk clear');
-    yield* wait(0.8); use(); yield* until(() => !G.hold, 10, 'release');
+    yield* until(() => !G.hold, 10, 'he lets go himself');
     yield* wait(look(3.5));
     yield* wait(think(5));
     yield* useAt(['present'], OFF5 + 113.6, actIs('present'), 'terminal');
@@ -604,17 +604,23 @@ window.__startBot = function (seed, opts = {}) {
     yield* walk(1, () => G.y > 2.0 && G.x > A.gallery.x0 + 0.2, 'climb the steps', { max: 60 });
     note('on the gallery'); yield* wait(look(4));
     yield* walk(1, () => G.x > 234.6 && G.y < 0.05, 'down into the corridor', { max: 40 });
-    // DL-14: the crank; back for the pole; jam A's wheel; the crank again; desk, ledges, hatch.
+    // DL-14: the crank runs B alone (the pole holds A's wheel); take the pole out; the crank brings A down; jam A's
+    // wheel again; the crank brings B down too; desk, ledges, hatch.
     yield* wait(look(4));
-    yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank'); yield* until(() => free() && Math.abs(S().blinds.a - S().blinds.ta) < 0.01, 10, 'blinds');
+    yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank'); yield* until(() => free() && Math.abs(S().blinds.b - S().blinds.tb) < 0.01, 10, 'blinds');
+    note('B down alone; the pole rattles in A\'s wheel');
+    if (mistakes) { yield* wait(think(4)); yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank back'); yield* until(() => free() && Math.abs(S().blinds.b - S().blinds.tb) < 0.01, 10, 'blinds 2'); note('B up again'); yield* wait(think(6)); }
+    yield* useAt(['att:unjam'], A.wheelA, actIs('att'), 'take the pole out', { max: 60 });
+    yield* until(() => G.hold === 'item' && free(), 10, 'carry pole'); note('the pole out of the wheel');
+    yield* goTo(240.0, 'put the pole down', { max: 40 });
+    yield* useAt(['setdownItem'], G.x, () => G.hold !== 'item' || actIs('setdownItem')(), 'set the pole down'); yield* settle();
+    yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank, unjammed'); yield* until(() => free() && S().blinds.a > 0.98, 12, 'A down');
     note('A down, ledge A out');
-    if (mistakes) { yield* wait(think(4)); yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank back'); yield* until(() => free() && Math.abs(S().blinds.b - S().blinds.tb) < 0.01, 10, 'blinds 2'); note('B down, A up'); yield* wait(think(6));
-      yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank A down again'); yield* until(() => free() && Math.abs(S().blinds.a - S().blinds.ta) < 0.01, 10, 'blinds 3'); }
-    yield* useAt(['liftItem:pole'], A.pole0, () => G.hold === 'item' || actIs('liftItem')(), 'the pole', { max: 60 });
+    yield* useAt(['liftItem:pole'], G.x - 1.5, () => G.hold === 'item' || actIs('liftItem')(), 'the pole again', { max: 60 });
     yield* until(() => G.hold === 'item' && free(), 10, 'carry pole');
     yield* walk(Math.sign(A.wheelA - G.x) || 1, () => D.near() === 'att:jam', 'to the wheel', { max: 40 });
     yield* until(() => !G.mantle && G.grounded, 5, 'at the wheel');
-    yield* useAt(['att:jam'], A.wheelA, actIs('att'), 'jam', { hop: false }); yield* until(() => S().jammed, 8, 'jam'); yield* settle(); note('the pole jams A');
+    yield* useAt(['att:jam'], A.wheelA, actIs('att'), 'jam', { hop: false }); yield* until(() => S().jammed, 8, 'jam'); yield* settle(); note('the pole jams A, down');
     yield* useAt(['att:crank'], A.crankX, actIs('att'), 'crank with A jammed'); yield* until(() => free() && S().blinds.b > 0.98 && S().blinds.a > 0.98, 12, 'both down');
     note('both ledges out');
     yield* goTo(A.desk.x0 - 0.5, 'back to the desk', { max: 40 });

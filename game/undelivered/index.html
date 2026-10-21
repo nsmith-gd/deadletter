@@ -254,7 +254,7 @@ const ATT = {
   gallery: { x0: 227.6, x1: 233.0, h: 2.05 }, cycle: { period: 12, out: [1.0, 2.6, 4.2], fold: [5.6, 6.2, 6.8] },
   stair14: { x0: 233.0, x1: 234.4, steps: 5 }, pole0: 234.4, desk: { x0: 235.4, x1: 236.2, h: 0.62 },
   ledgeA: { x0: 236.4, x1: 237.6, h: 1.1 }, ledgeB: { x0: 237.8, x1: 239.0, h: 1.6 }, hatch: { x0: 239.2, x1: 240.2, h: 2.15 },
-  wheelA: 235.0, crankX: 242.4, x0: 200.3, x1: 247.6,
+  wheelA: 235.0, wheelR: 0.25, crankX: 242.4, x0: 200.3, x1: 247.6,
 };
 const ATT_CPS = ['school', 'register', 'lesson', 'gallery13', 'window', 'hatch14'];
 const PLATFORMS = [STEP];                    // the depot cart (DL-01) is a pushable: see the Chapter 1 rework
@@ -275,7 +275,7 @@ const MANTLE_KEYS = [[0, 0, 0], [6, 0, 0], [10, 0.03, 0.12], [14, 0.03, 0.18], [
   [24, 0.05, 0.38], [32, 0.10, 0.78], [38, 0.20, 0.95], [44, 0.33, 1.0], [56, 0.38, 1.0]];   // build_dl01.py matches
 const MANTLE_FRAMES = 56;
 const HINT_LOOK = 5, HINT_LEAN = 10, HINT_GLYPH = 18;
-const LOOP_FRAMES = { Idle: 168, Walk: 11, Run: 10, CrouchWalk: 13, CrouchIdle: 48, JumpAir: 8, Crank: 24, CageRideLever: 48,
+const LOOP_FRAMES = { Idle: 168, Walk: 11, Run: 10, CrouchWalk: 13, CrouchIdle: 48, JumpAir: 8, Fall: 16, Crank: 24, CageRideLever: 48,
   CarryIdle: 48, CarryWalk: 14, PushIdle: 48, PushWalk: 12, Ride: 48, SadWalk: 16 };
 
 // DL-02 The Weight of the Job (art/dl02/build_dl02.py uses the same numbers).
@@ -822,12 +822,16 @@ Music.prefetch();
 // ---------------------------------------------------------------------------
 const Voice = (() => {
   const TREAT = {
-    tannoy: { rate: 1, pitch: 0, lo: 400, hi: 3000, drive: 4, crackle: 0.012, wow: 4, room: 2.4 },
+    // A public-address horn in a big hall: a two-note chime first, a narrow but clean band, and the far speakers
+    // answering a beat later. (Pass 8: the old treatment drove the placeholder's noise into a hiss, which grated.)
+    tannoy: { rate: 1, pitch: 0, lo: 380, hi: 3400, drive: 1.6, crackle: 0.005, wow: 2, room: 1.4, wet: 0.2, chime: true, echo: 0.23 },
+    // The depot's dispatch system: a synthetic voice on the same horns, no chime, a faint ring.
+    dispatch: { rate: 1, pitch: 0, lo: 330, hi: 3600, drive: 1.3, crackle: 0.003, wow: 0, room: 1.2, wet: 0.18, ring: 47, echo: 0.23, machine: true },
     card: { rate: 1, pitch: 0, lo: 250, hi: 3500, drive: 1.6, crackle: 0.02, wow: 9, room: 0.5 },
     card_worn: { rate: 0.97, pitch: 0, lo: 300, hi: 3000, drive: 2.2, crackle: 0.045, wow: 18, room: 0.5, drops: true },
     child: { rate: 1.06, pitch: 4, lo: 250, hi: 3800, drive: 1.6, crackle: 0.02, wow: 9, room: 0.6 },
     elder: { rate: 0.95, pitch: -1.5, lo: 250, hi: 3300, drive: 1.6, crackle: 0.025, wow: 12, room: 0.5, tremble: true },
-    machine: { rate: 1, pitch: 0, lo: 600, hi: 2600, drive: 6, crackle: 0.006, wow: 0, room: 0.9, ring: 31 },
+    machine: { rate: 1, pitch: 0, lo: 600, hi: 2600, drive: 3, crackle: 0.006, wow: 0, room: 0.9, ring: 31, machine: true },
     radio: { rate: 1, pitch: 0, lo: 500, hi: 2800, drive: 3, crackle: 0.08, wow: 6, room: 0.2, staticSwell: true },
   };
   const raw = {}, decoded = {};
@@ -878,7 +882,12 @@ const Voice = (() => {
     if (t.ring) { const rg = ctx.createGain(), osc = ctx.createOscillator(); osc.frequency.value = t.ring; rg.gain.value = 0.75; const depth = ctx.createGain(); depth.gain.value = 0.25; osc.connect(depth); depth.connect(rg.gain); osc.start(); lp.connect(rg); tail = rg; out.userData = { osc }; }
     tail.connect(mix);
     mix.connect(dry); dry.gain.value = 1;
-    if (t.room > 0) { const cv = ctx.createConvolver(); cv.buffer = impulse(t.room); mix.connect(cv); cv.connect(wet); wet.gain.value = Math.min(0.6, 0.18 + t.room * 0.12); wet.connect(out); }
+    if (t.room > 0) { const cv = ctx.createConvolver(); cv.buffer = impulse(t.room); mix.connect(cv); cv.connect(wet); wet.gain.value = t.wet ?? Math.min(0.6, 0.18 + t.room * 0.12); wet.connect(out); }
+    if (t.echo) {      // the next speaker along the hall, a little later and duller
+      const d = ctx.createDelay(1), fb = ctx.createGain(), el = ctx.createBiquadFilter(), eg = ctx.createGain();
+      d.delayTime.value = t.echo; fb.gain.value = 0.22; el.type = 'lowpass'; el.frequency.value = 1900; eg.gain.value = 0.32;
+      mix.connect(d); d.connect(el); el.connect(fb); fb.connect(d); el.connect(eg); eg.connect(out);
+    }
     dry.connect(out); out.connect(bus);
     return { head, out };
   }
@@ -912,8 +921,16 @@ const Voice = (() => {
     if (current !== c) return;
     const real = bufs.filter(Boolean);
     let dur = 0;
+    // The chime: two falling notes through the same horn, then the voice.
+    const lead = t.chime && !opts.stickAt ? 1.35 : 0.25;
+    if (t.chime && !opts.stickAt) for (const [f0, dt0] of [[659.3, 0.05], [523.3, 0.6]]) {
+      const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), at = ctx.currentTime + dt0;
+      o.frequency.value = f0; o2.frequency.value = f0 * 2.01; const g2 = ctx.createGain(); g2.gain.value = 0.18;
+      g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.32, at + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, at + 1.1);
+      o.connect(g); o2.connect(g2); g2.connect(g); g.connect(ch.head); o.start(at); o2.start(at); o.stop(at + 1.2); o2.stop(at + 1.2); c.nodes.push(o, o2);
+    }
     if (real.length) {
-      let at = ctx.currentTime + 0.25;
+      let at = ctx.currentTime + lead;
       for (const b of real) {
         const src = ctx.createBufferSource(); src.buffer = b; src.playbackRate.value = rate;
         if (t.wow) { const lfo = ctx.createOscillator(), g = ctx.createGain(); lfo.frequency.value = 0.55; g.gain.value = t.wow; lfo.connect(g); g.connect(src.detune); lfo.start(at); lfo.stop(at + b.duration / rate + 0.1); c.nodes.push(lfo);
@@ -924,22 +941,29 @@ const Voice = (() => {
         at += b.duration / rate + 0.15; dur += b.duration / rate + 0.15;
       }
     } else {
-      // The placeholder: a murmur in the voice's band, its syllables and pauses shaped to the lines.
+      // The placeholder, until a recording is in: a voiced murmur. A buzz at speaking pitch through two moving vowel
+      // formants, one syllable at a time, shaped to the lines; a machine speaks on one pitch.
       dur = v.lines.reduce((a, l) => a + l[1], 0);
-      const n = ctx.createBufferSource(); n.buffer = noise(2); n.loop = true;
-      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = v.treat === 'child' ? 1100 : v.treat === 'elder' ? 520 : 700; bp.Q.value = 3.5;
-      const env = ctx.createGain(); env.gain.value = 0;
-      n.connect(bp); bp.connect(env); env.connect(ch.head);
-      let at = ctx.currentTime + 0.25;
+      const f0 = t.machine ? 128 : v.treat === 'child' ? 265 : v.treat === 'elder' ? 112 : v.treat === 'tannoy' ? 138 : 165;
+      const osc = ctx.createOscillator(); osc.type = t.machine ? 'square' : 'sawtooth'; osc.frequency.value = f0;
+      const F1 = ctx.createBiquadFilter(), F2 = ctx.createBiquadFilter(), g1 = ctx.createGain(), g2 = ctx.createGain(), env = ctx.createGain();
+      F1.type = F2.type = 'bandpass'; F1.Q.value = 7; F2.Q.value = 9; g1.gain.value = 2.2; g2.gain.value = 1.4; env.gain.value = 0;
+      osc.connect(F1); osc.connect(F2); F1.connect(g1); F2.connect(g2); g1.connect(env); g2.connect(env); env.connect(ch.head);
+      const VOWELS = [[730, 1090], [270, 2290], [530, 1840], [570, 840], [300, 870], [440, 1020], [660, 1720], [390, 1990]];
+      let at = ctx.currentTime + lead;
       for (const [text, sec] of v.lines) {
         const words = Math.max(1, text.split(/\s+/).length), syl = Math.max(2, Math.round(words * 1.4)), span = Math.max(0.6, sec - 0.45);
         for (let i = 0; i < syl; i++) {
-          const s0 = at + i * span / syl, len = span / syl * (0.55 + Math.random() * 0.3), peak = 0.35 + Math.random() * 0.35;
-          env.gain.setValueAtTime(0.0001, s0); env.gain.linearRampToValueAtTime(peak, s0 + len * 0.3); env.gain.linearRampToValueAtTime(0.0001, s0 + len);
+          const s0 = at + i * span / syl, len = span / syl * (0.6 + Math.random() * 0.25), peak = 0.4 + Math.random() * 0.3;
+          const [a1, a2] = VOWELS[Math.floor(Math.random() * VOWELS.length)];
+          F1.frequency.setTargetAtTime(a1, s0, 0.03); F2.frequency.setTargetAtTime(a2, s0, 0.03);
+          // Each phrase falls in pitch toward its end, as speech does.
+          if (!t.machine) osc.frequency.setTargetAtTime(f0 * (1.08 - 0.16 * i / syl) * (0.97 + Math.random() * 0.06), s0, 0.05);
+          env.gain.setValueAtTime(0.0001, s0); env.gain.linearRampToValueAtTime(peak, s0 + len * 0.25); env.gain.linearRampToValueAtTime(peak * 0.7, s0 + len * 0.7); env.gain.linearRampToValueAtTime(0.0001, s0 + len);
         }
         at += sec;
       }
-      n.start(); n.stop(at + 0.2); c.nodes.push(n);
+      osc.start(); osc.stop(at + 0.2); c.nodes.push(osc);
     }
     // Crackle and hiss under it all.
     const cr = ctx.createBufferSource(); cr.buffer = crackleBuffer(3, t.crackle * 40); cr.loop = true;
@@ -951,7 +975,7 @@ const Voice = (() => {
     c.out.gain.setTargetAtTime(c.level, ctx.currentTime, 0.08);
     // Subtitles spread over the real length (or the placeholder's).
     const total = v.lines.reduce((a, l) => a + l[1], 0), k = dur / total;
-    let tt = 0.25;
+    let tt = lead;
     for (const [text, sec, who] of v.lines) { c.timers.push(setTimeout(() => { if (current === c) showLine(who ?? v.who, text); }, tt * 1000)); tt += sec * k; }
     c.timers.push(setTimeout(() => { if (current === c && !opts.stickAt) { stop(1.2); c.onEnd && c.onEnd(); } }, (tt + 0.6) * 1000));
     Telemetry.event('voice', { id: v.id, recorded: real.length > 0 });
@@ -1042,6 +1066,19 @@ const Ambience = (() => {
 // ---------------------------------------------------------------------------
 const input = { left: false, right: false, jumpHeld: false, jumpPressed: false, usePressed: false, axis: 0, shift: false, padShift: false, keyShift: false, lastActivity: 0 };
 const keymap = { KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right', Space: 'jump', KeyW: 'jump', ArrowUp: 'jump', KeyE: 'use', Enter: 'use' };
+// Held state comes from what is held now, by each source: the keys down (a set, so releasing A while → is still held
+// keeps him walking), the touch buttons and the pad. Losing focus drops every held key, since its keyup never comes.
+const held = { keys: new Set(), touch: new Set(), padJump: false };
+function syncHeld() {
+  const has = (k) => [...held.keys].some((c) => keymap[c] === k) || held.touch.has(k);
+  input.left = has('left'); input.right = has('right'); input.jumpHeld = has('jump') || held.padJump;
+}
+function releaseAll() {
+  held.keys.clear(); held.touch.clear(); held.padJump = false; input.keyShift = false; input.shift = input.padShift;
+  syncHeld(); touchEl.querySelectorAll('button.on').forEach((b) => b.classList.remove('on'));
+}
+addEventListener('blur', releaseAll);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(); e.preventDefault(); return; }
   if (e.code === 'Backquote') { dbg.hidden = !dbg.hidden; return; }
@@ -1049,29 +1086,25 @@ addEventListener('keydown', (e) => {
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { input.keyShift = true; input.shift = true; return; }
   const k = keymap[e.code]; if (!k) return;
   e.preventDefault();
-  if (e.repeat) return;
-  if (k === 'left') input.left = true;
-  if (k === 'right') input.right = true;
-  if (k === 'jump') { input.jumpHeld = true; input.jumpPressed = true; }
+  if (e.repeat && held.keys.has(e.code)) return;
+  held.keys.add(e.code); syncHeld();
+  if (k === 'jump') input.jumpPressed = true;
   if (k === 'use') input.usePressed = true;
   input.lastActivity = game.clock;
 });
 addEventListener('keyup', (e) => {
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { input.keyShift = false; input.shift = input.padShift; return; }
-  const k = keymap[e.code]; if (!k) return;
-  if (k === 'left') input.left = false;
-  if (k === 'right') input.right = false;
-  if (k === 'jump') input.jumpHeld = false;
+  if (!keymap[e.code]) return;
+  held.keys.delete(e.code); syncHeld();
 });
 const touchEl = document.getElementById('touch');
 touchEl.querySelectorAll('button').forEach((b) => {
   const k = b.dataset.key;
   const down = (e) => { e.preventDefault(); b.classList.add('on'); Sound.start();
-    if (k === 'left') input.left = true; if (k === 'right') input.right = true;
-    if (k === 'jump') { input.jumpHeld = true; input.jumpPressed = true; } if (k === 'interact') input.usePressed = true;
+    if (k !== 'interact') { held.touch.add(k); syncHeld(); }
+    if (k === 'jump') input.jumpPressed = true; if (k === 'interact') input.usePressed = true;
     input.lastActivity = game.clock; };
-  const up = (e) => { e.preventDefault(); b.classList.remove('on');
-    if (k === 'left') input.left = false; if (k === 'right') input.right = false; if (k === 'jump') input.jumpHeld = false; };
+  const up = (e) => { e.preventDefault(); b.classList.remove('on'); held.touch.delete(k); syncHeld(); };
   b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
 });
 const padPrev = {};
@@ -1079,7 +1112,7 @@ function pollGamepad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   const p = pads && pads[0];
   input.axis = 0;
-  if (!p) return;
+  if (!p) { if (held.padJump) { held.padJump = false; syncHeld(); } return; }
   const ax = p.axes[0] || 0;
   input.axis = Math.abs(ax) > 0.22 ? ax : 0;
   if (p.buttons[14]?.pressed) input.axis = -1;
@@ -1087,7 +1120,7 @@ function pollGamepad() {
   const btn = (i) => !!p.buttons[i]?.pressed;
   const edge = (i) => { const now = btn(i); const was = padPrev[i]; padPrev[i] = now; return now && !was; };
   if (edge(0)) { input.jumpPressed = true; }
-  input.jumpHeld = input.jumpHeld || btn(0);
+  if (held.padJump !== btn(0)) { held.padJump = btn(0); syncHeld(); }
   if (edge(2)) input.usePressed = true;
   input.padShift = btn(1) || btn(5); input.shift = input.keyShift || input.padShift;
   if (edge(9)) togglePause();
@@ -1383,7 +1416,7 @@ const CUES = [
   [120, () => { Sound.relay(0, 0.5); Sound.hum(0.5); }], [132, () => Sound.relay(1, 0.5)], [144, () => Sound.relay(2, 0.5)],
   [150, () => Sound.spark()], [153, () => Sound.spark()], [168, () => { Sound.relay(0); Sound.hum(1); }],
   [172, () => Sound.answer(0)], [180, () => Sound.relay(1)], [184, () => Sound.answer(1)], [192, () => Sound.relay(2)],
-  [196, () => { Sound.spark(); Sound.answer(2); }], [217, () => Sound.servo(0.12, 900, 1300, 0.02)],
+  [196, () => { Sound.spark(); Sound.answer(2); }], [204, () => Voice.play(voiceById('dispatch_wake'), { level: 0.8 })], [217, () => Sound.servo(0.12, 900, 1300, 0.02)],
   [225, () => Sound.servo(0.4, 400, 1600, 0.025)], [240, () => Sound.servo(0.22)], [258, () => Sound.servo(0.22, 320, 560)],
   [276, () => Sound.servo(0.24, 340, 620)], [300, () => Sound.servo(2.0, 180, 420, 0.03)], [312, () => Sound.click()],
   [336, () => Sound.relay(0)], [348, () => Sound.relay(1)], [350, () => Sound.grit()], [360, () => { Sound.relay(2); Sound.servo(0.12, 500, 900, 0.04); }],
@@ -1571,15 +1604,45 @@ function rightLimit0() {
 // ---------------------------------------------------------------------------
 // Interactions: cord lamp, latch, crank wheel, exit door
 // ---------------------------------------------------------------------------
+// What Use would do here. Each source of interactions is a category; the overlap audit (auditNear) asks each one alone,
+// and anywhere two answer at once is a priority clash, which must never ship.
+let NEAR_ONLY = null;
+const nearOn = (c) => !NEAR_ONLY || NEAR_ONLY === c;
+const NEAR_CATS = ['item', 'curio', 'secret', 'voice', 'letter', 'push', 'fixed'];
+function nearAll() {
+  const out = [];
+  for (const c of NEAR_CATS) { NEAR_ONLY = c; try { const k = nearUse(); if (k) out.push(k); } finally { NEAR_ONLY = null; } }
+  return out;
+}
+// Sweep him along x (on the floor, and on whatever he could stand on there) and list every spot where two
+// interactions answer at once. Run from each checkpoint by tools/sim/audit_near.mjs; the list must be empty.
+function auditNear(x0, x1, step = 0.02) {
+  const keep = { x: game.x, y: game.y, grounded: game.grounded, region: game.region }, out = [];
+  try {
+    for (let x = x0; x <= x1; x += step) {
+      game.x = x;
+      if (game.region === 2 && x > REGION3_X) game.region = 3;
+      if (game.region === 3 && game.upper && x > REGION4_X) game.region = 4;
+      if (game.region === 4 && x > REGION5_X) game.region = 5;
+      for (const y of new Set([floorAt(x), supportAt(x)])) {
+        game.y = y; game.grounded = true;
+        const all = nearAll();
+        if (all.length > 1) out.push({ x: +x.toFixed(2), y: +y.toFixed(2), region: game.region, all });
+      }
+    }
+  } finally { Object.assign(game, keep); }
+  return out;
+}
 function nearUse() {
   const c1 = game.ch1 ? nearCh1() : null;
   if (c1) return c1;
+  if (!nearOn('fixed')) return null;
   if (game.region === 5) return nearUse5();
   if (game.region === 4) return nearUse4();
   if (game.region === 3) return nearUse3();
   if (game.region === 2) return nearUse2();
   if (!game.grounded || game.y > 0.05) return null;
-  if (Math.abs(game.x - CORD_STAND) < 0.32) return 'cord';
+  if (Math.abs(game.x - CORD_STAND) < 0.22) return 'cord';
   if (!game.released && Math.abs(game.x - PULL_ROOT_X) < 0.34) return 'latch';
   if (game.doorOpen < 1 && Math.abs(game.x - CRANK_X) < 0.36) return 'crank';
   return null;
@@ -1781,6 +1844,8 @@ function updatePlayer(dt) {
     game.y += game.vy * dt;
     const ceil = ceilingAt(game.x);
     if (game.vy > 0 && game.y + STAND_H > ceil) { game.vy = 0; game.y = ceil - STAND_H; Sound.bonk(); }
+    // Pass 8: a real drop (not a hop) turns from the jump's tuck into the fall: arms up, legs paddling.
+    if (current === 'JumpAir' && actions.Fall && game.vy < -1.4 && game.peakY - game.y > 0.25 && !game.hold) setClip('Fall', 0.22);
     // Catch a ledge edge mid-air.
     const l = ledgeAhead(game.facing, 0.32);
     if (l && game.vy < 1.2 && l.top - game.y > MANTLE_MIN && l.top - game.y <= MANTLE_MAX + 0.1) { startMantle(l); return; }
@@ -2741,7 +2806,7 @@ function updateFall(a, dt) {
     a.v += 3.5 * dt; a.s += a.v * dt;
     const k = Math.min(1, a.s / len);
     game.x = A[0] + (B[0] - A[0]) * k; game.y = A[1] + (B[1] - A[1]) * k + 0.1; game.z = RAIL_Z;
-    if (k >= 1) { a.phase = 'air'; a.vx = a.v * 0.7; a.vy = -a.v * 0.6; setClip('JumpAir', 0.1); }
+    if (k >= 1) { a.phase = 'air'; a.vx = a.v * 0.7; a.vy = -a.v * 0.6; setClip(actions.Fall ? 'Fall' : 'JumpAir', 0.1); }
   } else if (a.phase === 'air') {
     a.vy -= GRAVITY * dt; game.x += a.vx * dt; game.y += a.vy * dt;
     const floor = heapH(game.x, game.z) + 0.05;
@@ -3213,6 +3278,7 @@ const BARRICADE5 = { x0: OFF5 + 80.2, x1: OFF5 + 81.0, gap: 0.62 };
 const END5 = { lookX: 173.2, stairX: 174.4, stairRise: 0.714, win: new THREE.Vector3(173.6, 24.0, -10.3), box: new THREE.Vector3(170.85, 1.46, -0.93),
   cam: new THREE.Vector3(172.4, 0.6, 0.8) };            // keep the camera at z <= 0.9: the well's lintel is above the landing
 const KNOCK5_X = OFF5 + 103.26, INNER5_X = OFF5 + 109.5, TOY5_X = OFF5 + 111.1, TERM5_X = OFF5 + 113.6, END5_X = OFF5 + 116.1;
+const MARKS_HOLD = 2.6;
 const DESK5 = { x: OFF5 + 113.6, half: 0.55, z: -0.62, min: OFF5 + 112.45, clear: OFF5 + 112.55 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
 const C114DOOR = { x: OFF5 + 103.6075, open: THREE.MathUtils.degToRad(95), handle: THREE.MathUtils.degToRad(-35) };
 const KNOCK5_Z = 0.07;                                                                      // a step toward the camera, square to C-114's shut front door
@@ -3293,7 +3359,11 @@ function updateDL05(dt) {
   if (!game.dl5.revealed && d.x <= DESK5.clear) {
     game.dl5.revealed = true; Music.bed(false); Music.play('child');
     if (once('marks')) game.marksShotAt = game.clock;
+    // Pass 8: he lets go of the desk himself; the terminal is the next thing, at once.
+    if (game.hold === 'desk') { game.hold = null; game.pushKey = null; setClip('Idle', 0.3); }
   }
+  // The held look at the marks gives way the moment the player does anything.
+  if (game.clock - game.marksShotAt > 0.8 && game.clock - game.marksShotAt < MARKS_HOLD && (input.left || input.right || input.axis || input.usePressed || input.jumpPressed)) game.marksShotAt = -100;
   // The toy sits up while he sets it straight.
   if (refs.Toy && refs.toySlump) {
     const a = game.act, k = a && a.kind === 'toy' && a.phase === 'act' ? smooth((actions.Straighten.time * FPS - 14) / 12) : game.dl5.toyUp ? 1 : 0;
@@ -3327,8 +3397,9 @@ function nearUse5() {
   if (game.hold === 'desk') return 'release';
   if (game.y > 0.05) return null;
   const d = game.desk5;
-  if (!game.dl5.forwarded && d.x <= DESK5.clear && Math.abs(game.x - TERM5_X) < 0.36) return 'present';
-  if (!game.dl5.forwarded && Math.abs(game.x - (d.x - PUSH_GAP5)) < 0.4) return 'grabDeskL';
+  // Once the desk is clear, Use anywhere between the toy and the terminal walks him to it.
+  if (!game.dl5.forwarded && d.x <= DESK5.clear && game.x > TOY5_X + 0.42 && game.x < TERM5_X + 0.36) return 'present';
+  if (!game.dl5.forwarded && !game.dl5.revealed && Math.abs(game.x - (d.x - PUSH_GAP5)) < 0.4) return 'grabDeskL';
   if (!game.dl5.toyUp && Math.abs(game.x - TOY5_X) < 0.4) return 'toy';
   return null;
 }
@@ -3454,7 +3525,7 @@ function currentShot() {
       refs.label.updateWorldMatrix(true, false);
       const L = new THREE.Box3().setFromObject(refs.label).getCenter(new THREE.Vector3());
       const fwd = V3(Math.sin(game.yaw), 0, Math.cos(game.yaw));
-      return { name: 'label', pos: L.clone().addScaledVector(fwd, 0.27).add(V3(0, 0.15, 0.05)), look: L, focal: 50, ease: 3.0 };
+      return { name: 'label', pos: L.clone().addScaledVector(fwd, 0.27).add(V3(0, 0.15, 0.05)), look: L, focal: 50, ease: a.holdFor ? 1.1 : 3.0 };   // the wake's: a slow push in
     }
   }
   if (game.region === 5 && game.exit && game.exit.phase === 'look') {
@@ -3466,7 +3537,7 @@ function currentShot() {
   }
   if (game.region === 5) {
     // The marks and the tree, held, the first time.
-    if (game.clock - game.marksShotAt < 3.6) return { name: 'marks', pos: V3(OFF5 + 113.55, 0.72, 0.9), look: V3(OFF5 + 113.55, 0.68, -1.0), focal: 50, ease: 1.2 };
+    if (game.clock - game.marksShotAt < MARKS_HOLD) return { name: 'marks', pos: V3(OFF5 + 113.55, 0.72, 0.9), look: V3(OFF5 + 113.55, 0.68, -1.0), focal: 50, ease: 1.2 };
     // The knock: close, from behind his right shoulder, the door and its name card in frame; held until the door is open.
     if (a && a.kind === 'knock' && !a.quick && a.phase !== 'out') return { name: 'knock', pos: V3(KNOCK5_X - 0.76, 0.72, 1.72), look: V3(KNOCK5_X + 0.16, 0.64, 0.12), focal: 28, ease: 1.2 };
     if (a && a.kind === 'present' && a.phase === 'act') return { name: 'terminal', pos: V3(X + 0.55, Y + 1.05, 0.75), look: V3(TERM5_X, 0.9, WALL5_Z), focal: 42, ease: 1.4 };
@@ -3554,9 +3625,10 @@ function playQuirk(clip, cancel = true) {
 function updateQuirk(a) {
   const act = actions[a.clip], dur = act.getClip().duration;
   const moving = input.axis || input.left || input.right || input.jumpPressed;
-  if (a.cancel && moving && act.time > 0.3) { game.act = null; return; }
+  const cancel = a.cancel || (a.cancelAfter && game.clock - a.start > a.cancelAfter);
+  if (cancel && moving && act.time > 0.3) { game.act = null; return; }
   if (act.time >= dur - 0.05) {
-    if (a.clip === 'CheckLabel' && game.clock - (a.endAt ??= game.clock) < 0.8) return;     // held a beat, so the label can be read
+    if (a.clip === 'CheckLabel' && game.clock - (a.endAt ??= game.clock) < (a.holdFor ?? 0.8)) return;     // held a beat, so the label can be read
     game.act = null; setClip('Idle', 0.35); if (a.then) a.then();
   }
 }
@@ -3595,6 +3667,7 @@ const SH = { x0: 12.0, x1: 25.0, tubeX: 14.6, tubeY: 0.9, tubeZ: -0.85, slotX: 1
 // DL-04 The Racks: the charging bay at the end of the hall.
 const RK = { courierX: 41.2, courierZ: -0.35, loopOff: 0.35, gap: 0.67, plate: { x0: 44.0, x1: 45.0 }, bayX: 44.5, door: { x0: 46.3, x1: 46.7 } };
 // DL-06 The Heap: the gallery gate and its counterweight bucket, the sorting weights by the dock, the slide back down.
+const gate6Target = (b) => (b >= 2 ? 1.4 : 0.38 * b);
 const HP = { gateX: OFF3 + 41.9, bucketX: OFF3 + 39.0, weights: [OFF3 + 31.6, OFF3 + 36.05], slideZ: 0.42,
   slide: [[38.85, 1.6], [38.762, 1.6], [38.62, 1.575], [38.48, 1.525], [38.376, 1.46], [37.266, 0.528], [36.95, 0.33],
     [36.6, 0.18], [36.25, 0.09], [35.98, 0.06], [35.78, 0.06], [35.72, 0.03], [35.70, 0.0]].map(([x, y]) => [OFF3 + x, y]) };
@@ -3841,46 +3914,52 @@ function limitsCh1(lo, hi) {
 // Interactions -------------------------------------------------------------------------------
 function nearCh1() {
   if (!game.grounded || game.act) return null;
-  if (game.region === 6) { const n6 = nearAtt(); if (n6) return n6; }
+  if (game.region === 6 && nearOn('item')) { const n6 = nearAttItem(); if (n6) return n6; }
   const s = game.ch1, x = game.x;
-  if (game.hold === 'push') return 'release';
+  if (game.hold === 'push') return nearOn('item') ? 'release' : null;
   if (game.hold === 'item') {
+    if (!nearOn('item')) return null;
     if (game.region === 3 && !game.upper && loadableCarrier()) return 'loadCarrier';
     if (game.region === 4 && game.carry && game.carry.key === 'case' && x > UO.car.x0 - 0.25 && x < UO.car.x1 + 0.25 && s.uo.phase === 'idle') return 'loadCar';
     if (game.region === 4 && game.carry && game.carry.key && game.carry.key[0] === 'p' && x > CW8.trayX - 0.8 && x < CG.shaft.x1 && game.ch1.cage.phase === 'top') return 'loadTray';
     return 'setdownItem';
   }
   if (game.hold) return null;
-  const cu = curioHere();
-  if (cu) return 'curio:' + cu.id;
-  const se = secretHere();
-  if (se) return 'secret:' + se.id;
-  const vc = voiceHere();
-  if (vc) return 'voice:' + vc.id;
-  // DL-10: the lift's UP, the service door's crank, and the counterweight's own UP.
-  if (game.region === 4 && x > UPONLY.x0) {
-    const uo = s.uo, deck = Math.abs(game.y - DECK) < 0.05;
-    if (deck && Math.abs(x - UO.upStand) < 0.22 && uo.phase === 'idle') return 'up10';
-    if (deck && Math.abs(x - UO.crankStand) < 0.25 && uo.door < 1) return 'crank10';
-    if (deck && x > UO.cw.x0 + 0.1 && x < UO.cw.x1 && uo.d < 0.01 && uo.phase === 'idle') return 'ride10';
-  }
-  // DL-09: C-108's doorbell, and the junction box's lever by C-110.
-  if (game.region === 5 && Math.abs(x - BELL9.x) < 0.25 && game.clock > s.bellUntil) return 'bell9';
-  if (game.region === 5 && Math.abs(x - JUNCTION9.x) < 0.25 && !s.junction) return 'junction9';
-  // Letters: pick one up, or post what he carries.
-  for (const L of LETTERS) {
-    const st = letterState[L.id];
-    if (L.region === game.region && st === 'floor' && (L.region !== 3 || !!L.upper === !!game.upper) && Math.abs(x - L.x) < 0.42) return 'pickLetter:' + L.id;
-  }
-  if (letterState.held > 0) for (const sl of SLOTS) if (sl.region === game.region && (sl.region !== 3 || !!sl.upper === !!game.upper) && Math.abs(x - sl.x) < 0.42) return 'postLetter:' + sl.id;
-  // Things he carries.
-  for (const it of itemsHere()) {
+  // Things he carries come first: they move, so whatever they were put down on is never blocked for good.
+  if (nearOn('item')) for (const it of itemsHere()) {
     if (it.state !== 'floor' || Math.abs(game.y - it.base) > 0.05) continue;
     const side = Math.sign(it.x - x) || game.facing, stand = it.x - side * GRIP_FWD;
     if (Math.abs(x - stand) < 0.4) return 'liftItem:' + it.key;
   }
+  const cu = nearOn('curio') && curioHere();
+  if (cu) return 'curio:' + cu.id;
+  const se = nearOn('secret') && secretHere();
+  if (se) return 'secret:' + se.id;
+  const vc = nearOn('voice') && voiceHere();
+  if (vc) return 'voice:' + vc.id;
+  if (nearOn('fixed')) {
+    if (game.region === 6) { const n6 = nearAttFixed(); if (n6) return n6; }
+    // DL-10: the lift's UP, the service door's crank, and the counterweight's own UP.
+    if (game.region === 4 && x > UPONLY.x0) {
+      const uo = s.uo, deck = Math.abs(game.y - DECK) < 0.05;
+      if (deck && Math.abs(x - UO.upStand) < 0.22 && uo.phase === 'idle') return 'up10';
+      if (deck && Math.abs(x - UO.crankStand) < 0.25 && uo.door < 1) return 'crank10';
+      if (deck && x > UO.cw.x0 + 0.1 && x < UO.cw.x1 && uo.d < 0.01 && uo.phase === 'idle') return 'ride10';
+    }
+    // DL-09: C-108's doorbell, and the junction box's lever by C-110.
+    if (game.region === 5 && Math.abs(x - BELL9.x) < 0.25 && game.clock > s.bellUntil) return 'bell9';
+    if (game.region === 5 && Math.abs(x - JUNCTION9.x) < 0.25 && !s.junction) return 'junction9';
+  }
+  // Letters: pick one up, or post what he carries.
+  if (nearOn('letter')) {
+    for (const L of LETTERS) {
+      const st = letterState[L.id];
+      if (L.region === game.region && st === 'floor' && (L.region !== 3 || !!L.upper === !!game.upper) && Math.abs(x - L.x) < 0.42) return 'pickLetter:' + L.id;
+    }
+    if (letterState.held > 0) for (const sl of SLOTS) if (sl.region === game.region && (sl.region !== 3 || !!sl.upper === !!game.upper) && Math.abs(x - sl.x) < 0.42) return 'postLetter:' + sl.id;
+  }
   // Things he pushes or drags.
-  for (const p of pushHere()) if (Math.abs(x - p.stand()) < 0.34 && Math.abs(game.y - p.floor) < 0.05) return 'grabPush:' + p.key;
+  if (nearOn('push')) for (const p of pushHere()) if (Math.abs(x - p.stand()) < 0.34 && Math.abs(game.y - p.floor) < 0.05) return 'grabPush:' + p.key;
   return null;
 }
 function itemsHere() {
@@ -4411,8 +4490,9 @@ function updateCh1(dt) {
   for (let i = 0; i < 3; i++) glow('BayLamp' + i, want ? 5 : 0.4);
   // DL-06: weights on the floor or riding a carrier; the bucket fills, the gate rises.
   s.weights.forEach((w, i) => placeItem(w, k.weights[i], dt));
-  // Pass 2: the gate wants both weights. One lifts it half way, where it stalls with a strain, too low to pass.
-  const gTarget = 0.7 * Math.min(2, s.bucket);
+  // Pass 2: the gate wants both weights. One lifts it a little, where it stalls with a strain; pass 8: well under
+  // his crouch (0.58), so it never looks like a gap he could duck through.
+  const gTarget = gate6Target(s.bucket);
   if (s.gate6 < gTarget) {
     s.gate6 = Math.min(gTarget, s.gate6 + 0.45 * dt); if (Math.random() < dt * 6) Sound.gateTick();
     if (s.gate6 >= gTarget && gTarget < 1.4) { Sound.strain(); Sound.creak(0.6); shake(0.15); }
@@ -4470,9 +4550,12 @@ function updateCh1(dt) {
     refs.bodyRipple.uAmp.value += (moving - refs.bodyRipple.uAmp.value) * Math.min(1, dt * 4);
     refs.bodyRipple.uTime.value += dt;
   }
-  const drumOn = Math.abs(dr.x - RH5.drumPlate) < 0.45, bodyOn = Math.abs(bd.x - RH5.bodyPlate) < 0.13;
+  // Pass 8: the plate weighs whatever share of each thing is on it, so the needle climbs as the body comes on. In
+  // a person's weights: D-17 0.2, the body 1, the drum 1.7. The dial reads -140 degrees a person.
+  const onPlate = (x, half) => THREE.MathUtils.clamp((Math.min(x + half, RH5.plate[1]) - Math.max(x - half, RH5.plate[0])) / (2 * half), 0, 1);
   const meOn = game.region === 2 && game.y < 0.05 && game.x > RH5.plate[0] && game.x < RH5.plate[1];
-  const reading = rh.served ? 'person' : drumOn ? 'over' : bodyOn ? 'person' : meOn ? 'under' : 'empty';
+  const W = onPlate(bd.x, RH5.bodyHalf) + 1.7 * onPlate(dr.x, 0.225) + (meOn ? 0.2 : 0);
+  const reading = rh.served ? 'person' : W < 0.05 ? 'empty' : W < 0.85 ? 'under' : W <= 1.15 ? 'person' : 'over';
   if (reading !== sc.reading) {
     sc.reading = reading; sc.since = game.clock;
     Telemetry.event('weigh', { reading });
@@ -4482,8 +4565,10 @@ function updateCh1(dt) {
   }
   if (reading === 'person' && !rh.served && game.clock - sc.since > 1.0) { rh.served = true; rh.servedAt = game.clock; Sound.ratchet(); Sound.chain(1.5); }
   // The needle: a heavy, damped swing to its reading.
-  const target = { empty: 0, under: RH5.needle.under, person: RH5.needle.person, over: RH5.needle.over }[reading];
+  const target = rh.served ? RH5.needle.person : RH5.needle.person * Math.min(W, 1.75);
+  const was = sc.needle;
   sc.nv += ((target - sc.needle) * 30 - sc.nv * 7) * dt; sc.needle += sc.nv * dt;
+  if (Math.floor(was / 20) !== Math.floor(sc.needle / 20) && game.region === 2) Sound.tick();     // the dial's detents, ticking past
   // Pass 7: whenever the needle swings through PERSON, the hatch answers: it jerks up a hand's breadth and drops back,
   // so even the wrong answers (the drum's OVER) show that a person's weight is the key.
   const inBand = Math.abs(sc.needle - RH5.needle.person) < 22;
@@ -4647,7 +4732,11 @@ function updateCage(dt) {
   // It blinks faster as the cage comes down toward it: the moment to pull is when it's level with the chevrons.
   const near = ['lower', 'shudder', 'slip', 'stall'].includes(c.phase) ? THREE.MathUtils.clamp(1 - (c.y - L) / 1.2, 0, 1) : 0;
   const lamp = c.phase === 'caught' ? 3 : 5 + 4 * Math.max(0, Math.sin(game.clock * (6 + 16 * near)));
-  glow('TrayLamp', 4);
+  // Pass 8: with a plate in his hands, the tray's lamp beats and he looks at the tray: that's where it goes.
+  const plateHeld = game.region === 4 && game.hold === 'item' && game.carry && game.carry.key && game.carry.key[0] === 'p' && c.phase === 'top';
+  glow('TrayLamp', plateHeld ? 6 + 6 * Math.max(0, Math.sin(game.clock * 5)) : 4);
+  const lookTray = plateHeld && Math.abs(game.x - CW8.trayX) < 3.2 && !game.act;
+  game.lookAt = lookTray ? 'tray' : game.lookAt === 'tray' ? null : game.lookAt;
   glow('LandingAmber', lamp); glow('StopStripe', lamp * 0.4);
   glow('CageBulb', ['shudder', 'slip', 'stall', 'crash'].includes(c.phase) && !game.calm ? (Math.sin(game.clock * 37) > 0.1 ? 4 : 0.4) : 3);
 }
@@ -4716,7 +4805,8 @@ function buildAtt(root) {
   // Lamps the game switches get their own materials.
   const lamp = (n, color) => { const o = get(n); if (!o) return null; const m = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0 }); o.traverse((q) => { if (q.isMesh) q.material = m; }); return m; };
   const chain = get('AttChain'); chain && chain.traverse((q) => { if (q.isMesh && q.material.map) { k.chainMap = q.material.map; k.chainMap.wrapT = THREE.RepeatWrapping; k.chainMap.needsUpdate = true; } });
-  k.lampPresent = lamp('AttLampPresent', 0x8cffa0); k.lampCoat = lamp('AttLampCoat', 0xffad48); k.pegLamp = lamp('AttPegLamp', 0xffad48);   // COAT 7 and peg 7 share the amber: one cause, one effect k.lessonLamp = lamp('AttLessonLamp', 0xffd9a0);
+  k.lampPresent = lamp('AttLampPresent', 0x8cffa0); k.lampCoat = lamp('AttLampCoat', 0xffad48); k.pegLamp = lamp('AttPegLamp', 0xffad48);   // COAT 7 and peg 7 share the amber: one cause, one effect
+  k.lessonLamp = lamp('AttLessonLamp', 0xffd9a0);
   // Lights, as proxies for the pool (region 6 only).
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; l.intensity = i; scene.add(l); l.layers.set(PROXY_LAYER); lightPool.proxies.push(l); return l; };
   const S = (color, i, d, at, to, ang, shadow = false) => { const l = new THREE.SpotLight(color, i, d, ang, 0.6, 2); l.position.set(...at); l.target.position.set(...to); if (shadow && !touchDevice) { l.castShadow = true; l.shadow.mapSize.set(512, 512); l.shadow.bias = -0.001; } scene.add(l, l.target); l.layers.set(PROXY_LAYER); lightPool.proxies.push(l); return l; };
@@ -4730,6 +4820,8 @@ function buildAtt(root) {
     // DL-14: the globes, the hatch, the stair's top, the cupboard's lamp (the cue to it), and pools on the desk and the crank.
     P(0xffdcaa, 1.6, 5, 234.6, 3.1, 0), P(0xffdcaa, 1.6, 5, 240.75, 3.1, 0), P(0xbcd0e8, 0.8, 3, 239.7, 2.9, 0.3), P(0xffdcaa, 0.8, 3.5, 233.4, 3.4, 0.4),
     P(0xffb870, 2.0, 3.5, 232.62, 0.98, -2.78), S(0xffd8a8, 6, 7, [237.4, 3.7, 1.4], [237.4, 0.8, -0.6], 0.75), S(0xffe0b8, 4, 5, [242.4, 2.4, 1.6], [242.4, 0.5, -0.32], 0.5),
+    // Pass 8: A's wheel and the pole through it, in their own low pool, so the jam reads from across the room.
+    S(0xffd8a8, 3.5, 4, [235.3, 2.6, 1.2], [234.95, 0.7, -0.62], 0.42),
   ];
   // Culling, like the prologue's: by x, near the camera.
   const box = new THREE.Box3();
@@ -4740,13 +4832,13 @@ function resetAtt(cp) {
   const on = ATT_CPS.includes(cp), p = (n) => on && ATT_CPS.indexOf(cp) >= ATT_CPS.indexOf(n);
   game.att = {
     coat: { x: ATT.coat0, base: 0, state: p('register') ? 'peg' : 'bin', blend: 0, drop: null },
-    pole: { x: ATT.pole0, base: 0, state: p('hatch14') ? 'jam' : 'floor', blend: 0, drop: null },
+    pole: { x: ATT.wheelA, base: 0, state: 'jam', blend: 0, drop: null },        // left through A's wheel, holding A up
     fig: { x: p('register') ? ATT.fig.strip : ATT.fig.x, v: 0, state: 'free' },
     fig2: { x: p('gallery13') ? ATT.fig2.seat : ATT.fig2.x, v: 0, state: 'free' },
     gateY: p('register') ? ATT.gate.open : 0, gateV: 0, said: {}, present: false, presentAt: -10, presentCount: 0,
     lesson: { on: p('gallery13'), t: p('gallery13') ? 4.9 : 0, braked: p('gallery13'), steps: p('gallery13') ? [1, 1, 1] : [0, 0, 0], tree: 0, lastT: 0 },
     blinds: { a: p('hatch14') ? 1 : 0, b: p('hatch14') ? 1 : 0, ta: p('hatch14') ? 1 : 0, tb: p('hatch14') ? 1 : 0, winds: p('hatch14') ? 3 : 0 },
-    jammed: p('hatch14'), peel: p('hatch14') ? 1 : 0, peeled: p('hatch14'), crank: 0, ended: false,
+    jammed: true, peel: p('hatch14') ? 1 : 0, peeled: p('hatch14'), crank: 0, ended: false,
   };
 }
 const attOut = (k) => k >= 0.95;
@@ -4780,18 +4872,25 @@ function limitsAtt(lo, hi) {
   if (x > ATT.gate.x && game.att.gateY < CROUCH_H + 0.02) lo = Math.max(lo, ATT.gate.x + 0.06 + HALF);
   return [lo, hi];
 }
-function nearAtt() {
+// The coat, the peg and the pole: things he carries, or takes back out of where they were put.
+function nearAttItem() {
   const a = game.att, x = game.x;
   if (!game.hold && a.coat.state === 'bin' && game.y < 0.05 && Math.abs(x - ATT.coat0) < 0.35) return 'att:coat';   // off the lost-property bin
   if (game.carry && game.carry === a.coat && Math.abs(game.y - ATT.bench.h) < 0.05 && Math.abs(x - ATT.peg.x) < 0.4) return 'att:hang';
-  if (game.carry && game.carry === a.pole && game.y < 0.05 && Math.abs(x - ATT.wheelA) < 0.45 && attOut(a.blinds.a) && !a.jammed) return 'att:jam';
-  if (game.hold) return null;
-  if (game.y < 0.05 && Math.abs(x - ATT.pawlX) < 0.32 && a.lesson.on) return 'att:pawl';
+  // A's chain wheel: the pole goes through its bracket, and comes back out. It holds A wherever A is.
+  const atWheel = game.y < 0.05 && Math.abs(x - ATT.wheelA) < ATT.wheelR && !past(game.checkpoint, 'hatch14');
+  if (atWheel && game.carry && game.carry === a.pole && !a.jammed) return 'att:jam';
+  if (atWheel && !game.hold && a.pole.state === 'jam') return 'att:unjam';
+  return null;
+}
+function nearAttFixed() {
+  const a = game.att, x = game.x;
+  if (game.y < 0.05 && Math.abs(x - ATT.pawlX) < 0.32) return a.lesson.on ? 'att:pawl' : 'att:pawlIdle';
   if (game.y < 0.05 && Math.abs(x - ATT.crankX) < 0.36) return 'att:crank';
   return null;
 }
 function beginAtt(kind) {
-  const stand = { coat: ATT.coat0, hang: ATT.peg.x, jam: ATT.wheelA - 0.22, pawl: ATT.pawlX - 0.2, crank: ATT.crankX - 0.22 }[kind];
+  const stand = { coat: ATT.coat0, hang: ATT.peg.x, jam: ATT.wheelA - 0.22, unjam: ATT.wheelA - 0.22, pawl: ATT.pawlX - 0.2, pawlIdle: ATT.pawlX - 0.2, crank: ATT.crankX - 0.22 }[kind];
   game.act = { kind: 'att', what: kind, phase: 'approach', t: 0, standX: stand, face: 1 };
 }
 function updateAttAct(a, dt) {
@@ -4799,19 +4898,20 @@ function updateAttAct(a, dt) {
   if (a.phase === 'approach') {
     if (approachCh1(a, dt)) {
       a.phase = 'act'; a.t = 0;
-      if (a.what === 'coat') { game.yawOverride = Math.PI; setClip('Lift', 0.15); }
+      if (a.what === 'coat' || a.what === 'unjam') { game.yawOverride = Math.PI; setClip('Lift', 0.15); }
       if (a.what === 'hang') { game.yawOverride = Math.PI; setClip(actions.SetDownHigh ? 'SetDownHigh' : 'SetDown', 0.15); }
       if (a.what === 'jam') { game.yawOverride = Math.PI; setClip('SetDown', 0.15); }
-      if (a.what === 'pawl') setClip(actions.Pull ? 'Pull' : 'Tug', 0.15);
+      if (a.what === 'pawl' || a.what === 'pawlIdle') setClip(actions.Pull ? 'Pull' : 'Tug', 0.15);
       if (a.what === 'crank') setClip(actions.Crank ? 'Crank' : 'Tug', 0.15);
     }
     return;
   }
-  if (a.what === 'coat') {
-    // He reaches into the bin for the little coat on top of it.
-    const f = actions.Lift.time * FPS, it = s.coat;
+  if (a.what === 'coat' || a.what === 'unjam') {
+    // He reaches into the bin for the little coat on top of it; or draws the pole back out of A's wheel.
+    const f = actions.Lift.time * FPS, it = a.what === 'coat' ? s.coat : s.pole;
+    if (a.what === 'unjam' && f >= 16 && s.jammed) { s.jammed = false; Sound.clank(); Telemetry.event('unjam', {}); }
     if (f >= 13 && !a.s1) { a.s1 = true; Sound.lift(); }
-    if (f >= 22) { if (it.state !== 'carried') { it.state = 'carried'; it.x = game.x; } it.blend = smooth((f - 22) / 4); }
+    if (f >= 22) { if (it.state !== 'carried') { it.fromJam = a.what === 'unjam'; it.state = 'carried'; it.x = game.x; } it.blend = smooth((f - 22) / 4); }
     if (f >= 39) { game.act = null; game.yawOverride = null; game.hold = 'item'; game.carry = it; it.blend = 1; setClip('CarryIdle', 0.2); }
     return;
   }
@@ -4824,6 +4924,12 @@ function updateAttAct(a, dt) {
       game.carry = null; game.hold = null;
     }
     if (f >= 35) { game.act = null; game.yawOverride = null; setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'pawlIdle') {
+    // No lesson running: the brake has nothing to hold. It clunks, and the empty seat's lamp blinks.
+    if (a.t > 0.35 && !a.done) { a.done = true; Sound.pawlClick(); Sound.clunk(); s.pawlIdleAt = game.clock; }
+    if (a.t > 1.0) { game.act = null; setClip('Idle', 0.3); }
     return;
   }
   if (a.what === 'pawl') {
@@ -4844,10 +4950,10 @@ function updateAttAct(a, dt) {
     // One wind of the crank runs the chain: the blind that is up comes down and the other goes up, unless it is jammed.
     if (a.t > 0.3 && !a.done) {
       a.done = true; const b = s.blinds; b.winds++;
-      if (b.ta < 0.5 && b.tb < 0.5) b.ta = 1;                                       // the first wind: A comes down
-      else if (b.ta > 0.5 && b.tb < 0.5) { b.tb = 1; if (!s.jammed) b.ta = 0; }      // B down; A up, unless the pole holds it
-      else if (b.tb > 0.5 && b.ta < 0.5) { b.ta = 1; b.tb = 0; }
-      else { b.ta = s.jammed ? 1 : 0; b.tb = s.jammed ? 1 : 0; }
+      // The pole holds A's wheel wherever A is, and the chain slips on it, so B goes the other way alone.
+      if (s.jammed) b.tb = b.tb > 0.5 ? 0 : 1;
+      else if (b.ta > 0.5 && b.tb < 0.5) { b.ta = 0; b.tb = 1; }                    // A goes up as B comes down
+      else { b.ta = 1; b.tb = 0; }                                                 // A comes down as B goes up
       Sound.chain(2.2); Sound.ratchet(); Telemetry.event('blinds', { a: b.ta, b: b.tb, jammed: s.jammed });
     }
     if (a.t > 0.9 && !a.r2) { a.r2 = true; Sound.ratchet(); }
@@ -4888,7 +4994,10 @@ function updateAtt(dt) {
   const L = s.lesson, seated = Math.abs(s.fig2.x - ATT.fig2.seat) < 0.06;
   if (seated && !L.on) { L.on = true; L.t = 0; Sound.bell?.(); Telemetry.event('lessonStart', {}); }
   if (!seated && L.on && !L.braked) { L.on = false; }
-  if (k.lessonLamp) k.lessonLamp.emissiveIntensity = L.on ? 3 : 0.05;
+  // The empty seat's lamp: off while nobody sits there; it blinks if he tries the brake with no lesson running.
+  const seatBlink = !L.on && game.clock - (s.pawlIdleAt ?? -9) < 2.2 ? (Math.sin(game.clock * 12) > 0 ? 4 : 0.2) : 0;
+  if (k.lessonLamp) k.lessonLamp.emissiveIntensity = L.on ? 3 : Math.max(0.05, seatBlink);
+  s.k13 = (s.k13 || 0) + ((L.on || game.x > 221.6 || game.y > 0.3 ? 1 : 0) - (s.k13 || 0)) * Math.min(1, dt * 0.9);
   if (L.on && !L.braked) {
     L.lastT = L.t; L.t += dt;
     if (L.t >= ATT.cycle.period) { L.t -= ATT.cycle.period; }
@@ -4921,6 +5030,11 @@ function updateAtt(dt) {
   const winding = Math.abs(B.a - B.ta) > 1e-3 || Math.abs(B.b - B.tb) > 1e-3;
   if (k.AttCrank && winding) k.AttCrank.rotateZ(dt * 4);
   if (k.chainMap && winding) k.chainMap.offset.y += dt * 0.6;                         // the chain runs while the blinds move
+  s.rattle = winding && s.jammed;
+  // The first time the chain runs against the pole, he looks round at the rattle.
+  if (s.rattle && !s.rattleAt) s.rattleAt = game.clock;
+  if (s.rattleAt && game.region === 6) { const t = game.clock - s.rattleAt; game.lookAt = t > 1.0 && t < 3.6 ? 'wheelA' : game.lookAt === 'wheelA' ? null : game.lookAt; }
+  if (s.rattle && Math.random() < dt * 9) Sound.tap();
   if (k.AttWheelA && !s.jammed) { k.AttWheelA.quaternion.copy(k.AttWheelA.userData.rest.q); k.AttWheelA.rotateZ(B.a * 6); }
   if (B.b > 0.9 && !s.peeled) { s.peeled = true; s.peelAt = game.clock; Sound.creak?.(); Music.bed(false); Music.play('child', 2.5); Telemetry.event('peel', {}); }
   if (s.peeled) s.peel = Math.min(1, s.peel + dt / 1.6);
@@ -4935,15 +5049,21 @@ function updateAtt(dt) {
     if (game.x > ATT.hatch.x0 + 0.35 && game.y > 2.1 && !s.ended) { s.ended = true; game.checkpoint = 'hatch14'; finishAtt(); }
   }
 }
-const PEEL_AXIS = new THREE.Vector3(0.5437, 0.8392, 0).normalize();
+const PEEL_AXIS = new THREE.Vector3(0.5437, 0.8392, 0).normalize(), ATT_JAM = new THREE.Vector3(234.78, 1.16, -0.64), ATT_JAM_LEAN = 0.26;
 function placeAttItem(it, g, dt) {
   if (!g) return;
   if (it.state === 'bin') { g.position.copy(g.userData.rest.p); g.quaternion.copy(g.userData.rest.q); return; }   // folded on the bin, as built
   if (it.state === 'peg') { g.position.copy(ATT.peg); g.quaternion.identity(); return; }                          // built hanging on its hanger
-  if (it.state === 'jam') { g.position.set(235.8, 0.41, -0.62); g.rotation.set(0, 0, -Math.PI / 2); return; }   // laid along the wall through both lugs of A's wheel bracket
+  // Stood up through the spokes of A's wheel and leant on the wall above it, its foot through the bracket: in plain
+  // sight above the desk. While the chain runs it rattles against the locked wheel.
+  if (it.state === 'jam') {
+    const r = game.att.rattle ? Math.sin(game.clock * 53) * 0.012 : 0;
+    g.position.set(ATT_JAM.x + r, ATT_JAM.y, ATT_JAM.z); g.rotation.set(0, 0, ATT_JAM_LEAN + r * 3); return;
+  }
   placeItem(it, g, dt);
-  // Lying on the floor the coat is folded flat; the pole leans by the stair until he takes it, then rides level in his hands.
-  if (g === refs.att.AttPole) { if (it.state === 'carried') g.rotation.set(0, 0, -Math.PI / 2); else g.quaternion.copy(g.userData.rest.q); }
+  if (it.state === 'carried' && it.fromJam && it.blend < 1) g.position.lerpVectors(ATT_JAM, g.position, it.blend);     // drawn out of the bracket
+  // Lying on the floor the coat is folded flat; the pole lies along the lane, and rides level in his hands.
+  if (g === refs.att.AttPole) { g.rotation.set(0, 0, -Math.PI / 2); if (it.state !== 'carried') g.position.y = it.base + 0.025; }
   if (g === refs.att.AttCoat) { if (it.state === 'carried') g.quaternion.identity(); else g.quaternion.copy(g.userData.rest.q); }
 }
 function finishAtt() {
@@ -4961,15 +5081,18 @@ function frameAtt(x, lead) {
   let cx = THREE.MathUtils.clamp(x + lead * 0.5, 203.6, 207.0), v = fit([6.4, 1.45, 0.9], 8.8), fog = 0.035;
   const kc = smooth((x - 209.6) / 1.2);
   cx += (THREE.MathUtils.clamp(x + lead, 211.0, 214.5) - cx) * kc; v = lerp3(v, fit([5.8, 1.35, 0.85], 6.4), kc);
-  // DL-13: the seat, the brake, the dial and the steps; up on the gallery, the seedlings.
-  const kl = smooth((x - 216.2) / 1.0);
-  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 223.4, 224.6) - cx) * kl; v = lerp3(v, fit([7.4, 2.0, 1.35], 11.0), kl); fog += (0.03 - fog) * kl;   // the seat, the brake, the dial and all three steps
+  // DL-13, pass 8: first the figure, the seat and the brake together, eased in from the corridor over the doorway;
+  // then, once the lesson runs (or he goes on toward the steps), the wide frame with the dial and all three steps.
+  // The second move eases in time (k13), so it reads as the camera stepping back, not a cut to somewhere else.
+  const kl = smooth((x - 215.3) / 1.8);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 218.9, 219.8) - cx) * kl; v = lerp3(v, fit([6.6, 1.6, 1.0], 7.6), kl); fog += (0.03 - fog) * kl;
+  const k13 = smooth(a ? a.k13 || 0 : 0) * kl;
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 223.4, 224.6) - cx) * k13; v = lerp3(v, fit([7.4, 2.0, 1.35], 11.0), k13);
   const kg = smooth((x - 227.4) / 1.0) * (game.y > 1.5 ? 1 : 0.3);
   cx += (THREE.MathUtils.clamp(x + lead, 229.0, 231.2) - cx) * kg; v = lerp3(v, fit([6.0, 2.6, 2.2], 6.4), kg);
   // DL-14: the pole, the desk, both blinds and ledges, the hatch and the crank.
   const kw = smooth((x - 232.4) / 1.4);
   cx += (THREE.MathUtils.clamp(x + lead * 0.4, 237.6, 239.0) - cx) * kw; v = lerp3(v, fit([7.0, 1.7, 1.25], 10.0), kw); fog += (0.03 - fog) * kw;
-  if (a && a.peeled && game.clock - a.peelAt < 4.5 && game.region === 6) { const kp = smooth((game.clock - a.peelAt) / 0.8) * (1 - smooth((game.clock - a.peelAt - 3.4) / 1.0)); cx += (238.4 - cx) * kp; v = lerp3(v, [4.2, 1.7, 1.55], kp); }
   return { cx, v, fog };
 }
 
@@ -4992,14 +5115,18 @@ const SECRETS = [
     path: [[211.8, -2.0], [212.55, -2.45]], face: Math.atan2(0.67, -0.75),
     cam: new THREE.Vector3(214.15, 1.3, -1.4), look: new THREE.Vector3(212.0, 0.8, -3.1), focal: 24 },
   // Chapter 1, DL-14: the stock cupboard under the stair, its lamp still on. The last teacher's unsent cards.
-  { id: 'cupboard', name: 'The stock cupboard', region: 6, ready: true, voice: 'att_teacher', open: [234.95, 235.15], stand: 235.05,
-    path: [[235.05, -0.72], [233.5, -0.72], [233.5, -1.45], [233.65, -2.2]], face: Math.atan2(-0.93, -0.45),
+  { id: 'cupboard', name: 'The stock cupboard', region: 6, ready: true, voice: 'att_teacher', open: [234.5, 234.5], stand: 234.5,
+    path: [[234.5, -0.72], [233.5, -0.72], [233.5, -1.45], [233.65, -2.2]], face: Math.atan2(-0.93, -0.45),
     cam: new THREE.Vector3(234.75, 1.3, -1.55), look: new THREE.Vector3(232.7, 0.8, -2.7), focal: 24, cond: () => !game.hold },
 ];
 const secretFound = {};
 // Pass 7: the voices (docs/voice_script.md, placed per docs/audio_audit.md). Cards play when he winds their player
 // (Use) or, in the secret rooms, when he goes in; tannoys play as he passes. `x` null: not placed in the set yet.
 const VOICE_LINES = {
+  // Pass 8: the reason for the wake. The power comes back, and the depot's dispatch picks up where it stopped: one
+  // courier, still on its cradle, with one parcel aboard. The second half plays over his look at the label.
+  dispatch_wake: { who: 'Dispatch', treat: 'dispatch', lines: [['Supply restored.', 2.2], ['Resuming dispatch.', 2.4]] },
+  dispatch_item: { who: 'Dispatch', treat: 'dispatch', lines: [['Courier D-17. One item outstanding.', 3.0], ['Deliver to: Mara. C-114, ring C.', 3.4]] },
   tan_depot_1: { who: 'Tannoy', treat: 'tannoy', lines: [['Night shift, to your stations.', 2.6], ['Night shift, to your stations.', 2.6], ['Sorting will run until oh-six-hundred. Couriers, report to dispatch.', 4.6], ['Thank you for your work. The refuge depends on it.', 4.0], ['Order above all.', 2.0]] },
   card_sorter: { who: 'Voice card', treat: 'card', lines: [['Hello, little bird. It’s Mum.', 3], ['I’m on nights again, so you’ll be asleep when this comes. Gran will play it for you at breakfast.', 6], ['It’s warm in here tonight. Stuffy. They’ve turned the fans down to save power, so we’re all yawning over the letters.', 7], ['Ruth fell asleep on the franking machine.', 3], ['Be good for Gran. I’ll be home when the shift’s done.', 4], ['Love you. Bye-bye. Bye.', 3]] },
   tan_racks: { who: 'Tannoy', treat: 'tannoy', lines: [['Couriers to dispatch.', 2.2], ['D-12.', 1.4], ['D-13.', 1.4], ['D-14.', 1.4], ['D-15.', 1.4], ['D-16.', 3.2]] },
@@ -5025,7 +5152,8 @@ const VOICE_LINES = {
 const VOICES = [
   // Placed by art/pass7/build_audio_props.py. Cards: he stands at standX (z out from the lane), turns into the set and
   // winds the player's crank; a loose card (no player) he reads himself, through his own speaker. Tannoys play as he passes.
-  { id: 'tan_depot_1', kind: 'tannoy', region: 1, x: 1.69, trigger: 1.6 },
+  // Pass 8: not at the wake (dispatch speaks then); the old night-shift loop starts up as he comes into the hall.
+  { id: 'tan_depot_1', kind: 'tannoy', region: 1, x: 1.69, at: 8.6, trigger: 0.6, reach: 14, when: () => game.released },
   { id: 'tan_racks', kind: 'tannoy', region: 2, x: 38.2, trigger: 3.0, when: () => game.revealed },
   { id: 'tan_rations', kind: 'tannoy', region: 2, x: 56.6, trigger: 2.6 },
   { id: 'tan_bridge', kind: 'tannoy', region: 4, x: 116.1, trigger: 2.4, reach: 7 },
@@ -5033,7 +5161,7 @@ const VOICES = [
   { id: 'card_sorter', kind: 'card', region: 2, x: 16.6, standX: 16.45, crank: 'VoicePlayerSorterCrank', axis: [0, 0, 1] },
   { id: 'card_queue', kind: 'card', region: 2, x: 51.55, standX: 51.55, z: -0.25, loose: true },
   { id: 'card_heap', kind: 'card', region: 3, upper: false, x: 68.0, standX: 68.0, crank: 'VoicePlayerHeapCrank', axis: [0, 1, 0] },
-  { id: 'card_lastcar', kind: 'card', region: 4, x: 121.74, standX: 121.74, loose: true },
+  { id: 'card_lastcar', kind: 'card', region: 4, x: 121.74, standX: 122.25, loose: true },   // stood clear of the suitcase's grip
   { id: 'card_mara_parent', kind: 'card', region: 5, x: 158.07, standX: 158.07, z: -0.2, crank: 'VoicePlayerMaraCrank', axis: [0, 0, 1] },
 ];
 const voiceFound = {};
@@ -5145,11 +5273,14 @@ function updateTannoys() {
   if (game.mode !== 'play') return;
   for (const v of VOICES) {
     if (v.kind !== 'tannoy' || v.x == null || v.region !== game.region || (v.upper !== undefined && !!v.upper !== !!game.upper) || (v.when && !v.when())) continue;
-    const near = Math.abs(game.x - v.x) < (v.trigger || 2.5);
+    const d = Math.abs(game.x - (v.at ?? v.x)), near = d < (v.trigger || 2.5);
+    if (d > (v.reach || 9)) v.away = true;
     if (!near || Voice.playing()) continue;
-    const t = game.clock - (v.last ?? -1e9);
-    // The first time he passes, at full; then now and then, fainter, while he lingers.
-    if (v.last === undefined || t > (v.every || 75)) { v.last = game.clock; Voice.play(Object.assign(voiceById(v.id), { x: v.x, reach: v.reach || 9 }), { level: v.played ? 0.55 : 0.9 }); v.played = true; voiceFound[v.id] = true; }
+    // Once as he passes; again, fainter, only if he has gone out of earshot and come back, and not for a while.
+    if (v.last === undefined || (v.away && game.clock - v.last > 150)) {
+      v.last = game.clock; v.away = false;
+      Voice.play(Object.assign(voiceById(v.id), { x: v.x, reach: v.reach || 9 }), { level: v.played ? 0.5 : 0.85 }); v.played = true; voiceFound[v.id] = true;
+    }
   }
 }
 function curioHere() {
@@ -5852,10 +5983,11 @@ function updateCharacter(dt, playing) {
   // Curiosity as the hint system: after a few idle seconds near something useful he looks at it.
   // When the rack lights come on, he looks before anything else.
   const rk = game.clock - game.revealTime;
-  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform' || game.lookAt === 'window';
+  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform' || game.lookAt === 'window' || game.lookAt === 'wheelA' || game.lookAt === 'tray';
   // The window is far above: look along the line to it (a point 2 m out on it, within the head look's reach).
   const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2)
-    : game.lookAt === 'window' ? tv4.copy(END5.win).sub(tv3.set(game.x, game.y + 0.6, game.z)).setLength(2).add(tv3) : REVEAL_LOOK;
+    : game.lookAt === 'window' ? tv4.copy(END5.win).sub(tv3.set(game.x, game.y + 0.6, game.z)).setLength(2).add(tv3)
+    : game.lookAt === 'wheelA' ? tv4.set(ATT.wheelA, 0.35, -0.6) : game.lookAt === 'tray' ? tv4.set(CW8.trayX, CG.top + 0.3, -0.6) : REVEAL_LOOK;
   // The early curiosities: he turns his head to each as he passes, the first time.
   const glance = !looking && glanceCurio();
   if (glance) glance.glanceT = (glance.glanceT || 0) + dt;                // one look each, the first time he passes
@@ -5958,7 +6090,7 @@ function frameFor(x) {
     let v3 = lerp3(fit([5.4, 1.15, 0.85], 5.0), fit([6.6, 1.35, 0.85], 6.6), kf);
     v3 = lerp3(v3, fit([7.0, 1.4, 0.9], 7.0), ku);
     // A loaded carrier's climb, the weight tipping into the bucket and the gate rising: all held in one wide frame.
-    const ch = game.ch1, gateMoving = ch && ch.gate6 < 0.7 * Math.min(2, ch.bucket) - 0.01, tumbling = ch && game.clock - (ch.tumbledAt ?? -99) < 2.5;
+    const ch = game.ch1, gateMoving = ch && ch.gate6 < gate6Target(ch.bucket) - 0.01, tumbling = ch && game.clock - (ch.tumbledAt ?? -99) < 2.5;
     const kw = !game.upper && ((refs.carriers && refs.carriers.some((c) => c.load && c.route === 'exit')) || gateMoving || tumbling) ? 1 : 0;
     game.watchLoad = (game.watchLoad || 0) + (kw - (game.watchLoad || 0)) * Math.min(1, 1 / 60 * 1.2);
     // Pass 5: the wide frame on the climb and the gate keeps him in it too, wherever he waits.
@@ -6339,9 +6471,17 @@ function startPlay(checkpoint = 'start') {
   Object.values(actions).forEach((a) => { if (a.getClip().name !== current) a.stop(); });
   setClip('Idle', naturalEnd ? 0.5 : 0.25);
   Sound.hum(1);
-  if (fromOpening && checkpoint === 'start') setTimeout(() => { if (game.mode === 'play' && !seen.has('labelWake') && playQuirk('CheckLabel', false)) seen.add('labelWake'); }, naturalEnd ? 600 : 300);
+  // Pass 8: the opening's last beat. He looks down at his label as dispatch reads out the job, with no cut: the side
+  // view starts from where the opening's camera is and eases to its frame beneath the close-up.
+  if (fromOpening && checkpoint === 'start' && !seen.has('labelWake') && playQuirk('CheckLabel', false)) {
+    seen.add('labelWake'); Object.assign(game.act, { holdFor: 3.2, cancelAfter: 2.5, start: game.clock });
+    Voice.play(voiceById('dispatch_item'), { level: 0.8 });
+  }
   const fr = frameFor(game.x);
-  cam.x = fr.cx; [cam.dist, cam.y, cam.look] = fr.v;
+  if (fromOpening) {
+    const fwd = camera.getWorldDirection(tv1), p0 = camera.position, t = fwd.z < -1e-3 ? -p0.z / fwd.z : 0;
+    cam.x = p0.x; cam.y = p0.y; cam.dist = p0.z; cam.look = p0.y + fwd.y * t;
+  } else { cam.x = fr.cx; [cam.dist, cam.y, cam.look] = fr.v; }
 }
 function loadCheckpoint() {
   if (game.mode === 'title') return;
@@ -6402,7 +6542,7 @@ function finish() {
 // and a summariser.
 // ---------------------------------------------------------------------------
 const Telemetry = (() => {
-  const BUILD = 'prologue-pass6';
+  const BUILD = 'prologue-pass8';
   const url = (() => { try { return new URLSearchParams(location.search).get('telemetry') || window.DL_TELEMETRY_URL || ''; } catch (e) { return ''; } })();
   const sid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)) ;
   let enabled = true, queue = [], log = [], seq = 0, sent = 0;
@@ -6628,7 +6768,7 @@ function step(dt) {
 // Test hook for automated traversal checks.
 window.__dl01 = { game, world: scene, THREE, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR, UO, UPONLY, CG, ATT }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
   clip: () => current, renderer, limits: () => [leftLimit(), rightLimit()], playVoice: (id) => Voice.play(voiceById(id)), voice: () => Voice.playing(), carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
-  crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), offsets: { OFF2, OFF3, OFF4, OFF5 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
+  crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), nearAll, auditNear, startAt, cps: CHECKPOINTS, cpOrder: CP_ORDER, offsets: { OFF2, OFF3, OFF4, OFF5 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
   k: { CART1, PIT, SH, RK, HP, RAIL7, CG, DIP9, DUCT9, GATE_X, DOCK_X, PAWL_X, GALLERY, T4_HALF, PUSH_GAP4, GRIP_FWD, SLOTS, LETTERS: LETTERS.map((l) => ({ id: l.id, x: l.x })) } };
 
 // Compile every shader variant the regions' lights will ask for, and upload every texture, before play. A region's

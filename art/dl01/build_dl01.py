@@ -9,7 +9,7 @@ Writes:
                 latch lever, counterweight, relay lamps, crank wheel, exit door; DL-02's weight,
                 trolley, floor plate, gate and gauge needle, rack row lights)
   d17.glb       D-17 rigged, with clips: Opening, Idle, Walk, Run, CrouchWalk, CrouchIdle, JumpStart,
-                JumpAir, Land, Mantle, Pull, Flinch, Tug, Crank, Lift, SetDown, SetDownHigh,
+                JumpAir, Fall, Land, Mantle, Pull, Flinch, Tug, Crank, Lift, SetDown, SetDownHigh,
                 CarryIdle, CarryWalk, Grab, PushIdle, PushWalk, Nudge
   couriers.glb  three baked poses of a dormant courier and the rack slots to instance them at
   white.glb     the White (art/white/build_white.py), skinned, with its clips
@@ -1068,6 +1068,22 @@ def clip_jump(arm):
         c.pose(frame, body=(0, 0, 0.01), body_rot=(4, 0, 0), head=(-6, 0, 0),
                antenna=[(-14 + 3 * math.sin(2 * math.pi * t - i), 0) for i in range(3)],
                feet=feet, hands=hands, claws={'L': 30, 'R': 18})
+    c.done()
+    # Pass 8: a real drop. Arms flung up and out, claws wide, the legs paddling for a floor that isn't there, his
+    # head down at where he's going and the antenna streaming up behind. Loops while he falls.
+    c = Clip(arm, 'Fall', 16)
+    tau = 2 * math.pi
+    for frame in range(1, 18):
+        t = (frame - 1) / 16
+        feet = {side: ((0, 0.035 * s * math.sin(tau * t), 0.07 + 0.045 * math.sin(tau * t + (0 if s > 0 else math.pi))),
+                       (28 + 18 * math.sin(tau * t + (0 if s > 0 else math.pi)), 0, 0)) for side, s in SIDES}
+        hands = {s: CARRY[s] + Vector((s * 0.085, 0.03 + 0.015 * math.sin(2 * tau * t + s),
+                                       0.16 + 0.035 * math.sin(2 * tau * t + (0.0 if s > 0 else 1.7)))) for _, s in SIDES}
+        c.pose(frame, body=(0, 0, 0.02), body_rot=(-7 + 2 * math.sin(tau * t), 3 * math.sin(tau * t), 2 * math.sin(tau * t + 1)),
+               head=(13 + 3 * math.sin(2 * tau * t), 4 * math.sin(tau * t + 0.5), 0),
+               antenna=[(-34 - 10 * i + 7 * math.sin(2 * tau * t - 0.8 * i), 0) for i in range(3)],
+               feet=feet, hands=hands, claws={'L': 52 + 14 * math.sin(2 * tau * t), 'R': 52 + 14 * math.sin(2 * tau * t + 1.3)},
+               elbows={'L': 0.9, 'R': 0.9})
     c.done()
     c = Clip(arm, 'Land', 10)
     for frame in range(1, 11):

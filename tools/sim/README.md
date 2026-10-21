@@ -45,3 +45,14 @@ bounds move.
   - `QUERY` appends a query string to the game's URL, for example `QUERY='?telemetry=http://127.0.0.1:8787/events'`
     to send the runs' telemetry to a local collector.
 - **`results_pass5_mechanical.jsonl`:** the pass 5 floor with the player model off: 7:45 of play.
+- **`results_pass8_mechanical.jsonl`:** the prologue after pass 8 (the wake's label beat and dispatch, the progressive
+  weigh-in, the desk letting go), player model off: 8:08 of play, end to end.
+- **`results_pass8_attendance_mechanical.jsonl`** and **`results_pass8_attendance_first_playthrough.jsonl`:** Chapter 1
+  with the reworked DL-14 (the pole starts in A's wheel): 2:39 mechanical; three first-time runs at 4:27 to 4:58.
+
+## The interaction-overlap audit
+
+`audit_near.mjs` (run it like `sim.mjs`, from a folder with playwright-core and three, the game served on :8765) loads
+every checkpoint in turn and sweeps D-17 along the stretch to the next one, on the floor and on whatever he could
+stand on, asking each category of interaction alone. Any spot where two answer Use is a priority clash and is listed;
+the script exits non-zero if there are any. Run it after moving anything he can use.
