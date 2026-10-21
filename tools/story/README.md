@@ -4,6 +4,11 @@
 with `python3 build.py` here: `template.html` plus the level list from `scenes.json` (extracted from
 `docs/scene_overview.md`), the timeline and the condensed bible.
 
+**Gameplay** comes from `docs/gameplay_breakdown.md`: each level's panel (type, builds on, new here, the steps, the
+wrong first try, the aha, carries forward), the ladder table and each chapter's summary. Every DL-nn in it becomes a
+link on the board. Keep its field names (`- **Builds on:**` and the rest) and its `### DL-nn Name` headings when
+editing, then rebuild. A level with steps there shows them as its play, and the old one-line play is dropped.
+
 Its cards live in the artifact's database (`elements`), with the timeline and the story-bible notes in `meta/timeline`
 and `meta/bible` once a Markdown import has set them. Claude reads and writes them with the ArtifactData tool.
 

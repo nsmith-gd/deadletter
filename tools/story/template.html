@@ -161,6 +161,40 @@ textarea { min-height: 96px; resize: vertical; }
 .check { display: inline-flex; flex-direction: row; gap: 8px; align-items: center; text-transform: none; letter-spacing: 0; font-family: var(--body); font-size: 14px; font-weight: 400; color: var(--ink); }
 .check input { width: auto; }
 .notes { white-space: pre-wrap; font-size: 14px; max-height: 360px; overflow-y: auto; }
+/* Gameplay: the level's puzzle, what it builds on and what it hands on. The NEW box is the one stamped element. */
+.gp { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 20px 18px; display: grid; gap: 14px; }
+.gp-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; }
+.gp-head h3 { font-size: 22px; }
+.gp-type { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.gp-label { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; display: block; margin-bottom: 2px; }
+.gp-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px 20px; }
+.gp-links p, .gp-pair p { margin: 0; max-width: 72ch; }
+.gp-new { border: 1.5px solid var(--stamp); border-radius: 4px; padding: 8px 12px; background: var(--stamp-soft); }
+.gp-new .gp-label { color: var(--stamp); }
+.gp-new.none { border-style: dashed; border-color: var(--rule); background: transparent; }
+.gp-new.none .gp-label { color: var(--ink-2); }
+.gp-steps { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 80ch; }
+.gp-steps li::marker { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.gp-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px 20px; padding-top: 12px; border-top: 1px dashed var(--rule); }
+.dlref { font-family: var(--mono); font-size: 12px; padding: 0 5px; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper); color: var(--stamp); white-space: nowrap; }
+.dlref:hover { border-color: var(--stamp); }
+.dlref.here { background: var(--stamp); color: var(--sheet); border-color: var(--stamp); }
+
+/* The ladder: every relationship's arc across the game */
+.ladder { margin-top: 36px; border-top: 2px solid var(--ink); padding-top: 18px; display: grid; gap: 14px; }
+.ladder h2 { font-size: 28px; text-transform: uppercase; letter-spacing: .03em; }
+.ladder > p { margin: 0; max-width: 72ch; color: var(--ink-2); }
+.lad { overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
+.lad table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: 13.5px; }
+.lad th, .lad td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+.lad thead th { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.lad tbody th { font-family: var(--display); font-size: 16px; font-weight: 600; min-width: 130px; }
+.lad tbody th small { display: block; font-family: var(--body); font-weight: 400; font-size: 12px; color: var(--ink-2); }
+.lad td.here { background: var(--stamp-soft); }
+.lad tbody tr:last-child > * { border-bottom: 0; }
+.kits { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+.kits .sheet p { margin: 0 0 8px; font-size: 14px; }
+.kits .sheet p:last-child { margin-bottom: 0; }
 @media (prefers-reduced-motion: no-preference) { .card { transition: border-color .15s; } }
 </style>
 
@@ -190,6 +224,16 @@ textarea { min-height: 96px; resize: vertical; }
 
     <main class="level" id="level"></main>
   </div>
+
+  <section class="ladder" aria-labelledby="ladder-h">
+    <h2 id="ladder-h">The gameplay ladder</h2>
+    <p>Each relationship the game teaches, from its safe first use to the room that gives it a new meaning. The open level is highlighted. Every level uses something the player already knows and adds one new thing at most. Source: <span class="mono">docs/gameplay_breakdown.md</span>.</p>
+    <div class="lad"><table>
+      <thead><tr><th scope="col">Relationship</th><th scope="col">Introduce</th><th scope="col">Develop</th><th scope="col">Twist</th><th scope="col">Combine</th><th scope="col">Reframed</th></tr></thead>
+      <tbody id="ladder"></tbody>
+    </table></div>
+    <div class="kits" id="kits"></div>
+  </section>
 
   <section class="bible" aria-labelledby="bible-h">
     <h2 id="bible-h">The story bible, for reference</h2>
@@ -241,6 +285,8 @@ textarea { min-height: 96px; resize: vertical; }
 const LEVELS = /*LEVELS*/[];
 const TIMELINE = /*TIMELINE*/[];
 const BIBLE = /*BIBLE*/"";
+const LADDER = /*LADDER*/[];
+const CHAPTERS = /*CHAPTERS*/[];
 const KINDS = [['room', 'Plot room'], ['music', 'Musical moment'], ['tableau', 'Tableau'], ['voice', 'Voice letter'], ['sign', 'Sign or writing'], ['object', 'Object'], ['secret', 'Secret room'], ['beat', 'Story beat'], ['note', 'Note']];
 const ERAS = [['order', 'Order', 'P.A. 268–308'], ['failure', 'The Failure', 'P.A. 309–311'], ['protocols', 'The protocols', 'P.A. 306 on'], ['commons', 'The Commons', 'P.A. 311–328'], ['rebellion', 'The rebellion', 'P.A. 317–320'], ['thinning', 'The thinning', 'P.A. 320–378'], ['now', 'Now', 'P.A. 387']];
 const STATUSES = [['idea', 'Idea'], ['planned', 'Planned'], ['built', 'In the game']];
@@ -306,9 +352,10 @@ function renderLevel() {
     h('h2', {}, `${l.id} ${l.name}`),
     h('dl', {},
       l.says ? [h('dt', {}, 'What it says'), h('dd', {}, l.says)] : null,
-      l.play ? [h('dt', {}, 'Play'), h('dd', {}, l.play)] : null,
+      l.play && !l.game ? [h('dt', {}, 'Play'), h('dd', {}, l.play)] : null,
       l.learn ? [h('dt', {}, 'Player comes to see'), h('dd', {}, l.learn)] : null));
   main.append(head);
+  if (l.game) main.append(gameplay(l));
 
   const its = itemsFor(l.id).filter((i) => state.filter === 'all' || (state.filter === 'mine' ? i.source !== 'game' : i.kind === state.filter))
     .sort((a, b) => (a.source === 'game') - (b.source === 'game') || (b.updatedAt || 0) - (a.updatedAt || 0));
@@ -607,7 +654,47 @@ $('#imp-file').addEventListener('change', async (e) => {
   catch (x) { setStatus('That file couldn\u2019t be read. Try saving it as plain text (.md).'); }
 });
 
-function render() { renderNav(); renderLevel(); }
+// ---- Gameplay: docs/gameplay_breakdown.md, read by build.py ----------------------------------------------------
+// Inline text: **bold**, and every DL-nn becomes a link to that level.
+function rich(text) {
+  const out = [];
+  String(text || '').split(/(\*\*[^*]+\*\*)/).forEach((part) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) { out.push(h('b', {}, ...refs(part.slice(2, -2)))); return; }
+    out.push(...refs(part));
+  });
+  return out;
+}
+function refs(text) {
+  return text.split(/(DL-\d\d)/).map((t) => /^DL-\d\d$/.test(t) && LEVELS.some((l) => l.id === t)
+    ? h('button', { type: 'button', class: 'dlref' + (t === state.level ? ' here' : ''), title: (LEVELS.find((l) => l.id === t) || {}).name, onclick: () => openLevel(t) }, t)
+    : t);
+}
+const cap = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
+function gameplay(l) {
+  const g = l.game, none = /^none\b/i.test(g.new || '');
+  return h('section', { class: 'gp', 'aria-labelledby': 'gp-h' },
+    h('div', { class: 'gp-head' }, h('h3', { id: 'gp-h' }, 'Gameplay'), h('span', { class: 'gp-type' }, g.type)),
+    h('div', { class: 'gp-links' },
+      h('div', {}, h('span', { class: 'gp-label' }, 'Builds on'), h('p', {}, ...rich(g.builds))),
+      h('div', { class: 'gp-new' + (none ? ' none' : '') }, h('span', { class: 'gp-label' }, none ? 'Nothing new' : 'New here'), h('p', {}, ...rich(cap(g.new))))),
+    g.steps.length ? h('ol', { class: 'gp-steps' }, g.steps.map((t) => h('li', {}, ...rich(t)))) : null,
+    h('div', { class: 'gp-pair' },
+      h('div', {}, h('span', { class: 'gp-label' }, 'Wrong first try'), h('p', {}, ...rich(cap(g.wrong)))),
+      h('div', {}, h('span', { class: 'gp-label' }, 'The aha'), h('p', {}, ...rich(cap(g.aha)))),
+      h('div', {}, h('span', { class: 'gp-label' }, 'Carries forward'), h('p', {}, ...rich(g.carries)))));
+}
+function renderLadder() {
+  const l = LEVELS.find((x) => x.id === state.level);
+  $('#ladder').replaceChildren(...LADDER.map((r) => {
+    const m = /^\*\*(.+?)\*\*\s*(.*)$/.exec(r[0]) || [null, r[0], ''];
+    return h('tr', {}, h('th', { scope: 'row' }, m[1], m[2] ? h('small', {}, m[2].replace(/^\(|\)$/g, '')) : null),
+      ...r.slice(1, 6).map((c) => h('td', { class: c.includes(state.level) ? 'here' : null }, ...rich(c))));
+  }));
+  $('#kits').replaceChildren(...CHAPTERS.map((c) => h('div', { class: 'sheet' }, h('h3', {}, c.name.replace(/\s*\(DL-.*$/, '')),
+    ...c.notes.map((n) => h('p', {}, ...rich(n))))));
+}
+
+function render() { renderNav(); renderLevel(); renderLadder(); }
 
 renderTimeline();
 render();

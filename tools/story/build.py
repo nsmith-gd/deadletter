@@ -1,5 +1,47 @@
 import json, re
 scenes = json.load(open('scenes.json'))
+
+
+def read_gameplay(path='../../docs/gameplay_breakdown.md'):
+    """The puzzle-by-puzzle breakdown: the ladder table, each chapter's summary, and each level's fields."""
+    ladder, chapters, levels = [], [], {}
+    chap = lv = sec = None
+    field = None
+    for line in open(path, encoding='utf-8').read().split('\n'):
+        m = re.match(r'^## (.+)$', line)
+        if m:
+            lv = None
+            chap = None if m.group(1).startswith(('The ', 'How ', 'Checks ')) else dict(name=m.group(1), notes=[])
+            if chap: chapters.append(chap)
+            sec = m.group(1)
+            continue
+        m = re.match(r'^### (DL-\d\d) (.+)$', line)
+        if m:
+            lv = levels[m.group(1)] = dict(chapter=chap['name'] if chap else '', type='', builds='', new='', steps=[], wrong='', aha='', carries='')
+            field = None
+            continue
+        if sec == 'The ladder' and line.startswith('| **'):
+            ladder.append([c.strip() for c in line.strip().strip('|').split(' | ')])
+            continue
+        if lv is not None:
+            m = re.match(r'^\*(.+)\*$', line.strip())
+            if m and not lv['type']:
+                lv['type'] = m.group(1)
+                continue
+            m = re.match(r'^- \*\*(Builds on|New|Play|Wrong first try|The aha|Carries forward):\*\*\s*(.*)$', line)
+            if m:
+                field = {'Builds on': 'builds', 'New': 'new', 'Play': 'steps', 'Wrong first try': 'wrong', 'The aha': 'aha', 'Carries forward': 'carries'}[m.group(1)]
+                if field != 'steps': lv[field] = m.group(2).strip()
+                continue
+            m = re.match(r'^\s+\d+\. (.+)$', line)
+            if m and field == 'steps':
+                lv['steps'].append(m.group(1).strip())
+        elif chap is not None and line.startswith('**'):
+            chap['notes'].append(line.strip())
+    return ladder, chapters, levels
+
+
+LADDER, CHAPTERS, GAMEPLAY = read_gameplay()
 PARTS = [(1, 11, 'Prologue', ['order', 'failure'], 'The lower works: the depot to ring C'),
          (12, 17, 'Ch 1 Attendance', ['order', 'protocols'], 'Ring B: the school'),
          (18, 25, 'Ch 2 Someone Home', ['commons', 'rebellion'], 'The homes'),
@@ -20,8 +62,10 @@ for s in scenes:
     n = s['n']
     part = next(p for p in PARTS if p[0] <= n <= p[1])
     o = OVR.get(n, {})
-    levels.append(dict(id='DL-%02d' % n, n=n, name=s['name'], part=part[2], eras=part[3], depth=part[4], built=n <= 14,
-                       says=o.get('says', s['evidence']), play=o.get('play', s['play']), learn=s['understanding']))
+    g = GAMEPLAY.get('DL-%02d' % n)
+    play = ' '.join('%d. %s' % (i + 1, t) for i, t in enumerate(g['steps'])) if g and g['steps'] else o.get('play', s['play'])
+    levels.append(dict(id='DL-%02d' % n, n=n, name=s['name'], part=part[2], eras=part[3], depth=part[4], built=n <= 17,
+                       says=o.get('says', s['evidence']), play=play, learn=s['understanding'], game=g))
 TIMELINE = [
  ['268', 'Sealing', 'Sealed overcrowded by design. The Steward rules through the Grade Council; grades 1 to 6, higher number lower down.', 'The prologue’s signage, grades and rations.'],
  ['268–308', 'Order', 'Everything allocated: shifts, rations, air, licensed births. ORDER ABOVE ALL everywhere.', 'The depot, the ration hall, the relocation lobby.'],
@@ -40,5 +84,6 @@ Vertical gradient: deeper rings = earlier era and more dead (heaps low down, few
 Telling rules: wordless; two or three independent cues per beat; show the change, not the state (a motto painted over, a portrait turned to the wall, a headcount crossed out smaller); voices are ordinary people talking about rations, coats, birthdays and rotas, never narrators explaining history; big truths land on objects; show what people did, not cause-of-death signs; never on the nose. Threads: the motto as a refrain (enamelled, then painted over, then defaced, then scratched out); Mara's crooked tree with a knot in one branch (crayon at nine, pencil behind the painted sky, graffiti, engineering drawings, a real seedling); the lights came on, someone turned them on."""
 t = open('template.html').read()
 t = t.replace('/*LEVELS*/[]', json.dumps(levels, ensure_ascii=False)).replace('/*TIMELINE*/[]', json.dumps(TIMELINE, ensure_ascii=False)).replace('/*BIBLE*/""', json.dumps(BIBLE, ensure_ascii=False))
+t = t.replace('/*LADDER*/[]', json.dumps(LADDER, ensure_ascii=False)).replace('/*CHAPTERS*/[]', json.dumps(CHAPTERS, ensure_ascii=False))
 open('/home/user/deadletter/docs/story_board.html', 'w').write(t)
 print(len(t), len(levels))
