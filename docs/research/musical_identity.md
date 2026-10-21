@@ -1,18 +1,30 @@
 # Dead Letter: a musical identity from Prahlow, Lober and Richards/Hahlweg
 
-**Status:** 21 October 2026. A proposal for the director, built on the composer studies in
+**Status:** 21 October 2026, second version. A proposal for the director, built on the composer studies in
 `reports/Dead Letter soundtrack composer studies.md` and on measurements of three tracks the director supplied.
-**Sketch:** `art/music/sketch_identity.py` renders an 80-second cue in this identity
+**Sketch:** `art/music/sketch_identity.py` renders a cue of about 2:25 in this identity
 (`art/music/sketches/identity_sketch.mp3`). The sketch is for listening, not for the game.
+
+**What changed after the first sketch.** The director heard the first sketch and asked for four things:
+- more intrigue and a sense of exploration, as in Richards and Hahlweg's *Sheepy*;
+- D-17's whimsy, because the character is playful;
+- a longer, teasing build that drums push upward, ending in a giant crashing crescendo;
+- a drop before full power that fades rather than stops suddenly.
+
+Rules 2 to 6 and the sketch are rewritten to match. The director's direction overrides the measured evidence where the
+two differ. The clearest case is drums: Lober's climaxes are drumless, but this score's are not.
 
 ## The identity in one paragraph
 
-The score is rooted in D minor and F major and played on instruments a person could hold: a whistle, a plucked string,
-the music box and the felt piano. It speaks rarely. When it does, it stands on a held note, a pedal, and builds in steps, not
-ramps. Just before its biggest arrival it takes a breath of near silence. It arrives warm rather than triumphant, landing on
-B-flat (the subdominant) before F, without drums. Then it cuts away at once and leaves one small voice to finish. Its
-melodies fall through the pentatonic scale and land on the parcel's F, E, D. The one note outside the pentatonic, E, is the
-parcel's voice. The refuge's machinery gets the opposite sound: synth pulses and open fifths with no third.
+The score is rooted in D minor and F major, and it is curious before it is sad. It walks: a moving ostinato over a held
+note, with a raised note (B natural, the Dorian sixth and Lydian fourth) that gives it the colour of looking around a
+corner. D-17 has a voice of its own, a skipping, slightly clumsy hop, traded between music box, pizzicato and whistle over
+an oom-pah-pah bass. The big moments are earned through long builds in rounds. Each round adds drums and lifts the
+strings, and the early rounds tease by pulling back for a bar before pushing on. At the top the music falls away, fading and
+darkening into near silence. Then it climbs back out of that silence on a riser and rolls, into a crashing arrival with drums,
+horns and strings in octaves. Its melodies fall through the pentatonic scale and land on the parcel's F, E, D, or, at the
+arrivals, turn upward. When the arrival is spent, D-17 has the last, small, playful word. The refuge's machinery gets the
+opposite sound: synth pulses and open fifths with no third.
 
 ## How this was built, and how sure it is
 
@@ -142,7 +154,8 @@ Two habits from "The Way" carry over:
 - **The second breath.** A longer piece can breathe twice: once before the first big entry and once before the real
   climax.
 
-His drums are held back for at most one moment in the whole game (see rule 6).
+A third habit, his drums arriving only after a long drumless stretch (the first at 2:39 in "The Way"), is now part of
+rule 6: drums are kept for the big moments, and each build earns them.
 
 ## The rules
 
@@ -150,37 +163,61 @@ His drums are held back for at most one moment in the whole game (see rule 6).
    asks. When music comes in, it comes in on a held note. Use D or F, low or high, or both.
    - The bed (`bed`) should become a pedal with occasional music-box glints from the D-minor pentatonic (D, F, G, A, C),
      rather than a moving chord pad.
-2. **Two palettes and a swell.**
+2. **Three palettes and a swell.**
    - **The hearth:** whistle, a plucked string (between nylon guitar and banjo), the music box and the felt piano, for
      the living, for Mara and for memory.
+   - **D-17's play:** pizzicato strings, the music box and the whistle, trading short figures in call and response,
+     over an oom-pah-pah pizzicato bass (bass on one, chord on two and three). A shaker ticking quavers keeps it walking.
+     This is the palette of curiosity and of D-17's whimsy.
    - **The machine:** a soft analog-style pad and a quaver pump, for the protocols, the attendant and Protective
      Custody.
-   - **The swell:** the existing strings, violins in octaves, cello, timpani roll and suspended cymbal, as
-     `direction.md` specifies.
+   - **The swell:** the existing strings (now with spiccato ostinatos as well as long notes), violins in octaves, cello,
+     horns, timpani, a drum section (taiko, toms, kick, snare) and cymbals.
    - **Mixing them:** a scene may mix palettes. The meaning comes from which palette leads.
-3. **Melody falls through the pentatonic and lands on the parcel.** The core cell is **the cascade**: D6, C6, A5, G5, F5,
-   speeding up, then E5 and D5, slower.
-   - The first five notes are pentatonic. The last three are the parcel's F, E, D, so every cascade ends by quoting the
-     parcel.
-   - The E is the only note outside the pentatonic: the parcel's "wrong" note, the one that hurts.
-   - The cascade can be cut at any point. Ending on F is home, ending on E is unfinished, and ending on D is delivered.
-4. **Harmony: pedals, colour, warm arrivals.**
+3. **Two melodic cells: the cascade and the hop.**
+   - **The cascade** is the parcel's cell: D6, C6, A5, G5, F5, speeding up, then E5 and D5, slower.
+     - The first five notes are pentatonic. The last three are the parcel's F, E, D, so every cascade ends by quoting the
+       parcel.
+     - The E is the only note outside the pentatonic: the parcel's "wrong" note, the one that hurts.
+     - The cascade can be cut at any point. Ending on F is home, ending on E is unfinished, and ending on D is
+       delivered.
+     - At the arrivals it turns **upward**: D, F, G, A, C, D, the same scale climbing. That is D-17's spirit lifting.
+   - **The hop** is D-17's cell: C5, F5, a rest, then E5, F5 and a leap to A5, then G5, **B5**, A5, F5.
+     - It skips up, stumbles, leaps and winks. The B natural is the wink: a note just outside the key, curious rather
+       than wrong.
+     - It belongs to pizzicato and the music box. It can grow onto the cello in a build, and it gets the last word after
+       an arrival.
+4. **Harmony: curiosity, pedals, colour, warm landings.**
    - **Keys:** stay in the D-minor and F-major pair the score already uses.
+   - **Curiosity:** for exploration, raise one note. D Dorian (D minor with B natural) and F Lydian (F major with B
+     natural) are the colours of looking around a corner. G major over a D pedal, and G over F, are the signature chords.
    - **Colour:** add 9ths and major 7ths, the colour of "Almost Alive".
-   - **Arrivals:** land big moments on **B♭** (the subdominant in F), then move to F. The ending sounds like coming home,
-     not like winning.
+   - **Builds:** climb the bass by step into the top (G, A, B♭, C), so the dominant is the edge of the drop.
+   - **Arrivals:** crash onto F. Let the arrival's own phrase close **plagal** (B♭ to F), so it ends like coming home
+     rather than winning.
    - **The Order:** give it open fifths with no third.
    - **D major:** keep it back, as the composer studies recommend, for DL-51.
-5. **Form: plateaus, the breath, the hard cut.**
-   - **Plateaus:** build by adding a layer every one or two bars, a few dB each time, never with a smooth crescendo.
-   - **The breath:** before the biggest arrival, hold 2 to 5 seconds of near silence (at least 10 dB below the plateau
-     before it), with at most one small sound.
-   - **The hard cut:** end the arrival by cutting to one voice at once, then let a long tail fade.
-   - **Longer set pieces:** these may breathe twice.
-6. **No drums at the climax.** Power comes from register spread, harmonic density and brightness. Percussion is the
-   timpani roll and cymbal swell rising *out of the breath* into the peak, as `direction.md` asks. Hemsey's drums are for
-   at most one mechanical set piece in the whole game. The DL-34 alarm is the candidate the composer studies already
-   name.
+5. **Form: long builds in rounds, a drop that fades, a climb out of the silence.**
+   - **Rounds:** build in rounds of about eight bars (16 seconds at 90 bpm). Each round adds a layer of drums, lifts the
+     strings an octave or adds one, and moves the melody to a higher, fuller voice. A big moment wants at least three
+     rounds, about 45 seconds of build.
+   - **The tease:** the first rounds end by pulling back for a bar, to a heartbeat and a held chord, before the next
+     round pushes on harder. The listener should feel it about to break more than once.
+   - **The drop:** at the top of the last round, land a final chord with a crash, then let everything fade and darken
+     (the low-pass closing) over four to five seconds into near silence. It does not stop dead. In the silence, one small
+     sound at most: a far whistle, a heartbeat.
+   - **The climb:** from the silence, a riser (reverse cymbal), a snare roll and a timpani roll climb for about three
+     seconds into the arrival.
+   - **The tail:** after the arrival, let the final chord ring and fall away. Then the music box or D-17's hop finishes
+     alone.
+   - **Longer set pieces:** these may drop twice, with the first drop shallower than the second.
+6. **Drums drive the build and crash the arrival.**
+   - **In the build:** drums enter in layers. First a taiko on the downbeat and a shaker, then a full 3/4 groove (taiko on
+     one, toms on two and three, a snare on three), then fills and a snare roll into the top.
+   - **At the arrival:** a crash and the biggest taiko hit on the downbeat, the groove at full strength, a crash every
+     four bars, and one last hit on the final chord.
+   - **Elsewhere:** exploration and whimsy keep percussion light (shaker and pizzicato), and quiet scenes have none.
+     Drums are what tell the player this is a big moment, so use them only for big moments.
 7. **Mix: wide space, focused punch, wide dynamics.**
    - Keep the tails wide and the arrivals narrower, as "Almost Alive" narrows to 0.53 at its entry.
    - Keep each cue's loudness range around 15 to 20 LU, and don't compress swells flat.
@@ -193,34 +230,48 @@ His drums are held back for at most one moment in the whole game (see rule 6).
 ## The sketch
 
 `sketch_identity.py` uses the score's own instruments from `compose_dl01.py` (felt piano, music box, strings, timpani,
-cymbal, wind, hall, tape) and adds three:
-- a plucked string;
+cymbal swell, wind, hall, tape) and adds new ones:
+- pizzicato strings;
 - a whistle;
-- an analog-style pad with an optional quaver pump.
+- an analog-style pad with a quaver pump;
+- a horn section built from saw waves;
+- a drum section: taiko, toms, kick, snare, shaker and crash cymbal.
 
-It is 80 seconds long, in 3/4 at 60 bpm:
+It runs about 2:25, in 3/4 at 90 bpm (a bar is 2 s). The first sketch was 80 seconds at 60 bpm; the faster tempo gives
+the exploration room to walk.
 
 | Time | Rule it shows | What plays |
 |---|---|---|
-| 0–14 s | 1, 3 | An F pedal (low cello and bass, a very quiet high violin F) with music-box glints from the pentatonic. |
-| 14–29 s | 2, 3 | The pluck rocks in 3/4 over the pedal. The whistle sings the cascade, then half of it, and the music box answers with the parcel's F, E, D. |
-| 29–47 s | 5, 2 | Phrase A's harmony (Dm add9, B♭maj7, F/A, Gm7) at 4.5 s a bar. Each bar adds a layer: low strings, then violas, then violins in octaves on the cascade, then the synth pad and its pump. |
-| 47–50 s | 5 | The breath: everything stops within a quarter of a second, and one quiet music-box note sounds. |
-| 50–61 s | 4, 6 | The roll and cymbal rise out of the silence into **B♭ add 9**, with the cascade broad in violins, octave violins and cello. Then F major with D on top. There are no drums. |
-| 61–80 s | 5, 3 | A hard cut. The music box alone plays the cascade, small, and **stops on E**: the last D is left unplayed. |
+| 0–20 s | 1, 4 | **Intrigue.** A D pedal. A felt-piano ostinato walks in quavers through D minor 9, G over D (the Dorian B natural), B♭ with an E, and A sus 4. Music-box glints on B, E and A. A shaker starts ticking at 10 s, and pizzicato footsteps join at 14 s. |
+| 20–44 s | 2, 3 | **Whimsy.** An oom-pah-pah pizzicato bass in F, with G over F for the Lydian wink. D-17's hop on music box, doubled by pizzicato. The whistle answers with half the cascade, then takes the hop itself, and the music box answers with the cascade. They hop together, then the whistle sings the whole cascade into the build. |
+| 44–60 s | 5, 6 | **Build, round 1.** B♭, C, D minor. Viola spiccato, taiko on the downbeats, a shaker, and the hop grown onto the cello. The last bar pulls back to a heartbeat. |
+| 60–76 s | 5, 6 | **Build, round 2.** Violin spiccato over held string chords, the full 3/4 drum groove, the synth pad pumping, and the cascade turned upward on violins. The last bar pulls back again. |
+| 76–92 s | 4, 5, 6 | **Build, round 3.** Spiccato in octaves, the groove harder, and the upward cascade in violins, octave violins and cello. Then the bass climbs G, A, B♭, C, with horns entering bar by bar, tom fills, a snare roll, a timpani roll and a cymbal swell into the top. |
+| 92–100 s | 5 | **The drop.** A C major chord with a crash and taiko, then everything fades and darkens over five seconds into near silence. A far whistle and a faint heartbeat. Then the riser, a snare roll and a timpani roll climb out of the silence. |
+| 100–124 s | 3, 4, 6 | **The arrival.** F, with the biggest taiko and a crash. The drum groove at full strength, with a crash every four bars. Horns, spiccato and held strings; the cascade turned upward and then falling home in violins, octave violins, cello and horns. It runs F, C over E, D minor, B♭, F over A, G minor 7, then **B♭ to F** at the close. |
+| 124–146 s | 3, 8 | **It lets go.** The last F rings with a final hit. The music box plays the whole cascade over a D, and D-17 has the last word: the hop on pizzicato, and one more note, a little late. |
 
-Measured with the same tools as the reference tracks, the sketch behaves as designed:
-- **Plateaus:** from −25/−26 dB, the build steps to −24, then −21 dB.
-- **The breath:** it reaches −36 dB, about 15 dB below the last plateau.
-- **The arrival:** −15 to −17 dB.
-- **The cut:** within a second it drops to −34 dB, and the tail fades over 18 s.
-- **Percussion:** the percussive share stays under 0.2.
-- **Overall:** −18.5 LUFS integrated, with a loudness range of 16.3 LU, inside the range of the reference tracks.
+Measured with the same tools as the reference tracks, by section (average level):
 
-**Known limits.** The whistle and pluck are synthesized and sound it. A recorded whistle (the director could record it)
-and a real nylon guitar or banjo would lift the hearth palette most. The cascade is new material. It shares only a
-generic idea with Lober's hook: a pentatonic fall that speeds up. It differs in metre (3/4), contour, starting note and
-ending, since it ends on the parcel's E and D rather than the tonic.
+| Section | Level |
+|---|---|
+| Intrigue | −31 dB |
+| Whimsy | −24 dB |
+| Build round 1 | −25 dB |
+| Build round 2 | −22 dB |
+| Build round 3 | −19 dB |
+| Arrival | −16 dB (peak seconds −12 dB) |
+| Outro | −28 dB |
+
+The drop falls from −15 dB to −48 dB over three seconds, then climbs back through −32 and −27 dB into the arrival. The
+whole sketch measures −17.4 LUFS integrated, with a loudness range of 15.5 LU.
+
+**Known limits.**
+- **The sound:** the whistle, pluck, horns and drums are synthesized and sound it. A recorded whistle and real drums or
+  drum samples would lift this most. The horns are the weakest part.
+- **The melodies:** the cascade and the hop are new material. The cascade shares only a generic idea with Lober's hook (a
+  pentatonic fall that speeds up). It differs in metre, contour, starting note and ending, since it ends on the parcel's
+  E and D rather than the tonic.
 
 ## What it would change in the existing cues
 
@@ -229,14 +280,14 @@ These are recommendations; nothing in the game has been changed.
 | Cue | Change |
 |---|---|
 | `bed` | Replace the chord pad with a D (or F) pedal and rare pentatonic music-box glints. |
-| `wake` | Keep it. The music box's three notes are already the end of the cascade. Let the whistle or pluck hint at the cascade's first notes once, far off. |
-| `hall`, `threshold` | Keep them. They are already sparse and end open, which is rule 3's "unfinished". |
+| `wake` | Keep it. The music box's three notes are already the end of the cascade. As he stands, add the hop once, on pizzicato, small: D-17's first playful step. |
+| `hall`, `threshold` | `hall` can take the intrigue ostinato (Dorian, over its pedal) under the cello. `threshold` is a walk into a new space, so it suits a short exploration figure with a shaker. |
 | `racks` | Keep it. Its low pedal and bare, unresolved ending already lean toward the Order's sound. |
-| `kin` | Build it in plateaus and add **the breath** (2 to 3 s) before the bar-8 peak. Then hard-cut to the music box. |
+| `kin` | Build it in rounds with a pull-back, let it fade into a short drop before the bar-8 peak, then roll back up into the peak. It is a moment of grief, so keep the drums out and let the timpani carry it. |
 | `dead` | Fine as it is. Its turn to F major can land via B♭ (rule 4). |
-| `refuge` | Already the closest to the identity (near silence, then a peak). Move the peak from F major to **B♭ add 9 then F**, and take a short breath before the roll. |
+| `refuge` | Already the closest to the identity (near silence, then a peak). It is the chapter's one wide reveal, so it can take the full shape: a short build with drums, a fading drop, then the crash into F, closing B♭ to F. |
 | `child` | Re-dress phrase A as a music-box version (rule 8). It already is one. |
-| `end` | End with a hard cut to the music box and stop the cascade on E. This holds the full resolution back for DL-51. |
+| `end` | Let the final chord fall away to the music box, stop the cascade on E, and give D-17's hop the last word. This holds the full resolution back for DL-51. |
 
 ## Appendix: the numbers
 
@@ -247,7 +298,13 @@ These are recommendations; nothing in the game has been changed.
 | Hemsey, "The Way" | 7:06 | −10.3 LUFS | 16.5 LU | 3:29–6:04, about −11 dB | 2:16–2:24 and 3:23–3:29 | 0.15–0.35 |
 | Dead Letter `kin` | — | −13.7 LUFS | 23.2 LU | — | — | — |
 | Dead Letter `refuge` | — | −14.5 LUFS | 19.4 LU | — | — | — |
-| Identity sketch | 1:20 | −18.5 LUFS | 16.3 LU | 0:50–0:59, −15 to −17 dB | 0:47–0:50, −36 dB | under 0.2 |
+| Identity sketch (first) | 1:20 | −18.5 LUFS | 16.3 LU | 0:50–0:59, −15 to −17 dB | 0:47–0:50, −36 dB | under 0.2 |
+| Identity sketch (second) | 2:26 | −17.4 LUFS | 15.5 LU | 1:40–2:04, −16 dB | 1:32–1:37, fading to −48 dB | not comparable* |
+
+\*The percussive-share measure separates sharp transients from sustained tones. The sketch's synthesized drums are
+mostly pitched sine sweeps, so the measure reads them as tones and misses most of them. The stem levels confirm the drums
+are there. Measured on their own, they lead the build: about 7 dB above the strings in round 1 and 4 dB above in
+round 3. In the arrival they sit level with the strings, at about −20 dB each.
 
 The analysis scripts, figures and per-second tables are kept outside the repository, together with the source audio,
 which is the director's own copy and is not committed here.
