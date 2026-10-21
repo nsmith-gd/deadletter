@@ -102,27 +102,30 @@ def chord(m, names, start, dur, dyn, rng, attack=1.0, release=2.0, shape=None):
 # The cues. Each returns its metadata; the notes go into the mix it is given.
 # ---------------------------------------------------------------------------
 def cue_wake(m, rng):
-    """The opening, out of silence on black. The power returns at 8 s (the lights at 8.2, dispatch at
-    8.5): the pedal and a breath of choir come up, the machinery starts turning over. The parcel's three
-    notes on the old music box as he answers. He stands (12.5 s): low piano. From 16 s a cello carries
-    the lament, the cascade flattened, under dispatch's second line (about 24 s). It settles into the
-    lower works by 44 s."""
-    L = at(11)
+    """The opening, out of silence on black. The power returns with the lights at 8.17 s (dispatch's
+    first line at 8.5): the pedal and a breath of choir come up, the machinery starts turning over. The
+    parcel's three notes on the old music box as he answers. He stands (12.5 s): low piano. Play begins
+    at 20 s, with a far bell, under dispatch's "Courier D-17. One item outstanding." When it has said
+    "Deliver to: Mara. C-114, ring C." (about 23 to 26.5 s), a cello answers the name with the lament,
+    the cascade flattened. It settles into the lower works by 48 s."""
+    L = at(12)
+    power = 8.17
     m['air'].add(wind(L + RING, 0.035, rng) * env_curve(int((L + RING) * SR), 2.5, 3), 0)
-    pedal(m, L + RING, rng, fade_in=4.0, fade_out=L, start=8.0)     # nothing until the power returns
-    m['choir'].add(choir(['D3', 'A3'], 6.0, 0.5, rng, attack=2.0, release=3.0, shape=[0.5, 1, 0.6]), 8.0, 0.0)
-    thuds(m, 9.0, L, rng, ramp=(9.0, 20.0))
+    pedal(m, L + RING, rng, fade_in=4.0, fade_out=L, start=power)     # nothing until the power returns
+    m['choir'].add(choir(['D3', 'A3'], 6.0, 0.5, rng, attack=2.0, release=3.0, shape=[0.5, 1, 0.6]), power, 0.0)
+    thuds(m, power + 1.0, L, rng, ramp=(power + 1.0, 20.0))
     parcel(m, 11.6, rng, vel=0.34)
     m['piano'].add(piano('D2', 0.36, 5, rng), 12.5, -0.3)
     m['piano'].add(piano('A2', 0.26, 4, rng), 12.62, -0.2)
     m['piano'].add(piano('Eb2', 0.2, 4, rng), 14.4, -0.25)
-    ln, l0 = legato_line(line(LAMENT, 16.0), 0, 'cello', 0.36, rng, vib_cents=14, tail=2.0,
-                         shape=[(16, 0.7), (19, 1.0), (28, 0.85), (35, 0.55)])
-    m['lament'].add(ln, l0, -0.15)
     m['bells'].add(far_bell('D3', 0.45, rng, length=11), 20.0, -0.1)
-    string_note(m['strings'], 'A5', 26.0, 11, 0.025, 'violin', 0.4, 3, 3, players=1, rng=rng)
+    lament = 26.6
+    ln, l0 = legato_line(line(LAMENT, lament), 0, 'cello', 0.36, rng, vib_cents=14, tail=2.0,
+                         shape=[(lament, 0.7), (lament + 3, 1.0), (lament + 12, 0.85), (lament + 19, 0.55)])
+    m['lament'].add(ln, l0, -0.15)
+    string_note(m['strings'], 'A5', 33.0, 11, 0.025, 'violin', 0.4, 3, 3, players=1, rng=rng)
     return dict(handover=L, hands_to='lower_works', intro_bars=0, starts_from='silence',
-                hits={'power_on': 8.0, 'parcel_notes': 11.6, 'stands': 12.5, 'lament': 16.0, 'play_begins': 20.0})
+                hits={'power_on': power, 'parcel_notes': 11.6, 'stands': 12.5, 'play_begins': 20.0, 'lament': lament})
 
 
 def cue_hall(m, rng):

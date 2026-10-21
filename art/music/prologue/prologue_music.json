@@ -119,17 +119,17 @@
       "name": "wake",
       "file": "prologue_cue_wake.mp3",
       "beat": "Opening: power returns, he answers, stands, play begins.",
-      "seconds": 50.0,
-      "handover": 44.0,
+      "seconds": 54.0,
+      "handover": 48.0,
       "hands_to": "lower_works",
       "intro_bars": 0,
       "starts_from": "silence",
       "hits": {
-        "power_on": 8.0,
+        "power_on": 8.17,
         "parcel_notes": 11.6,
         "stands": 12.5,
-        "lament": 16.0,
-        "play_begins": 20.0
+        "play_begins": 20.0,
+        "lament": 26.6
       },
       "old_seconds": 58,
       "level": 0.9
@@ -263,7 +263,7 @@
       "handover": 60.0,
       "hands_to": null,
       "intro_bars": 0,
-      "starts_from": "silence",
+      "starts_from": "loop",
       "hits": {
         "birthday_tune": 38.0,
         "tune_stops": 52.7

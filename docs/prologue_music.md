@@ -89,7 +89,7 @@ Ten new cues replace the chapter 1 score's cues in the prologue. The old files s
 
 | Cue | Length (handover) | Grows out of → hands to | What it does |
 |---|---|---|---|
-| `wake` | 50 s (44) | silence → lower_works | Black until the power returns at 8 s. Then the pedal and a breath of choir rise, and the machinery turns over. The parcel's three notes play on the old music box at 11.6 s; its E sags flat, because the box can't hold it. Low piano plays as he stands (12.5 s). From 16 s a cello carries the lament (the cascade flattened) under dispatch's second line. |
+| `wake` | 54 s (48) | silence → lower_works | Black until the power returns with the lights at 8.17 s. Then the pedal and a breath of choir rise, and the machinery turns over. The parcel's three notes play on the old music box at 11.6 s; its E sags flat, because the box can't hold it. Low piano plays as he stands (12.5 s), and a far bell as play begins (20 s). Once dispatch has said "Deliver to: Mara" (about 26.5 s), a cello answers the name with the lament. |
 | `hall` | 38 s (32) | lower_works → lower_works | The Steward's anthem, heard from far up the building: its first phrase on a distant organ and horns, with the march barely beneath it. Then it thins back to the machinery. |
 | `threshold` | 30 s (24) | lower_works → lower_works | A rise through B-flat and C minor to an open D, with a soft choir and horns as the bulkhead opens. Then it settles. |
 | `racks` | 42 s (36) | lower_works → heaps (or `kin`) | The machinery stops. As the rows light (from 4 s, every 2 s), a stack of low strings builds one row at a time: D, A, D, then the E-flat against it. A cello begins the lament, and it settles into the heaps' choir. |
