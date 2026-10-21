@@ -95,11 +95,11 @@
       "name": "lastcar",
       "file": "prologue_lastcar.mp3",
       "from_theme": {
-        "start": 80.0,
+        "start": 86.0,
         "end": 96.0
       },
-      "seconds": 16.0,
-      "use": "DL-10: the relocation car leaves with the suitcase. The anthem's last phrase, then the world runs down."
+      "seconds": 10.0,
+      "use": "DL-10: the relocation car leaves with the suitcase. The anthem's closing bars, then the world runs down as he rides the counterweight down (the run-down starts 3 s in and is gone by 10 s)."
     },
     {
       "name": "collapse",

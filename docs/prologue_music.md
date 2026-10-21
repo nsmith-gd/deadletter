@@ -67,7 +67,7 @@ These are cut from the theme master at the theme's gain, so they match the loops
 
 | Cue | From the theme | Length | Beat |
 |---|---|---|---|
-| `prologue_lastcar` | 1:20–1:36 | 16 s | DL-10: the relocation car leaves with the suitcase. The anthem's last phrase, then the world runs down. |
+| `prologue_lastcar` | 1:26–1:36 | 10 s | DL-10: the relocation car leaves with the suitcase. The anthem's closing bars; the run-down starts 3 s in, as he rides the counterweight down, and has died away by 10 s. |
 | `prologue_collapse` | 2:28.5–2:52 | 23.5 s | DL-10: riding the counterweight down, he looks down at ring C. The chime alone, the climb, the collapse (E-flat over D), and the first bar of the lament. |
 
 DL-10 is where the Failure is told most directly: "the moment they left, and who went". So the theme's climax lives there.
@@ -98,7 +98,7 @@ The loops replace `bed` in the prologue. The rule is simple:
 | 12 | DL-09: onto the balcony (`refuge`) | `refuge` cue, as now. It runs on into DL-10. |
 | 13 | DL-10: the relocation lobby (`uponly`) | **order** fades in when `refuge` ends. This is the strongest Order room: RELOCATION — GRADES 1–2 ONLY, and the bridge and relocation tannoys, which duck it. |
 | 14 | DL-10: he presses UP and the car rises with the suitcase | **`prologue_lastcar`** cue (the anthem's last phrase runs down). |
-| 15 | DL-10: on the counterweight's ride down, as the camera looks down at ring C | **`prologue_collapse`** cue. It crossfades from `lastcar` if that is still playing. |
+| 15 | DL-10: he lands, and a short authored shot looks down at ring C (the scene doc's cinematic beat) | **`prologue_collapse`** queued after `lastcar`, so it starts about 10 s after UP. The chime sounds at 1 s and the crash lands at 3.5 s; hold the shot through the crash and hand back as the lament begins. |
 | 16 | DL-10/11: ring C (`ringc`) after the collapse | **heaps**, low, in place of today's silence. |
 | 17 | DL-11: the bedroom (`bedroom`) | **heaps** fades out on entering the bedroom; the room is quiet. The desk reveal plays `child` as now. |
 | 18 | The end card | `end`, as now. |

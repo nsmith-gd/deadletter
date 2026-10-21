@@ -477,8 +477,9 @@ SECTIONS = [  # name, builder, bars
     ('hope', sec_hope, 6),
 ]
 CUES = [  # name, from (s), to (s) in the theme, fade in, fade out, the beat it is for
-    ('lastcar', 80.0, 96.0, 0.3, 1.5,
-     "DL-10: the relocation car leaves with the suitcase. The anthem's last phrase, then the world runs down."),
+    ('lastcar', 86.0, 96.0, 0.3, 1.0,
+     "DL-10: the relocation car leaves with the suitcase. The anthem's closing bars, then the world runs down as he "
+     'rides the counterweight down (the run-down starts 3 s in and is gone by 10 s).'),
     ('collapse', 148.5, 172.0, 0.3, 4.0,
      'DL-10: riding the counterweight down, he looks down at ring C. The chime alone, the climb, the collapse, '
      'and the first bar of the lament.'),
