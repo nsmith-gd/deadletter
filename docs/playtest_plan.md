@@ -59,3 +59,9 @@ pretend to look; the next real information comes from people.
 ## Length
 The chapters planned in `docs/roadmap.md` take the game past two hours. Each new chapter should be measured the same
 way before the next is built.
+
+## Results
+
+| Date | Player | What | Time | Notes |
+|---|---|---|---|---|
+| 21 October 2026 | First-time player, rarely plays this kind of game | Prologue, cold | 26:47 | Above the roadmap's 15–20 min target and the simulated first-time players (19:15 in pass 5), which is the direction we wanted: the simulation is optimistic, and real first-time play runs longer. |
