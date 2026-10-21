@@ -90,7 +90,7 @@ RED = (4.2, 5.6)
 
 # The seated figures are linked duplicates of one mesh (LessonFigureSeated), as asked: 10 objects, 2 draw calls each
 # unless the game instances them. True merges them into AttLessonRoom instead (one more material there, 19 fewer calls).
-MERGE_SEATED = False
+MERGE_SEATED = True
 
 I4 = Matrix.Identity(4)
 
