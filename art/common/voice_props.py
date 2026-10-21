@@ -48,7 +48,7 @@ API (stable: other agents build on it; new names and options may be added, these
         A loose voice card: a thin tin disc 0.12 across with a paper centre label, in a brown paper sleeve 0.135
         square with a small address label; `out`: how far the disc has slid out of the sleeve's +x edge (0 .. 0.9 of
         its diameter). Lying flat, the origin under the sleeve's centre (it is 0.004 thick). upright=True: stood on
-        its -z... edge, in the xz plane (on a shelf against a wall at +y), the origin under its bottom edge's middle.
+        its edge in the xz plane, its face toward -y (on a shelf, against a wall at +y), the origin under its bottom edge.
         Returns 'centre' (the disc's centre), 'top' (its highest point).
     info = VP.music_box(T, M=None, lid=105.0, key=True)
         A child's music box: a little box 0.15 x 0.10 x 0.065, painted blue and chipped (ChildPaint), its lid open
@@ -77,7 +77,8 @@ Materials (all in index.html's tables except TannoyEnamel, new: WORN, below):
                chipRough: .7, metal: .1, grime: 4, chipScale: 30, chipAmt: .68, dust: [.16, .16, .14], dustAmt: .5,
                streak: .6 }
 
-Triangles (default options): card_player ~2.1k (+ crank ~0.2k), tannoy ~1.6k, card ~0.3k, music_box ~1.2k.
+Triangles (default options): card_player ~2.9k (its crank ~0.3k of that), tannoy ~2.3k, card ~0.4k, music_box ~1.4k.
+The tannoy reads best turned (aim +-35..60): head-on to the camera its horn is only a ring.
 
 Coordinates: metres, Blender Z up, the lane at y = 0, travel along +x, the camera at -y. Game (x, y, z) = (x, z, -y).
 """
@@ -387,7 +388,7 @@ def _crank_parts(parts, angle):
     a = math.radians(angle)
     d = V((0.0, -math.sin(a), -math.cos(a)))
     L = 0.058
-    add_cyl(st, (0.024, 0, 0) - d * 0.006, V((0.024, 0, 0)) + d * L, 0.0075, 0.0055, mat=0, seg=8)   # the arm
+    add_cyl(st, V((0.024, 0, 0)) - d * 0.006, V((0.024, 0, 0)) + d * L, 0.0075, 0.0055, mat=0, seg=8)   # the arm
     add_sphere(st, (0.024, 0, 0), 0.009, mat=0, seg=8, scale=(0.7, 1, 1))              # its boss
     end = V((0.024, 0, 0)) + d * L
     add_cyl(hb, end + V((0.002, 0, 0)), end + V((0.03, 0, 0)), 0.0075, 0.0085, mat=0, seg=10)   # the handle, worn bright
@@ -436,7 +437,7 @@ def _player_parts(lid, horn, card, with_crank, crank_angle):
         add_cyl(br, (0.008, 0.05, P_TOP + 0.012), (-0.02, 0.016, P_TOP + 0.012), 0.003, mat=0, seg=6)    # the reed arm
     if lid != 'off':
         lp = _Parts()
-        _rbox(lp['PigeonWood'], lx0, lx1, ly0 - ly1, 0.0, 0.0, 0.009, p=6, cuts=2)
+        _rbox(lp['PigeonWood'], lx0, lx1, ly0 - ly1, 0.0, 0.0, 0.009, p=14, cuts=2)
         add_sphere(lp['Brass'], ((lx0 + lx1) / 2, ly0 - ly1 + 0.008, 0.011), 0.005, mat=0, seg=8)   # its knob
         rot = Matrix.Rotation(math.radians(-102.0 if lid == 'open' else 0.0), 4, 'X')
         _bake(lp, Matrix.Translation((0, ly1, P_TOP)) @ rot)
@@ -449,9 +450,9 @@ def _player_parts(lid, horn, card, with_crank, crank_angle):
     h = math.radians(horn)
     d = V((math.sin(h), -math.cos(h), 0.0))
     p0 = P_NECK + V((0, 0, 0.05))
-    pts = _bezier(p0, p0 + V((0, 0, 0.1)), p0 + d * 0.19 + V((0, 0, 0.15)), 15)
-    radii = [0.0095 + 0.077 * (i / 14) ** 2.7 for i in range(15)]
-    _horn(br, pts, radii, seg=20, wall=0.0022, petals=8, petal_amp=0.05, lip=0.003)
+    pts = _bezier(p0, p0 + V((0, 0, 0.1)), p0 + d * 0.19 + V((0, 0, 0.15)), 13)
+    radii = [0.0095 + 0.077 * (i / 12) ** 2.7 for i in range(13)]
+    _horn(br, pts, radii, seg=18, wall=0.0022, petals=8, petal_amp=0.05, lip=0.003)
     # its stay: a thin rod from the top's back edge up to the horn's elbow
     add_cyl(st, (P_NECK.x - 0.05, w2 - 0.01, P_TOP), pts[5], 0.0025, mat=0, seg=5)
     mouth = pts[-1]
@@ -509,16 +510,15 @@ def tannoy(T, M=None, tilt=20.0, aim=0.0, conduit=0.6, conduit_dir=90.0, cable=T
     C = piv + V((0, 0, -0.085))
     can0, can1 = C - axis * 0.075, C + axis * 0.03
     add_cyl(en, can0, can1, 0.058, 0.062, mat=0, seg=16)
-    add_sphere(en, can0, 0.058, mat=0, seg=16, scale=(1, 1, 1))     # its domed back
+    add_sphere(en, can0, 0.058, mat=0, seg=14, scale=(1, 1, 1))     # its domed back
     # yoke: a strap over the can from the swivel
     add_cyl(sl, piv + V((0, 0, -0.03)), C + V((0, 0, 0.064)), 0.009, mat=0, seg=6)
-    hp = [can1 + axis * (0.3 * i / 13) for i in range(14)]
-    hr = [0.045 + 0.09 * (i / 13) ** 1.9 for i in range(14)]
-    _horn(en, hp, hr, seg=20, wall=0.004, lip=0.007)
+    hp = [can1 + axis * (0.3 * i / 9) for i in range(10)]
+    hr = [0.045 + 0.09 * (i / 9) ** 1.9 for i in range(10)]
+    _horn(en, hp, hr, seg=18, wall=0.004, lip=0.007)
     # the horn's inside dark: an inner liner just within the inner skin, open to the mouth
     liner = bmesh.new()
-    li_pts = hp[:-1]
-    _horn(liner, li_pts, [r - 0.0045 for r in hr[:-1]], seg=20, wall=0.001, lip=0.0)
+    _horn(liner, hp[:-1:2], [r - 0.0045 for r in hr[:-1:2]], seg=18, wall=0.001, lip=0.0)
     _merge_bm(dk, liner)
     _disc(dk, can1 + axis * 0.004, axis, 0.04, 0.004, seg=14)    # the throat's grille
     mouth = hp[-1]

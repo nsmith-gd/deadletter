@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.join(HERE, '..', 'dl02'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl03'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl04'))
 sys.path.insert(0, os.path.join(HERE, '..', 'dl05'))
-for _d in ('sorting_hall', 'racks', 'cage', 'pass2', 'pass3', 'pass4', 'pass6', 'white'):
+for _d in ('sorting_hall', 'racks', 'cage', 'pass2', 'pass3', 'pass4', 'pass6', 'pass7', 'white'):
     sys.path.insert(0, os.path.join(HERE, '..', _d))
 
 import bpy  # noqa: E402  (must precede bmesh/mathutils)
@@ -57,6 +57,9 @@ PASS6 = []
 for _name in ('build_tableaux_depot', 'build_tableaux_ringc', 'build_ending_secrets'):
     if os.path.exists(os.path.join(HERE, '..', 'pass6', _name + '.py')):
         PASS6.append(__import__(_name))
+# Pass 7: the voice-card players, cards, tannoys and the den's music box (docs/audio_audit.md), after the tableaux.
+if os.path.exists(os.path.join(HERE, '..', 'pass7', 'build_audio_props.py')):
+    PASS6.append(__import__('build_audio_props'))
 import build_white as white  # noqa: E402
 from build_d17 import (add_box, add_cyl, add_sphere, add_torus, rounded_box, mesh_object,  # noqa: E402
                        worn_material, emission_material, simple_material, smoothstep, ease_back,

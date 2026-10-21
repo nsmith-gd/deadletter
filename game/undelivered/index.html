@@ -164,7 +164,7 @@
       </div>
       <div class="row scene-pick">
         <label for="scene-select">For testing, start at</label>
-        <select id="scene-select"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option></select>
+        <select id="scene-select"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option></select>
         <button class="act secondary" id="scene-go" type="button" disabled>Start there</button>
       </div>
       <p class="note">The eleven scenes of the prologue, from The Wake to The Child at the Address, run as one, with no cut between them. Headphones recommended.</p>
@@ -192,7 +192,7 @@
       </div>
       <div class="row scene-pick">
         <label for="scene-select-p">Jump to</label>
-        <select id="scene-select-p"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option></select>
+        <select id="scene-select-p"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option></select>
         <button class="act secondary" id="scene-go-p" type="button">Go</button>
         <button class="act secondary" id="export-log" type="button">Save play log</button>
       </div>
@@ -202,13 +202,14 @@
   <section id="end" class="layer" hidden>
     <div class="card">
       <div class="eyebrow"><span>Dead Letter</span><span id="end-time"></span></div>
-      <h1>End of the prologue</h1>
-      <h2 class="sub">Undelivered</h2>
-      <p>Behind a fallen desk, nine pencil marks climb the wall, one a year, and a crooked tree is drawn beside them. The terminal says nobody is home, and forwards the parcel up, to a school on ring B. D-17 sat the rabbit up and left the room as he found it.</p>
-      <p class="note">Chapter one, <strong>Attendance</strong>, is being made.</p>
+      <h1 id="end-title">End of the prologue</h1>
+      <h2 class="sub" id="end-sub">Undelivered</h2>
+      <p id="end-text">Behind a fallen desk, nine pencil marks climb the wall, one a year, and a crooked tree is drawn beside them. The terminal says nobody is home, and forwards the parcel up, to a school on ring B. D-17 sat the rabbit up and left the room as he found it.</p>
+      <p class="note" id="end-next">Chapter one, <strong>Attendance</strong>: its first three scenes are here.</p>
       <p class="note" id="end-found"></p>
       <div class="row">
-        <button class="act" id="again" type="button">Play again</button>
+        <button class="act" id="continue-att" type="button">Continue to chapter one</button>
+        <button class="act secondary" id="again" type="button">Play again</button>
         <button class="act secondary" id="again-skip" type="button">Play again, skip intro</button>
       </div>
     </div>
@@ -1396,6 +1397,7 @@ function rotatedPath() {
   return SHUTTER_PATH.map(([x, z]) => { const dx = x - SHUTTER_PIVOT.x, dz = z - SHUTTER_PIVOT.y; return [SHUTTER_PIVOT.x + dx * c - dz * s, SHUTTER_PIVOT.y + dx * s + dz * c]; });
 }
 function ceilingAt(x) {
+  if (game.region === 6) return 3.4;
   if (x > BARRICADE5.x0 && x < BARRICADE5.x1) return BARRICADE5.gap;                            // under ring C's seal
   const cc = game.ch1 ? ceilingCh1(x) : null;
   if (cc !== null) return cc;
@@ -1483,6 +1485,7 @@ function updateMechanisms(dt) {
 // Ground, ledges and ceilings
 // ---------------------------------------------------------------------------
 function floorAt(x) {
+  if (game.region === 6) return floorAtt(x);
   const f = game.ch1 ? floorCh1(x) : null;
   if (f !== null) return f;
   if (x > SHAFT.x0 && x < SHAFT.x1) return platTop();
@@ -1490,6 +1493,7 @@ function floorAt(x) {
   return x > PIT.x0 && x < PIT.x1 ? PIT.y : 0;
 }
 function surfaceAt(x) {                       // the surface directly under one point
+  if (game.region === 6) return surfaceAtt(x, floorAtt(x));
   let h = floorAt(x);
   for (const p of PLATFORMS) if (x >= p.x0 && x <= p.x1) h = Math.max(h, p.h);
   if (x > ROOM_X0) {
@@ -1523,6 +1527,7 @@ function liftOpen() { return game.plat.latched || game.plat.h >= 0.985; }
 function leftLimit() { return game.ch1 ? limitsCh1(leftLimit0(), rightLimit0())[0] : leftLimit0(); }
 function rightLimit() { return game.ch1 ? limitsCh1(leftLimit0(), rightLimit0())[1] : rightLimit0(); }
 function leftLimit0() {
+  if (game.region === 6) return ATT.x0;
   if (game.region === 1) return LEFT_LIMIT;
   if (game.region === 4) return game.x >= SHAFT.x1 - 0.05 && !liftOpen() ? SHAFT.x1 + HALF - 0.08 : DOOR4_X - 0.6;
   if (game.region === 5) return UO.cw.x0 + HALF;
@@ -1530,6 +1535,7 @@ function leftLimit0() {
   return game.x > GATE_X && gateBlocks() ? GATE_X + 0.06 + HALF : SH.x0 + 0.2;
 }
 function rightLimit0() {
+  if (game.region === 6) return ATT.x1;
   if (game.region === 1) return game.released ? RIGHT_LIMIT : LOCKED_LIMIT;
   if (game.region === 3) return game.upper ? REGION4_X + 1 : FLOOR3_X1 - 0.25;
   if (game.region === 4) return game.x <= SHAFT.x0 + 0.05 && !liftOpen() ? SHAFT.x0 - HALF + 0.08 : REGION5_X + 1;
@@ -2370,6 +2376,7 @@ function setRegionLights(r, zone = lightZoneFor(r)) {
   (refs.rcLights || []).forEach((l) => (l.visible = r === 5 || uo));
   (refs.secretLights || []).forEach((l, i) => (l.visible = i === 0 ? r === 3 : r === 4 && !uo));
   (refs.endLights || []).forEach((l) => (l.visible = r === 5));
+  (refs.attLights || []).forEach((l) => (l.visible = r === 6));
   game.lightRegion = r;
 }
 
@@ -3583,7 +3590,7 @@ const letterState = {};
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const FLAT_LETTER = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);   // flat on the floor, across the lane                                   // kept through respawns and checkpoints; a new game clears it
 const CP_ORDER = ['start', 'shutter', 'hall', 'door', 'room', 'weighroom', 'solved', 'bay', 'ration', 'hatch', 'scanned', 'landing', 'gallery',
-  'goods', 'latched', 'cage', 'landing8', 'tunnel', 'uponly', 'ringc', 'bedroom', 'forwarded'];
+  'goods', 'latched', 'cage', 'landing8', 'tunnel', 'uponly', 'ringc', 'bedroom', 'forwarded', 'school', 'register', 'lesson', 'gallery13', 'window', 'hatch14'];
 const past = (cp, name) => CP_ORDER.indexOf(cp) >= CP_ORDER.indexOf(name);
 
 // Build: find the movable pieces and give each a group to move by.
@@ -3767,6 +3774,7 @@ function ceilingCh1(x) {
 }
 // Extra walls: the bay door, the gallery gate, the cage's sides, the upper landing's edge.
 function limitsCh1(lo, hi) {
+  if (game.region === 6) return limitsAtt(lo, hi);
   const s = game.ch1, x = game.x;
   if (game.region === 2 && x < RK.door.x0 && s.bayDoor < 0.55) hi = Math.min(hi, RK.door.x0 - 0.04 - HALF);
   if (game.region === 2 && x < SH.x1 + 0.4) lo = Math.max(lo, SH.x0 + 0.2);
@@ -3801,6 +3809,7 @@ function limitsCh1(lo, hi) {
 // Interactions -------------------------------------------------------------------------------
 function nearCh1() {
   if (!game.grounded || game.act) return null;
+  if (game.region === 6) { const n6 = nearAtt(); if (n6) return n6; }
   const s = game.ch1, x = game.x;
   if (game.hold === 'push') return 'release';
   if (game.hold === 'item') {
@@ -3848,6 +3857,10 @@ function itemsHere() {
   if (game.region === 3) s.weights.forEach((w, i) => out.push(Object.assign(w, { key: 'w' + i, h: WEIGHT_H, r: WEIGHT_R, below: BAIL_BELOW_WRIST, g: refs.ch1.weights[i] })));
   if (game.region === 4) out.push(Object.assign(s.uo.case, { key: 'case', h: 0.2, r: UO.caseHalf, below: 0.24, g: refs.ch1.suitcase }));
   if (game.region === 4) s.plates.forEach((p, i) => out.push(Object.assign(p, { key: 'p' + i, h: 0.21, r: 0.05, below: BAIL_BELOW_WRIST, g: refs.ch1.plates[i] })));
+  if (game.region === 6 && game.att && refs.att) {
+    out.push(Object.assign(game.att.coat, { key: 'coat', h: 0.1, r: 0.16, below: 0.16, g: refs.att.AttCoat }));
+    out.push(Object.assign(game.att.pole, { key: 'pole', h: 0.06, r: 0.3, below: 0.08, g: refs.att.AttPole }));
+  }
   return out;
 }
 const PUSHABLES = {
@@ -3859,6 +3872,9 @@ const PUSHABLES = {
   body: { region: 2, side: -1, state: () => game.ch1.body, gap: RH5.bodyGap, speed: 0.2, min: RH5.body0,
     max: () => { const d = game.ch1.drum; return Math.min(RH5.bodyPlate, d.x > game.ch1.body.x ? d.x - 0.225 - RH5.bodyHalf - 0.02 : Infinity); },
     avail: () => PUSHABLES.body.max() - game.ch1.body.x > 0.05, floor: 0, z: 0 },
+  // Chapter 1: the teaching figures, stand-in pupils.
+  fig: { region: 6, side: 1, state: () => game.att.fig, gap: 0.6, speed: 0.4, min: ATT.bench.x1 + 0.75, max: () => ATT.fig.strip, floor: 0, z: ATT.fig.z },
+  fig2: { region: 6, side: 1, state: () => game.att.fig2, gap: 0.6, speed: 0.4, min: 217.3, max: () => ATT.fig2.seat, floor: 0, z: ATT.fig2.z },
   duct: { region: 5, side: 1, state: () => game.ch1.duct, gap: DUCT9.gap, speed: 0.45, min: DUCT9.x, max: () => DIP9.x0 - DUCT9.half + 0.4, floor: 0, z: 0 },
 };
 function pushHere() {
@@ -3869,7 +3885,7 @@ function pushHere() {
   }
   return out;
 }
-const ACT_CH1 = new Set(['loadCar', 'up10', 'crank10', 'ride10', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck', 'shove', 'secret', 'voice']);
+const ACT_CH1 = new Set(['loadCar', 'up10', 'crank10', 'ride10', 'death', 'knockback', 'curio', 'bell9', 'junction9', 'loadTray', 'liftItem', 'setdownItem', 'loadCarrier', 'grabPush', 'pickLetter', 'postLetter', 'bayTouch', 'cage', 'slide', 'waterFlinch', 'trenchStuck', 'shove', 'secret', 'voice', 'att']);
 function beginCh1(kind) {
   const [k, arg] = kind.split(':');
   game.vx = 0;
@@ -3885,6 +3901,7 @@ function beginCh1(kind) {
   if (k === 'crank10') { game.act = { kind: 'crank10', phase: 'approach', t: 0, standX: UO.crankStand, face: 1, strokes: Math.round(game.ch1.uo.door * UO.strokes), lastF: 0 }; return; }
   if (k === 'bell9') { game.act = { kind: 'bell9', phase: 'approach', t: 0, standX: BELL9.x, face: 1 }; return; }
   if (k === 'junction9') { game.act = { kind: 'junction9', phase: 'approach', t: 0, standX: JUNCTION9.x - 0.25, face: 1 }; return; }
+  if (k === 'att') { beginAtt(arg); return; }
   if (k === 'voice') {
     const v = VOICES.find((q) => q.id === arg);
     game.act = { kind: 'voice', v, phase: 'approach', t: 0, standX: v.standX, face: v.face || 1 };
@@ -3959,6 +3976,7 @@ function updateActCh1(a, dt) {
   if (a.kind === 'curio') { updateCurioAct(a, dt); return; }
   if (a.kind === 'secret') { updateSecretAct(a, dt); return; }
   if (a.kind === 'voice') { updateVoiceAct(a, dt); return; }
+  if (a.kind === 'att') { updateAttAct(a, dt); return; }
   if (['loadCar', 'up10', 'crank10', 'ride10'].includes(a.kind)) { updateAct10(a, dt); return; }
   if (a.kind === 'bell9' || a.kind === 'junction9') {
     // He turns to the wall to press the bell (or pull the lever), then back to the lane.
@@ -4635,6 +4653,274 @@ const CURIOS = [
 ];
 const curioFound = {};
 const curioCount = () => CURIOS.filter((c) => curioFound[c.id]).length;
+// =====================================================================================================================
+// Chapter 1 Attendance, DL-12 to DL-14 (docs/chapter1_attendance_plan.md). The school on ring B: its own set
+// (assets/attendance.json, art/ch1/), loaded on demand, played as region 6 from world x OFF6.
+// DL-12: a gate that wants a pupil present and their coat on the peg; a stand-in pupil. DL-13: a lesson whose steps come
+// out in turn; brake it in the moment they are all out. DL-14: one chain, two blinds; jam one with the window pole.
+// =====================================================================================================================
+const OFF6 = 200;
+const ATT = {
+  coat0: 202.9, bench: { x0: 204.9, x1: 205.9, h: 0.42 }, peg: new THREE.Vector3(205.4, 1.18, -0.3),
+  fig: { x: 207.0, z: -0.4, strip: 208.4 }, strip: { x0: 208.0, x1: 208.8 }, gate: { x: 209.4, open: 1.3 },
+  fig2: { x: 217.6, z: -0.4, seat: 219.55 }, pawlX: 220.6, speakerX: 224.0,
+  steps: [{ x0: 224.6, x1: 225.4, h: 0.55 }, { x0: 225.6, x1: 226.4, h: 1.05 }, { x0: 226.6, x1: 227.4, h: 1.55 }],
+  gallery: { x0: 227.6, x1: 233.0, h: 2.05 }, cycle: { period: 12, out: [1.0, 2.6, 4.2], fold: [5.6, 6.2, 6.8] },
+  stair14: { x0: 233.0, x1: 234.4, steps: 5 }, pole0: 234.4, desk: { x0: 235.4, x1: 236.2, h: 0.62 },
+  ledgeA: { x0: 236.4, x1: 237.6, h: 1.1 }, ledgeB: { x0: 237.8, x1: 239.0, h: 1.6 }, hatch: { x0: 239.2, x1: 240.2, h: 2.15 },
+  wheelA: 236.6, crankX: 242.4, x0: 200.3, x1: 247.6,
+};
+const ATT_CPS = ['school', 'register', 'lesson', 'gallery13', 'window', 'hatch14'];
+let attLoading = null;
+function loadAttendance() {
+  attLoading ||= loadModel('assets/attendance.json').then((g) => {
+    prepare(g.scene); scene.add(g.scene); buildAtt(g.scene);
+    // Its lights join the pool; its shaders compile now, into the composer's target, as the prologue's did.
+    renderer.setRenderTarget(composer.renderTarget1); setRegionLights(6, null); renderer.compile(scene, camera); renderer.setRenderTarget(null);
+    setRegionLights(game.region || 1, null);
+  });
+  return attLoading;
+}
+function buildAtt(root) {
+  const k = refs.att = {};
+  const get = (n) => root.getObjectByName(n);
+  for (const n of ['AttFigure', 'AttGate', 'AttCoat', 'AttFigure2', 'AttStep1', 'AttStep2', 'AttStep3', 'AttDialHand', 'AttPawl',
+    'AttTreeTrunk', 'AttTreeBranch1', 'AttTreeBranch2', 'AttTreeBranch3', 'AttTreeLeaves', 'AttBlindA', 'AttBlindB', 'AttLedgeA', 'AttLedgeB',
+    'AttPanelPeel', 'AttCrank', 'AttWheelA', 'AttPole']) { k[n] = get(n); if (k[n]) k[n].userData.rest = { p: k[n].position.clone(), q: k[n].quaternion.clone(), s: k[n].scale.clone() }; }
+  // Lamps the game switches get their own materials.
+  const lamp = (n, color) => { const o = get(n); if (!o) return null; const m = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0 }); o.traverse((q) => { if (q.isMesh) q.material = m; }); return m; };
+  k.lampPresent = lamp('AttLampPresent', 0xffd9a0); k.lampCoat = lamp('AttLampCoat', 0xffd9a0); k.pegLamp = lamp('AttPegLamp', 0xffc070); k.lessonLamp = lamp('AttLessonLamp', 0xffd9a0);
+  // Lights, as proxies for the pool (region 6 only).
+  const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; l.intensity = i; scene.add(l); l.layers.set(PROXY_LAYER); lightPool.proxies.push(l); return l; };
+  refs.attLights = [
+    P(0xffe0b8, 2.2, 6, 201.2, 2.6, 0.4), P(0xffd6a0, 1.8, 5, 205.0, 2.4, -0.2), P(0xffe6c4, 2.0, 5, 208.8, 2.5, 0.2), P(0xd8e0e8, 1.2, 5, 213.0, 2.4, -0.6),
+    P(0xffd8b0, 2.6, 7, 219.5, 2.8, 0.6), P(0xffe6c8, 2.4, 7, 225.5, 3.0, 0.2), P(0xfff0d0, 1.6, 4, 229.8, 3.2, -0.6),
+    P(0xc8d8f0, 2.2, 7, 236.0, 3.0, 0.4), P(0xc8d8f0, 2.0, 7, 240.5, 3.0, 0.4), P(0xffd8b0, 1.0, 4, 244.5, 2.4, 0.2),
+  ];
+  // Culling, like the prologue's: by x, near the camera.
+  const box = new THREE.Box3();
+  root.updateMatrixWorld(true);
+  root.traverse((o) => { if (o.isMesh) { box.setFromObject(o); refs.cull.push({ o, x0: box.min.x, x1: box.max.x }); } });
+}
+function resetAtt(cp) {
+  const on = ATT_CPS.includes(cp), p = (n) => on && ATT_CPS.indexOf(cp) >= ATT_CPS.indexOf(n);
+  game.att = {
+    coat: { x: ATT.coat0, base: 0, state: p('register') ? 'peg' : 'floor', blend: 0, drop: null },
+    pole: { x: ATT.pole0, base: 0, state: p('hatch14') ? 'jam' : 'floor', blend: 0, drop: null },
+    fig: { x: p('register') ? ATT.fig.strip : ATT.fig.x, v: 0, state: 'free' },
+    fig2: { x: p('gallery13') ? ATT.fig2.seat : ATT.fig2.x, v: 0, state: 'free' },
+    gateY: p('register') ? ATT.gate.open : 0, gateV: 0, said: {}, present: false, presentAt: -10, presentCount: 0,
+    lesson: { on: p('gallery13'), t: p('gallery13') ? 4.9 : 0, braked: p('gallery13'), steps: p('gallery13') ? [1, 1, 1] : [0, 0, 0], tree: 0, lastT: 0 },
+    blinds: { a: p('hatch14') ? 1 : 0, b: p('hatch14') ? 1 : 0, ta: p('hatch14') ? 1 : 0, tb: p('hatch14') ? 1 : 0, winds: p('hatch14') ? 3 : 0 },
+    jammed: p('hatch14'), peel: p('hatch14') ? 1 : 0, peeled: p('hatch14'), crank: 0, ended: false,
+  };
+}
+const attOut = (k) => k >= 0.95;
+function floorAtt(x) {
+  if (x >= ATT.gallery.x0 && x < ATT.stair14.x0) return ATT.gallery.h;                    // the gallery, and DL-14's way in
+  if (x >= ATT.stair14.x0 && x < ATT.stair14.x1) {                                       // down the stair, a step at a time
+    const n = ATT.stair14.steps, k = (x - ATT.stair14.x0) / (ATT.stair14.x1 - ATT.stair14.x0);
+    return ATT.gallery.h * (1 - Math.ceil(k * n) / n);
+  }
+  return 0;
+}
+function surfaceAtt(x, h) {
+  const a = game.att;
+  if (x >= ATT.bench.x0 && x <= ATT.bench.x1) h = Math.max(h, ATT.bench.h);
+  ATT.steps.forEach((s, i) => { if (attOut(a.lesson.steps[i]) && x >= s.x0 && x <= s.x1) h = Math.max(h, s.h); });
+  if (x >= ATT.desk.x0 && x <= ATT.desk.x1) h = Math.max(h, ATT.desk.h);
+  if (attOut(a.blinds.a) && x >= ATT.ledgeA.x0 && x <= ATT.ledgeA.x1) h = Math.max(h, ATT.ledgeA.h);
+  if (attOut(a.blinds.b) && x >= ATT.ledgeB.x0 && x <= ATT.ledgeB.x1) h = Math.max(h, ATT.ledgeB.h);
+  // The hatch is high in the wall: a sill only for someone up on the ledges; the floor below runs on to the crank.
+  if (game.y > 1.3 && x >= ATT.hatch.x0 && x <= ATT.hatch.x1) h = Math.max(h, ATT.hatch.h);
+  return h;
+}
+function limitsAtt(lo, hi) {
+  const x = game.x;
+  lo = Math.max(lo, ATT.x0); hi = Math.min(hi, ATT.x1);
+  if (x < ATT.gate.x && game.att.gateY < CROUCH_H + 0.02) hi = Math.min(hi, ATT.gate.x - 0.06 - HALF);   // the attendance gate, down
+  if (x > ATT.gate.x && game.att.gateY < CROUCH_H + 0.02) lo = Math.max(lo, ATT.gate.x + 0.06 + HALF);
+  return [lo, hi];
+}
+function nearAtt() {
+  const a = game.att, x = game.x;
+  if (game.carry && game.carry === a.coat && Math.abs(game.y - ATT.bench.h) < 0.05 && Math.abs(x - ATT.peg.x) < 0.4) return 'att:hang';
+  if (game.carry && game.carry === a.pole && game.y < 0.05 && Math.abs(x - ATT.wheelA) < 0.45 && attOut(a.blinds.a) && !a.jammed) return 'att:jam';
+  if (game.hold) return null;
+  if (game.y < 0.05 && Math.abs(x - ATT.pawlX) < 0.32 && a.lesson.on) return 'att:pawl';
+  if (game.y < 0.05 && Math.abs(x - ATT.crankX) < 0.36) return 'att:crank';
+  return null;
+}
+function beginAtt(kind) {
+  const stand = { hang: ATT.peg.x, jam: ATT.wheelA - 0.22, pawl: ATT.pawlX - 0.2, crank: ATT.crankX - 0.22 }[kind];
+  game.act = { kind: 'att', what: kind, phase: 'approach', t: 0, standX: stand, face: 1 };
+}
+function updateAttAct(a, dt) {
+  const s = game.att;
+  if (a.phase === 'approach') {
+    if (approachCh1(a, dt)) {
+      a.phase = 'act'; a.t = 0;
+      if (a.what === 'hang') { game.yawOverride = Math.PI; setClip(actions.SetDownHigh ? 'SetDownHigh' : 'SetDown', 0.15); }
+      if (a.what === 'jam') { game.yawOverride = Math.PI; setClip('SetDown', 0.15); }
+      if (a.what === 'pawl') setClip(actions.Pull ? 'Pull' : 'Tug', 0.15);
+      if (a.what === 'crank') setClip(actions.Crank ? 'Crank' : 'Tug', 0.15);
+    }
+    return;
+  }
+  if (a.what === 'hang' || a.what === 'jam') {
+    const clip = a.what === 'hang' && actions.SetDownHigh ? actions.SetDownHigh : actions.SetDown, f = clip.time * FPS;
+    if (f >= 14 && game.carry) {
+      const it = game.carry; it.blend = 0;
+      if (a.what === 'hang') { it.state = 'peg'; Sound.setDown(false); Sound.tap(); }
+      else { it.state = 'jam'; s.jammed = true; Sound.clank(); Sound.ratchet(); shake(0.12); }
+      game.carry = null; game.hold = null;
+    }
+    if (f >= 35) { game.act = null; game.yawOverride = null; setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'pawl') {
+    if (a.t > 0.35 && !a.done) {
+      a.done = true; s.lesson.braked = !s.lesson.braked; Sound.pawlClick(); shake(0.15);
+      if (s.lesson.braked) {
+        Sound.groan();
+        const allOut = s.lesson.steps.every(attOut);
+        Telemetry.event('lessonBrake', { t: +s.lesson.t.toFixed(2), allOut });
+        // The lesson sticks mid-sentence: a scrap of the recording, over and over.
+        if (Voice.playing() === 'att_lesson') Voice.play({ id: 'att_lesson', who: 'Lesson', treat: 'card', lines: [['…grows… grows… grows…', 4]], x: ATT.speakerX, reach: 10 }, { stickAt: 9.2, level: 0.7 });
+      } else if (Voice.playing() === 'att_lesson') Voice.stop(0.3);
+    }
+    if (a.t > 1.0) { game.act = null; setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'crank') {
+    // One wind of the crank runs the chain: the blind that is up comes down and the other goes up, unless it is jammed.
+    if (a.t > 0.3 && !a.done) {
+      a.done = true; const b = s.blinds; b.winds++;
+      if (b.ta < 0.5 && b.tb < 0.5) b.ta = 1;                                       // the first wind: A comes down
+      else if (b.ta > 0.5 && b.tb < 0.5) { b.tb = 1; if (!s.jammed) b.ta = 0; }      // B down; A up, unless the pole holds it
+      else if (b.tb > 0.5 && b.ta < 0.5) { b.ta = 1; b.tb = 0; }
+      else { b.ta = s.jammed ? 1 : 0; b.tb = s.jammed ? 1 : 0; }
+      Sound.chain(2.2); Sound.ratchet(); Telemetry.event('blinds', { a: b.ta, b: b.tb, jammed: s.jammed });
+    }
+    if (a.t > 0.9 && !a.r2) { a.r2 = true; Sound.ratchet(); }
+    if (a.t > 1.5) { game.act = null; setClip('Idle', 0.3); }
+  }
+}
+function updateAtt(dt) {
+  const s = game.att, k = refs.att;
+  if (!s || !k) return;
+  // DL-12: the register. Someone on the strip, and a coat on peg 7.
+  const meOn = game.region === 6 && game.x > ATT.strip.x0 && game.x < ATT.strip.x1 && game.y < 0.05;
+  const figOn = Math.abs(s.fig.x - ATT.fig.strip) < 0.25;
+  const present = meOn || figOn, coat = s.coat.state === 'peg';
+  if (present && !s.present) { s.presentCount++; s.presentAt = game.clock; Sound.plate(); }
+  s.present = present;
+  if (game.region === 6 && game.x < 212) {
+    const g = (id) => Object.assign(voiceById(id), { x: ATT.gate.x, reach: 8 });
+    if (present && !coat && game.clock - s.presentAt > 0.6 && !s.said['p' + s.presentCount]) {
+      s.said['p' + s.presentCount] = true; Sound.buzzShort?.();
+      Voice.play(g(s.presentCount > 1 ? 'att_gate_2' : 'att_gate_1'), { level: 0.8 });
+    }
+    if (present && coat && !s.said.thanks) { s.said.thanks = true; Voice.play(g('att_gate_3'), { level: 0.8 }); Sound.bell?.(); }
+  }
+  const blink = (game.calm ? 1 : (Math.sin(game.clock * 7) > 0 ? 1 : 0.15));
+  if (k.lampPresent) k.lampPresent.emissiveIntensity = present ? 3 : 0.05;
+  if (k.lampCoat) k.lampCoat.emissiveIntensity = coat ? 3 : present ? 3 * blink : 0.05;
+  if (k.pegLamp) k.pegLamp.emissiveIntensity = !coat && present ? 4 * blink : coat ? 0.6 : 0.1;
+  const want = present && coat ? ATT.gate.open : 0, prev = s.gateY;
+  if (want > s.gateY) { s.gateV = 0; s.gateY = Math.min(want, s.gateY + 0.5 * dt); }
+  else if (want < s.gateY) {
+    s.gateV = Math.min(3, s.gateV + 8 * dt); s.gateY = Math.max(want, s.gateY - s.gateV * dt);
+    if (s.gateY <= want + 1e-4 && s.gateV > 0.8) { Sound.gateSlam(0.8); shake(0.3); s.gateV = 0; }
+  }
+  if (game.region === 6 && Math.abs(game.x - ATT.gate.x) < HALF + 0.06) s.gateY = Math.max(s.gateY, Math.min(prev, game.y + (game.crouched ? CROUCH_H : STAND_H) + 0.03));
+  if (k.AttGate) k.AttGate.position.y = k.AttGate.userData.rest.p.y + s.gateY;
+  if (k.AttFigure) k.AttFigure.position.x = s.fig.x;
+  // DL-13: the lesson runs while a pupil sits in the front seat.
+  const L = s.lesson, seated = Math.abs(s.fig2.x - ATT.fig2.seat) < 0.06;
+  if (seated && !L.on) { L.on = true; L.t = 0; Sound.bell?.(); Telemetry.event('lessonStart', {}); }
+  if (!seated && L.on && !L.braked) { L.on = false; }
+  if (k.lessonLamp) k.lessonLamp.emissiveIntensity = L.on ? 3 : 0.05;
+  if (L.on && !L.braked) {
+    L.lastT = L.t; L.t += dt;
+    if (L.t >= ATT.cycle.period) { L.t -= ATT.cycle.period; }
+    // Each lesson begins with its bell and the recorded voice, if he is in the room to hear it.
+    if (L.t < L.lastT || (L.lastT === 0 && L.t < 0.1)) { Sound.bell?.(); if (game.region === 6 && game.x > 216 && game.x < 233 && Voice.playing() !== 'att_lesson') Voice.play(Object.assign(voiceById('att_lesson'), { x: ATT.speakerX, reach: 11 }), { level: 0.75 }); }
+    ATT.cycle.out.forEach((t0, i) => {
+      const t1 = ATT.cycle.fold[i], want = L.t >= t0 && L.t < t1 ? 1 : 0, prevS = L.steps[i];
+      L.steps[i] += Math.sign(want - L.steps[i]) * Math.min(Math.abs(want - L.steps[i]), dt / 0.35);
+      if (prevS < 0.5 && L.steps[i] >= 0.5) Sound.clack?.(); if (prevS > 0.5 && L.steps[i] <= 0.5) Sound.thud();
+    });
+    L.tree = L.t < 6.8 ? 0 : L.t < 10.4 ? (L.t - 6.8) / 3.6 : Math.max(0, 1 - (L.t - 10.4) / 1.2);
+  } else if (!L.on) { L.steps = L.steps.map((v) => Math.max(0, v - dt / 0.35)); L.tree = Math.max(0, L.tree - dt); }
+  ATT.steps.forEach((st, i) => { const o = k['AttStep' + (i + 1)]; if (o) { o.quaternion.copy(o.userData.rest.q); o.rotateX(-Math.PI / 2 * (1 - L.steps[i])); } });
+  if (k.AttDialHand) { k.AttDialHand.quaternion.copy(k.AttDialHand.userData.rest.q); k.AttDialHand.rotateZ(-2 * Math.PI * L.t / ATT.cycle.period); }
+  if (k.AttPawl) { k.AttPawl.quaternion.copy(k.AttPawl.userData.rest.q); k.AttPawl.rotateX(L.braked ? -0.6 : 0); }
+  ['AttTreeTrunk', 'AttTreeBranch1', 'AttTreeBranch2', 'AttTreeBranch3', 'AttTreeLeaves'].forEach((n, i) => {
+    const o = k[n]; if (!o) return; const v = THREE.MathUtils.clamp(L.tree * 5 - i, 0, 1); o.scale.copy(o.userData.rest.s).multiplyScalar(Math.max(0.001, smooth(v))); o.visible = v > 0.01;
+  });
+  if (k.AttFigure2) k.AttFigure2.position.x = s.fig2.x;
+  if (game.region === 6 && game.y > 2.0 && game.x > ATT.gallery.x0 && game.x < ATT.stair14.x0 && !past(game.checkpoint, 'gallery13')) game.checkpoint = 'gallery13';
+  // DL-14: the blinds on their chain, the ledges, the peeled panel.
+  const B = s.blinds;
+  B.a += Math.sign(B.ta - B.a) * Math.min(Math.abs(B.ta - B.a), dt / 2.2);
+  B.b += Math.sign(B.tb - B.b) * Math.min(Math.abs(B.tb - B.b), dt / 2.2);
+  const ledge = (v) => smooth(THREE.MathUtils.clamp((v - 0.75) / 0.25, 0, 1));
+  for (const [blind, ledgeO, v] of [[k.AttBlindA, k.AttLedgeA, B.a], [k.AttBlindB, k.AttLedgeB, B.b]]) {
+    if (blind) { blind.scale.copy(blind.userData.rest.s); blind.scale.y = Math.max(0.04, v); }
+    if (ledgeO) { ledgeO.quaternion.copy(ledgeO.userData.rest.q); ledgeO.rotateX(-Math.PI / 2 * (1 - ledge(v))); }
+  }
+  if (k.AttCrank && B.a !== B.ta) k.AttCrank.rotateZ(dt * 4);
+  if (k.AttWheelA && !s.jammed) { k.AttWheelA.quaternion.copy(k.AttWheelA.userData.rest.q); k.AttWheelA.rotateZ(B.a * 6); }
+  if (B.b > 0.9 && !s.peeled) { s.peeled = true; s.peelAt = game.clock; Sound.creak?.(); Music.bed(false); Music.play('child', 2.5); Telemetry.event('peel', {}); }
+  if (s.peeled) s.peel = Math.min(1, s.peel + dt / 1.6);
+  if (k.AttPanelPeel) { k.AttPanelPeel.quaternion.copy(k.AttPanelPeel.userData.rest.q); k.AttPanelPeel.rotateY(-1.1 * smooth(s.peel)); }
+  // The items.
+  placeAttItem(s.coat, k.AttCoat, dt); placeAttItem(s.pole, k.AttPole, dt);
+  // Checkpoints and the end of what's built.
+  if (game.region === 6) {
+    if (game.x > ATT.gate.x + 0.6 && !past(game.checkpoint, 'register')) game.checkpoint = 'register';
+    if (game.x > 216.6 && !past(game.checkpoint, 'lesson')) game.checkpoint = 'lesson';
+    if (game.x > 234.6 && game.y < 0.05 && !past(game.checkpoint, 'window')) game.checkpoint = 'window';
+    if (game.x > ATT.hatch.x0 + 0.35 && game.y > 2.1 && !s.ended) { s.ended = true; game.checkpoint = 'hatch14'; finishAtt(); }
+  }
+}
+function placeAttItem(it, g, dt) {
+  if (!g) return;
+  if (it.state === 'peg') { g.position.copy(ATT.peg); g.quaternion.copy(g.userData.rest.q); return; }
+  if (it.state === 'jam') { g.position.set(ATT.wheelA, 0.32, -0.6); g.quaternion.copy(g.userData.rest.q); g.rotation.set(0, Math.PI / 2, Math.PI / 2); return; }
+  placeItem(it, g, dt);
+  // Lying on the floor the coat is folded flat; the pole leans by the stair until he takes it, then rides level in his hands.
+  if (g === refs.att.AttPole) { if (it.state === 'carried') g.rotation.set(0, 0, Math.PI / 2); else g.quaternion.copy(g.userData.rest.q); }
+  if (g === refs.att.AttCoat) { if (it.state === 'carried') g.quaternion.copy(g.userData.rest.q); else g.rotation.set(0, 0, Math.PI / 2); }
+}
+function finishAtt() {
+  // Through the hatch: the end of what's built of chapter one, for now.
+  game.exit = { t: 0, att: true };
+  document.getElementById('end-title').textContent = 'To be continued';
+  document.getElementById('end-sub').textContent = 'Chapter one · Attendance';
+  document.getElementById('end-text').textContent = 'The register took a stand-in. The lesson stopped mid-sentence. Behind the painted sky, a child had drawn her tree, over and over. D-17 climbed on through the window.';
+  document.getElementById('end-next').innerHTML = 'Next: <strong>One Pupil Missing</strong>, being made.';
+  game.ended = true; finish();
+}
+function frameAtt(x, lead) {
+  const a = game.att;
+  // DL-12: the bin, the bench and peg, the figure, the strip and the gate in one frame; then the corridor.
+  let cx = THREE.MathUtils.clamp(x + lead * 0.5, 203.6, 207.0), v = fit([6.4, 1.45, 0.9], 8.8), fog = 0.035;
+  const kc = smooth((x - 209.6) / 1.2);
+  cx += (THREE.MathUtils.clamp(x + lead, 211.0, 214.5) - cx) * kc; v = lerp3(v, fit([5.8, 1.35, 0.85], 6.4), kc);
+  // DL-13: the seat, the brake, the dial and the steps; up on the gallery, the seedlings.
+  const kl = smooth((x - 216.2) / 1.0);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 221.6, 223.8) - cx) * kl; v = lerp3(v, fit([7.2, 1.85, 1.25], 10.4), kl); fog += (0.03 - fog) * kl;
+  const kg = smooth((x - 227.4) / 1.0) * (game.y > 1.5 ? 1 : 0.3);
+  cx += (THREE.MathUtils.clamp(x + lead, 229.0, 231.2) - cx) * kg; v = lerp3(v, fit([6.0, 2.6, 2.2], 6.4), kg);
+  // DL-14: the pole, the desk, both blinds and ledges, the hatch and the crank.
+  const kw = smooth((x - 232.4) / 1.4);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 237.6, 239.0) - cx) * kw; v = lerp3(v, fit([7.0, 1.7, 1.25], 10.0), kw); fog += (0.03 - fog) * kw;
+  if (a && a.peeled && game.clock - a.peelAt < 4.5 && game.region === 6) { const kp = smooth((game.clock - a.peelAt) / 0.8) * (1 - smooth((game.clock - a.peelAt - 3.4) / 1.0)); cx += (238.4 - cx) * kp; v = lerp3(v, [4.2, 1.7, 1.55], kp); }
+  return { cx, v, fog };
+}
+
 // Pass 6: secret rooms. A gap in the back wall he can notice; Use, and he goes in (away from the camera, as through
 // DL-01's doorway), the camera frames the room, and he stays until the player moves him on. Each room tells one small
 // story by its layout. `ready` stays false until the room's art is in the build.
@@ -4698,6 +4984,11 @@ const EMITTERS = [
   { region: 5, x: 150.0, kind: 'lap', level: 0.45, reach: 6 },
   { region: 5, x: 170.85, kind: 'hum', level: 0.45, reach: 3 },                              // the new splice box: the only fresh sound in ring C
   { region: 5, x: 174.5, kind: 'wind', level: 0.7, reach: 4.5 },                             // the well
+  // Chapter 1: the school's tubes, and the lesson's clockwork while it runs.
+  { region: 6, x: 205.0, kind: 'buzz', level: 0.3, reach: 6 },
+  { region: 6, x: 224.0, kind: 'tick', period: 0.25, level: 0.5, reach: 7, when: () => game.att && game.att.lesson.on && !game.att.lesson.braked },
+  { region: 6, x: 224.0, kind: 'machine', level: 0.35, reach: 6, when: () => game.att && game.att.lesson.on && !game.att.lesson.braked },
+  { region: 6, x: 238.0, kind: 'buzz', level: 0.25, reach: 6 },
 ];
 function secretHere() {
   if (game.mode !== 'play') return null;
@@ -5541,6 +5832,7 @@ const lerp3 = (a, b, k) => a.map((v, i) => v + (b[i] - v) * k);
 const fit = (vol, width) => [Math.max(vol[0], widthFit(35, width)), vol[1], vol[2]];
 function frameFor(x) {
   const lead = game.exit || game.transit || ['trolley', 'trolley4', 'desk', 'push', 'item'].includes(game.hold) ? 0 : game.facing * (0.6 + 0.35 * Math.abs(game.vx));
+  if (game.region === 6) return frameAtt(x, lead);
   const inHall = smooth((x - 6.9) / 0.9) * (1 - smooth((x - 8.9) / 0.8));
   let v = lerp3(lerp3(VOL.alcove, VOL.hall, smooth((x - 6.9) / 0.9)), VOL.bulk, smooth((x - 8.9) / 0.8));
   let cx = THREE.MathUtils.clamp(x + lead * (1 - 0.6 * inHall), 1.2, 10.6), fog = 0.075 - 0.032 * inHall;
@@ -5869,9 +6161,17 @@ const CHECKPOINTS = {
   ringc: { y: 0, x: OFF5 + 81.25, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
   bedroom: { y: 0, x: OFF5 + 110.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true },
   forwarded: { y: 0, x: OFF5 + 113.1, released: true, door: 1, region: 5, solved: true, scanned: true, upper: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  // Chapter 1 Attendance (region 6): the prologue is all done.
+  school: { y: 0, x: 200.8, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  register: { y: 0, x: 210.0, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  lesson: { y: 0, x: 216.8, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  gallery13: { y: 2.05, x: 228.4, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  window: { y: 0, x: 234.8, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  hatch14: { y: 0, x: 234.8, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
 };
 function resetWorld(name = 'start') {
   const c = CHECKPOINTS[name];
+  resetAtt(name);
   Object.assign(game, { x: c.x, y: 0, z: 0, vx: 0, vy: 0, facing: 1, yaw: Math.PI / 2, yawOverride: null, grounded: true,
     crouched: false, mantle: null, act: null, exit: null, jumpBuffer: 0, coyote: 0, landTimer: 0, hintWeight: 0, ended: false, peakY: 0, pitch: 0 });
   game.released = c.released; game.shutterAngle = c.released ? SHUTTER_OPEN_DEG : 0; game.leverAngle = c.released ? 72 : 0;
@@ -5980,6 +6280,7 @@ function togglePause() {
 // Which of Chapter 1's nine scenes he is in.
 function sceneName() {
   const x = game.x, r = game.region;
+  if (r === 6) return x < 216 ? 'DL-12 Coats Without Children' : x < 232 ? 'DL-13 The Repeated Lesson' : 'DL-14 The Window';
   if (r === 1) return 'DL-01 The Wake';
   if (r === 2) return x < SH.x1 ? 'DL-02 The Sorting Hall' : x < GATE_X ? 'DL-03 The Weight of the Job' : x < RATION5.x0 ? 'DL-04 The Racks' : 'DL-05 The Ration Hall';
   // The heap begins once the belt runs to the exit: the loading on the sorting floor is DL-07's.
@@ -5995,6 +6296,7 @@ const tally = () => {
     (rooms.length ? ` \u00B7 secret rooms ${rooms.filter((q) => secretFound[q.id]).length} of ${rooms.length}` : '') +
     ` \u00B7 voices heard ${Object.keys(voiceFound).length}`;
 };
+const END_CARD = Object.fromEntries(['end-title', 'end-sub', 'end-text', 'end-next'].map((id) => [id, document.getElementById(id).innerHTML]));
 function finish() {
   // The picture goes slowly to black as he climbs away into the dark; then the prologue's card.
   game.endTime = game.clock - game.playStart;
@@ -6003,7 +6305,11 @@ function finish() {
   fadeEl.style.opacity = 1;
   Sound.distant();
   if (Music.playing() !== 'end') Music.queue('end');
-  setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; document.getElementById('end-found').textContent = tally(); endEl.hidden = false; document.getElementById('again').focus(); }, 5200);
+  // The prologue's card offers chapter one; chapter one's (finishAtt) says where it stops for now.
+  const att = game.region === 6, cont = document.getElementById('continue-att');
+  if (!att) for (const [id, v] of Object.entries(END_CARD)) document.getElementById(id).innerHTML = v;
+  cont.hidden = att;
+  setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; document.getElementById('end-found').textContent = tally(); endEl.hidden = false; (att ? document.getElementById('again') : cont).focus(); }, 5200);
 }
 
 // ---------------------------------------------------------------------------
@@ -6107,13 +6413,20 @@ document.getElementById('checkpoint').addEventListener('click', loadCheckpoint);
 document.getElementById('restart').addEventListener('click', () => { pauseEl.hidden = true; startOpening(); });
 document.getElementById('again').addEventListener('click', () => { endEl.hidden = true; startOpening(); });
 // Testing (pass 5): start at any scene's first checkpoint, from the title card or the pause card.
-function startAt(cp) {
+async function startAt(cp) {
   Telemetry.event('startAt', { cp });
+  // Chapter 1's set loads the first time it's wanted.
+  if (ATT_CPS.includes(cp) && !refs.att) {
+    const st = document.getElementById('load-status'); st.textContent = 'Loading the school\u2026'; st.classList.remove('ok');
+    try { await loadAttendance(); } catch (e) { console.error(e); st.textContent = 'The school files did not load.'; return; }
+    st.textContent = 'Ready'; st.classList.add('ok');
+  }
   Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); Voice.init(); Voice.prefetch(Object.keys(VOICE_LINES).map(voiceById));
   titleEl.hidden = true; pauseEl.hidden = true; endEl.hidden = true;
   seen.clear(); clearLetters(); game.playStart = 0;
   startPlay(cp);
 }
+document.getElementById('continue-att').addEventListener('click', () => { Telemetry.event('continue', {}); startAt('school'); });
 document.getElementById('scene-go').addEventListener('click', () => startAt(document.getElementById('scene-select').value));
 document.getElementById('scene-go-p').addEventListener('click', () => startAt(document.getElementById('scene-select-p').value));
 document.getElementById('again-skip').addEventListener('click', () => { endEl.hidden = true; game.playStart = 0; seen.clear(); clearLetters(); startPlay('start'); });
@@ -6218,7 +6531,7 @@ function step(dt) {
         if (k > 0.02) [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, k * Math.max(0.25, 0.8 - Math.abs(game.x - 2) / 8)), i * 500));
       }
     }
-    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); updateRingC(dt); updateHazards(dt); updateClockHands(dt); } updateSparks(dt); updateCurios(dt); updateWhite(dt); }
+    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); updateAtt(dt); updateRingC(dt); updateHazards(dt); updateClockHands(dt); } updateSparks(dt); updateCurios(dt); updateWhite(dt); }
     if (game.mode === 'play') syncRide();
     updateCharacter(dt, game.mode === 'play');
     placeWeight(dt);
