@@ -6,8 +6,8 @@ casts against the built scene to find the wall faces), never changed.
 The Steward's portrait (one mesh, StewardPortrait, as two linked duplicates):
     StewardPortraitRations  DL-05, over the ration hatch's end of the counter: hung from behind the RATION ISSUE fascia
                             in front of the servery grille, right of the ration board, clear of the shutter (x 56.30+)
-    StewardPortraitUpOnly   DL-10, on the lobby's back wall beside the UP poster, under TannoyRelocation, over the heap
-                            of left luggage, left of the departures board
+    StewardPortraitUpOnly   DL-10, on the pier of the lobby's back wall between the UP poster and the departures board,
+                            under the pendant lamp, over the heap of left luggage, clear of TannoyRelocation
     A large institutional oil portrait (canvas 0.64 x 0.80) in a heavy gilt frame (0.82 x 0.98 outside) with corner
     cartouches, a crest and a brass title plaque, hung on a cord from one hook and leaning out at the top. The painting
     is steward_portrait.png (StewardPortraitMat): a stern, kindly-painted older man in a high-collared uniform,
@@ -123,7 +123,8 @@ def make_portrait(path):
     img = _blend(img, drape, dmask)
     # a column's base and plinth at the left, barely there
     col = Image.new('RGB', (W, H), (70, 60, 44))
-    cmask = _soft(lambda g: (g.rectangle((0, H * 0.18, W * 0.13, H), fill=110), g.rectangle((0, H * 0.16, W * 0.17, H * 0.2), fill=120)),
+    cmask = _soft(lambda g: (g.rectangle((0, H * 0.18, W * 0.13, H), fill=110),
+                             g.rectangle((0, H * 0.16, W * 0.17, H * 0.2), fill=120)),
                   (W, H), 10)
     img = _blend(img, col, cmask)
 
@@ -179,7 +180,8 @@ def make_portrait(path):
     sx, sy = cx + 118, 690
     for k in range(8):
         a = k * math.pi / 4
-        d.polygon([(sx, sy), (sx + 26 * math.cos(a - 0.22), sy + 26 * math.sin(a - 0.22)), (sx + 36 * math.cos(a), sy + 36 * math.sin(a)),
+        d.polygon([(sx, sy), (sx + 26 * math.cos(a - 0.22), sy + 26 * math.sin(a - 0.22)),
+                   (sx + 36 * math.cos(a), sy + 36 * math.sin(a)),
                    (sx + 26 * math.cos(a + 0.22), sy + 26 * math.sin(a + 0.22))], fill=(150, 140, 112, 255))
     d.ellipse((sx - 11, sy - 11, sx + 11, sy + 11), fill=(98, 32, 26, 255))
     for k, c in enumerate(((98, 32, 26), (150, 124, 60), (34, 46, 74), (150, 124, 60))):
@@ -205,11 +207,13 @@ def make_portrait(path):
     # modelling: the shadow side, the eye sockets, under the jaw, the cheeks' warmth, the brow's light
     sh = _soft(lambda g: g.ellipse((fx + 30, fy - 100, fx + 140, fy + 150), fill=170), (W, H), 34)
     img = _blend(img, Image.new('RGB', (W, H), (84, 54, 38)), np.asarray(sh, np.float32) / 255 * 0.85)
-    sock = _soft(lambda g: (g.ellipse((fx - 82, fy - 30, fx - 10, fy + 14), fill=150), g.ellipse((fx + 12, fy - 30, fx + 84, fy + 14), fill=190)), (W, H), 10)
+    sock = _soft(lambda g: (g.ellipse((fx - 82, fy - 30, fx - 10, fy + 14), fill=150),
+                            g.ellipse((fx + 12, fy - 30, fx + 84, fy + 14), fill=190)), (W, H), 10)
     img = _blend(img, Image.new('RGB', (W, H), (104, 66, 48)), np.asarray(sock, np.float32) / 255 * 0.7)
     jaw = _soft(lambda g: g.rectangle((fx - 76, fy + fh / 2 - 8, fx + 76, fy + fh / 2 + 40), fill=220), (W, H), 14)
     img = _blend(img, Image.new('RGB', (W, H), (54, 36, 26)), np.asarray(jaw, np.float32) / 255 * 0.85)
-    cheek = _soft(lambda g: (g.ellipse((fx - 88, fy + 16, fx - 30, fy + 70), fill=120), g.ellipse((fx + 34, fy + 16, fx + 84, fy + 66), fill=70)),
+    cheek = _soft(lambda g: (g.ellipse((fx - 88, fy + 16, fx - 30, fy + 70), fill=120),
+                             g.ellipse((fx + 34, fy + 16, fx + 84, fy + 66), fill=70)),
                   (W, H), 16)
     img = _blend(img, Image.new('RGB', (W, H), (190, 112, 88)), np.asarray(cheek, np.float32) / 255 * 0.4)
     brow = _soft(lambda g: g.ellipse((fx - 80, fy - 120, fx + 30, fy - 50), fill=140), (W, H), 20)
@@ -224,8 +228,9 @@ def make_portrait(path):
         g.ellipse((fx - fw / 2 - 8, fy - fh / 2 - 22, fx + fw / 2 + 8, fy + fh / 2 - 60), fill=255)   # the skull
         g.rectangle((fx - fw, fy - 52, fx + fw, H), fill=0)                                           # cut at the brow
         g.ellipse((fx - 70, fy - fh / 2 + 2, fx + 66, fy - 40), fill=0)                              # the forehead, receded
-        g.polygon([(fx - fw / 2 - 6, fy - 60), (fx - fw / 2 + 16, fy - 60), (fx - fw / 2 + 10, fy + 20), (fx - fw / 2 - 2, fy + 20)], fill=255)
-        g.polygon([(fx + fw / 2 + 6, fy - 60), (fx + fw / 2 - 16, fy - 60), (fx + fw / 2 - 10, fy + 20), (fx + fw / 2 + 2, fy + 20)], fill=255)
+        for s in (-1, 1):                                                                    # sideburns
+            e = fx + s * fw / 2
+            g.polygon([(e + s * 6, fy - 60), (e - s * 16, fy - 60), (e - s * 10, fy + 20), (e + s * 2, fy + 20)], fill=255)
     img = _blend(img, hair, _soft(hairline, (W, H), 3.5))
     d = ImageDraw.Draw(img, 'RGBA')
     for k in range(60):                                       # combed-back strokes
@@ -261,7 +266,8 @@ def make_portrait(path):
     d.line((fx - 42, fy + 48, fx - 52, fy + 92), fill=(130, 80, 58, 90), width=4)   # the folds by the mouth
     d.line((fx + 42, fy + 48, fx + 52, fy + 92), fill=(90, 56, 40, 110), width=4)
     # The stand collar: high and stiff, up under the jaw, gilt braid at its edges and oak leaves on it
-    d.polygon([(cx - 98, 404), (cx + 98, 404), (cx + 104, 486), (cx + 18, 500), (cx - 18, 500), (cx - 104, 486)], fill=(22, 33, 28, 255))
+    d.polygon([(cx - 98, 404), (cx + 98, 404), (cx + 104, 486), (cx + 18, 500), (cx - 18, 500), (cx - 104, 486)],
+              fill=(22, 33, 28, 255))
     d.polygon([(cx + 10, 404), (cx + 98, 404), (cx + 104, 486), (cx + 18, 500)], fill=(14, 22, 18, 160))
     d.line([(cx - 98, 405), (cx + 98, 405)], fill=(150, 118, 56, 255), width=5)
     d.line([(cx - 104, 486), (cx - 18, 500), (cx + 18, 500), (cx + 104, 486)], fill=(170, 136, 66, 255), width=7)
@@ -273,7 +279,7 @@ def make_portrait(path):
     img = img.filter(ImageFilter.GaussianBlur(1.6))
     arr = np.asarray(img, np.float32)
     strokes = _noise(W, H, 3, 23, 2)
-    sx_ = Image.fromarray((strokes * 255).astype(np.uint8), 'L').filter(ImageFilter.BoxBlur(0)).resize((W // 6, H), Image.BILINEAR).resize((W, H), Image.BILINEAR)
+    sx_ = Image.fromarray((strokes * 255).astype(np.uint8), 'L').resize((W // 6, H), Image.BILINEAR).resize((W, H), Image.BILINEAR)
     st = np.asarray(sx_, np.float32) / 255.0
     arr *= (0.92 + 0.16 * st)[..., None]
     # Varnish: yellowed and darkened, more so toward the edges (a vignette), grime settled at the bottom.
@@ -339,7 +345,7 @@ PLATE = (0, 256, 1024, 480)           # the enamel plate
 
 def _stencil_mask(text, size, spacing, bridge):
     """The text set in Carlito Bold as a stencil: every counter tied to the outside by a bridge (O and D at top and
-    bottom). Returns an L image, the letters 255."""
+    bottom); bridge 0 sets it solid (enamel). Returns an L image, the letters 255."""
     f = _font(size)
     glyphs = []
     for ch in text:
@@ -357,7 +363,7 @@ def _stencil_mask(text, size, spacing, bridge):
         fa = np.asarray(ff).copy()
         out = a.copy()
         k = 0
-        while True:
+        while bridge > 0:
             zs = np.argwhere(fa == 0)
             if not len(zs):
                 break
@@ -420,10 +426,10 @@ def _band(img, box, seed, fade):
     lay.paste(m, ((W - m.width) // 2, (H - m.height) // 2))
     over = lay.filter(ImageFilter.GaussianBlur(2.2))            # the overspray round the letters
     let = np.asarray(lay, np.float32) / 255 * 0.95 + np.asarray(over, np.float32) / 255 * 0.18
-    cream_wear = np.clip((_noise(W, H, 22, seed + 2, 4) - (0.26 + fade)) * 3.0, 0, 1) * (0.75 + 0.25 * n2)
+    cream_wear = np.clip((_noise(W, H, 22, seed + 2, 4) - (0.2 + fade)) * 3.0, 0, 1) * (0.7 + 0.3 * n2)
     let = np.clip(let, 0, 1) * cream_wear
     rules = rules * cream_wear * ends * 0.85
-    cream = np.array([128, 120, 96], np.float32)
+    cream = np.array([120, 112, 90], np.float32)
     cr_a = np.clip(let + rules, 0, 1)
     rgb = gcol * (1 - cr_a[..., None]) + cream * cr_a[..., None]
     alpha = np.clip(band_a + cr_a * 0.9 * ends, 0, 1)
@@ -498,7 +504,7 @@ def _plate(img, box, seed):
 def make_motto(path):
     img = Image.new('RGBA', (MW, MH), (0, 0, 0, 0))
     _band(img, BAND_A, 9101, 0.0)
-    _band(img, BAND_B, 9202, 0.06)
+    _band(img, BAND_B, 9202, 0.03)
     _plate(img, PLATE, 9303)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path, optimize=True)
@@ -515,31 +521,36 @@ def make_motto(path):
 #    rays pass (bars), so the portrait hangs on the grille's plane (y 0.975), its hook inside the fascia: top 2.15,
 #    crest 2.195 (under the fascia), foot 1.17, x 55.39..56.21. The counter's strip lamp (y 0.25, z 2.05) crosses its
 #    top rail as the side camera sees it.
-#  - DL-10 (art/pass3/build_up_only.py build_waiting): the back wall y 1.2 (a pilaster at 121.2..121.45 stands to
-#    y 1.1); the UP poster x 119.74..120.16, z 3.13..3.97; the departures board 121.9..123.3; TannoyRelocation
-#    120.35..120.75, z 4.20..4.79; the luggage to z 2.87. The portrait x 120.31..121.13, z 2.97..3.95, its hook 4.07.
+#  - DL-10 (art/pass3/build_up_only.py build_waiting): the back wall y 1.2, and a pier (UOShell) x 121.03..121.38
+#    standing to y 1.1 the full height; the UP poster x 119.74..120.16, z 3.13..3.97; the departures board 121.9..123.3;
+#    TannoyRelocation 120.35..120.75, z 4.20..4.79; the pendant lamp's shade at x 121.35, y 0.2, z 4.07..4.17; the
+#    luggage to z 2.87. Hung on the pier, centred (its sides over the wall behind): x 120.79..121.61, z 2.97..3.95,
+#    the hook 4.07, under the lamp.
+# (object, x, hook z, ray y_from, the wall plane's y if not ray-found, the wall's object, rays' half-width, note)
 PORTRAITS = [
-    ('StewardPortraitRations', 55.80, 2.27, (0.4, 0.975), 'DL-05 over the ration hatch end of the counter'),
-    ('StewardPortraitUpOnly', 120.72, 4.07, (0.5, None), "DL-10 Up Only's lobby, beside the UP poster"),
+    ('StewardPortraitRations', 55.80, 2.27, 0.4, 0.975, 'RationSetWallPanel', 0.36, 'DL-05 over the ration hatch end of the counter'),
+    ('StewardPortraitUpOnly', 121.205, 4.07, 0.5, None, 'UOShell', 0.1, "DL-10 Up Only's lobby, on the pier by the UP poster"),
 ]
 
-# ORDER ABOVE ALL bands: (scene, x centre, z centre, length, variant, ray y_from, note). Height = length / 8.
+# ORDER ABOVE ALL bands: (scene, x centre, z centre, length, variant, ray y_from, the wall's object, note). Height =
+# length / 8.
 #  - DL-01: the alcove's back wall (art/dl01 build_set: panels y 1.0..1.06, the pipe run at z 2.04 and 2.17 with its
 #    brackets from 1.97; the route map x -0.55..0.45 to z 1.61; the dispatch board from x 0.66). The opening's frame
 #    shows the wall from x -1.3: the band x -1.25..0.50, z 1.74..1.96, the racking's uprights in front of its left.
 #  - DL-02: the sorting hall's back wall (y 1.0) over the tea corner (alcove x 15.35..17.3) and the welded stair door
 #    (17.38..18.40, top 2.1); the pigeonholes start at 18.44. The band x 15.0..17.9, z 2.77..3.13 (the side camera's
 #    frame top there is ~3.4).
-#  - DL-04: the recharge hall's far wall (RechargeHall, face y 9.1) behind the racks, left of the row lights
-#    (x 39.55..43.05, which the camera sees against the wall at z 2.8..3.4): the band x 32.2..37.8, z 3.6..4.3.
+#  - DL-04: the recharge hall's far wall (RechargeHall, face y 9.1) behind the racks: the side camera (height 1.6)
+#    sees the racks below its horizon and the row lights' tubes (z 2.58, y 1.6..6.9) against the wall at z 2.8..3.4,
+#    so the band goes between them: x 32.6..37.4, z 1.95..2.55, seen past the hall's columns.
 #  - DL-06: the sorting floor's wall (SortingWall, face y 1.56) over the postal service poster (66.3..66.9, top 2.13),
 #    between the pendant lamps (64.6 and 67.6, y 0.2); EVERYONE UP from 67.40. The band x 65.0..67.3, z 2.39..2.68
 #    (the frame's top there is ~2.95).
 BANDS = [
-    ('DL01', -0.375, 1.85, 1.75, 'A', -0.5, 'DL-01 alcove, under the pipe run'),
-    ('DL02', 16.45, 2.95, 2.90, 'B', -0.5, 'DL-02 over the tea corner and the stair door'),
-    ('DL04', 35.0, 3.95, 5.60, 'A', -0.5, 'DL-04 far wall over the racks'),
-    ('DL06', 66.15, 2.535, 2.30, 'B', 0.5, 'DL-06 over the postal service poster'),
+    ('DL01', -0.375, 1.85, 1.75, 'A', -0.5, 'AlcoveWalls', 'DL-01 alcove, under the pipe run'),
+    ('DL02', 16.45, 2.95, 2.90, 'B', -0.5, 'SortHallWalls', 'DL-02 over the tea corner and the stair door'),
+    ('DL04', 35.0, 2.25, 4.80, 'A', -0.5, 'RechargeHall', 'DL-04 far wall over the racks'),
+    ('DL06', 66.15, 2.535, 2.30, 'A', 0.5, 'SortingWall', 'DL-06 over the postal service poster'),
 ]
 
 # The enamel plate on DL-01's hall gantry (art/dl01 build_extension: the deck x 5..17, y 2.1..2.7, z 3.14..3.26; its
@@ -581,7 +592,7 @@ def _image_material(name, path, rough, alpha=False):
 
 NEW = {
     # Gilt over red bole: the gold dulled and dirty, chipped through to the bole at the edges and the ornament.
-    'GiltFrame': lambda: d17.worn_material('GiltFrame', base=(0.36, 0.25, 0.09), dirt=(0.12, 0.08, 0.035),
+    'GiltFrame': lambda: d17.worn_material('GiltFrame', base=(0.3, 0.21, 0.08), dirt=(0.1, 0.07, 0.032),
                                            chip=(0.2, 0.09, 0.05), rough=0.42, chip_rough=0.8, metallic=0.75,
                                            dust=(0.14, 0.12, 0.09), grime_scale=14, chip_scale=60, chip_amount=0.74,
                                            streaks=0.3, dust_amount=0.6),
@@ -649,7 +660,9 @@ def _uv(region, size):
 _OURS = set()
 
 
-def _ray(o, d, dist=20.0):
+def _ray(o, d, dist=20.0, only=None):
+    """The first hit from o along d past our own objects, the voices' tannoys and the decals (and, given `only`, past
+    everything but the objects named there): (location, object) or (None, None)."""
     dg = bpy.context.evaluated_depsgraph_get()
     sc = bpy.context.scene
     o, d = V(o), V(d).normalized()
@@ -658,23 +671,23 @@ def _ray(o, d, dist=20.0):
         hit, loc, nrm, idx, ob, mw = sc.ray_cast(dg, p, d, distance=dist - (p - o).length)
         if not hit:
             return None, None
-        if ob.name in _OURS or ob.name.startswith(('D17', 'Way', 'Lore', 'Tannoy')):
+        if ob.name in _OURS or ob.name.startswith(('D17', 'Way', 'Lore', 'Tannoy')) or (only and ob.name not in only):
             p = loc + d * 0.002
             continue
         return loc, ob
     return None, None
 
 
-def wall_face(x0, x1, z0, z1, y_from, n=4):
+def wall_face(x0, x1, z0, z1, y_from, n=4, only=None):
     """The wall's face behind a rectangle: the nearest of a grid of +y rays that agree with their median (thin props
-    in front and decals passed), and the names of what was hit."""
+    in front and decals passed; given `only`, everything but those objects), and the names of what was hit."""
     hits = []
     names = set()
     for i in range(n):
         for j in range(3):
             x = x0 + (x1 - x0) * (i + 0.5) / n
             z = z0 + (z1 - z0) * (j + 0.5) / 3
-            loc, ob = _ray((x, y_from, z), (0, 1, 0))
+            loc, ob = _ray((x, y_from, z), (0, 1, 0), only=only)
             if loc is not None:
                 hits.append(loc.y)
                 names.add(ob.name)
@@ -787,16 +800,16 @@ def portrait_mesh():
 def build_portraits(coll):
     me = portrait_mesh()
     obs = []
-    for name, x, zh, (y_from, y_cap), note in PORTRAITS:
+    for name, x, zh, y_from, y_cap, wall, phw, note in PORTRAITS:
         a = math.radians(TILT)
         z_top = zh - HOOK_UP
         z_foot = z_top - OUT_H * math.cos(a)
         if y_cap is not None:
             y, names = y_cap, ['(the grille plane)']
-            yw, wn = wall_face(x - OUT_W / 2 + 0.05, x + OUT_W / 2 - 0.05, z_foot + 0.05, z_top - 0.05, y_from)
+            yw, wn = wall_face(x - phw, x + phw, z_foot + 0.05, z_top - 0.05, y_from, only=(wall,))
             names = ['grille plane %.3f; wall behind %.3f %s' % (y_cap, yw, wn)]
         else:
-            y, names = wall_face(x - OUT_W / 2 + 0.05, x + OUT_W / 2 - 0.05, z_foot + 0.05, z_top - 0.05, y_from)
+            y, names = wall_face(x - phw, x + phw, z_foot + 0.05, z_top - 0.05, y_from, only=(wall,))
             y -= 0.002
         ob = bpy.data.objects.new(name, me)
         coll.objects.link(ob)
@@ -842,9 +855,10 @@ def plate(K, x, y, ztop, w):
 
 def build_motto(coll):
     by_scene = {}
-    for scene, x, z, length, variant, y_from, note in BANDS:
+    for scene, x, z, length, variant, y_from, wall, note in BANDS:
         h = length / 8.0
-        y, names = wall_face(x - length / 2 + 0.05, x + length / 2 - 0.05, z - h / 2 + 0.02, z + h / 2 - 0.02, y_from, n=6)
+        y, names = wall_face(x - length / 2 + 0.05, x + length / 2 - 0.05, z - h / 2 + 0.02, z + h / 2 - 0.02, y_from, n=6,
+                             only=(wall,))
         y -= 0.004
         K = by_scene.setdefault(scene, Kit())
         hh = band(K, x, y, z, length, variant)
@@ -858,8 +872,13 @@ def build_motto(coll):
         note, w, h, x - w / 2, x + w / 2, ztop - h, ztop)))
     obs = []
     for scene, K in sorted(by_scene.items()):
+        lo = V([min(v.co[i] for v in K.bm.verts) for i in range(3)])
+        hi = V([max(v.co[i] for v in K.bm.verts) for i in range(3)])
+        c = (lo + hi) / 2                                  # the origin at its bounds' centre (for the game's culling)
+        bmesh.ops.translate(K.bm, verts=K.bm.verts[:], vec=-c)
         me = K.mesh('OrderMotto' + scene)
         ob = bpy.data.objects.new('OrderMotto' + scene, me)
+        ob.location = c
         coll.objects.link(ob)
         _OURS.add(ob.name)
         obs.append(ob)
