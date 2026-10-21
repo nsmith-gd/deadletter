@@ -152,11 +152,34 @@ def materials(dl01, m):
     M['CrateWood'] = m['wood']
     M['LeverRed'] = m['red']
     M['AttLessonLamp'] = bpy.data.materials.get('AttLessonLamp') or d17.emission_material('AttLessonLamp', (1.0, 0.78, 0.42), 0.0)
-    M['AttShoot'] = bpy.data.materials.get('AttShoot') or d17.emission_material('AttShoot', (0.78, 0.92, 0.62), 0.35)
+    # DL-12's lit bulb (the game's EMIT table has it): the gallery's lamp over the lesson sheet.
+    M['AttBulbGlow'] = bpy.data.materials.get('AttBulbGlow') or d17.emission_material('AttBulbGlow', (1.0, 0.82, 0.58), 4.0)
     path = os.path.join(TEX, 'dl13_atlas.png')
     make_atlas(path)
     M['LessonAtlas'] = bpy.data.materials.get('LessonAtlas') or dl01.image_material('LessonAtlas', path)
+    path = os.path.join(TEX, 'dl13_sheet.png')
+    make_sheet(path)
+    M['LessonSheet'] = bpy.data.materials.get('LessonSheet') or sheet_material('LessonSheet', path)
     return M
+
+
+def sheet_material(name, path):
+    """The lesson sheet and the crayon past its edge: an image with alpha (the game keeps a textured material's alpha
+    when the glTF says it blends: it draws it as a decal)."""
+    import build_d17 as d17
+    mat, nt, bsdf = d17._new_material(name)
+    tex = nt.nodes.new('ShaderNodeTexImage')
+    tex.image = bpy.data.images.load(path, check_existing=True)
+    nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+    nt.links.new(tex.outputs['Alpha'], bsdf.inputs['Alpha'])
+    bsdf.inputs['Roughness'].default_value = 0.85
+    for attr, value in (('surface_render_method', 'BLENDED'), ('blend_method', 'BLEND')):
+        if hasattr(mat, attr):
+            try:
+                setattr(mat, attr, value)
+            except (TypeError, ValueError):
+                pass
+    return mat
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -434,6 +457,26 @@ def make_atlas(path):
             for c in range(2):
                 d.text((x0 + 104 + c * 76, ry + 22), 'the tree', font=font(15), fill=(60, 50, 40), anchor='mm')
     d.line((x0 + 62, y0 + 52, x0 + 62, y0 + 272), fill=(90, 84, 70), width=2)
+
+    # --- the seedling tray's soil, long dry: pale, shrunk from the tray's sides, cracked into plates ------------------
+    import numpy as np
+    x0, y0, x1, y1 = R_SOIL
+    w, h = x1 - x0, y1 - y0
+    rs = np.random.default_rng(1390)
+    seeds = np.stack([rs.uniform(0, w, 70), rs.uniform(0, h, 70)], 1)
+    yy, xx = np.mgrid[0:h, 0:w]
+    dist = np.sqrt((xx[..., None] - seeds[None, None, :, 0]) ** 2 + ((yy[..., None] - seeds[None, None, :, 1]) * 1.15) ** 2)
+    dist.sort(axis=2)
+    gap = dist[..., 1] - dist[..., 0]
+    plate = np.clip(dist[..., 0] / 22.0, 0, 1)
+    base = np.array((156, 138, 112), float)
+    col = base[None, None, :] * (1.04 - 0.12 * plate[..., None]) * (1 + rs.normal(0, 0.05, (h, w, 1)))
+    crack = gap < 2.2
+    col[crack] = (62, 48, 36)
+    col[(gap >= 2.2) & (gap < 3.6)] *= 0.82
+    edge = np.minimum.reduce([xx, w - 1 - xx, yy * 2.5, (h - 1 - yy) * 2.5])
+    col[edge < 6] = (40, 32, 24)                            # the soil pulled away from the tray's sides
+    img.paste(Image.fromarray(np.clip(col, 0, 255).astype('uint8'), 'RGB'), (x0, y0))
 
     # Age it all: stains, a little fade and blur.
     for _ in range(140):
