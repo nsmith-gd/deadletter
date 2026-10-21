@@ -328,21 +328,21 @@ def make_atlas(path):
         d.line((x0, yy, x1, yy), fill=(int(70 - 50 * f), int(60 - 42 * f), int(42 - 28 * f)))
     cx = (x0 + x1) / 2
     d.polygon([(x0 + 8, y1), (x0 + 18, y0 + 100), (cx - 18, y0 + 84), (cx + 18, y0 + 84), (x1 - 18, y0 + 100), (x1 - 8, y1)], fill=(30, 34, 40))
-    d.line((x0 + 30, y0 + 98, x1 - 34, y1 - 6), fill=(120, 40, 34), width=9)            # the sash
+    d.line((x0 + 30, y0 + 98, x1 - 34, y1 - 6), fill=(150, 124, 62), width=9)           # the sash
     for k in range(4):
         d.ellipse((cx - 3, y0 + 104 + 12 * k, cx + 3, y0 + 110 + 12 * k), fill=(170, 140, 70))
     d.ellipse((cx - 22, y0 + 34, cx + 22, y0 + 88), fill=(150, 118, 92))                 # the head
     d.chord((cx - 23, y0 + 26, cx + 23, y0 + 70), 180, 360, fill=(170, 170, 160))          # grey hair
     for ex in (-9, 9):
         d.line((cx + ex - 4, y0 + 56, cx + ex + 4, y0 + 56), fill=(50, 36, 28), width=2)
-    d.arc((cx - 8, y0 + 64, cx + 8, y0 + 76), 20, 160, fill=(90, 50, 40), width=2)       # the painted half-smile
+    d.arc((cx - 7, y0 + 68, cx + 7, y0 + 74), 30, 150, fill=(90, 50, 40), width=2)       # the painted half-smile
     enamel(R_STEWPLATE, (120, 92, 44), 'THE STEWARD', (40, 30, 16), 18, border=False)
     # --- the protective era: the notice by the apparatus ---------------------------------------------------------------
     x0, y0, x1, y1 = R_NOTICE
     d.rectangle(R_NOTICE, fill=(206, 198, 172))
-    d.rectangle((x0 + 5, y0 + 5, x1 - 5, y1 - 5), outline=(130, 40, 30), width=4)
+    d.rectangle((x0 + 5, y0 + 5, x1 - 5, y1 - 5), outline=(40, 52, 44), width=4)
     for k, line in enumerate(('NO PUPIL', 'TO APPROACH THE APPARATUS', 'UNACCOMPANIED')):
-        d.text(((x0 + x1) / 2, y0 + 30 + 34 * k), line, font=font(30 if k != 1 else 19), fill=(40, 34, 28), anchor='mm')
+        d.text(((x0 + x1) / 2, y0 + 30 + 34 * k), line, font=font(30 if k != 1 else 17), fill=(40, 34, 28), anchor='mm')
 
     # --- the clock: stopped -------------------------------------------------------------------------------------------
     x0, y0, x1, y1 = R_CLOCK

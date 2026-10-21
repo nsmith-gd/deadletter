@@ -1718,7 +1718,7 @@ function updatePlayer(dt) {
   if (game.riding) { updateRide(dt); return; }
 
   // DL-02: walking in among the couriers, he stops and understands.
-  if (game.region === 2 && game.revealed && !game.revealPending && game.clock - game.revealTime > 10 && !game.realised && game.x > GATE_X + 1.5 && game.grounded && !game.hold) {   // pass 5: after the pan
+  if (game.region === 2 && game.revealed && !game.revealPending && game.clock - game.revealTime > 1.0 && !game.realised && game.x > GATE_X + 0.6 && game.grounded && !game.hold) {   // pass 7: the camera goes to him the moment he is in among them
     game.realised = true;
     if (once('realise')) { game.kinSlow = true; game.vx = 0; game.act = { kind: 'realise', phase: 'act', t: 0 }; setClip('Realise', 0.4); if (game.clock - game.revealTime < 45) Music.queue('kin'); else Music.play('kin'); return; }   // pass 5: the lament plays through; kin follows it
   }
@@ -2210,7 +2210,7 @@ function placeWeight(dt) {
 const CORRIDOR_X0 = OFF3 + 26.9, REGION3_X = OFF3 + 27.3, SCANNER_X = OFF3 + 28.9, FLOOR3_X1 = OFF3 + 36.4, RAIL_Z = -0.55;
 const HATCH_X = OFF3 + 30.5, DOCK_X = OFF3 + 31.0, JUNCTION_X = OFF3 + 34.6, TIP_X = OFF3 + 36.5, BLADE_END = [OFF3 + 35.25, 0.32], RAMP_TOP = [OFF3 + 38.5, 1.6];
 const LANDING_X = OFF3 + 39.7, RETURN_X = OFF3 + 41.3, GALLERY = { x0: OFF3 + 38.85, x1: OFF3 + 47.4, h: 1.6 };
-const STOP_LEVER_X = OFF3 + 32.9, POINTS_LEVER_X = OFF3 + 34.25, LEVER_Z = -0.3, LEVER_AWAY = -18, LEVER_NEAR = 6;
+const STOP_LEVER_X = OFF3 + 29.5, POINTS_LEVER_X = OFF3 + 30.3, LEVER_Z = -0.15, LEVER_AWAY = -18, LEVER_NEAR = 6;
 const CARRIER_FLOOR = 0.14, BELT_SPEED = 0.6, DOCK_WAIT = 3.4, SPAWN_EVERY = 6.0, CARRIER_GAP = 0.8;
 const HEAP = { x: OFF3 + 41.5, z: -3.0, sx: 4.2, sz: 3.0, peak: -0.4, floor: -6.0 };   // art/dl03 matches
 const CHUTE = [[OFF3 + 36.6, 0.0], [OFF3 + 39.3, -2.4]];
@@ -4479,6 +4479,11 @@ function updateCh1(dt) {
   // The needle: a heavy, damped swing to its reading.
   const target = { empty: 0, under: RH5.needle.under, person: RH5.needle.person, over: RH5.needle.over }[reading];
   sc.nv += ((target - sc.needle) * 30 - sc.nv * 7) * dt; sc.needle += sc.nv * dt;
+  // Pass 7: whenever the needle swings through PERSON, the hatch answers: it jerks up a hand's breadth and drops back,
+  // so even the wrong answers (the drum's OVER) show that a person's weight is the key.
+  const inBand = Math.abs(sc.needle - RH5.needle.person) < 22;
+  if (inBand && !sc.inBand && !rh.served && game.clock - (sc.twitchAt ?? -9) > 1.2) { sc.twitchAt = game.clock; Sound.ratchet(); setTimeout(() => Sound.clunk(), 260); Telemetry.event('hatchTwitch', {}); }
+  sc.inBand = inBand;
   if (k.rneedle) { k.rneedle.quaternion.copy(k.rneedle.userData.rest.q); k.rneedle.rotateZ(THREE.MathUtils.degToRad(sc.needle)); }
   sc.dip += ((reading === 'empty' ? 0 : 1) - sc.dip) * Math.min(1, dt * 8);
   if (k.rplate) k.rplate.position.y = k.rplate.userData.rest.p.y - 0.01 * sc.dip;
@@ -4487,7 +4492,8 @@ function updateCh1(dt) {
   if (rh.h < serveH) { rh.h = Math.min(serveH, rh.h + 0.22 * dt); if (Math.random() < dt * 6) Sound.ratchet(); if (rh.h >= serveH) { Sound.clunk(); shake(0.15); } }
   rh.flag = rh.served ? Math.min(1, rh.flag + dt / 0.5) : 0;
   if (k.rflag) { k.rflag.quaternion.copy(k.rflag.userData.rest.q); k.rflag.rotateX(-Math.PI / 2 * (1 - Math.pow(1 - rh.flag, 3))); }
-  if (k.rshutter) k.rshutter.position.y = k.rshutter.userData.rest.p.y + rh.h;
+  const tw = rh.served ? 0 : Math.max(0, 1 - (game.clock - (sc.twitchAt ?? -9)) / 0.9);
+  if (k.rshutter) k.rshutter.position.y = k.rshutter.userData.rest.p.y + rh.h + 0.14 * Math.sin(Math.PI * (1 - tw)) * (tw > 0 ? 1 : 0);
   // DL-01: the dispatch board's one lit line, blinking.
   glow('DispatchLineLamp', game.region === 1 ? (Math.sin(game.clock * 3.2) > 0 ? 4 : 0.3) : 0);
   const zone = lightZoneFor(game.lightRegion);

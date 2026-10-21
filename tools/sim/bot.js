@@ -294,16 +294,16 @@ window.__startBot = function (seed, opts = {}) {
       if (G.belt.running && G.route !== 'exit') {
         if (mistakes && !triedLocked && chance(0.75 - 0.3 * P.skill)) {
           triedLocked = true; note('tries the points: locked');
-          yield* useAt(['leverPoints'], OFF3 + 34.25, actIs('lever'), 'points (locked)');
+          yield* useAt(['leverPoints'], OFF3 + 30.3, actIs('lever'), 'points (locked)');
           yield* until(() => !G.act, 20, 'locked'); yield* wait(think(10));
         }
-        yield* useAt(['leverStop'], OFF3 + 32.9, actIs('lever'), 'stop');
+        yield* useAt(['leverStop'], OFF3 + 29.5, actIs('lever'), 'stop');
         yield* until(() => !G.act, 20, 'stopped'); note('belt stopped'); yield* wait(think(4));
       } else if (!G.belt.running && G.route !== 'exit') {
-        yield* useAt(['leverPoints'], OFF3 + 34.25, actIs('lever'), 'points');
+        yield* useAt(['leverPoints'], OFF3 + 30.3, actIs('lever'), 'points');
         yield* until(() => !G.act, 20, 'thrown'); note('points thrown'); yield* wait(look(2.5));
       } else if (!G.belt.running && G.route === 'exit') {
-        yield* useAt(['leverStop'], OFF3 + 32.9, actIs('lever'), 'start');
+        yield* useAt(['leverStop'], OFF3 + 29.5, actIs('lever'), 'start');
         yield* until(() => !G.act, 20, 'started'); note('belt started');
       }
       yield;

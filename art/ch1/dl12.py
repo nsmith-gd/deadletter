@@ -1338,14 +1338,14 @@ def make_lore(path):
     _noise_fill(img, LCELLS['motto'], (122, 108, 84), 8, 91)
     d.rectangle((x0, y0 + 4, x1, y0 + 8), fill=(70, 52, 40, 160))
     d.rectangle((x0, y1 - 8, x1, y1 - 4), fill=(70, 52, 40, 160))
-    d.text(((x0 + x1) / 2, (y0 + y1) / 2 + 2), 'ORDER  ABOVE  ALL', font=_font(60, 'serif'), fill=(66, 40, 30), anchor='mm')
+    d.text(((x0 + x1) / 2, (y0 + y1) / 2 + 2), 'ORDER   ABOVE   ALL', font=_font(66, 'serif'), fill=(66, 40, 30), anchor='mm')
     over = Image.new('RGBA', (LW, LH), (0, 0, 0, 0))
     od = ImageDraw.Draw(over)
-    xa = 430
+    xa = 520
     for k in range(40):                                                     # brush strokes, ragged at the left edge
         yy = y0 + k * 1.8
         xs = xa + rnd.uniform(-40, 30) + 18 * math.sin(k * 0.7)
-        od.line((xs, yy, x1, yy + rnd.uniform(-1, 1)), fill=(150, 138, 112, rnd.randint(200, 236)), width=3)
+        od.line((xs, yy, x1, yy + rnd.uniform(-1, 1)), fill=(150, 138, 112, rnd.randint(120, 170)), width=3)
     img.paste(over, (0, 0), over)
     # The rules board: enamel, the school's green, cream capitals.
     x0, y0, x1, y1 = LCELLS['rules']
