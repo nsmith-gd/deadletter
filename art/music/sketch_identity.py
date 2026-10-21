@@ -127,9 +127,9 @@ def saw_voice(f, amp, cutoff, rng, top=5000):
     return out * amp
 
 
-def synth_pad(names, dur, level, rng, pump=0.0, cutoff=(500, 1800)):
+def synth_pad(names, dur, level, rng, pump=0.0, cutoff=(500, 1800), pulse=None):
     """A soft analog-style pad: detuned saws through a slowly opening low-pass, with an optional
-    quaver pump."""
+    pump every `pulse` seconds (a quaver by default)."""
     n = int(dur * SR)
     t = np.arange(n, dtype=np.float32) / SR
     fc = (cutoff[0] + (cutoff[1] - cutoff[0]) * (0.5 - 0.5 * np.cos(np.pi * np.clip(t / dur, 0, 1)))).astype(np.float32)
@@ -137,7 +137,8 @@ def synth_pad(names, dur, level, rng, pump=0.0, cutoff=(500, 1800)):
     out = sum(saw_voice(np.full(n, hz(name, cents=det + rng.normal(0, 1)), np.float32), env, fc, rng)
               for name in names for det in (-7, 0, 7))
     if pump:
-        out *= 1 - pump * np.exp(-((t % (B / 2)) / (B / 2)) / 0.12)
+        p = pulse or B / 2
+        out *= 1 - pump * np.exp(-((t % p) / p) / 0.12)
     return (out * level * 0.01).astype(np.float32)
 
 

@@ -1,0 +1,94 @@
+{
+  "title": "Undelivered (prologue theme)",
+  "key": "D Phrygian (D minor with E-flat)",
+  "tempo_bpm": 60,
+  "meter": "4/4",
+  "bar_seconds": 4.0,
+  "theme": {
+    "file": "prologue_theme.mp3",
+    "sections": [
+      {
+        "name": "lower_works",
+        "start": 0.0,
+        "end": 32.0
+      },
+      {
+        "name": "order",
+        "start": 32.0,
+        "end": 64.0
+      },
+      {
+        "name": "anthem",
+        "start": 64.0,
+        "end": 96.0
+      },
+      {
+        "name": "failure",
+        "start": 96.0,
+        "end": 168.0
+      },
+      {
+        "name": "heaps",
+        "start": 168.0,
+        "end": 200.0
+      },
+      {
+        "name": "hope",
+        "start": 200.0,
+        "end": 224.0
+      }
+    ]
+  },
+  "loops": [
+    {
+      "name": "lower_works",
+      "file": "prologue_loop_lower_works.mp3",
+      "loop_start": 2.0,
+      "loop_end": 34.0,
+      "bars": 8,
+      "rms_dbfs": -29.8,
+      "use": "Exploring the depot and the dark lower works.",
+      "in_theme": {
+        "start": 0.0,
+        "end": 32.0
+      }
+    },
+    {
+      "name": "order",
+      "file": "prologue_loop_order.mp3",
+      "loop_start": 2.0,
+      "loop_end": 34.0,
+      "bars": 8,
+      "rms_dbfs": -26.3,
+      "use": "Rooms of the Order: the ration hall, the relocation lobby, signage and tannoys.",
+      "in_theme": {
+        "start": 32.0,
+        "end": 64.0
+      }
+    },
+    {
+      "name": "heaps",
+      "file": "prologue_loop_heaps.mp3",
+      "loop_start": 2.0,
+      "loop_end": 34.0,
+      "bars": 8,
+      "rms_dbfs": -25.6,
+      "use": "Among the dead: the racks, the heap, the queue line.",
+      "in_theme": {
+        "start": 168.0,
+        "end": 200.0
+      }
+    },
+    {
+      "name": "failure",
+      "file": "prologue_loop_failure.mp3",
+      "loop_start": 2.0,
+      "loop_end": 34.0,
+      "bars": 8,
+      "rms_dbfs": -19.6,
+      "use": "Set pieces under threat: the slipping cage, a held moment of danger.",
+      "in_theme": null
+    }
+  ],
+  "crossfade": "Every loop and every section sits on the same D pedal, tempo and bar grid. Crossfade on a bar line (a multiple of 4 s from a section or loop start) over 2 to 4 s. Loop each file from loop_start to loop_end."
+}
