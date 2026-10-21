@@ -364,6 +364,7 @@ const WORN = {
   BedroomDado: { base: [.20, .30, .26], dirt: [.10, .13, .10], chip: [.34, .29, .21], rough: .8, chipRough: .9, metal: 0, grime: 4, chipScale: 24, chipAmt: .7 },
   ChildPaint: { base: [.12, .24, .42], dirt: [.06, .09, .12], chip: [.20, .14, .08], rough: .6, chipRough: .8, metal: 0, grime: 8, chipScale: 40, chipAmt: .7 },
   ToyFabric: { base: [.36, .33, .30], dirt: [.18, .15, .12], chip: [.42, .40, .36], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
+  ChildCoat: { base: [.07, .11, .19], dirt: [.04, .05, .06], chip: [.12, .15, .2], rough: .95, chipRough: .95, metal: 0, grime: 8, chipScale: 30, chipAmt: .75, dustAmt: .5 },   // pass 6: on a lap in the queue for the last car
   SorterCushion: { base: [.16, .045, .035], dirt: [.07, .03, .022], chip: [.24, .17, .12], rough: .62, chipRough: .85, metal: 0, grime: 8, chipScale: 30, chipAmt: .72, dust: [.12, .1, .09], dustAmt: .4 },
   RingPlasterA: { base: [.20, .22, .22], dirt: [.10, .10, .09], chip: [.13, .12, .10], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, streak: .6 },
   RingPlasterB: { base: [.30, .20, .17], dirt: [.15, .10, .08], chip: [.20, .16, .13], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, streak: .6 },
@@ -2957,7 +2958,7 @@ function buildDL05(setRoot) {
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; scene.add(l); return l; };
   const sun = new THREE.SpotLight(0xffc98a, 0, 4, THREE.MathUtils.degToRad(48), 0.7, 1.6);
   sun.position.set(OFF5 + 110.65, 1.5, -0.9); sun.target.position.set(OFF5 + 110.9, 0.2, -0.1); sun.userData.base = 9; scene.add(sun, sun.target);
-  refs.dl05Lights = [P(0xdfe6f2, 1.0, 3.6, OFF5 + 81.65, 1.85, -0.5), P(0xdfe6f2, 0.9, 3.4, OFF5 + 95.3, 1.85, -0.5), P(0xffd9b0, 1.5, 3.5, OFF5 + 109.28, 1.0, -0.62),
+  refs.dl05Lights = [P(0xcfdcf0, 0.8, 2.2, 152.85, 2.3, -0.2), P(0xdfe6f2, 1.0, 3.6, OFF5 + 81.65, 1.85, -0.5), P(0xdfe6f2, 0.9, 3.4, OFF5 + 95.3, 1.85, -0.5), P(0xffd9b0, 1.5, 3.5, OFF5 + 109.28, 1.0, -0.62),
     sun, P(0xffe2c4, 2.4, 4.5, OFF5 + 112.3, 1.8, 0.5), P(0x9fe0c8, 0, 2.5, TERM5_X, 1.0, -0.6),
     P(0xdfe6f2, 0.8, 3.2, OFF5 + 86.8, 1.85, -0.5), P(0xdfe6f2, 0.8, 3.2, OFF5 + 90.65, 1.85, -0.5)];   // the longer street's lane bulbs
   refs.termLight = refs.dl05Lights[5];

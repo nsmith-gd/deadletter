@@ -72,7 +72,7 @@ WELL_FLOOR = -5.5                       # the well's bottom, below the landing, 
 WELL_TOP = 44.0                         # the rock over it
 RAIL_Y = 1.22                           # the parapet's rail over the well (x WELL[0]..STAIR_X0)
 LEVELS = (5.6, 11.2, 16.8, 22.4, 28.0, 33.6, 39.2)   # the rings' floors, as slab edges in the well's walls
-WIN = (173.6, 23.3, 24.7, 1.06)         # the lit window: centre x, sill z, head z, width (on the back wall, y WELL[3])
+WIN = (173.6, 23.2, 24.75, 1.2)          # the lit window: centre x, sill z, head z, width (on the back wall, y WELL[3])
 STAIR_X0 = 174.4                        # the iron stair's foot (flight 1 rises along +x)
 STAIR_RISE, STAIR_RUN, STAIR_W = 0.2, 0.28, 0.8
 OLD_BOX = (170.12, 170.58, 1.04, 1.64)  # ring C's old supply box: x0, x1, z0, z1 (on the block's front face)
@@ -1130,14 +1130,19 @@ def _remains_in_chair(coll, x, y, turn, seat=0.44):
     lap's pile on the seat, the legs folded down over the seat's front edge, the boots fallen on the floor."""
     import remains as R
     Q = R.painted()
-    R.add(Q, 'seated', None, seed=3.7, support=True, knees=0.0, skull='chest', arms='lap', coat='cloth', trousers='cloth')
-    xf = 0.25                                                  # the seat's front edge, in the pose's frame
-    ang = math.radians(78)
+    R.add(Q, 'seated', None, seed=3.7, support=True, knees=0.0, skull='chest', arms='hip', coat='cloth', trousers='cloth')
+    xf, ys = 0.25, -0.2                                        # the seat's front edge and its right edge, in the pose's frame
+    ang, side = math.radians(78), math.radians(80)
     for v in Q.bm.verts:
-        if v.co.x > xf:
+        v.co.z *= 0.82 if v.co.z > 0.12 else 1.0               # slumped lower into the chair than against a wall
+        if v.co.x > xf:                                        # the legs over the seat's front edge, down to the floor
             dx, dz = v.co.x - xf, v.co.z
             v.co.x = xf + dx * math.cos(ang) + dz * math.sin(ang) * 0.4
             v.co.z = dz - dx * math.sin(ang)
+        elif v.co.y < ys:                                      # the right arm hanging down by the chair, its hand on the floor
+            dy, dz = ys - v.co.y, v.co.z
+            v.co.y = ys - dy * math.cos(side) - 0.02
+            v.co.z = dz - dy * math.sin(side) * 1.6
     for v in Q.bm.verts:
         v.co.z += seat
         if v.co.z < 0.012:
