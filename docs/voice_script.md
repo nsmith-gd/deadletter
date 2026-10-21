@@ -2,6 +2,12 @@
 
 **Status:** draft for the director to record, 21 October 2026. Placement is in `docs/audio_audit.md`.
 
+## The motto
+
+The order-era tannoys all end the same way: **"Order above all."** Say it flatly, as a sign-off nobody hears any
+more. The player hears it often enough that it stops meaning anything; later chapters paint it over, deface it and
+finally scratch it out (`docs/story_bible.md`).
+
 ## The idea
 
 The refuge's post carried more than paper. For the price of a stamp you could speak into a recorder at the post
@@ -55,7 +61,7 @@ had a card player: a small wooden box with a brass horn and a crank. Some cards 
 Treatment `tannoy`. About 14 s.
 > Night shift, to your stations. *[pause]* Night shift, to your stations.
 > Sorting will run until oh-six-hundred. Couriers, report to dispatch.
-> *[pause]* Thank you for your work. The refuge depends on it.
+> *[pause]* Thank you for your work. The refuge depends on it. *[pause]* Order above all.
 
 ### `card_sorter`: a sorter to her daughter (DL-02, the tea corner)
 
@@ -82,7 +88,7 @@ Treatment `tannoy`, with dropouts. About 12 s.
 Treatment `tannoy`. About 14 s.
 > Attention, grade four. Rations are suspended until further notice.
 > Distribution will resume at oh-eight-hundred. *[pause]*
-> Please remain in the hall. Please keep the aisles clear for the weigh-in.
+> Please remain in the hall. Please keep the aisles clear for the weigh-in. *[pause]* Order above all.
 
 ### `card_queue`: a card in the queue (DL-05)
 
@@ -140,7 +146,7 @@ The only time Mara is named in the prologue's voices: as a child who wouldn't sp
 
 Treatment `tannoy`, running slow; the game also drags its speed down. About 10 s.
 > Grades one and two only beyond this point. *[pause]* Grades one and two only.
-> All other residents, return to your rings. *[pause]* Thank you for your patience.
+> All other residents, return to your rings. *[pause]* Thank you for your patience. *[pause]* Order above all.
 
 ## Up Only
 
@@ -149,7 +155,7 @@ Treatment `tannoy`, running slow; the game also drags its speed down. About 10 s
 Treatment `tannoy`, cleaner than the others. About 16 s.
 > Relocation. This car is for grades one and two. Please have your papers ready.
 > One case per person. *[pause]* Do not push.
-> This is the last scheduled car. *[pause]* This is the last scheduled car.
+> This is the last scheduled car. *[pause]* This is the last scheduled car. *[pause]* Order above all.
 
 ### `card_lastcar`: a parent's card to a child who went up (DL-10, the queue)
 
@@ -219,6 +225,7 @@ Treatment `card`. About 35 s.
 > To the family of Mara D., class four. *[pause]*
 > She's doing well. She doesn't speak much in class, but she listens to everything.
 > She asked me today why the windows don't open. I told her the truth. *[pause]* I hope that was right.
+> The protocol says she isn't to be left alone, so I eat my lunch with her. I don't mind.
 > She's drawn on the wall behind the window panel. A tree. I haven't had it cleaned. *[pause]*
 > I'll keep recording these until someone writes back. *[pause]* Take care of yourselves.
 

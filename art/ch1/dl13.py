@@ -175,6 +175,10 @@ R_FRIEZE = (0, 544, 1024, 608)      # the alphabet frieze
 R_POSTER = (0, 608, 256, 928)       # THE PARTS OF A TREE
 R_TIMES = (256, 608, 512, 928)      # the timetable: every lesson the same
 R_BELLPLATE = (512, 608, 768, 672)  # under the bell: LESSON BELL
+R_MOTTO = (512, 672, 1024, 720)     # ORDER ABOVE ALL, stencilled over the apparatus (the order era)
+R_NOTICE = (512, 720, 768, 848)     # NO PUPIL TO APPROACH THE APPARATUS UNACCOMPANIED (the protective era)
+R_STEWARD = (768, 720, 896, 880)    # the Steward's portrait
+R_STEWPLATE = (896, 720, 1024, 752) # its brass plate
 R_NUM = [(768 + 64 * k, 608, 832 + 64 * k, 672) for k in range(3)]   # enamel step numbers 1, 2, 3
 
 
@@ -308,6 +312,36 @@ def make_atlas(path):
         d.rectangle(r, fill=(60, 50, 34))
         d.ellipse((r[0] + 3, r[1] + 3, r[2] - 3, r[3] - 3), fill=(206, 196, 166), outline=(120, 92, 44), width=4)
         d.text(((r[0] + r[2]) / 2, (r[1] + r[3]) / 2 + 1), str(k + 1), font=font(40), fill=ink, anchor='mm')
+
+    # --- the order era: the motto in stencil, cream on a dark band; the Steward's portrait, kindly and stern ----------
+    x0, y0, x1, y1 = R_MOTTO
+    d.rectangle(R_MOTTO, fill=(34, 40, 34))
+    d.text(((x0 + x1) / 2, (y0 + y1) / 2 + 1), 'ORDER   ABOVE   ALL', font=font(38), fill=(196, 186, 150), anchor='mm')
+    for k in range(9):                                     # the stencil's bridges: gaps cut through the letters
+        bx = x0 + 70 + k * 46
+        d.line((bx, y0 + 18, bx, y0 + 22), fill=(34, 40, 34), width=3)
+    x0, y0, x1, y1 = R_STEWARD
+    d.rectangle(R_STEWARD, fill=(40, 34, 26))
+    for yy in range(y0, y1):                               # a painted, varnished dark ground, lighter behind the head
+        f = abs((yy - y0) / (y1 - y0) - 0.35)
+        d.line((x0, yy, x1, yy), fill=(int(70 - 50 * f), int(60 - 42 * f), int(42 - 28 * f)))
+    cx = (x0 + x1) / 2
+    d.polygon([(x0 + 8, y1), (x0 + 18, y0 + 100), (cx - 18, y0 + 84), (cx + 18, y0 + 84), (x1 - 18, y0 + 100), (x1 - 8, y1)], fill=(30, 34, 40))
+    d.line((x0 + 30, y0 + 98, x1 - 34, y1 - 6), fill=(120, 40, 34), width=9)            # the sash
+    for k in range(4):
+        d.ellipse((cx - 3, y0 + 104 + 12 * k, cx + 3, y0 + 110 + 12 * k), fill=(170, 140, 70))
+    d.ellipse((cx - 22, y0 + 34, cx + 22, y0 + 88), fill=(150, 118, 92))                 # the head
+    d.chord((cx - 23, y0 + 26, cx + 23, y0 + 70), 180, 360, fill=(170, 170, 160))          # grey hair
+    for ex in (-9, 9):
+        d.line((cx + ex - 4, y0 + 56, cx + ex + 4, y0 + 56), fill=(50, 36, 28), width=2)
+    d.arc((cx - 8, y0 + 64, cx + 8, y0 + 76), 20, 160, fill=(90, 50, 40), width=2)       # the painted half-smile
+    enamel(R_STEWPLATE, (120, 92, 44), 'THE STEWARD', (40, 30, 16), 18, border=False)
+    # --- the protective era: the notice by the apparatus ---------------------------------------------------------------
+    x0, y0, x1, y1 = R_NOTICE
+    d.rectangle(R_NOTICE, fill=(206, 198, 172))
+    d.rectangle((x0 + 5, y0 + 5, x1 - 5, y1 - 5), outline=(130, 40, 30), width=4)
+    for k, line in enumerate(('NO PUPIL', 'TO APPROACH THE APPARATUS', 'UNACCOMPANIED')):
+        d.text(((x0 + x1) / 2, y0 + 30 + 34 * k), line, font=font(30 if k != 1 else 19), fill=(40, 34, 28), anchor='mm')
 
     # --- the clock: stopped -------------------------------------------------------------------------------------------
     x0, y0, x1, y1 = R_CLOCK
@@ -659,7 +693,13 @@ def alcove(S, M):
     disc_decal(S, (219.75, yw - 0.062, 3.1), 0.15, R_CLOCK, at, seg=24)
     quad(S, (216.75, yw - 0.006, 1.62), (0.25, 0, 0), (0, 0, 0.31), R_POSTER, at)
     quad(S, (219.75, yw - 0.006, 1.62), (0.25, 0, 0), (0, 0, 0.31), R_TIMES, at)
-    disc_decal(S, (217.45, yw - 0.006, 3.35), 0.24, R_MARK, at)                            # the school's roundel
+    disc_decal(S, (216.75, yw - 0.006, 3.35), 0.22, R_MARK, at)                            # the school's roundel
+    # The Steward over the board: an institutional portrait in a heavy frame, a brass plate under it.
+    cbox(bm, (bx, yw - 0.03, 3.3), (0.62, 0.06, 0.76), 0.02, dk)
+    cbox(bm, (bx, yw - 0.05, 3.3), (0.54, 0.02, 0.68), 0.006, S(M['Brass']))
+    quad(S, (bx, yw - 0.062, 3.3), (0.25, 0, 0), (0, 0, 0.312), R_STEWARD, at)
+    cbox(bm, (bx, yw - 0.008, 2.86), (0.24, 0.016, 0.06), 0.003, S(M['Brass']))
+    quad(S, (bx, yw - 0.017, 2.86), (0.11, 0, 0), (0, 0, 0.0275), R_STEWPLATE, at)
     for x, y in ((217.3, 1.8), (219.3, 2.9)):                                              # enamel shades, dead
         add_cyl(bm, (x, y, CEIL), (x, y, 3.5), 0.006, mat=ir, seg=6)
         add_cyl(bm, (x, y, 3.52), (x, y, 3.42), 0.03, 0.05, mat=ir, seg=12)
@@ -942,10 +982,21 @@ def apparatus(S, M, coll):
     # The cornice over the whole machine and the title plate on it; the tower's crest.
     cbox(bm, ((a0 + c1) / 2, (FACE_Y - 0.06 + BACK_Y) / 2, cz1 + 0.07), (c1 - a0 + 0.1, BACK_Y - FACE_Y + 0.06, 0.14), 0.02, dk)
     add_box(bm, ((a0 + c1) / 2, FACE_Y - 0.065, cz1 + 0.02), (c1 - a0 + 0.1, 0.01, 0.02), mat=br)
-    cbox(bm, (225.0, FACE_Y + 0.02, cz1 + 0.33), (2.7, 0.04, 0.38), 0.01, dk)
-    quad(S, (225.0, FACE_Y - 0.002, cz1 + 0.33), (1.25, 0, 0), (0, 0, 0.156), R_TITLE, at)
-    for x in (223.62, 226.38):
-        add_sphere(bm, (x, FACE_Y - 0.01, cz1 + 0.33), 0.03, mat=br, seg=10)
+    tx = 221.75                                             # the title plate, over the tower's end
+    cbox(bm, (tx, FACE_Y + 0.02, cz1 + 0.3), (2.5, 0.04, 0.34), 0.01, dk)
+    quad(S, (tx, FACE_Y - 0.002, cz1 + 0.3), (1.15, 0, 0), (0, 0, 0.144), R_TITLE, at)
+    for x in (tx - 1.22, tx + 1.22):
+        add_sphere(bm, (x, FACE_Y - 0.01, cz1 + 0.3), 0.03, mat=br, seg=10)
+    # The order era's motto, stencilled on a dark band on the wall over the rest of the machine.
+    quad(S, (225.75, BACK_Y - 0.004, cz1 + 0.34), (2.0, 0, 0), (0, 0, 0.1875), R_MOTTO, at)
+    # The protective era's notice on the apparatus, screwed on over the left panel, below the bell.
+    cbox(bm, (222.85, FACE_Y - 0.026, 1.42), (0.58, 0.012, 0.3), 0.003, S(M['CastIron']))
+    quad(S, (222.85, FACE_Y - 0.033, 1.42), (0.27, 0, 0), (0, 0, 0.135), R_NOTICE, at)
+    # And a soft mat on the floor under the steps (padded canvas, quilted): low, flat, walked over.
+    mx0, mx1 = STEPS[0][0] - 0.1, STEPS[2][1] + 0.08
+    cbox(bm, ((mx0 + mx1) / 2, 0.22, 0.015), (mx1 - mx0, 1.14, 0.03), 0.012, S(M["LessonDado"]))
+    for k in range(1, 6):
+        add_box(bm, (mx0 + (mx1 - mx0) * k / 6, 0.22, 0.03), (0.012, 1.1, 0.004), mat=S(M['PigeonWood']))
 
 
 def tree(M, coll):
