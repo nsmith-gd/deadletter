@@ -453,6 +453,160 @@ def _paint_lid(img):
     img.paste(Image.fromarray(np.clip(a, 0, 255).astype('uint8')), (x0, y0))
 
 
+# Rev 0.3: the shared outside drawing, its own texture (textures/dl15_drawing.png, material Att15Drawing): the sheet,
+# the strip torn from a lesson sheet that extends it, and a cork tile for the pinboard.
+DRAW_PATH = os.path.join(TEX, 'dl15_drawing.png')
+DCELLS = {'dw_sheet': (0, 0, 512, 384), 'dw_strip': (0, 384, 342, 504), 'dw_cork': (352, 392, 512, 512)}
+SHEET = (0.6, 0.45)                    # the drawing's sheet, w x h (m)
+STRIP = (0.4, 0.14, 0.12, 0.02)        # the strip: w, h, its left edge's x on the sheet, how far it tucks under the sheet
+
+
+def dcell_uv(name):
+    x0, y0, x1, y1 = DCELLS[name]
+    return x0 / 512, 1 - y1 / 512, x1 / 512, 1 - y0 / 512
+
+
+def strip_edge(t):
+    """The strip's torn top edge: its height (fraction of STRIP h) at t (0..1 along it)."""
+    return 0.86 + 0.06 * math.sin(t * 23.0 + 1.0) + 0.04 * math.sin(t * 61.0) + 0.05 * (1 - t) * (t < 0.3)
+
+
+def make_drawing(path):
+    """Three children under a tree too big for the sheet (1 px = 1 mm while painting): wax crayon on buff sugar paper.
+    The tree is Mara's, crooked, the knot in its branch; it goes off the top, and the crown goes on over a strip torn
+    from a lesson sheet (printed ruled lines and a line of the lesson), tucked under the top edge and taped. Under
+    the tree, holding hands, R.A., M (in her boots) and T.O.; a sun; grass."""
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFilter
+    W, Hs = int(SHEET[0] * 1000), int(SHEET[1] * 1000)
+    sw, sh, sx, tuck = (int(v * 1000) for v in STRIP)
+    top = sh - tuck                                                  # the sheet's top edge on the canvas
+    H = top + Hs
+    rng = np.random.default_rng(1600)
+    canvas = np.zeros((H, W, 3))
+    # the papers: the lesson strip (white, ruled, printed), the sheet (buff sugar paper)
+    n = _noise(W, H, 6, 1601)
+    strip = Image.new('RGB', (sw, sh), (226, 224, 212))
+    ds = ImageDraw.Draw(strip)
+    for y in range(18, sh, 11):
+        ds.line((0, y, sw, y), fill=(150, 170, 200), width=1)
+    ds.line((22, 0, 22, sh), fill=(200, 120, 120), width=1)
+    ds.text((30, 14), 'LESSON 6   Living things', font=_font(15, 'serif'), fill=(70, 70, 76), anchor='lb')
+    ds.text((30, 36), '4.  The tree grows straight and tall toward the', font=_font(13, 'serif'), fill=(80, 80, 86), anchor='lb')
+    ds.text((30, 58), '     light. Draw the tree in the box below.', font=_font(13, 'serif'), fill=(80, 80, 86), anchor='lb')
+    ds.text((30, 102), '5.  Name the three parts of a tree:', font=_font(13, 'serif'), fill=(80, 80, 86), anchor='lb')
+    canvas[:sh, sx:sx + sw] = np.asarray(strip).astype(float)
+    paper = np.ones((Hs, W, 3)) * np.array([206, 190, 150], float)
+    paper *= (0.9 + 0.16 * n[top:, :])[..., None]
+    paper += (rng.random((Hs, W)) * 10 - 5)[..., None]
+    canvas[top:] = paper
+    img = Image.fromarray(np.clip(canvas, 0, 255).astype('uint8')).convert('RGBA')
+    rnd = random.Random(1602)
+
+    def crayon(paint, rgb, seed, grain=0.45, alpha=0.92):
+        """A wax-crayon layer: paint(draw) onto a mask; the paper's tooth shows through."""
+        m = Image.new('L', (W, H), 0)
+        paint(ImageDraw.Draw(m))
+        m = m.filter(ImageFilter.GaussianBlur(0.8))
+        g = np.random.default_rng(seed).random((H, W))
+        tooth = np.clip(1.0 - grain * (g ** 2) * 1.6, 0, 1)
+        a = np.asarray(m).astype(float) / 255.0 * tooth * alpha
+        lay = np.zeros((H, W, 4))
+        lay[..., :3] = rgb
+        lay[..., 3] = a * 255
+        img.alpha_composite(Image.fromarray(np.clip(lay, 0, 255).astype('uint8'), 'RGBA'))
+
+    def scribble(d, x0, y0, x1, y1, step=7, wd=7, slant=0.3):
+        """Back-and-forth crayon filling a box."""
+        y = y0
+        while y < y1:
+            d.line((x0 + rnd.uniform(-4, 4), y, x1 + rnd.uniform(-4, 4), y + slant * (x1 - x0) * 0.1 + rnd.uniform(-3, 3)), fill=255, width=wd)
+            y += step
+    ground = H - 70
+    # sky: blue crayon across the sheet's top, scribbled, and on round behind the crown
+    crayon(lambda d: scribble(d, 0, top + 4, W, top + 110, step=9, wd=8), (92, 136, 196), 1603, alpha=0.75)
+    # the sun, top right, with rays
+    def sun(d):
+        cx, cy = W - 70, top + 70
+        d.ellipse((cx - 38, cy - 38, cx + 38, cy + 38), fill=255)
+        for k in range(12):
+            a = 2 * math.pi * k / 12
+            d.line((cx + 48 * math.cos(a), cy + 48 * math.sin(a), cx + 66 * math.cos(a), cy + 66 * math.sin(a)), fill=255, width=7)
+    crayon(sun, (236, 190, 40), 1604)
+    # grass, and a path of brown
+    crayon(lambda d: scribble(d, 0, ground - 10, W, H, step=8, wd=9), (70, 140, 60), 1605)
+    def blades(d):
+        for x in range(0, W, 9):
+            h_ = rnd.uniform(14, 34)
+            d.line((x, ground, x + rnd.uniform(-6, 6), ground - h_), fill=255, width=4)
+    crayon(blades, (52, 118, 46), 1606)
+    # the tree: crooked, enormous, off the top of the sheet and on up the strip
+    tx, tbase = 200, ground + 8
+    def trunk(d):
+        def stroke(pts, weight):
+            d.line(pts, fill=255, width=int(14 + 26 * weight), joint='curve')
+        import build_dl05 as dl05
+        dl05._crooked_tree(stroke, tx, tbase, 640, sx=560)
+    crayon(trunk, (104, 66, 36), 1607, grain=0.35)
+    tips = [(tx + ux * 560, tbase + uy * 640) for ux, uy in ((-0.33, -0.66), (0.03, -0.9), (0.43, -0.78), (-0.15, -0.75),
+                                                             (0.2, -0.7), (0.24, -0.3), (-0.05, -0.55))]
+    def crown(d):
+        for k in range(30):                                        # leafy loops round the branch ends
+            bx, by = tips[k % len(tips)]
+            cx, cy = bx + rnd.uniform(-50, 50), by + rnd.uniform(-45, 40)
+            r = rnd.uniform(36, 66)
+            pts = [(cx + r * math.cos(a) * rnd.uniform(0.85, 1.1), cy + r * 0.8 * math.sin(a) * rnd.uniform(0.85, 1.1))
+                   for a in [j * 0.5 for j in range(14)]]
+            d.line(pts, fill=255, width=7, joint='curve')
+    crayon(crown, (54, 128, 58), 1608, alpha=0.88)
+    crayon(lambda d: [d.ellipse((x - 9, y - 9, x + 9, y + 9), fill=255) for x, y in
+                      [(bx + rnd.uniform(-40, 40), by + rnd.uniform(-30, 30)) for bx, by in tips for _ in range(2)]], (200, 56, 44), 1609)   # apples
+    # the three, holding hands under it: R.A. (tall, blue jumper), M (smaller, red, in boots), T.O. (green, a cap)
+    people = ((340, 160, (60, 90, 170), 'R.A.', 'hair'), (425, 128, (196, 60, 52), 'M', 'plaits'), (505, 150, (60, 140, 76), 'T.O.', 'cap'))
+    feet = ground + 30
+    for k, (cx, ht, col, name, head) in enumerate(people):
+        hy = feet - ht
+        def body(d, cx=cx, ht=ht, hy=hy):
+            d.polygon([(cx - 22, hy + 30), (cx + 22, hy + 30), (cx + 28, hy + ht * 0.62), (cx - 28, hy + ht * 0.62)], fill=255)
+        crayon(body, col, 1610 + k)
+        def limbs(d, cx=cx, ht=ht, hy=hy):
+            d.line((cx - 10, hy + ht * 0.62, cx - 14, feet - 4), fill=255, width=7)
+            d.line((cx + 10, hy + ht * 0.62, cx + 14, feet - 4), fill=255, width=7)
+            d.line((cx - 22, hy + 36, cx - 44, hy + ht * 0.5), fill=255, width=6)
+            d.line((cx + 22, hy + 36, cx + 44, hy + ht * 0.5), fill=255, width=6)
+            d.ellipse((cx - 17, hy - 4, cx + 17, hy + 30), outline=255, width=5)
+        crayon(limbs, (40, 34, 30), 1620 + k, grain=0.3)
+        if head == 'plaits':
+            crayon(lambda d, cx=cx, hy=hy: [d.line((cx + s * 16, hy + 6, cx + s * 24, hy + 34), fill=255, width=7) for s in (-1, 1)],
+                   (120, 74, 34), 1630)
+            crayon(lambda d, cx=cx: [d.rounded_rectangle((cx + s * 14 - 12 + (6 if s > 0 else -6), feet - 18, cx + s * 14 + 12 + (10 if s > 0 else -10), feet + 2),
+                                                         radius=4, fill=255) for s in (-1, 1)], (110, 70, 36), 1631)   # her boots
+        elif head == 'cap':
+            crayon(lambda d, cx=cx, hy=hy: d.chord((cx - 19, hy - 12, cx + 19, hy + 18), 180, 360, fill=255), (196, 150, 40), 1632)
+        else:
+            crayon(lambda d, cx=cx, hy=hy: d.arc((cx - 18, hy - 6, cx + 18, hy + 20), 180, 360, fill=255, width=8), (60, 40, 24), 1633)
+        crayon(lambda d, cx=cx, hy=hy, name=name: d.text((cx, hy - 26), name, font=_font(28, 'handb'), fill=255, anchor='mm'), (40, 36, 60), 1640 + k, grain=0.25)
+    crayon(lambda d: [d.line((people[k][0] + 44, feet - people[k][1] * 0.5, people[k + 1][0] - 44, feet - people[k + 1][1] * 0.5), fill=255, width=6)
+                      for k in range(2)], (40, 34, 30), 1650)        # holding hands
+    # the tape over the join (yellowed, see-through), on the sheet's face and over the strip
+    lay = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    dl = ImageDraw.Draw(lay)
+    for x0_ in (sx + 18, sx + sw * 0.45, sx + sw - 70):
+        dl.polygon([(x0_, top - 26), (x0_ + 56, top - 30), (x0_ + 58, top + 26), (x0_ + 2, top + 30)], fill=(236, 214, 140, 105))
+    img.alpha_composite(lay)
+    out = Image.new('RGB', (512, 512), (60, 58, 54))
+    sheet = img.crop((0, top, W, H)).convert('RGB').resize((512, 384), Image.LANCZOS)
+    out.paste(_fade(sheet, 1660, k=0.12, dust=0.12), (0, 0))
+    st = img.crop((sx, 0, sx + sw, sh)).convert('RGB').resize((342, 120), Image.LANCZOS)
+    out.paste(_fade(st, 1661, k=0.1, dust=0.1), (0, 384))
+    # cork
+    cn = _noise(160, 120, 10, 1662)
+    ck = np.ones((120, 160, 3)) * np.array([150, 108, 66], float) * (0.75 + 0.4 * cn)[..., None]
+    ck *= (0.85 + 0.3 * rng.random((120, 160)))[..., None]
+    out.paste(Image.fromarray(np.clip(ck, 0, 255).astype('uint8')), (352, 392))
+    out.save(path, optimize=True)
+
+
 def make_atlas(path):
     from PIL import Image, ImageDraw, ImageFilter
     os.makedirs(TEX, exist_ok=True)

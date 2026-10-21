@@ -1361,8 +1361,8 @@ def pot(B, x, y, z, r, h, rnd, tag=None, plant='dead', seg=12, soil='sw_soil_dry
     return zs
 
 
-def seed_tray(B, cx, cy, z, rnd, tag, w=0.36, d=0.24, h=0.06, yaw=0.0, wood='CrateWood', soil='sw_soil_dry', dead='sw_straw'):
-    """A wooden seed tray of soil, rows of dead seedlings, a name tag and the name on its front."""
+def seed_tray(B, cx, cy, z, rnd, tag, w=0.36, d=0.24, h=0.06, yaw=0.0, wood='CrateWood', soil='sw_soil_dark', dead=None):
+    """A wooden seed tray, its soil dried and cracked, rows of shrivelled seedlings, a name tag and the name on its front."""
     n0 = B.mark()
     t = 0.012
     B.box(wood, -w / 2, w / 2, -d / 2, -d / 2 + t, 0.0, h)
@@ -1371,7 +1371,9 @@ def seed_tray(B, cx, cy, z, rnd, tag, w=0.36, d=0.24, h=0.06, yaw=0.0, wood='Cra
     B.box(wood, w / 2 - t, w / 2, -d / 2 + t, d / 2 - t, 0.0, h)
     B.box(wood, -w / 2 + t, w / 2 - t, -d / 2 + t, d / 2 - t, 0.0, 0.01)
     zs = h * 0.8
-    B.sbox(soil, -w / 2 + t, w / 2 - t, -d / 2 + t, d / 2 - t, 0.01, zs)
+    B.sbox(soil, -w / 2 + t, w / 2 - t, -d / 2 + t, d / 2 - t, 0.01, zs - 0.004)
+    B.tbox('Att17Atlas', -w / 2 + t + 0.005, w / 2 - t - 0.005, -d / 2 + t + 0.005, d / 2 - t - 0.005, zs - 0.012, zs,
+           {'+z': 'soilcrack', 'all': 'sw_crust'})
     B.decal(-0.055, 0.055, h * 0.25, h * 0.25 + 0.11 * 40 / 128, -d / 2 - 0.0008, 'tag%d' % tag)
     B.xform(n0, TR(cx, cy, z, yaw))
     rows, cols = 3, 6
@@ -1381,7 +1383,8 @@ def seed_tray(B, cx, cy, z, rnd, tag, w=0.36, d=0.24, h=0.06, yaw=0.0, wood='Cra
                 continue
             lx, ly = -w / 2 + 0.04 + j * (w - 0.08) / (cols - 1), -d / 2 + 0.05 + i * (d - 0.1) / (rows - 1)
             px, py = cx + lx * math.cos(yaw) - ly * math.sin(yaw), cy + lx * math.sin(yaw) + ly * math.cos(yaw)
-            dead_plant(B, px, py, z + zs, rnd, n=1, h=rnd.uniform(0.04, 0.08), cell=dead, droop=rnd.uniform(0.8, 1.5))
+            dead_plant(B, px, py, z + zs, rnd, n=1, h=rnd.uniform(0.04, 0.08), cell=dead or rnd.choice(('sw_straw', 'sw_shrivel', 'sw_deadleaf')),
+                       droop=rnd.uniform(0.8, 1.5))
     lx, ly = w / 2 - 0.04, -d / 2 + 0.03
     name_tag(B, cx + lx * math.cos(yaw) - ly * math.sin(yaw), cy + lx * math.sin(yaw) + ly * math.cos(yaw), z + zs, tag,
              yaw + rnd.uniform(-0.2, 0.2), tall=0.06)
@@ -1521,21 +1524,32 @@ def sack(B, base, size, lying=False):
 
 
 def bean_jar(B, x, y, z, rnd, tag):
-    """A jam jar, a bean in it on blotting paper, the shoot dried and leaning out over the rim; a name on it."""
+    """A jam jar gone dry (see-through, the game's Window glass): blotting paper rolled inside, a dry tide-mark at its
+    foot; a bean against the glass, shrivelled dark, its root a dry thread; most with a dead stalk bent out over the
+    rim; a name on it."""
     r, h = 0.034, 0.11
-    B.scyl('sw_glass', (x, y, z), (x, y, z + h), r, seg=10)
-    B.scyl('sw_glass', (x, y, z + h), (x, y, z + h + 0.008), r * 0.88, seg=10)
-    B.scyl('sw_paper', (x, y, z + h), (x, y, z + h + 0.02), r * 0.8, seg=8)
-    a = rnd.uniform(-2.4, -0.7)
-    p0 = Vector((x, y, z + h + 0.015))
-    p1 = p0 + Vector((0.01 * math.cos(a), 0.01 * math.sin(a), rnd.uniform(0.05, 0.1)))
-    p2 = p1 + Vector((0.06 * math.cos(a), 0.06 * math.sin(a), -0.07))
-    B.scyl('sw_deadleaf', p0, p1, 0.003, seg=4)
-    B.scyl('sw_deadleaf', p1, p2, 0.0025, seg=3)
+    B.cyl('Window', (x, y, z), (x, y, z + h), r, seg=12)
+    B.torus('Window', (x, y, z + h - 0.004), (0, 0, 1), r * 0.95, 0.004, seg=12, rseg=4)
+    B.scyl('sw_paper', (x, y, z + 0.004), (x, y, z + h * 0.82), r * 0.8, seg=10)
+    B.scyl('sw_label', (x, y, z + 0.004), (x, y, z + 0.02), r * 0.81, seg=10)
+    a = -math.pi / 2 + rnd.uniform(-0.45, 0.45)                 # the bean, between paper and glass, to the front
+    bx, by, bz = x + r * 0.88 * math.cos(a), y + r * 0.88 * math.sin(a), z + rnd.uniform(0.05, 0.068)
     n0 = B.mark()
-    B.sbox('sw_deadleaf', -0.02, 0.02, -0.008, 0.008, -0.002, 0.0)
-    B.xform(n0, Matrix.Translation(p2) @ Matrix.Rotation(a, 4, 'Z') @ Matrix.Rotation(0.5, 4, 'X'))
-    B.decal(x - 0.03, x + 0.03, z + 0.035, z + 0.035 + 0.06 * 40 / 128, y - r - 0.0015, 'tag%d' % tag)
+    B.sphere('Att17Atlas', (0, 0, 0), 0.0085, seg=8, scale=(1.0, 0.42, 0.68), cell='sw_beandead')
+    B.xform(n0, Matrix.Translation((bx, by, bz)) @ Matrix.Rotation(a + math.pi / 2, 4, 'Z') @ Matrix.Rotation(rnd.uniform(-0.6, 0.6), 4, 'Y'))
+    B.scyl('sw_shrivel', (bx, by, bz - 0.004), (bx + rnd.uniform(-0.006, 0.006), by, bz - 0.022), 0.0013, 0.0008, seg=3)
+    B.scyl('sw_shrivel', (bx + 0.002, by, bz - 0.02), (bx + rnd.uniform(-0.01, 0.01), by, bz - 0.04), 0.0009, 0.0006, seg=3)
+    if rnd.random() < 0.7:                                    # its shoot, long dead, bent over the rim
+        a2 = rnd.uniform(-2.4, -0.7)
+        p0 = Vector((bx, by, bz + 0.005))
+        p1 = Vector((x + 0.6 * r * math.cos(a2), y + 0.6 * r * math.sin(a2), z + h + rnd.uniform(0.02, 0.05)))
+        p2 = p1 + Vector((0.05 * math.cos(a2), 0.05 * math.sin(a2), -0.06))
+        B.scyl('sw_shrivel', p0, p1, 0.0022, 0.0018, seg=4)
+        B.scyl('sw_shrivel', p1, p2, 0.0018, 0.0012, seg=3)
+        n0 = B.mark()
+        B.sbox('sw_deadleaf', -0.012, 0.012, -0.005, 0.005, -0.002, 0.0)
+        B.xform(n0, Matrix.Translation(p2) @ Matrix.Rotation(a2, 4, 'Z') @ Matrix.Rotation(0.9, 4, 'X'))
+    B.decal(x - 0.03, x + 0.03, z + 0.01, z + 0.01 + 0.06 * 40 / 128, y - r - 0.0015, 'tag%d' % tag)
 
 
 def build_bench_top(B, rnd):
@@ -2044,8 +2058,9 @@ DRAWING_AT = CARD_AT = None
 
 
 def build_tray(coll):
-    """Att17Tray: a heavy wooden seed tray of damp dark soil, its seedlings dead and black; a name tag (T. ORME).
-    Built level about its bottom centre; the object's rotation tips it where it lies."""
+    """Att17Tray: a heavy wooden seed tray, its soil dried hard, shrunk from the sides and cracked into plates, its
+    seedlings long dead (shrivelled brown stalks, fallen flat); a name tag (T. ORME). Built level about its bottom
+    centre; the object's rotation tips it where it lies."""
     B = MB()
     w, d, h = TRAY_SIZE
     t = 0.014
@@ -2058,32 +2073,50 @@ def build_tray(coll):
         B.box('CrateWood', -w / 2 + t, w / 2 - t, y + 0.002, y + (d - 2 * t) / 4 - 0.002, 0.006, 0.016)
     for sx in (-1, 1):                                        # two runners under it
         B.box('CrateWood', -w / 2 + 0.01, w / 2 - 0.01, sx * (d / 2 - 0.035) - 0.012, sx * (d / 2 - 0.035) + 0.012, 0.0, 0.006)
-    # The soil: heaped and pocked, wet.
-    nx, ny = 10, 7
+    # The soil: dried hard, shrunk from the tray's sides (a dark gap all round), cracked into plates.
     rnd = random.Random(1760)
     sx0, sx1, sy0, sy1 = -w / 2 + t, w / 2 - t, -d / 2 + t, d / 2 - t
-    verts = [[None] * (ny + 1) for _ in range(nx + 1)]
+    g = 0.008
+    ax0, ax1, ay0, ay1 = sx0 + g, sx1 - g, sy0 + g, sy1 - g
+    zs = h - 0.026                                             # the crust's top
+    B.sbox('sw_soil_dark', sx0, sx1, sy0, sy1, 0.016, zs - 0.03)
+    B.sbox('sw_crust', ax0, ax1, ay0, ay1, zs - 0.03, zs - 0.004)
+    nx, ny = 10, 7
+    cu0, cv0, cu1, cv1 = cell_uv('soilcrack')
+    asp = (ay1 - ay0) / (ax1 - ax0)
+    verts, uvs = [[None] * (ny + 1) for _ in range(nx + 1)], {}
     for i in range(nx + 1):
         for j in range(ny + 1):
-            x, y = sx0 + (sx1 - sx0) * i / nx, sy0 + (sy1 - sy0) * j / ny
+            x, y = ax0 + (ax1 - ax0) * i / nx, ay0 + (ay1 - ay0) * j / ny
             edge = i in (0, nx) or j in (0, ny)
-            zz = h - 0.014 + (0 if edge else rnd.uniform(-0.006, 0.008)) - 0.01 * (x / w) ** 2
-            verts[i][j] = B.bm.verts.new((x, y, zz))
-    sm = B.m('DampSoil')
+            zz = zs - (0.003 if edge else rnd.uniform(-0.002, 0.003))
+            v = B.bm.verts.new((x, y, zz))
+            verts[i][j] = v
+            uvs[v] = (cu0 + (cu1 - cu0) * i / nx, cv0 + (cv1 - cv0) * asp * j / ny)
+    sm = B.m('Att17Atlas')
     for i in range(nx):
         for j in range(ny):
             f = B.bm.faces.new((verts[i][j], verts[i + 1][j], verts[i + 1][j + 1], verts[i][j + 1]))
             f.material_index = sm
             f[B.flat] = 1
-    B.box('DampSoil', sx0, sx1, sy0, sy1, 0.016, h - 0.022)
-    # Dead seedlings, blackened and flat on the soil.
+            for lp in f.loops:
+                lp[B.uv].uv = uvs[lp.vert]
+    # A few plates lifted at their edges, curled.
+    for _ in range(5):
+        cx, cy = rnd.uniform(ax0 + 0.04, ax1 - 0.04), rnd.uniform(ay0 + 0.03, ay1 - 0.03)
+        n0 = B.mark()
+        B.sbox('sw_crust', -0.02, 0.02, -0.014, 0.014, -0.002, 0.003)
+        B.xform(n0, Matrix.Translation((cx, cy, zs + 0.004)) @ Matrix.Rotation(rnd.uniform(0, 3.1), 4, 'Z') @
+                Matrix.Rotation(rnd.uniform(0.15, 0.3), 4, 'X'))
+    # The seedlings, long dead: shrivelled brown stalks, fallen over on the crust.
     for i in range(4):
         for j in range(7):
-            if rnd.random() < 0.15:
+            if rnd.random() < 0.2:
                 continue
             x, y = sx0 + 0.035 + j * (sx1 - sx0 - 0.07) / 6, sy0 + 0.035 + i * (sy1 - sy0 - 0.07) / 3
-            dead_plant(B, x, y, h - 0.016, rnd, n=1, h=rnd.uniform(0.03, 0.06), cell='sw_rot', droop=rnd.uniform(1.2, 1.8))
-    name_tag(B, sx1 - 0.04, sy0 + 0.03, h - 0.016, 1, 0.1, tall=0.075)
+            dead_plant(B, x, y, zs, rnd, n=1, h=rnd.uniform(0.03, 0.06), cell=rnd.choice(('sw_shrivel', 'sw_deadleaf', 'sw_straw')),
+                       droop=rnd.uniform(1.2, 1.8))
+    name_tag(B, sx1 - 0.04, sy0 + 0.03, zs, 1, 0.1, tall=0.075)
     B.decal(-0.06, 0.06, 0.028, 0.028 + 0.12 * 40 / 128, -d / 2 - 0.0008, 'tag1')
     ob = B.obj('Att17Tray', coll)
     M = tray_matrix()
@@ -2097,6 +2130,53 @@ def build_growlamp(coll):
     for dy in (-0.045, 0.045):
         B.cyl('Att17GrowLamp', (g0, gy + dy, gz), (g1, gy + dy, gz), 0.014, seg=10)
     return B.obj('Att17GrowLamp', coll, origin=((g0 + g1) / 2, gy, gz))
+
+
+def build_door_leaf(coll):
+    """Att17Door: the stair door's leaf, shut, hung flush with the end wall's stair-side face; steel-faced, green, a
+    wired-glass light (the game's see-through Window glass, the lit stair behind it), a kick plate, lever handles both
+    sides. Origin on its hinge axis at floor level: the back jamb's stair-side corner, HINGE. It opens away from the
+    room, toward the stair: +90 degrees about Blender +z (game +y); open, it stands along the stairwell's back,
+    x 296.0 to 297.0, y 0.455 to 0.5, clear of the first riser (x 297.1) and of the lane."""
+    B = MB()
+    hx, hy, _ = HINGE
+    dy0, dy1, hd = DOOR17
+    fx0, fx1 = hx - LEAF_T, hx                                  # its faces: room side, stair side
+    ly0, ly1, lz0, lz1 = dy0 + 0.005, dy1 - 0.005, 0.008, hd - 0.006
+    gy0, gy1, gz0, gz1 = -0.2, 0.2, 1.2, 1.82                  # the glass light
+    for (a, b, c, d_) in ((ly0, ly1, lz0, gz0), (ly0, ly1, gz1, lz1), (ly0, gy0, gz0, gz1), (gy1, ly1, gz0, gz1)):
+        B.box('DepotGreen', fx0, fx1, a, b, c, d_)
+    B.box('Window', fx0 + 0.016, fx1 - 0.016, gy0, gy1, gz0, gz1)
+    for fx, s in ((fx0, -1), (fx1, 1)):                          # beads round the glass, both faces; the wire mesh in it
+        for (a, b, c, d_) in ((gy0 - 0.02, gy1 + 0.02, gz0 - 0.02, gz0), (gy0 - 0.02, gy1 + 0.02, gz1, gz1 + 0.02),
+                              (gy0 - 0.02, gy0, gz0, gz1), (gy1, gy1 + 0.02, gz0, gz1)):
+            B.box('WornIron', min(fx, fx + s * 0.006), max(fx, fx + s * 0.006), a, b, c, d_)
+    for k in range(1, 6):
+        z = gz0 + (gz1 - gz0) * k / 6
+        B.box('WornIron', (fx0 + fx1) / 2 - 0.001, (fx0 + fx1) / 2 + 0.001, gy0, gy1, z - 0.0012, z + 0.0012)
+    for k in range(1, 4):
+        y = gy0 + (gy1 - gy0) * k / 4
+        B.box('WornIron', (fx0 + fx1) / 2 - 0.001, (fx0 + fx1) / 2 + 0.001, y - 0.0012, y + 0.0012, gz0, gz1)
+    B.box('WornIron', fx0 - 0.004, fx0, ly0 + 0.03, ly1 - 0.03, 0.03, 0.27)                  # kick plate (room side)
+    B.box('HandledBrass', fx0 - 0.003, fx0, ly0 + 0.06, ly0 + 0.16, 1.15, 1.45)             # finger plate, by the free edge
+    for fx, s in ((fx0, -1), (fx1, 1)):                          # lever handles, by the free edge
+        hy_ = ly0 + 0.08
+        B.cyl('HandledBrass', (fx, hy_, 1.0), (fx + s * 0.012, hy_, 1.0), 0.03, seg=12)
+        B.cyl('HandledBrass', (fx + s * 0.012, hy_, 1.0), (fx + s * 0.055, hy_, 1.0), 0.009, seg=8)
+        B.cyl('HandledBrass', (fx + s * 0.055, hy_, 1.0), (fx + s * 0.06, hy_ + 0.12, 1.0), 0.009, seg=8)
+        B.box('HandledBrass', min(fx, fx + s * 0.004), max(fx, fx + s * 0.004), hy_ - 0.012, hy_ + 0.012, 0.86, 0.92)   # keyhole plate
+    for z in (0.25, 1.05, 1.85):                                 # hinge knuckles on the stair side
+        B.cyl('WornIron', (hx + 0.006, hy - 0.004, z - 0.06), (hx + 0.006, hy - 0.004, z + 0.06), 0.011, seg=8)
+        B.box('WornIron', fx1, fx1 + 0.003, hy - 0.09, hy - 0.006, z - 0.05, z + 0.05)
+    return B.obj('Att17Door', coll, origin=HINGE)
+
+
+def build_stairlamp(coll):
+    """Att17StairLamp: the globe of the bulkhead lamp over the flight, high on the stairwell's back wall."""
+    B = MB()
+    lx, ly, lz = STAIR_LAMP
+    B.sphere('Att17StairLamp', (lx, ly, lz), 0.055, seg=12, scale=(1, 0.7, 1))
+    return B.obj('Att17StairLamp', coll, origin=STAIR_LAMP)
 
 
 def build_bulbs(coll):
@@ -2135,6 +2215,7 @@ def build_set(dl01, m, coll):
     tap = build_window(B, rnd, names)
     build_sink(B, tap)
     build_door(B)
+    build_stairwell(B)
     build_ceiling_lights(B)
     build_floor_things(B, rnd)
     heap_under_tray(B)
@@ -2143,8 +2224,9 @@ def build_set(dl01, m, coll):
     objs.append(build_drawer(coll))
     objs.append(build_tray(coll))
     objs.append(build_growlamp(coll))
-    objs.append(build_shoot(coll))
     objs.append(build_bulbs(coll))
+    objs.append(build_door_leaf(coll))
+    objs.append(build_stairlamp(coll))
     bpy.context.view_layer.update()
     total_t, total_p = 0, 0
     for ob in objs:
@@ -2158,7 +2240,9 @@ def build_set(dl01, m, coll):
             min(v.x for v in bb), max(v.x for v in bb), min(v.y for v in bb), max(v.y for v in bb), min(v.z for v in bb),
             max(v.z for v in bb), [s.material.name for s in ob.material_slots]))
     print('dl17: total tris %d, draw calls (material slots) %d' % (total_t, total_p))
-    print('dl17: drawing at', DRAWING_AT, 'card at', CARD_AT, 'shoot soil z', SHOOT_Z)
+    print('dl17: drawing at', DRAWING_AT, 'card at', CARD_AT)
+    print('dl17: treads (x0, x1, top):', [tuple(round(c, 3) for c in tread_x(i)) + (round(tread_top(i), 3),) for i in range(1, TREADS + 1)],
+          'upper landing from x %.3f at %.3f' % (tread_x(TREADS)[1], tread_top(TREADS + 1)))
     print('dl17: tray rotation (deg)', tuple(round(math.degrees(a), 2) for a in objs[2].rotation_euler), 'loc', tuple(objs[2].location))
 
 
