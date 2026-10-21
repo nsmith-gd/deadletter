@@ -390,6 +390,9 @@ const WORN = {
   LessonPlaster: { base: [.27, .25, .2], dirt: [.14, .12, .09], chip: [.17, .15, .12], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, streak: .6 },   // chapter 1, DL-13
   LessonDado: { base: [.13, .19, .15], dirt: [.07, .09, .07], chip: [.25, .23, .19], rough: .75, chipRough: .9, metal: 0, grime: 4, chipScale: 24, chipAmt: .68, streak: .5 },
   LessonLeaf: { base: [.11, .17, .08], dirt: [.06, .08, .04], chip: [.3, .24, .16], rough: .6, chipRough: .5, metal: 0, grime: 10, chipScale: 40, chipAmt: .72, streak: .3 },
+  WorkPlaster: { base: [.33, .27, .18], dirt: [.17, .13, .08], chip: [.23, .19, .14], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, dust: [.26, .22, .16], dustAmt: .4, streak: .5 },   // chapter 1, DL-17
+  PotClay: { base: [.34, .15, .075], dirt: [.16, .1, .06], chip: [.42, .36, .28], rough: .9, chipRough: .95, metal: 0, grime: 10, chipScale: 40, chipAmt: .72, dust: [.36, .32, .26], dustAmt: .5, streak: .3 },
+  DampSoil: { base: [.03, .022, .015], dirt: [.018, .013, .009], chip: [.06, .045, .03], rough: .8, chipRough: .45, metal: 0, grime: 30, chipScale: 80, chipAmt: .7, dust: [.06, .05, .04], dustAmt: .1 },
   WinPlaster: { base: [.29, .27, .21], dirt: [.15, .13, .095], chip: [.2, .185, .15], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, dust: [.24, .22, .18], dustAmt: .5, streak: .6 },   // chapter 1, DL-14
   WinDado: { base: [.12, .16, .135], dirt: [.065, .075, .06], chip: [.30, .27, .21], rough: .55, chipRough: .85, metal: 0, grime: 4, chipScale: 22, chipAmt: .68, dust: [.16, .17, .15], dustAmt: .4, streak: .5 },
   WinLino: { base: [.115, .085, .05], dirt: [.06, .045, .03], chip: [.075, .07, .062], rough: .7, chipRough: .9, metal: 0, grime: 3, chipScale: 14, chipAmt: .66, dust: [.13, .12, .1], dustAmt: .6, streak: .3 },
@@ -426,7 +429,7 @@ const PLAIN = { NewCable: [[.016, .016, .018], .28, 0], NewSteel: [[.26, .27, .2
   AtriumCloth: [[.2, .13, .065], .9, 0], AtriumWood: [[.085, .06, .04], .88, 0],
   Barricade: [[.4, .06, .04], .7, 0], AtriumVine: [[.055, .068, .036], .9, 0], AtriumMoss: [[.085, .1, .05], .95, 0], AtriumWet: [[.014, .016, .015], .35, 0], CandleWax: [[.55, .5, .4], .6, 0], GaugeNeedle: [[.02, .018, .016], .4, .3], BrassPolished: [[.8, .62, .32], .22, 1], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
-const EMIT = { Att16PitGlow: [1, .42, .14, 2.2], AttBulbGlow: [1, .82, .58, 4], AttLessonLamp: [1, .78, .42, 0], AttShoot: [.78, .92, .62, .35], AttGlobeLamp: [1, .86, .62, 3], AttCupboardLamp: [1, .72, .42, 6], EndWindowGlow: [1, .64, .32, 9], EndCurtainGlow: [1, .42, .16, 3.2], EndPilotLamp: [1, .6, .18, 6], SecretLampGlow: [1, .78, .5, 6], DenLanternGlow: [1, .55, .22, 2.5],   // pass 6
+const EMIT = { Att16PitGlow: [1, .42, .14, 2.2], Att17GrowLamp: [.78, .84, 1, 3], Att17Bulb: [1, .78, .5, 5], AttBulbGlow: [1, .82, .58, 4], AttLessonLamp: [1, .78, .42, 0], AttShoot: [.78, .92, .62, .35], AttGlobeLamp: [1, .86, .62, 3], AttCupboardLamp: [1, .72, .42, 6], EndWindowGlow: [1, .64, .32, 9], EndCurtainGlow: [1, .42, .16, 3.2], EndPilotLamp: [1, .6, .18, 6], SecretLampGlow: [1, .78, .5, 6], DenLanternGlow: [1, .55, .22, 2.5],   // pass 6
   Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
   CradleStatus: [.35, 1, .45, 0], Spark: [.7, .85, 1, 0], FarGlow: [.45, .55, .6, .09], RelayA: [.75, 1, .82, 0],
@@ -3516,7 +3519,10 @@ function currentShot() {
   // Chapter 1, DL-15: sat in Mara's place, at child-desk height, the room emptying past him.
   if (a && a.kind === 'att' && a.what === 'sit' && a.phase === 'act' && a.t > 0.5) return { name: 'sit15', pos: V3(255.15, 0.62, 1.45), look: V3(258.6, 0.72, -0.9), focal: 28, ease: 0.9 };
   // DL-17: the drawer, close: the drawing beside the mended pot, then the placement card.
-  if (a && a.kind === 'att' && a.what === 'read' && a.phase === 'act') { const k = smooth((a.t - 2.6) / 1.4); return { name: 'drawer17', pos: V3(286.2 + 0.2 * k, 1.05 - 0.15 * k, 0.55), look: V3(286.25 + 0.1 * k, 0.32, -0.15), focal: 40 + 10 * k, ease: 1.2 }; }
+  if (a && a.kind === 'att' && a.what === 'read' && a.phase === 'act') {
+    const k = smooth((a.t - 3.0) / 1.2);       // (art/ch1/dl17.py REPORT) the drawing beside the mended pot, then the card
+    return { name: 'drawer17', pos: V3(286.62 - 0.69 * k, 0.92 - 0.17 * k, -0.06 + 0.01 * k), look: V3(286.62 - 0.69 * k, 0.33 + 0.066 * k, -0.42 + 0.05 * k), focal: 24 + 11 * k, ease: 1.2 };
+  }
   // Pass 6: a secret room, framed from inside once he's in the doorway.
   if (a && a.kind === 'secret' && a.se.cam && (a.phase === 'look' || game.z < a.se.path[0][1] + 0.1)) {
     return { name: 'secret', pos: a.se.cam.clone(), look: a.se.look.clone(), focal: a.se.focal || 30, ease: 1.3 };
@@ -4842,6 +4848,10 @@ function buildAtt(root) {
     P(0xffdcaa, 1.6, 5, 265.0, 2.45, 0), P(0xffdcaa, 1.6, 5, 270.05, 2.45, 0), S(0xffe0b8, 4, 4, [266.0, 2.4, 1.4], [266.0, 0.4, -0.35], 0.5),
     S(0xffd8a8, 7, 6, [275.3, 2.9, 1.6], [275.6, 1.2, -1.0], 0.7, true), S(0xffd8a8, 4, 5, [278.5, 2.7, 1.6], [278.5, 0.8, 0], 0.6),
     P(0xff7a30, 1.2, 2.5, 268.5, -1.1, -0.3), P(0xe8dcc8, 0.6, 6, 269.0, 2.4, 2.0),
+    // DL-17 (art/ch1/dl17.py REPORT): the pendant's pool, the bench lamp, the drawer, the grow lamp's cool light, the stair door, the way in.
+    S(0xffc27a, 5, 4, [285.95, 2.15, -0.8], [285.95, 0.0, -0.8], 1.0), S(0xffcc8c, 3, 2.5, [285.04, 1.34, -0.9], [285.5, 0.9, -0.7], 0.8),
+    S(0xffd69e, 4, 4, [286.2, 1.8, 1.6], [286.2, 0.3, -0.45], 0.35), S(0xbdd1ff, 3, 3, [290.5, 1.57, -1.05], [290.5, 0.9, -1.05], 0.9),
+    P(0xffc890, 0.6, 3, 295.25, 2.2, -0.95), P(0xffd8a8, 0.8, 4, 281.2, 2.6, -0.2),
     // Pass 8: A's wheel and the pole through it, in their own low pool, so the jam reads from across the room.
     S(0xffd8a8, 3.5, 4, [235.3, 2.6, 1.2], [234.95, 0.7, -0.62], 0.42),
   ];
@@ -5207,7 +5217,7 @@ function nearAtt2Fixed() {
   if (s.f17.drawer >= 1 && !s.f17.read && Math.abs(x - ATT2.drawer.x) < 0.3) return 'att:read';
   return null;
 }
-const ATT2_STAND = { tray: ATT2.tray0 - 0.15, sit: ATT2.chair.x, lever16: ATT2.lever - 0.25, drawer: ATT2.drawer.x, read: ATT2.drawer.x };
+const ATT2_STAND = { tray: ATT2.tray0 - 0.15, sit: ATT2.chair.x, lever16: ATT2.lever - 0.25, drawer: ATT2.drawer.x, read: ATT2.drawer.x - 0.65 };   // reading, he stands aside for the close-up
 function updateAtt2Act(a, dt) {
   const s = game.att;
   if (a.what === 'duct') {
@@ -5532,7 +5542,7 @@ const VOICES = [
   { id: 'card_heap', kind: 'card', region: 3, upper: false, x: 68.0, standX: 68.0, crank: 'VoicePlayerHeapCrank', axis: [0, 1, 0] },
   { id: 'card_lastcar', kind: 'card', region: 4, x: 121.74, standX: 122.25, loose: true },   // stood clear of the suitcase's grip
   { id: 'att_bell', kind: 'tannoy', region: 6, x: 265.4, trigger: 1.2, reach: 12, when: () => !!game.att && game.att.f15.dismissed },
-  { id: 'att_volunteer', kind: 'card', region: 6, x: 288.0, standX: 288.0, z: -0.15 },
+  { id: 'att_volunteer', kind: 'card', region: 6, x: 288.0, standX: 288.0, z: -0.12 },
   { id: 'card_mara_parent', kind: 'card', region: 5, x: 158.07, standX: 158.07, z: -0.2, crank: 'VoicePlayerMaraCrank', axis: [0, 0, 1] },
 ];
 const voiceFound = {};

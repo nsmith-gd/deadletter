@@ -1637,6 +1637,13 @@ def build_floor_things(B, rnd):
         B.scyl('sw_putty', p1, p2, 0.008, seg=5)
         B.scyl('sw_black', p1 + (p1 - Vector((px, py, p1.z))).normalized() * 0.0065,
                p2 + (p2 - Vector((px, py, p2.z))).normalized() * 0.0065, 0.0025, seg=4)
+    ro, ri = r * 0.99 + h * 0.075, r * 0.99 - h * 0.075               # and over the rim, into the soil
+    for (ra, za), (rb, zb_) in (((ro + 0.002, h * 0.9), (ro * 0.97, h * 0.995)), ((ro * 0.97, h * 0.995), (ri, h * 0.97)),
+                                 ((ri, h * 0.97), (ri - 0.02, h * 0.905))):
+        pa = Vector((px + ra * math.cos(az0), py + ra * math.sin(az0), za))
+        pb = Vector((px + rb * math.cos(az0 + 0.04), py + rb * math.sin(az0 + 0.04), zb_))
+        B.scyl('sw_putty', pa, pb, 0.008, seg=5)
+        B.scyl('sw_black', pa + Vector((0, 0, 0.006)), pb + Vector((0, 0, 0.006)), 0.0022, seg=4)
     for zb in (0.07, 0.165):
         rr = rad(zb) + 0.0025
         B.torus('Att17Atlas', (px, py, zb), (0, 0, 1), rr, 0.0022, seg=28, rseg=4, cell='sw_wire')
@@ -1866,4 +1873,71 @@ def build_set(dl01, m, coll):
     print('dl17: tray rotation (deg)', tuple(round(math.degrees(a), 2) for a in objs[2].rotation_euler), 'loc', tuple(objs[2].location))
 
 
-REPORT = """(filled in after the build)"""
+REPORT = """DL-17 A Different Lesson (art/ch1/dl17.py). Blender (x, y, z) -> game (x, z, -y). Built 21 October 2026.
+
+MOVED / ANIMATED (origin = pivot, world coordinates)
+- Att17Drawer: built SHUT. Origin = middle of its front face, Blender (286.0, 0.62, 0.30) = game (286.0, 0.30, -0.62).
+  The front is x 285.3-286.7, z 0.12-0.48. Slide 0.45 toward the camera: Blender -y (game +z). Open origin is
+  Blender y 0.17 (game z -0.17). Its contents are part of its mesh: papers, other children's cards (R. ABEL,
+  T. ORME), the drawing, a pencil, a rubber, and the card. The label PLACEMENTS sits in a brass frame above a bar pull.
+- Att17Tray: the carried seed tray, 0.42 x 0.30 x 0.09, damp soil with blackened seedlings, tag "T. ORME".
+  The mesh is built level about its bottom centre. Lying pose: location Blender (285.7, 0.05, 0.026) = game
+  (285.7, 0.026, -0.05); rotation_euler XYZ (10, 0, -9) degrees (its back edge is up on a heap of spilled soil).
+  Zero rotation = level, as carried; when level, its bottom is at the origin.
+  Its footprint (Blender y -0.16..0.23) overlaps the open drawer's front (y 0.17), so the drawer is blocked until
+  the tray moves. It can't literally touch the handle (handle at y 0.58, tray centre given as y 0.05).
+- Att17GrowLamp: EMIT, two tubes x 289.42-291.58 at Blender y 1.005 / 1.095, z 1.60. Origin Blender (290.5, 1.05, 1.60)
+  = game (290.5, 1.60, -1.05).
+Static extras: Att17Shoot (the pale living shoot, EMIT AttShoot as in DL-13; origin on its soil, (290.5, 1.06, 1.021),
+tag "M. D."), Att17Bulbs (EMIT Att17Bulb: pendant (285.95, 0.80, 2.215), bench lamp (285.05, 0.89, 1.33),
+door bulkhead (295.25, 1.19, 2.25)), Att17Set (everything else).
+
+DRAWER CONTENTS (Blender; open = shut y - 0.45)
+- Drawing 0.50 x 0.35, face up, top of image toward +y, turned 0.03 rad: centre shut (286.385, 0.86, 0.3945),
+  open (286.385, 0.41, 0.3945) = game (286.385, 0.3945, -0.41).
+- Card 0.20 x 0.125, turned -0.09 rad: shut (285.93, 0.82, 0.3957), open (285.93, 0.37, 0.396) = game (285.93, 0.396, -0.37).
+- Mended pot on the floor: centre (286.9, 0.35), r 0.13, rim 0.255 = game (286.9, 0, -0.35).
+CLOSE-UP CAMERAS (drawer open; game coordinates; vertical FOV for 16:9)
+- Drawing beside the pot: pos (286.62, 0.92, -0.06), look (286.62, 0.33, -0.42), 24 mm = vFOV 45.7 deg (0.69 m).
+- Drawing alone: pos (286.385, 0.83, -0.08), look (286.385, 0.394, -0.41), 35 mm = vFOV 32.3 deg (0.55 m).
+- Card: pos (285.93, 0.75, -0.05), look (285.93, 0.396, -0.37), 35 mm = vFOV 32.3 deg (0.48 m).
+  Keep the camera at least 0.8 m high. Lower down, the drawer's front (top 0.48) hides the near edge of the drawing.
+
+SURFACES / LIMITS
+- Floor top 0 from x 280.0 to 295.8. The lane (y -0.3..0.3) is clear from 280 to 295.8 except the tray
+  (x ~285.49-285.91, top 0.09 when level).
+- Left wall x 280.0-280.15, with a doorway in it at Blender y -0.45..0.55 (game z -0.55..0.45), head 2.1.
+- Right end wall face x 295.8. Ceiling 3.0, with beams across the lane (bottom 2.84) at x 281.6, 284.0, 286.4,
+  288.8, 291.2 and 293.6, each +-0.07.
+- Behind the lane (not on his path): bench top 0.9 (x 282.8-288.6, y 0.65-1.3); stool top 0.45
+  (x 287.6-288.4, y 0.30-0.70); window shelf top 0.92 (x 289.0-292.0, y 0.82-1.3); sink top 0.86 (292.1-292.9).
+- Stair door (shut) x 293.75-294.85, head 2.15, in the back wall (y 1.3). Sign WORKS . RING A with an arrow
+  at z 2.27-2.6. A step plate in front of the door is 0.015 high.
+
+VOICE PLAYER (att_volunteer): on the stool, base Blender (288.0, 0.48, 0.45) = game (288.0, 0.45, -0.48), front to
+the camera. Card (288.0, 0.435, 0.602), top 0.598, horn mouth (288.18, 0.374, 0.798), crank pivot (288.11, 0.48, 0.538).
+
+RECOMMENDED GAME LIGHTS (game x, y, z)
+- Pendant pool: spot at (285.95, 2.15, -0.80), aimed down at (285.95, 0, -0.6). Colour (1, .76, .48), wide
+  (about 120 deg). Warm key on the bench, the drawer and the pot.
+- Bench lamp: spot at (285.04, 1.34, -0.90), aimed at (285.5, 0.9, -0.70). Colour (1, .8, .55), 75 deg, low.
+- Drawer reveal fill: spot at (286.2, 1.8, 1.6), aimed at (286.2, 0.3, -0.45). Colour (1, .84, .62), narrow (40 deg).
+  Raise it when the drawer opens.
+- Grow lamp: rect area or a pair of points under the tubes at (290.5, 1.57, -1.05). Cool (.74, .82, 1.0), aimed down.
+- Door: small point at (295.25, 2.2, -0.95). Colour (.95, .88, .75), dim.
+- Entry: warm point at (281.2, 2.6, -0.2), dim.
+
+NEW MATERIALS (index.html format)
+WORN:
+  WorkPlaster: { base: [.33, .27, .18], dirt: [.17, .13, .08], chip: [.23, .19, .14], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, dust: [.26, .22, .16], dustAmt: .4, streak: .5 },   // chapter 1, DL-17
+  PotClay: { base: [.34, .15, .075], dirt: [.16, .1, .06], chip: [.42, .36, .28], rough: .9, chipRough: .95, metal: 0, grime: 10, chipScale: 40, chipAmt: .72, dust: [.36, .32, .26], dustAmt: .5, streak: .3 },
+  DampSoil: { base: [.03, .022, .015], dirt: [.018, .013, .009], chip: [.06, .045, .03], rough: .8, chipRough: .45, metal: 0, grime: 30, chipScale: 80, chipAmt: .7, dust: [.06, .05, .04], dustAmt: .1 },
+EMIT:
+  Att17GrowLamp: [.78, .84, 1, 3], Att17Bulb: [1, .78, .5, 5],
+Reused materials: WinDado, PigeonWood, CrateWood, PupilWood, WornIron, HandledBrass, DarkMetal, WornStrap,
+DepotGreen, ParcelBrown, DirtyGlass, TeaEnamel, Cable, Copper, AttShoot, plus the
+voice-prop materials (Brass, HandWorn, ParcelPaper). Image material: Att17Atlas (textures/dl17_atlas.png, 2048
+square, about 1.8 MB).
+
+BUDGET: 35,864 triangles (set 33,652; drawer 428; tray 1,354; lamp 72; shoot 38; bulbs 320); 31 material slots.
+"""
