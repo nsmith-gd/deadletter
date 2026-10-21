@@ -762,8 +762,10 @@ README). It is sparse:
 - DL-09: `refuge`: near silence, then phrase B broadening into F major, peaking as the camera reaches its widest over
   the atrium. It plays out over the start of DL-10.
 - DL-11: `child`: when the desk clears the marks, the parcel's three notes become a lullaby on the music box, piano and strings.
-- DL-10: `prologue_lastcar` as the car leaves for good with the suitcase (UP on the counterweight's panel), then
-  `prologue_collapse` straight after it as he comes down into ring C.
+- DL-10: `prologue_lastcar` (10 s) as the car leaves for good with the suitcase (UP on the counterweight's panel),
+  then `prologue_collapse` straight after it. The ride down has its own shot: up at the car going, then, landed, high
+  over ring C's lane (a cold light comes up over it), held through the collapse's opening and handed back as the
+  lament begins (`LOOK10`: 16 s after UP, or 6.2 s into the collapse, never under 12 s).
 - After it, over the end card, the full theme ending in a music-box *Happy Birthday*.
 
 **Ambience (the prologue theme's loops, `docs/prologue_music.md`).** Under the cues, one looping layer crossfades

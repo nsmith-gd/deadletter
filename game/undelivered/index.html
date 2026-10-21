@@ -782,7 +782,7 @@ const Music = (() => {
     dead: 'dl01_dead', latch: 'dl04_latch', refuge: 'dl04_refuge', child: 'dl05_child', end: 'dl01_end',
     lastcar: 'prologue_lastcar', collapse: 'prologue_collapse', lower_works: 'prologue_loop_lower_works', order: 'prologue_loop_order',
     heaps: 'prologue_loop_heaps', failure: 'prologue_loop_failure' };
-  const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.46, dead: 0.62, latch: 0.55, refuge: 0.4, child: 0.6, end: 0.6, lastcar: 0.6, collapse: 0.6 };
+  const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.46, dead: 0.62, latch: 0.55, refuge: 0.4, child: 0.6, end: 0.6, lastcar: 0.6, collapse: 0.45 };
   // Each loop file is padded 2 s at each end, so the decoder's priming never lands on the seam. The prologue's loops are
   // mastered against each other and share one gain.
   const LOOPS = { bed: { loop: [2, 50], level: 0.26 }, lower_works: { loop: [2, 34], level: 0.5 }, order: { loop: [2, 34], level: 0.5 },
@@ -2562,6 +2562,7 @@ function setRegionLights(r, zone = lightZoneFor(r)) {
   (refs.rcLights || []).forEach((l) => (l.visible = r === 5 || uo));
   (refs.secretLights || []).forEach((l, i) => (l.visible = i === 0 ? r === 3 : r === 4 && !uo));
   (refs.endLights || []).forEach((l) => (l.visible = r === 5));
+  if (refs.ringcLook) refs.ringcLook.visible = r === 5 || uo;
   (refs.spillLights || []).forEach((l, i) => (l.visible = i === 0 ? r === 3 && !game.upper : r === 4 && !uo));
   if (refs.cotLight) refs.cotLight.visible = r === 1;
   (refs.attLights || []).forEach((l) => (l.visible = r === 6));
@@ -3606,6 +3607,13 @@ function currentShot() {
     return { name: 'realise', pos: V3(X + 1.7 - 0.8 * k, 0.42 + 0.2 * k, 1.0 + 0.3 * k),
       look: V3(X - 0.1 + 0.1 * k, 0.6 - 0.1 * k, -1.4 + 1.4 * k), focal: 30 + 20 * k, ease: 1.1 };
   }
+  // DL-10: riding the counterweight down, he looks up at the car leaving with the suitcase; landed, the camera rises
+  // over his shoulder and looks down the length of ring C, held through the collapse's opening.
+  const uo = game.ch1 && game.ch1.uo;
+  if (a && a.kind === 'ride10' && a.phase === 'ride' && uo && uo.upAt != null) {
+    if (uo.phase === 'up') return { name: 'car10', pos: V3(X + 0.9, Y + 0.35, 1.5), look: V3(UO.car.mid, DECK + 1.3 + uo.d, -0.9), focal: 24, ease: 0.9 };
+    return { name: 'ringc10', pos: V3(X - 0.2, 3.3, 3.6), look: V3(X + 7.5, 0.2, -1.4), focal: 22, ease: 0.45 };
+  }
   // Chapter 1, DL-15: sat in Mara's place, at child-desk height, the room emptying past him.
   if (a && a.kind === 'att' && a.what === 'sit' && a.phase === 'act' && a.t > 0.5) return { name: 'sit15', pos: V3(255.15, 0.62, 1.45), look: V3(258.6, 0.72, -0.9), focal: 28, ease: 0.9 };
   // DL-17: the drawer, close: the drawing beside the mended pot, then the placement card.
@@ -3927,6 +3935,8 @@ function buildCh1(setRoot) {
   refs.endLights = [P(0xffb066, 2.5, 8, 173.6, 24.2, -9.3), P(0xa8b8cc, 0.7, 3.5, 172.4, 1.4, -0.3)];
   // Pass 10: the first two secret rooms spill warm light out of their gaps onto the lane, so the gap reads as a way in;
   // and the night-shift cot at the back of the depot floor (DL-01's curiosity in depth) has a lamp of its own.
+  // DL-10's look down over ring C (LOOK10): a cold light comes up over the lane while the shot holds, so the street reads.
+  refs.ringcLook = new THREE.PointLight(0xb8c8d8, 0, 9, 1.6); refs.ringcLook.position.set(UO.cw.stand + 5, 2.6, -0.3); scene.add(refs.ringcLook);
   refs.spillLights = [P(0xffcf8a, 1.3, 2.6, 66.9, 0.75, -0.95), P(0xffa860, 1.2, 2.6, 107.17, DECK + 0.7, -1.45)];
   refs.cotLight = P(0xffc890, 1.1, 2.6, 4.75, 1.15, -2.2);
   refs.rcLights = [P(0xffbf80, 0.35, 1.5, OFF5 + 90.85, 1.45, -1.75), P(0xffc890, 0.9, 1.6, OFF5 + 102.75, 0.9, 0.1),
@@ -4447,7 +4457,7 @@ function updateAct10(a, dt) {
         uo.phase = 'up'; uo.t = 0; uo.riding = a.kind === 'ride10'; Sound.clunk(); Sound.chain(2.0); shake(0.15);
         // The car leaves for good with the suitcase (he rides the counterweight down): the anthem's last phrase, then the
         // collapse as he comes down into ring C.
-        if (uo.riding) { Music.play('lastcar', 0.3); Music.queue('collapse'); }
+        if (uo.riding) { Music.play('lastcar', 0.3); Music.queue('collapse'); uo.upAt = game.clock; uo.lookEnd = game.clock + LOOK10.hold; }
       }
       else { uo.buzz = game.clock; Sound.buzzShort(); Telemetry.event('liftBuzz', { from: a.kind }); if (!uo.loaded) Pips.flash('car10'); }
     }
@@ -4461,9 +4471,16 @@ function updateAct10(a, dt) {
   if (a.phase === 'ride') {
     // Down the open shaft on the counterweight's frame, his claws on its rails, looking up at the car going away.
     game.x = UO.cw.stand; game.y = DECK - uo.d; game.vx = 0; game.grounded = true; game.facing = 1;
-    if (uo.phase === 'gone' && a.t > 1.0) { game.act = null; setClip('Idle', 0.4); input.lastActivity = game.clock; }
+    // Landed, he stays a while: the shot looks down over ring C through the collapse's opening (the chime alone, the
+    // crash at about +3.5 s) and hands back as the lament begins, 6 s in. Timed from the cue when the music plays.
+    if (Music.playing() === 'collapse' && !a.collapseAt) { a.collapseAt = game.clock; uo.lookEnd = Math.max(uo.upAt + LOOK10.min, Math.min(uo.lookEnd, a.collapseAt + LOOK10.afterCollapse)); }
+    if (uo.phase === 'gone' && !a.landed) { a.landed = true; setClip('Idle', 0.5); }
+    if (refs.ringcLook) refs.ringcLook.intensity = 2.6 * smooth(Math.min(1, (game.clock - uo.upAt - UO.ride) / 2.5)) * (1 - smooth((game.clock - uo.lookEnd + 1.5) / 1.5));
+    if (uo.phase === 'gone' && game.clock >= Math.min(uo.lookEnd, uo.upAt + LOOK10.cap)) { game.act = null; setClip('Idle', 0.4); input.lastActivity = game.clock; if (refs.ringcLook) refs.ringcLook.intensity = 0; }
   }
 }
+// DL-10's last car (docs/prologue_music.md, beat 15): up at the car going, then down over ring C on landing.
+const LOOK10 = { hold: 16, afterCollapse: 6.2, min: 12, cap: 21 };      // seconds from UP
 function updateUpOnly(dt) {
   const uo = game.ch1.uo, k = refs.ch1, it = uo.case;
   Pips.set('car10', uo.loaded ? 1 : 0);
