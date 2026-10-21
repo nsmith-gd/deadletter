@@ -778,11 +778,18 @@ const Sound = (() => {
 // that crossfades between the prologue's four loops (lower works, order, heaps, failure) as the scene changes,
 // fades out under any cue and comes back with the scene's loop when it ends. Chapter one keeps its old bed.
 const Music = (() => {
-  const FILES = { wake: 'dl01_wake', bed: 'dl01_bed', hall: 'dl01_hall', threshold: 'dl01_threshold', racks: 'dl01_racks', kin: 'dl01_kin',
-    dead: 'dl01_dead', latch: 'dl04_latch', refuge: 'dl04_refuge', child: 'dl05_child', end: 'dl01_end',
+  // The prologue's scene cues are the composer's (art/music/prologue_cues.py), written in the loops' language; chapter
+  // one keeps the old score's `child` (the window peel, the dismissal) and its own end.
+  const FILES = { wake: 'prologue_cue_wake', bed: 'dl01_bed', hall: 'prologue_cue_hall', threshold: 'prologue_cue_threshold', racks: 'prologue_cue_racks',
+    kin: 'prologue_cue_kin', dead: 'prologue_cue_dead', latch: 'prologue_cue_latch', refuge: 'prologue_cue_refuge', childP: 'prologue_cue_child', end: 'prologue_cue_end',
+    child: 'dl05_child', endAtt: 'dl01_end',
     lastcar: 'prologue_lastcar', collapse: 'prologue_collapse', lower_works: 'prologue_loop_lower_works', order: 'prologue_loop_order',
     heaps: 'prologue_loop_heaps', failure: 'prologue_loop_failure' };
-  const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.46, dead: 0.62, latch: 0.55, refuge: 0.4, child: 0.6, end: 0.6, lastcar: 0.6, collapse: 0.45 };
+  const LEVEL = { wake: 0.9, hall: 0.9, threshold: 0.9, racks: 0.9, kin: 0.9, dead: 0.9, latch: 0.9, refuge: 0.9, childP: 0.9, end: 0.9, child: 0.6, endAtt: 0.6, lastcar: 0.6, collapse: 0.45 };
+  // The scene cues' handovers (prologue_music.json, scene_cues): at `hand` seconds in, a bar line, the scene's loop starts
+  // from its loop_start under the cue's ringing tail (or the queued cue starts); `intro` bars at the head share the
+  // outgoing loop's texture, so the loop fades out across them (4 s a bar, or 2 s with none).
+  const HAND = { wake: [44, 0], hall: [32, 1], threshold: [24, 1], racks: [36, 1], kin: [40, 1], dead: [40, 0], latch: [8, 0], refuge: [32, 0], childP: [40, 1], end: [60, 0] };
   // Each loop file is padded 2 s at each end, so the decoder's priming never lands on the seam. The prologue's loops are
   // mastered against each other and share one gain.
   // (At the composer's 0.5 the loops sat as low as the old bed and went unheard in play; 0.9 is about 5 dB up.)
@@ -816,21 +823,21 @@ const Music = (() => {
   function fadeOut(g, sec) { g.gain.cancelScheduledValues(ctx.currentTime); g.gain.setTargetAtTime(0, ctx.currentTime, sec / 4); }
   const note = () => { const k = (cue ? cue.name : '-') + '|' + (amb.cur ? amb.cur.name : '-'); if (log.length && log[log.length - 1][1] === k) return; log.push([typeof game !== 'undefined' ? +game.clock.toFixed(1) : 0, k]); if (log.length > 400) log.shift(); };
   // The ambience: the wanted loop, unless a cue is playing. A change crossfades; a cue starting hides it in 1.5 s.
-  function updateBed() {
+  function updateBed(fadeIn = amb.fadeIn) {
     if (!ctx) return;
-    const name = cue ? null : amb.want, cur = amb.cur, t = ctx.currentTime;
+    const name = cue && !cue.handed ? null : amb.want, cur = amb.cur, t = ctx.currentTime;
     if (cur && cur.name === name) {
       const lv = LOOPS[name].level * amb.scale;
       if (Math.abs(cur.level - lv) > 1e-3) { cur.level = lv; cur.gain.gain.cancelScheduledValues(t); cur.gain.gain.setTargetAtTime(lv, t, 1.0); }
       note(); return;
     }
     if (cur) {
-      const out = cue ? 1.5 : amb.fadeOut; fadeOut(cur.gain, out); cur.dead = true; amb.cur = null;
+      const out = cue && !cue.handed ? (HAND[cue.name] ? (HAND[cue.name][1] ? 4 : 2) : 1.5) : amb.fadeOut; fadeOut(cur.gain, out); cur.dead = true; amb.cur = null;
       setTimeout(() => { try { cur.src && cur.src.stop(); } catch (e) { /* already stopped */ } cur.gain.disconnect(); }, out * 1000 + 300);
     }
     if (name) {
       const L = LOOPS[name], c = { name, src: null, gain: ctx.createGain(), level: L.level * amb.scale };
-      c.gain.gain.setValueAtTime(0.0001, t); c.gain.gain.linearRampToValueAtTime(c.level, t + Math.max(0.05, amb.fadeIn)); c.gain.connect(bus);
+      c.gain.gain.setValueAtTime(0.0001, t); c.gain.gain.linearRampToValueAtTime(c.level, t + Math.max(0.05, fadeIn)); c.gain.connect(bus);
       amb.cur = c;
       get(name).then((b) => {
         if (!b || c.dead) return;
@@ -856,7 +863,14 @@ const Music = (() => {
         if (cue !== c || !b) { if (cue === c) { cue = null; updateBed(); } return; }
         c.src = ctx.createBufferSource(); c.src.buffer = b; c.src.connect(c.gain);
         // Start where it would be had it decoded instantly, so the wake stays in step with the opening.
-        c.src.start(0, Math.min(Math.max(0, ctx.currentTime - asked), b.duration - 0.1));
+        const off = Math.min(Math.max(0, ctx.currentTime - asked), b.duration - 0.1);
+        c.src.start(0, off);
+        if (HAND[name]) setTimeout(() => {
+          if (cue !== c) return;
+          c.handed = true;
+          if (c.next) { const n = c.next; c.next = null; this.play(n); } else updateBed(1.5);
+          note();
+        }, Math.max(0, HAND[name][0] - off) * 1000);
         c.src.onended = () => { if (cue === c) { cue = null; if (c.next) this.play(c.next); else updateBed(); } };     // a queued cue follows with no ambience between
       });
     },
@@ -3452,7 +3466,7 @@ function updateDL05(dt) {
   }
   // The marks are uncovered: the music comes in, and the first time the camera holds on them.
   if (!game.dl5.revealed && d.x <= DESK5.clear) {
-    game.dl5.revealed = true; Music.play('child');
+    game.dl5.revealed = true; Music.play('childP');
     if (once('marks')) game.marksShotAt = game.clock;
     // Pass 8: he lets go of the desk himself; the terminal is the next thing, at once.
     if (game.hold === 'desk') { game.hold = null; game.pushKey = null; setClip('Idle', 0.3); }
@@ -7347,7 +7361,8 @@ function finish() {
   Telemetry.event('end', { time: Math.round(game.endTime), deaths: game.deaths, found: Object.keys(curioFound).length }); Telemetry.flush();
   fadeEl.style.opacity = 1;
   Sound.distant();
-  if (Music.playing() !== 'end') Music.queue('end');
+  const endCue = game.region === 6 ? 'endAtt' : 'end';
+  if (Music.playing() !== endCue) Music.queue(endCue);
   // The prologue's card offers chapter one; chapter one's (finishAtt) says where it stops for now.
   const att = game.region === 6, cont = document.getElementById('continue-att');
   if (!att) for (const [id, v] of Object.entries(END_CARD)) document.getElementById(id).innerHTML = v;

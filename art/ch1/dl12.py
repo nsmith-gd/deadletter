@@ -22,7 +22,9 @@ Objects (origins are pivots, in world coordinates):
     AttLampCoat     the COAT 7 lamp's dome (EMIT AttLampCoat)
     AttPegLamp      peg 7's little bulb (EMIT AttPegLamp)
     AttCoat         the carried coat, built hanging on its hanger (origin at the inside top of the hanger's hook, the coat
-                    hanging along -z, its front to -y); placed as found, laid flat along x on top of the bin
+                    hanging along -z, its front to -y); placed as found, laid flat along x on top of the bin. Coat 7 is M.'s:
+                    its sleeves let down three times (bands of other cloth past each cuff, coat7_cuffs), its left pocket
+                    patched crookedly with big uneven stitches (_coat7_mends in the atlas)
 Voice props (art/common/voice_props.py, once VOICE_PROPS_READY exists): the gate's speaker (att_gate_*) and the
 caretaker's card player on his desk (att_caretaker).
 
@@ -165,6 +167,8 @@ CELLS = {
     'mitten': (0, 880, 64, 960), 'scarf': (64, 880, 128, 960), 'hat': (128, 880, 192, 960), 'shoe': (192, 880, 256, 960),
     'tin': (768, 880, 832, 960), 'jumper': (832, 880, 896, 960), 'cork': (896, 880, 960, 960), 'iron': (960, 880, 1024, 960),
     'banner': (0, 960, 1024, 1024),
+    # Coat 7's sleeve extensions, oldest to newest (three other cloths), and the thread at their seams.
+    'cuff1': (0, 300, 128, 320), 'cuff2': (128, 300, 256, 320), 'cuff3': (256, 300, 384, 320), 'seam7': (384, 300, 416, 320),
 }
 TAG_W, TAG_H, TAG_COLS = 48, 20, 21
 for _k in range(16):                     # the lost-property tags, 64 x 40
@@ -252,6 +256,66 @@ def _mark(d, mx, my, k, sun, book, ground):
     d.line((mx, my + 8 * k, mx, my + 70 * k), fill=ground, width=max(2, int(5 * k)))
 
 
+def _coat7_mends(img, d):
+    """Coat 7 (M.'s): one person's care. Its left pocket torn and mended crookedly, a patch of other cloth sewn on
+    askew with big uneven stitches; the sleeves' extension cloths (cuff1..3, oldest first) and their seam thread."""
+    import numpy as np
+    from PIL import Image, ImageDraw
+    rr = random.Random(707)
+    x0, y0, x1, y1 = CELLS['coatM']
+    w, h = x1 - x0, y1 - y0
+    # The patch: a faded blue-grey check, cut by hand (not square), sewn on tilted over the pocket's torn corner.
+    pw, ph = 44, 34
+    pat = Image.new('RGBA', (pw + 28, ph + 28), (0, 0, 0, 0))
+    pd = ImageDraw.Draw(pat)
+    ox, oy = 14, 14
+    poly = [(ox + 2, oy + 1), (ox + pw - 3, oy + 5), (ox + pw, oy + ph - 2), (ox + 5, oy + ph)]
+    pd.polygon(poly, fill=(80, 96, 110, 255))
+    for k in range(ox + 6, ox + pw - 2, 10):                   # the check, faint
+        pd.line((k, oy + 3, k + 2, oy + ph - 2), fill=(66, 78, 92, 255), width=2)
+    for k in range(oy + 8, oy + ph - 2, 10):
+        pd.line((ox + 3, k, ox + pw - 2, k + 2), fill=(100, 112, 122, 255), width=2)
+    pd.line((ox + 6, oy + 9, ox + pw - 6, oy + 12), fill=(44, 50, 60, 255), width=3)    # the pocket's mouth, sewn on again
+    # Big uneven whip stitches over its edge in pale thread: some long, some short, the spacing wandering.
+    edges = poly + [poly[0]]
+    for a, b in zip(edges, edges[1:]):
+        L = math.hypot(b[0] - a[0], b[1] - a[1])
+        ux, uy = (b[0] - a[0]) / L, (b[1] - a[1]) / L
+        nx, ny = uy, -ux                                        # outward (the polygon runs clockwise on screen)
+        t = rr.uniform(2, 5)
+        while t < L - 2:
+            px, py = a[0] + ux * t, a[1] + uy * t
+            li, lo = rr.uniform(3, 6), rr.uniform(2, 4)
+            sl = rr.uniform(-2, 3)
+            pd.line((px - nx * li - ux * sl, py - ny * li - uy * sl, px + nx * lo + ux * sl, py + ny * lo + uy * sl),
+                    fill=(232, 222, 192, 255), width=3)
+            t += rr.uniform(5, 10)
+    pat = pat.rotate(-12, resample=Image.BICUBIC, expand=False)
+    pcx, pcy = x0 + w / 2 - w * 0.22 + 6, y0 + h * 0.725
+    img.paste(pat, (int(pcx - (pw + 28) / 2), int(pcy - (ph + 28) / 2)), pat)
+    # The sleeves' extensions: each a different cloth.
+    def cloth(cell, base, seed, draw):
+        _noise_fill(img, CELLS[cell], base, 12, seed, weave=True)
+        cx0, cy0, cx1, cy1 = CELLS[cell]
+        draw(cx0, cy0, cx1, cy1)
+    def tweed(a, b, c, e):                                     # 1: brown herringbone
+        for k in range(a - 20, c, 6):
+            for j in range(b, e - 6, 6):
+                sgn = 1 if ((j - b) // 6) % 2 else -1
+                d.line((k, j, k + 3, j + sgn * 3 + 3), fill=(70, 56, 44), width=1)
+    def check(a, b, c, e):                                     # 2: navy with a pale check
+        for k in range(a + 3, c, 12):
+            d.line((k, b, k, e), fill=(150, 160, 176), width=2)
+        d.line((a, (b + e) / 2, c, (b + e) / 2), fill=(150, 160, 176), width=2)
+    def stripe(a, b, c, e):                                    # 3: a knitted brick red, cream bands round it
+        for j in (b + 4, b + 12):
+            d.line((a, j, c, j), fill=(214, 200, 170), width=3)
+    cloth('cuff1', (104, 82, 60), 811, tweed)
+    cloth('cuff2', (64, 84, 128), 812, check)
+    cloth('cuff3', (150, 58, 44), 813, stripe)
+    _noise_fill(img, CELLS['seam7'], (40, 34, 30), 8, 814)
+
+
 def make_atlas(path):
     from PIL import Image, ImageDraw, ImageFilter
     rnd = random.Random(1212)
@@ -313,8 +377,8 @@ def make_atlas(path):
                                      (0.25, 0.7, 22, 18, (96, 90, 84))], (160, 150, 120))
     coat('coatC', (96, 72, 52), 13, [(0.08, 0.56, 30, 36, (60, 66, 60)), (0.92, 0.56, 30, 36, (110, 96, 70)), (0.6, 0.4, 26, 22, (80, 70, 90)),
                                      (0.3, 0.18, 30, 24, (70, 60, 50))], (40, 30, 22))
-    coat('coatM', (156, 118, 46), 14, [(0.92, 0.56, 26, 30, (118, 104, 70)), (0.3, 0.3, 22, 18, (90, 98, 96))], (70, 52, 30), toggles=True,
-         tape='M.')
+    coat('coatM', (156, 118, 46), 14, [(0.92, 0.56, 26, 30, (118, 104, 70))], (70, 52, 30), toggles=True, tape='M.')
+    _coat7_mends(img, d)
     coat('coatK', (58, 54, 50), 15, [(0.08, 0.56, 32, 40, (78, 70, 58)), (0.92, 0.56, 32, 40, (78, 70, 58))], (30, 28, 24))
 
     # Swatches.
@@ -655,6 +719,26 @@ def coat_body(bm, s=1.0, hanger=True, hood=False, wide=1.0, length=1.0):
     rounded_box((0.125 * s * wide, 0.082 * s, 0.032 * s), (0, 0.002, L[0][0] * s - 0.006 * s), p=3.0, cuts=2, bm=bm, mat=mi)
     if hood:
         add_sphere(bm, (0, 0.046 * s, L[1][0] * s - 0.05 * s), 1.0, mat=mi, seg=10, scale=(0.082 * s, 0.04 * s, 0.085 * s))
+
+
+def coat7_cuffs(C, s=1.0, length=1.0, wide=1.0):
+    """Coat 7's sleeves, let down again and again: past each cuff (as coat_body hangs it on its hanger) three bands of
+    other cloth, oldest first, each a little longer and wider than the last, a dark seam where each is sewn on."""
+    L = ((-0.09, .148), (-0.17, .146))
+    zs, wb = L[0][0] * s, L[1][1] * s * wide
+    bands = (('cuff1', 0.034, 0.0365, 0.036), ('cuff2', 0.032, 0.038, 0.034), ('cuff3', 0.036, 0.0395, 0.04))
+    for sx in (-1, 1):
+        p2 = Vector((sx * (wb + 0.03 * s), -0.012 * s, zs - 0.2 * s * length))
+        p3 = Vector((sx * (wb + 0.028 * s), -0.02 * s, zs - 0.33 * s * length))
+        dv = (p3 - p2).normalized()
+        a = p3 - dv * 0.006
+        for k, (cell, ln, r0, r1) in enumerate(bands):
+            dk = Matrix.Rotation(math.radians(sx * (4.0, -5.0, 6.0)[k]), 3, 'Y') @ dv     # sewn on by hand: each a little askew
+            b = a + dk * (ln + (0.004 if sx > 0 and k == 2 else 0.0))       # the right one's newest band cut a bit long
+            C.painted(cell, lambda bm, a=a, b=b, r0=r0, r1=r1: add_cyl(bm, a, b, r0 * s, r1 * s, mat=0, seg=10))
+            C.painted('seam7', lambda bm, a=a, r0=r0, dk=dk: add_torus(bm, a + dk * 0.002, dk, r0 * s + 0.001, 0.0028, mat=0, seg=12, rseg=4))
+            a = b - dk * 0.002
+        C.painted('seam7', lambda bm, a=a, dk=dk: add_cyl(bm, a - dk * 0.001, a + dk * 0.0005, 0.03 * s, 0.03 * s, mat=0, seg=10))
 
 
 def hanger_bar(bm, s=1.0):
@@ -1469,6 +1553,7 @@ def build_set(dl01, m, coll):
     # The coat: built hanging on its hanger (origin at the inside top of the hook); placed as found, laid along x on the bin.
     C = Batch()
     C.painted('coatM', lambda bm: coat_body(bm, s=1.0, hanger=True, hood=True))
+    coat7_cuffs(C)
     C.painted('wood', lambda bm: hanger_bar(bm))
     C.painted('brass', hanger_hook)
     coat = C.done('AttCoat', coll, origin=(0.0, 0.0, 0.0))

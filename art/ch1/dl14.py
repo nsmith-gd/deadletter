@@ -62,8 +62,16 @@ WINDOWS = [                     # name, x0, x1, painted variant
     ('W5', 244.70, 245.80, 1),
 ]
 TRANSOMS = (1.30, 2.15)
-HATCH = (239.25, 240.15, 2.15, 3.0)          # the way on: x0, x1, sill, head
+HATCH = (239.2, 240.25, 2.15, 3.05)          # the way on: x0, x1, sill, head (rev 0.3: was 239.25..240.15, head 3.0)
 HATCH_LAND = (239.2, 240.2, 2.15)            # its iron landing, lane-deep
+DEN = (238.98, 240.47, WALL_Y2, 2.6)         # behind the hatch: the children's refuge, x0, x1, y0, y1 (floor = the sill)
+DEN_TOP = 3.08                               # its ceiling
+DUCT = (WALL_Y2, 1.95, 0.62)                 # the duct on from its right side, behind the painted windows: y0, y1, height
+PLACES = (239.56, 239.87, 240.18)            # the three places along its back wall: R.A., T.O., M (by the pipe)
+REF_PIPE = (240.385, 2.5)                    # the water pipe down its back right corner (x, y)
+REF_LAMP = (239.42, 1.74)                    # the lantern on the floor (x, y); its glass is AttRefugeLamp
+CLUTCH = (235.0, 0.712, 0.32, 0.12)          # AttClutch, behind A's wheel: x, y (its face), z (the axle), r
+DRIVE_PLATE = (242.64, 243.20, 0.44, 0.92)   # the enamel drive plate by the crank: x0, x1, z0, z1
 END_DOOR = (246.4, 247.3, 2.1)
 CUP_DOOR = (233.2, 233.8, 1.05)              # the stock cupboard's door, under the stair
 ROOM = (232.4, 235.0, WALL_Y1, 3.4, 2.3)     # x0, x1, y0, y1, ceiling
@@ -106,8 +114,11 @@ REUSE_WORN = {   # names already in index.html's WORN table (fallbacks for a lon
     'HandledBrass': dict(base=(.2, .14, .06), dirt=(.08, .06, .03), chip=(.62, .46, .2), rough=.5, chip_rough=.2, metallic=.85,
                          grime_scale=8, chip_scale=26, chip_amount=.5, dust=(.12, .1, .07), dust_amount=.2),
 }
-NEW_EMIT = {'AttGlobeLamp': ((1.0, 0.86, 0.62), 3.0), 'AttCupboardLamp': ((1.0, 0.72, 0.42), 6.0)}
-IMAGES = {'WinPanel': ('dl14_panels.png', 0.45), 'WinAtlas': ('dl14_atlas.png', 0.85), 'WinChain': ('dl14_chain.png', 0.4)}
+NEW_EMIT = {'AttGlobeLamp': ((1.0, 0.86, 0.62), 3.0), 'AttCupboardLamp': ((1.0, 0.72, 0.42), 6.0),
+            'DenLanternGlow': ((1.0, 0.55, 0.22), 2.5)}     # (already in index.html's EMIT: DL-09's den lantern)
+REUSE_PLAIN = {'Copper': ((.55, .3, .18), .35, 1.0)}
+IMAGES = {'WinPanel': ('dl14_panels.png', 0.45), 'WinAtlas': ('dl14_atlas.png', 0.85), 'WinChain': ('dl14_chain.png', 0.4),
+          'WinDrive': ('dl14_drive.png', 0.6)}
 
 
 def mat(name):
@@ -121,6 +132,9 @@ def mat(name):
     if name in NEW_EMIT:
         c, s = NEW_EMIT[name]
         return emission_material(name, c, s)
+    if name in REUSE_PLAIN:
+        c, r, mtl = REUSE_PLAIN[name]
+        return simple_material(name, c, r, metallic=mtl)
     if name in IMAGES:
         fn, rough = IMAGES[name]
         mt, nt, bsdf = d17._new_material(name)
@@ -166,7 +180,7 @@ PANEL_W = 448                  # each painted variant is 448 x 1024 in dl14_pane
 
 
 def cell_uv(name):
-    x0, y0, x1, y1 = CELLS[name]
+    x0, y0, x1, y1 = CELLS2[name] if name.startswith('r_') else CELLS[name]
     return x0 / ATLAS, 1 - y1 / ATLAS, x1 / ATLAS, 1 - y0 / ATLAS
 
 
@@ -534,11 +548,314 @@ def make_chain(path):
     img.filter(ImageFilter.GaussianBlur(0.5)).save(path, optimize=True)
 
 
+# Rev 0.3 (docs/chapter1_rev03_plan.md): the drive plate by the crank, the clutch's face, the A / B roundels, and the
+# children's refuge behind the hatch, in a second atlas (textures/dl14_drive.png, material WinDrive). Its cells are
+# named r_*; cell_uv() takes either atlas's names.
+CELLS2 = {
+    'r_drive': (0, 0, 640, 544),            # the drive plate, 0.56 x 0.48 m
+    'r_clutch': (640, 0, 896, 256),         # the clutch plate's face (a disc)
+    'r_tinlid': (896, 0, 1024, 96),         # the biscuit tin's lid, 0.21 x 0.16
+    'r_lblA': (896, 96, 960, 160), 'r_lblB': (960, 96, 1024, 160),
+    'r_cushA': (640, 256, 768, 384), 'r_cushO': (768, 256, 896, 384), 'r_blanket': (896, 256, 1024, 384),
+    'r_tinside': (640, 384, 896, 416),
+    'r_wall': (0, 544, 768, 1024),          # the refuge's back wall, x 238.98..240.47, z 2.15..3.08
+}
+SWATCH2 = {'r_sw_tin': (46, 70, 106), 'r_sw_crumb': (182, 146, 88), 'r_sw_enamel': (222, 218, 204), 'r_sw_blue': (34, 52, 104),
+           'r_sw_wood': (112, 80, 50), 'r_sw_iron': (40, 39, 37), 'r_sw_brass': (176, 136, 66), 'r_sw_string': (190, 178, 146),
+           'r_sw_dark': (10, 9, 8), 'r_sw_red': (132, 48, 40), 'r_sw_cream': (222, 212, 184), 'r_sw_paper': (204, 196, 172),
+           'r_sw_tinin': (120, 112, 96), 'r_sw_green': (52, 84, 60)}
+for _i, _k in enumerate(SWATCH2):
+    CELLS2[_k] = (768 + 32 * (_i % 8), 544 + 32 * (_i // 8), 768 + 32 * (_i % 8) + 32, 544 + 32 * (_i // 8) + 32)
+WALL2 = (238.98, 240.47, 2.15)              # the refuge wall cell's x0, x1, z0 (its top: z0 + (x1 - x0) * 480 / 768)
+
+
+def _letters(d, xy, text, size, fill, kind='carlito', anchor='mm', stroke=0, stroke_fill=None):
+    d.text(xy, text, font=_font(size, kind), fill=fill, anchor=anchor, stroke_width=stroke, stroke_fill=stroke_fill)
+
+
+def _arrow_v(d, x, ya, yb, w, fill):
+    """A bold arrow along y from ya (its tail) to yb (its head)."""
+    s = 1 if yb > ya else -1
+    head = w * 1.25
+    d.rectangle((x - w * 0.32, min(ya, yb - s * head), x + w * 0.32, max(ya, yb - s * head)), fill=fill)
+    d.polygon([(x - w, yb - s * head), (x + w, yb - s * head), (x, yb)], fill=fill)
+
+
+def _chain_dots(d, pts, fill, step=13, r=(6, 3.5)):
+    """A roller chain along a polyline: links as little ovals, alternate ones turned."""
+    acc = 0.0
+    k = 0
+    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+        L = math.hypot(bx - ax, by - ay)
+        while acc <= L:
+            t = acc / L
+            x, y = ax + (bx - ax) * t, ay + (by - ay) * t
+            horiz = abs(bx - ax) > abs(by - ay)
+            rx, ry = (r if horiz else (r[1], r[0])) if k % 2 == 0 else (r[1] + 1, r[1] + 1)
+            d.ellipse((x - rx, y - ry, x + rx, y + ry), fill=fill)
+            acc += step
+            k += 1
+        acc -= L
+
+
+def make_drive_plate(img):
+    """The enamel drive plate (1 px ~ 0.9 mm): one chain round two blinds, A down = B up; and the clutch, which slips
+    if a blind is held so the other moves alone. Pictures first, a few big words."""
+    from PIL import Image, ImageDraw
+    x0, y0, x1, y1 = CELLS2['r_drive']
+    w, h = x1 - x0, y1 - y0
+    cream, green, ink, cloth = (220, 212, 186), (34, 62, 50), (26, 26, 24), (70, 104, 84)
+    amber = (196, 128, 36)
+    p = Image.new('RGB', (w, h), cream)
+    d = ImageDraw.Draw(p)
+    d.rounded_rectangle((4, 4, w - 5, h - 5), radius=26, outline=green, width=10)
+    d.rounded_rectangle((18, 18, w - 19, 84), radius=12, fill=green)
+    _letters(d, (w // 2, 52), 'BLIND DRIVE', 50, cream)
+    # Left: the two blinds on one endless chain, driven by the crank.
+    rA, rB, ry = 104, 276, 128                                    # roller centres (x), roller y
+    for cx, label, down in ((rA, 'A', True), (rB, 'B', False)):
+        d.rounded_rectangle((cx - 66, ry - 11, cx + 66, ry + 11), radius=10, fill=(96, 70, 44), outline=ink, width=3)
+        bot = 336 if down else 214
+        d.rectangle((cx - 58, ry + 11, cx + 58, bot), fill=cloth, outline=ink, width=3)
+        d.rectangle((cx - 62, bot, cx + 62, bot + 12), fill=(96, 70, 44), outline=ink, width=2)
+        if down:
+            _arrow_v(d, cx, ry + 40, 318, 30, cream)
+        else:
+            _arrow_v(d, cx, 318, 236, 30, ink)
+        d.ellipse((cx - 34, 372 - 34, cx + 34, 372 + 34), fill=ink)
+        _letters(d, (cx, 374), label, 54, cream)
+    # The chain: up from the crank, over both rollers' sprockets, and back down to it.
+    sA, sB, cw = (rA + 66, ry), (rB + 66, ry), (190, 470)
+    loop = [(cw[0] - 30, cw[1]), (28, cw[1] - 20), (28, ry - 26), (sA[0], ry - 26), (sA[0], ry + 20), (sB[0] - 132, ry + 20),
+            (sB[0] - 132, ry - 26), (sB[0], ry - 26), (sB[0] + 22, ry), (sB[0] + 22, cw[1] - 20), (cw[0] + 30, cw[1])]
+    _chain_dots(d, loop, (60, 58, 54))
+    for sx, sy in (sA, sB):
+        d.ellipse((sx - 15, sy - 15, sx + 15, sy + 15), fill=(120, 116, 106), outline=ink, width=3)
+    d.ellipse((cw[0] - 32, cw[1] - 32, cw[0] + 32, cw[1] + 32), fill=cream, outline=ink, width=7)   # the crank's handwheel
+    for a in range(3):
+        aa = math.radians(90 + 120 * a)
+        d.line((cw[0], cw[1], cw[0] + 30 * math.cos(aa), cw[1] + 30 * math.sin(aa)), fill=ink, width=5)
+    d.ellipse((cw[0] - 8, cw[1] - 8, cw[0] + 8, cw[1] + 8), fill=ink)
+    d.ellipse((cw[0] - 23 - 9, cw[1] - 23 - 9, cw[0] - 23 + 9, cw[1] - 23 + 9), fill=amber, outline=ink, width=2)
+    d.arc((cw[0] - 50, cw[1] - 50, cw[0] + 50, cw[1] + 50), 200, 320, fill=amber, width=6)        # turn it
+    d.polygon([(cw[0] + 36, cw[1] - 46), (cw[0] + 50, cw[1] - 26), (cw[0] + 26, cw[1] - 28)], fill=amber)
+    # A down = B up.
+    _letters(d, (492, 506), 'A DOWN = B UP', 34, green)
+    # Right: the clutch. A held blind (the pole through its wheel), the clutch slipping, the other blind moving alone.
+    d.rounded_rectangle((372, 100, 612, 470), radius=14, outline=green, width=4)
+    _letters(d, (492, 126), 'CLUTCH', 34, green)
+    cx, cy = 430, 214                                              # a held wheel: pins, and the pole through them
+    d.ellipse((cx - 38, cy - 38, cx + 38, cy + 38), outline=ink, width=6)
+    for a in range(6):
+        aa = math.radians(a * 60 + 15)
+        d.ellipse((cx + 24 * math.cos(aa) - 5, cy + 24 * math.sin(aa) - 5, cx + 24 * math.cos(aa) + 5, cy + 24 * math.sin(aa) + 5), fill=ink)
+    d.line((cx - 30, cy + 70, cx + 18, cy - 70), fill=(150, 104, 56), width=11)                      # the pole
+    d.line((cx - 30, cy + 70, cx + 18, cy - 70), fill=ink, width=2)
+    _letters(d, (cx, cy + 92), 'HELD', 26, ink)
+    ex, ey = 540, 214                                              # the clutch: two plates and a spring, slipping
+    for dx in (-22, 22):
+        d.rounded_rectangle((ex + dx - 8, ey - 44, ex + dx + 8, ey + 44), radius=4, fill=(120, 116, 106), outline=ink, width=3)
+    d.line((ex - 14, ey, ex + 14, ey), fill=ink, width=5)
+    for k in range(4):
+        d.line((ex - 12 + 6 * k, ey - 10, ex - 9 + 6 * k, ey + 10), fill=ink, width=3)
+    for s in (-1, 1):                                              # slip: one plate turns, the other stays
+        d.arc((ex - 58, ey - 58, ex + 58, ey + 58), 200 if s < 0 else 20, 300 if s < 0 else 120, fill=amber, width=7)
+    d.polygon([(ex + 24, ey - 66), (ex + 4, ey - 50), (ex + 30, ey - 46)], fill=amber)
+    d.polygon([(ex - 24, ey + 66), (ex - 4, ey + 50), (ex - 30, ey + 46)], fill=amber)
+    _letters(d, (ex, ey + 92), 'SLIPS', 26, amber)
+    d.line((470, 214, 494, 214), fill=ink, width=4)
+    d.polygon([(494, 206), (494, 222), (506, 214)], fill=ink)
+    for k, s in enumerate(('If a blind is held,', 'the clutch slips:', 'the other blind', 'moves alone.')):
+        _letters(d, (492, 350 + k * 28), s, 25, ink)
+    for sx, sy in ((26, 26), (w - 27, 26), (26, h - 27), (w - 27, h - 27)):                       # its four screws
+        d.ellipse((sx - 7, sy - 7, sx + 7, sy + 7), fill=(150, 146, 136), outline=(70, 66, 60), width=2)
+        d.line((sx - 5, sy, sx + 5, sy), fill=(70, 66, 60), width=2)
+    img.paste(_fade(p, 1470, k=0.1, dust=0.12), (x0, y0))
+    dd = ImageDraw.Draw(img, 'RGBA')                               # chips in the enamel at the edges
+    rnd = random.Random(1471)
+    for _ in range(6):
+        ex_, ey_ = (rnd.choice((rnd.uniform(6, 30), rnd.uniform(w - 30, w - 6))), rnd.uniform(6, h - 6)) if rnd.random() < 0.5 else \
+                   (rnd.uniform(6, w - 6), rnd.choice((rnd.uniform(6, 22), rnd.uniform(h - 22, h - 6))))
+        r = rnd.uniform(2, 5)
+        dd.ellipse((x0 + ex_ - r, y0 + ey_ - r * 0.7, x0 + ex_ + r, y0 + ey_ + r * 0.7), fill=(52, 56, 60, 220))
+
+
+def make_refuge_wall(img):
+    """The refuge's back wall (1 px ~ 1.94 mm): bare concrete, and what three children left on it. Over each place its
+    initials, scratched: R.A. (an aeroplane), T.O. (a boat), M (her crooked tree); between them, a window drawn in
+    chalk with a sun in it; tally marks; a smudge where heads leant."""
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFilter
+    x0, y0, x1, y1 = CELLS2['r_wall']
+    w, h = x1 - x0, y1 - y0
+    s = w / (WALL2[1] - WALL2[0])                                  # px per metre
+    top = WALL2[2] + h / s
+    px = lambda x: (x - WALL2[0]) * s
+    pz = lambda z: (top - z) * s
+    n = _noise(w, h, 5, 1480)
+    a = np.ones((h, w, 3)) * np.array([118, 114, 106]) * (0.8 + 0.36 * n)[..., None]
+    for yy in range(int(pz(2.95)), h, int(0.3 * s)):              # formwork board marks
+        a[yy:yy + 2] *= 0.84
+    rng = np.random.default_rng(1481)
+    a[rng.random((h, w)) > 0.995] *= 0.55
+    yy, xx = np.mgrid[0:h, 0:w]
+    for xc in (239.56, 239.87, 240.18):                           # where heads and shoulders leant: darker, polished
+        g = np.exp(-(((xx - px(xc)) / (0.11 * s)) ** 2 + ((yy - pz(2.5)) / (0.13 * s)) ** 2))
+        a *= (1 - 0.22 * g)[..., None]
+    wall = Image.fromarray(np.clip(a, 0, 255).astype('uint8')).convert('RGBA')
+    lay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(lay)
+    rnd = random.Random(1482)
+    scratch, shade = (196, 192, 182, 235), (40, 38, 34, 170)
+
+    def scr(pts, wd=3):                                            # a scratch: a pale groove with a dark lip under it
+        q = [(x + rnd.uniform(-0.7, 0.7), y + rnd.uniform(-0.7, 0.7)) for x, y in pts]
+        d.line([(x + 1.2, y + 1.6) for x, y in q], fill=shade, width=wd)
+        d.line(q, fill=scratch, width=wd)
+
+    def scr_text(cx, cy, text, size):
+        m = Image.new('L', (w, h), 0)
+        ImageDraw.Draw(m).text((cx, cy), text, font=_font(size, 'sans-bold'), fill=255, anchor='mm')
+        m = m.filter(ImageFilter.FIND_EDGES).filter(ImageFilter.MaxFilter(3))
+        sh = Image.new('RGBA', (w, h), shade[:3] + (0,))
+        sh.putalpha(m.point(lambda v: int(v * 0.7)))
+        lay.alpha_composite(sh, (2, 2))
+        sc = Image.new('RGBA', (w, h), scratch[:3] + (0,))
+        sc.putalpha(m.point(lambda v: int(v * 0.92)))
+        lay.alpha_composite(sc)
+    # The initials, each over its own place.
+    scr_text(px(239.56), pz(2.66), 'R.A.', 46)
+    scr_text(px(239.87), pz(2.66), 'T.O.', 46)
+    scr_text(px(240.18), pz(2.66), 'M', 56)
+    # R.A.'s aeroplane
+    ax, ay = px(239.56), pz(2.83)
+    scr([(ax - 40, ay), (ax + 40, ay - 6)], 4)
+    scr([(ax - 8, ay - 3), (ax - 22, ay - 30), (ax - 4, ay - 30), (ax + 12, ay - 4)], 3)
+    scr([(ax - 6, ay + 1), (ax - 18, ay + 22), (ax - 2, ay + 22), (ax + 12, ay - 1)], 3)
+    scr([(ax - 40, ay), (ax - 46, ay - 16), (ax - 34, ay - 2)], 3)
+    # T.O.'s boat
+    bx, by = px(239.87), pz(2.81)
+    scr([(bx - 38, by), (bx + 38, by), (bx + 26, by + 16), (bx - 26, by + 16), (bx - 38, by)], 3)
+    scr([(bx, by), (bx, by - 50)], 3)
+    scr([(bx + 2, by - 48), (bx + 30, by - 8), (bx + 2, by - 8)], 3)
+    for k in range(3):
+        scr([(bx - 40 + 26 * k, by + 26), (bx - 28 + 26 * k, by + 22), (bx - 16 + 26 * k, by + 26)], 2)
+    # M's crooked tree, pencil, gone over and over
+    pen = ImageDraw.Draw(lay)
+
+    def stroke(pts, weight):
+        for _ in range(2):
+            q = [(x + rnd.uniform(-1, 1), y + rnd.uniform(-1, 1)) for x, y in pts]
+            pen.line(q, fill=(34, 34, 42, 230), width=max(2, int(4 * (0.6 + weight * 0.6))), joint='curve')
+    import build_dl05 as dl05
+    dl05._crooked_tree(stroke, px(240.18), pz(2.74), 0.2 * s, sx=0.17 * s)
+    # A window drawn in chalk above the middle place, the sun in its top pane: an outside, from inside.
+    wx0, wx1, wz0, wz1 = px(239.62), px(240.12), pz(3.03), pz(2.86)
+    ch = (226, 224, 214, 215)
+    for k in range(2):
+        o = k * 1.5
+        d.rectangle((wx0 + o, wz0 + o, wx1 - o, wz1 - o), outline=ch, width=3)
+    d.line(((wx0 + wx1) / 2, wz0, (wx0 + wx1) / 2, wz1), fill=ch, width=3)
+    d.line((wx0, (wz0 + wz1) / 2, wx1, (wz0 + wz1) / 2), fill=ch, width=3)
+    sx_, sy_ = wx0 + 0.72 * (wx1 - wx0), wz0 + 0.28 * (wz1 - wz0)
+    d.ellipse((sx_ - 10, sy_ - 10, sx_ + 10, sy_ + 10), outline=(226, 196, 110, 230), width=4)
+    for k in range(8):
+        aa = 2 * math.pi * k / 8
+        d.line((sx_ + 14 * math.cos(aa), sy_ + 14 * math.sin(aa), sx_ + 21 * math.cos(aa), sy_ + 21 * math.sin(aa)), fill=(226, 196, 110, 220), width=3)
+    # Tally marks by the pipe (days, or visits), in pencil.
+    tx, tz = px(240.3), pz(2.98)
+    for g in range(3):
+        for k in range(5 if g < 2 else 3):
+            if k == 4:
+                pen.line((tx + g * 34 - 4, tz + 18 + g * 0, tx + g * 34 + 26, tz + 2), fill=(40, 40, 48, 210), width=2)
+            else:
+                pen.line((tx + g * 34 + k * 6, tz, tx + g * 34 + k * 6 + 1, tz + 22), fill=(40, 40, 48, 210), width=2)
+    wall.alpha_composite(lay)
+    img.paste(wall.convert('RGB').filter(ImageFilter.GaussianBlur(0.5)), (x0, y0))
+
+
+def make_drive(path):
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFilter
+    img = Image.new('RGB', (1024, 1024), (60, 58, 54))
+    make_drive_plate(img)
+    make_refuge_wall(img)
+    # The clutch plate's face: dark iron, three bold cream bars and an amber wedge, so its turning reads.
+    x0, y0, x1, y1 = CELLS2['r_clutch']
+    c = Image.new('RGB', (x1 - x0, y1 - y0), (40, 39, 37))
+    d = ImageDraw.Draw(c)
+    cx = cy = 128
+    d.ellipse((2, 2, 253, 253), fill=(150, 116, 56))
+    d.ellipse((14, 14, 241, 241), fill=(44, 42, 40))
+    for k in range(3):
+        aa = math.radians(90 + 120 * k)
+        pts = [(cx + r * math.cos(aa + da), cy - r * math.sin(aa + da)) for r, da in ((34, -0.32), (112, -0.13), (112, 0.13), (34, 0.32))]
+        d.polygon(pts, fill=(226, 220, 200))
+    d.pieslice((18, 18, 237, 237), -95, -55, fill=(214, 140, 40))
+    d.ellipse((cx - 30, cy - 30, cx + 30, cy + 30), fill=(70, 68, 64))
+    d.ellipse((cx - 12, cy - 12, cx + 12, cy + 12), fill=(24, 23, 22))
+    for k in range(6):
+        aa = math.radians(k * 60)
+        d.ellipse((cx + 22 * math.cos(aa) - 4, cy + 22 * math.sin(aa) - 4, cx + 22 * math.cos(aa) + 4, cy + 22 * math.sin(aa) + 4), fill=(24, 23, 22))
+    img.paste(_fade(c, 1490, k=0.06, dust=0.1), (x0, y0))
+    # The A and B roundels: enamel, green on cream.
+    for name, t in (('r_lblA', 'A'), ('r_lblB', 'B')):
+        x0, y0, x1, y1 = CELLS2[name]
+        r = Image.new('RGB', (64, 64), (34, 62, 50))
+        dr = ImageDraw.Draw(r)
+        dr.ellipse((1, 1, 62, 62), fill=(220, 212, 186), outline=(34, 62, 50), width=5)
+        dr.text((32, 34), t, font=_font(40, 'carlito'), fill=(34, 62, 50), anchor='mm')
+        img.paste(r, (x0, y0))
+    # The biscuit tin: its lid (a painted oval, ASSORTED, biscuits round it) and its side band.
+    x0, y0, x1, y1 = CELLS2['r_tinlid']
+    t = Image.new('RGB', (128, 96), (46, 70, 106))
+    dt = ImageDraw.Draw(t)
+    dt.rectangle((3, 3, 124, 92), outline=(184, 150, 70), width=4)
+    dt.ellipse((16, 14, 112, 82), fill=(212, 196, 150), outline=(184, 150, 70), width=4)
+    dt.text((64, 40), 'ASSORTED', font=_font(15, 'carlito'), fill=(120, 40, 34), anchor='mm')
+    dt.text((64, 58), 'BISCUITS', font=_font(12, 'carlito'), fill=(60, 50, 40), anchor='mm')
+    for k in range(4):
+        dt.ellipse((6 + k * 30, 76, 18 + k * 30, 88), fill=(176, 130, 70))
+    img.paste(_fade(t, 1491, k=0.2, dust=0.2), (x0, y0))
+    x0, y0, x1, y1 = CELLS2['r_tinside']
+    ts = Image.new('RGB', (256, 32), (46, 70, 106))
+    dts = ImageDraw.Draw(ts)
+    dts.rectangle((0, 10, 255, 21), fill=(184, 150, 70))
+    for k in range(10):
+        dts.ellipse((6 + k * 25, 12, 16 + k * 25, 20), fill=(120, 40, 34))
+    img.paste(_fade(ts, 1492, k=0.2, dust=0.2), (x0, y0))
+    # Their three places: a faded red cushion (R.A.), a ticking cushion (T.O.), a folded army blanket (M).
+    rng = np.random.default_rng(1493)
+    for name, kind in (('r_cushA', 'red'), ('r_cushO', 'ticking'), ('r_blanket', 'blanket')):
+        x0, y0, x1, y1 = CELLS2[name]
+        n = _noise(128, 128, 3, int(rng.integers(1, 9999)))
+        if kind == 'red':
+            a = np.ones((128, 128, 3)) * np.array([132, 52, 42], float)
+            yy, xx = np.mgrid[0:128, 0:128]
+            a[((xx // 16 + yy // 16) % 2) == 0] *= 0.86                      # a faded check
+        elif kind == 'ticking':
+            a = np.ones((128, 128, 3)) * np.array([196, 190, 170], float)
+            for k in range(0, 128, 14):
+                a[:, k:k + 5] = np.array([60, 74, 112], float)
+        else:
+            a = np.ones((128, 128, 3)) * np.array([94, 94, 98], float)
+            a[20:28] = np.array([124, 50, 44], float)
+            for k in range(44, 128, 28):
+                a[k:k + 3] *= 0.7                                             # the folds
+        a *= (0.82 + 0.3 * n)[..., None]
+        img.paste(Image.fromarray(np.clip(a, 0, 255).astype('uint8')), (x0, y0))
+    for name, rgb in SWATCH2.items():
+        x0, y0, x1, y1 = CELLS2[name]
+        ImageDraw.Draw(img).rectangle((x0, y0, x1 - 1, y1 - 1), fill=rgb)
+    img.filter(ImageFilter.GaussianBlur(0.4)).save(path, optimize=True)
+
+
 def make_textures():
     os.makedirs(TEX, exist_ok=True)
     make_panels(os.path.join(TEX, 'dl14_panels.png'))
     make_atlas(os.path.join(TEX, 'dl14_atlas.png'))
     make_chain(os.path.join(TEX, 'dl14_chain.png'))
+    make_drive(os.path.join(TEX, 'dl14_drive.png'))
 
 
 # =====================================================================================================================
@@ -636,7 +953,7 @@ class MB:
         for k, pts in P.items():
             c = cells.get(k, cells.get('all'))
             u0, v0, u1, v1 = cell_uv(c)
-            if c.startswith('sw_'):
+            if 'sw_' in c:
                 u0 = u1 = (u0 + u1) / 2
                 v0 = v1 = (v0 + v1) / 2
             self.face(mt, pts, [(u0, v0), (u1, v0), (u1, v1), (u0, v1)])
@@ -846,12 +1163,22 @@ def build_hatch(B):
     for a, b, c, d in ((x0 - 0.05, x0, z0 - 0.05, z1 + 0.05), (x1, x1 + 0.05, z0 - 0.05, z1 + 0.05),
                        (x0 - 0.05, x1 + 0.05, z1, z1 + 0.05)):
         B.box('WornIron', a, b, WALL_Y - 0.025, WALL_Y, c, d)
-    B.box('WinPlaster', x0 - 0.05, x1 + 0.05, WALL_Y2, 2.6, z0 - 0.1, z0)              # the duct, back into the dark
-    B.box('WinPlaster', x0 - 0.1, x0, WALL_Y2, 2.6, z0, z1)
-    B.box('WinPlaster', x1, x1 + 0.1, WALL_Y2, 2.6, z0, z1)
-    B.box('WinPlaster', x0 - 0.1, x1 + 0.1, WALL_Y2, 2.6, z1, z1 + 0.1)
-    B.box('WinAtlas', x0 - 0.1, x1 + 0.1, 2.6, 2.7, z0 - 0.1, z1 + 0.1, cell='sw_dark')
-    B.box('PigeonWood', x1 - 0.035, x1 - 0.005, WALL_Y2 + 0.02, WALL_Y2 + 0.84, z0 + 0.02, z1 - 0.02)   # the door, open in
+    # Behind it (rev 0.3), the room the children kept: concrete, floored with boards, its back wall marked (WinDrive's
+    # r_wall); the duct goes on from its right side, low, behind the painted windows toward DL-15.
+    dx0, dx1, dy0, dy1 = DEN
+    B.box('CrateWood', dx0 - 0.1, dx1 + 0.1, dy0, dy1 + 0.1, z0 - 0.1, z0)
+    for k in range(1, 9):                                                               # its boards' seams
+        y = dy0 + (dy1 - dy0) * k / 9
+        B.box('PigeonWood', dx0, dx1, y - 0.004, y + 0.004, z0, z0 + 0.002)
+    B.box('WinPlaster', dx0 - 0.1, dx0, dy0, dy1 + 0.1, z0, DEN_TOP)
+    B.box('WinPlaster', dx1, dx1 + 0.1, DUCT[1], dy1 + 0.1, z0, DEN_TOP)
+    B.box('WinPlaster', dx1, dx1 + 0.1, dy0, DUCT[1], z0 + DUCT[2], DEN_TOP)
+    B.box('WinPlaster', dx0 - 0.1, dx1 + 0.1, dy0, dy1 + 0.1, DEN_TOP, DEN_TOP + 0.1)
+    B.box('WinPlaster', dx0 - 0.1, dx1 + 0.1, dy1, dy1 + 0.1, z0, DEN_TOP)
+    B.decal('WinDrive', WALL2[0], WALL2[1], WALL2[2], WALL2[2] + (WALL2[1] - WALL2[0]) * 480 / 768, dy1 - 0.001, cell='r_wall')
+    B.box('WinAtlas', dx1 + 0.1, dx1 + 0.6, dy0 - 0.05, DUCT[1] + 0.05, z0 - 0.05, z0 + DUCT[2] + 0.05, cell='sw_dark')
+    B.box('WornIron', dx1 - 0.01, dx1 + 0.1, dy0, DUCT[1], z0 + DUCT[2] - 0.03, z0 + DUCT[2])                # its lintel
+    B.box('PigeonWood', x0 + 0.005, x0 + 0.035, WALL_Y2 + 0.02, WALL_Y2 + 0.86, z0 + 0.02, z1 - 0.02)   # the door, open in
     lx0, lx1, lh = HATCH_LAND
     B.box('WornIron', lx0, lx1, LEDGE_Y[0], WALL_Y, lh - 0.035, lh)
     B.box('WornIron', lx0, lx1, LEDGE_Y[0], LEDGE_Y[0] + 0.025, lh - 0.09, lh)
@@ -930,7 +1257,25 @@ def build_props(B):
     B.box('WornIron', 242.22, 242.58, 0.74, WALL_Y, 0.28, 1.1)
     B.box('WornIron', 242.18, 242.62, 0.84, WALL_Y, 0.24, 0.3)
     B.cyl('WornIron', (242.4, 0.74, 0.5), (242.4, 0.70, 0.5), 0.06, seg=14)
-    B.decal('WinAtlas', 242.64, 242.92, 0.70, 0.77, WALL_Y - 0.002, cell='blindsplate')
+    # Rev 0.3: the drive plate (it replaces the little BLINDS A B plate): one chain, two blinds, A down = B up; the
+    # clutch slips if a blind is held. Enamel on a steel backing, four screws.
+    px0, px1, pz0, pz1 = DRIVE_PLATE
+    B.box('WornIron', px0 - 0.012, px1 + 0.012, WALL_Y - 0.008, WALL_Y, pz0 - 0.012, pz1 + 0.012)
+    B.decal('WinDrive', px0, px1, pz0, pz1, WALL_Y - 0.009, cell='r_drive')
+    # A and B, on the two blinds' pelmets and on A's chain wheel's wall plate, so the plate's letters have places.
+    for name, xc, zc, r in (('r_lblA', 236.99, 3.17, 0.055), ('r_lblB', 238.375, 3.17, 0.055), ('r_lblA', 235.19, 0.17, 0.035)):
+        y = 0.6585 if zc > 3 else WALL_Y - 0.016
+        u0, v0, u1, v1 = cell_uv(name)
+        ring = [2 * math.pi * k / 16 for k in range(16)]
+        B.face('WinDrive', [(xc + r * math.cos(a), y, zc + r * math.sin(a)) for a in ring],
+               [((u0 + u1) / 2 + (u1 - u0) / 2 * math.cos(a), (v0 + v1) / 2 + (v1 - v0) / 2 * math.sin(a)) for a in ring])
+    # The clutch's static half behind A's wheel (AttClutch is the plate that turns): a friction ring, its spring.
+    cx, cy, cz, cr = CLUTCH
+    B.cyl('WinAtlas', (cx, cy + 0.02, cz), (cx, cy + 0.03, cz), cr - 0.012, seg=24, cell='sw_brass')
+    B.cyl('WornIron', (cx, cy + 0.03, cz), (cx, cy + 0.05, cz), cr - 0.02, seg=24)
+    for k in range(7):
+        B.torus('WornIron', (cx, cy + 0.06 + k * 0.016, cz), (0, 1, 0), 0.034, 0.006, seg=12, rseg=4)
+    B.cyl('WornIron', (cx, WALL_Y - 0.016, cz), (cx, cy + 0.16, cz), 0.05, seg=14)
     sx, sz, sr = S0
     pulley(B, sx, sz, sr, axle_to=0.74)
     # Ceiling pulleys and the rollers' sprockets (static), each on an axle from the wall.
@@ -1163,6 +1508,133 @@ def build_wheel(coll):
     return B.obj('AttWheelA', coll, origin=(x, y, z))
 
 
+def build_clutch(coll):
+    """AttClutch (rev 0.3): the slipping clutch on A's drive, its pressure plate just behind A's chain wheel, seen through
+    the wheel's spokes: a disc 0.24 across, its face painted with three bold cream bars and an amber wedge so its turning
+    reads, a brass friction rim, the hub nut. Origin on the axle (235.0, 0.722, 0.32): it spins about Blender y, the
+    game's z (toward the camera), as AttWheelA does. The game turns it with the wheel, and alone while the wheel is held
+    and the chain slips past."""
+    B = MB()
+    x, y, z, r = CLUTCH
+    B.cyl('WornIron', (x, y + 0.002, z), (x, y + 0.02, z), r, seg=32)
+    u0, v0, u1, v1 = cell_uv('r_clutch')
+    ring = [2 * math.pi * k / 32 for k in range(32)]
+    B.face('WinDrive', [(x + r * math.cos(a), y, z + r * math.sin(a)) for a in ring],
+           [((u0 + u1) / 2 + (u1 - u0) / 2 * math.cos(a), (v0 + v1) / 2 + (v1 - v0) / 2 * math.sin(a)) for a in ring])
+    B.torus('HandledBrass', (x, y + 0.011, z), (0, 1, 0), r, 0.008, seg=32, rseg=6)
+    B.cyl('WornIron', (x, y - 0.012, z), (x, y, z), 0.026, seg=6)                 # the hub nut, hexagonal
+    return B.obj('AttClutch', coll, origin=(x, y + 0.01, z))
+
+
+def _project(B, verts, cell, c, size, front_y=None):
+    """UVs for the faces round these verts from an atlas cell, projected: from above for faces that face up, from
+    the front (-y) for the rest; c the centre, size (x, y, z) the extent mapped onto the cell."""
+    u0, v0, u1, v1 = cell_uv(cell)
+    faces = set()
+    for v in verts:
+        faces.update(v.link_faces)
+    for f in faces:
+        f.normal_update()
+        up = abs(f.normal.z) > 0.6
+        for lp in f.loops:
+            p = lp.vert.co
+            s = 0.5 + (p.x - c[0]) / size[0]
+            t = 0.5 + ((p.y - c[1]) / size[1] if up else (p.z - c[2]) / size[2])
+            s, t = min(max(s, 0.0), 1.0), min(max(t, 0.0), 1.0)
+            lp[B.uv].uv = (u0 + (u1 - u0) * s, v0 + (v1 - v0) * t)
+
+
+def build_refuge(coll):
+    """AttRefuge (rev 0.3; static): the place the last three children shared, behind the hatch, at the duct's mouth,
+    seen through the hatch by anyone who climbs to it, lit by a lantern on the floor (its glass AttRefugeLamp,
+    EMIT DenLanternGlow). Along the back wall, three places under their marks: R.A.'s faded red cushion, T.O.'s ticking
+    cushion, M's folded army blanket by the pipe. In front, the biscuit tin, open, its lid leant on it, crumbs. On M's
+    side, a tin cup held to the water pipe with string, mouth to the pipe: for listening."""
+    B = MB()
+    z0 = HATCH[2]
+    rnd = random.Random(1495)
+    py = 2.37
+    for x, cell, size, tilt in ((PLACES[0], 'r_cushA', (0.27, 0.3, 0.085), 0.05), (PLACES[1], 'r_cushO', (0.26, 0.29, 0.08), -0.04),
+                                (PLACES[2], 'r_blanket', (0.28, 0.31, 0.07), 0.02)):
+        n0 = B.mark()
+        d17.rounded_box(size, (0.0, 0.0, size[2] / 2), p=3.0 if cell != 'r_blanket' else 6.0, cuts=3, bm=B.bm, mat=B.m('WinDrive'))
+        vs = B.since(n0)
+        for v in vs:                                                                # sat on: dished in the middle
+            r2 = (v.co.x / (size[0] / 2)) ** 2 + (v.co.y / (size[1] / 2)) ** 2
+            if v.co.z > size[2] * 0.6:
+                v.co.z -= 0.025 * max(0.0, 1 - r2) * (1.0 if cell != 'r_blanket' else 0.4)
+        for v in vs:
+            v.co = Matrix.Translation((x, py + rnd.uniform(-0.02, 0.02), z0)) @ Matrix.Rotation(tilt, 4, 'Z') @ v.co
+        _project(B, vs, cell, (x, py, z0 + size[2] / 2), (size[0] + 0.01, size[1] + 0.01, size[2] + 0.01))
+        if cell == 'r_blanket':                                                     # its folded edge, rolled
+            B.cyl('WinDrive', (x - 0.14, py - 0.155, z0 + 0.035), (x + 0.14, py - 0.15, z0 + 0.035), 0.034, seg=10, cell='r_sw_iron')
+    # The biscuit tin, open, in front of the middle place; its lid leant against it facing out; crumbs.
+    tx, ty = PLACES[1] + 0.02, 1.98
+    tw, td, th = 0.21, 0.155, 0.075
+    n0 = B.mark()
+    B.box('WinDrive', tx - tw / 2, tx + tw / 2, ty - td / 2, ty + td / 2, z0, z0 + 0.006, cell='r_sw_tinin')
+    for a, b, c, d in ((tx - tw / 2, tx + tw / 2, ty - td / 2, ty - td / 2 + 0.004), (tx - tw / 2, tx + tw / 2, ty + td / 2 - 0.004, ty + td / 2),
+                       (tx - tw / 2, tx - tw / 2 + 0.004, ty - td / 2, ty + td / 2), (tx + tw / 2 - 0.004, tx + tw / 2, ty - td / 2, ty + td / 2)):
+        vs = B.box('WinDrive', a, b, c, d, z0, z0 + th)
+        _project(B, vs, 'r_tinside', (tx, ty, z0 + th / 2), (tw + 0.002, td + 0.002, th + 0.002))
+    for k in range(5):                                                              # what is left inside: crumbs
+        cx, cy = tx + rnd.uniform(-0.08, 0.08), ty + rnd.uniform(-0.05, 0.05)
+        B.box('WinDrive', cx - 0.006, cx + 0.006, cy - 0.005, cy + 0.005, z0 + 0.006, z0 + 0.012, cell='r_sw_crumb')
+    for k in range(9):
+        cx, cy = tx + rnd.uniform(-0.25, 0.25), ty + rnd.uniform(-0.2, 0.15)
+        if abs(cx - tx) < tw / 2 + 0.01 and abs(cy - ty) < td / 2 + 0.01:
+            continue
+        B.box('WinDrive', cx - 0.005, cx + 0.005, cy - 0.004, cy + 0.004, z0, z0 + 0.006, cell='r_sw_crumb')
+    B.box('WinDrive', tx + 0.14, tx + 0.18, ty - 0.11, ty - 0.085, z0, z0 + 0.008, cell='r_sw_crumb')     # half a biscuit
+    n0 = B.mark()
+    lw, ld = tw + 0.008, td + 0.008
+    vs = B.box('WinDrive', -lw / 2, lw / 2, -0.006, 0.006, 0.0, ld)
+    vs = B.since(n0)
+    for v in vs:
+        v.co = Matrix.Translation((tx + 0.01, ty - td / 2 - 0.045, z0)) @ Matrix.Rotation(math.radians(-17), 4, 'X') @ v.co
+    u0, v0, u1, v1 = cell_uv('r_tinlid')
+    faces = set()
+    for v in vs:
+        faces.update(v.link_faces)
+    for f in faces:
+        for lp in f.loops:
+            lp[B.uv].uv = (u0 + (u1 - u0) * (0.5 + (lp.vert.co.x - tx - 0.01) / lw), v0 + (v1 - v0) * min(1.0, max(0.0, (lp.vert.co.z - z0) / (ld * 0.956))))
+    # The water pipe down the back right corner, and the tin cup held to it with string, its mouth to the pipe.
+    px, py_ = REF_PIPE
+    B.cyl('Copper', (px, py_, z0), (px, py_, DEN_TOP), 0.019, seg=10)
+    for z in (z0 + 0.2, DEN_TOP - 0.12):
+        B.box('WornIron', px - 0.012, px + 0.012, py_, DEN[3], z - 0.02, z + 0.02)
+    cz = z0 + 0.5
+    B.cyl('WinDrive', (px - 0.115, py_, cz), (px - 0.018, py_, cz), 0.03, 0.036, seg=14, cell='r_sw_enamel')
+    B.torus('WinDrive', (px - 0.019, py_, cz), (1, 0, 0), 0.036, 0.003, seg=14, rseg=4, cell='r_sw_blue')
+    B.torus('WinDrive', (px - 0.07, py_, cz + 0.045), (0, 1, 0), 0.02, 0.005, seg=10, rseg=4, cell='r_sw_enamel')
+    for k, z in enumerate((cz - 0.012, cz + 0.014)):                               # the string, round the pipe and the cup
+        B.torus('WinDrive', (px, py_, z), (0, 0, 1), 0.021, 0.0025, seg=10, rseg=3, cell='r_sw_string')
+        B.cyl('WinDrive', (px - 0.015, py_ - 0.02, z), (px - 0.09, py_ - 0.032, z - 0.005 + 0.01 * k), 0.0025, seg=4, cell='r_sw_string')
+        B.cyl('WinDrive', (px - 0.015, py_ + 0.02, z), (px - 0.09, py_ + 0.032, z - 0.005 + 0.01 * k), 0.0025, seg=4, cell='r_sw_string')
+    B.cyl('WinDrive', (px - 0.09, py_ - 0.033, cz - 0.003), (px - 0.09, py_ + 0.033, cz - 0.003), 0.0025, seg=4, cell='r_sw_string')
+    # The lantern on the floor: a base, its cage, its cap and handle (the glass is AttRefugeLamp).
+    lx, ly = REF_LAMP
+    B.cyl('WinDrive', (lx, ly, z0), (lx, ly, z0 + 0.03), 0.055, 0.05, seg=14, cell='r_sw_iron')
+    B.cyl('WinDrive', (lx, ly, z0 + 0.155), (lx, ly, z0 + 0.18), 0.045, 0.02, seg=12, cell='r_sw_iron')
+    for k in range(4):
+        a = math.pi / 4 + k * math.pi / 2
+        B.cyl('WinDrive', (lx + 0.047 * math.cos(a), ly + 0.047 * math.sin(a), z0 + 0.03),
+              (lx + 0.042 * math.cos(a), ly + 0.042 * math.sin(a), z0 + 0.158), 0.004, seg=4, cell='r_sw_iron')
+    B.torus('WinDrive', (lx, ly, z0 + 0.2), (0, 1, 0), 0.035, 0.003, seg=12, rseg=4, cell='r_sw_iron')
+    # A pencil and a crayon dropped on R.A.'s cushion's edge; a sheet of drawing paper under the tin's corner.
+    B.cyl('WinDrive', (PLACES[0] - 0.06, 2.2, z0 + 0.004), (PLACES[0] + 0.05, 2.16, z0 + 0.004), 0.004, seg=6, cell='r_sw_brass')
+    B.cyl('WinDrive', (PLACES[0] + 0.12, 2.1, z0 + 0.005), (PLACES[0] + 0.17, 2.14, z0 + 0.005), 0.005, seg=6, cell='r_sw_green')
+    n0 = B.mark()
+    B.box('WinDrive', -0.1, 0.1, -0.075, 0.075, 0.0, 0.002, cell='r_sw_paper')
+    B.xform(n0, Matrix.Translation((tx - 0.17, ty + 0.05, z0)) @ Matrix.Rotation(0.35, 4, 'Z'))
+    ob = B.obj('AttRefuge', coll)
+    L = MB()
+    L.cyl('DenLanternGlow', (lx, ly, z0 + 0.035), (lx, ly, z0 + 0.15), 0.036, 0.03, seg=14)
+    lamp = L.obj('AttRefugeLamp', coll, origin=(lx, ly, z0 + 0.09))
+    return ob, lamp
+
+
 def build_pole(coll):
     """AttPole: the window pole, 2.2 m: a wooden shaft, a brass hook at the top, a ferrule at the foot, and a grip band
     worn bright at the middle. Built along local z (hook at +z), origin at the middle grip; leaned against the newel by
@@ -1361,7 +1833,9 @@ def build_set(dl01, m, coll):
     objs.append(build_peel(coll))
     objs.append(build_crank(coll))
     objs.append(build_wheel(coll))
+    objs.append(build_clutch(coll))
     objs.append(build_pole(coll))
+    objs.extend(build_refuge(coll))
     objs.extend(build_cupboard(coll))
     bpy.context.view_layer.update()
     total_t, total_p = 0, 0

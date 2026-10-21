@@ -85,8 +85,10 @@ SHOOT = (229.42, 1.16)
 
 # The cycle dial (12 s a lesson): the steps out at 1.0, 2.6, 4.2 s; all out 4.2-5.6 s (the red sector).
 CYCLE = 12.0
-MARKS = (1.0, 2.6, 4.2)
-RED = (4.2, 5.6)
+MARKS = (1.0, 2.6, 4.2)             # each step out (the game's ATT.cycle.out) ...
+FOLDS = (5.6, 6.2, 6.8)             # ... and folded again (ATT.cycle.fold)
+RED = (4.2, 5.6)                    # all three out: the useful window; its middle (4.9 s) is the brake's chevron
+TREE_T = (6.8, 10.4)                # the model tree grows
 
 # The seated figures are linked duplicates of one mesh (LessonFigureSeated), as asked: 10 objects, 2 draw calls each
 # unless the game instances them. True merges them into AttLessonRoom instead (one more material there, 19 fewer calls).
@@ -181,6 +183,9 @@ R_NOTICE = (512, 720, 768, 848)     # NO PUPIL TO APPROACH THE APPARATUS UNACCOM
 R_STEWARD = (768, 720, 896, 880)    # the Steward's portrait
 R_STEWPLATE = (896, 720, 1024, 752) # its brass plate
 R_NUM = [(768 + 64 * k, 608, 832 + 64 * k, 672) for k in range(3)]   # enamel step numbers 1, 2, 3
+R_POINTER = (960, 608, 1024, 672)   # the brake's pointer plate on the dial's bezel
+R_WHITE = (896, 752, 960, 784)      # white enamel (the pointer's edge)
+R_SOIL = (0, 928, 512, 1024)        # the seedling tray's dry, cracked soil
 
 
 def make_atlas(path):
@@ -262,31 +267,68 @@ def make_atlas(path):
     for k in range(3):
         d.text((x0 + 268, y0 + 196 + 20 * k), 'A tree always grows straight.', font=font(15), fill=(170, 176, 168), anchor='lm')
 
-    # --- the cycle dial: cream enamel, three marks for the steps out, the red sector when all three are out --------
+    # --- the cycle dial: its shapes are the lesson's phases. Clockwise from the bell at the top, 12 s a turn: a band
+    #     for each step's time out (step 1 inner, its enamel number where it comes out), the window where all three are
+    #     out cut red through them (the bands white in it), a white chevron on the rim at the window's middle (the
+    #     brake's pointer on the bezel matches it), and the model tree's growth on the left, in green.
     x0, y0, x1, y1 = R_DIAL
     cx, cy, R = (x0 + x1) / 2, (y0 + y1) / 2, 126
     d.rectangle(R_DIAL, fill=(60, 50, 34))
-    d.ellipse((cx - R, cy - R, cx + R, cy + R), fill=(206, 196, 166))
+    face, dark, red, white = (214, 204, 174), (34, 40, 36), (168, 30, 22), (246, 242, 228)
+    d.ellipse((cx - R, cy - R, cx + R, cy + R), fill=face, outline=(70, 62, 50), width=3)
 
     def ang(t):                                             # clockwise from the top, in PIL's degrees
         return t / CYCLE * 360.0 - 90.0
-    d.pieslice((cx - R + 6, cy - R + 6, cx + R - 6, cy + R - 6), ang(RED[0]), ang(RED[1]), fill=(150, 30, 22))
-    d.ellipse((cx - R + 40, cy - R + 40, cx + R - 40, cy + R - 40), fill=(206, 196, 166))
-    for k in range(48):                                     # the quarter-second ticks
-        a = math.radians(k * 7.5 - 90)
-        r0 = R - (16 if k % 4 == 0 else 9)
-        d.line((cx + r0 * math.cos(a), cy + r0 * math.sin(a), cx + (R - 4) * math.cos(a), cy + (R - 4) * math.sin(a)),
-               fill=(70, 62, 50), width=2 if k % 4 == 0 else 1)
-    for k, t in enumerate(MARKS):                           # the three steps out, bold, numbered
+
+    def pt(t, r):
         a = math.radians(ang(t))
-        d.line((cx + (R - 46) * math.cos(a), cy + (R - 46) * math.sin(a), cx + (R - 4) * math.cos(a), cy + (R - 4) * math.sin(a)),
-               fill=ink, width=7)
-        d.text((cx + (R - 62) * math.cos(a), cy + (R - 62) * math.sin(a)), str(k + 1), font=font(22), fill=ink, anchor='mm')
-    a = math.radians(-90)                                   # the bell at the top
-    d.ellipse((cx - 9, cy - R + 18, cx + 9, cy - R + 34), fill=(150, 116, 50))
-    d.text((cx, cy + 52), 'LESSON', font=font(20), fill=(70, 62, 50), anchor='mm')
-    mark(cx, cy + 6, 0.32, sun=(170, 136, 60), book=(150, 140, 116), bg=(206, 196, 166))
-    d.ellipse((cx - 10, cy - 10, cx + 10, cy + 10), fill=(60, 50, 34))
+        return cx + r * math.cos(a), cy + r * math.sin(a)
+
+    def band(r0, r1, t0, t1, col):
+        d.arc((cx - r1, cy - r1, cx + r1, cy + r1), ang(t0), ang(t1), fill=col, width=int(r1 - r0))
+    d.pieslice((cx - R + 3, cy - R + 3, cx + R - 3, cy + R - 3), ang(RED[0]), ang(RED[1]), fill=red)      # all out
+    d.ellipse((cx - 30, cy - 30, cx + 30, cy + 30), fill=face)
+    for k in range(12):                                     # the seconds
+        if k == 0:
+            continue
+        a = math.radians(k * 30 - 90)
+        d.line((cx + 110 * math.cos(a), cy + 110 * math.sin(a), cx + 122 * math.cos(a), cy + 122 * math.sin(a)), fill=(70, 62, 50), width=3)
+    band(102, 109, TREE_T[0], TREE_T[1], (58, 104, 54))     # the tree grows
+    tx, ty = pt((TREE_T[0] + TREE_T[1]) / 2, 64)
+    d.line((tx, ty + 20, tx, ty - 6), fill=(96, 70, 40), width=5)
+    d.ellipse((tx - 17, ty - 30, tx + 17, ty + 2), fill=(58, 104, 54))
+    for s in (-1, 1):
+        d.line((tx, ty + 4, tx + s * 10, ty - 6), fill=(96, 70, 40), width=3)
+    BANDS = ((32, 49), (54, 71), (76, 93))
+    for k, ((r0, r1), t0, t1) in enumerate(zip(BANDS, MARKS, FOLDS)):
+        band(r0, r1, t0, t1, dark)
+        band(r0 + 2, r1 - 2, RED[0], RED[1], white)        # white where they are all out
+    for k, ((r0, r1), t0) in enumerate(zip(BANDS, MARKS)):  # the steps' enamel numbers, where each comes out
+        nx, ny = pt(t0 + 0.12, (r0 + r1) / 2)
+        d.ellipse((nx - 14, ny - 14, nx + 14, ny + 14), fill=(206, 196, 166), outline=(120, 92, 44), width=3)
+        d.text((nx, ny + 1), str(k + 1), font=font(22), fill=ink, anchor='mm')
+    # The chevron on the rim at the window's middle, pointing in.
+    tm = (RED[0] + RED[1]) / 2
+    a, w = math.radians(ang(tm)), math.radians(12)
+    tip, base = 90, 126
+    chev = [(cx + tip * math.cos(a), cy + tip * math.sin(a)), (cx + base * math.cos(a - w), cy + base * math.sin(a - w)),
+            (cx + (base - 11) * math.cos(a), cy + (base - 11) * math.sin(a)), (cx + base * math.cos(a + w), cy + base * math.sin(a + w))]
+    d.polygon(chev, fill=white, outline=dark, width=3)
+    # The bell at the top, where the hand starts.
+    bx, by = cx, cy - 113
+    d.pieslice((bx - 9, by - 9, bx + 9, by + 9), 180, 360, fill=(170, 130, 52))
+    d.rectangle((bx - 9, by - 1, bx + 9, by + 3), fill=(170, 130, 52))
+    d.ellipse((bx - 3, by + 2, bx + 3, by + 8), fill=(120, 88, 36))
+    d.ellipse((cx - 13, cy - 13, cx + 13, cy + 13), fill=(60, 50, 34))
+
+    # --- the brake's pointer plate on the bezel (behind the white chevron, upright): three stairs, all out, on red --
+    x0, y0, x1, y1 = R_POINTER
+    d.rectangle(R_POINTER, fill=dark)
+    d.rectangle((x0 + 3, y0 + 3, x1 - 4, y1 - 4), fill=red)
+    d.polygon([(x0 + 9, y1 - 10), (x0 + 9, y1 - 22), (x0 + 24, y1 - 22), (x0 + 24, y1 - 35), (x0 + 39, y1 - 35), (x0 + 39, y1 - 48),
+               (x0 + 55, y1 - 48), (x0 + 55, y1 - 10)], fill=white)
+    x0, y0, x1, y1 = R_WHITE
+    d.rectangle(R_WHITE, fill=white)
 
     # --- the school's mark, an enamel roundel -----------------------------------------------------------------------
     x0, y0, x1, y1 = R_MARK

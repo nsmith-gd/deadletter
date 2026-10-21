@@ -768,6 +768,8 @@ README). It is sparse:
   lament begins (`LOOK10`: 16 s after UP, or 6.2 s into the collapse, never under 12 s).
 - After it, over the end card, the full theme ending in a music-box *Happy Birthday*.
 
+**The prologue's scene cues** (wake, hall, threshold, racks, kin, dead, latch, refuge, the DL-11 bedroom, the end card) are the composer's rewrites in the loops' language (`prologue_cue_*.mp3`, `art/music/prologue_cues.py`). Each starts out of the loop that is playing (the loop fades across its first bar) and, at its handover bar, the scene's loop restarts under its ringing tail; a queued cue (kin after racks) starts at that bar instead. Chapter one keeps the old `child` and end.
+
 **Ambience (the prologue theme's loops, `docs/prologue_music.md`).** Under the cues, one looping layer crossfades
 between four loops cut from the prologue theme: `lower_works` (the depot and the lower works), `order` (the Order's
 rooms: the Ration Hall, the scanner's corridor, the relocation lobby), `heaps` (among the dead: the racks; ring C,

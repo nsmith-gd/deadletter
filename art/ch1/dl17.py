@@ -64,9 +64,17 @@ BOARD = (282.95, 285.75, 1.05, 2.05, 1.276)     # the tool board: x0, x1, z0, z1
 WINDOW = (289.3, 291.7, 1.05, 2.0)              # x0, x1, sill, head (a dead light well behind)
 WSHELF = (289.0, 292.0, 0.82, 1.3, 0.92)        # the window shelf: x0, x1, y0, y1, top
 GROW = (289.42, 291.58, 1.05, 1.60)             # the grow-lamp tubes: x0, x1, y centre, z
-SHOOT_POT = (290.5, 1.06)
+MD_POT = (290.5, 1.06)                          # M. D.'s pot, under the middle of the grow-lamp (dry, dead)
 SINK = (292.1, 292.9)
-STAIR_DOOR = (293.75, 294.85, 2.15)             # the way on: x0, x1, head
+DOOR17 = (-0.5, 0.5, 2.15)                      # the way on: the stair door in the right end wall, y0, y1, head
+HINGE = (296.0, 0.5, 0.0)                       # Att17Door's hinge (its origin): the stair-side face, the back jamb
+LEAF_T = 0.045                                  # the leaf's thickness (hung flush with the wall's stair-side face)
+STAIR_X0, RISE, GOING, TREADS = 297.1, 0.18, 0.26, 18   # first riser; tread i (1..18) top RISE*i; then the upper landing
+STAIR_Y = (-0.6, 0.9)                           # the flight's width (front edge, back wall face)
+WELL = (296.0, 303.0, -0.75, 0.9, 1.05, 5.2)    # the stairwell: x0, x1, front y, back wall face, back, top
+WELL_FASCIA = 298.2                             # the room's ceiling carries on over the landing to here; beyond, open up
+STAIR_LAMP = (299.3, 0.84, 3.62)                # the warm lamp over the flight (Att17StairLamp)
+SIGN17 = (294.62, 295.72, 2.42, 2.718)          # the blade sign over the door: x0, x1, z0, z1 (in the plane y = 0)
 PENDANT = (285.95, 0.80, 2.215)                 # the lit pendant's bulb over the bench and the drawer
 LAMP_HEAD = Vector((285.0, 0.92, 1.40))         # the bench lamp's head
 LAMP_AIM = Vector((285.5, 0.70, 0.90))
@@ -80,8 +88,6 @@ NEW_WORN = {     # the game's WORN table format is in REPORT
                         metallic=0, grime_scale=3, chip_scale=18, chip_amount=.7, streaks=.5, dust=(.26, .22, .16), dust_amount=.4),
     'PotClay': dict(base=(.34, .15, .075), dirt=(.16, .1, .06), chip=(.42, .36, .28), rough=.9, chip_rough=.95,
                     metallic=0, grime_scale=10, chip_scale=40, chip_amount=.72, streaks=.3, dust=(.36, .32, .26), dust_amount=.5),
-    'DampSoil': dict(base=(.03, .022, .015), dirt=(.018, .013, .009), chip=(.06, .045, .03), rough=.8, chip_rough=.45,
-                     metallic=0, grime_scale=30, chip_scale=80, chip_amount=.7, streaks=0, dust=(.06, .05, .04), dust_amount=.1),
 }
 REUSE_WORN = {   # names already in index.html's WORN table (fallbacks for a lone build)
     'WinDado': dict(base=(.12, .16, .135), dirt=(.065, .075, .06), chip=(.30, .27, .21), rough=.55, chip_rough=.85,
@@ -109,8 +115,8 @@ REUSE_WORN = {   # names already in index.html's WORN table (fallbacks for a lon
 }
 REUSE_PLAIN = {'DirtyGlass': ((.03, .035, .035), .25, .2), 'TeaEnamel': ((.58, .55, .47), .35, 0.0),
                'Cable': ((.014, .013, .012), .55, 0.0), 'Copper': ((.55, .3, .18), .35, 1.0)}
-NEW_EMIT = {'Att17GrowLamp': ((0.78, 0.84, 1.0), 3.0), 'Att17Bulb': ((1.0, 0.78, 0.5), 5.0)}
-REUSE_EMIT = {'AttShoot': ((0.78, 0.92, 0.62), 0.35)}
+NEW_EMIT = {'Att17GrowLamp': ((0.78, 0.84, 1.0), 3.0), 'Att17Bulb': ((1.0, 0.78, 0.5), 5.0), 'Att17StairLamp': ((1.0, 0.8, 0.55), 6.0)}
+REUSE_EMIT = {}
 IMAGES = {'Att17Atlas': ('dl17_atlas.png', 0.85)}
 
 
@@ -125,6 +131,8 @@ def mat(name):
     if name in REUSE_PLAIN:
         c, r, mtl = REUSE_PLAIN[name]
         return simple_material(name, c, r, metallic=mtl)
+    if name == 'Window':                       # the game's GLASSY Window (see-through): the jars, the door's light
+        return simple_material('Window', (0.8, 0.82, 0.8), 0.12, transmission=0.95)
     if name in NEW_EMIT or name in REUSE_EMIT:
         c, s = NEW_EMIT.get(name) or REUSE_EMIT[name]
         return emission_material(name, c, s)
@@ -167,6 +175,7 @@ CELLS = {
     'toolboard': (0, 1104, 1024, 1488), 'chart': (1024, 1104, 1536, 1488),
     'paper1': (1536, 1104, 1792, 1360), 'paper2': (1792, 1104, 2048, 1360),
     'seedlist': (1536, 1360, 2048, 1488),
+    'soilcrack': (1040, 1704, 1328, 1992),    # dry soil, cracked (the trays' surface)
 }
 NAMES = ['M. D.', 'T. ORME', 'R. ABEL', 'Ada', 'Ben K.', 'Lotte', 'Pim', 'Joss', 'Nell', 'Ivo', 'Tam', 'Kit', 'Rosa',
          'Dov', 'Hana', 'Sami', 'Ewa', 'Oskar', 'Lin', 'Bea', 'Tobi', 'Mira', 'Fen', 'Cass', 'Aldo', 'Yusuf', 'Wren',
@@ -183,7 +192,8 @@ SWATCH = {'sw_soil_dry': (72, 56, 42), 'sw_soil_dark': (30, 23, 17), 'sw_straw':
           'sw_wool': (96, 70, 52), 'sw_pencil': (206, 160, 52), 'sw_graphite': (40, 40, 44), 'sw_tea': (34, 18, 8),
           'sw_steel': (140, 142, 140), 'sw_grille': (52, 44, 34), 'sw_tagwhite': (226, 222, 208), 'sw_lolly': (196, 168, 120),
           'sw_tray': (96, 68, 42), 'sw_green': (52, 78, 58), 'sw_seam': (22, 15, 9), 'sw_rubber': (20, 20, 19),
-          'sw_cream': (200, 190, 160), 'sw_blue': (60, 80, 120), 'sw_tin': (110, 112, 104), 'sw_label': (200, 186, 150)}
+          'sw_cream': (200, 190, 160), 'sw_blue': (60, 80, 120), 'sw_tin': (110, 112, 104), 'sw_label': (200, 186, 150),
+          'sw_crust': (112, 92, 70), 'sw_shrivel': (96, 72, 44), 'sw_beandead': (64, 44, 32)}
 for _i, _k in enumerate(SWATCH):
     _x, _y = 1152 + (_i % 14) * 64, 1488 + (_i // 14) * 64
     CELLS[_k] = (_x, _y, _x + 64, _y + 64)
@@ -323,16 +333,94 @@ TREE = [
 ]
 
 
+GRAPHITE = (50, 50, 60)          # Mara's pencil
+BLUE = (30, 66, 158)              # Vance's blue pencil
+
+
+def _wob(pts, rnd, amp=1.0, step=8.0, over=0.0):
+    """A line by hand through pts (final px): resampled, swaying a little side to side, overshooting its ends."""
+    pts = [tuple(p) for p in pts]
+    if over and len(pts) > 1:
+        for i0, i1 in ((0, 1), (-1, -2)):
+            (ax, ay), (bx, by) = pts[i0], pts[i1]
+            L = math.hypot(ax - bx, ay - by) or 1
+            pts[i0] = (ax + (ax - bx) / L * over, ay + (ay - by) / L * over)
+    ph1, ph2 = rnd.uniform(0, 6.3), rnd.uniform(0, 6.3)
+    f1, f2 = rnd.uniform(0.015, 0.03), rnd.uniform(0.07, 0.11)
+    out, s = [], 0.0
+    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+        L = math.hypot(bx - ax, by - ay)
+        if L == 0:
+            continue
+        nx, ny = -(by - ay) / L, (bx - ax) / L
+        n = max(1, int(L / step))
+        for i in range(n):
+            t = i / n
+            o = amp * (0.7 * math.sin((s + t * L) * f1 + ph1) + 0.3 * math.sin((s + t * L) * f2 + ph2))
+            out.append((ax + (bx - ax) * t + nx * o, ay + (by - ay) * t + ny * o))
+        s += L
+    out.append(pts[-1])
+    return out
+
+
+def _chaikin(pts, n=2):
+    for _ in range(n):
+        q = [pts[0]]
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            q += [(0.75 * ax + 0.25 * bx, 0.75 * ay + 0.25 * by), (0.25 * ax + 0.75 * bx, 0.25 * ay + 0.75 * by)]
+        q.append(pts[-1])
+        pts = q
+    return pts
+
+
+def _offset(pts, dist):
+    """A polyline moved sideways by dist (its normals averaged at the joints)."""
+    out = []
+    for i, (x, y) in enumerate(pts):
+        a, b = pts[max(0, i - 1)], pts[min(len(pts) - 1, i + 1)]
+        L = math.hypot(b[0] - a[0], b[1] - a[1]) or 1
+        out.append((x - (b[1] - a[1]) / L * dist, y + (b[0] - a[0]) / L * dist))
+    return out
+
+
+def _clip_circle(pts, c, r, keep='out'):
+    """The part of a polyline outside (or inside) a circle, cut where it crosses."""
+    def inside(p):
+        return math.hypot(p[0] - c[0], p[1] - c[1]) < r
+    out = []
+    for a, b in zip(pts, pts[1:]):
+        ia, ib = inside(a), inside(b)
+        want_a, want_b = (not ia, not ib) if keep == 'out' else (ia, ib)
+        if want_a and (not out or out[-1] != a):
+            out.append(a)
+        if want_a != want_b:
+            lo, hi = 0.0, 1.0
+            for _ in range(30):
+                mid = (lo + hi) / 2
+                p = (a[0] + (b[0] - a[0]) * mid, a[1] + (b[1] - a[1]) * mid)
+                if inside(p) == ia:
+                    lo = mid
+                else:
+                    hi = mid
+            out.append((a[0] + (b[0] - a[0]) * lo, a[1] + (b[1] - a[1]) * lo))
+    if pts and ((not inside(pts[-1])) if keep == 'out' else inside(pts[-1])):
+        out.append(pts[-1])
+    return out
+
+
 def make_drawing():
-    """Mara's irrigation drawing (1280 x 896, drawn at 2x): her crooked tree from when she was small, in soft heavy
-    pencil, and over it, ruled in hard pencil, a garden bed: the trunk a main channel from the tank, the branches
-    laterals with sluices, the knot a settling loop; plants along the laterals; a section, notes, a title block;
-    the volunteer's red-pencil note. Everything here is in final pixels; K scales to the working canvas."""
+    """Mara's irrigation drawing (1280 x 896, drawn at 2x), all of it in her own pencil: her crooked tree, sketched
+    soft, made a garden bed: the trunk the main channel from the tank, the branches laterals with sluices, the knot a
+    settling loop; plants along the laterals; her section, her notes, her title block. Beside her lines, never over
+    them, the volunteer's blue pencil, in his own hand: 'fall 1 in 100', 'levels!' at the tank, a shallower channel
+    section drawn next to hers, a tick at the knot, his initials where it says CHECKED. Final pixels; K scales to the
+    working canvas."""
     from PIL import Image, ImageDraw, ImageFilter
     K = 2
     W, H = 1280, 896
     rnd = random.Random(1701)
     paper = _paper(W * K, H * K, (230, 222, 200), 1702, amp=0.07, edge=0.12, edge_px=60)
+    BED = (150, 70, 800, 660)
 
     def P(u, v):                                               # the tree's unit coordinates -> final px
         return (470 + u * 700, 800 + v * 740)
@@ -340,215 +428,281 @@ def make_drawing():
     def k(pts):
         return [(x * K, y * K) for x, y in pts]
 
-    # 1. The child's tree: soft pencil, pressed hard, gone over twice; smudged.
+    # 1. Her tree, sketched first: soft pencil, light, gone over; a hand's smudges.
     child = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
     dc = ImageDraw.Draw(child)
     for pts, wgt in TREE:
         q = [P(u, v) for u, v in pts]
-        for _ in range(3):
-            j = [(x + rnd.uniform(-2.2, 2.2), y + rnd.uniform(-2.2, 2.2)) for x, y in q]
-            dc.line(k(j), fill=(58, 58, 68, rnd.randint(150, 190)), width=int(K * (4 + 5 * wgt)), joint='curve')
-    for _ in range(4):                                         # smudges where a hand rested
+        for _ in range(2):
+            j = [(x + rnd.uniform(-2.0, 2.0), y + rnd.uniform(-2.0, 2.0)) for x, y in q]
+            dc.line(k(j), fill=GRAPHITE + (rnd.randint(70, 100),), width=int(K * (3 + 4 * wgt)), joint='curve')
+    for _ in range(4):
         cx, cy, r = rnd.uniform(380, 640), rnd.uniform(300, 760), rnd.uniform(30, 70)
-        dc.ellipse(k([(cx - r, cy - r * 0.6), (cx + r, cy + r * 0.6)]), fill=(90, 90, 100, 9))
-    child = _grain(child.filter(ImageFilter.GaussianBlur(0.9 * K)), 1703, lo=0.55)
+        dc.ellipse(k([(cx - r, cy - r * 0.6), (cx + r, cy + r * 0.6)]), fill=(90, 90, 100, 8))
+    child = _grain(child.filter(ImageFilter.GaussianBlur(1.0 * K)), 1703, lo=0.5)
 
-    # 2. A first try, rubbed out: the right lateral ruled straight through where the knot is.
+    # 2. A first try, rubbed out: the right lateral drawn straight through where the knot is.
     ghost = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
     dg = ImageDraw.Draw(ghost)
-    dg.line(k([(445, 415), (771, 223)]), fill=(80, 80, 92, 38), width=3 * K)
-    dg.line(k([(445, 431), (771, 239)]), fill=(80, 80, 92, 30), width=3 * K)
+    dg.line(k([(445, 415), (771, 223)]), fill=(80, 80, 92, 34), width=3 * K)
+    dg.line(k([(445, 431), (771, 239)]), fill=(80, 80, 92, 26), width=3 * K)
     for _ in range(40):
         x, y = rnd.uniform(480, 760), rnd.uniform(220, 420)
         dg.ellipse(k([(x, y), (x + rnd.uniform(2, 6), y + rnd.uniform(1, 3))]), fill=(150, 140, 120, 60))
     ghost = ghost.filter(ImageFilter.GaussianBlur(1.2 * K))
 
-    # 3. The ruled drawing: hard pencil, crisp.
+    # 3. Her drawing over it: the same pencil, sharpened, pressed firmly; drawn freehand, the long lines against a
+    #    ruler (straight, but overshooting their corners); her careful capitals.
     rl = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
     d = ImageDraw.Draw(rl)
-    INK = (38, 40, 52, 225)
-    LW = 2 * K
+    INK = GRAPHITE + (215,)
+    LW = 2.2
 
-    def line(a, b, w=LW, fill=INK):
-        d.line(k([a, b]), fill=fill, width=w)
+    def pen(pts, w=LW, amp=0.9, over=0.0, fill=INK, step=8.0):
+        d.line(k(_wob(pts, rnd, amp, step, over)), fill=fill, width=max(1, int(round(w * K))), joint='curve')
 
-    def arrow(a, b, size=9, fill=INK):
+    def ruled(a, b, w=LW, over=5.0):
+        pen([a, b], w, amp=0.35, over=over + rnd.uniform(-2, 3), step=20)
+
+    def arrow(a, b, size=9, fill=INK, w=LW, amp=0.5):
         ax, ay = a
         bx, by = b
         L = math.hypot(bx - ax, by - ay) or 1
         ux, uy = (bx - ax) / L, (by - ay) / L
-        line(a, b, fill=fill)
-        d.polygon(k([(bx, by), (bx - ux * size - uy * size * 0.45, by - uy * size + ux * size * 0.45),
-                     (bx - ux * size + uy * size * 0.45, by - uy * size - ux * size * 0.45)]), fill=fill)
+        pen([a, b], w, amp=amp, fill=fill)
+        for s in (1, -1):                                       # a hand's arrowhead: two strokes
+            pen([(bx, by), (bx - ux * size + s * uy * size * 0.5, by - uy * size - s * ux * size * 0.5)], w, amp=0.2, fill=fill)
 
-    def channel(a, b, half=7, plants=None, start=34, end=0):
-        ax, ay = a
-        bx, by = b
-        L = math.hypot(bx - ax, by - ay)
-        ux, uy = (bx - ax) / L, (by - ay) / L
-        nx, ny = -uy, ux
-        for s in (-half, half):
-            line((ax + nx * s, ay + ny * s), (bx + nx * s, by + ny * s))
-        # flow arrow at the middle
-        mx, my = ax + ux * L * 0.5, ay + uy * L * 0.5
-        d.polygon(k([(mx + ux * 8, my + uy * 8), (mx - ux * 6 + nx * 4.5, my - uy * 6 + ny * 4.5),
-                     (mx - ux * 6 - nx * 4.5, my - uy * 6 - ny * 4.5)]), fill=INK)
-        if plants:
-            t = start
-            while t < L - end - 6:
-                for s in (-1, 1):
-                    px, py = ax + ux * t + nx * 25 * s, ay + uy * t + ny * 25 * s
-                    d.ellipse(k([(px - 7.5, py - 7.5), (px + 7.5, py + 7.5)]), outline=INK, width=K + 1)
-                    d.line(k([(px - 4, py - 4), (px + 4, py + 4)]), fill=INK, width=K)
-                    d.line(k([(px - 4, py + 4), (px + 4, py - 4)]), fill=INK, width=K)
-                t += 46
-        return (ux, uy, nx, ny)
+    def circ(c, r, w=LW, fill=INK, wob=0.8):
+        a0 = rnd.uniform(0, 6.3)
+        n = max(10, int(r * 0.9))
+        pts = [(c[0] + (r + wob * math.sin(i * 0.7 + a0)) * math.cos(a0 + 2 * math.pi * i / n * 1.06),
+                c[1] + (r + wob * math.sin(i * 0.7 + a0)) * math.sin(a0 + 2 * math.pi * i / n * 1.06)) for i in range(n + 1)]
+        d.line(k(pts), fill=fill, width=max(1, int(round(w * K))), joint='curve')
 
-    def sluice(a, b, at, label, lx, ly):
-        ax, ay = a
-        bx, by = b
-        L = math.hypot(bx - ax, by - ay)
-        ux, uy = (bx - ax) / L, (by - ay) / L
-        nx, ny = -uy, ux
-        cx, cy = ax + ux * at, ay + uy * at
-        for s in (-1, 1):                                       # a bow-tie across the channel: the gate
-            d.polygon(k([(cx, cy), (cx + nx * 11 * s - ux * 7, cy + ny * 11 * s - uy * 7),
-                         (cx + nx * 11 * s + ux * 7, cy + ny * 11 * s + uy * 7)]), outline=INK, fill=(38, 40, 52, 120))
-        d.ellipse(k([(lx - 12, ly - 12), (lx + 12, ly + 12)]), outline=INK, width=K + 1)
-        lab.append(((lx, ly), label, 17, 'm'))
+    lab = []                                                   # her lettering, put on after the lines
+    # The sheet's border and the bed, against a ruler.
+    for a, b in (((22, 24), (1257, 22)), ((1257, 22), (1258, 873)), ((1258, 873), (23, 874)), ((23, 874), (22, 24))):
+        ruled(a, b, w=2.4, over=4)
+    for a, b in (((BED[0], BED[1]), (BED[2], BED[1])), ((BED[2], BED[1]), (BED[2], BED[3])),
+                 ((BED[2], BED[3]), (BED[0], BED[3])), ((BED[0], BED[3]), (BED[0], BED[1]))):
+        ruled(a, b, w=2.6, over=8)
+    lab.append(((164, 92), 'BED 1', 21, 'l'))
+    arrow((475, 46), (BED[0] + 2, 46), 9)
+    arrow((475, 46), (BED[2] - 2, 46), 9)
+    ruled((BED[0], 36), (BED[0], 58), 1.6, 2)
+    ruled((BED[2], 36), (BED[2], 58), 1.6, 2)
+    lab.append(((475, 36), '2400', 16, 'm'))
+    arrow((128, 365), (128, BED[1] + 2), 9)
+    arrow((128, 365), (128, BED[3] - 2), 9)
+    lab.append(((106, 365), '2200', 16, 'm'))
 
-    lab = []                                                   # lettering, put on after the lines
-    # The border and the bed.
-    d.rectangle(k([(22, 22), (1258, 874)]), outline=INK, width=LW)
-    d.rectangle(k([(28, 28), (1252, 868)]), outline=INK, width=K)
-    for r in (0, 5):
-        d.rectangle(k([(190 - r, 70 - r), (840 + r, 660 + r)]), outline=INK, width=LW)
-    lab.append(((204, 92), 'BED 1', 21, 'l'))
-    # Dimensions.
-    arrow((515, 46), (190, 46), 8)
-    arrow((515, 46), (840, 46), 8)
-    line((190, 38), (190, 58), K)
-    line((840, 38), (840, 58), K)
-    lab.append(((515, 38), '2400', 16, 'm'))
-    arrow((160, 365), (160, 70), 8)
-    arrow((160, 365), (160, 660), 8)
-    lab.append(((128, 365), '2200', 16, 'm'))
-    # The main channel up the trunk, from the tank; its laterals along the branches.
-    main_a, main_b = (470, 812), (437, 267)
-    channel(main_a, main_b, half=9)
-    channel(main_b, (491, 112), plants=True, start=40)                               # crown: peas
-    channel((442, 208), (540, 164), half=6, plants=True, start=30)
-    channel((451, 504), (345, 440), plants=True, start=40)                           # lateral A: beans
-    channel((345, 440), (239, 312), plants=True, start=20)
-    channel((351, 430), (379, 341), half=5)
-    channel((445, 415), (555, 348), plants=True, start=40, end=10)                   # lateral B, to the loop
-    channel((666, 283), (771, 223), plants=True, start=20)                           # out of the loop: kale
-    channel((458, 615), (624, 593), plants=True, start=40)                           # lateral C: potatoes
-    # The knot, made a settling loop: a ring channel, ruled with compasses, its centre marked.
-    kx, ky = 610, 315
-    for r in (50, 64):
-        d.ellipse(k([(kx - r, ky - r), (kx + r, ky + r)]), outline=INK, width=LW)
-    line((kx - 6, ky), (kx + 6, ky), K)
-    line((kx, ky - 6), (kx, ky + 6), K)
-    for a0 in (40, 160, 280):                                  # flow round the loop
+    # The channels: banks either side of each branch of the tree, the knot made a ring.
+    kc, kr0, kr1 = P(0.2, -0.655), 30, 46
+    trunk = _chaikin([P(u, v) for u, v in TREE[0][0]])
+    trunk[0] = (trunk[0][0], 818)                               # down to the tank's top
+    branches = {}
+    for i in (2, 4, 6, 7, 9):
+        pts = _chaikin([P(u, v) for u, v in TREE[i][0]])
+        if i in (4, 6):
+            pts = _clip_circle(pts, kc, kr1 + 1)
+        branches[i] = pts
+    for s in (-9, 9):
+        pen(_offset(trunk, s), 2.4, amp=1.5, step=6.0)
+    for i, pts in branches.items():
+        for s in (-6, 6):
+            pen(_offset(pts, s), 2.2, amp=1.4, step=6.0)
+    for i in (3, 8):                                            # twigs: furrows, a single line
+        pen(_chaikin([P(u, v) for u, v in TREE[i][0]]), 1.8, amp=0.8)
+    for r in (kr0, kr1):
+        circ(kc, r, 2.4, wob=1.1)
+    for a0 in (40, 160, 280):                                   # flow round the loop
         a = math.radians(a0)
-        px, py = kx + 57 * math.cos(a), ky + 57 * math.sin(a)
+        px, py = kc[0] + 38 * math.cos(a), kc[1] + 38 * math.sin(a)
         tx, ty = -math.sin(a), math.cos(a)
         d.polygon(k([(px + tx * 7, py + ty * 7), (px - tx * 5 + math.cos(a) * 4, py - ty * 5 + math.sin(a) * 4),
                      (px - tx * 5 - math.cos(a) * 4, py - ty * 5 - math.sin(a) * 4)]), fill=INK)
-    line((660, 352), (690, 392), K)
-    lab.append(((694, 392), 'SETTLING LOOP', 16, 'l'))
-    # Sluices at the head of each lateral.
-    sluice((451, 504), (345, 440), 30, 'A', 405, 530)
-    sluice((445, 415), (568, 357), 30, 'B', 468, 368)
-    sluice((458, 615), (624, 593), 30, 'C', 488, 640)
-    # Crops.
-    lab.append(((206, 520), 'BEANS', 17, 'l'))
-    lab.append(((700, 186), 'KALE', 17, 'l'))
-    lab.append(((640, 628), 'POTATOES', 17, 'l'))
-    lab.append(((512, 90), 'PEAS', 17, 'l'))
-    # The tank and the feed.
-    d.rectangle(k([(425, 818), (515, 860)]), outline=INK, width=LW)
-    lab.append(((470, 839), 'TANK', 15, 'm'))
-    arrow((236, 846), (423, 846), 9)
+    pen([(kc[0] + 30, kc[1] + 38), (690, 392)], 1.6, amp=0.4)
+    lab.append(((694, 394), 'SETTLING LOOP', 16, 'l'))
+
+    def flow(pts, at=0.5):
+        n = len(pts) - 1
+        i = max(0, min(n - 1, int(n * at)))
+        (ax, ay), (bx, by) = pts[i], pts[i + 1]
+        L = math.hypot(bx - ax, by - ay) or 1
+        ux, uy, mx, my = (bx - ax) / L, (by - ay) / L, (ax + bx) / 2, (ay + by) / 2
+        d.polygon(k([(mx + ux * 8, my + uy * 8), (mx - ux * 6 - uy * 4.5, my - uy * 6 + ux * 4.5),
+                     (mx - ux * 6 + uy * 4.5, my - uy * 6 - ux * 4.5)]), fill=INK)
+    flow(list(reversed(trunk)), 0.6)
+    flow(list(reversed(trunk)), 0.25)
+    for i, pts in branches.items():
+        flow(pts, 0.45)
+
+    # Plants along the laterals, both sides: her little circles with a dot.
+    def near_trunk(p):
+        return min(math.hypot(p[0] - q[0], p[1] - q[1]) for q in trunk) < 24
+    for i, pts in branches.items():
+        acc, nxt = 0.0, 26.0
+        for a, b in zip(pts, pts[1:]):
+            L = math.hypot(b[0] - a[0], b[1] - a[1])
+            while acc + L >= nxt:
+                t = (nxt - acc) / L
+                x, y = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+                nx, ny = -(b[1] - a[1]) / L, (b[0] - a[0]) / L
+                for s in (-1, 1):
+                    px, py = x + nx * 22 * s, y + ny * 22 * s
+                    if (BED[0] + 12 < px < BED[2] - 12 and BED[1] + 12 < py < BED[3] - 12 and not near_trunk((px, py))
+                            and math.hypot(px - kc[0], py - kc[1]) > kr1 + 14):
+                        circ((px + rnd.uniform(-1, 1), py + rnd.uniform(-1, 1)), 6.5, 1.6, wob=0.6)
+                        d.ellipse(k([(px - 1.6, py - 1.6), (px + 1.6, py + 1.6)]), fill=INK)
+                nxt += 38
+            acc += L
+
+    # Sluices at the head of each lateral: a gate across it, lettered in a ring.
+    def sluice(pts, at, label, lx, ly):
+        (ax, ay), (bx, by) = pts[at], pts[at + 1]
+        L = math.hypot(bx - ax, by - ay) or 1
+        ux, uy = (bx - ax) / L, (by - ay) / L
+        nx, ny = -uy, ux
+        cx, cy = ax, ay
+        for s in (-1, 1):
+            d.polygon(k([(cx, cy), (cx + nx * 11 * s - ux * 6, cy + ny * 11 * s - uy * 6),
+                         (cx + nx * 11 * s + ux * 6, cy + ny * 11 * s + uy * 6)]), outline=INK, fill=GRAPHITE + (110,))
+        circ((lx, ly), 12, 1.8)
+        lab.append(((lx, ly + 1), label, 17, 'm'))
+    sluice(branches[2], 2, 'A', 410, 532)
+    sluice(branches[4], 2, 'B', 470, 372)
+    sluice(branches[9], 2, 'C', 500, 650)
+    lab += [((176, 470), 'BEANS', 17, 'l'), ((300, 136), 'PEAS', 17, 'l'), ((688, 204), 'KALE', 17, 'l'),
+            ((640, 630), 'POTATOES', 17, 'l')]
+    # The tank and its feed.
+    for a, b in (((425, 818), (515, 818)), ((515, 818), (515, 860)), ((515, 860), (425, 860)), ((425, 860), (425, 818))):
+        ruled(a, b, 2.4, 4)
+    lab.append(((470, 840), 'TANK', 15, 'm'))
+    arrow((236, 846), (421, 846), 9)
     lab.append(((238, 828), 'FROM RING A MAIN', 14, 'l'))
-    lab.append(((292, 724), 'FALL 1 IN 40', 15, 'l'))
-    arrow((278, 744), (278, 692), 8)
+    lab.append(((198, 712), 'FALL 1 IN 40', 15, 'l'))
+    arrow((184, 730), (184, 694), 8)
     # The section mark across the main.
-    for sx in (408, 500):
-        line((sx, 760), (sx + 26 * (1 if sx < 450 else -1), 760), 3 * K)
-        arrow((sx, 760), (sx, 744), 7)
-    lab.append(((398, 744), 'A', 15, 'm'))
-    lab.append(((512, 744), 'A', 15, 'm'))
-    # Section A-A.
-    lab.append(((900, 60), 'SECTION A-A', 19, 'l'))
-    line((900, 72), (1046, 72), K)
-    line((905, 150), (1000, 150))
-    line((1140, 150), (1235, 150))
-    for off in (0, 12):
-        d.line(k([(1000 - off, 150), (1030 - off * 0.6, 230 + off), (1110 + off * 0.6, 230 + off), (1140 + off, 150)]),
-               fill=INK, width=LW)
-    for t in range(0, 300, 16):                                 # the soil, hatched
+    for sx in (412, 500):
+        pen([(sx, 764), (sx + 24 * (1 if sx < 450 else -1), 764)], 3.4, amp=0.2)
+        arrow((sx, 764), (sx, 748), 7)
+    lab.append(((402, 748), 'A', 15, 'm'))
+    lab.append(((510, 748), 'A', 15, 'm'))
+
+    # Her section A-A: deep and narrow, clay-lined.
+    lab.append(((880, 62), 'SECTION A-A', 19, 'l'))
+    pen([(880, 74), (1032, 74)], 1.6, amp=0.3)
+    gy, by_ = 140, 214
+    pen([(905, gy), (1000, gy)], 2.2, amp=0.5)
+    pen([(1100, gy), (1190, gy)], 2.2, amp=0.5)
+    for off in (0, 11):
+        pen([(1000 - off, gy), (1026 - off * 0.5, by_ + off), (1074 + off * 0.5, by_ + off), (1100 + off, gy)], 2.2, amp=0.5)
+    for t in range(0, 290, 16):                                 # the soil, hatched
         x = 905 + t
-        if 990 < x < 1150:
+        if 984 < x < 1112:
             continue
-        line((x, 160), (x + 22, 182), K, fill=(38, 40, 52, 140))
-    for t in range(6):                                          # the clay lining, hatched densely
-        y = 160 + t * 13
-        line((1000 - 6 + t * 0.4 * 13 / 6 * 2.2, y), (1000 + 6 + t * 0.4 * 13 / 6 * 2.2, y + 6), K)
-        line((1140 + 6 - t * 0.4 * 13 / 6 * 2.2, y), (1140 - 6 - t * 0.4 * 13 / 6 * 2.2, y + 6), K)
-    line((1014, 182), (1126, 182), K)                           # the water line
-    d.polygon(k([(1062, 166), (1078, 166), (1070, 178)]), outline=INK, width=K)
-    line((1000, 120), (1140, 120), K)
-    for x in (1000, 1140):
-        line((x, 112), (x, 128), K)
-    lab.append(((1070, 106), '300', 15, 'm'))
-    line((1132, 214), (1170, 252), K)
-    lab.append(((1172, 258), 'CLAY 50', 14, 'l'))
-    line((1100, 196), (1170, 196), K)
-    lab.append(((1172, 196), 'WATER', 14, 'l'))
-    # Notes.
-    notes = ['NOTES', '1. MAIN FEED FROM TANK.', '    FALL 1 IN 40.', '2. SLUICES A B C: SHUT TWO,', '    WATER THE THIRD.',
-             '3. THE KNOT IS A SETTLING', '    LOOP. SILT DROPS OUT', '    BEFORE THE KALE.', '4. CHANNELS CLAY-LINED.',
-             '5. WATER LITTLE, OFTEN.']
+        pen([(x, gy + 10), (x + 20, gy + 30)], 1.2, amp=0.2, fill=GRAPHITE + (130,))
+    pen([(1012, gy + 40), (1088, gy + 40)], 1.4, amp=0.3)       # the water line
+    d.polygon(k([(1042, gy + 26), (1058, gy + 26), (1050, gy + 38)]), outline=INK, width=K)
+    arrow((1050, 104), (1000, 104), 6, w=1.4)
+    arrow((1050, 104), (1100, 104), 6, w=1.4)
+    lab.append(((1050, 92), '300', 15, 'm'))
+    pen([(1094, by_ - 6), (1150, by_ + 12)], 1.4, amp=0.3)
+    lab.append(((1154, by_ + 14), 'CLAY 50', 14, 'l'))
+    pen([(1076, gy + 40), (1150, gy + 40)], 1.4, amp=0.3)
+    lab.append(((1154, gy + 40), 'WATER', 14, 'l'))
+
+    # Her notes.
+    notes = ['NOTES', '1. MAIN FEED FROM TANK.', '2. SLUICES A B C: SHUT TWO,', '    WATER THE THIRD.', '3. THE KNOT IS A SETTLING',
+             '    LOOP. SILT DROPS OUT', '    BEFORE THE KALE.', '4. WATER LITTLE, OFTEN.']
     for i, s in enumerate(notes):
-        lab.append(((900, 336 + i * 30), s, 18 if i else 21, 'l'))
-    line((900, 350), (962, 350), K)
-    # The title block.
+        lab.append(((884, 400 + i * 30), s, 18 if i else 21, 'l'))
+    pen([(884, 414), (946, 414)], 1.6, amp=0.3)
+    # Her title block.
     tb = (880, 690, 1250, 866)
-    d.rectangle(k([(tb[0], tb[1]), (tb[2], tb[3])]), outline=INK, width=LW)
+    for a, b in (((tb[0], tb[1]), (tb[2], tb[1])), ((tb[2], tb[1]), (tb[2], tb[3])), ((tb[2], tb[3]), (tb[0], tb[3])),
+                 ((tb[0], tb[3]), (tb[0], tb[1]))):
+        ruled(a, b, 2.4, 4)
     for y in (734, 778, 822):
-        line((tb[0], y), (tb[2], y), K)
-    line((1094, 734), (1094, 778), K)
-    line((1094, 822), (1094, 866), K)
-    lab.append(((894, 712), 'IRRIGATION \u00b7 BED 1', 21, 'l'))
-    lab.append(((894, 756), 'DRAWN   M. D.', 19, 'l'))
-    lab.append(((1106, 756), 'AGE 14', 19, 'l'))
-    lab.append(((894, 800), 'CHECKED   E. V.', 19, 'l'))
-    lab.append(((894, 844), 'SCALE 1:20', 19, 'l'))
-    lab.append(((1106, 844), 'SHEET 1/1', 19, 'l'))
-    for (x, y), s, size, anc in lab:                            # her lettering: careful capitals
-        _hand(rl, (x * K, y * K), s, _font(size * K, 'letter'), INK, rnd, jit=0.5 * K, rot=2.5, anchor=anc, track=1.06)
-    rl = _grain(rl.filter(ImageFilter.GaussianBlur(0.45 * K)), 1704, lo=0.7)
+        ruled((tb[0], y), (tb[2], y), 1.6, 3)
+    ruled((1094, 734), (1094, 778), 1.6, 2)
+    ruled((1094, 822), (1094, 866), 1.6, 2)
+    lab += [((894, 712), 'IRRIGATION · BED 1', 21, 'l'), ((894, 756), 'DRAWN   M. D.', 19, 'l'), ((1106, 756), 'AGE 14', 19, 'l'),
+            ((894, 800), 'CHECKED', 19, 'l'), ((894, 844), 'SCALE 1:20', 19, 'l'), ((1106, 844), 'SHEET 1/1', 19, 'l')]
+    for (x, y), s, size, anc in lab:                            # her lettering: careful capitals, not quite level
+        _hand(rl, (x * K, y * K), s, _font(size * K, 'letter'), INK, rnd, jit=0.8 * K, rot=4.0, anchor=anc, track=1.07)
+    rl = _grain(rl.filter(ImageFilter.GaussianBlur(0.5 * K)), 1704, lo=0.6)
 
-    # 4. The volunteer's red pencil.
-    red = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
-    RED = (168, 46, 36, 215)
-    _hand(red, (582 * K, 478 * K), 'Good. The knot works!', _font(27 * K, 'ink'), RED, rnd, jit=0.6 * K, rot=4)
-    _hand(red, (742 * K, 512 * K), '- E.V.', _font(25 * K, 'ink'), RED, rnd, jit=0.6 * K, rot=4)
-    dr = ImageDraw.Draw(red)
-    for (a, b) in (((1060, 796), (1070, 808)), ((1070, 808), (1090, 784))):     # a tick by CHECKED
-        dr.line(k([a, b]), fill=RED, width=3 * K)
-    dr.line(k([(528, 246), (535, 258), (552, 236)]), fill=RED, width=3 * K)    # and one by the knot
-    red = _grain(red.filter(ImageFilter.GaussianBlur(0.6 * K)), 1705, lo=0.55)
+    # 4. Beside her lines, the volunteer's blue pencil: a looser hand, the practical things.
+    bl = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
+    db = ImageDraw.Draw(bl)
+    BL = BLUE + (230,)
 
-    for lay in (child, ghost, rl, red):
+    def bpen(pts, w=2.6, amp=0.7):
+        db.line(k(_wob(pts, rnd, amp, 7.0)), fill=BL, width=max(1, int(round(w * K))), joint='curve')
+
+    def barrow(pts, size=11):
+        bpen(pts)
+        (ax, ay), (bx, by) = pts[-2], pts[-1]
+        L = math.hypot(bx - ax, by - ay) or 1
+        ux, uy = (bx - ax) / L, (by - ay) / L
+        for s in (1, -1):
+            bpen([(bx, by), (bx - ux * size + s * uy * size * 0.55, by - uy * size - s * ux * size * 0.55)], amp=0.2)
+
+    def bnote(xy, s, size=26, rot=3.0):
+        _hand(bl, (xy[0] * K, xy[1] * K), s, _font(size * K, 'ink'), BL, rnd, jit=0.7 * K, rot=rot)
+
+    def tick(x, y, s=1.0):
+        bpen([(x, y), (x + 8 * s, y + 11 * s), (x + 26 * s, y - 14 * s)], 3.2, amp=0.3)
+
+    # The fall, under hers.
+    bnote((196, 756), 'fall 1 in 100', 27)
+    bnote((210, 786), 'or it scours', 22)
+    barrow([(298, 742), (306, 734), (314, 726)], 9)
+    # Levels, at the tank: a datum mark and the word.
+    bnote((548, 806), 'levels!', 28)
+    bpen([(548, 822), (628, 820)], 2.0)
+    bpen([(552, 829), (622, 828)], 1.6)
+    barrow([(542, 812), (530, 818), (520, 824)], 9)
+    db.polygon(k([(640, 784), (660, 784), (650, 798)]), outline=BL, width=K * 2)
+    bpen([(632, 799), (668, 799)], 2.0)
+    # His section, drawn next to hers: shallower, wider, gentler sides.
+    sy, sb = 286, 310
+    bpen([(930, sy), (978, sy)], 2.2)
+    bpen([(1124, sy), (1172, sy)], 2.2)
+    bpen([(978, sy), (1008, sb), (1094, sb), (1124, sy)], 2.4)
+    bpen([(994, sy + 12), (1108, sy + 12)], 1.6)
+    barrow([(1138, sy - 8), (1126, sy - 36), (1102, sy - 52)], 10)
+    bnote((934, 336), 'wider, shallower', 23)
+    bnote((934, 362), 'sides 1 in 2', 21)
+    # The knot: a tick, and what he thought of it.
+    bnote((592, 112), 'The knot works!', 28)
+    tick(780, 112)
+    barrow([(640, 132), (628, 186), (616, 236)], 10)
+    bnote((660, 146), '- E.V.', 23)
+    # Checked.
+    bnote((1004, 802), 'E. V.', 25)
+    tick(1062, 796, 0.9)
+    bl = _grain(bl.filter(ImageFilter.GaussianBlur(0.55 * K)), 1705, lo=0.55)
+
+    for lay in (child, ghost, rl, bl):
         paper.alpha_composite(lay)
     return paper.convert('RGB').resize((W, H), Image.LANCZOS)
 
 
-def make_card(w, h, entries, number, seed, stamp=True, sign=True):
-    """A placement card: printed in green, filled in on a typewriter, signed, stamped. Drawn at 768 x 480."""
+CARD_A = (('M. D.', '14', 'WORKS DEPT., RING A', 'WATER AND IRRIGATION', 'E. VANCE', 'BY THE PUPIL',
+           'RESIDENTIAL ACCESS, RING A', '(WORKS GATE SEALED)'), '0417', 1730)
+CARD_B = (('R. ABEL', '13', 'KITCHENS, RING A', 'COOK (JUNIOR)', 'M. PRICE', 'BY THE PUPIL', 'KITCHEN DOOR, RING A', ''),
+          '0409', 1731)
+CARD_C = (('T. ORME', '13', 'STORES, RING A', 'STOREKEEPING', 'E. VANCE', 'BY THE PUPIL', 'STORES YARD, RING A', ''),
+          '0412', 1732)
+
+
+def make_card(w, h, entries, number, seed, stamp=True, sign=True, pupil='Mara D.'):
+    """A placement card: printed in green, filled in on a typewriter, signed by the pupil who applied and by her
+    sponsor, stamped. entries: name, age, placed with, trade, sponsor, application, report via (two lines).
+    Drawn at 768 x 480."""
     from PIL import Image, ImageDraw, ImageFilter
     rnd = random.Random(seed)
     W, H = 768, 480
@@ -556,47 +710,81 @@ def make_card(w, h, entries, number, seed, stamp=True, sign=True):
     pr = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(pr)
     GREEN = (34, 72, 54, 235)
-    d.rectangle((22, 18, 746, 22), fill=GREEN)
-    d.text((30, 42), 'REFUGE WORKS DEPARTMENT \u00b7 APPRENTICE PLACEMENTS', font=_font(19, 'carlito'), fill=GREEN, anchor='lm')
-    d.text((30, 100), 'PLACEMENT', font=_font(78, 'carlito'), fill=GREEN, anchor='lm')
-    d.text((628, 96), 'No.', font=_font(22, 'carlito'), fill=GREEN, anchor='rm')
-    d.rectangle((22, 138, 746, 140), fill=GREEN)
-    labels = ('NAME', 'AGE', 'PLACED WITH', 'TRADE', 'SPONSOR')
-    for i, s in enumerate(labels):
-        y = 180 + i * 48
-        d.text((30, y), s, font=_font(21, 'carlito'), fill=GREEN, anchor='lm')
-        for x in range(196, 742, 7):
-            d.point((x, y + 17), fill=GREEN)
-            d.point((x + 1, y + 17), fill=GREEN)
-    d.text((30, 440), "Sponsor's signature", font=_font(17, 'carlito-reg'), fill=GREEN, anchor='lm')
-    for x in range(176, 420, 7):
-        d.point((x, 452), fill=GREEN)
+    d.rectangle((22, 14, 746, 18), fill=GREEN)
+    d.text((48, 34), 'REFUGE WORKS DEPARTMENT · APPRENTICE PLACEMENTS', font=_font(18, 'carlito'), fill=GREEN, anchor='lm')
+    d.text((48, 78), 'PLACEMENT', font=_font(58, 'carlito'), fill=GREEN, anchor='lm')
+    d.text((628, 76), 'No.', font=_font(22, 'carlito'), fill=GREEN, anchor='rm')
+    d.rectangle((22, 108, 746, 110), fill=GREEN)
+    rows = [('NAME', 134), ('PLACED WITH', 172), ('TRADE', 210), ('SPONSOR', 248), ('APPLICATION', 286), ('REPORT VIA', 324)]
+    for s, y in rows:
+        d.text((30, y), s, font=_font(19, 'carlito'), fill=GREEN, anchor='lm')
+        for x in range(178, 742 if s != 'NAME' else 500, 7):
+            d.point((x, y + 15), fill=GREEN)
+            d.point((x + 1, y + 15), fill=GREEN)
+    d.text((520, 134), 'AGE', font=_font(19, 'carlito'), fill=GREEN, anchor='lm')
+    for x in range(566, 742, 7):
+        d.point((x, 149), fill=GREEN)
+        d.point((x + 1, 149), fill=GREEN)
+    for x in range(178, 742, 7):
+        d.point((x, 373), fill=GREEN)
+    d.text((30, 448), "Pupil", font=_font(17, 'carlito-reg'), fill=GREEN, anchor='lm')
+    d.text((300, 448), "Sponsor", font=_font(17, 'carlito-reg'), fill=GREEN, anchor='lm')
+    for x0, x1 in ((74, 284), (360, 560)):
+        for x in range(x0, x1, 7):
+            d.point((x, 458), fill=GREEN)
     card.alpha_composite(pr)
     ty = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    _typed(ty, (640, 96), number, _font(30, 'mono'), rnd, ink=(150, 40, 32))
-    for i, s in enumerate(entries):
-        _typed(ty, (204 + rnd.uniform(-2, 2), 178 + i * 48), s, _font(33, 'mono'), rnd)
+    _typed(ty, (640, 76), number, _font(30, 'mono'), rnd, ink=(150, 40, 32))
+    name, age, placed, trade, sponsor, appl, via, via2 = entries
+    f = _font(28, 'mono')
+    for s, (x, y) in ((name, (186, 132)), (age, (572, 132)), (placed, (186, 170)), (trade, (186, 208)), (sponsor, (186, 246)),
+                      (appl, (186, 284)), (via, (186, 322)), (via2, (186, 358))):
+        if s:
+            _typed(ty, (x + rnd.uniform(-2, 2), y), s, f, rnd)
     card.alpha_composite(ty.filter(ImageFilter.GaussianBlur(0.5)))
+    ink = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    if pupil:                                                  # hers in pencil, careful and joined
+        _hand(ink, (84, 438), pupil, _font(36, 'hand'), (54, 54, 64, 225), rnd, jit=0.6, rot=3, track=0.96)
     if sign:
-        ink = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-        _hand(ink, (186, 432), 'E. Vance', _font(38, 'ink'), (28, 34, 70, 230), rnd, jit=0.8, rot=5)
-        card.alpha_composite(ink.filter(ImageFilter.GaussianBlur(0.4)))
+        _hand(ink, (370, 436), 'E. Vance', _font(38, 'ink'), (28, 34, 70, 230), rnd, jit=0.8, rot=5)
+    card.alpha_composite(ink.filter(ImageFilter.GaussianBlur(0.45)))
     if stamp:
-        st = Image.new('RGBA', (236, 108), (0, 0, 0, 0))
+        st = Image.new('RGBA', (204, 94), (0, 0, 0, 0))
         ds = ImageDraw.Draw(st)
         V = (104, 52, 130, 215)
-        ds.rounded_rectangle((4, 4, 232, 104), radius=12, outline=V, width=5)
-        ds.rounded_rectangle((12, 12, 224, 96), radius=8, outline=V, width=2)
-        ds.text((118, 40), 'ACCEPTED', font=_font(40, 'carlito'), fill=V, anchor='mm')
-        ds.text((118, 70), 'WORKS DEPT \u00b7 RING A', font=_font(18, 'carlito'), fill=V, anchor='mm')
-        ds.text((118, 88), 'P.A. 316', font=_font(17, 'carlito'), fill=V, anchor='mm')
+        ds.rounded_rectangle((4, 4, 200, 90), radius=11, outline=V, width=5)
+        ds.rounded_rectangle((11, 11, 193, 83), radius=7, outline=V, width=2)
+        ds.text((102, 34), 'ACCEPTED', font=_font(34, 'carlito'), fill=V, anchor='mm')
+        ds.text((102, 60), 'WORKS DEPT · RING A', font=_font(16, 'carlito'), fill=V, anchor='mm')
+        ds.text((102, 76), 'P.A. 316', font=_font(16, 'carlito'), fill=V, anchor='mm')
         st = _grain(st, seed + 7, lo=0.3).rotate(7, resample=Image.BICUBIC, expand=True)
-        card.alpha_composite(st, (W - st.width - 16, H - st.height - 6))
+        card.alpha_composite(st, (W - st.width - 14, H - st.height - 6))
     dd = ImageDraw.Draw(card)
     dd.ellipse((14, 58, 34, 78), fill=(36, 30, 24))                       # a punched hole
     dd.rectangle((686, 0, 712, 6), fill=(120, 76, 40, 255))                # a paper clip's rust
     out = card.convert('RGB')
     return out if (w, h) == (W, H) else out.resize((w, h), Image.LANCZOS)
+
+
+def make_soilcrack(w, h, seed):
+    """Dry soil, shrunk and cracked into plates (Voronoi cells): pale crusted tops, dark gaps, plate edges lifted."""
+    import numpy as np
+    from PIL import Image
+    rng = np.random.default_rng(seed)
+    pts = rng.random((46, 2)) * [w, h]
+    pts = np.concatenate([pts + [dx * w, dy * h] for dx in (-1, 0, 1) for dy in (-1, 0, 1)])     # tiles
+    yy, xx = np.mgrid[0:h, 0:w]
+    dist = np.sqrt((xx[..., None] - pts[:, 0]) ** 2 + (yy[..., None] - pts[:, 1]) ** 2)
+    dist.sort(axis=2)
+    gap = dist[..., 1] - dist[..., 0]
+    n = _noise(w, h, 6, seed)
+    base = np.array([112, 92, 70], float) * (0.82 + 0.3 * n)[..., None]
+    lift = np.clip(1 - gap / 9.0, 0, 1)[..., None]                   # edges curl up, catch the light
+    a = base * (1 + 0.16 * lift)
+    crack = np.clip((3.2 + 1.5 * n - gap) / 1.6, 0, 1)[..., None]
+    a = a * (1 - crack) + np.array([30, 22, 16]) * crack
+    a *= (1 - 0.1 * (rng.random((h, w)) > 0.9))[..., None]
+    return Image.fromarray(np.clip(a, 0, 255).astype('uint8'), 'RGB')
 
 
 def make_atlas(path):
@@ -605,12 +793,9 @@ def make_atlas(path):
     rnd = random.Random(1720)
     img = Image.new('RGB', (ATLAS, ATLAS), (60, 56, 50))
     img.paste(make_drawing(), CELLS['drawing'][:2])
-    img.paste(make_card(768, 480, ('M. D.', '14', 'WORKS DEPT., RING A', 'WATER AND IRRIGATION', 'E. VANCE'), '0417', 1730),
-              CELLS['card'][:2])
-    img.paste(make_card(384, 240, ('R. ABEL', '13', 'KITCHENS, RING A', 'COOK (JUNIOR)', 'M. PRICE'), '0409', 1731, sign=False),
-              CELLS['cardB'][:2])
-    img.paste(make_card(384, 240, ('T. ORME', '13', 'STORES, RING A', 'STOREKEEPING', 'E. VANCE'), '0412', 1732),
-              CELLS['cardC'][:2])
+    img.paste(make_card(768, 480, *CARD_A), CELLS['card'][:2])
+    img.paste(make_card(384, 240, *CARD_B, sign=False, pupil='R. Abel'), CELLS['cardB'][:2])
+    img.paste(make_card(384, 240, *CARD_C, pupil='T. Orme'), CELLS['cardC'][:2])
     ink = (30, 28, 24)
 
     # The drawer's label: a buff card in a brass holder, stencilled.
@@ -627,24 +812,42 @@ def make_atlas(path):
     ds.text(((x1 - x0) / 2, 82), 'WORKSHOP', font=_font(112, 'carlito'), fill=(222, 210, 176), anchor='mm')
     ds.text(((x1 - x0) / 2, 158), 'MAINTENANCE \u00b7 VOLUNTEERS', font=_font(32, 'carlito'), fill=(214, 204, 172), anchor='mm')
     img.paste(_fade(s, 1734, k=0.12, dust=0.18), (x0, y0))
+    # The stair door's sign: the way on, through the homes (the Works' own gate is sealed); the Works' small cog mark.
     x0, y0, x1, y1 = CELLS['sign_works']
-    s = Image.new('RGB', (x1 - x0, y1 - y0), (26, 40, 66))
+    sw, sh = x1 - x0, y1 - y0
+    s = Image.new('RGB', (sw, sh), (26, 40, 66))
     ds = ImageDraw.Draw(s)
     cream = (226, 218, 194)
-    ds.rounded_rectangle((8, 8, x1 - x0 - 9, y1 - y0 - 9), radius=18, outline=cream, width=7)
-    ds.text((34, 86), 'WORKS \u00b7 RING A', font=_font(82, 'carlito'), fill=cream, anchor='lm')
-    ax, ay = 700, 86                                           # the arrow, up
-    ds.polygon([(ax, ay - 62), (ax + 42, ay - 8), (ax + 15, ay - 8), (ax + 15, ay + 58), (ax - 15, ay + 58), (ax - 15, ay - 8),
-                (ax - 42, ay - 8)], fill=cream)
-    ds.text((384, 172), 'STAIR \u00b7 STAFF AND PLACED PUPILS', font=_font(30, 'carlito'), fill=cream, anchor='mm')
-    for xx in (26, x1 - x0 - 26):
-        ds.ellipse((xx - 7, 97, xx + 7, 111), fill=(150, 150, 140))
+    ds.rounded_rectangle((8, 8, sw - 9, sh - 9), radius=18, outline=cream, width=7)
+    size = 74
+    while _font(size, 'carlito').getlength('RESIDENTIAL ACCESS') > 590:
+        size -= 2
+    ds.text((34, 66), 'RESIDENTIAL ACCESS', font=_font(size, 'carlito'), fill=cream, anchor='lm')
+    ds.text((34, 148), 'RING A', font=_font(84, 'carlito'), fill=cream, anchor='lm')
+    ra = _font(84, 'carlito').getlength('RING A')
+    mx, my = 34 + ra + 64, 150                                  # the Works mark: a cog in a ring, WORKS beside it
+    for t in range(10):
+        a = t * math.pi / 5
+        ds.polygon([(mx + 25 * math.cos(a + o), my + 25 * math.sin(a + o)) for o in (-0.16, 0.16)] +
+                   [(mx + 33 * math.cos(a + o), my + 33 * math.sin(a + o)) for o in (0.11, -0.11)], fill=cream)
+    ds.ellipse((mx - 27, my - 27, mx + 27, my + 27), fill=cream)
+    ds.ellipse((mx - 11, my - 11, mx + 11, my + 11), fill=(26, 40, 66))
+    ds.text((mx + 44, my + 2), 'WORKS', font=_font(28, 'carlito'), fill=cream, anchor='lm')
+    ax, ay = 700, 104                                           # the arrow, up
+    ds.polygon([(ax, ay - 76), (ax + 46, ay - 18), (ax + 16, ay - 18), (ax + 16, ay + 74), (ax - 16, ay + 74), (ax - 16, ay - 18),
+                (ax - 46, ay - 18)], fill=cream)
+    for xx in (26, sw - 26):
+        ds.ellipse((xx - 7, sh // 2 - 7, xx + 7, sh // 2 + 7), fill=(150, 150, 140))
     s = _fade(s, 1735, k=0.1, dust=0.15)
     ds = ImageDraw.Draw(s)
     for _ in range(26):                                        # enamel chipped to black iron
-        cx, cy, r = rnd.uniform(0, x1 - x0), rnd.choice((rnd.uniform(0, 18), rnd.uniform(y1 - y0 - 18, y1 - y0))), rnd.uniform(2, 7)
+        cx, cy, r = rnd.uniform(0, sw), rnd.choice((rnd.uniform(0, 18), rnd.uniform(sh - 18, sh))), rnd.uniform(2, 7)
         ds.ellipse((cx - r, cy - r, cx + r, cy + r * 0.7), fill=(16, 16, 18))
     img.paste(s, (x0, y0))
+
+    # Dry soil, cracked into plates: the trays' surface.
+    x0, y0, x1, y1 = CELLS['soilcrack']
+    img.paste(make_soilcrack(x1 - x0, y1 - y0, 1745), (x0, y0))
 
     # The volunteer's notice, in ink.
     x0, y0, x1, y1 = CELLS['rota']
@@ -1026,7 +1229,7 @@ def wall_runs(holes, z0, z1, xa, xb):
 
 
 def build_shell(B):
-    holes = [(WINDOW[0], WINDOW[1], WINDOW[2], WINDOW[3]), (STAIR_DOOR[0], STAIR_DOOR[1], 0.0, STAIR_DOOR[2])]
+    holes = [(WINDOW[0], WINDOW[1], WINDOW[2], WINDOW[3])]
     wx0 = LWALL[1]
     holed_wall(B, wx0, END_X, WALL_Y, WALL_Y2, 0.0, CEIL, holes)
     # Floor: timber boards along x (their joints as dark lines), ceiling, beams.
@@ -1062,15 +1265,20 @@ def build_shell(B):
     for (y0_, y1_, z0_, z1_) in ((ya - 0.08, ya - 0.01, 0.0, hd + 0.08), (yb + 0.01, yb + 0.08, 0.0, hd + 0.08), (ya - 0.08, yb + 0.08, hd, hd + 0.08)):
         B.box('PigeonWood', LWALL[1], LWALL[1] + 0.025, y0_, y1_, z0_, z1_)
     B.box('WornIron', LWALL[0] - 0.01, LWALL[1] + 0.01, ya, yb, 0.0, 0.012)                    # threshold strip
-    # The right end wall.
-    B.box('WinDado', END_X, X1, -1.0, WALL_Y2, 0.0, 1.0)
-    B.box('WorkPlaster', END_X, X1, -1.0, WALL_Y2, 1.0, CEIL)
+    # The right end wall, the stair door's opening in it (DOOR17), and above the ceiling the stairwell's side.
+    dy0, dy1, dhd = DOOR17
+    for (y0_, y1_, z0_, z1_) in ((-1.0, dy0, 0.0, CEIL), (dy1, WALL_Y2, 0.0, CEIL), (dy0, dy1, dhd, CEIL)):
+        for za, zb, mt in ((z0_, min(z1_, 1.0), 'WinDado'), (max(z0_, 1.0), z1_, 'WorkPlaster')):
+            if zb > za:
+                B.box(mt, END_X, X1, y0_, y1_, za, zb)
+    B.box('WorkPlaster', END_X, X1, WELL[2], WELL[4], CEIL + 0.15, WELL[5])
     # Skirting, dado rail, conduit along the back wall.
     for a, b in wall_runs(holes, 0.0, 0.12, wx0, END_X):
         B.box('PigeonWood', a, b, WALL_Y - 0.02, WALL_Y, 0.0, 0.12)
     for a, b in wall_runs(holes, 0.98, 1.03, wx0, END_X):
         B.box('PigeonWood', a, b, WALL_Y - 0.03, WALL_Y, 0.98, 1.03)
-    B.box('PigeonWood', END_X - 0.02, END_X, -1.0, WALL_Y, 0.0, 0.12)
+    for y0_, y1_ in ((-1.0, DOOR17[0] - 0.08), (DOOR17[1] + 0.08, WALL_Y)):
+        B.box('PigeonWood', END_X - 0.02, END_X, y0_, y1_, 0.0, 0.12)
     B.box('PigeonWood', LWALL[1], LWALL[1] + 0.02, yb + 0.08, WALL_Y, 0.0, 0.12)
     B.cyl('WornIron', (wx0, WALL_Y - 0.04, 2.72), (END_X, WALL_Y - 0.04, 2.72), 0.016, seg=8)
     for x in (281.2, 284.2, 289.0, 292.4):
@@ -1399,7 +1607,7 @@ def build_bench_top(B, rnd):
     # Soil crumbs on the bench's front edge, where the tray went over.
     for _ in range(14):
         cx, cy = rnd.uniform(285.5, 285.95), rnd.uniform(0.66, 0.8)
-        B.sphere('DampSoil', (cx, cy, top), rnd.uniform(0.006, 0.014), seg=6, scale=(1, 1, 0.5))
+        B.sphere('Att17Atlas', (cx, cy, top), rnd.uniform(0.006, 0.014), seg=6, scale=(1, 1, 0.5), cell='sw_crust')
     # The mug, the kettle on its ring, a tea caddy.
     mx, my = 287.3, 0.8
     B.cyl('TeaEnamel', (mx, my, top), (mx, my, top + 0.095), 0.042, seg=14)
@@ -1466,7 +1674,6 @@ def build_board(B):
 
 def build_window(B, rnd, names):
     """The window into a dead light well, its shelf of pots under the grow-lamp, the drip line from the sink tap."""
-    global SHOOT_Z
     x0, x1, sill, head = WINDOW
     # The well behind: dark, a little way back.
     B.box('DarkMetal', x0 - 0.1, x1 + 0.1, 2.0, 2.1, sill - 0.1, head + 0.1)
@@ -1491,15 +1698,15 @@ def build_window(B, rnd, names):
     for bx in (s0 + 0.15, (s0 + s1) / 2, s1 - 0.15):
         B.prism_yz('WornIron', [(WALL_Y, st - 0.035), (WALL_Y, st - 0.32), (WALL_Y - 0.025, st - 0.32), (sy0 + 0.04, st - 0.035)],
                    bx - 0.007, bx + 0.007)
-    # The pots: dry, dead; the one under the middle of the lamp living (its shoot is Att17Shoot); M. D. on its tag.
-    xs = [289.18, 289.42, 289.68, 289.95, 290.2, SHOOT_POT[0], 290.8, 291.08, 291.34, 291.6, 291.84]
+    # The pots: dry, dead, all of them; the one under the middle of the lamp has M. D. on its tag, a dry stalk in it.
+    xs = [289.18, 289.42, 289.68, 289.95, 290.2, MD_POT[0], 290.8, 291.08, 291.34, 291.6, 291.84]
     drip = []
     for k, x in enumerate(xs):
-        r = 0.075 if x == SHOOT_POT[0] else rnd.uniform(0.05, 0.07)
-        y = SHOOT_POT[1] if x == SHOOT_POT[0] else 1.04 + rnd.uniform(-0.06, 0.08)
-        if x == SHOOT_POT[0]:
-            zs = pot(B, x, y, st, r, r * 1.5, rnd, tag=0, plant=None, soil='sw_soil_dark', tag_yaw=0.05)
-            SHOOT_Z = zs
+        r = 0.075 if x == MD_POT[0] else rnd.uniform(0.05, 0.07)
+        y = MD_POT[1] if x == MD_POT[0] else 1.04 + rnd.uniform(-0.06, 0.08)
+        if x == MD_POT[0]:
+            zs = pot(B, x, y, st, r, r * 1.5, rnd, tag=0, plant=None, tag_yaw=0.05)
+            dead_plant(B, x + 0.01, y, zs, rnd, n=1, h=0.11, cell='sw_shrivel', droop=1.4)
         else:
             zs = pot(B, x, y, st, r, r * 1.5, rnd, tag=names(), plant='dead')
         drip.append((x, y, zs, r))
@@ -1541,9 +1748,6 @@ def build_window(B, rnd, names):
     return tap
 
 
-SHOOT_Z = None
-
-
 def build_sink(B, tap):
     """The butler sink, its tap (the drip line's T on it), a bucket."""
     x0, x1 = SINK
@@ -1574,26 +1778,33 @@ def build_sink(B, tap):
 
 
 def build_door(B):
-    """The way on: the stair door, steel-faced, shut; WORKS . RING A and an arrow up over it; a bulkhead lamp."""
-    x0, x1, hd = STAIR_DOOR
-    for a, b in ((x0, x0 + 0.06), (x1 - 0.06, x1)):
-        B.box('WornIron', a, b, WALL_Y - 0.02, WALL_Y2, 0.0, hd)
-    B.box('WornIron', x0, x1, WALL_Y - 0.02, WALL_Y2, hd - 0.06, hd)
-    lx0, lx1 = x0 + 0.06, x1 - 0.06
-    B.box('DepotGreen', lx0, lx1, 1.37, 1.42, 0.0, hd - 0.06)
-    B.box('WornIron', lx0 + 0.25, lx1 - 0.25, 1.364, 1.37, 1.3, 1.85)
-    B.box('DirtyGlass', lx0 + 0.29, lx1 - 0.29, 1.362, 1.364, 1.34, 1.81)
-    B.box('WornIron', lx0 + 0.03, lx1 - 0.03, 1.364, 1.37, 0.02, 0.26)
-    for bx in (lx0 + 0.12, lx1 - 0.12):
-        B.box('WornIron', bx - 0.02, bx + 0.02, 1.3, 1.37, 0.98, 1.06)
-    B.cyl('HandledBrass', (lx0 + 0.1, 1.31, 1.02), (lx1 - 0.1, 1.31, 1.02), 0.016, seg=10)
-    for hz in (0.3, 1.0, 1.7):
-        B.cyl('WornIron', (lx1 + 0.01, 1.36, hz), (lx1 + 0.01, 1.36, hz + 0.12), 0.015, seg=8)
-    B.box('WornIron', x0 - 0.05, x1 + 0.05, WALL_Y - 0.15, WALL_Y, 0.0, 0.015)                  # the step plate
-    # The sign over it, on a backing plate.
-    B.box('WornIron', 293.68, 294.92, WALL_Y - 0.015, WALL_Y, 2.255, 2.61)
-    B.decal(293.70, 294.90, 2.27, 2.595, WALL_Y - 0.016, 'sign_works')
-    # The bulkhead lamp beside it (its bulb is in Att17Bulbs).
+    """The way on, in the right end wall: the stair door's steel frame and architrave, its threshold; over it a blade
+    sign, RESIDENTIAL ACCESS . RING A and an arrow up, with the Works' small cog; the bulkhead lamp on the back wall
+    by the corner. (The leaf is Att17Door; the stair beyond, build_stairwell.)"""
+    dy0, dy1, hd = DOOR17
+    # The steel frame lining the opening, and the room side's timber architrave.
+    for y0_, y1_ in ((dy0 - 0.02, dy0), (dy1, dy1 + 0.02)):
+        B.box('WornIron', END_X, X1, y0_, y1_, 0.0, hd)
+    B.box('WornIron', END_X, X1, dy0 - 0.02, dy1 + 0.02, hd, hd + 0.02)
+    for (y0_, y1_, z0_, z1_) in ((dy0 - 0.09, dy0 - 0.02, 0.0, hd + 0.09), (dy1 + 0.02, dy1 + 0.09, 0.0, hd + 0.09),
+                                 (dy0 - 0.09, dy1 + 0.09, hd + 0.02, hd + 0.09)):
+        B.box('PigeonWood', END_X - 0.025, END_X, y0_, y1_, z0_, z1_)
+    B.box('WornIron', END_X - 0.01, X1 + 0.01, dy0, dy1, 0.0, 0.012)                       # the threshold strip
+    # The door stop on the stair side (the leaf closes against it).
+    for y0_, y1_ in ((dy0, dy0 + 0.015), (dy1 - 0.015, dy1)):
+        B.box('WornIron', X1 - LEAF_T - 0.02, X1 - LEAF_T - 0.002, y0_, y1_, 0.0, hd)
+    B.box('WornIron', X1 - LEAF_T - 0.02, X1 - LEAF_T - 0.002, dy0, dy1, hd - 0.015, hd)
+    # The blade sign, hung off the end wall over the door, its face to the room's open side.
+    sx0, sx1, sz0, sz1 = SIGN17
+    B.box('WornIron', sx0 - 0.015, sx1 + 0.015, -0.018, 0.018, sz0 - 0.015, sz1 + 0.015)
+    B.decal(sx0, sx1, sz0, sz1, -0.0185, 'sign_works')
+    bz = sz1 + 0.07
+    B.box('WornIron', sx0 - 0.08, END_X, -0.012, 0.012, bz - 0.012, bz + 0.012)            # the bracket arm
+    B.cyl('WornIron', (END_X, 0.0, bz - 0.24), (sx1 - 0.35, 0.0, bz), 0.008, seg=6)          # its strut
+    B.box('WornIron', END_X - 0.012, END_X, -0.05, 0.05, bz - 0.28, bz + 0.04)              # the wall plate
+    for hx in (sx0 + 0.12, sx1 - 0.12):                                                    # two hangers
+        B.cyl('WornIron', (hx, 0.0, bz - 0.012), (hx, 0.0, sz1 + 0.015), 0.005, seg=5)
+    # The bulkhead lamp on the back wall by the corner (its bulb is in Att17Bulbs).
     lx, ly, lz = DOOR_LAMP
     B.box('WornIron', lx - 0.08, lx + 0.08, WALL_Y - 0.02, WALL_Y, lz - 0.1, lz + 0.1)
     B.cyl('WornIron', (lx, WALL_Y - 0.02, lz), (lx, ly - 0.04, lz), 0.06, seg=12)
@@ -1602,6 +1813,97 @@ def build_door(B):
         ang = a * math.pi / 4
         B.cyl('WornIron', (lx + 0.055 * math.cos(ang), ly - 0.01, lz + 0.055 * math.sin(ang)),
               (lx - 0.055 * math.cos(ang), ly - 0.01, lz - 0.055 * math.sin(ang)), 0.003, seg=4)
+
+
+def tread_top(i):
+    """Tread i's (1..TREADS) top height; TREADS + 1 is the upper landing."""
+    return RISE * i
+
+
+def tread_x(i):
+    """Tread i's (1..TREADS) going: x0 (its nosing's riser face) to x1."""
+    return STAIR_X0 + (i - 1) * GOING, STAIR_X0 + i * GOING
+
+
+def build_stairwell(B):
+    """Beyond the door: a landing, then a straight flight up toward +x, out of the frame's top into a lit shaft. Seen
+    from the room's open side in section: the stair's painted string, worn timber treads with iron nosings, the
+    handrail on the back wall, the dado following the pitch; the room's ceiling carries over the landing and stops,
+    and above the flight the shaft goes up to the warm lamp."""
+    x0, x1, fy, wy, wy2, top = WELL
+    y0, y1 = STAIR_Y
+    nose = 0.022
+    # The landing's floor (boards along x), the well's floor under the flight.
+    B.box('CrateWood', x0, x1, fy, wy2, -0.2, 0.0)
+    u0, v0, u1, v1 = cell_uv('sw_seam')
+    su = ((u0 + u1) / 2, (v0 + v1) / 2)
+    y = fy + 0.07
+    while y < wy:
+        B.face('Att17Atlas', [(x0, y - 0.0025, 0.0006), (STAIR_X0, y - 0.0025, 0.0006), (STAIR_X0, y + 0.0025, 0.0006),
+                              (x0, y + 0.0025, 0.0006)], [su] * 4)
+        y += 0.14
+    # The back wall, plaster; its dado, painted, following the pitch; the end wall.
+    B.box('WorkPlaster', x0, x1 + 0.15, wy, wy2, 0.0, top)
+    B.box('WorkPlaster', x1, x1 + 0.15, fy, wy, 0.0, top)
+    slope = RISE / GOING
+    xd = STAIR_X0 - 0.15
+    dz = 0.8
+    ztop = tread_top(TREADS + 1) + dz
+    B.prism_xz('WinDado', [(x0, 0.0), (x1, 0.0), (x1, ztop), (xd + (ztop - dz) / slope, ztop), (xd, dz), (x0, dz)],
+               wy - 0.012, wy)
+    pts = [(x0, dz), (xd, dz), (xd + (ztop - dz) / slope, ztop), (x1, ztop)]
+    for (ax, az), (bx, bz) in zip(pts, pts[1:]):                                             # its rail
+        B.cyl('PigeonWood', (ax, wy - 0.018, az), (bx, wy - 0.018, bz), 0.014, seg=6)
+    # The ceiling over the landing (the room's, carried on), its edge; the shaft's top, out of sight.
+    B.box('WorkPlaster', x0, WELL_FASCIA, fy, wy2, CEIL, CEIL + 0.15)
+    B.box('PigeonWood', WELL_FASCIA - 0.14, WELL_FASCIA, fy, wy, CEIL - 0.16, CEIL)
+    B.box('WorkPlaster', WELL_FASCIA, x1 + 0.15, fy, wy2, top, top + 0.15)
+    # The flight: a painted mass in section (the string), its soffit parallel to the pitch.
+    zl = tread_top(TREADS + 1)
+    prof = [(STAIR_X0, 0.0)]
+    for i in range(1, TREADS + 1):
+        a, b = tread_x(i)
+        prof += [(a, tread_top(i) - 0.03), (b, tread_top(i) - 0.03)]
+    xs0 = STAIR_X0 + 0.5
+    zs = zl - 0.24
+    prof += [(tread_x(TREADS)[1], zl - 0.03), (x1, zl - 0.03), (x1, zs), (xs0 + zs / slope, zs), (xs0, 0.0)]
+    B.prism_xz('WinDado', prof, y0, y1 - 0.002)
+    B.box('PigeonWood', tread_x(TREADS)[1] + 0.1, x1, y0 - 0.02, y0, zs - 0.04, zl - 0.03)     # the landing's edge beam
+    # Treads: worn timber boards with iron nosings; the upper landing's boards.
+    for i in range(1, TREADS + 1):
+        a, b = tread_x(i)
+        z = tread_top(i)
+        B.box('PupilWood', a - nose, b, y0, y1 - 0.004, z - 0.03, z)
+        B.box('WornIron', a - nose - 0.003, a + 0.035, y0 - 0.002, y1 - 0.004, z - 0.032, z + 0.0015)
+    a = tread_x(TREADS)[1]
+    B.box('PupilWood', a - nose, x1, y0, y1 - 0.004, zl - 0.03, zl)
+    B.box('WornIron', a - nose - 0.003, a + 0.035, y0 - 0.002, y1 - 0.004, zl - 0.032, zl + 0.0015)
+    # The handrail on the back wall, on brackets, over the pitch (0.9 above the nosings), level over the landings.
+    ry = wy - 0.065
+    rz = lambda x: 0.9 + RISE + (x - STAIR_X0) * slope
+    rpts = [(x0 + 0.25, 0.9 + 0.02), (STAIR_X0 - 0.1, 0.9 + 0.02), (STAIR_X0 + 0.1, rz(STAIR_X0 + 0.1)),
+            (tread_x(TREADS)[1] - 0.05, rz(tread_x(TREADS)[1] - 0.05)), (tread_x(TREADS)[1] + 0.25, zl + 0.92), (x1 - 0.1, zl + 0.92)]
+    for (ax, az), (bx, bz) in zip(rpts, rpts[1:]):
+        B.cyl('WornIron', (ax, ry, az), (bx, ry, bz), 0.019, seg=10)
+        B.sphere('WornIron', (bx, ry, bz), 0.019, seg=8)
+    B.cyl('WornIron', (rpts[0][0], ry, rpts[0][1]), (rpts[0][0], wy, rpts[0][1]), 0.019, seg=8)
+    for bx in (x0 + 0.6, STAIR_X0 + 0.9, STAIR_X0 + 2.2, STAIR_X0 + 3.5, x1 - 0.4):
+        bzz = 0.92 if bx < STAIR_X0 else (rz(bx) if bx < tread_x(TREADS)[1] else zl + 0.92)
+        B.cyl('WornIron', (bx, ry, bzz - 0.02), (bx, ry + 0.03, bzz - 0.06), 0.006, seg=5)
+        B.cyl('WornIron', (bx, ry + 0.03, bzz - 0.06), (bx, wy, bzz - 0.06), 0.006, seg=5)
+        B.cyl('WornIron', (bx, wy - 0.004, bzz - 0.06), (bx, wy, bzz - 0.06), 0.03, seg=10)
+    # The landing's skirting.
+    B.box('PigeonWood', x0, STAIR_X0, wy - 0.02, wy, 0.0, 0.12)
+    # The lamp's fitting over the flight: a back plate and a cage (the glowing globe is Att17StairLamp).
+    lx, ly, lz = STAIR_LAMP
+    B.box('WornIron', lx - 0.09, lx + 0.09, wy - 0.02, wy, lz - 0.12, lz + 0.12)
+    B.cyl('WornIron', (lx, wy - 0.02, lz), (lx, ly + 0.03, lz), 0.07, seg=12)
+    B.torus('WornIron', (lx, ly - 0.02, lz), (0, 1, 0), 0.065, 0.004, seg=12, rseg=3)
+    for a in range(4):
+        ang = a * math.pi / 4
+        B.cyl('WornIron', (lx + 0.065 * math.cos(ang), ly - 0.02, lz + 0.065 * math.sin(ang)),
+              (lx - 0.065 * math.cos(ang), ly - 0.02, lz - 0.065 * math.sin(ang)), 0.003, seg=4)
+    B.cyl('Cable', (lx, wy - 0.01, lz + 0.12), (lx, wy - 0.01, top), 0.008, seg=6)
 
 
 def build_ceiling_lights(B):
@@ -1654,7 +1956,8 @@ def build_floor_things(B, rnd):
     # Spilled soil: where the tray slid off the bench and landed; a heap under its raised back edge.
     for _ in range(18):
         cx, cy = TRAY[0] + rnd.uniform(-0.32, 0.32), TRAY[1] + rnd.uniform(0.12, 0.5)
-        B.sphere('DampSoil', (cx, cy, 0.0), rnd.uniform(0.012, 0.035), seg=7, scale=(1.3, 1, 0.35))
+        B.sphere('Att17Atlas', (cx, cy, 0.0), rnd.uniform(0.012, 0.035), seg=7, scale=(1.3, 1, 0.35),
+                 cell=rnd.choice(('sw_crust', 'sw_soil_dry')))
     # Coil of hose, low in the foreground.
     for k in range(3):
         B.torus('Att17Atlas', (283.7 + 0.02 * k, -1.05 + 0.015 * k, 0.014 + 0.024 * k), (0, 0, 1), 0.2 - 0.01 * k, 0.013,
@@ -1667,7 +1970,7 @@ def heap_under_tray(B):
     w, d, h = TRAY_SIZE
     for lx in (-0.12, 0.0, 0.12):
         p = M @ Vector((lx, d / 2 - 0.03, 0.0))
-        B.sphere('DampSoil', (p.x, p.y, 0.0), 0.06, seg=8, scale=(1.4, 1.0, max(0.2, (p.z + 0.006) / 0.06)))
+        B.sphere('Att17Atlas', (p.x, p.y, 0.0), 0.06, seg=8, scale=(1.4, 1.0, max(0.2, (p.z + 0.006) / 0.06)), cell='sw_crust')
 
 
 def tray_matrix():
@@ -1794,20 +2097,6 @@ def build_growlamp(coll):
     for dy in (-0.045, 0.045):
         B.cyl('Att17GrowLamp', (g0, gy + dy, gz), (g1, gy + dy, gz), 0.014, seg=10)
     return B.obj('Att17GrowLamp', coll, origin=((g0 + g1) / 2, gy, gz))
-
-
-def build_shoot(coll):
-    """The pale living shoot in M. D.'s pot under the lamp: a stem leaning toward the tubes, two seed leaves, a true leaf."""
-    B = MB()
-    x, y, z = SHOOT_POT[0] + 0.01, SHOOT_POT[1] - 0.005, SHOOT_Z
-    top = Vector((x - 0.004, y - 0.006, z + 0.13))
-    B.cyl('AttShoot', (x, y, z - 0.005), top, 0.0045, 0.0032, seg=6)
-    for s, size, lift in ((-1, 1.0, -30), (1, 1.0, -30), (1, 0.6, 40)):
-        vs = [B.bm.verts.new(top + Matrix.Rotation(math.radians(s * lift), 3, 'Y') @ (Vector(p) * size))
-              for p in ((0, 0, 0), (s * 0.024, 0.010, 0.002), (s * 0.045, 0, 0), (s * 0.024, -0.010, 0.002), (s * 0.024, 0, -0.003))]
-        for a, b, c in ((0, 1, 2), (0, 2, 3), (0, 4, 1), (1, 4, 2), (2, 4, 3), (3, 4, 0)):
-            B.bm.faces.new((vs[a], vs[b], vs[c])).material_index = B.m('AttShoot')
-    return B.obj('Att17Shoot', coll, origin=(SHOOT_POT[0], SHOOT_POT[1], SHOOT_Z))
 
 
 def build_bulbs(coll):
