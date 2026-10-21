@@ -844,7 +844,7 @@ def build_balcony(B):
     B.box('WornIron', x0, x1, y1 - 0.04, y1, BAL_UNDER - 0.06, top - 0.04)  # the ledger on the wall
     for x in (248.27, 251.29):                                               # two slim columns, in front of the lane
         B.cyl('WornIron', (x, -0.36, 0.0), (x, -0.36, BAL_UNDER), 0.032, seg=10)
-        B.box('WornIron', x - 0.07, x + 0.07, -0.43, -0.29, 0.0, 0.02)
+        B.box('WornIron', x - 0.07, x + 0.07, -0.43, -0.31, 0.0, 0.02)
         B.box('WornIron', x - 0.06, x + 0.06, -0.42, -0.24, BAL_UNDER - 0.03, BAL_UNDER)
         B.cyl('WornIron', (x, -0.36, BAL_UNDER - 0.3), (x + (0.25 if x < 250 else -0.25), -0.3, BAL_UNDER - 0.02), 0.012, seg=6)
     build_rails(B, BAL_STUB[0], BAL_STUB[1], top, stop_left=True)
@@ -1526,4 +1526,59 @@ def build_set(dl01, m, coll):
     return objs
 
 
-REPORT = """(filled in after the build)"""
+REPORT = """DL-15 One Pupil Missing (art/ch1/dl15.py). Game coords: (x, y, z) = Blender (x, z, -y).
+
+MOVED (origin = pivot, world, built state):
+- Att15FigA (259.2, 0.03, -0.55), Att15FigB (249.9, 1.63, -0.55): rail figures, origin on rail top under the stand, face
+  +x. Same mesh (Att15FigureRail). Stand 0.40 long (buffers +-0.20), body +-0.13 deep, 0.95 tall above rail top.
+  Seat stops (origin x): S1 253.2, S2 254.6, S3 256.0 (brass plates in the channel).
+- Att15Lift: origin (251.9, 1.6, -0.3) = deck top centre, built UP; deck x 251.4-252.4, z -0.9..0.3; travel -1.6 in y
+  (down: deck top 0, flush in its 0.06 pit). Includes its rail stub and its hoist cable.
+- Att15LiftGate: origin (252.4, 1.6, -0.9) on the back hinge post; shut along x 252.4, z -0.9..0.27, 0.85 high. Move
+  with the deck; open = rotate about game y by -90 deg (free end swings into the lift along its back, to x 251.2).
+- Att15LiftCW: origin (251.57, 0.475, -1.2), built low; travel +1.6 in y as the lift goes down.
+- Att15Door: hinge (263.9, 0, -0.38); leaf z -0.375..0.3 (y -0.3..0.375 Blender), 2.0 high, shut; open = rotate
+  about game y by +95 deg. NOTE: hinge is at Blender y 0.38, not 0.55: the flap and the figures need y 0.40-0.72 clear.
+- Att15Flap: hinge (263.815, 1.05, -0.56); 0.30 wide (Blender y 0.41-0.71), z0 0.035; open = rotate about game z by
+  +80 deg (Blender ry -80): swings up toward +x.
+- Emissive (own objects + materials): Att15LampPupil (252.11, 2.2, -0.85), Att15LampEscort (252.25, 2.2, -0.85) static
+  on the right guide post 0.6 above the up-deck; Att15Lamp1/2/3 at x 257.64 / 258.1 / 258.56, y 2.17, z -1.36
+  (R. ABEL, T. ORME, M. D.); Att15HideLamp (250.62, 0.13, -1.12), on as built.
+- Static named: Att15Chair (origin 255.92, 0, -0.31; seat top 0.30; footprint x 255.81-256.03, z -0.42..-0.20),
+  Att15Bell (258.1, 2.74, -1.4).
+
+SURFACES (x0, x1, top):
+- Floor 248.15-263.75, 0. Under the balcony (248.15-251.4) ceiling 1.5. Lift pit 251.4-252.4: -0.06 while lift is up.
+- Balcony 248.15-251.4, 1.6 (lane-deep); rails 1.63. Lift deck 251.4-252.4, 1.6 up / 0 down.
+- Rails everywhere +0.03 (no climb). Mara's chair seat 0.30 (Blender y 0.20-0.42: just behind the lane).
+- Behind the lane, not walkable from it: front-row desks 0.49-0.60 sloped, teacher's desk 0.72, cot 1.98.
+WALLS/LIMITS: left wall face x 248.15 (both levels); end partition face 263.75 (door 2.0 high when open); ceiling 3.6;
+hatch in back wall x 248.55-249.35, sill 1.6, head 2.4, duct z -1.4..-2.6, open toward -x behind the wall. Gate blocks
+the lift's right edge while shut. Two slim columns at x 248.27, 251.29, z +0.36 (in front of the lane, not blocking).
+
+SECRET ROOM: floor x 248.3-251.2, z -0.4..-1.4, clear 1.5. Blanket at z -0.35; gap x 249.56-250.12. Path: from the lane
+at x 249.8 straight in to z -0.6 (stop: the tin is at z -0.81..-1.03). Voice player (att_escort) on the biscuit tin:
+base (249.95, 0.10, -0.92), card (249.95, 0.25, -0.875), horn mouth (249.91, 0.45, -0.81). Use it from x 249.95.
+
+LIGHTS (index.html P/S format, game coords):
+P(0xffd8b0, 1.8, 4.5, 250.2, 2.95, -0.45)   sick bay pendant
+P(0xbcd0e8, 0.5, 2.0, 248.95, 2.0, -1.3)    the duct mouth
+S(0xffe0b8, 5, 5, [252.0, 3.2, 1.2], [252.0, 2.1, -0.8], 0.45)   lift sign + PUPIL/ESCORT
+S(0xffd8a8, 7, 6, [254.6, 3.0, 0.6], [254.6, 0.35, -0.9], 0.75, true)   S1/S2 and the rail
+S(0xffe0b8, 5, 5, [256.0, 2.9, 0.9], [256.0, 0.45, -0.7], 0.4, true)   Mara's desk lid and chair
+S(0xffe2c0, 4.5, 5, [258.1, 3.2, 1.0], [258.1, 2.1, -1.38], 0.4)   attendance board, bell
+S(0xffe6c8, 8, 7, [260.3, 3.3, 1.4], [260.3, 1.4, -1.38], 0.6, true)   blackboard, figure A
+P(0xffd8b0, 1.0, 3.5, 262.9, 2.6, 0.0)      door end
+P(0xb8c8dc, 0.35, 4, 254.8, 2.6, -2.6)      alcove of desks, dim and cool
+P(0xffb870, 1.8, 2.4, 250.62, 0.25, -0.95), P(0xffb873, 0.5, 1.4, 249.8, 0.15, -0.25)   hide lamp + floor slit
+
+MATERIALS: reused WORN CrateWood, PigeonWood, WornIron, PupilWood, HandledBrass, LessonPlaster, LessonDado, DarkMetal;
+PLAIN Brass, Copper; voice-prop HandWorn, ParcelPaper; EMIT AttBulbGlow (pendants). Image: Att15Atlas
+(textures/dl15_atlas.png, passes through as a map). New EMIT entries:
+Att15LampPupil: [.72, 1, .78, 0], Att15LampEscort: [1, .66, .26, 0], Att15Lamp1: [1, .86, .62, 0],
+Att15Lamp2: [1, .86, .62, 0], Att15Lamp3: [1, .86, .62, 0], Att15HideLamp: [1, .7, .4, 5],
+Suggested lamp() colours: Pupil 0xb8ffc8, Escort 0xffa848, Lamp1-3 0xffdca0.
+
+TRIANGLES: 28.3k in 20 objects (Att15Set 7.4k, Rows 5.5k, Hide 5.0k, each figure 3.5k); ~50 material slots.
+Cables above the ceiling sit in a black trunk (invisible on the game's background).
+"""
