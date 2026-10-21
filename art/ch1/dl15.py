@@ -72,6 +72,10 @@ LAMP_PUPIL = (252.11, 0.85, 2.2)
 LAMP_ESCORT = (252.25, 0.85, 2.2)
 FLOOR_RAIL = (252.4, 264.0)
 SEATS = (('S1', 253.2, 'R. ABEL'), ('S2', 254.6, 'T. ORME'), ('S3', 256.0, 'M. D.'))
+DOCK_Y = (0.715, 0.79)                 # rev 0.3: the docks at S1 and S2 stand behind the rail's back edge (y)
+SEAT_PLATE = (0.065, 0.006)            # Mara's chair: its round brass pressure plate, radius and thickness
+PINBOARD = (257.56, 258.70, 1.06, 1.63)   # rev 0.3: the cork board under the attendance board: x0, x1, z0, z1
+DRAWING = (257.83, 1.08)               # the drawing's sheet: its left edge x, bottom z (SHEET, STRIP give its size)
 DESK_Y = (0.8, 1.2)
 DESK_W = 0.3                           # half width
 CHAIR = (255.92, 0.31, -4.0)           # Att15Chair: seat centre x, y; turn (degrees; it faces +x, its back to -x)
@@ -95,8 +99,9 @@ FLAP_HINGE = (263.815, 0.56, 1.05)
 HIDE = (248.3, 251.2, 0.4, 1.4)        # the hiding place under the balcony
 BLANKET_Y = 0.35
 HIDE_ENTRY = 249.8
-TIN = (249.95, 0.92, 0.1)              # the biscuit tin: centre x, y; height
-PLAYER_AT = (249.95, 0.92, 0.1)        # the card player stands on the tin
+STOOL = (249.95, 0.92, 0.26)           # rev 0.3: the escort's stool (centre x, y; seat top), where the tin was
+LOG_T = 0.03                           # the escort's log on it, closed
+PLAYER_AT = (249.95, 0.94, STOOL[2] + LOG_T)   # the card player stands on the log (it was on the tin, at z 0.1)
 HIDE_LAMP = (250.62, 1.12, 0.13)       # the hide lamp's glass
 PIPE_Z = 0.44
 PIPE_Y = BACK_Y - 0.055                # the copper pipe along the hide's back wall
@@ -182,7 +187,8 @@ CELLS = {
     'liftsign': (0, 740, 512, 900),         # 0.86 x 0.28 m
     'name1': (0, 900, 128, 952), 'name2': (128, 900, 256, 952), 'name3': (256, 900, 384, 952),
     'lpupil': (384, 900, 512, 926), 'lescort': (384, 926, 512, 952),
-    'tin': (0, 952, 128, 1024), 'book': (128, 952, 224, 1024), 'clock': (224, 952, 296, 1024),
+    'dock1': (0, 952, 128, 988), 'dock2': (0, 988, 128, 1024), 'book': (128, 952, 224, 1024), 'clock': (224, 952, 296, 1024),
+    'log': (896, 928, 1024, 1024),
     'pencil': (512, 448, 1024, 712),        # the hide's back wall, 2.9 x 1.46 m
     'under': (512, 712, 1024, 800),         # the deck's underside over the hide, 2.9 x 1.0 m
     'lid': (512, 800, 768, 928),            # Mara's desk lid, 0.56 x 0.28 m
