@@ -155,7 +155,7 @@ The score is largely Western in harmony and structure, with Japanese "colour" la
 - The model is "Western grammar, borrowed accent": write themes that resolve in ways the core audience understands, then give the solo voices and percussion to culturally specific instruments. For a game set in a specific culture or world, put the signature instrument on solo melody and percussion and keep the harmonic logic familiar. Be aware of the authenticity criticism this approach invites.
 
 ### Gaps
-- No source names Japanese-born performers on the recording. The koto player, June Kuramoto, is a Japanese-American musician; other ethnicities were not stated in the sources.
+- The sources do not give the performers' backgrounds. One search summary called the soloists "mostly Western session players", but nothing I found confirms that.
 - The 10,000-taiko-hits claim is unverified.
 
 ## 9. The Last Samurai: themes and specific cues
