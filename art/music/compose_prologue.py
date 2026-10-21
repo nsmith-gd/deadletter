@@ -476,6 +476,13 @@ SECTIONS = [  # name, builder, bars
     ('heaps', sec_heaps, 8),
     ('hope', sec_hope, 6),
 ]
+CUES = [  # name, from (s), to (s) in the theme, fade in, fade out, the beat it is for
+    ('lastcar', 80.0, 96.0, 0.3, 1.5,
+     "DL-10: the relocation car leaves with the suitcase. The anthem's last phrase, then the world runs down."),
+    ('collapse', 148.5, 172.0, 0.3, 4.0,
+     'DL-10: riding the counterweight down, he looks down at ring C. The chime alone, the climb, the collapse, '
+     'and the first bar of the lament.'),
+]
 LOOPS = [  # name, builder, loop file stem, what it is for
     ('lower_works', sec_lower, 'prologue_loop_lower_works', 'Exploring the depot and the dark lower works.'),
     ('order', sec_order, 'prologue_loop_order', 'Rooms of the Order: the ration hall, the relocation lobby, signage and tannoys.'),
@@ -558,6 +565,18 @@ def main():
     to_mp3(wav, os.path.join(args.out, 'prologue_theme.mp3'))
     files.append(wav)
 
+    # Cues cut from the theme for single story beats, at the theme's gain.
+    cues = []
+    for name, a, b, fade_in, fade_out, use in CUES:
+        x = theme[:, int(a * SR):int(b * SR)].copy()
+        x[:, :int(fade_in * SR)] *= np.linspace(0, 1, int(fade_in * SR)) ** 2
+        x[:, -int(fade_out * SR):] *= np.linspace(1, 0, int(fade_out * SR)) ** 2
+        wav = os.path.join(wavdir, f'prologue_{name}.wav')
+        write_wav(wav, x)
+        to_mp3(wav, os.path.join(args.out, f'prologue_{name}.mp3'))
+        files.append(wav)
+        cues.append(dict(name=name, file=f'prologue_{name}.mp3', from_theme=dict(start=a, end=b), seconds=b - a, use=use))
+
     loops = []
     sections = {build for _, build, _ in SECTIONS}
     for k, (name, build, stem, use) in enumerate(LOOPS):
@@ -580,6 +599,7 @@ def main():
         title='Undelivered (prologue theme)', key='D Phrygian (D minor with E-flat)', tempo_bpm=60, meter='4/4', bar_seconds=BAR,
         theme=dict(file='prologue_theme.mp3', sections=[dict(name=k, start=v[0], end=v[0] + v[1]) for k, v in starts.items()]),
         loops=loops,
+        cues=cues,
         crossfade=('Every loop and every section sits on the same D pedal, tempo and bar grid. Crossfade on a bar line '
                    '(a multiple of 4 s from a section or loop start) over 2 to 4 s. Loop each file from loop_start to '
                    'loop_end.'))

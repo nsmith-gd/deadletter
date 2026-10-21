@@ -90,5 +90,27 @@
       "in_theme": null
     }
   ],
+  "cues": [
+    {
+      "name": "lastcar",
+      "file": "prologue_lastcar.mp3",
+      "from_theme": {
+        "start": 80.0,
+        "end": 96.0
+      },
+      "seconds": 16.0,
+      "use": "DL-10: the relocation car leaves with the suitcase. The anthem's last phrase, then the world runs down."
+    },
+    {
+      "name": "collapse",
+      "file": "prologue_collapse.mp3",
+      "from_theme": {
+        "start": 148.5,
+        "end": 172.0
+      },
+      "seconds": 23.5,
+      "use": "DL-10: riding the counterweight down, he looks down at ring C. The chime alone, the climb, the collapse, and the first bar of the lament."
+    }
+  ],
   "crossfade": "Every loop and every section sits on the same D pedal, tempo and bar grid. Crossfade on a bar line (a multiple of 4 s from a section or loop start) over 2 to 4 s. Loop each file from loop_start to loop_end."
 }
