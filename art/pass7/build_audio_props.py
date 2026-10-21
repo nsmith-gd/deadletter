@@ -119,7 +119,7 @@ def up_to(p, skip=()):
 TANNOYS = [
     ('tan_depot_1', 'TannoyDepot1', 1.69, 1.97, 0.0, 22.0, -38.0, 1.0, (0.4, (0, 1, 0)), 'DL-01 by the dispatch board'),
     ('tan_racks', 'TannoyRacks', 38.2, 3.25, 0.0, 26.0, 40.0, 1.0, (-0.6, (0, 1, 0)), 'DL-04 racks hall, high'),
-    ('tan_rations', 'TannoyRations', 56.0, 3.12, -90.0, 24.0, 28.0, 1.0, (0.25, (1, 0, 0)), 'DL-05 over the hatch'),
+    ('tan_rations', 'TannoyRations', 56.0, 3.0, -90.0, 24.0, 28.0, 1.0, (0.3, (1, 0, 0)), 'DL-05 over the hatch'),
     ('tan_scanner', 'TannoyScanner', 62.65, 1.86, 0.0, 22.0, -42.0, 0.72, (0.0, (0, 1, 0)), "DL-06 the scanner's speaker"),
     ('tan_bridge', 'TannoyBridge', 116.1, 11.75, 0.0, 18.0, -30.0, 2.6, (58.0, (0, 1, 0)), 'DL-09 the cut bridge'),
     ('tan_relocation', 'TannoyRelocation', 120.45, 4.5, 0.0, 22.0, 38.0, 1.0, (0.4, (0, 1, 0)), 'DL-10 the lobby'),
@@ -306,12 +306,12 @@ def build_heap(coll, rnd):
         a = rnd.uniform(0, 2 * math.pi)
         r = rnd.uniform(0.05, 0.3)
         px, py = x + math.cos(a) * r * 1.3, y + math.sin(a) * r * 0.45
-        py = min(max(py, 0.11), 0.31)
+        py = min(max(py, 0.14), 0.27)
         mound = 0.075 * math.exp(-((px - x) / 0.2) ** 2 - ((py - y) / 0.12) ** 2)
         envelope(K, (px, py, z0 + 0.002 + mound * rnd.uniform(0.3, 1.0)), rnd.uniform(0, math.pi),
                  (rnd.uniform(-0.35, 0.35), rnd.uniform(-0.35, 0.35)))
-    rounded_box((0.26, 0.17, 0.15), (x + 0.24, y + 0.03, z0 + 0.074), p=8, cuts=2, mat=K('ParcelBrown'), bm=K.bm,
-                rot=Matrix.Rotation(0.3, 4, 'Z') @ Matrix.Rotation(-0.25, 4, 'X'))
+    rounded_box((0.24, 0.15, 0.13), (x + 0.25, y - 0.01, z0 + 0.064), p=8, cuts=2, mat=K('ParcelBrown'), bm=K.bm,
+                rot=Matrix.Rotation(0.15, 4, 'Z') @ Matrix.Rotation(-0.2, 4, 'X'))
     ob = _finish(K, 'VoicePlayerHeap', coll, base)
     R = M @ L                                         # the tipped player's frame: the crank's axis is its local x
     cr = _crank(coll, 'VoicePlayerHeapCrank', info, 0.0, extra_rot=Matrix.Translation(-R.to_translation()) @ R)
