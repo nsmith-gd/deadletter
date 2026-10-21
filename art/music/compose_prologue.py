@@ -598,6 +598,7 @@ def main():
 
     manifest = dict(
         title='Undelivered (prologue theme)', key='D Phrygian (D minor with E-flat)', tempo_bpm=60, meter='4/4', bar_seconds=BAR,
+        master_gain=gain,     # prologue_cues.py masters the scene cues with this, so they match the loops
         theme=dict(file='prologue_theme.mp3', sections=[dict(name=k, start=v[0], end=v[0] + v[1]) for k, v in starts.items()]),
         loops=loops,
         cues=cues,
