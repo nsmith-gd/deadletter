@@ -75,6 +75,8 @@ LEVELS = (5.6, 11.2, 16.8, 22.4, 28.0, 33.6, 39.2)   # the rings' floors, as sla
 WIN = (173.6, 23.2, 24.75, 1.2)          # the lit window: centre x, sill z, head z, width (on the back wall, y WELL[3])
 STAIR_X0 = 174.4                        # the iron stair's foot (flight 1 rises along +x)
 STAIR_RISE, STAIR_RUN, STAIR_W = 0.2, 0.28, 0.8
+STAIR_Y0 = -0.25                        # flight 1's front edge: it stands on the lane's line (y -0.25..0.55)
+STAIR_DOOR = [1.2, 2.05, 5.6]           # ring B's door at the stair's top: y0, y1, sill (set by build_stair)
 OLD_BOX = (170.12, 170.58, 1.04, 1.64)  # ring C's old supply box: x0, x1, z0, z1 (on the block's front face)
 NEW_BOX = (170.72, 170.98, 1.30, 1.62)  # the new splice box beside it
 
@@ -708,13 +710,13 @@ def build_landing(B):
     B.box((174.9, x1), (-0.99, -0.85), (0.0, 0.16), 'Concrete')
     B.box((x0, x1), (yf, yf + 0.35), (-2.8, -0.35), 'Concrete')
     # The parapet over the well: a low concrete upstand and an iron rail on posts (behind the lane).
-    B.box((WELL[0], STAIR_X0 + 0.3), (RAIL_Y - 0.06, RAIL_Y + 0.1), (-0.35, 0.22), 'Concrete')
+    B.box((WELL[0], STAIR_X0 + 10 * STAIR_RUN), (RAIL_Y - 0.06, RAIL_Y + 0.1), (-0.35, 0.22), 'Concrete')
     x = WELL[0] + 0.15
-    while x < STAIR_X0 + 0.2:
+    while x < STAIR_X0 + 10 * STAIR_RUN:
         add_cyl(B.bm, (x, RAIL_Y + 0.02, 0.22), (x, RAIL_Y + 0.02, 0.96), 0.018, seg=6, mat=B('WornIron'))
         x += 0.9
-    add_cyl(B.bm, (WELL[0] + 0.02, RAIL_Y + 0.02, 0.96), (STAIR_X0 + 0.25, RAIL_Y + 0.02, 0.96), 0.022, seg=8, mat=B('WornIron'))
-    add_cyl(B.bm, (WELL[0] + 0.02, RAIL_Y + 0.02, 0.6), (STAIR_X0 + 0.25, RAIL_Y + 0.02, 0.6), 0.012, seg=6, mat=B('WornIron'))
+    add_cyl(B.bm, (WELL[0] + 0.02, RAIL_Y + 0.02, 0.96), (STAIR_X0 + 10 * STAIR_RUN, RAIL_Y + 0.02, 0.96), 0.022, seg=8, mat=B('WornIron'))
+    add_cyl(B.bm, (WELL[0] + 0.02, RAIL_Y + 0.02, 0.6), (STAIR_X0 + 10 * STAIR_RUN, RAIL_Y + 0.02, 0.6), 0.012, seg=6, mat=B('WornIron'))
     # A slab end under the landing seen from the well, and the well's bottom: rubble in a dark sump.
     B.box((WELL[0], WELL[1]), (WELL[2] + 0.3, WELL[3]), (WELL_FLOOR - 0.3, WELL_FLOOR), 'Concrete')
     rnd = random.Random(171)
@@ -819,10 +821,6 @@ def build_well(B):
     add_cyl(B.bm, (wx0, wy1 - 1.2, 26.2), (wx1, wy1 - 1.4, 26.4), 0.11, seg=10, mat=B('DepotSteel'))
     add_cyl(B.bm, (wx0, 4.4, 14.6), (wx1, 4.9, 14.4), 0.07, seg=8, mat=B('DepotSteel'))
     B.box((wx0, wx1), (wy1 - 0.75, wy1 - 0.25), (31.0, 31.5), 'DepotSteel')
-    # The stair's door on the right wall at ring B's first floor, dark: the way on.
-    B.quad([(wx1 - 0.006, 2.6, LEVELS[0] + 0.05), (wx1 - 0.006, 1.75, LEVELS[0] + 0.05), (wx1 - 0.006, 1.75, LEVELS[0] + 2.1),
-            (wx1 - 0.006, 2.6, LEVELS[0] + 2.1)], 'AtriumDark')
-    B.box((wx1 - 0.05, wx1), (1.65, 2.7), (LEVELS[0] + 2.1, LEVELS[0] + 2.22), 'Concrete')
 
 
 def build_window(B, coll):
@@ -970,41 +968,35 @@ def build_supply(B, coll):
 
 
 def build_stair(B):
-    """The iron stair up the well's right wall: flight 1 along +x from the landing, then switchbacks along y."""
+    """The iron stair: flight 1 rises along +x on the lane's own line (he can climb it as he walks: game z -0.15 at its
+    middle, 0.8 wide), then switchbacks up the well's right wall along y to ring B's door, into the dark."""
     x0 = STAIR_X0
     r, run, W = STAIR_RISE, STAIR_RUN, STAIR_W
     wx1 = WELL[1]
-    n1 = 10
-    ya, yb_ = 0.3, 0.3 + W
     iron = 'WornIron'
-
-    def tread(xx, yy, z, along):
-        if along == 'x':
-            B.box((xx, xx + run + 0.02), yy, (z - 0.025, z), iron)
-        else:
-            B.box(xx, (yy, yy + run + 0.02) if run > 0 else (yy + run - 0.02, yy), (z - 0.025, z), iron)
-
+    ya, yb_ = STAIR_Y0, STAIR_Y0 + W
+    n1 = 10
     for k in range(n1):
-        tread(x0 + k * run, (ya, yb_), (k + 1) * r, 'x')
+        B.box((x0 + k * run, x0 + (k + 1) * run + 0.02), (ya, yb_), ((k + 1) * r - 0.025, (k + 1) * r), iron)
+        B.box((x0 + k * run + 0.01, x0 + k * run + 0.03), (ya + 0.02, yb_ - 0.02), (k * r + 0.04, (k + 1) * r - 0.025), iron)   # risers, open below
     top1 = n1 * r
-    for yy in (ya, yb_):                                                        # the stringers
-        s0 = Vector((x0, yy, -0.05))
-        s1 = Vector((x0 + n1 * run, yy, top1 - 0.05))
-        add_cyl(B.bm, s0, s1, 0.04, seg=4, mat=B(iron))
-    # platform 1, at the right wall
     px0 = x0 + n1 * run
-    B.box((px0, wx1), (ya, 2.1), (top1 - 0.05, top1), iron)
-    # flight 2: along +y on the right wall
+    for yy in (ya, yb_):                                                        # the stringers
+        add_cyl(B.bm, (x0 - 0.05, yy, 0.0), (px0, yy, top1 - 0.06), 0.035, seg=4, mat=B(iron))
+    # platform 1, against the end wall, wide enough to turn on
+    y1p = ya + 1.8
+    B.box((px0, wx1), (ya, y1p), (top1 - 0.05, top1), iron)
+    # flight 2: along +y up the right wall
     fx = (wx1 - W, wx1)
     n2 = 10
     for k in range(n2):
-        B.box(fx, (2.1 + k * run, 2.1 + (k + 1) * run + 0.02), (top1 + (k + 1) * r - 0.025, top1 + (k + 1) * r), iron)
+        B.box(fx, (y1p + k * run, y1p + (k + 1) * run + 0.02), (top1 + (k + 1) * r - 0.025, top1 + (k + 1) * r), iron)
     top2 = top1 + n2 * r
-    y2 = 2.1 + n2 * run
+    y2 = y1p + n2 * run
     for xx in fx:
-        add_cyl(B.bm, (xx, 2.1, top1 - 0.05), (xx, y2, top2 - 0.05), 0.04, seg=4, mat=B(iron))
+        add_cyl(B.bm, (xx, y1p, top1 - 0.05), (xx, y2, top2 - 0.05), 0.035, seg=4, mat=B(iron))
     B.box((wx1 - 2 * W, wx1), (y2, y2 + 0.9), (top2 - 0.05, top2), iron)
-    # flight 3: back along -y, beside flight 2
+    # flight 3: back along -y, beside flight 2, up to ring B's door
     gx = (wx1 - 2 * W, wx1 - W)
     n3 = 8
     for k in range(n3):
@@ -1013,24 +1005,28 @@ def build_stair(B):
     top3 = top2 + n3 * r
     y3 = y2 - n3 * run
     for xx in gx:
-        add_cyl(B.bm, (xx, y2, top2 - 0.05), (xx, y3, top3 - 0.05), 0.04, seg=4, mat=B(iron))
-    B.box((wx1 - 2 * W, wx1), (y3 - 1.0, y3), (top3 - 0.05, top3), iron)            # to the door at ring B
-    # handrails: the outer side of each flight, on posts
+        add_cyl(B.bm, (xx, y2, top2 - 0.05), (xx, y3, top3 - 0.05), 0.035, seg=4, mat=B(iron))
+    B.box((wx1 - 2 * W, wx1), (y3 - 1.0, y3), (top3 - 0.05, top3), iron)
+    STAIR_DOOR[:] = [y3 - 0.92, y3 - 0.06, top3]
+
     def rail(a, b, n):
         a, b = Vector(a), Vector(b)
         for i in range(n + 1):
             p = a.lerp(b, i / n)
             add_cyl(B.bm, p - Vector((0, 0, 0.9)), p, 0.014, seg=5, mat=B(iron))
         add_cyl(B.bm, a, b, 0.02, seg=6, mat=B(iron))
-    rail((x0 + 0.05, ya, r + 0.9), (px0, ya, top1 + 0.9), 4)
-    rail((px0, ya, top1 + 0.9), (wx1 - W, ya, top1 + 0.9), 1)
-    rail((wx1 - W, ya, top1 + 0.9), (wx1 - W, 2.1, top1 + 0.9), 1)
-    rail((wx1 - 2 * W, y2 + 0.9, top2 + 0.9), (wx1 - 2 * W, y3, top3 + 0.9), 3)
-    rail((wx1 - W, 2.1, top1 + 0.9), (wx1 - W, y2, top2 + 0.9), 4)
+    h = 0.9
+    rail((x0 + 0.05, yb_, r + h), (px0, yb_, top1 + h), 4)                      # flight 1, on its well side
+    rail((px0, yb_, top1 + h), (px0, y1p, top1 + h), 1)
+    rail((wx1 - W, y1p, top1 + h), (wx1 - W, y2, top2 + h), 4)                  # flight 2
+    rail((wx1 - 2 * W, y2 + 0.9, top2 + h), (wx1, y2 + 0.9, top2 + h), 2)       # platform 2
+    rail((wx1 - 2 * W, y2 + 0.9, top2 + h), (wx1 - 2 * W, y3, top3 + h), 3)     # flight 3
+    rail((wx1 - 2 * W, y3, top3 + h), (wx1 - 2 * W, y3 - 1.0, top3 + h), 1)
+    rail((wx1 - 2 * W, y3 - 1.0, top3 + h), (wx1, y3 - 1.0, top3 + h), 2)
     # brackets into the right wall
-    for yy, z in ((2.6, top1 + 0.2), (4.2, top1 + 1.4), (y2 + 0.4, top2 - 0.1)):
+    for yy, z in ((y1p + 0.5, top1 + 0.3), (y1p + 2.0, top1 + 1.4), (y2 + 0.45, top2 - 0.1), (y3 - 0.5, top3 - 0.1)):
         add_cyl(B.bm, (wx1, yy, z - 0.7), (wx1 - 0.7, yy, z - 0.06), 0.025, seg=4, mat=B(iron))
-    return dict(foot=(x0, 0.0, 0.7), top1=(px0, top1), top=(wx1 - W, y3 - 0.5, top3))
+    return dict(foot=(x0, (ya + yb_) / 2, 0.0), top1=(px0, top1), top=((gx[0] + wx1) / 2, y3 - 0.5, top3))
 
 
 def build_ending(coll):
@@ -1042,13 +1038,19 @@ def build_ending(coll):
     build_cable(B)
     build_supply(B, coll)
     info = build_stair(B)
+    # The stair's door on the right wall at ring B's first floor, dark: the way on.
+    wx1 = WELL[1]
+    d0, d1, sill = STAIR_DOOR
+    B.quad([(wx1 - 0.006, d1, sill + 0.05), (wx1 - 0.006, d0, sill + 0.05), (wx1 - 0.006, d0, sill + 2.1), (wx1 - 0.006, d1, sill + 2.1)],
+           'AtriumDark')
+    B.box((wx1 - 0.05, wx1), (d0 - 0.1, d1 + 0.1), (sill + 2.1, sill + 2.22), 'Concrete')
     ob = B.done('EndWell', coll)
     # The school's enamel sign onto the stair's first post, square to the camera.
     sign = bpy.data.objects.get('D5SchoolSign')
     if sign is not None:
         bb = [sign.matrix_world @ Vector(c) for c in sign.bound_box]
         cur = Vector((sum(v.x for v in bb) / 8, sum(v.y for v in bb) / 8, sum(v.z for v in bb) / 8))
-        want = Vector((STAIR_X0 - 0.42, RAIL_Y - 0.09, 1.28))
+        want = Vector((STAIR_X0 - 0.5, RAIL_Y - 0.02, 0.78))          # wired to the parapet's rail, by the stair's foot
         sign.location += want - cur
         sign.scale *= 0.7
     return ob, info
@@ -1142,7 +1144,7 @@ def _remains_in_chair(coll, x, y, turn, seat=0.44):
         elif v.co.y < ys:                                      # the right arm hanging down by the chair, its hand on the floor
             dy, dz = ys - v.co.y, v.co.z
             v.co.y = ys - dy * math.cos(side) - 0.02
-            v.co.z = dz - dy * math.sin(side) * 1.6
+            v.co.z = dz - dy * math.sin(side)
     for v in Q.bm.verts:
         v.co.z += seat
         if v.co.z < 0.012:
@@ -1384,7 +1386,7 @@ def build_room_b(coll):
     for k in range(6):
         s_ = k / 5
         yy = fy - 0.04 + (y1 - fy) * s_
-        top = hook + (ridge - hook) * (1 - s_) if False else ridge + (hook - ridge) * s_
+        top = ridge + (hook - ridge) * s_
         side.append([Vector((fx0 - 0.1 - 0.03 * math.sin(math.pi * t), yy, top - (top - z0 - 0.01) * t)) for t in (0, 0.25, 0.5, 0.75, 1.0)])
     blanket('stripe', side)
     for (cx_, cy_, s, a) in ((fx0 + 0.45, fy + 0.45, 1.0, 10), (fx0 + 0.9, fy + 0.6, 0.9, -20), (fx0 + 1.25, fy + 0.38, 0.8, 35)):
