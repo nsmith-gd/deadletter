@@ -79,7 +79,8 @@ GALLERY = (227.6, 232.0, 2.05)
 DOOR_OUT = 230.6
 DOOR_OUT_H = 1.85
 VEST = (230.7, 0.9, 3.95)           # past the door out: DL-14's back wall face (y) and ceiling, so the seam at 232 meets
-RAIL_Y = -0.52
+GAL_FRONT = -0.5                    # the gallery's front face (DL-14's landing front is at -0.47)
+RAIL_Y = -0.44
 SHOOT = (229.42, 1.16)
 
 # The cycle dial (12 s a lesson): the steps out at 1.0, 2.6, 4.2 s; all out 4.2-5.6 s (the red sector).
@@ -659,21 +660,26 @@ def room(S, M):
     quad(S, ((lx0 + lx1) / 2, ly - 0.03, 1.05), (0.13, 0, 0), (0, 0, 0.042), R_CLASS, S(M['LessonAtlas']))
     add_sphere(bm, (lx1 - 0.07, ly - 0.05, 0.92), 0.028, mat=br, seg=10)
     add_cyl(bm, (lx1 - 0.07, ly - 0.02, 0.92), (lx1 - 0.07, ly - 0.05, 0.92), 0.008, mat=br, seg=6)
-    # The gallery: solid beneath (a panelled store front), the deck at 2.05 with a brass nosing on its mantle edge.
+    # The gallery: solid beneath, plastered with a dado like DL-14's landing; the deck at 2.05 with a brass nosing on
+    # its mantle edge; a fascia under the deck's edge; a small locked store door low in its front.
     g0, g1, gz = GALLERY
-    add_box(bm, ((g0 + X1) / 2, (FRONT_Y + BACK_Y) / 2, (gz - 0.08) / 2), (X1 - g0, BACK_Y - FRONT_Y, gz - 0.08), mat=dk)
-    add_box(bm, ((g0 + X1) / 2, (FRONT_Y + BACK_Y) / 2, gz - 0.04), (X1 - g0, BACK_Y - FRONT_Y, 0.08), mat=wd)
-    add_cyl(bm, (g0 - 0.005, FRONT_Y, gz - 0.015), (g0 - 0.005, FACE_Y, gz - 0.015), 0.018, mat=br, seg=8)
+    gf = GAL_FRONT
+    add_box(bm, ((g0 + X1) / 2, (gf + BACK_Y) / 2, 0.475), (X1 - g0, BACK_Y - gf, 0.95), mat=da)
+    add_box(bm, ((g0 + X1) / 2, (gf + BACK_Y) / 2, (0.95 + gz - 0.08) / 2), (X1 - g0, BACK_Y - gf, gz - 0.08 - 0.95), mat=pl)
+    add_box(bm, ((g0 + X1) / 2, (gf + BACK_Y) / 2, gz - 0.04), (X1 - g0, BACK_Y - gf, 0.08), mat=wd)
+    add_cyl(bm, (g0 - 0.005, gf, gz - 0.015), (g0 - 0.005, FACE_Y, gz - 0.015), 0.018, mat=br, seg=8)
     for k in range(6):                                                      # the deck's boards, along it
-        add_box(bm, ((g0 + X1) / 2, FRONT_Y + 0.05 + 0.36 * k, gz), (X1 - g0, 0.008, 0.004), mat=dk)
-    for x0, x1 in ((g0 + 0.15, g0 + 1.45), (g0 + 1.6, g0 + 2.9), (g0 + 3.05, X1 - 0.05)):   # panels on the front
-        cbox(bm, ((x0 + x1) / 2, FRONT_Y - 0.012, 1.15), (x1 - x0, 0.03, 1.4), 0.01, dk)
-        cbox(bm, ((x0 + x1) / 2, FRONT_Y - 0.018, 1.15), (x1 - x0 - 0.12, 0.03, 1.28), 0.008, wd)
-    cbox(bm, ((g0 + X1) / 2, FRONT_Y - 0.03, 1.94), (X1 - g0 + 0.04, 0.06, 0.06), 0.012, dk)    # the fascia's moulding
-    cbox(bm, ((g0 + X1) / 2, FRONT_Y - 0.016, 0.07), (X1 - g0, 0.035, 0.14), 0.006, dk)        # skirting
-    # Its left end, under the deck: the same panelling across the store's end, a small locked door.
-    cbox(bm, (g0 - 0.012, (FRONT_Y + FACE_Y) / 2, 1.0), (0.03, FACE_Y - FRONT_Y - 0.1, 1.6), 0.01, wd)
-    add_sphere(bm, (g0 - 0.035, 0.45, 0.95), 0.022, mat=br, seg=8)
+        add_box(bm, ((g0 + X1) / 2, gf + 0.05 + 0.34 * k, gz), (X1 - g0, 0.008, 0.004), mat=dk)
+    cbox(bm, ((g0 + X1) / 2, gf - 0.03, gz - 0.07), (X1 - g0 + 0.04, 0.06, 0.1), 0.012, dk)       # the fascia
+    cbox(bm, ((g0 + X1) / 2, gf - 0.012, 0.95), (X1 - g0, 0.025, 0.04), 0.006, wd)               # the dado rail
+    cbox(bm, ((g0 + X1) / 2, gf - 0.01, 0.06), (X1 - g0, 0.02, 0.12), 0.005, dk)                 # skirting
+    cbox(bm, (g0 - 0.012, (gf + FACE_Y) / 2, 0.95), (0.025, FACE_Y - gf, 0.04), 0.006, wd)
+    cbox(bm, (g0 - 0.01, (gf + FACE_Y) / 2, 0.06), (0.02, FACE_Y - gf, 0.12), 0.005, dk)
+    sd = (229.2, 229.85, 1.25)                                              # the store door
+    cbox(bm, ((sd[0] + sd[1]) / 2, gf - 0.015, sd[2] / 2 + 0.06), (sd[1] - sd[0], 0.03, sd[2]), 0.008, dk)
+    cbox(bm, ((sd[0] + sd[1]) / 2, gf - 0.03, sd[2] / 2 + 0.06), (sd[1] - sd[0] - 0.14, 0.012, sd[2] - 0.2), 0.004, wd)
+    add_box(bm, (sd[1] - 0.08, gf - 0.045, 0.75), (0.03, 0.02, 0.08), mat=br)                 # its hasp, padlocked
+    add_torus(bm, (sd[1] - 0.08, gf - 0.06, 0.69), (1, 0, 0), 0.02, 0.005, mat=br, seg=10, rseg=4)
 
 
 def alcove(S, M):
