@@ -1330,7 +1330,7 @@ def place_voice_props(B):
         print('dl12: VOICE_PROPS_READY not there yet: no speaker or card player placed')
         return {}
     spk = VP.tannoy(B, VP.xform(SPEAKER), tilt=22.0, aim=-12.0, conduit=0.5, conduit_dir=90.0, cable=False)
-    ply = VP.card_player(B, VP.xform(CARD_PLAYER, turn=30.0), lid='closed', horn=35.0, card=True)
+    ply = VP.card_player(B, VP.xform(CARD_PLAYER, turn=30.0), lid='closed', horn=-40.0, card=True)
     return {'speaker': spk, 'player': ply}
 
 

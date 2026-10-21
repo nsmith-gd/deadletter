@@ -160,7 +160,7 @@ CELLS = {
     'sw_glass': (768, 960, 832, 1024), 'sw_green': (832, 960, 896, 1024), 'sw_chalk': (896, 960, 960, 1024), 'sw_ink': (960, 960, 1024, 1024),
 }
 SWATCH = {'sw_wood': (104, 74, 46), 'sw_brass': (170, 132, 64), 'sw_iron': (38, 37, 35), 'sw_string': (184, 172, 140),
-          'sw_cardboard': (122, 96, 64), 'sw_pages': (196, 188, 164), 'sw_wool': (92, 84, 96), 'sw_dark': (8, 8, 8),
+          'sw_cardboard': (122, 96, 64), 'sw_pages': (196, 188, 164), 'sw_wool': (78, 70, 64), 'sw_dark': (8, 8, 8),
           'sw_glass': (70, 74, 72), 'sw_green': (44, 66, 54), 'sw_chalk': (214, 210, 198), 'sw_ink': (18, 20, 30)}
 PANEL_W = 448                  # each painted variant is 448 x 1024 in dl14_panels.png; 896..1024 is the hardboard back
 
@@ -1098,8 +1098,8 @@ def build_ledge(coll, name, x0, x1, h, notch=None):
     for hx in (kx0 + 0.2, (kx0 + x1) / 2, x1 - 0.2):
         B.box('CrateWood', hx - 0.03, hx + 0.03, y1 - 0.25, y1 - 0.012, h, h + 0.004)
     for bx in ((x0 + 0.55, x1 - 0.12) if notch else (x0 + 0.18, x1 - 0.18)):
-        B.prism_yz('CrateWood', [(y1 - 0.015, h - 0.045), (y1 - 0.015, h - 0.36), (y1 - 0.06, h - 0.36),
-                                (-0.12, h - 0.06), (-0.12, h - 0.045)], bx - 0.008, bx + 0.008)
+        B.prism_yz('CrateWood', [(y1 - 0.015, h - 0.045), (y1 - 0.015, h - 0.24), (y1 - 0.05, h - 0.24),
+                                (0.25, h - 0.06), (0.25, h - 0.045)], bx - 0.008, bx + 0.008)
     return B.obj(name, coll, origin=((x0 + x1) / 2, WALL_Y, h))
 
 
