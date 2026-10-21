@@ -393,8 +393,8 @@ def _paint_att(img):
     img.paste(_fade(Image.fromarray(np.clip(a, 0, 255).astype('uint8')), 1512, k=0.1, dust=0.16), (x0, y0))
 
 
-def _paint_pencil(img, name, ground, seed, n_trees, dado_px=None, boards=False):
-    """Mara's crooked trees in pencil, over and over (the hide's back wall, the deck's underside)."""
+def _paint_pencil(img, name, ground, seed, n_trees, dado_px=None, boards=False, n_big=5, low=False):
+    """Mara's crooked trees in pencil (the hide's back wall, the deck's underside); `low`: drawn where a child sat."""
     import numpy as np
     from PIL import Image, ImageDraw
     x0, y0, x1, y1 = CELLS[name]
@@ -418,11 +418,15 @@ def _paint_pencil(img, name, ground, seed, n_trees, dado_px=None, boards=False):
             d.line(q, fill=(34, 34, 44, int(al)), width=max(1, int(wd * (0.6 + weight * 0.6))), joint='curve')
         _crooked(stroke, ox, oy, s, sx=s * rnd.uniform(0.7, 0.9))
     for k in range(n_trees):                                  # spread along the wall, a few big ones traced over and over
-        s = (rnd.uniform(0.42, 0.62) if k < 5 else rnd.uniform(0.2, 0.36)) * h
-        ox = (k + rnd.uniform(0.2, 0.8)) / n_trees * w if k >= 5 else (0.1 + 0.2 * k + rnd.uniform(-0.04, 0.04)) * w
+        big = k < n_big
+        s = (rnd.uniform(0.42, 0.62) if big else rnd.uniform(0.2, 0.36)) * h
+        ox = (k + rnd.uniform(0.2, 0.8)) / n_trees * w if not big else (0.1 + 0.2 * k + rnd.uniform(-0.04, 0.04)) * w
         oy = rnd.uniform(0.95 * s, h - 4)
-        for _p in range(3 if k < 5 else 1):
-            tree(ox, oy, s, rnd.choice((150, 190, 225)), rnd.uniform(2.0, 3.0) if k < 5 else rnd.uniform(1.4, 2.0))
+        if low:
+            s = rnd.uniform(0.2, 0.3) * h
+            oy = h - rnd.uniform(4, 0.18 * h)
+        for _p in range(3 if big else 1):
+            tree(ox, oy, s, rnd.choice((150, 190, 225)), rnd.uniform(2.0, 3.0) if big else rnd.uniform(1.4, 2.0))
     base.alpha_composite(pen)
     img.paste(base.convert('RGB'), (x0, y0))
 
@@ -620,8 +624,9 @@ def make_atlas(path):
     ink, cream, green = (30, 28, 24), (214, 204, 176), (40, 64, 50)
     _paint_board(img)
     _paint_att(img)
-    _paint_pencil(img, 'pencil', (140, 132, 116), 1530, 22, dado_px=int((1.48 - 1.0) / 1.46 * 264))
-    _paint_pencil(img, 'under', (150, 120, 84), 1531, 14, boards=True)
+    # Rev 0.3: the refuge has moved to DL-14; here, a few of her trees, low on the wall where she sat, and over her head.
+    _paint_pencil(img, 'pencil', (140, 132, 116), 1530, 6, dado_px=int((1.48 - 1.0) / 1.46 * 264), n_big=0, low=True)
+    _paint_pencil(img, 'under', (150, 120, 84), 1531, 5, boards=True, n_big=2)
     _paint_lid(img)
 
     def enamel(name, lines, bg, fg, border=True, seed=0):
