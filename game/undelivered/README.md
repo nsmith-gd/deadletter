@@ -762,12 +762,19 @@ README). It is sparse:
 - DL-09: `refuge`: near silence, then phrase B broadening into F major, peaking as the camera reaches its widest over
   the atrium. It plays out over the start of DL-10.
 - DL-11: `child`: when the desk clears the marks, the parcel's three notes become a lullaby on the music box, piano and strings.
-- DL-05 and DL-10 have no cue of their own: the bed plays on through the Ration Hall, and Up Only has only the
-  machinery.
+- DL-10: `prologue_lastcar` as the car leaves for good with the suitcase (UP on the counterweight's panel), then
+  `prologue_collapse` straight after it as he comes down into ring C.
 - After it, over the end card, the full theme ending in a music-box *Happy Birthday*.
 
-The bed stops at the tunnel mouth. The depot's relay pulse, which has sounded every six seconds since the wake, fades
-out on the returns belt.
+**Ambience (the prologue theme's loops, `docs/prologue_music.md`).** Under the cues, one looping layer crossfades
+between four loops cut from the prologue theme: `lower_works` (the depot and the lower works), `order` (the Order's
+rooms: the Ration Hall, the scanner's corridor, the relocation lobby), `heaps` (among the dead: the racks; ring C,
+low) and `failure` (DL-09's cage, from the moment its brake gives until the pawl holds, through every retry). It fades
+out under any cue in 1.5 s and comes back with the scene's loop about 4 s after the cue ends. `sceneAmbience()` picks
+the loop from where he is and what has happened. The tunnel, the balcony and C-114's bedroom are silent. Chapter one
+keeps its old 48 s bed.
+
+The depot's relay pulse, which has sounded every six seconds since the wake, fades out on the returns belt.
 
 Music has its own toggle in the title and pause menus, and it dips while paused.
 

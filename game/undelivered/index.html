@@ -773,16 +773,24 @@ const Sound = (() => {
   };
 })();
 
-// The score (art/music/compose_dl01.py). Sparse by design: a cue at the wake, the hall and the
-// door, and a quiet loop under play between them.
+// The score (art/music/compose_dl01.py, and the prologue theme's loops and cues, art/music/compose_prologue.py and
+// docs/prologue_music.md). Cues play one at a time for the big moments. Under them, an ambience: one looping layer
+// that crossfades between the prologue's four loops (lower works, order, heaps, failure) as the scene changes,
+// fades out under any cue and comes back with the scene's loop when it ends. Chapter one keeps its old bed.
 const Music = (() => {
   const FILES = { wake: 'dl01_wake', bed: 'dl01_bed', hall: 'dl01_hall', threshold: 'dl01_threshold', racks: 'dl01_racks', kin: 'dl01_kin',
-    dead: 'dl01_dead', latch: 'dl04_latch', refuge: 'dl04_refuge', child: 'dl05_child', end: 'dl01_end' };
-  const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.46, dead: 0.62, latch: 0.55, refuge: 0.4, child: 0.6, end: 0.6 }, BED_LEVEL = 0.26;
-  const BED_LOOP = [2, 50];            // one 48 s period, padded by 2 s on each side
-  const raw = {}, decoded = {};
+    dead: 'dl01_dead', latch: 'dl04_latch', refuge: 'dl04_refuge', child: 'dl05_child', end: 'dl01_end',
+    lastcar: 'prologue_lastcar', collapse: 'prologue_collapse', lower_works: 'prologue_loop_lower_works', order: 'prologue_loop_order',
+    heaps: 'prologue_loop_heaps', failure: 'prologue_loop_failure' };
+  const LEVEL = { wake: 0.55, hall: 0.5, threshold: 0.5, racks: 0.55, kin: 0.46, dead: 0.62, latch: 0.55, refuge: 0.4, child: 0.6, end: 0.6, lastcar: 0.6, collapse: 0.6 };
+  // Each loop file is padded 2 s at each end, so the decoder's priming never lands on the seam. The prologue's loops are
+  // mastered against each other and share one gain.
+  const LOOPS = { bed: { loop: [2, 50], level: 0.26 }, lower_works: { loop: [2, 34], level: 0.5 }, order: { loop: [2, 34], level: 0.5 },
+    heaps: { loop: [2, 34], level: 0.5 }, failure: { loop: [2, 34], level: 0.5 } };
+  const raw = {}, decoded = {}, log = [];
   let ctx = null, bus = null, enabled = true, paused = false;
-  let cue = null, bedSrc = null, bedGain = null, bedWanted = false;
+  let cue = null;
+  const amb = { want: null, scale: 1, fadeIn: 4, fadeOut: 4, cur: null };
   function prefetch() {
     for (const [k, f] of Object.entries(FILES)) {
       raw[k] = fetch(`assets/music/${f}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
@@ -801,23 +809,36 @@ const Music = (() => {
     const lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -24; lim.knee.value = 12; lim.ratio.value = 4; lim.attack.value = 0.25; lim.release.value = 1.2;
     bus = ctx.createGain(); bus.gain.value = level(); bus.connect(lim); lim.connect(Sound.output());
-    bedGain = ctx.createGain(); bedGain.gain.value = 0; bedGain.connect(bus);
     Object.keys(FILES).forEach(get);
+    updateBed();
   }
   function fadeOut(g, sec) { g.gain.cancelScheduledValues(ctx.currentTime); g.gain.setTargetAtTime(0, ctx.currentTime, sec / 4); }
+  const note = () => { const k = (cue ? cue.name : '-') + '|' + (amb.cur ? amb.cur.name : '-'); if (log.length && log[log.length - 1][1] === k) return; log.push([typeof game !== 'undefined' ? +game.clock.toFixed(1) : 0, k]); if (log.length > 400) log.shift(); };
+  // The ambience: the wanted loop, unless a cue is playing. A change crossfades; a cue starting hides it in 1.5 s.
   function updateBed() {
     if (!ctx) return;
-    const on = bedWanted && !cue;
-    bedGain.gain.cancelScheduledValues(ctx.currentTime);
-    bedGain.gain.setTargetAtTime(on ? BED_LEVEL : 0, ctx.currentTime, on ? 2.5 : 0.8);
-    if (on && !bedSrc) {
-      get('bed').then((b) => {
-        if (!b || bedSrc) return;
-        bedSrc = ctx.createBufferSource(); bedSrc.buffer = b; bedSrc.loop = true;
-        [bedSrc.loopStart, bedSrc.loopEnd] = BED_LOOP;
-        bedSrc.connect(bedGain); bedSrc.start(0, BED_LOOP[0]);
+    const name = cue ? null : amb.want, cur = amb.cur, t = ctx.currentTime;
+    if (cur && cur.name === name) {
+      const lv = LOOPS[name].level * amb.scale;
+      if (Math.abs(cur.level - lv) > 1e-3) { cur.level = lv; cur.gain.gain.cancelScheduledValues(t); cur.gain.gain.setTargetAtTime(lv, t, 1.0); }
+      note(); return;
+    }
+    if (cur) {
+      const out = cue ? 1.5 : amb.fadeOut; fadeOut(cur.gain, out); cur.dead = true; amb.cur = null;
+      setTimeout(() => { try { cur.src && cur.src.stop(); } catch (e) { /* already stopped */ } cur.gain.disconnect(); }, out * 1000 + 300);
+    }
+    if (name) {
+      const L = LOOPS[name], c = { name, src: null, gain: ctx.createGain(), level: L.level * amb.scale };
+      c.gain.gain.setValueAtTime(0.0001, t); c.gain.gain.linearRampToValueAtTime(c.level, t + Math.max(0.05, amb.fadeIn)); c.gain.connect(bus);
+      amb.cur = c;
+      get(name).then((b) => {
+        if (!b || c.dead) return;
+        c.src = ctx.createBufferSource(); c.src.buffer = b; c.src.loop = true;
+        [c.src.loopStart, c.src.loopEnd] = L.loop;
+        c.src.connect(c.gain); c.src.start(0, L.loop[0]);
       });
     }
+    note();
   }
   return {
     prefetch, init,
@@ -825,7 +846,7 @@ const Music = (() => {
     // Every cue fades in (1.2 s unless asked otherwise), so none bursts in at full level.
     play(name, fadeIn = 1.2) {
       if (!ctx) return;
-      this.stop(1.5);
+      this.stop(1.5, true);                              // (the ambience stays hidden: a cue follows at once)
       const asked = ctx.currentTime;
       const c = { name, src: null, gain: ctx.createGain() };
       c.gain.gain.setValueAtTime(0.0001, asked); c.gain.gain.linearRampToValueAtTime(LEVEL[name], asked + Math.max(0.05, fadeIn)); c.gain.connect(bus);
@@ -835,20 +856,28 @@ const Music = (() => {
         c.src = ctx.createBufferSource(); c.src.buffer = b; c.src.connect(c.gain);
         // Start where it would be had it decoded instantly, so the wake stays in step with the opening.
         c.src.start(0, Math.min(Math.max(0, ctx.currentTime - asked), b.duration - 0.1));
-        c.src.onended = () => { if (cue === c) { cue = null; updateBed(); if (c.next) this.play(c.next); } };
+        c.src.onended = () => { if (cue === c) { cue = null; if (c.next) this.play(c.next); else updateBed(); } };     // a queued cue follows with no ambience between
       });
     },
-    stop(sec = 1.5) {
+    stop(sec = 1.5, quiet = false) {
       if (!cue) return;
       const c = cue; cue = null;
       fadeOut(c.gain, sec);
       setTimeout(() => { try { c.src && c.src.stop(); } catch (e) { /* already stopped */ } c.gain.disconnect(); }, sec * 1000 + 200);
-      updateBed();
+      if (!quiet) updateBed();
     },
     playing: () => (cue ? cue.name : null),
+    ambienceName: () => (amb.cur ? amb.cur.name : null),
+    ambienceWant: () => amb.want,
+    log: () => log.slice(),
+    // The scene's loop (null for none). Opts: fadeIn and fadeOut in seconds (4 each, a crossfade), and scale on its level.
+    ambience(name, { fadeIn = 4, fadeOut = 4, scale = 1 } = {}) {
+      if (name === amb.want && scale === amb.scale) return;
+      Object.assign(amb, { want: name, scale, fadeIn, fadeOut }); updateBed();
+    },
     // Play a cue when the one now playing ends by itself (or now, if nothing is playing).
     queue(name) { if (cue) cue.next = name; else this.play(name); },
-    bed(on) { bedWanted = on; updateBed(); },
+    bed(on) { this.ambience(on ? 'bed' : null, { fadeIn: 6, fadeOut: 3 }); },          // chapter one's
     setEnabled(on) { enabled = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
     setPaused(on) { paused = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
     // Under a voice the music steps back.
@@ -2285,7 +2314,7 @@ function updateDL02(dt) {
   // The reveal plays the moment he is through the gate, however it was opened (a half-open gate can be crawled under).
   if ((game.revealPending || !game.revealed) && game.region === 2 && !game.transit && game.x > GATE_X + 0.2) {
     game.revealed = true; game.revealPending = false; game.revealTime = game.clock; game.rowsLit = 0; game.checkpoint = 'solved';
-    Music.bed(false); Music.play('racks', 0.6);
+    Music.play('racks', 0.6);
   }
 
   // Lights: the plate lamp and passage once the bulkhead is open; the rack rows one after another.
@@ -2662,7 +2691,7 @@ function updateScan(dt) {
     drawScreen('idle', game.clock);
     if (game.region === 3 && !game.upper && game.x >= SCANNER_X - 0.06 && game.grounded && !game.act && !game.hold) {
       sc.phase = 'scan'; sc.t = 0; game.act = { kind: 'scan', phase: 'act', t: 0 }; game.vx = 0; game.facing = 1;
-      setClip('Attention', 0.3); setRegionLights(3); Music.bed(false);
+      setClip('Attention', 0.3); setRegionLights(3);
     }
     return;
   }
@@ -2695,7 +2724,7 @@ function updateScan(dt) {
     if (actions.CheckLabel.time * FPS >= 56 && !sc.perked) { sc.perked = true; Sound.chirp(); }
     if (actions.CheckLabel.time * FPS >= 83) {
       sc.phase = 'done'; game.act = null; game.lookAt = null; setClip('Idle', 0.3); input.lastActivity = game.clock;
-      startBelt(); game.checkpoint = 'scanned'; Music.bed(true);
+      startBelt(); game.checkpoint = 'scanned';
     }
   } else drawScreen('reject', t);
   // Scanner lamps stay red once the parcel is refused; the floor arrows point the way to the chute.
@@ -3297,14 +3326,14 @@ function updateTriggers4() {
   if (game.plat.latched && x > SHAFT.x1 + 0.6 && game.belt4.state === 'idle') { game.belt4.state = 'warn'; game.belt4.t = 0; }
   if (x > TUNNEL_X0 + 0.25 && ['goods', 'latched', 'cage', 'landing8'].includes(game.checkpoint)) game.checkpoint = 'tunnel';
   if (x > TUNNEL_X0 + 0.6 && !d.lookedBack) {
-    d.lookedBack = true; Music.bed(false);
+    d.lookedBack = true;
     // Pass 3: the look back is cut. With the cage and the cable behind him it no longer read as the depot.
   }
   if (x > HOP4_X && x < HOP4_X + 0.5 && !d.hopped && game.facing > 0) {
     d.hopped = true;
     if (once('hopscotch')) { startHopscotch(x); return true; }
   }
-  if (x > VISTA_X0 - 0.6 && !d.refuge) { d.refuge = true; Music.bed(false); Music.play('refuge', 3.0); }
+  if (x > VISTA_X0 - 0.6 && !d.refuge) { d.refuge = true; Music.play('refuge', 3.0); }
   if (x > AWE_X && !d.awed) {
     d.awed = true;
     if (once('awe')) { game.aweStart = game.clock; game.vx = 0; game.act = { kind: 'awe', phase: 'turn', t: 0 }; return true; }
@@ -3421,7 +3450,7 @@ function updateDL05(dt) {
   }
   // The marks are uncovered: the music comes in, and the first time the camera holds on them.
   if (!game.dl5.revealed && d.x <= DESK5.clear) {
-    game.dl5.revealed = true; Music.bed(false); Music.play('child');
+    game.dl5.revealed = true; Music.play('child');
     if (once('marks')) game.marksShotAt = game.clock;
     // Pass 8: he lets go of the desk himself; the terminal is the next thing, at once.
     if (game.hold === 'desk') { game.hold = null; game.pushKey = null; setClip('Idle', 0.3); }
@@ -3965,7 +3994,7 @@ function resetCh1(cp) {
     if (c110.obj && c110.rest) { c110.obj.position.copy(c110.rest); c110.obj.quaternion.copy(c110.restQ); }
   }
 }
-function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; for (const k of Object.keys(secretFound)) delete secretFound[k]; for (const k of Object.keys(voiceFound)) delete voiceFound[k]; persist.cw = 0; persist.shockedOnce = false; persist.warned = false; Letters.clear(); }
+function clearLetters() { for (const k of Object.keys(letterState)) delete letterState[k]; letterState.held = 0; letterState.posted = 0; for (const k of Object.keys(curioFound)) delete curioFound[k]; for (const k of Object.keys(secretFound)) delete secretFound[k]; for (const k of Object.keys(voiceFound)) delete voiceFound[k]; persist.cw = 0; persist.shockedOnce = false; persist.warned = false; persist.cageDanger = false; Letters.clear(); }
 
 // Collision ---------------------------------------------------------------------------------
 function floorCh1(x) {
@@ -4414,7 +4443,12 @@ function updateAct10(a, dt) {
     uo[a.kind === 'up10' ? 'pressL' : 'pressS'] = f > 13 && f < 22 ? 1 : 0;
     if (f >= 16 && !a.pressed) {
       a.pressed = true; Sound.click();
-      if (uo.loaded && uo.gate >= 1 && uo.phase === 'idle') { uo.phase = 'up'; uo.t = 0; uo.riding = a.kind === 'ride10'; Sound.clunk(); Sound.chain(2.0); shake(0.15); }
+      if (uo.loaded && uo.gate >= 1 && uo.phase === 'idle') {
+        uo.phase = 'up'; uo.t = 0; uo.riding = a.kind === 'ride10'; Sound.clunk(); Sound.chain(2.0); shake(0.15);
+        // The car leaves for good with the suitcase (he rides the counterweight down): the anthem's last phrase, then the
+        // collapse as he comes down into ring C.
+        if (uo.riding) { Music.play('lastcar', 0.3); Music.queue('collapse'); }
+      }
       else { uo.buzz = game.clock; Sound.buzzShort(); Telemetry.event('liftBuzz', { from: a.kind }); if (!uo.loaded) Pips.flash('car10'); }
     }
     if (f >= 34) {
@@ -4849,7 +4883,7 @@ function updateCage(dt) {
   }
   const L = CG.landing, catchY = L + 0.35;
   if (c.phase === 'settle') { c.y = CG.top - 0.04 * smooth(c.t / 0.9); if (c.t > 1.0) { c.phase = 'lower'; c.t = 0; Sound.chain(1.2); } }
-  else if (c.phase === 'lower') { c.y -= 0.32 * dt; if (c.y < CG.top - 0.55) { c.phase = 'shudder'; c.t = 0; Sound.lurch(); shake(0.35); } }
+  else if (c.phase === 'lower') { c.y -= 0.32 * dt; if (c.y < CG.top - 0.55) { c.phase = 'shudder'; c.t = 0; Sound.lurch(); shake(0.35); persist.cageDanger = true; } }
   else if (c.phase === 'shudder') { if (c.t > 0.7) { c.phase = 'slip'; c.t = 0; c.v = 0; Sound.groan(); } }
   else if (c.phase === 'slip') {
     c.v = Math.min(1.6, c.v + 2.6 * dt); c.y -= c.v * dt;
@@ -4860,7 +4894,7 @@ function updateCage(dt) {
       if (game.act && game.act.kind === 'cage') { Sound.splash(1.5); die('fall', { follow: () => { game.y = c.y; } }); }
     }
   } else if (c.phase === 'stall') { if (c.t > 0.75) { c.phase = 'slip'; c.t = 0; c.v = 0.3; } }
-  else if (c.phase === 'bite') { c.y += (L - c.y) * Math.min(1, dt * 9); if (c.t > 0.5) { c.y = L; c.phase = 'caught'; c.t = 0; Sound.clunk(); } }
+  else if (c.phase === 'bite') { c.y += (L - c.y) * Math.min(1, dt * 9); if (c.t > 0.5) { c.y = L; c.phase = 'caught'; c.t = 0; Sound.clunk(); persist.cageDanger = false; } }
   else if (c.phase === 'crash') { if (c.t > 1.4) { c.phase = 'haul'; c.t = 0; Sound.chain(2.5); } }
   else if (c.phase === 'haul') { c.y = Math.min(CG.top, c.y + 0.7 * dt); if (c.y >= CG.top) { c.phase = 'top'; c.t = 0; c.caughtOnce = false; c.readyAt = game.clock + 1.6; if (game.act && game.act.kind === 'cage') { game.act = null; setClip('Idle', 0.3); } } }
   if (k.cage) k.cage.position.y = k.cage.userData.rest.p.y + (c.y - CG.top);
@@ -7162,7 +7196,7 @@ function startOpening() {
   resetWorld('start');
   game.cordOn = false; game.cordUsed = false; game.cordPull = 0;
   game.mode = 'card'; game.sceneTime = 0; cuePtr = 0; game.nextRelay = OPENING_FRAMES;
-  game.heardHall = false; Music.setPaused(false); Music.bed(false);
+  game.heardHall = false; Music.setPaused(false); Music.ambience('lower_works');     // under the wake, until it ends
   // The card before the wake: the power is back after 76 years, and nothing says why. Any key, tap or click moves on.
   const card = document.getElementById('intertitle');
   card.hidden = false; card.style.opacity = 1;
@@ -7191,7 +7225,8 @@ function startPlay(checkpoint = 'start') {
   // The wake plays on into the first steps; any other cue gives way to the bed.
   if (!fromOpening && Music.playing() !== 'wake') Music.stop(2);
   game.heardHall = !['start', 'shutter'].includes(checkpoint);
-  Music.setPaused(false); Music.bed(!['tunnel', 'ringc', 'bedroom', 'forwarded'].includes(checkpoint));
+  Music.setPaused(false);
+  if (ATT_CPS.includes(checkpoint)) Music.bed(true); else updateAmbience();
   if (!naturalEnd && game.frame < 380) refs.grit.forEach((g) => (g.m.visible = false));
   game.mode = 'play';
   game.sceneTime = Math.max(game.sceneTime, OPENING_FRAMES / FPS);
@@ -7243,6 +7278,29 @@ function sceneName() {
   if (r === 3) return game.upper || past(game.checkpoint, 'landing') || (game.route === 'exit' && game.belt.running) ? 'DL-07 The Heap' : 'DL-06 Return to Sender';
   if (r === 4) return x < CG.x0 ? 'DL-08 The Handbrake' : x < UPONLY.x0 ? 'DL-09 The Slipping Cage' : 'DL-10 Up Only';
   return 'DL-11 The Child at the Address';
+}
+// The prologue's ambience (docs/prologue_music.md, the beat map): which loop, from where he is and what has happened.
+// Cues hide it on their own. Chapter one keeps its bed (Music.bed).
+function sceneAmbience() {
+  const r = game.region, x = game.x, cp = game.checkpoint;
+  if (r === 1) return ['lower_works'];
+  if (r === 2) return [x < GATE_X || !game.revealed ? 'lower_works' : x < RATION5.x0 ? 'heaps' : 'order'];      // the racks, then the ration hall
+  if (r === 3) return [past(cp, 'scanned') ? 'lower_works' : 'order'];                                           // the scanner's corridor is the Order's
+  if (r === 4) {
+    if (x < CG.x0) return ['lower_works'];
+    if (x > UPONLY.x0) return [game.ch1.uo.riding ? null : 'order'];                                             // the lobby, until the last car goes
+    if (game.ch1.cage.phase === 'caught' || past(cp, 'landing8')) return [null];                                 // silence into the tunnel
+    if (persist.cageDanger) return ['failure', { fadeIn: 1 }];                                                   // from the slip, through every retry
+    return ['lower_works'];
+  }
+  if (r === 5) return [past(cp, 'bedroom') ? null : 'heaps', { scale: 0.6 }];                                  // ring C, low; the bedroom is quiet
+  return [null];
+}
+function updateAmbience() {
+  if (game.region === 6) return;
+  const [name, opts = {}] = sceneAmbience();
+  if (Music.ambienceWant() === 'failure' && name !== 'failure') opts.fadeOut = 2;
+  Music.ambience(name, opts);
 }
 const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
@@ -7590,7 +7648,7 @@ function step(dt) {
         if (k > 0.02) [0, 1, 2].forEach((i) => setTimeout(() => Sound.relay(i, k * Math.max(0.25, 0.8 - Math.abs(game.x - 2) / 8)), i * 500));
       }
     }
-    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); updateAtt(dt); updateRingC(dt); updateHazards(dt); updateClockHands(dt); } updateSparks(dt); updateCurios(dt); Glints.update(dt); Pips.update(); updateWhite(dt); }
+    if (active) { updateMechanisms(dt); updateAtmosphere(dt); updateDL02(dt); if (game.mode === 'play') { updateDL03(dt); updateDL04(dt); updateDL05(dt); updateCh1(dt); updateAtt(dt); updateRingC(dt); updateHazards(dt); updateClockHands(dt); } updateSparks(dt); updateCurios(dt); Glints.update(dt); Pips.update(); if (game.mode === 'play') updateAmbience(); updateWhite(dt); }
     if (game.mode === 'play') syncRide();
     updateCharacter(dt, game.mode === 'play');
     placeWeight(dt);
@@ -7603,7 +7661,7 @@ function step(dt) {
 }
 
 // Test hook for automated traversal checks.
-window.__dl01 = { game, world: scene, THREE, Glints, Letters, Pips, Resume, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR, UO, UPONLY, CG, ATT }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
+window.__dl01 = { game, world: scene, THREE, Music, persist, ambience: () => Music.ambienceName(), musicLog: () => Music.log(), Glints, Letters, Pips, Resume, pressT: () => game.clock % PRESS2.period, arcT: () => game.clock % ARC_PERIOD, k2: { CW8, ARCS8, BELL9, JUNCTION9, PRESS2, SHAFT, RH5, RATION5, C114DOOR, UO, UPONLY, CG, ATT }, skip: () => startPlay('start'), play: (c) => startPlay(c), input, actions: () => Object.keys(actions), cam, camera, refs, music: () => Music.playing(),
   clip: () => current, renderer, limits: () => [leftLimit(), rightLimit()], playVoice: (id) => Voice.play(voiceById(id)), voice: () => Voice.playing(), carriers: () => (refs.carriers || []).map((c) => ({ s: +c.s.toFixed(2), state: c.state, route: c.route, ridden: c.ridden })),
   crates: () => (refs.crates || []).map((c) => ({ x: +c.x.toFixed(2), h: c.h, state: c.state })), seen, near: () => nearUse(), nearAll, auditNear, startAt, cps: CHECKPOINTS, cpOrder: CP_ORDER, offsets: { OFF2, OFF3, OFF4, OFF5 }, scene: () => sceneName(), letters: letterState, curios: curioFound, waters: WATERS, curioList: () => CURIOS.map((c) => ({ id: c.id, x: c.x, region: c.region, upper: !!c.upper, early: !!c.early })), white: () => ({ state: white.state, x: +white.x.toFixed(2), water: white.w && white.w.id, lure: !!(white.lure && game.clock < white.lure.until) }), die,
   k: { CART1, PIT, SH, RK, HP, RAIL7, CG, DIP9, DUCT9, GATE_X, DOCK_X, PAWL_X, GALLERY, T4_HALF, PUSH_GAP4, GRIP_FWD, SLOTS, LETTERS: LETTERS.map((l) => ({ id: l.id, x: l.x })) } };
