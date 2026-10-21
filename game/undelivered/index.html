@@ -3806,6 +3806,9 @@ const LETTER_TEXT = {
   tube: { img: 'letter_tube.png', head: 'From Mara, to the post office', text: '\u201CDEAR POST, MY BIRTHDAY PARCEL HASNT COME. IS D-17 LOST? LOVE MARA \u2665 C-114.\u201D On the back, in crayon: a girl crying at her door by a crooked tree, and far off in the dark, a little courier with a parcel and a question mark over him.' },
   heap: { img: 'letter_heap.png', head: 'To C-114, ring C', text: 'Postmarked P.A. 311, a heart in the corner. Sealed. On the back, in crayon: a courier bringing a parcel to a house, a flower in its window, the sun out.' },
   c110: { img: 'letter_c110.png', head: 'To C-110, ring C', text: 'Postmarked P.A. 310. Sealed, and never delivered.' },
+  // Rev 0.3: DL-17's records scan themselves as he reads them (the plan: records auto-scan; replay from the pause card).
+  drawing17: { img: 'record_drawing17.png', record: true, head: 'Mara\u2019s drawing, the workshop', text: 'Her crooked tree become a garden bed, with water channels running round its roots, in her pencil. Beside it, in another hand: \u201Cfall 1 in 100\u201D, \u201Clevels!\u201D, a channel drawn again in section, and a tick.' },
+  placement17: { img: 'record_placement17.png', record: true, head: 'Placement, P.A. 316', text: 'PLACEMENT \u00B7 M. D. \u00B7 AGE 14. Works Dept., ring A: water and irrigation. At the pupil\u2019s own request. Sponsor: E. Vance. Report via residential access, ring A.' },
 };
 const Letters = (() => {
   const el = document.getElementById('letter'), read = [];
@@ -3815,8 +3818,10 @@ const Letters = (() => {
     const url = `url("assets/letters/${L.img}")`;
     document.getElementById('letter-front').style.backgroundImage = url;
     document.getElementById('letter-back').style.backgroundImage = url;
-    document.getElementById('letter-head').textContent = 'Scanned \u00B7 ' + L.head;
-    document.getElementById('letter-n').textContent = `${read.indexOf(id) + 1} of ${LETTERS.length}`;
+    document.getElementById('letter-head').textContent = (L.record ? 'Record \u00B7 ' : 'Scanned \u00B7 ') + L.head;
+    document.getElementById('letter-n').textContent = L.record ? '' : `${read.filter((q) => !LETTER_TEXT[q].record).indexOf(id) + 1} of ${LETTERS.length}`;
+    document.getElementById('letter-back').hidden = !!L.record;
+    for (const f of ['letter-front', 'letter-back']) document.getElementById(f).style.backgroundSize = L.record ? 'contain' : '';
     document.getElementById('letter-text').textContent = L.text;
     document.getElementById('letter-hint').textContent = game.mode === 'paused' ? 'Select to close' : touchDevice ? 'USE to put it away' : 'E to put it away';
     el.hidden = false; openAt = game.clock; at = game.x;
@@ -5044,7 +5049,7 @@ function buildAtt(root) {
     P(0xff7a30, 1.2, 2.5, 268.5, -1.1, -0.3), P(0xe8dcc8, 0.6, 6, 269.0, 2.4, 2.0),
     // DL-17 (art/ch1/dl17.py REPORT): the pendant's pool, the bench lamp, the drawer, the grow lamp's cool light, the stair door, the way in.
     S(0xffc27a, 5, 4, [285.95, 2.15, -0.8], [285.95, 0.0, -0.8], 1.0), S(0xffcc8c, 3, 2.5, [285.04, 1.34, -0.9], [285.5, 0.9, -0.7], 0.8),
-    S(0xffd69e, 4, 4, [286.2, 1.8, 1.6], [286.2, 0.3, -0.45], 0.35), S(0xbdd1ff, 3, 3, [290.5, 1.57, -1.05], [290.5, 0.9, -1.05], 0.9),
+    S(0xffd69e, 4, 4, [286.2, 1.8, 1.6], [286.2, 0.3, -0.45], 0.35), S(0xbdd1ff, 0, 3, [290.5, 1.57, -1.05], [290.5, 0.9, -1.05], 0.9),   // rev 0.3: the grow lamp is off (no one tends the trays)
     P(0xffc890, 0.6, 3, 295.25, 2.2, -0.95), P(0xffd8a8, 0.8, 4, 281.2, 2.6, -0.2),
     // Pass 8: A's wheel and the pole through it, in their own low pool, so the jam reads from across the room.
     S(0xffd8a8, 3.5, 4, [235.3, 2.6, 1.2], [234.95, 0.7, -0.62], 0.42),
@@ -5319,7 +5324,9 @@ const ATT2 = {
   drawer: { x: 286.0, out: 0.45 }, tray0: 285.7, trayKeepOut: [285.15, 286.85], trayPark: 284.7,
   x1: 295.6,
 };
-const ATT2_DETENTS = [ATT2.lift.mid, ...ATT2.seats];
+// Rev 0.3: the figures' rail docks only at the friends' two places; Mara's is an ordinary chair off the rail, with a
+// seat plate, so after the stand-ins the third place is his (docs/chapter1_rev03_plan.md).
+const ATT2_DETENTS = [ATT2.lift.mid, ATT2.seats[0], ATT2.seats[1]];
 // DL-15's two stand-in pupils, on the floor rail: pushed from either side (an entry each), stopping at each seat.
 Object.assign(PUSHABLES, { f15A: pushable15('A', 1), f15Ar: pushable15('A', -1), f15B: pushable15('B', 1), f15Br: pushable15('B', -1) });
 function resetAtt2(s, p) {
@@ -5504,9 +5511,9 @@ function updateAtt2(dt) {
   if (want !== f15.lift) { f15.lift += Math.sign(want - f15.lift) * Math.min(Math.abs(want - f15.lift), L.speed * dt); if (Math.random() < dt * 5) Sound.ratchet(); if (f15.lift === want) { Sound.clunk(); shake(0.12); } }
   f15.liftV = (f15.lift - prev) / Math.max(dt, 1e-4);
   if (game.region === 6 && escort && game.grounded && Math.abs(game.y - prev) < 0.08) game.y = f15.lift;   // he rides it
-  // The seats: a figure clicked into one lights its lamp; Mara's lamp lights for whoever sits in her chair.
+  // The seats: a figure docked at one lights its lamp; Mara's lamp lights when he sits on her chair's plate.
   const at = (x) => figs.some((f) => f.state === 'free' && f.base < 0.05 && Math.abs(f.x - x) < 0.03);
-  const lit = [at(ATT2.seats[0]), at(ATT2.seats[1]), at(ATT2.seats[2]) || f15.seated];
+  const lit = [at(ATT2.seats[0]), at(ATT2.seats[1]), f15.seated];
   lit.forEach((v, i) => { if (v && !f15.lamps[i]) { Sound.plate(); Telemetry.event('seat15', { seat: i + 1 }); } f15.lamps[i] = v ? 1 : 0; });
   if (!f15.dismissed) {
     if (lit.every(Boolean) && f15.seated) { f15.allSince ??= game.clock; } else f15.allSince = null;
@@ -5537,11 +5544,14 @@ function updateAtt2(dt) {
       const slot = b.storedN++;
       f.state = 'stored'; f.stored = { t: 0, from: new THREE.Vector3(f.x, 0.03, ATT2.railZ), to: ATT2.hooks[Math.min(slot, 1)].clone() };
       Sound.ratchet(); Telemetry.event('stored16', { n: b.storedN });
-      if (b.storedN >= 2) b.fullAt = game.clock;
+      // Rev 0.3: the quiet after docking is protected. The music steps out; only the wheels ticking. It comes back
+      // in the workshop.
+      if (b.storedN >= 2) { b.fullAt = game.clock; Music.bed(false); Music.stop(5); b.hushed = true; }
     }
   });
   figs.forEach((f) => { if (f.stored && f.stored.t < 1) f.stored.t = Math.min(1, f.stored.t + dt / 1.8); });
   if (b.fullAt !== null && !b.latched && game.clock - b.fullAt > 2.0) { b.latched = true; b.held = false; Sound.clank(); Sound.chain(2.5); shake(0.2); game.checkpoint = past(game.checkpoint, 'store') ? game.checkpoint : game.checkpoint; Telemetry.event('rackFull', {}); }
+  if (b.hushed && game.region === 6 && game.x > 281.0) { b.hushed = false; Music.bed(true); }
   if (b.latched) { const was = b.cw; b.cw = Math.min(1, b.cw + dt / 2.6); if (was < 1 && Math.random() < dt * 6) Sound.ratchet(); }
   // His courtesy: the first time he comes up behind the waiting figures, he lets them go first.
   if (game.region === 6 && f15.dismissed && !b.bowed && game.x > 264.6 && game.x < ATT2.lever + 0.4 && order.length && !game.act && !game.hold && game.grounded) {
@@ -5603,7 +5613,7 @@ function updateAtt2(dt) {
   if (k.Att16CW) k.Att16CW.position.y = k.Att16CW.userData.rest.p.y + ATT2.cw.lift * smooth(b.cw);
   if (k.Att17Drawer) k.Att17Drawer.position.z = k.Att17Drawer.userData.rest.p.z + ATT2.drawer.out * smooth(d.drawer);
   if (k.hideLamp) k.hideLamp.emissiveIntensity = 4;
-  if (k.growLamp) k.growLamp.emissiveIntensity = 5;
+  if (k.growLamp) k.growLamp.emissiveIntensity = 0;              // rev 0.3: off, over dead trays
   placeTray17(d.tray, k.Att17Tray, dt);
 }
 function placeTray17(it, g, dt) {
@@ -5718,7 +5728,7 @@ const VOICE_LINES = {
   att_lesson: { who: 'Lesson', treat: 'card', lines: [['Good morning, class. Today we will learn how a tree grows.', 4], ['First, the root. Then, the trunk.', 3.2], ['Then the branches reach for the light. And then, the leaves.', 4.4], ['A tree always grows straight, and tall, toward the sun.', 4], ['Let us watch it again.', 2.4]] },
   att_escort: { who: 'Voice card', treat: 'card_worn', lines: [['Escort log. Fourteen hundred.', 2.6], ['Pupil M.D. not in sick bay at the check. Not in class. Not in the cloakroom.', 5.4], ['Found under the sick bay balcony. Again. Third time this week.', 4.6], ['She says she was listening to the pipes.', 3.4], ['Recommend…', 1.6], ['No recommendation. Let her listen.', 3.4]] },
   att_bell: { who: 'Tannoy', treat: 'tannoy', lines: [['End of lessons.', 2.0], ['Pupils will walk, not run, to the playground.', 3.6], ['Escorts to the gate, please.', 2.6], ['Order above all.', 2.0]] },
-  att_volunteer: { who: 'Voice card', treat: 'elder', lines: [['Mara. Vance here. The bench.', 3.0], ['Your drawing’s good. Better than mine.', 3.2], ['Water’s patient, love. Give it a slope and it’ll go round anything.', 5.0], ['I’ve put your name down for the Works. Ring A. Water and the growing beds.', 5.4], ['They’ll grumble you’re young. Let them.', 3.4], ['Your tree can be crooked. The channels can’t. Mind the levels.', 4.6]] },
+  att_volunteer: { who: 'Voice card', treat: 'elder', lines: [['Mara. Vance here. The bench.', 3.0], ['You asked me about the Works again, so I asked them for you.', 4.4], ['Your drawing’s good. Better than mine.', 3.2], ['Water’s patient, love. Give it a slope and it’ll go round anything.', 5.0], ['They said yes. Ring A, water and the growing beds. After your birthday.', 5.2], ['They’ll grumble you’re young. Let them.', 3.4], ['Your tree can be crooked. The channels can’t. Mind the levels.', 4.6]] },   // rev 0.3: she asked; he helped
   att_teacher: { who: 'Voice card', treat: 'card', lines: [['To the family of Mara D., class four.', 3.4], ['She’s doing well. She doesn’t speak much in class, but she listens to everything.', 5.6], ['She asked me today why the windows don’t open. I told her the truth. I hope that was right.', 6.4], ['The protocol says she isn’t to be left alone, so I eat my lunch with her. I don’t mind.', 5], ['She’s drawn on the wall behind the window panel. A tree. I haven’t had it cleaned.', 5.6], ['I’ll keep recording these until someone writes back. Take care of yourselves.', 5]] },
 };
 // Cards he winds (Use): where the player is and where he stands. Tannoys: where they hang; they play as he passes.

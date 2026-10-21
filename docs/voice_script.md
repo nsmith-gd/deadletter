@@ -257,11 +257,12 @@ Treatment `tannoy`, small and bright, the register's voice. About 10 s. Plays as
 
 ### `att_volunteer`: Mr Vance, to Mara (DL-17, the stool by the bench)
 
-Treatment `elder`. About 25 s. An old volunteer who mends things, fond and plain.
+Treatment `elder`. About 30 s. An old volunteer who mends things, fond and plain. She asked for the placement; he helped arrange it (the director's plan, revision 0.3).
 > Mara. Vance here. The bench. *[pause]*
+> You asked me about the Works again, so I asked them for you.
 > Your drawing's good. Better than mine.
 > Water's patient, love. Give it a slope and it'll go round anything.
-> I've put your name down for the Works. Ring A. Water and the growing beds.
+> They said yes. Ring A, water and the growing beds. After your birthday.
 > They'll grumble you're young. Let them. *[pause]*
 > Your tree can be crooked. The channels can't. Mind the levels.
 
