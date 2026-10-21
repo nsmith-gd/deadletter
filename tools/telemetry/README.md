@@ -31,3 +31,11 @@ Run it behind HTTPS if the game is served over HTTPS. Any service that accepts a
 
 prints, per scene: sessions that reached it, median time in it, deaths by cause, idles, prompts and quits; the
 full-chapter time; puzzle signals; and frame rate by device.
+
+## A chapter's play data (pass 9)
+
+Each chapter's end card has **Save this chapter's play data**. It saves `dead-letter-<chapter>-playlog-<id>.json` with
+only the events since that chapter began (the prologue from its opening or any prologue checkpoint, chapter one from
+any of its own), plus a `summary`: time, deaths, finds (curiosities and secret rooms), voices heard, whether it was
+finished, and seconds spent in each scene. A playtester can send the file back; `summarise.py` reads it like any other
+log. The pause card's **Save play log** still saves the whole session.

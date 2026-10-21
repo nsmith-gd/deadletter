@@ -212,6 +212,10 @@
         <button class="act secondary" id="again" type="button">Play again</button>
         <button class="act secondary" id="again-skip" type="button">Play again, skip intro</button>
       </div>
+      <div class="row">
+        <button class="act secondary" id="end-log" type="button">Save this chapter's play data</button>
+        <span class="note" id="end-log-note"></span>
+      </div>
     </div>
   </section>
 </div>
@@ -6818,7 +6822,7 @@ function resetWorld(name = 'start') {
   setRegionLights(game.region === 3 && !c.scanned ? 2 : game.region);
 }
 function startOpening() {
-  seen.clear(); clearLetters();
+  seen.clear(); clearLetters(); Telemetry.chapter('prologue');
   resetWorld('start');
   game.cordOn = false; game.cordUsed = false; game.cordPull = 0;
   game.mode = 'card'; game.sceneTime = 0; cuePtr = 0; game.nextRelay = OPENING_FRAMES;
@@ -6924,6 +6928,7 @@ function finish() {
   const att = game.region === 6, cont = document.getElementById('continue-att');
   if (!att) for (const [id, v] of Object.entries(END_CARD)) document.getElementById(id).innerHTML = v;
   cont.hidden = att;
+  document.getElementById('end-log-note').textContent = '';
   setTimeout(() => { game.mode = 'end'; document.getElementById('end-time').textContent = `Time ${fmt(game.endTime)}`; document.getElementById('end-found').textContent = tally(); endEl.hidden = false; (att ? document.getElementById('again') : cont).focus(); }, 5200);
 }
 
@@ -6935,16 +6940,16 @@ function finish() {
 // and a summariser.
 // ---------------------------------------------------------------------------
 const Telemetry = (() => {
-  const BUILD = 'prologue-pass8';
+  const BUILD = 'chapter1-pass9';
   const url = (() => { try { return new URLSearchParams(location.search).get('telemetry') || window.DL_TELEMETRY_URL || ''; } catch (e) { return ''; } })();
   const sid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)) ;
-  let enabled = true, queue = [], log = [], seq = 0, sent = 0;
+  let enabled = true, queue = [], log = [], seq = 0, sent = 0, chap = null;
   const stamp = () => ({ t: +game.clock.toFixed(2), play: game.playStart ? +(game.clock - game.playStart).toFixed(1) : null,
     scene: game.mode === 'play' ? sceneName().slice(0, 5) : game.mode, x: +game.x.toFixed(2), cp: game.checkpoint });
   function event(type, data = {}) {
     if (!enabled) return;
     const e = { i: seq++, type, ...stamp(), ...data };
-    queue.push(e); log.push(e); if (log.length > 4000) log.splice(0, log.length - 4000);
+    queue.push(e); log.push(e); if (log.length > 8000) log.splice(0, log.length - 8000);
     try { localStorage.setItem('dl01-telemetry-' + sid, JSON.stringify(log.slice(-1500))); } catch (err) { /* storage full or off */ }
     if (queue.length >= 25) flush();
   }
@@ -6965,14 +6970,31 @@ const Telemetry = (() => {
   // the viewer first. Elsewhere it's a plain download link.
   const inViewer = !!(window.claude && window.claude.use);
   const downloads = inViewer ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
-  async function save() {
-    const filename = `dead-letter-playlog-${sid.slice(0, 8)}.json`;
-    const data = JSON.stringify({ sid, build: BUILD, device: device(), events: log }, null, 1);
+  // A chapter's run starts here (the prologue from its opening or first checkpoint, chapter one from any of its own);
+  // its play log is everything from that event on.
+  function chapter(name) { chap = { name, from: seq, t0: game.clock }; event('chapterStart', { name }); }
+  // A short summary on top of the events: how long, how many deaths and finds, and the time spent in each scene.
+  function summary(events) {
+    const end = [...events].reverse().find((e) => e.type === 'end');
+    const scenes = {}; let cur = null, t = null;
+    for (const e of events) if (e.type === 'scene') { if (cur && t !== null) scenes[cur] = +((scenes[cur] || 0) + e.t - t).toFixed(1); cur = e.name; t = e.t; }
+    if (cur && t !== null) scenes[cur] = +((scenes[cur] || 0) + (end ? end.t : game.clock) - t).toFixed(1);     // the last scene stops at the chapter's end
+    return { time: end ? end.time : Math.round(game.clock - (chap ? chap.t0 : 0)), deaths: events.filter((e) => e.type === 'death').length,
+      found: events.filter((e) => e.type === 'curio' || e.type === 'secret').length, voices: events.filter((e) => e.type === 'voice').length, finished: !!end, scenes };
+  }
+  // Save the log: the whole session's (the pause card), or one chapter's (its end card). Resolves 'saved', 'declined'
+  // or 'unavailable'.
+  async function save(opts = {}) {
+    const events = opts.chapter && chap ? log.filter((e) => e.i >= chap.from) : log;
+    const tag = opts.chapter && chap ? chap.name + '-' : '';
+    const filename = `dead-letter-${tag}playlog-${sid.slice(0, 8)}.json`;
+    const data = JSON.stringify({ sid, build: BUILD, chapter: opts.chapter && chap ? chap.name : null, saved: new Date().toISOString(), device: device(), summary: summary(events), events }, null, 1);
     const dl = await downloads;
-    if (dl) { try { await dl.save({ filename, data }); } catch (e) { /* declined or unavailable */ } return; }
-    if (inViewer) return;
+    if (dl) { try { await dl.save({ filename, data }); return 'saved'; } catch (e) { return e && e.code === 'declined' ? 'declined' : 'unavailable'; } }
+    if (inViewer) return 'unavailable';
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = filename; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    return 'saved';
   }
   // Watching the game: scene and checkpoint changes, being stuck, and frame rate, sampled each second of play.
   const w = { scene: null, cp: null, idleLogged: {}, frames: 0, time: 0, worst: 0, long: 0 };
@@ -6991,7 +7013,7 @@ const Telemetry = (() => {
   setInterval(() => flush(), 15000);
   addEventListener('pagehide', () => { event('leave', {}); flush(true); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { event('hidden', {}); flush(true); } });
-  return { event, flush, save, tick, device, setEnabled(v) { enabled = v; }, get url() { return url; }, sid, canSave: downloads.then((d) => !!d || !inViewer) };
+  return { event, flush, save, tick, device, chapter, get enabled() { return enabled; }, get chapterName() { return chap && chap.name; }, setEnabled(v) { enabled = v; }, get url() { return url; }, sid, canSave: downloads.then((d) => !!d || !inViewer) };
 })();
 
 // Options shared between the title and pause cards.
@@ -7018,7 +7040,16 @@ for (const n of Object.keys(OPTS)) {
 game.assist = getOpt('assist'); game.calm = getOpt('calm'); game.autorun = getOpt('autorun'); Telemetry.setEnabled(getOpt('telemetry'));
 Telemetry.event('session', { device: Telemetry.device(), opts: Object.fromEntries(Object.keys(OPTS).map((n) => [n, getOpt(n)])), referrer: document.referrer ? new URL(document.referrer).hostname : '' });
 document.getElementById('export-log').addEventListener('click', () => Telemetry.save());
-Telemetry.canSave.then((ok) => { if (!ok) document.getElementById('export-log').hidden = true; });
+// The end card's: just this chapter's play, for a playtester to send back.
+document.getElementById('end-log').addEventListener('click', async () => {
+  const note = document.getElementById('end-log-note'), btn = document.getElementById('end-log');
+  if (!Telemetry.enabled) { note.textContent = 'Play data recording is switched off in the options, so there is nothing to save.'; return; }
+  btn.disabled = true; note.textContent = 'Saving\u2026';
+  const r = await Telemetry.save({ chapter: true });
+  note.textContent = r === 'saved' ? 'Saved. Thank you! Send the file to whoever asked you to play.' : r === 'declined' ? 'Not saved.' : 'Saving isn\u2019t available here.';
+  btn.disabled = false;
+});
+Telemetry.canSave.then((ok) => { if (!ok) { document.getElementById('export-log').hidden = true; document.getElementById('end-log').hidden = true; } });
 syncOpts();
 
 beginBtn.addEventListener('click', () => { Telemetry.event('begin'); Sound.start(); Sound.setEnabled(getOpt('sound')); Music.init(); Music.setEnabled(getOpt('music')); Voice.init(); Voice.prefetch(Object.keys(VOICE_LINES).map(voiceById)); titleEl.hidden = true; startOpening(); });
@@ -7029,7 +7060,7 @@ document.getElementById('restart').addEventListener('click', () => { pauseEl.hid
 document.getElementById('again').addEventListener('click', () => { endEl.hidden = true; startOpening(); });
 // Testing (pass 5): start at any scene's first checkpoint, from the title card or the pause card.
 async function startAt(cp) {
-  Telemetry.event('startAt', { cp });
+  Telemetry.event('startAt', { cp }); Telemetry.chapter(ATT_CPS.includes(cp) ? 'chapter1' : 'prologue');
   // Chapter 1's set loads the first time it's wanted.
   if (ATT_CPS.includes(cp) && !refs.att) {
     const st = document.getElementById('load-status'); st.textContent = 'Loading the school\u2026'; st.classList.remove('ok');
@@ -7044,7 +7075,7 @@ async function startAt(cp) {
 document.getElementById('continue-att').addEventListener('click', () => { Telemetry.event('continue', {}); startAt('school'); });
 document.getElementById('scene-go').addEventListener('click', () => startAt(document.getElementById('scene-select').value));
 document.getElementById('scene-go-p').addEventListener('click', () => startAt(document.getElementById('scene-select-p').value));
-document.getElementById('again-skip').addEventListener('click', () => { endEl.hidden = true; game.playStart = 0; seen.clear(); clearLetters(); startPlay('start'); });
+document.getElementById('again-skip').addEventListener('click', () => { endEl.hidden = true; game.playStart = 0; Telemetry.chapter('prologue'); seen.clear(); clearLetters(); startPlay('start'); });
 
 // ---------------------------------------------------------------------------
 // Main loop
