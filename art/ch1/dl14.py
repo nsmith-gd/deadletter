@@ -7,6 +7,13 @@ up over the ceiling pulleys to both rollers, and down the wall to A's chain whee
 from 236.6, between the pole and the desk). Behind B's painted panel, in its lower right pane, the corner peels back
 to show concrete, and on it Mara's crooked tree in pencil, drawn over and over. Under the stair, the stock cupboard: the last teacher's corner.
 
+Rev 0.3 (docs/chapter1_rev03_plan.md): behind the hatch, at the duct's mouth, the refuge the last three children shared
+(AttRefuge, seen through the hatch from ledge B and the landing): three places along its back wall under their
+scratched initials (R.A., T.O., M), a biscuit tin open with crumbs, a tin cup held to the water pipe, a lantern
+(AttRefugeLamp); the duct goes on from its right side behind the painted windows. By the crank, an enamel drive plate
+(one chain, two blinds, A down = B up; the clutch slips if a blind is held), A and B roundels on the two pelmets, and a
+clutch (AttClutch) behind A's chain wheel that the game spins while the chain slips.
+
 Called by build_attendance.py as build_set(dl01, m, coll), in final world coordinates.
 Blender (x, y, z) is the game's (x, z, -y): +y is away from the camera, z is up. The lane is y = 0, the floor z = 0.
 
@@ -18,8 +25,10 @@ What the game moves (origin = pivot, world coordinates; see REPORT at the bottom
     AttWheelA              A's chain wheel at 235.0 (between the pole and the desk), low on the wall; origin on its axle
     AttPole                the window pole (carried); origin at its middle grip; built along local z, leaned by rotation
     AttChain               the endless chain, static (its UV v runs along the loop for a texture scroll)
+    AttClutch              the clutch's pressure plate behind A's wheel; origin on the axle; spins about local y (game z)
 Static: AttWinSet (the corridor), AttGlobeLamps (EMIT AttGlobeLamp), AttCupboard (the secret room),
-AttCupboardLamp (EMIT AttCupboardLamp), and the card player from art/common/voice_props.py.
+AttCupboardLamp (EMIT AttCupboardLamp), AttRefuge (the children's refuge), AttRefugeLamp (EMIT DenLanternGlow), and the
+card player from art/common/voice_props.py.
 """
 import math
 import os
@@ -561,7 +570,7 @@ CELLS2 = {
     'r_wall': (0, 544, 768, 1024),          # the refuge's back wall, x 238.98..240.47, z 2.15..3.08
 }
 SWATCH2 = {'r_sw_tin': (46, 70, 106), 'r_sw_crumb': (182, 146, 88), 'r_sw_enamel': (222, 218, 204), 'r_sw_blue': (34, 52, 104),
-           'r_sw_wood': (112, 80, 50), 'r_sw_iron': (40, 39, 37), 'r_sw_brass': (176, 136, 66), 'r_sw_string': (190, 178, 146),
+           'r_sw_wood': (136, 100, 62), 'r_sw_iron': (40, 39, 37), 'r_sw_brass': (176, 136, 66), 'r_sw_string': (190, 178, 146),
            'r_sw_dark': (10, 9, 8), 'r_sw_red': (132, 48, 40), 'r_sw_cream': (222, 212, 184), 'r_sw_paper': (204, 196, 172),
            'r_sw_tinin': (120, 112, 96), 'r_sw_green': (52, 84, 60)}
 for _i, _k in enumerate(SWATCH2):
@@ -1553,25 +1562,43 @@ def build_refuge(coll):
     B = MB()
     z0 = HATCH[2]
     rnd = random.Random(1495)
-    py = 2.37
-    for x, cell, size, tilt in ((PLACES[0], 'r_cushA', (0.27, 0.3, 0.085), 0.05), (PLACES[1], 'r_cushO', (0.26, 0.29, 0.08), -0.04),
-                                (PLACES[2], 'r_blanket', (0.28, 0.31, 0.07), 0.02)):
-        n0 = B.mark()
+    py = 2.4
+    for k, (x, cell, size, tilt) in enumerate(((PLACES[0], 'r_cushA', (0.26, 0.25, 0.075), 0.05), (PLACES[1], 'r_cushO', (0.25, 0.24, 0.07), -0.04),
+                                               (PLACES[2], 'r_blanket', (0.27, 0.25, 0.065), 0.02))):
+        # a fruit crate stood on end for a seat: four corner posts, slats with gaps, the dark inside
+        ch, cw, cd = 0.2 - 0.012 * k, 0.27, 0.24
+        M = Matrix.Translation((x, py, z0)) @ Matrix.Rotation(tilt * 0.6, 4, 'Z')
+        n0 = set(B.bm.verts)
+        B.box('WinDrive', -cw / 2 + 0.012, cw / 2 - 0.012, -cd / 2 + 0.012, cd / 2 - 0.012, 0.0, ch - 0.004, cell='r_sw_dark')
+        for sx_ in (-1, 1):
+            for sy_ in (-1, 1):
+                B.box('WinDrive', sx_ * cw / 2 - 0.012, sx_ * cw / 2 + 0.012, sy_ * cd / 2 - 0.012, sy_ * cd / 2 + 0.012, 0.0, ch, cell='r_sw_wood')
+        for za, zb in ((0.012, 0.075), (0.1, 0.165), (ch - 0.03, ch)):
+            if zb > ch:
+                continue
+            B.box('WinDrive', -cw / 2, cw / 2, -cd / 2 - 0.006, -cd / 2 + 0.006, za, min(zb, ch), cell='r_sw_wood')
+            for sx_ in (-1, 1):
+                B.box('WinDrive', sx_ * cw / 2 - 0.006, sx_ * cw / 2 + 0.006, -cd / 2, cd / 2, za, min(zb, ch), cell='r_sw_wood')
+        for v in [v for v in B.bm.verts if v not in n0]:
+            v.co = M @ v.co
+        # and on it the cushion (or the folded blanket), sat on
+        n0 = set(B.bm.verts)
         d17.rounded_box(size, (0.0, 0.0, size[2] / 2), p=3.0 if cell != 'r_blanket' else 6.0, cuts=3, bm=B.bm, mat=B.m('WinDrive'))
-        vs = B.since(n0)
-        for v in vs:                                                                # sat on: dished in the middle
+        vs = [v for v in B.bm.verts if v not in n0]
+        for v in vs:                                                                # dished in the middle
             r2 = (v.co.x / (size[0] / 2)) ** 2 + (v.co.y / (size[1] / 2)) ** 2
             if v.co.z > size[2] * 0.6:
-                v.co.z -= 0.025 * max(0.0, 1 - r2) * (1.0 if cell != 'r_blanket' else 0.4)
+                v.co.z -= 0.022 * max(0.0, 1 - r2) * (1.0 if cell != 'r_blanket' else 0.4)
         for v in vs:
-            v.co = Matrix.Translation((x, py + rnd.uniform(-0.02, 0.02), z0)) @ Matrix.Rotation(tilt, 4, 'Z') @ v.co
-        _project(B, vs, cell, (x, py, z0 + size[2] / 2), (size[0] + 0.01, size[1] + 0.01, size[2] + 0.01))
-        if cell == 'r_blanket':                                                     # its folded edge, rolled
-            B.cyl('WinDrive', (x - 0.14, py - 0.155, z0 + 0.035), (x + 0.14, py - 0.15, z0 + 0.035), 0.034, seg=10, cell='r_sw_iron')
+            v.co = M @ Matrix.Translation((0.0, 0.0, ch)) @ Matrix.Rotation(tilt, 4, 'Z') @ v.co
+        _project(B, vs, cell, (x, py, z0 + ch + size[2] / 2), (size[0] + 0.03, size[1] + 0.03, size[2] + 0.01))
+        if cell == 'r_blanket':                                                     # its folded edge, rolled over the front
+            B.cyl('WinDrive', (x - 0.13, py - 0.125, z0 + ch + 0.03), (x + 0.13, py - 0.12, z0 + ch + 0.03), 0.032, seg=10, cell='r_sw_iron')
+            B.box('WinDrive', x - 0.13, x + 0.13, py - 0.135, py - 0.115, z0 + ch - 0.09, z0 + ch + 0.03, cell='r_sw_iron')
     # The biscuit tin, open, in front of the middle place; its lid leant against it facing out; crumbs.
     tx, ty = PLACES[1] + 0.02, 1.98
     tw, td, th = 0.21, 0.155, 0.075
-    n0 = B.mark()
+    n0 = set(B.bm.verts)
     B.box('WinDrive', tx - tw / 2, tx + tw / 2, ty - td / 2, ty + td / 2, z0, z0 + 0.006, cell='r_sw_tinin')
     for a, b, c, d in ((tx - tw / 2, tx + tw / 2, ty - td / 2, ty - td / 2 + 0.004), (tx - tw / 2, tx + tw / 2, ty + td / 2 - 0.004, ty + td / 2),
                        (tx - tw / 2, tx - tw / 2 + 0.004, ty - td / 2, ty + td / 2), (tx + tw / 2 - 0.004, tx + tw / 2, ty - td / 2, ty + td / 2)):
@@ -1586,10 +1613,10 @@ def build_refuge(coll):
             continue
         B.box('WinDrive', cx - 0.005, cx + 0.005, cy - 0.004, cy + 0.004, z0, z0 + 0.006, cell='r_sw_crumb')
     B.box('WinDrive', tx + 0.14, tx + 0.18, ty - 0.11, ty - 0.085, z0, z0 + 0.008, cell='r_sw_crumb')     # half a biscuit
-    n0 = B.mark()
+    n0 = set(B.bm.verts)
     lw, ld = tw + 0.008, td + 0.008
     vs = B.box('WinDrive', -lw / 2, lw / 2, -0.006, 0.006, 0.0, ld)
-    vs = B.since(n0)
+    vs = [v for v in B.bm.verts if v not in n0]
     for v in vs:
         v.co = Matrix.Translation((tx + 0.01, ty - td / 2 - 0.045, z0)) @ Matrix.Rotation(math.radians(-17), 4, 'X') @ v.co
     u0, v0, u1, v1 = cell_uv('r_tinlid')
@@ -1604,7 +1631,7 @@ def build_refuge(coll):
     B.cyl('Copper', (px, py_, z0), (px, py_, DEN_TOP), 0.019, seg=10)
     for z in (z0 + 0.2, DEN_TOP - 0.12):
         B.box('WornIron', px - 0.012, px + 0.012, py_, DEN[3], z - 0.02, z + 0.02)
-    cz = z0 + 0.5
+    cz = z0 + 0.6
     B.cyl('WinDrive', (px - 0.115, py_, cz), (px - 0.018, py_, cz), 0.03, 0.036, seg=14, cell='r_sw_enamel')
     B.torus('WinDrive', (px - 0.019, py_, cz), (1, 0, 0), 0.036, 0.003, seg=14, rseg=4, cell='r_sw_blue')
     B.torus('WinDrive', (px - 0.07, py_, cz + 0.045), (0, 1, 0), 0.02, 0.005, seg=10, rseg=4, cell='r_sw_enamel')
@@ -1625,9 +1652,10 @@ def build_refuge(coll):
     # A pencil and a crayon dropped on R.A.'s cushion's edge; a sheet of drawing paper under the tin's corner.
     B.cyl('WinDrive', (PLACES[0] - 0.06, 2.2, z0 + 0.004), (PLACES[0] + 0.05, 2.16, z0 + 0.004), 0.004, seg=6, cell='r_sw_brass')
     B.cyl('WinDrive', (PLACES[0] + 0.12, 2.1, z0 + 0.005), (PLACES[0] + 0.17, 2.14, z0 + 0.005), 0.005, seg=6, cell='r_sw_green')
-    n0 = B.mark()
+    n0 = set(B.bm.verts)
     B.box('WinDrive', -0.1, 0.1, -0.075, 0.075, 0.0, 0.002, cell='r_sw_paper')
-    B.xform(n0, Matrix.Translation((tx - 0.17, ty + 0.05, z0)) @ Matrix.Rotation(0.35, 4, 'Z'))
+    for v in [v for v in B.bm.verts if v not in n0]:
+        v.co = Matrix.Translation((tx - 0.17, ty + 0.05, z0)) @ Matrix.Rotation(0.35, 4, 'Z') @ v.co
     ob = B.obj('AttRefuge', coll)
     L = MB()
     L.cyl('DenLanternGlow', (lx, ly, z0 + 0.035), (lx, ly, z0 + 0.15), 0.036, 0.03, seg=14)
@@ -1851,3 +1879,33 @@ def build_set(dl01, m, coll):
             ob.name, t, prim, [s.material.name for s in ob.material_slots],
             min(v.x for v in bb), max(v.x for v in bb), min(v.y for v in bb), max(v.y for v in bb), min(v.z for v in bb), max(v.z for v in bb)))
     print('dl14: total tris %d, draw calls (material slots) %d' % (total_t, total_p))
+
+
+REPORT = """DL-14 The Window, rev 0.3 additions (art/ch1/dl14.py). Game coords: (x, y, z) = Blender (x, z, -y).
+
+MOVED (new):
+- AttClutch: the slipping clutch's pressure plate, behind A's chain wheel (seen through its spokes): a disc r 0.12,
+  face toward the camera with three cream bars and an amber wedge. Origin (235.0, 0.32, -0.722), on the same axis as
+  AttWheelA. Spin axis: game z (Blender y; its local z in three.js after the glTF y-up conversion), i.e.
+  AttClutch.rotateZ(angle), as AttWheelA. Turn it with the wheel while A is free (rotateZ(B.a * 6) like the wheel), and
+  spin it on its own (about -dt * 6 per second, the chain's way) while the wheel is jammed and the chain runs.
+
+STATIC (new):
+- AttRefuge: the children's refuge behind the hatch, floor = the sill (2.15), x 238.98-240.47, z -1.3..-2.6, ceiling
+  3.08. Three places along the back wall (z -2.22..-2.52): R.A. x 239.56, T.O. x 239.87, M x 240.18; biscuit tin
+  (239.89, 2.15, -1.98); tin cup on the pipe (240.30, 2.65, -2.5); pipe x 240.385, z -2.5. Seen through the hatch
+  from ledge B and from the landing (the game's camera is above the sill there).
+- AttRefugeLamp: the lantern's glass, (239.42, 2.24, -1.74), material DenLanternGlow (already in EMIT: [1, .55, .22, 2.5]).
+  Suggested light: P(0xffb070, 1.4, 2.2, 239.6, 2.5, -1.9)   the refuge, through the hatch.
+- The drive plate (in AttWinSet): x 242.64-243.20, y 0.44-0.92, z -0.891 (on the wall right of the crank's gearbox;
+  it replaces the small BLINDS A B plate). A / B roundels on the two blinds' pelmets (x 236.99 / 238.375, y 3.17) and an
+  A on A's wheel's wall plate.
+
+CHANGED:
+- The hatch's opening is wider and a little taller: x 239.2-240.25 (was 239.25-240.15), head 3.05 (was 3.0). The sill
+  (2.15), the landing (239.2-240.2) and ATT.hatch are unchanged. The duct now runs on from the refuge's right side,
+  z -1.3..-1.95, 0.62 high (the game's duct z -1.3 is inside it). The hatch door hangs open against the refuge's left.
+
+MATERIALS: new image WinDrive (textures/dl14_drive.png, passes through as a map); Copper (PLAIN, existing);
+DenLanternGlow (EMIT, existing).
+"""

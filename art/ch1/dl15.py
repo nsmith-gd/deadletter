@@ -6,9 +6,14 @@ right end; the figures' rail along the floor from the lift to the end partition;
 (S1 R. ABEL, S2 T. ORME, S3 Mara's, with her crooked tree carved in the lid and her chair pulled out and turned); rows of
 empty desks going back into the dark of an alcove behind; the attendance board with its three lamps and a bell; the
 blackboard with the headcount crossed out and rewritten smaller under the Steward's portrait; the teacher's desk; and the
-end partition with the class door and the rail's flap. Under the balcony, behind a half-pulled blanket, Mara's hiding
-place: the nest, pencil trees all over the wall and the deck's underside, a cup held to a copper pipe, a biscuit tin with
-the voice-card player on it, a torch, and a small warm lamp.
+end partition with the class door and the rail's flap. Under the balcony, behind a half-pulled blanket, where Mara hid.
+
+Rev 0.3 (docs/chapter1_rev03_plan.md): the friends' places S1 and S2 are docks for the figures (a cast-iron housing on
+the seats' wire, brass contacts, stop cheeks, an engraved name plate); Mara's place has no dock and no stop, the rail
+runs past, and her ordinary chair (Att15Chair) has a round brass pressure plate on its seat. Under the balcony, only the
+escort's side is left (the children's refuge is DL-14's now): a few pencil trees, the copper pipe, the escort's stool
+with the escort's log and the voice-card player on it, the small lamp. Under the attendance board, on a cork board, the
+shared outside drawing (Att15Drawing), framed by the seated shot from her chair.
 
 Called by build_attendance.py as build_set(dl01, m, coll), in final world coordinates.
 Blender (x, y, z) is the game's (x, z, -y): +y is away from the camera, z is up. The lane is y -0.3..0.3, the floor z 0.
@@ -22,7 +27,8 @@ What the game moves (origin = pivot, world coordinates; REPORT at the bottom has
     Att15Door              the class door in the end partition, built shut; origin on its hinge (x 263.9)
     Att15Flap              the rail's flap in the end partition, built shut; origin on its top hinge
 Static: Att15Set (the room), Att15Rows (the empty desks behind, merged), Att15Lights (the pendant bulbs, EMIT AttBulbGlow),
-Att15Hide (the hiding place, with the card player), Att15Chair (Mara's chair: D-17 sits on it), Att15Bell.
+Att15Hide (the hiding place, with the card player), Att15Chair (Mara's chair, its seat plate: D-17 sits on it), Att15Bell,
+Att15Drawing (the cork board and the drawing; image Att15Drawing, textures/dl15_drawing.png).
 """
 import math
 import os
@@ -75,7 +81,7 @@ SEATS = (('S1', 253.2, 'R. ABEL'), ('S2', 254.6, 'T. ORME'), ('S3', 256.0, 'M. D
 DOCK_Y = (0.715, 0.79)                 # rev 0.3: the docks at S1 and S2 stand behind the rail's back edge (y)
 SEAT_PLATE = (0.065, 0.006)            # Mara's chair: its round brass pressure plate, radius and thickness
 PINBOARD = (257.56, 258.70, 1.06, 1.63)   # rev 0.3: the cork board under the attendance board: x0, x1, z0, z1
-DRAWING = (257.83, 1.08)               # the drawing's sheet: its left edge x, bottom z (SHEET, STRIP give its size)
+DRAWING = (257.80, 1.05)               # the drawing's sheet: its left edge x, bottom z (SHEET, STRIP give its size)
 DESK_Y = (0.8, 1.2)
 DESK_W = 0.3                           # half width
 CHAIR = (255.92, 0.31, -4.0)           # Att15Chair: seat centre x, y; turn (degrees; it faces +x, its back to -x)
@@ -101,7 +107,7 @@ BLANKET_Y = 0.35
 HIDE_ENTRY = 249.8
 STOOL = (249.95, 0.92, 0.26)           # rev 0.3: the escort's stool (centre x, y; seat top), where the tin was
 LOG_T = 0.03                           # the escort's log on it, closed
-PLAYER_AT = (249.95, 0.94, STOOL[2] + LOG_T)   # the card player stands on the log (it was on the tin, at z 0.1)
+PLAYER_AT = (249.95, 0.98, STOOL[2] + LOG_T)   # the card player stands on the log (it was on the tin, at z 0.1)
 HIDE_LAMP = (250.62, 1.12, 0.13)       # the hide lamp's glass
 PIPE_Z = 0.44
 PIPE_Y = BACK_Y - 0.055                # the copper pipe along the hide's back wall
@@ -152,6 +158,13 @@ def mat(name):
     if name in NEW_EMIT or name in KNOWN_EMIT:
         c, s = NEW_EMIT.get(name) or KNOWN_EMIT[name]
         return emission_material(name, c, s)
+    if name == 'Att15Drawing':
+        mt, nt, bsdf = d17._new_material(name)
+        tex = nt.nodes.new('ShaderNodeTexImage')
+        tex.image = bpy.data.images.load(DRAW_PATH, check_existing=True)
+        nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+        bsdf.inputs['Roughness'].default_value = 0.85
+        return mt
     if name == ATLAS_MAT:
         mt, nt, bsdf = d17._new_material(name)
         tex = nt.nodes.new('ShaderNodeTexImage')
@@ -467,8 +480,8 @@ def _paint_lid(img):
 # the strip torn from a lesson sheet that extends it, and a cork tile for the pinboard.
 DRAW_PATH = os.path.join(TEX, 'dl15_drawing.png')
 DCELLS = {'dw_sheet': (0, 0, 512, 384), 'dw_strip': (0, 384, 342, 504), 'dw_cork': (352, 392, 512, 512)}
-SHEET = (0.6, 0.45)                    # the drawing's sheet, w x h (m)
-STRIP = (0.4, 0.14, 0.12, 0.02)        # the strip: w, h, its left edge's x on the sheet, how far it tucks under the sheet
+SHEET = (0.66, 0.48)                   # the drawing's sheet, w x h (m)
+STRIP = (0.44, 0.15, 0.13, 0.02)       # the strip: w, h, its left edge's x on the sheet, how far it tucks under the sheet
 
 
 def dcell_uv(name):
@@ -689,15 +702,25 @@ def make_atlas(path):
                 xx = 40 + col * 7 + (8 if col > 2 else 0)
                 dr.line((xx, yy - 2, xx + 1, yy, xx + 4, yy - 5), fill=(50, 50, 80), width=1)
     img.paste(rg, (x0, y0))
-    # The biscuit tin's lid, an exercise book, a stopped clock face.
-    x0, y0, x1, y1 = CELLS['tin']
-    tn = Image.new('RGB', (x1 - x0, y1 - y0), (58, 82, 110))
-    dt = ImageDraw.Draw(tn)
-    dt.ellipse((14, 8, 114, 64), fill=(196, 180, 140), outline=(150, 120, 60), width=4)
-    dt.text((64, 30), 'ASSORTED', font=_font(15, 'carlito'), fill=(90, 40, 34), anchor='mm')
-    for k in range(5):
-        dt.ellipse((30 + k * 15, 42, 40 + k * 15, 52), fill=(160, 70, 60))
-    img.paste(_fade(tn, 1561, k=0.25, dust=0.25), (x0, y0))
+    # Rev 0.3: the docks' brass name plates (engraved, black-filled), the escort's log's cover; an exercise book, a
+    # stopped clock face.
+    for k, (_s, _x, nm) in enumerate(SEATS[:2]):
+        x0, y0, x1, y1 = CELLS['dock%d' % (k + 1)]
+        pl = Image.new('RGB', (x1 - x0, y1 - y0), (176, 136, 66))
+        dpl = ImageDraw.Draw(pl)
+        dpl.rectangle((1, 1, x1 - x0 - 2, y1 - y0 - 2), outline=(110, 82, 36), width=2)
+        dpl.text(((x1 - x0) // 2, (y1 - y0) // 2 + 1), nm, font=_font(24, 'serif'), fill=(28, 22, 14), anchor='mm')
+        for xx in (7, x1 - x0 - 8):
+            dpl.ellipse((xx - 3, (y1 - y0) // 2 - 3, xx + 3, (y1 - y0) // 2 + 3), fill=(90, 70, 34))
+        img.paste(_fade(pl, 1561 + k, k=0.08, dust=0.12), (x0, y0))
+    x0, y0, x1, y1 = CELLS['log']
+    lg = Image.new('RGB', (x1 - x0, y1 - y0), (52, 40, 32))
+    dlg = ImageDraw.Draw(lg)
+    dlg.rectangle((0, 0, 14, y1 - y0), fill=(30, 24, 20))                     # the spine's cloth
+    dlg.rectangle((24, 56, 122, 90), fill=(204, 196, 168))                    # its label, by the front edge
+    dlg.text((73, 66), 'ESCORT LOG', font=_font(15, 'carlito'), fill=(30, 28, 24), anchor='mm')
+    dlg.text((73, 82), 'Class 6', font=_font(11, 'hand'), fill=(40, 40, 70), anchor='mm')
+    img.paste(_fade(lg, 1563, k=0.15, dust=0.2), (x0, y0))
     x0, y0, x1, y1 = CELLS['book']
     bk = Image.new('RGB', (x1 - x0, y1 - y0), (100, 124, 96))
     db = ImageDraw.Draw(bk)
@@ -1226,21 +1249,57 @@ def child_chair(B, M, seat_mt='CrateWood', leg_mt='PigeonWood', w=0.2, d=0.2, se
     B.xform(n0, M)
 
 
+def dock(B, x, k):
+    """Rev 0.3: a figure's dock at a friend's place (S1 R. ABEL, S2 T. ORME), behind the rail's back edge where the
+    stand's flank meets it: a low cast-iron housing on the seats' wire, sprung brass contacts on its face toward the
+    rail, its sloped top carrying the engraved brass name plate; at each end an iron stop cheek with a brass plunger
+    that clicks the stand home. The brass contact plates lie in the channel between the rails, under the stand."""
+    y0, y1 = DOCK_Y
+    B.box('HandledBrass', x - 0.16, x + 0.16, RAIL_Y - 0.06, RAIL_Y + 0.06, 0.0, 0.006)            # contact plates
+    B.box('HandledBrass', x - 0.17, x + 0.17, RAIL_Y - 0.065, RAIL_Y - 0.055, 0.0, 0.008)
+    B.box('HandledBrass', x - 0.17, x + 0.17, RAIL_Y + 0.055, RAIL_Y + 0.065, 0.0, 0.008)
+    for dx in (-0.12, 0.12):
+        B.cyl('WornIron', (x + dx, RAIL_Y, 0.006), (x + dx, RAIL_Y, 0.009), 0.008, seg=6)
+    B.box('WornIron', x - 0.2, x + 0.2, y0 - 0.006, y1 + 0.006, 0.0, 0.012)                       # the housing's foot
+    B.box('WornIron', x - 0.19, x + 0.19, y0, y1, 0.012, 0.09)
+    B.prism_yz('WornIron', [(y0, 0.09), (y1, 0.09), (y1, 0.15), (y0, 0.112)], x - 0.19, x + 0.19)
+    sl = Vector((0.0, y1 - y0, 0.15 - 0.112)).normalized()
+    nrm = Vector((0.0, -sl.z, sl.y)) * 0.0015
+    a, b = Vector((0.0, y0 + 0.008, 0.112 + 0.008 * sl.z / sl.y)), Vector((0.0, y1 - 0.008, 0.15 - 0.008 * sl.z / sl.y))
+    u0, v0, u1, v1 = cell_uv('dock%d' % (k + 1))
+    B.face(ATLAS_MAT, [(x - 0.15, (a + nrm).y, (a + nrm).z), (x + 0.15, (a + nrm).y, (a + nrm).z), (x + 0.15, (b + nrm).y, (b + nrm).z),
+                       (x - 0.15, (b + nrm).y, (b + nrm).z)], [(u0, v0), (u1, v0), (u1, v1), (u0, v1)])
+    for dx in (-0.08, 0.08):                                                                     # sprung contacts
+        B.box('HandledBrass', x + dx - 0.035, x + dx + 0.035, y0 - 0.012, y0, 0.03, 0.075)
+        B.box('WornIron', x + dx - 0.012, x + dx + 0.012, y0 - 0.02, y0 - 0.012, 0.045, 0.06)
+    for s_ in (-1, 1):                                                                           # the stop cheeks
+        cx = x + s_ * 0.23
+        B.box('WornIron', cx - 0.015, cx + 0.015, 0.665, y1 + 0.006, 0.0, 0.17)
+        B.box('WornIron', cx - 0.02, cx + 0.02, 0.66, y1 + 0.01, 0.15, 0.175)
+        B.cyl('HandledBrass', (cx - s_ * 0.015, 0.69, 0.11), (cx - s_ * 0.04, 0.69, 0.11), 0.014, seg=10)
+        B.sphere('HandledBrass', (cx - s_ * 0.04, 0.69, 0.11), 0.014, seg=8)
+
+
 def build_front_row(B):
-    """S1, S2, S3: the desks behind the rail, their brass seat plates in the rail channel, the wire to the board."""
+    """S1, S2, S3: the desks behind the rail. Rev 0.3: the friends' two places are docks for the figures (dock());
+    Mara's place has no dock and no stop: the rail runs straight past it, and her chair (Att15Chair) stands off the
+    rail with a brass pressure plate on its seat, its flex across the channel to the seats' wire."""
     for k, (_s, x, _nm) in enumerate(SEATS):
         desk(B, x, lid_cell='lid' if k == 2 else None, name_cell='name%d' % (k + 1))
-        B.box('HandledBrass', x - 0.16, x + 0.16, RAIL_Y - 0.06, RAIL_Y + 0.06, 0.0, 0.006)
-        B.box('HandledBrass', x - 0.17, x + 0.17, RAIL_Y - 0.065, RAIL_Y - 0.055, 0.0, 0.008)
-        B.box('HandledBrass', x - 0.17, x + 0.17, RAIL_Y + 0.055, RAIL_Y + 0.065, 0.0, 0.008)
-        for dx in (-0.12, 0.12):
-            B.cyl('WornIron', (x + dx, RAIL_Y, 0.006), (x + dx, RAIL_Y, 0.009), 0.008, seg=6)
-        B.cyl('WornIron', (x, CHAN[1] + 0.005, 0.006), (x, CHAN[1] + 0.03, 0.006), 0.006, seg=6)
-    # The seats' wire: along the channel's back edge to the board, then up the wall to it.
+        if k < 2:
+            dock(B, x, k)
+    # The seats' wire: along the channel's back edge from the docks to the board, then up the wall to it.
     wx = ATT[0] + 0.06
     B.cyl('WornIron', (SEATS[0][1], CHAN[1] + 0.03, 0.008), (wx, CHAN[1] + 0.03, 0.008), 0.007, seg=6)
     B.cyl('WornIron', (wx, CHAN[1] + 0.03, 0.008), (wx, BACK_Y - 0.012, 0.008), 0.007, seg=6)
     B.cyl('WornIron', (wx, BACK_Y - 0.012, 0.008), (wx, BACK_Y - 0.012, ATT[2]), 0.007, seg=6)
+    # The seat plate's flex: from the chair's leg along the floor, under a brass cover strip across the channel (the
+    # figures pass over it), to a junction box on the wire.
+    fx = 256.12
+    fl = [(CHAIR[0] + 0.07, CHAIR[1] + 0.085, 0.006), (fx, 0.385, 0.006)]
+    B.cyl('WornIron', fl[0], fl[1], 0.0045, seg=6)
+    B.box('HandledBrass', fx - 0.025, fx + 0.025, CHAN[0] - 0.01, CHAN[1] + 0.01, 0.0, 0.007)
+    B.box('WornIron', fx - 0.035, fx + 0.035, CHAN[1] + 0.012, CHAN[1] + 0.05, 0.0, 0.035)
     # Mara's things on her desk: an exercise book, a pencil.
     x = SEATS[2][1]
     B.tbox(x - 0.25, x - 0.08, 1.08, 1.19, 0.6, 0.606, {'+z': 'book', 'all': 'sw_pages'})
@@ -1249,10 +1308,21 @@ def build_front_row(B):
 
 def build_chair(coll):
     """Att15Chair: Mara's chair, pulled out from her desk and turned to face +x, as if she got up in a hurry. Static;
-    D-17 sits on it (seat top 0.30). Origin on the floor under the seat's centre."""
+    D-17 sits on it (seat top 0.30). Origin on the floor under the seat's centre. Rev 0.3: an ordinary child's chair,
+    off the rail, with a round brass pressure plate let into its seat (radius 0.065, 6 mm proud) and its flex down the
+    front leg: the one place a figure cannot take."""
     B = MB()
     cx, cy, turn = CHAIR
-    child_chair(B, Matrix.Translation((cx, cy, 0.0)) @ Matrix.Rotation(math.radians(turn), 4, 'Z'), seat=CHAIR_SEAT)
+    M = Matrix.Translation((cx, cy, 0.0)) @ Matrix.Rotation(math.radians(turn), 4, 'Z')
+    child_chair(B, M, seat=CHAIR_SEAT)
+    n0 = B.mark()
+    r, t = SEAT_PLATE
+    B.cyl('HandledBrass', (0, 0, CHAIR_SEAT - 0.002), (0, 0, CHAIR_SEAT + t), r, seg=28)
+    B.torus('HandledBrass', (0, 0, CHAIR_SEAT + t - 0.001), (0, 0, 1), r - 0.006, 0.0035, seg=28, rseg=4)
+    B.cyl('WornIron', (0, 0, CHAIR_SEAT + t), (0, 0, CHAIR_SEAT + t + 0.002), 0.014, seg=12)
+    B.cyl('WornIron', (0.02, 0.0, CHAIR_SEAT - 0.024), (0.07, 0.085, CHAIR_SEAT - 0.024), 0.0045, seg=6)    # its flex
+    B.cyl('WornIron', (0.07, 0.085, CHAIR_SEAT - 0.024), (0.07, 0.085, 0.006), 0.0045, seg=6)
+    B.xform(n0, M)
     return B.obj('Att15Chair', coll, origin=(cx, cy, 0.0))
 
 
@@ -1322,6 +1392,61 @@ def build_boards(B):
     uc, vc, ur = (u0 + u1) / 2, (v0 + v1) / 2, (u1 - u0) / 2 * 0.98
     B.face(ATLAS_MAT, [(cx + 0.14 * math.cos(a), BACK_Y - 0.052, cz + 0.14 * math.sin(a)) for a in (2 * math.pi * k / 16 for k in range(16))],
            [(uc + ur * math.cos(a), vc + ur * math.sin(a)) for a in (2 * math.pi * k / 16 for k in range(16))])
+
+
+def build_drawing(coll):
+    """Att15Drawing (rev 0.3; static): the class's cork board under the attendance board, at a seated child's eye line
+    from Mara's desk, empty now but for one thing: the three of them under a tree too big for the sheet, the tree
+    going off the top and on over a strip torn from a lesson sheet, tucked under the top edge and taped. Pinned at its
+    corners; a couple of old pins with torn corners where other work hung."""
+    B = MB()
+    x0, x1, z0, z1 = PINBOARD
+    yb = BACK_Y
+    for a, b, c, d in ((x0 - 0.025, x0, z0 - 0.025, z1 + 0.025), (x1, x1 + 0.025, z0 - 0.025, z1 + 0.025),
+                       (x0, x1, z0 - 0.025, z0), (x0, x1, z1, z1 + 0.025)):
+        B.box('PigeonWood', a, b, yb - 0.02, yb, c, d)
+    u0, v0, u1, v1 = dcell_uv('dw_cork')
+    B.face('Att15Drawing', [(x0, yb - 0.016, z0), (x1, yb - 0.016, z0), (x1, yb - 0.016, z1), (x0, yb - 0.016, z1)],
+           [(u0, v0), (u1, v0), (u1, v1), (u0, v1)])
+    B.box('PigeonWood', x0, x1, yb - 0.015, yb, z0, z1)
+    sx0, sz0 = DRAWING
+    W, H = SHEET
+    sw, sh, soff, tuck = STRIP
+    ys = yb - 0.024
+    # the sheet: a grid, its lower corners curling off the cork a little
+    u0, v0, u1, v1 = dcell_uv('dw_sheet')
+    nx, nz = 6, 4
+    P = {}
+    for i in range(nx + 1):
+        for j in range(nz + 1):
+            s_, t_ = i / nx, j / nz
+            curl = 0.012 * max(0.0, 1 - t_ / 0.35) ** 2 * (abs(s_ - 0.5) * 2) ** 3
+            P[i, j] = ((sx0 + W * s_, ys - curl, sz0 + H * t_), (u0 + (u1 - u0) * s_, v0 + (v1 - v0) * t_))
+    for i in range(nx):
+        for j in range(nz):
+            q = [P[i, j], P[i + 1, j], P[i + 1, j + 1], P[i, j + 1]]
+            B.face('Att15Drawing', [c for c, _ in q], [t for _, t in q])
+    # the strip, behind the sheet's top edge, its top torn
+    u0, v0, u1, v1 = dcell_uv('dw_strip')
+    zb, xs = sz0 + H - tuck, sx0 + soff
+    n = 16
+    for i in range(n):
+        ta, tb = i / n, (i + 1) / n
+        ha, hb = strip_edge(ta), strip_edge(tb)
+        B.face('Att15Drawing', [(xs + sw * ta, ys + 0.0015, zb), (xs + sw * tb, ys + 0.0015, zb), (xs + sw * tb, ys + 0.0015, zb + sh * hb),
+                                (xs + sw * ta, ys + 0.0015, zb + sh * ha)],
+               [(u0 + (u1 - u0) * ta, v0), (u0 + (u1 - u0) * tb, v0), (u0 + (u1 - u0) * tb, v0 + (v1 - v0) * hb),
+                (u0 + (u1 - u0) * ta, v0 + (v1 - v0) * ha)])
+    # drawing pins (brass), and two old ones holding torn corners of what was taken down
+    pins = [(sx0 + 0.02, sz0 + H - 0.02), (sx0 + W - 0.02, sz0 + H - 0.02), (sx0 + 0.02, sz0 + 0.12), (sx0 + W - 0.02, sz0 + 0.12),
+            (xs + 0.03, zb + sh * strip_edge(0.07) - 0.03), (xs + sw - 0.03, zb + sh * strip_edge(0.93) - 0.03)]
+    for px, pz in pins:
+        B.cyl(ATLAS_MAT, (px, ys - 0.001, pz), (px, ys - 0.006, pz), 0.007, seg=10, cell='sw_brass')
+    for px, pz in ((x0 + 0.1, z1 - 0.08), (x1 - 0.09, z0 + 0.2)):
+        B.face(ATLAS_MAT, [(px - 0.01, ys, pz - 0.03), (px + 0.025, ys, pz + 0.025), (px - 0.03, ys, pz + 0.02)],
+               [cell_mid('sw_pages')] * 3)
+        B.cyl(ATLAS_MAT, (px, ys - 0.001, pz), (px, ys - 0.006, pz), 0.007, seg=10, cell='sw_brass')
+    return B.obj('Att15Drawing', coll)
 
 
 def build_bell(coll):
@@ -1472,13 +1597,14 @@ def cloth(B, x0, x1, z_top, z_bot, y, folds, amp, cell, hem=None, seed=0, nx=16,
 
 
 def build_hide(coll):
-    """Att15Hide: Mara's hiding place under the balcony (floor level, x 248.3..251.2, y 0.4..1.4), behind a blanket
-    on a cord at y 0.35, pulled half aside (the way in at x 249.8). The pencil trees on the wall and on the deck's
-    underside; the nest; the cup held to the copper pipe; the biscuit tin with the card player on it; a torch;
-    the lamp's brass body (its glass is Att15HideLamp)."""
+    """Att15Hide: under the balcony (floor level, x 248.3..251.2, y 0.4..1.4), behind a blanket on a cord at y 0.35,
+    pulled half aside (the way in at x 249.8). Rev 0.3: the children's refuge has moved to DL-14; this is the escort's
+    side of it, the place she was found again and again. A few of her pencil trees, low on the wall where she sat and
+    on the deck's underside; the copper pipe she listened to; the escort's stool, the escort's log on it, and on the log
+    the voice-card player (the log, read aloud); the small lamp's brass body (its glass is Att15HideLamp)."""
     B = MB()
     hx0, hx1, hy0, hy1 = HIDE
-    # The pencil trees: on the back wall (over its dado and plaster) and on the deck's underside, between the joists.
+    # The pencil trees: low on the back wall (over its dado), and a few on the deck's underside, between the joists.
     B.decal(hx0, hx1, 0.02, 1.48, BACK_Y - 0.035, 'pencil')
     u0, v0, u1, v1 = cell_uv('under')
     zu = BAL[4] - 0.041
@@ -1491,53 +1617,34 @@ def build_hide(coll):
     B.cyl('WornIron', (hx0, BLANKET_Y, 1.47), (hx1, BLANKET_Y, 1.47), 0.004, seg=6)
     cloth(B, hx0, 249.52, 1.47, 0.05, BLANKET_Y, 3.5, 0.03, 'blanket', seed=1)
     cloth(B, 249.38, 249.56, 1.47, 0.08, BLANKET_Y + 0.02, 2.0, 0.035, 'blanket', seed=2, nx=6)          # the bunch
-    cloth(B, 250.12, hx1, 1.47, 0.06, BLANKET_Y, 3.0, 0.028, 'blanket', seed=3,
-          hem=lambda t: 0.75 * max(0.0, 1 - t / 0.3) ** 1.6)
-    B.cyl('WornIron', (250.14, BLANKET_Y, 0.82), (250.14, BLANKET_Y + 0.05, 0.82), 0.003, seg=4)        # the hook it's caught on
-    # The nest: a blanket in a heap, a cushion, an exercise book; pencil stubs.
+    cloth(B, 250.12, hx1, 1.47, 0.06, BLANKET_Y, 3.0, 0.028, 'blanket', seed=3,     # its corner hooked well back (rev 0.3:
+          hem=lambda t: 1.0 * max(0.0, 1 - t / 0.7) ** 0.7)                          # the secret's camera sees the stool)
+    B.cyl('WornIron', (250.14, BLANKET_Y, 1.06), (250.14, BLANKET_Y + 0.05, 1.06), 0.003, seg=4)        # the hook it's caught on
+    # Two pencil stubs on the floor by the wall: what she drew them with.
     rnd = random.Random(1570)
-    nx, ny = 10, 6
-    pts = {}
-    for i in range(nx + 1):
-        for j in range(ny + 1):
-            x = 248.4 + 1.15 * i / nx
-            y = 0.62 + 0.72 * j / ny
-            e = math.sin(math.pi * i / nx) * math.sin(math.pi * j / ny)
-            pts[i, j] = (x, y, 0.004 + e * (0.06 + 0.05 * rnd.random()) + 0.03 * e * math.sin(i * 1.3 + j))
-    u0, v0, u1, v1 = cell_uv('blanket')
-    for i in range(nx):
-        for j in range(ny):
-            q = [pts[i, j], pts[i + 1, j], pts[i + 1, j + 1], pts[i, j + 1]]
-            B.face(ATLAS_MAT, q, [(u0 + (u1 - u0) * (i + a) / nx, v0 + (v1 - v0) * (j + b) / ny) for a, b in ((0, 0), (1, 0), (1, 1), (0, 1))])
-    n0 = B.mark()
-    d17.rounded_box((0.34, 0.24, 0.1), (248.68, 1.16, 0.12), p=3.0, cuts=3, bm=B.bm, mat=B.m(ATLAS_MAT))
-    B.paint(B.since(n0), 'sw_cushion')
-    n0 = B.mark()
-    B.tbox(-0.09, 0.09, -0.12, 0.12, 0.0, 0.006, {'+z': 'book', 'all': 'sw_pages'})
-    B.xform(n0, Matrix.Translation((249.25, 0.8, 0.075)) @ Matrix.Rotation(0.5, 4, 'Z') @ Matrix.Rotation(0.12, 4, 'X'))
-    for k in range(6):
-        x, y, a = 249.45 + rnd.uniform(-0.15, 0.25), 1.15 + rnd.uniform(-0.15, 0.15), rnd.uniform(0, math.pi)
-        ln = rnd.uniform(0.03, 0.06)
+    for k in range(2):
+        x, y, a = 248.75 + 0.35 * k + rnd.uniform(-0.05, 0.05), 1.22 + rnd.uniform(-0.05, 0.05), rnd.uniform(0, math.pi)
+        ln = rnd.uniform(0.03, 0.05)
         B.cyl(ATLAS_MAT, (x, y, 0.004), (x + ln * math.cos(a), y + ln * math.sin(a), 0.004), 0.004, seg=6, cell='sw_pencil')
-    # The copper pipe along the back wall (from the basin above), and the cup held to it on a building block.
+    # The copper pipe along the back wall (from the basin above): she said she was listening to the pipes.
     py = PIPE_Y
     B.cyl('Copper', (LWALL[1], py, PIPE_Z), (251.15, py, PIPE_Z), 0.018, seg=10)
     B.cyl('Copper', (251.15, py, PIPE_Z), (251.15, py, BAL_UNDER), 0.018, seg=10)
     for x in (248.6, 249.6, 250.6):
         B.box('WornIron', x - 0.012, x + 0.012, py + 0.015, BACK_Y - 0.035, PIPE_Z - 0.03, PIPE_Z + 0.03)
-    cx = 249.7
-    B.sbox('sw_wood', cx - 0.06, cx + 0.06, py - 0.13, py - 0.01, 0.0, PIPE_Z - 0.045)
-    B.cyl(ATLAS_MAT, (cx, py - 0.115, PIPE_Z), (cx, py - 0.019, PIPE_Z), 0.034, 0.04, seg=14, cell='sw_enamel')
-    B.torus(ATLAS_MAT, (cx + 0.04, py - 0.07, PIPE_Z), (0, 1, 0), 0.022, 0.005, seg=10, rseg=4, cell='sw_enamel')
-    # The biscuit tin (the card player stands on it), the torch, the lamp's body.
-    tx, ty, th = TIN
-    B.tbox(tx - 0.14, tx + 0.14, ty - 0.11, ty + 0.11, 0.0, th - 0.012, {'all': 'sw_tin'})
-    B.tbox(tx - 0.145, tx + 0.145, ty - 0.115, ty + 0.115, th - 0.012, th, {'+z': 'tin', 'all': 'sw_tin'})
+    # The escort's stool: a plain four-legged school stool, its top worn; on it the escort's log, closed.
+    sx, sy, st = STOOL
+    B.box('CrateWood', sx - 0.16, sx + 0.16, sy - 0.15, sy + 0.15, st - 0.03, st)
+    for dx in (-1, 1):
+        for dy in (-1, 1):
+            B.cyl('PigeonWood', (sx + dx * 0.12, sy + dy * 0.11, st - 0.03), (sx + dx * 0.145, sy + dy * 0.135, 0.0), 0.016, seg=8)
+    for dy in (-1, 1):
+        B.box('PigeonWood', sx - 0.13, sx + 0.13, sy + dy * 0.12 - 0.01, sy + dy * 0.12 + 0.01, 0.09, 0.11)
     n0 = B.mark()
-    B.cyl(ATLAS_MAT, (0, 0, 0), (0.15, 0, 0), 0.02, seg=10, cell='sw_torch')
-    B.cyl(ATLAS_MAT, (0.15, 0, 0), (0.19, 0, 0), 0.022, 0.03, seg=12, cell='sw_brass')
-    B.cyl(ATLAS_MAT, (0.19, 0, 0), (0.192, 0, 0), 0.028, seg=12, cell='sw_glass')
-    B.xform(n0, Matrix.Translation((250.35, 0.62, 0.02)) @ Matrix.Rotation(2.6, 4, 'Z'))
+    B.tbox(-0.12, 0.12, -0.15, 0.15, 0.0, LOG_T, {'+z': 'log', '-x': 'sw_wooddk', 'all': 'sw_pages'})
+    B.xform(n0, Matrix.Translation((sx, sy, st)) @ Matrix.Rotation(0.06, 4, 'Z'))
+    B.cyl(ATLAS_MAT, (sx + 0.06, sy - 0.17, st + 0.002), (sx + 0.16, sy - 0.14, st + 0.002), 0.004, seg=6, cell='sw_pencil')
+    # The lamp's body.
     lx, ly, lz = HIDE_LAMP
     B.cyl(ATLAS_MAT, (lx, ly, 0.0), (lx, ly, 0.05), 0.05, 0.04, seg=14, cell='sw_brass')
     B.cyl(ATLAS_MAT, (lx, ly, lz + 0.05), (lx, ly, lz + 0.075), 0.035, 0.015, seg=12, cell='sw_brass')
@@ -1559,8 +1666,8 @@ PLAYER_INFO = None
 
 
 def place_card_player(B):
-    """The voice-card player (art/common/voice_props.py) on the biscuit tin, its front to the camera, lid shut, horn
-    turned toward the nest, a card (att_escort) standing in its slot."""
+    """The voice-card player (art/common/voice_props.py) on the escort's log on the stool, its front to the camera, lid
+    shut, horn turned back toward the wall, a card (att_escort) standing in its slot."""
     vp = _voice_props()
     if vp is None:
         print('dl15: voice props not ready; no card player placed')
@@ -1644,6 +1751,7 @@ def tris(ob):
 
 def build_set(dl01, m, coll):
     make_atlas(ATLAS_PATH)
+    make_drawing(DRAW_PATH)
     B = MB()
     build_shell(B)
     build_balcony(B)
@@ -1660,6 +1768,7 @@ def build_set(dl01, m, coll):
     objs.append(build_rows(coll))
     objs.append(build_chair(coll))
     objs.append(build_bell(coll))
+    objs.append(build_drawing(coll))
     objs.extend(build_hide(coll))
     objs.append(build_lift(coll))
     objs.append(build_gate(coll))
@@ -1696,7 +1805,9 @@ REPORT = """DL-15 One Pupil Missing (art/ch1/dl15.py). Game coords: (x, y, z) = 
 MOVED (origin = pivot, world, built state):
 - Att15FigA (259.2, 0.03, -0.55), Att15FigB (249.9, 1.63, -0.55): rail figures, origin on rail top under the stand, face
   +x. Same mesh (Att15FigureRail). Stand 0.40 long (buffers +-0.20), body +-0.13 deep, 0.95 tall above rail top.
-  Seat stops (origin x): S1 253.2, S2 254.6, S3 256.0 (brass plates in the channel).
+  Docks (origin x): S1 253.2 (R. ABEL), S2 254.6 (T. ORME): brass contact plates in the channel, a cast-iron housing
+  behind the rail (z -0.715..-0.79, 0.15 high, its sloped top the engraved name plate), stop cheeks at x +-0.23 (z
+  -0.665..-0.80, 0.175 high) with brass plungers. NO dock or stop at S3 256.0 (rev 0.3): the rail runs past Mara's chair.
 - Att15Lift: origin (251.9, 1.6, -0.3) = deck top centre, built UP; deck x 251.4-252.4, z -0.9..0.3; travel -1.6 in y
   (down: deck top 0, flush in its 0.06 pit). Includes its rail stub and its hoist cable.
 - Att15LiftGate: origin (252.4, 1.6, -0.9) on the back hinge post; shut along x 252.4, z -0.9..0.27, 0.85 high. Move
@@ -1709,21 +1820,25 @@ MOVED (origin = pivot, world, built state):
 - Emissive (own objects + materials): Att15LampPupil (252.11, 2.2, -0.85), Att15LampEscort (252.25, 2.2, -0.85) static
   on the right guide post 0.6 above the up-deck; Att15Lamp1/2/3 at x 257.64 / 258.1 / 258.56, y 2.17, z -1.36
   (R. ABEL, T. ORME, M. D.); Att15HideLamp (250.62, 0.13, -1.12), on as built.
-- Static named: Att15Chair (origin 255.92, 0, -0.31; seat top 0.30; footprint x 255.81-256.03, z -0.42..-0.20),
-  Att15Bell (258.1, 2.74, -1.4).
+- Static named: Att15Chair (origin 255.92, 0, -0.31; seat top 0.30, its brass seat plate r 0.065 on it, top 0.306;
+  footprint x 255.81-256.03, z -0.42..-0.20), Att15Bell (258.1, 2.74, -1.4), Att15Drawing (cork board x 257.56-258.70,
+  y 1.06-1.63, z -1.38; the drawing's sheet x 257.80-258.46, y 1.05-1.53, the strip above it to y 1.66).
 
 SURFACES (x0, x1, top):
 - Floor 248.15-263.75, 0. Under the balcony (248.15-251.4) ceiling 1.5. Lift pit 251.4-252.4: -0.06 while lift is up.
 - Balcony 248.15-251.4, 1.6 (lane-deep); rails 1.63. Lift deck 251.4-252.4, 1.6 up / 0 down.
-- Rails everywhere +0.03 (no climb). Mara's chair seat 0.30 (Blender y 0.20-0.42: just behind the lane).
+- Rails everywhere +0.03 (no climb). Mara's chair seat 0.30 (Blender y 0.20-0.42: just behind the lane). The seat
+  plate's flex crosses the channel at x 256.12 under a brass cover strip 7 mm high (figures pass over it).
 - Behind the lane, not walkable from it: front-row desks 0.49-0.60 sloped, teacher's desk 0.72, cot 1.98.
 WALLS/LIMITS: left wall face x 248.15 (both levels); end partition face 263.75 (door 2.0 high when open); ceiling 3.6;
 hatch in back wall x 248.55-249.35, sill 1.6, head 2.4, duct z -1.4..-2.6, open toward -x behind the wall. Gate blocks
 the lift's right edge while shut. Two slim columns at x 248.27, 251.29, z +0.36 (in front of the lane, not blocking).
 
-SECRET ROOM: floor x 248.3-251.2, z -0.4..-1.4, clear 1.5. Blanket at z -0.35; gap x 249.56-250.12. Path: from the lane
-at x 249.8 straight in to z -0.6 (stop: the tin is at z -0.81..-1.03). Voice player (att_escort) on the biscuit tin:
-base (249.95, 0.10, -0.92), card (249.95, 0.25, -0.875), horn mouth (249.91, 0.45, -0.81). Use it from x 249.95.
+SECRET ROOM: floor x 248.3-251.2, z -0.4..-1.4, clear 1.5. Blanket at z -0.35; gap x 249.56-250.12 (the right
+blanket's corner now hooked back higher, so the secret's camera sees the stool). Path: from the lane at x 249.8 straight
+in to z -0.6 (stop: the escort's stool is at x 249.79-250.11, z -0.77..-1.07, seat 0.26). Rev 0.3: the voice player
+(att_escort) stands on the escort's log on the stool: base (249.95, 0.29, -0.98), card (249.95, 0.44, -0.935), horn
+mouth (249.91, 0.64, -0.87). Use it from x 249.95. The nest, cushion, biscuit tin, cup and torch are gone (to DL-14).
 
 LIGHTS (index.html P/S format, game coords):
 P(0xffd8b0, 1.8, 4.5, 250.2, 2.95, -0.45)   sick bay pendant
@@ -1738,8 +1853,8 @@ P(0xb8c8dc, 0.35, 4, 254.8, 2.6, -2.6)      alcove of desks, dim and cool
 P(0xffb870, 1.8, 2.4, 250.62, 0.25, -0.95), P(0xffb873, 0.5, 1.4, 249.8, 0.15, -0.25)   hide lamp + floor slit
 
 MATERIALS: reused WORN CrateWood, PigeonWood, WornIron, PupilWood, HandledBrass, LessonPlaster, LessonDado, DarkMetal;
-PLAIN Brass, Copper; voice-prop HandWorn, ParcelPaper; EMIT AttBulbGlow (pendants). Image: Att15Atlas
-(textures/dl15_atlas.png, passes through as a map). New EMIT entries:
+PLAIN Brass, Copper; voice-prop HandWorn, ParcelPaper; EMIT AttBulbGlow (pendants). Images: Att15Atlas
+(textures/dl15_atlas.png) and Att15Drawing (textures/dl15_drawing.png, rev 0.3), both pass through as maps. New EMIT entries:
 Att15LampPupil: [.72, 1, .78, 0], Att15LampEscort: [1, .66, .26, 0], Att15Lamp1: [1, .86, .62, 0],
 Att15Lamp2: [1, .86, .62, 0], Att15Lamp3: [1, .86, .62, 0], Att15HideLamp: [1, .7, .4, 5],
 Suggested lamp() colours: Pupil 0xb8ffc8, Escort 0xffa848, Lamp1-3 0xffdca0.

@@ -1,11 +1,19 @@
-"""Chapter 1 Attendance, DL-17 A Different Lesson (game x 280.0 to 296.0). Design: docs/chapter1_part2_plan.md.
+"""Chapter 1 Attendance, DL-17 A Different Lesson (game x 280.0 to 296.0, and the stair beyond to 303.15).
+Design: docs/chapter1_part2_plan.md; rev 0.3 (docs/chapter1_rev03_plan.md, docs/full_game_plan.md DL-17).
 
 The school's workshop: a volunteer maintenance bench, warm light, the most lived-in room in the school. Children's
-growing experiments everywhere: a tall slatted shelf of seed trays and pots, each with a child's name tag, most dead
-and dry; beans in jars with names; a mended pot; a grow-lamp still on over the window shelf and under it one pale
-living shoot (its tag: M. D.). A drip line from the sink tap still feeds the window shelf. Under the bench, a plan
-chest; its lowest drawer, PLACEMENTS, holds Mara's irrigation drawing (her crooked tree with the knot, ruled over into
-a garden bed with channels, sluices and a settling loop where the knot is) and her placement card.
+growing experiments everywhere, all of them long dead and dry (nobody has tended them for decades): a tall slatted
+shelf of seed trays and pots, each with a child's name tag, the soil shrunk and cracked, the seedlings shrivelled
+brown; beans in jars gone dry, each bean shrivelled against the glass; a mended pot; a grow-lamp over the window shelf
+(the game switches it off) and under it a pot with a dry stalk and the tag M. D. Nothing green, nothing living. Under
+the bench, a plan chest; its lowest drawer, PLACEMENTS, holds Mara's irrigation drawing and her placement card.
+The drawing is all hers, in her own pencil: her crooked tree with the knot made a garden bed, the trunk the main
+channel, the branches laterals with sluices, the knot a settling loop. Beside her lines, never over them, the
+volunteer's blue pencil in his own hand: "fall 1 in 100", "levels!" at the tank, a shallower channel section drawn
+next to hers, a tick at the knot. The card: she applied for the placement herself (APPLICATION: BY THE PUPIL, her
+signature beside his); Works Dept., ring A, water and irrigation, sponsor E. Vance, P.A. 316; REPORT VIA residential
+access, ring A (Works gate sealed). The way on is the stair door in the right end wall: it opens on a lit stair up
+and out of frame, RESIDENTIAL ACCESS . RING A on a blade sign over it.
 
 Called by build_attendance.py as build_set(dl01, m, coll), in final world coordinates.
 Blender (x, y, z) is the game's (x, z, -y): +y is away from the camera, z is up. The lane is y = 0, the floor z = 0.
@@ -16,8 +24,11 @@ What the game moves (origin = pivot, world coordinates; numbers in REPORT at the
     Att17Tray      the fallen seed tray (carried); mesh built level about its bottom centre; the tilt it lies at is
                    the object's rotation (zero rotation = level, as carried).
     Att17GrowLamp  the grow-lamp's two tubes (EMIT Att17GrowLamp); origin at their centre.
-Static: Att17Set (the room), Att17Bulbs (EMIT Att17Bulb: the pendant, the bench lamp, the door's bulkhead),
-Att17Shoot (the living shoot, EMIT AttShoot as DL-13's), and the card player from art/common/voice_props.py.
+    Att17Door      the stair door's leaf, built SHUT; origin on its hinge axis at the floor (HINGE); opens +90 deg
+                   about +z, away from the room, toward the stair.
+Static: Att17Set (the room and the stairwell), Att17Bulbs (EMIT Att17Bulb: the pendant, the bench lamp, the bulkhead
+by the door), Att17StairLamp (EMIT Att17StairLamp: the lamp over the flight), and the card player from
+art/common/voice_props.py.
 """
 import math
 import os
@@ -334,7 +345,7 @@ TREE = [
 
 
 GRAPHITE = (50, 50, 60)          # Mara's pencil
-BLUE = (30, 66, 158)              # Vance's blue pencil
+BLUE = (26, 58, 150)              # Vance's blue pencil
 
 
 def _wob(pts, rnd, amp=1.0, step=8.0, over=0.0):
@@ -639,7 +650,7 @@ def make_drawing():
     db = ImageDraw.Draw(bl)
     BL = BLUE + (230,)
 
-    def bpen(pts, w=2.6, amp=0.7):
+    def bpen(pts, w=3.0, amp=0.7):
         db.line(k(_wob(pts, rnd, amp, 7.0)), fill=BL, width=max(1, int(round(w * K))), joint='curve')
 
     def barrow(pts, size=11):
@@ -1331,23 +1342,24 @@ def name_tag(B, x, y, zs, idx, yaw=0.0, tall=0.07):
 
 
 def dead_plant(B, x, y, zs, rnd, n=2, h=0.12, cell='sw_straw', droop=1.0):
+    """Dead stalks: each leans, bends over and down; its withered leaves hang from it, shrivelled narrow."""
     for _ in range(n):
         a = rnd.uniform(0, 2 * math.pi)
         hh = h * rnd.uniform(0.6, 1.1)
         p0 = Vector((x + rnd.uniform(-0.012, 0.012), y + rnd.uniform(-0.012, 0.012), zs))
         p1 = p0 + Vector((0.15 * hh * math.cos(a), 0.15 * hh * math.sin(a), hh))
         p2 = p1 + Vector((hh * 0.6 * droop * math.cos(a), hh * 0.6 * droop * math.sin(a), -hh * 0.55 * droop))
-        B.scyl(cell, p0, p1, 0.004, 0.003, seg=4)
-        B.scyl(cell, p1, p2, 0.003, 0.002, seg=3)
-        for p, s in ((p2, 1.0), (p0.lerp(p1, 0.7), 0.7)):
+        B.scyl(cell, p0, p1, 0.0035, 0.0025, seg=4)
+        B.scyl(cell, p1, p2, 0.0025, 0.0015, seg=3)
+        for p, s, side in ((p2, 1.0, 0.0), (p0.lerp(p1, 0.7), 0.75, rnd.choice((-1.0, 1.0)))):
             n0 = B.mark()
-            B.sbox(cell, -0.016 * s, 0.016 * s, -0.006 * s, 0.006 * s, -0.002, 0.0)
-            B.xform(n0, Matrix.Translation(p) @ Matrix.Rotation(a + rnd.uniform(-0.6, 0.6), 4, 'Z') @
-                    Matrix.Rotation(rnd.uniform(-0.8, 0.8), 4, 'X'))
+            B.sbox(cell, 0.0, 0.026 * s, -0.004 * s, 0.004 * s, -0.0015, 0.0)
+            B.xform(n0, Matrix.Translation(p) @ Matrix.Rotation(a + side * rnd.uniform(1.2, 1.9), 4, 'Z') @
+                    Matrix.Rotation(rnd.uniform(0.9, 1.4), 4, 'Y') @ Matrix.Rotation(rnd.uniform(-0.6, 0.6), 4, 'X'))
 
 
-def pot(B, x, y, z, r, h, rnd, tag=None, plant='dead', seg=12, soil='sw_soil_dry', tag_yaw=None):
-    """A clay pot: tapered body, rolled rim, soil; a dead plant (or none) and a name tag."""
+def pot(B, x, y, z, r, h, rnd, tag=None, plant='dead', seg=12, soil='sw_crust', tag_yaw=None):
+    """A clay pot: tapered body, rolled rim, soil dried pale; a dead plant (or none) and a name tag."""
     B.cyl('PotClay', (x, y, z), (x, y, z + h * 0.86), r * 0.74, r * 0.97, seg=seg)
     B.torus('PotClay', (x, y, z + h * 0.92), (0, 0, 1), r * 0.99, h * 0.075, seg=seg, rseg=4)
     zs = z + h * 0.9
@@ -1533,9 +1545,9 @@ def bean_jar(B, x, y, z, rnd, tag):
     B.scyl('sw_paper', (x, y, z + 0.004), (x, y, z + h * 0.82), r * 0.8, seg=10)
     B.scyl('sw_label', (x, y, z + 0.004), (x, y, z + 0.02), r * 0.81, seg=10)
     a = -math.pi / 2 + rnd.uniform(-0.45, 0.45)                 # the bean, between paper and glass, to the front
-    bx, by, bz = x + r * 0.88 * math.cos(a), y + r * 0.88 * math.sin(a), z + rnd.uniform(0.05, 0.068)
+    bx, by, bz = x + r * 0.89 * math.cos(a), y + r * 0.89 * math.sin(a), z + rnd.uniform(0.05, 0.066)
     n0 = B.mark()
-    B.sphere('Att17Atlas', (0, 0, 0), 0.0085, seg=8, scale=(1.0, 0.42, 0.68), cell='sw_beandead')
+    B.sphere('Att17Atlas', (0, 0, 0), 0.011, seg=8, scale=(1.0, 0.36, 0.66), cell='sw_beandead')
     B.xform(n0, Matrix.Translation((bx, by, bz)) @ Matrix.Rotation(a + math.pi / 2, 4, 'Z') @ Matrix.Rotation(rnd.uniform(-0.6, 0.6), 4, 'Y'))
     B.scyl('sw_shrivel', (bx, by, bz - 0.004), (bx + rnd.uniform(-0.006, 0.006), by, bz - 0.022), 0.0013, 0.0008, seg=3)
     B.scyl('sw_shrivel', (bx + 0.002, by, bz - 0.02), (bx + rnd.uniform(-0.01, 0.01), by, bz - 0.04), 0.0009, 0.0006, seg=3)
@@ -1720,7 +1732,7 @@ def build_window(B, rnd, names):
         y = MD_POT[1] if x == MD_POT[0] else 1.04 + rnd.uniform(-0.06, 0.08)
         if x == MD_POT[0]:
             zs = pot(B, x, y, st, r, r * 1.5, rnd, tag=0, plant=None, tag_yaw=0.05)
-            dead_plant(B, x + 0.01, y, zs, rnd, n=1, h=0.11, cell='sw_shrivel', droop=1.4)
+            dead_plant(B, x + 0.01, y - 0.01, zs, rnd, n=2, h=0.15, cell='sw_shrivel', droop=1.2)
         else:
             zs = pot(B, x, y, st, r, r * 1.5, rnd, tag=names(), plant='dead')
         drip.append((x, y, zs, r))
@@ -1848,10 +1860,10 @@ def build_stairwell(B):
     y0, y1 = STAIR_Y
     nose = 0.022
     # The landing's floor (boards along x), the well's floor under the flight.
-    B.box('CrateWood', x0, x1, fy, wy2, -0.2, 0.0)
+    B.box('CrateWood', x0, x1, FRONT_Y, wy2, -0.2, 0.0)                                   # flush with the room's front edge
     u0, v0, u1, v1 = cell_uv('sw_seam')
     su = ((u0 + u1) / 2, (v0 + v1) / 2)
-    y = fy + 0.07
+    y = FRONT_Y + 0.07
     while y < wy:
         B.face('Att17Atlas', [(x0, y - 0.0025, 0.0006), (STAIR_X0, y - 0.0025, 0.0006), (STAIR_X0, y + 0.0025, 0.0006),
                               (x0, y + 0.0025, 0.0006)], [su] * 4)
@@ -1938,7 +1950,7 @@ def build_floor_things(B, rnd):
     r, h = 0.13, 0.24
     B.cyl('PotClay', (px, py, 0.0), (px, py, h * 0.86), r * 0.74, r * 0.97, seg=18)
     B.torus('PotClay', (px, py, h * 0.92), (0, 0, 1), r * 0.99, h * 0.075, seg=18, rseg=5)
-    B.scyl('sw_soil_dry', (px, py, h * 0.8), (px, py, h * 0.9), r * 0.93, r * 0.97, seg=16)
+    B.scyl('sw_crust', (px, py, h * 0.8), (px, py, h * 0.9), r * 0.93, r * 0.97, seg=16)
     rad = lambda z: r * 0.74 + (r * 0.97 - r * 0.74) * min(z / (h * 0.86), 1.0) if z < h * 0.84 else r * 0.99 + h * 0.075
     az0 = math.radians(-102)
     zc, az = h, az0
@@ -2246,29 +2258,48 @@ def build_set(dl01, m, coll):
     print('dl17: tray rotation (deg)', tuple(round(math.degrees(a), 2) for a in objs[2].rotation_euler), 'loc', tuple(objs[2].location))
 
 
-REPORT = """DL-17 A Different Lesson (art/ch1/dl17.py). Blender (x, y, z) -> game (x, z, -y). Built 21 October 2026.
+REPORT = """DL-17 A Different Lesson (art/ch1/dl17.py). Blender (x, y, z) -> game (x, z, -y). Built 21 October 2026,
+revised the same day for rev 0.3 (her drawing with his notes beside it, the card, the dead trays, the stair door).
 
 MOVED / ANIMATED (origin = pivot, world coordinates)
 - Att17Drawer: built SHUT. Origin = middle of its front face, Blender (286.0, 0.62, 0.30) = game (286.0, 0.30, -0.62).
   The front is x 285.3-286.7, z 0.12-0.48. Slide 0.45 toward the camera: Blender -y (game +z). Open origin is
   Blender y 0.17 (game z -0.17). Its contents are part of its mesh: papers, other children's cards (R. ABEL,
   T. ORME), the drawing, a pencil, a rubber, and the card. The label PLACEMENTS sits in a brass frame above a bar pull.
-- Att17Tray: the carried seed tray, 0.42 x 0.30 x 0.09, damp soil with blackened seedlings, tag "T. ORME".
+- Att17Tray: the carried seed tray, 0.42 x 0.30 x 0.09: soil dried hard, shrunk from the sides, cracked into plates
+  (crust top 0.064 above its bottom), shrivelled brown stalks fallen on it, tag "T. ORME". Nothing green.
   The mesh is built level about its bottom centre. Lying pose: location Blender (285.7, 0.05, 0.026) = game
   (285.7, 0.026, -0.05); rotation_euler XYZ (10, 0, -9) degrees (its back edge is up on a heap of spilled soil).
   Zero rotation = level, as carried; when level, its bottom is at the origin.
   Its footprint (Blender y -0.16..0.23) overlaps the open drawer's front (y 0.17), so the drawer is blocked until
   the tray moves. It can't literally touch the handle (handle at y 0.58, tray centre given as y 0.05).
 - Att17GrowLamp: EMIT, two tubes x 289.42-291.58 at Blender y 1.005 / 1.095, z 1.60. Origin Blender (290.5, 1.05, 1.60)
-  = game (290.5, 1.60, -1.05).
-Static extras: Att17Shoot (the pale living shoot, EMIT AttShoot as in DL-13; origin on its soil, (290.5, 1.06, 1.021),
-tag "M. D."), Att17Bulbs (EMIT Att17Bulb: pendant (285.95, 0.80, 2.215), bench lamp (285.05, 0.89, 1.33),
-door bulkhead (295.25, 1.19, 2.25)), Att17Set (everything else).
+  = game (290.5, 1.60, -1.05). Rev 0.3: switch it off (nothing under it is alive).
+- Att17Door: the stair door's leaf, built SHUT, in the right end wall's doorway. Origin = its hinge axis at the floor,
+  Blender (296.0, 0.5, 0.0) = game (296.0, 0.0, -0.5): the stair-side face of the end wall (x 296.0), at the back
+  jamb. Shut, the leaf is x 295.955-296.0, Blender y -0.495..0.495 (game z -0.495..0.495), z 0.008-2.144 (handles
+  stand to x 295.895 on the room side). OPEN: rotate +90 degrees about the vertical axis, i.e. Blender rotation z
+  +pi/2 = three.js rotation.y += +pi/2 (game +y). The free edge (game z +0.495, the camera side) swings away from the
+  room, round into +x. Open, the leaf stands along the stairwell's back: x 296.0-297.0, game z -0.5..-0.455, clear
+  of the lane and of the first riser (x 297.1). A wired-glass light in it (Window glass, see-through) shows the lit
+  stair while it is shut.
+Static extras: Att17Bulbs (EMIT Att17Bulb: pendant (285.95, 0.80, 2.215), bench lamp (285.05, 0.89, 1.33), bulkhead
+by the door on the back wall (295.25, 1.19, 2.25)); Att17StairLamp (EMIT Att17StairLamp, the globe of the lamp over
+the flight: Blender (299.3, 0.84, 3.62) = game (299.3, 3.62, -0.84)); Att17Set (everything else).
+REMOVED: Att17Shoot (the living shoot) and its use of AttShoot. M. D.'s pot under the grow lamp now holds dry soil
+and a dead stalk, like the rest.
 
 DRAWER CONTENTS (Blender; open = shut y - 0.45)
 - Drawing 0.50 x 0.35, face up, top of image toward +y, turned 0.03 rad: centre shut (286.385, 0.86, 0.3945),
-  open (286.385, 0.41, 0.3945) = game (286.385, 0.3945, -0.41).
+  open (286.385, 0.41, 0.3945) = game (286.385, 0.3945, -0.41). All in her pencil (graphite): the tree made a bed,
+  sluices A B C, the settling loop, her section A-A, NOTES 1-4, title block (DRAWN M. D., AGE 14, CHECKED). His blue
+  pencil, beside her lines: "fall 1 in 100 / or it scours" under her "FALL 1 IN 40" (bottom left); "levels!" and a
+  datum mark by the TANK (bottom middle); his shallower section with "wider, shallower / sides 1 in 2" under hers
+  (top right); "The knot works! - E.V." and a tick over the loop (top middle); "E. V." and a tick at CHECKED.
 - Card 0.20 x 0.125, turned -0.09 rad: shut (285.93, 0.82, 0.3957), open (285.93, 0.37, 0.396) = game (285.93, 0.396, -0.37).
+  Typed: NAME M. D., AGE 14, PLACED WITH WORKS DEPT., RING A, TRADE WATER AND IRRIGATION, SPONSOR E. VANCE,
+  APPLICATION BY THE PUPIL, REPORT VIA RESIDENTIAL ACCESS, RING A (WORKS GATE SEALED). Signed: Pupil "Mara D."
+  (pencil), Sponsor "E. Vance" (ink). Stamp: ACCEPTED, WORKS DEPT . RING A, P.A. 316. No. 0417.
 - Mended pot on the floor: centre (286.9, 0.35), r 0.13, rim 0.255 = game (286.9, 0, -0.35).
 CLOSE-UP CAMERAS (drawer open; game coordinates; vertical FOV for 16:9)
 - Drawing beside the pot: pos (286.62, 0.92, -0.06), look (286.62, 0.33, -0.42), 24 mm = vFOV 45.7 deg (0.69 m).
@@ -2277,15 +2308,30 @@ CLOSE-UP CAMERAS (drawer open; game coordinates; vertical FOV for 16:9)
   Keep the camera at least 0.8 m high. Lower down, the drawer's front (top 0.48) hides the near edge of the drawing.
 
 SURFACES / LIMITS
-- Floor top 0 from x 280.0 to 295.8. The lane (y -0.3..0.3) is clear from 280 to 295.8 except the tray
-  (x ~285.49-285.91, top 0.09 when level).
+- Floor top 0 from x 280.0 to 297.1 (the room to 295.8, the doorway's threshold strip x 295.79-296.01 0.012 high,
+  then the stair landing x 296.0-297.1). The lane (y -0.3..0.3) is clear from 280 to the first riser at 297.1 except
+  the tray (x ~285.49-285.91, top 0.09 when level) and the shut door leaf (x 295.955-296.0).
 - Left wall x 280.0-280.15, with a doorway in it at Blender y -0.45..0.55 (game z -0.55..0.45), head 2.1.
-- Right end wall face x 295.8. Ceiling 3.0, with beams across the lane (bottom 2.84) at x 281.6, 284.0, 286.4,
-  288.8, 291.2 and 293.6, each +-0.07.
+- Right end wall x 295.8-296.0 (its room face x 295.8), with the stair doorway at Blender y -0.5..0.5 (game z
+  -0.5..0.5), head 2.15: clear width 1.0 for D-17 (0.35 wide, 0.6 tall). Ceiling 3.0, with beams across the lane
+  (bottom 2.84) at x 281.6, 284.0, 286.4, 288.8, 291.2 and 293.6, each +-0.07.
+- Over the door, a blade sign hung off the end wall in the plane y 0, its face to the camera: RESIDENTIAL ACCESS .
+  RING A, an arrow up, the Works' cog with WORKS. Sign x 294.62-295.72, z 2.42-2.72; its bracket arm z 2.79.
+- THE STAIR (beyond the door; game x = Blender x, tread top = game y). Width Blender y -0.6..0.9 (game z -0.9..0.6).
+  Landing x 296.0-297.1 at 0. Then 18 treads, rise 0.18, going 0.26 (34.7 deg): tread i (1..18) runs
+  x 297.1 + 0.26 (i - 1) to 297.1 + 0.26 i, top 0.18 i; each nosing overhangs 0.022 toward -x (iron, 1.5 mm proud).
+    i:   1      2      3      4      5      6      7      8      9      10     11     12     13     14     15     16     17     18
+    x0:  297.10 297.36 297.62 297.88 298.14 298.40 298.66 298.92 299.18 299.44 299.70 299.96 300.22 300.48 300.74 301.00 301.26 301.52
+    top: 0.18   0.36   0.54   0.72   0.90   1.08   1.26   1.44   1.62   1.80   1.98   2.16   2.34   2.52   2.70   2.88   3.06   3.24
+  Upper landing from x 301.78 at 3.42 to the stairwell's end wall at x 303.0 (out of frame).
+  The pitch line through the nosings: top = 0.18 + (x - 297.1) * 0.6923.
+  Stairwell: back wall face Blender y 0.9 (game z -0.9), handrail on it 0.9 above the nosings; the room's ceiling
+  (3.0) carries on over the landing to x 298.2 (fascia beam bottom 2.84 at x 298.06-298.2); beyond it the shaft
+  is open up to 5.2. Headroom under the fascia over tread 5 (top 0.9): 1.94.
 - Behind the lane (not on his path): bench top 0.9 (x 282.8-288.6, y 0.65-1.3); stool top 0.45
   (x 287.6-288.4, y 0.30-0.70); window shelf top 0.92 (x 289.0-292.0, y 0.82-1.3); sink top 0.86 (292.1-292.9).
-- Stair door (shut) x 293.75-294.85, head 2.15, in the back wall (y 1.3). Sign WORKS . RING A with an arrow
-  at z 2.27-2.6. A step plate in front of the door is 0.015 high.
+  The back wall (y 1.3) is now plain where the old stair door was (x 293.75-294.85).
+- The game's ATT2.x1 / ATT.x1 (295.6) stop him short of the doorway: extend them for the exit through it and the climb.
 
 VOICE PLAYER (att_volunteer): on the stool, base Blender (288.0, 0.48, 0.45) = game (288.0, 0.45, -0.48), front to
 the camera. Card (288.0, 0.435, 0.602), top 0.598, horn mouth (288.18, 0.374, 0.798), crank pivot (288.11, 0.48, 0.538).
@@ -2296,21 +2342,27 @@ RECOMMENDED GAME LIGHTS (game x, y, z)
 - Bench lamp: spot at (285.04, 1.34, -0.90), aimed at (285.5, 0.9, -0.70). Colour (1, .8, .55), 75 deg, low.
 - Drawer reveal fill: spot at (286.2, 1.8, 1.6), aimed at (286.2, 0.3, -0.45). Colour (1, .84, .62), narrow (40 deg).
   Raise it when the drawer opens.
-- Grow lamp: rect area or a pair of points under the tubes at (290.5, 1.57, -1.05). Cool (.74, .82, 1.0), aimed down.
-- Door: small point at (295.25, 2.2, -0.95). Colour (.95, .88, .75), dim.
+- Grow lamp: off (rev 0.3). (Was: cool (.74, .82, 1.0) under the tubes at (290.5, 1.57, -1.05).)
+- Door bulkhead: small point at (295.25, 2.2, -0.95). Colour (.95, .88, .75), dim.
+- The stair, warm from above: spot at (298.6, 4.6, -0.2) aimed at (298.2, 0.8, -0.1), colour (1, .8, .55), about
+  75 deg, strong enough that the treads read brighter than the workshop; plus a dim warm point at the lamp,
+  (299.3, 3.5, -0.7), and a low warm fill on the landing and first treads, e.g. a point at (297.0, 1.6, -0.2),
+  so he reads as he steps through. Through the door's glass while it is shut, a warm patch; when it opens, the pool.
 - Entry: warm point at (281.2, 2.6, -0.2), dim.
 
 NEW MATERIALS (index.html format)
-WORN:
+WORN (already in index.html; DampSoil is no longer used by DL-17):
   WorkPlaster: { base: [.33, .27, .18], dirt: [.17, .13, .08], chip: [.23, .19, .14], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, dust: [.26, .22, .16], dustAmt: .4, streak: .5 },   // chapter 1, DL-17
   PotClay: { base: [.34, .15, .075], dirt: [.16, .1, .06], chip: [.42, .36, .28], rough: .9, chipRough: .95, metal: 0, grime: 10, chipScale: 40, chipAmt: .72, dust: [.36, .32, .26], dustAmt: .5, streak: .3 },
-  DampSoil: { base: [.03, .022, .015], dirt: [.018, .013, .009], chip: [.06, .045, .03], rough: .8, chipRough: .45, metal: 0, grime: 30, chipScale: 80, chipAmt: .7, dust: [.06, .05, .04], dustAmt: .1 },
 EMIT:
   Att17GrowLamp: [.78, .84, 1, 3], Att17Bulb: [1, .78, .5, 5],
+  Att17StairLamp: [1, .8, .55, 6],   // NEW (rev 0.3): the lamp over the stair
 Reused materials: WinDado, PigeonWood, CrateWood, PupilWood, WornIron, HandledBrass, DarkMetal, WornStrap,
-DepotGreen, ParcelBrown, DirtyGlass, TeaEnamel, Cable, Copper, AttShoot, plus the
-voice-prop materials (Brass, HandWorn, ParcelPaper). Image material: Att17Atlas (textures/dl17_atlas.png, 2048
-square, about 1.8 MB).
+DepotGreen, ParcelBrown, DirtyGlass, TeaEnamel, Cable, Copper, Window (GLASSY: the bean jars, the door's light),
+plus the voice-prop materials (Brass, HandWorn, ParcelPaper). No longer used: AttShoot, DampSoil. Image material:
+Att17Atlas (textures/dl17_atlas.png, 2048 square; new cells: soilcrack, and the sign_works cell redrawn as the
+RESIDENTIAL ACCESS sign).
 
-BUDGET: 35,864 triangles (set 33,652; drawer 428; tray 1,354; lamp 72; shoot 38; bulbs 320); 31 material slots.
+BUDGET: 40,092 triangles (set 37,062; drawer 428; tray 1,470; lamp 72; bulbs 320; door 620; stair lamp 120);
+34 material slots.
 """

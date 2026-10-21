@@ -15,8 +15,10 @@ The room, left to right:
                speaker (220.4-222.0), the pawl brake AttPawl on its base at 220.6, the rod along the floor to the cycle
                dial at 224.0 (height 1.4, AttDialHand), the three hinged steps AttStep1-3 and their slots
   222.0-228.0  the model tree's glass case (height 2.6-3.6) over the steps, its parts AttTree*
-  227.6-232.0  the gallery at 2.05 (solid beneath), its rail on the camera side, the seedling tray behind glass
-               (AttShoot, the one living shoot), the door out at 230.6 into DL-14
+  227.6-232.0  the gallery at 2.05 (solid beneath), its rail on the camera side, the seedling tray behind glass (long
+               dead: dry cracked soil, a few dead stalks), over it on the back wall the lesson sheet (SHEET: the printed
+               straight tree with the three children's roots, creatures, corrected machine, and three figures drawn on
+               past the paper's edge onto the wall) under the gallery's lamp, the door out at 230.6 into DL-14
 
 Moving parts (origins at their pivots, final world coordinates):
   AttFigure2       origin on the floor under its centre; faces +x. Pushable (half-width 0.22, height 0.95).
@@ -29,7 +31,12 @@ Moving parts (origins at their pivots, final world coordinates):
                    (game: about +z by -t/12 * 360 deg).
   AttLessonLamp    the LESSON lamp's glass (emissive material AttLessonLamp, off as built).
   AttTreeTrunk, AttTreeBranch1..3, AttTreeLeaves   the model tree; origins at their attachment points, scaled 0 -> 1.
-  AttShoot         the pale living shoot in the seedling tray (static; its own object so the game can light it).
+  (No AttShoot any more: the tray is dead. The game's EMIT entry for it and its little light at 229.42 have nothing to
+  light; the light is better moved to the lesson sheet's lamp, SHEET_LAMP.)
+
+Static, in AttLessonRoom: the dial's face (R_DIAL: a band per step's time out, the all-out window, the rim chevron at
+4.9 s) and the brake's fixed pointer on the bezel at the same angle (a white chevron on an iron arm, a red plate of three
+stairs); the lesson sheet (material LessonSheet, dl13_sheet.png, alpha: a decal); the gallery's lamp (AttBulbGlow).
   AttLessonSpeaker an empty at the horn's mouth: the emitter for att_lesson.
 """
 import math
@@ -81,7 +88,9 @@ DOOR_OUT_H = 1.85
 VEST = (230.7, 0.9, 3.95)           # past the door out: DL-14's back wall face (y) and ceiling, so the seam at 232 meets
 GAL_FRONT = -0.5                    # the gallery's front face (DL-14's landing front is at -0.47)
 RAIL_Y = -0.44
-SHOOT = (229.42, 1.16)
+SHEET = (228.08, 229.33, 3.08, 3.705)   # the lesson sheet's quad on the gallery's back wall: x0, x1, z0, z1 (the paper is
+                                        # x 228.10-228.92, z 3.11-3.68; the crayon past its edge runs on to 229.3)
+SHEET_LAMP = (228.62, 1.36, 3.86)       # the gallery's lamp over it (its bulb, AttBulbGlow)
 
 # The cycle dial (12 s a lesson): the steps out at 1.0, 2.6, 4.2 s; all out 4.2-5.6 s (the red sector).
 CYCLE = 12.0
@@ -484,6 +493,210 @@ def make_atlas(path):
         d.ellipse((x - r, y - r, x + r, y + r), fill=(60, 46, 26, rnd.randint(6, 20)))
     img = img.filter(ImageFilter.GaussianBlur(0.6))
     img.quantize(160, method=Image.Quantize.MEDIANCUT).save(path, optimize=True)
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# The lesson sheet: the printed perfect tree, and what three children added to it (its own texture, with alpha)
+# --------------------------------------------------------------------------------------------------------------------
+SW, SH = 1024, 512                  # dl13_sheet.png, over the quad SHEET (1.25 x 0.625 m): the paper on its left, the wall
+PAPER = (14, 18, 694, 486)          # the paper in it (0.83 x 0.57 m), pinned up a degree off level
+
+
+def make_sheet(path):
+    """The lesson's printed sheet (HOW A TREE GROWS, the straight tree, A tree always grows straight.) and on it, in
+    pencil and crayon: roots drawn down under the trunk; Abel's creatures in the branches (a spotted long-necked beast,
+    a fish-bird with a tail longer than itself, a six-legged thing in a hat on top, eyes in the leaves); Orme's
+    machine (a wheel that turns itself, crossed out; under it the corrected wheel with a crank and a hamster running in
+    it); and the printed ground line drawn on past the paper's edge onto the wall, three children standing on it hand
+    in hand under a crayon sun."""
+    from PIL import Image, ImageDraw, ImageFont
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    rng = random.Random(1377)
+    ink, graphite = (36, 42, 38, 255), (78, 78, 88, 235)
+    orange, blue, green, red = (214, 112, 30), (48, 78, 176), (40, 124, 58), (196, 38, 30)
+    brown, yellow, purple = (124, 78, 40), (232, 176, 36), (120, 60, 140)
+
+    def font(size, path=FONT):
+        return ImageFont.truetype(path, size)
+
+    def jit(pts, a):
+        return [(x + rng.uniform(-a, a), y + rng.uniform(-a, a)) for x, y in pts]
+
+    def crayon(d, pts, col, w=6, passes=3):
+        """Waxy: a few passes, a little off each other, not quite opaque."""
+        for k in range(passes):
+            q = jit(pts, 1.2)
+            d.line(q, fill=col + (rng.randint(170, 235),), width=max(2, w + rng.randint(-1, 1)), joint='curve')
+
+    def pencil(d, pts, w=3):
+        d.line(jit(pts, 0.6), fill=graphite, width=w, joint='curve')
+
+    def blob(d, box, col):
+        for k in range(3):
+            b = [v + rng.uniform(-1.5, 1.5) for v in box]
+            d.ellipse(b, fill=col + (rng.randint(150, 210),))
+
+    def wave(p0, p1, amp, n=8, ph=0.0):
+        (x0, y0), (x1, y1) = p0, p1
+        L = math.hypot(x1 - x0, y1 - y0)
+        nx, ny = -(y1 - y0) / L, (x1 - x0) / L
+        return [(x0 + (x1 - x0) * k / n + nx * amp * math.sin(ph + k * 1.3), y0 + (y1 - y0) * k / n + ny * amp * math.sin(ph + k * 1.3))
+                for k in range(n + 1)]
+
+    # The paper, on its own layer (it is rotated a little when it is pinned up).
+    x0, y0, x1, y1 = PAPER
+    pw, ph = x1 - x0, y1 - y0
+    paper = Image.new('RGBA', (SW, SH), (0, 0, 0, 0))
+    import numpy as np
+    rs = np.random.default_rng(1378)
+    tone = np.clip(np.array((224, 216, 192), float)[None, None, :] * (1 + rs.normal(0, 0.025, (ph, pw, 1))
+                   - 0.06 * np.linspace(0, 1, ph)[:, None, None] ** 2), 0, 255).astype('uint8')
+    paper.paste(Image.fromarray(np.concatenate([tone, np.full((ph, pw, 1), 255, 'uint8')], 2), 'RGBA'), (x0, y0))
+    d = ImageDraw.Draw(paper, 'RGBA')
+    d.line((x0 + pw * 0.5, y0, x0 + pw * 0.5 + 2, y1), fill=(196, 186, 160, 255), width=2)        # a fold
+    d.line((x0, y0 + ph * 0.5, x1, y0 + ph * 0.5 - 1), fill=(200, 190, 164, 255), width=2)
+    X = lambda u: x0 + u                                     # paper coordinates -> the layer's
+    Y = lambda v: y0 + v
+    # Printed: the title, the rule, the tree (straight, symmetric, the same every time), its ground line.
+    d.text((X(26), Y(40)), 'HOW A TREE GROWS', font=font(36), fill=ink, anchor='lm')
+    d.text((X(26), Y(78)), 'A tree always grows straight.', font=font(24, '/usr/share/fonts/truetype/crosextra/Carlito-Regular.ttf'),
+           fill=ink, anchor='lm')
+    gy, tx = 330, 300
+    d.line((X(130), Y(gy), X(470), Y(gy)), fill=ink, width=4)
+    d.line((X(tx), Y(gy), X(tx), Y(126)), fill=ink, width=8)
+    for vy, span in ((272, 104), (226, 82), (184, 58)):
+        for sg in (-1, 1):
+            d.line((X(tx), Y(vy), X(tx + sg * span), Y(vy - 34)), fill=ink, width=5)
+    d.ellipse((X(tx - 138), Y(104), X(tx + 138), Y(262)), outline=ink, width=4)
+    # Pencil and crayon. Roots, down from the trunk's foot through the printed ground and on to the paper's foot.
+    roots = [((tx - 4, gy), (220, 440), (190, 428)), ((tx - 2, gy), (262, 462), (236, 450)), ((tx, gy), (302, 466), (322, 452)),
+             ((tx + 2, gy), (348, 458), (378, 446)), ((tx + 4, gy), (404, 420), (440, 404))]
+    for (a, b, c) in roots:
+        mid = ((a[0] + b[0]) / 2 + rng.uniform(-10, 10), (a[1] + b[1]) / 2)
+        pts = [(X(p[0]), Y(p[1])) for p in wave(a, mid, 3, 4) + wave(mid, b, 4, 4)[1:]]
+        crayon(d, pts, brown, 6)
+        pencil(d, [pts[-3], (X(c[0]), Y(c[1]))], 3)
+        pencil(d, [pts[4], (X(c[0] + (b[0] - a[0]) * 0.3), Y(c[1] - 40))], 2)
+    # Abel's creatures in the branches. A spotted long-necked beast lies along the lower left branch, legs dangling.
+    bx, by = tx - 92, 238
+    blob(d, (X(bx - 30), Y(by - 14), X(bx + 26), Y(by + 14)), orange)
+    crayon(d, [(X(bx - 24), Y(by - 4)), (X(bx - 40), Y(by - 34)), (X(bx - 48), Y(by - 60))], orange, 7)     # the neck
+    blob(d, (X(bx - 62), Y(by - 74), X(bx - 38), Y(by - 54)), orange)
+    d.ellipse((X(bx - 55), Y(by - 69), X(bx - 49), Y(by - 63)), fill=(20, 20, 20, 255))
+    for k in range(5):
+        crayon(d, [(X(bx - 20 + k * 10), Y(by + 10)), (X(bx - 22 + k * 10), Y(by + 34 + (k % 2) * 6))], orange, 4, 2)
+    for sx_, sy_ in ((-14, -4), (0, 4), (12, -6), (-4, -12)):
+        d.ellipse((X(bx + sx_ - 4), Y(by + sy_ - 4), X(bx + sx_ + 4), Y(by + sy_ + 4)), fill=blue + (230,))
+    crayon(d, [(X(bx + 24), Y(by)), (X(bx + 40), Y(by + 12)), (X(bx + 46), Y(by - 4)), (X(bx + 38), Y(by - 10))], orange, 4, 2)
+    # A fish with wings on the right middle branch, its striped tail hanging down past the canopy.
+    fx, fy = tx + 86, 182
+    blob(d, (X(fx - 24), Y(fy - 12), X(fx + 24), Y(fy + 12)), blue)
+    d.ellipse((X(fx + 10), Y(fy - 6), X(fx + 16), Y(fy)), fill=(250, 250, 240, 255))
+    crayon(d, [(X(fx - 4), Y(fy - 8)), (X(fx - 18), Y(fy - 34)), (X(fx + 6), Y(fy - 20))], blue, 4, 2)                # a wing
+    tail = wave((fx - 22, fy + 4), (fx - 6, fy + 150), 10, 10)
+    for k, (a, b) in enumerate(zip(tail, tail[1:])):
+        crayon(d, [(X(a[0]), Y(a[1])), (X(b[0]), Y(b[1]))], (red, yellow)[k % 2], 9, 2)
+    # On top of the canopy a six-legged thing in a tall hat.
+    cx_, cy_ = tx + 84, 118
+    blob(d, (X(cx_ - 28), Y(cy_ - 10), X(cx_ + 28), Y(cy_ + 10)), green)
+    for k in range(6):
+        crayon(d, [(X(cx_ - 22 + k * 9), Y(cy_ + 6)), (X(cx_ - 24 + k * 9), Y(cy_ + 18))], green, 3, 2)
+    blob(d, (X(cx_ + 20), Y(cy_ - 22), X(cx_ + 38), Y(cy_ - 4)), green)
+    d.rectangle((X(cx_ + 22), Y(cy_ - 52), X(cx_ + 36), Y(cy_ - 22)), fill=purple + (225,))
+    d.line((X(cx_ + 16), Y(cy_ - 22), X(cx_ + 42), Y(cy_ - 22)), fill=purple + (235,), width=5)
+    # Eyes in the leaves.
+    for ex in (tx - 46, tx - 30):
+        d.ellipse((X(ex - 7), Y(144), X(ex + 7), Y(158)), fill=(250, 250, 240, 255), outline=(30, 30, 30, 255), width=2)
+        d.ellipse((X(ex - 2), Y(149), X(ex + 3), Y(155)), fill=(20, 20, 20, 255))
+    # Orme's machine, in the margin: a wheel that turns itself (balls on hinged arms), a rope to the tree; crossed out.
+    def wheel(cx, cy, r, arms=True):
+        pencil(d, [(X(cx + r * math.cos(a / 16 * 2 * math.pi)), Y(cy + r * math.sin(a / 16 * 2 * math.pi))) for a in range(17)], 3)
+        for k in range(8):
+            a = k / 8 * 2 * math.pi
+            pencil(d, [(X(cx), Y(cy)), (X(cx + r * math.cos(a)), Y(cy + r * math.sin(a)))], 2)
+            if arms:
+                ex, ey = cx + r * math.cos(a), cy + r * math.sin(a)
+                fx2, fy2 = ex + 16 * math.cos(a + 0.9), ey + 16 * math.sin(a + 0.9)
+                pencil(d, [(X(ex), Y(ey)), (X(fx2), Y(fy2))], 2)
+                d.ellipse((X(fx2 - 5), Y(fy2 - 5), X(fx2 + 5), Y(fy2 + 5)), fill=graphite)
+        pencil(d, [(X(cx), Y(cy)), (X(cx - 6), Y(cy + r + 22)), (X(cx + 6), Y(cy + r + 22)), (X(cx), Y(cy))], 3)   # its stand
+    wx, wy = 560, 168
+    wheel(wx, wy, 40)
+    pencil(d, [(X(wx - 40), Y(wy - 6)), (X(tx + 120), Y(150))], 2)
+    crayon(d, [(X(wx - 62), Y(wy - 60)), (X(wx + 62), Y(wy + 66))], red, 8)
+    crayon(d, [(X(wx + 62), Y(wy - 60)), (X(wx - 62), Y(wy + 66))], red, 8)
+    # Corrected: the same wheel, no balls, a crank; and a hamster running in it (the joke), drops of sweat flying.
+    wx2, wy2 = 568, 330
+    wheel(wx2, wy2, 40, arms=False)
+    pencil(d, [(X(wx2), Y(wy2)), (X(wx2 + 30), Y(wy2 - 30)), (X(wx2 + 44), Y(wy2 - 24))], 3)
+    hx, hy = wx2 - 2, wy2 + 26
+    blob(d, (X(hx - 16), Y(hy - 10), X(hx + 16), Y(hy + 8)), brown)
+    blob(d, (X(hx + 10), Y(hy - 14), X(hx + 24), Y(hy)), brown)
+    d.ellipse((X(hx + 16), Y(hy - 10), X(hx + 20), Y(hy - 6)), fill=(20, 20, 20, 255))
+    for k in range(3):
+        crayon(d, [(X(hx - 10 + k * 10), Y(hy + 6)), (X(hx - 14 + k * 12), Y(hy + 14))], brown, 3, 1)
+    for k, (dx_, dy_) in enumerate(((-34, -14), (-40, -2), (-30, -26))):
+        d.ellipse((X(hx + dx_ - 3), Y(hy + dy_ - 5), X(hx + dx_ + 3), Y(hy + dy_ + 3)), fill=(80, 130, 210, 230))
+    pencil(d, [(X(wx2 - 40), Y(wy2 - 10)), (X(tx + 130), Y(196))], 2)
+    pencil(d, [(X(wx2 + 52), Y(wy2 + 30)), (X(wx2 + 60), Y(wy2 + 42)), (X(wx2 + 80), Y(wy2 + 12))], 4)       # a tick
+    # The children's own ground line, over the printed one and on past its end, to the paper's edge.
+    crayon(d, [(X(440), Y(gy + 2)), (X(560), Y(gy + 6)), (X(pw - 1), Y(gy + 4))], green, 6)
+    # A pin at each top corner.
+    for px_ in (x0 + 16, x1 - 16):
+        d.ellipse((px_ - 8, y0 + 8, px_ + 8, y0 + 24), fill=(178, 140, 60, 255), outline=(110, 82, 30, 255), width=2)
+    # Pin it up, a degree off level.
+    th = 1.0
+    pcx, pcy = (x0 + x1) / 2, (y0 + y1) / 2
+    paper = paper.rotate(th, resample=Image.BICUBIC, center=(pcx, pcy))
+
+    def R(x, y):
+        t = math.radians(th)
+        return pcx + (x - pcx) * math.cos(t) + (y - pcy) * math.sin(t), pcy - (x - pcx) * math.sin(t) + (y - pcy) * math.cos(t)
+    img = Image.new('RGBA', (SW, SH), (0, 0, 0, 0))
+    # A faint shadow under the paper on the wall, then the paper.
+    sh = Image.new('RGBA', (SW, SH), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).polygon([R(x0 + 4, y0 + 6), R(x1 + 5, y0 + 6), R(x1 + 5, y1 + 6), R(x0 + 4, y1 + 6)], fill=(20, 16, 10, 90))
+    img = Image.alpha_composite(img, sh)
+    img = Image.alpha_composite(img, paper)
+    d = ImageDraw.Draw(img, 'RGBA')
+    # Past the edge, on the wall: the ground line goes on, and three children stand on it hand in hand.
+    ex0, ey0 = R(x1 - 2, y0 + gy + 4)
+    line = [(ex0, ey0), (ex0 + 90, ey0 + 4), (ex0 + 200, ey0 + 1), (ex0 + 300, ey0 + 6)]
+    crayon(d, line, green, 7)
+    feet = ey0 + 2
+    figs = (('A', orange, ex0 + 40, 128, 'arms'), ('M', blue, ex0 + 128, 116, 'dress'), ('O', green, ex0 + 214, 108, 'cap'))
+    hands = []
+    for k, (ini, col, fx_, h_, kind) in enumerate(figs):
+        hy_ = feet - h_
+        hr = 15
+        crayon(d, [(fx_ - 16, feet), (fx_, feet - h_ * 0.42), (fx_ + 16, feet)], col, 7)                      # legs
+        crayon(d, [(fx_, feet - h_ * 0.42), (fx_, hy_ + 2 * hr)], col, 8)                                     # body
+        if kind == 'dress':
+            d.polygon([(fx_ - 26, feet - h_ * 0.34), (fx_ + 26, feet - h_ * 0.34), (fx_ + 4, hy_ + 2 * hr + 2), (fx_ - 4, hy_ + 2 * hr + 2)],
+                      fill=col + (200,))
+        d.ellipse((fx_ - hr, hy_, fx_ + hr, hy_ + 2 * hr), outline=col + (230,), width=6)                    # head
+        d.ellipse((fx_ - 7, hy_ + 10, fx_ - 3, hy_ + 14), fill=(30, 30, 30, 230))
+        d.ellipse((fx_ + 3, hy_ + 10, fx_ + 7, hy_ + 14), fill=(30, 30, 30, 230))
+        d.arc((fx_ - 8, hy_ + 12, fx_ + 8, hy_ + 24), 20, 160, fill=(30, 30, 30, 230), width=3)
+        sy_ = hy_ + 2 * hr + 14
+        if kind == 'dress':
+            for sg in (-1, 1):                                                                            # plaits
+                crayon(d, [(fx_ + sg * hr, hy_ + 10), (fx_ + sg * (hr + 10), hy_ + 34)], col, 5, 2)
+        if kind == 'cap':
+            d.chord((fx_ - hr - 2, hy_ - 6, fx_ + hr + 2, hy_ + 18), 180, 360, fill=col + (230,))
+            crayon(d, [(fx_, hy_ + 2), (fx_ + 26, hy_ + 4)], col, 5, 2)
+        hands.append(((fx_ - 34, sy_ + 16), (fx_ + 34, sy_ + 16), (fx_, sy_)))
+        d.text((fx_, feet + 22), ini, font=font(26), fill=col + (220,), anchor='mm')
+    for k, (l, r, s_) in enumerate(hands):
+        crayon(d, [l, s_, r], figs[k][1], 6)
+    crayon(d, [hands[0][0], (hands[0][0][0] - 26, hands[0][0][1] - 30)], orange, 6)                           # A waves back at the tree
+    # A crayon sun over them, up the wall.
+    sx_, sy_ = ex0 + 270, ey0 - 214
+    d.ellipse((sx_ - 26, sy_ - 26, sx_ + 26, sy_ + 26), fill=yellow + (215,))
+    for k in range(10):
+        a = k / 10 * 2 * math.pi
+        crayon(d, [(sx_ + 34 * math.cos(a), sy_ + 34 * math.sin(a)), (sx_ + 52 * math.cos(a), sy_ + 52 * math.sin(a))], yellow, 6, 2)
+    img.save(path, optimize=True)
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -1027,6 +1240,27 @@ def apparatus(S, M, coll):
         add_box(bm, (dx + (DIAL_R + 0.03) * math.cos(a), FACE_Y - 0.02, dz + (DIAL_R + 0.03) * math.sin(a)), (0.026, 0.03, 0.014),
                 mat=br, rot=_ry(-a + 0.4))
     disc_decal(S, (dx, FACE_Y - 0.036, dz), DIAL_R - 0.01, R_DIAL, at, seg=40)
+    # The brake's pointer, fixed on the bezel at the face's chevron (the middle of the all-out window, 4.9 s): a white
+    # enamel chevron on an iron arm pointing at the spindle; brake when the hand meets it. Beside it, upright on a
+    # standoff, a small red plate with three white stairs.
+    a = 2 * math.pi * ((RED[0] + RED[1]) / 2) / CYCLE
+    rad, tan = Vector((math.sin(a), 0, math.cos(a))), Vector((math.cos(a), 0, -math.sin(a)))
+    c0 = Vector((dx, 0, dz))
+    P2 = lambda r, t: ((c0 + rad * r + tan * t).x, (c0 + rad * r + tan * t).z)
+    cbox(bm, c0 + rad * 0.43 + Vector((0, FACE_Y - 0.03, 0)), (0.034, 0.06, 0.13), 0.006, ir, rot=_ry(a))      # the arm
+    prism(bm, [P2(0.312, 0), P2(0.408, 0.062), P2(0.408, -0.062)], 'y', FACE_Y - 0.06, FACE_Y - 0.054, mat=ir)  # its dark edge
+    n0 = len(bm.faces)
+    prism(bm, [P2(0.322, 0), P2(0.4, 0.05), P2(0.382, 0)], 'y', FACE_Y - 0.066, FACE_Y - 0.06, mat=at)        # the chevron
+    prism(bm, [P2(0.322, 0), P2(0.382, 0), P2(0.4, -0.05)], 'y', FACE_Y - 0.066, FACE_Y - 0.06, mat=at)
+    bm.faces.ensure_lookup_table()
+    wu, wv = ((R_WHITE[0] + R_WHITE[2]) / 2) / ATLAS, 1.0 - ((R_WHITE[1] + R_WHITE[3]) / 2) / ATLAS
+    for f in bm.faces[n0:]:
+        for lp in f.loops:
+            lp[S.uv].uv = (wu, wv)
+    pc = c0 + rad * 0.47 + tan * 0.0
+    pc = Vector((pc.x + 0.03, 0, pc.z - 0.02))
+    cbox(bm, (pc.x, FACE_Y - 0.026, pc.z), (0.112, 0.052, 0.112), 0.006, ir)                          # the plate's standoff
+    quad(S, (pc.x, FACE_Y - 0.0535, pc.z), (0.05, 0, 0), (0, 0, 0.05), R_POINTER, at)
     K = Kit()
     hw = K(M['GaugeNeedle'])
     prism(K.bm, [(-0.012, -0.01), (-0.004, DIAL_R - 0.03), (0.004, DIAL_R - 0.03), (0.012, -0.01), (0.0, -0.07)], 'y', -0.004, 0.004, mat=hw)
@@ -1168,34 +1402,53 @@ def gallery(S, M, coll):
     add_box(bm, ((s0 + s1) / 2, (sy0 + sy1) / 2, hz + 0.01), (s1 - s0 - 0.04, sy1 - sy0, 0.006), mat=gl)
     for x in (s0 + 0.01, s1 - 0.01):
         add_box(bm, (x, (sy0 + sy1) / 2, (bz + hz) / 2), (0.006, sy1 - sy0 - 0.04, hz - bz), mat=gl)
-    # The seedlings: three rows, dead and bent over, dry; one place, the pale living shoot (AttShoot).
+    # Nothing has lived in it for a long time: the soil dried pale, shrunk from the sides and cracked into plates; a few
+    # dead brown stalks, standing, fallen, snapped; dry leaves on the soil.
+    quad(S, ((s0 + s1) / 2, (sy0 + sy1) / 2, soil + 0.0006), ((s1 - s0 - 0.16) / 2, 0, 0), (0, (sy1 - sy0 - 0.14) / 2, 0), R_SOIL, at)
     rnd = random.Random(2290)
-    sw = S(M['LessonPlaster'])                                                # dried to straw
-    for r, y in enumerate((1.16, 1.26, 1.36, 1.44)):
-        x = s0 + 0.14
-        while x < s1 - 0.12:
-            if abs(x - SHOOT[0]) < 0.05 and r == 0:
-                x += 0.11
-                continue
-            h = rnd.uniform(0.06, 0.12)
-            a = rnd.uniform(0, 2 * math.pi)
-            lean = rnd.uniform(0.5, 1.3)
-            p0 = Vector((x + rnd.uniform(-0.01, 0.01), y + rnd.uniform(-0.01, 0.01), soil))
-            p1 = p0 + Vector((0.2 * h * math.cos(a), 0.2 * h * math.sin(a), h))
-            p2 = p1 + Vector((h * lean * 0.7 * math.cos(a), h * lean * 0.7 * math.sin(a), -h * lean * 0.6))
-            add_cyl(bm, p0, p1, 0.005, 0.004, mat=sw, seg=3)
-            add_cyl(bm, p1, p2, 0.004, 0.003, mat=sw, seg=3)
-            add_box(bm, p2 + Vector((0, 0, -0.004)), (0.026, 0.012, 0.004), mat=sw, rot=_rz(a))
-            x += rnd.uniform(0.1, 0.12)
-    K = Kit()
-    sh = K(M['AttShoot'])
-    add_cyl(K.bm, (0, 0, 0), (0.006, 0, 0.11), 0.005, 0.0035, mat=sh, seg=6)
-    for s in (-1, 1):                                                         # two seed leaves, lifted toward the light
-        vs = [K.bm.verts.new(Vector((0.006, 0, 0.11)) + _ry(s * math.radians(-35)) @ Vector(p))
-              for p in ((0, 0, 0), (s * 0.022, 0.009, 0.002), (s * 0.04, 0, 0), (s * 0.022, -0.009, 0.002), (s * 0.022, 0, -0.003))]
-        for a, b, c in ((0, 1, 2), (0, 2, 3), (0, 4, 1), (1, 4, 2), (2, 4, 3), (3, 4, 0)):
-            K.bm.faces.new((vs[a], vs[b], vs[c])).material_index = sh
-    K.obj('AttShoot', coll).location = (SHOOT[0], SHOOT[1], soil)
+    st, lf = S(M['PigeonWood']), S(M['CrateWood'])
+    for k, (x, y, kind) in enumerate(((228.62, 1.17, 'stand'), (228.86, 1.4, 'fallen'), (229.05, 1.22, 'snapped'), (229.24, 1.43, 'stand'),
+                                      (229.45, 1.16, 'stand'), (229.6, 1.33, 'fallen'), (229.83, 1.2, 'snapped'), (229.98, 1.42, 'stand'),
+                                      (230.1, 1.18, 'fallen'), (228.74, 1.31, 'snapped'))):
+        a = rnd.uniform(0, 2 * math.pi)
+        dv = Vector((math.cos(a), math.sin(a), 0))
+        p0 = Vector((x, y, soil))
+        if kind == 'stand':                 # upright and brittle, its head bowed, two shrivelled leaves
+            h = rnd.uniform(0.09, 0.14)
+            p1 = p0 + dv * 0.012 + Vector((0, 0, h))
+            p2 = p1 + dv * rnd.uniform(0.03, 0.045) + Vector((0, 0, -0.035))
+            add_cyl(bm, p0, p1, 0.0045, 0.0032, mat=st, seg=4)
+            add_cyl(bm, p1, p2, 0.0032, 0.0022, mat=st, seg=4)
+            for sg in (-1, 1):
+                q = p0 + (p1 - p0) * rnd.uniform(0.45, 0.7)
+                add_box(bm, q + Vector((-dv.y, dv.x, 0)) * sg * 0.012 + Vector((0, 0, -0.008)), (0.022, 0.008, 0.003), mat=lf,
+                        rot=_rz(a + math.pi / 2) @ _rx(sg * 0.9))
+        elif kind == 'fallen':              # flat on the soil
+            L = rnd.uniform(0.09, 0.13)
+            add_cyl(bm, p0 + Vector((0, 0, 0.004)), p0 + dv * L + Vector((0, 0, 0.004)), 0.004, 0.0025, mat=st, seg=4)
+            add_box(bm, p0 + dv * L * 0.6 + Vector((0, 0, 0.003)), (0.024, 0.011, 0.002), mat=lf, rot=_rz(a + 0.5))
+        else:                               # snapped: a stub, its top lying by it
+            h = rnd.uniform(0.035, 0.05)
+            add_cyl(bm, p0, p0 + Vector((0, 0, h)), 0.0045, 0.0038, mat=st, seg=4)
+            add_cyl(bm, p0 + dv * 0.02 + Vector((0, 0, 0.004)), p0 + dv * 0.09 + Vector((0, 0, 0.004)), 0.0035, 0.0022, mat=st, seg=4)
+    for k in range(9):                      # dry leaves dropped on the soil
+        x, y = rnd.uniform(s0 + 0.12, s1 - 0.12), rnd.uniform(sy0 + 0.1, sy1 - 0.1)
+        add_box(bm, (x, y, soil + 0.002), (0.022, 0.012, 0.002), mat=lf, rot=_rz(rnd.uniform(0, math.pi)))
+    # The lesson sheet, pinned on the wall over the tray: the printed straight tree and the three children's pencil and
+    # crayon, which runs on past the paper's edge onto the plaster (dl13_sheet.png, LessonSheet). The gallery's lamp
+    # over it (a bracket, an enamel shade, the lit bulb).
+    hx0, hx1, hz0, hz1 = SHEET
+    quad(S, ((hx0 + hx1) / 2, BACK_Y - 0.004, (hz0 + hz1) / 2), ((hx1 - hx0) / 2, 0, 0), (0, 0, (hz1 - hz0) / 2), (0, 0, ATLAS, ATLAS),
+         S(M['LessonSheet']))
+    lx, ly, lz = SHEET_LAMP
+    add_box(bm, (lx, BACK_Y - 0.01, lz + 0.12), (0.07, 0.02, 0.1), mat=ir)
+    add_cyl(bm, (lx, BACK_Y - 0.02, lz + 0.12), (lx, ly + 0.02, lz + 0.12), 0.008, mat=ir, seg=6)
+    add_cyl(bm, (lx, ly + 0.02, lz + 0.12), (lx, ly, lz + 0.06), 0.008, mat=ir, seg=6)
+    res = bmesh.ops.create_cone(bm, cap_ends=False, cap_tris=False, segments=18, radius1=0.11, radius2=0.02, depth=0.08)
+    bmesh.ops.translate(bm, vec=Vector((lx, ly, lz + 0.03)), verts=res['verts'])          # the shade, open below
+    for f in {f for v in res['verts'] for f in v.link_faces}:
+        f.material_index = S(M['LessonDado'])
+    add_sphere(bm, (lx, ly, lz - 0.005), 0.03, mat=S(M['AttBulbGlow']), seg=10)
     # The watering can, dry, on the shelf under the bench.
     wx, wy = 229.75, 1.26
     add_cyl(bm, (wx, wy, gz + 0.13), (wx, wy, gz + 0.32), 0.08, mat=ir, seg=14)
