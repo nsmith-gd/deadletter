@@ -1391,7 +1391,7 @@ def build_lore(B):
     """Static dressing only: the motto high over the frieze, the rules board by the door, the safety notice on the
     gate's front post, the headcount board on the corridor wall just past the gate."""
     yf = WALL_Y - 0.003
-    B.quad([(202.3, yf, 2.72), (208.1, yf, 2.72), (208.1, yf, 2.96), (202.3, yf, 2.96)], LORE, lore_uv('motto'))
+    B.quad([(201.98, yf, 2.72), (207.6, yf, 2.72), (207.6, yf, 2.96), (201.98, yf, 2.96)], LORE, lore_uv('motto'))   # the lit globe in the gap after ABOVE
     B.box((201.36, 201.96), (WALL_Y - 0.02, WALL_Y), (2.36, 2.79), 'DepotGreen')
     B.quad([(201.38, WALL_Y - 0.021, 2.38), (201.94, WALL_Y - 0.021, 2.38), (201.94, WALL_Y - 0.021, 2.77),
             (201.38, WALL_Y - 0.021, 2.77)], LORE, lore_uv('rules'))
