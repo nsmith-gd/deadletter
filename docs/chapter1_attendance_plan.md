@@ -1,7 +1,7 @@
 # Chapter 1: Attendance (DL-12 to DL-14)
 
-**Status:** in build, 21 October 2026. These are the first three scenes after the prologue, built to the roadmap's
-standard (`docs/roadmap.md`):
+**Status:** in build, 21 October 2026. These are the first three scenes after the prologue, built to the director's
+standard for every chapter:
 - multi-step puzzles that combine what the prologue taught;
 - at least one secret room;
 - the tableau principle;

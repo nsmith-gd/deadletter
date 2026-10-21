@@ -57,7 +57,7 @@ pretend to look; the next real information comes from people.
   - any scene two or more people called boring.
 
 ## Length
-The chapters planned in `docs/roadmap.md` take the game past two hours. Each new chapter should be measured the same
+The chapters planned in `docs/full_game_plan.md` aim at about 150 minutes for a first-time player. Each new chapter should be measured the same
 way before the next is built.
 
 ## Results

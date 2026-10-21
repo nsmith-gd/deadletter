@@ -91,7 +91,7 @@ The weigh-in body stays a tied shroud, since it has to drag as one piece.
 | Mara seems the only one with a room in C-114. | A stair up to the floor above, in the hall. |
 | The ending ("a staircase that's a school") should be an emotional reveal. | Out of the back door is a landing on a dark well through the rings. He looks up, and the camera goes with him to the one lit window, 24 m above, and the new cable running down from it to a splice box here: someone up there turned the power back on. He checks his label and climbs the iron stair toward ring B as the picture fades. |
 | Secret rooms that tell stories. | Two: the one who stayed (DL-06, behind a panel: a cot, tins, 384 opened letters pinned to the walls, a chair turned to face them), and the children's den (DL-09, through a vent by the hopscotch: a blanket fort, chalk drawings, handprints, Mara's crooked tree). Use at the gap; he goes in, the camera frames the room, and any move brings him back out. |
-| It's a tutorial, not a chapter; the game must run past two hours. | This becomes the **prologue**. The plan for the rest is `docs/roadmap.md`. |
+| It's a tutorial, not a chapter; the game must run past two hours. | This becomes the **prologue**. The plan for the rest is now `docs/full_game_plan.md`. |
 
 ## Status: built
 

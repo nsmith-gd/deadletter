@@ -218,7 +218,7 @@ stamped RETURN, and the game never says who sent them.
 
 ## 6. Numbering
 
-The director chose to renumber, so the game is now 49 scenes and about 155 minutes (`docs/scene_overview.md`).
+The director chose to renumber, so the game is now 49 scenes and about 155 minutes (the scene overview then; the sequence is now `docs/full_game_plan.md`).
 Chapter 1 runs 1 to 9, and the old scenes 6 to 45 are now 10 to 49.
 
 | Scene | Name | Was |

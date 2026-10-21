@@ -1,9 +1,9 @@
 # Chapter 1 Attendance, part 2: DL-15 to DL-17
 
 **Status:** built, 21 October 2026 (pass 9). The second half of Chapter 1, after `docs/chapter1_attendance_plan.md` (DL-12
-to DL-14). Same standard (`docs/roadmap.md`): multi-step puzzles built from known relationships plus one twist, a
-secret room, tableaux, voice letters. Story follows `docs/story_bible.md`: the school in late Order, the first child
-protection protocols, and Mara, a silent pupil, the last name on the register.
+to DL-14). Same standard: multi-step puzzles built from known relationships plus one twist, a
+secret room, tableaux, voice letters. Story follows `docs/full_game_plan.md`: the school of the last childhoods, where Mara and her two friends
+were loved, confined and curious.
 
 **Coordinates:** game x from `OFF6 = 200`; floor at height 0; the lane at z 0. Blender (x, y, z) becomes game
 (x, z, −y): **Blender +y is away from the camera**. Every scene module builds in final world coordinates, as

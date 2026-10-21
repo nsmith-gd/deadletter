@@ -145,7 +145,7 @@ The ring C relocation lift lobby: the place the families left from.
 
 Everything above is in the game (`game/undelivered/`), with the docs: the scene docs renumbered (`docs/scenes/`, each
 with a *Pass 3* section), two new ones (`DL-05_the_ration_hall.md`, `DL-10_up_only.md`), the game's README and
-`docs/scene_overview.md` (now 51 scenes). Section 1 uses pass 2's scene numbers except for DL-11: its DL-06 is now
+the scene overview (then 51 scenes; the sequence is now `docs/full_game_plan.md`). Section 1 uses pass 2's scene numbers except for DL-11: its DL-06 is now
 DL-07 The Heap, and its DL-08 is DL-09 The Slipping Cage.
 
 **What shipped:**
