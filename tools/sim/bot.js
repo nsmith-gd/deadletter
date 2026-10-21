@@ -566,7 +566,7 @@ window.__startBot = function (seed, opts = {}) {
     yield* wait(look(3));
     // DL-12: tries the strip first, hears it wants a coat; the coat; the bench and peg 7; a stand-in on the strip.
     if (mistakes) { yield* walk(1, () => G.x > A.strip.x0 + 0.3, 'onto the strip', { max: 40 }); note('on the strip: wants a coat'); yield* wait(think(5)); }
-    yield* useAt(['liftItem:coat'], A.coat0, () => G.hold === 'item' || actIs('liftItem')(), 'the coat');
+    yield* useAt(['att:coat'], A.coat0, actIs('att'), 'the coat');
     yield* until(() => G.hold === 'item' && free(), 10, 'carry coat'); note('has the coat');
     yield* walk(Math.sign(A.peg.x - G.x) || 1, () => D.near() === 'att:hang', 'onto the bench', { max: 30 });
     yield* until(() => !G.mantle && G.grounded, 5, 'on the bench');

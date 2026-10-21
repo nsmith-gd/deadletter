@@ -247,8 +247,8 @@ const PIT = { x0: 6.6, x1: 8.0, y: -0.8 };      // drain trench: too wide to jum
 // Chapter 1 Attendance's layout (see its code, further down).
 const OFF6 = 200;
 const ATT = {
-  coat0: 202.9, bench: { x0: 204.9, x1: 205.9, h: 0.42 }, peg: new THREE.Vector3(205.4, 1.18, -0.3),
-  fig: { x: 207.0, z: -0.4, strip: 208.4 }, strip: { x0: 208.0, x1: 208.8 }, gate: { x: 209.4, open: 1.3 },
+  coat0: 202.92, bench: { x0: 204.9, x1: 205.9, h: 0.42 }, peg: new THREE.Vector3(205.4, 1.18, -0.38),
+  fig: { x: 207.0, z: 0, strip: 208.4 }, strip: { x0: 208.0, x1: 208.8 }, gate: { x: 209.4, open: 1.3 },
   fig2: { x: 217.6, z: 0, seat: 219.40 }, desk13: { x0: 219.48, x1: 219.92, h: 0.52 }, pawlX: 220.6, speakerX: 220.97,
   steps: [{ x0: 224.6, x1: 225.4, h: 0.55 }, { x0: 225.6, x1: 226.4, h: 1.05 }, { x0: 226.6, x1: 227.4, h: 1.55 }],
   gallery: { x0: 227.6, x1: 233.0, h: 2.05 }, cycle: { period: 12, out: [1.0, 2.6, 4.2], fold: [5.6, 6.2, 6.8] },
@@ -385,6 +385,7 @@ const WORN = {
   BedroomDado: { base: [.20, .30, .26], dirt: [.10, .13, .10], chip: [.34, .29, .21], rough: .8, chipRough: .9, metal: 0, grime: 4, chipScale: 24, chipAmt: .7 },
   ChildPaint: { base: [.12, .24, .42], dirt: [.06, .09, .12], chip: [.20, .14, .08], rough: .6, chipRough: .8, metal: 0, grime: 8, chipScale: 40, chipAmt: .7 },
   ToyFabric: { base: [.36, .33, .30], dirt: [.18, .15, .12], chip: [.42, .40, .36], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
+  PupilWood: { base: [.36, .27, .17], dirt: [.17, .12, .08], chip: [.46, .38, .27], rough: .7, chipRough: .6, metal: 0, grime: 12, chipScale: 40, chipAmt: .74, dust: [.3, .28, .24], dustAmt: .5 },   // chapter 1: the teaching figures
   LessonPlaster: { base: [.27, .25, .2], dirt: [.14, .12, .09], chip: [.17, .15, .12], rough: .9, chipRough: .85, metal: 0, grime: 3, chipScale: 18, chipAmt: .7, streak: .6 },   // chapter 1, DL-13
   LessonDado: { base: [.13, .19, .15], dirt: [.07, .09, .07], chip: [.25, .23, .19], rough: .75, chipRough: .9, metal: 0, grime: 4, chipScale: 24, chipAmt: .68, streak: .5 },
   LessonLeaf: { base: [.11, .17, .08], dirt: [.06, .08, .04], chip: [.3, .24, .16], rough: .6, chipRough: .5, metal: 0, grime: 10, chipScale: 40, chipAmt: .72, streak: .3 },
@@ -424,7 +425,7 @@ const PLAIN = { NewCable: [[.016, .016, .018], .28, 0], NewSteel: [[.26, .27, .2
   AtriumCloth: [[.2, .13, .065], .9, 0], AtriumWood: [[.085, .06, .04], .88, 0],
   Barricade: [[.4, .06, .04], .7, 0], AtriumVine: [[.055, .068, .036], .9, 0], AtriumMoss: [[.085, .1, .05], .95, 0], AtriumWet: [[.014, .016, .015], .35, 0], CandleWax: [[.55, .5, .4], .6, 0], GaugeNeedle: [[.02, .018, .016], .4, .3], BrassPolished: [[.8, .62, .32], .22, 1], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
-const EMIT = { AttLessonLamp: [1, .78, .42, 0], AttShoot: [.78, .92, .62, .35], AttGlobeLamp: [1, .86, .62, 3], AttCupboardLamp: [1, .72, .42, 6], EndWindowGlow: [1, .64, .32, 9], EndCurtainGlow: [1, .42, .16, 3.2], EndPilotLamp: [1, .6, .18, 6], SecretLampGlow: [1, .78, .5, 6], DenLanternGlow: [1, .55, .22, 2.5],   // pass 6
+const EMIT = { AttBulbGlow: [1, .82, .58, 4], AttLessonLamp: [1, .78, .42, 0], AttShoot: [.78, .92, .62, .35], AttGlobeLamp: [1, .86, .62, 3], AttCupboardLamp: [1, .72, .42, 6], EndWindowGlow: [1, .64, .32, 9], EndCurtainGlow: [1, .42, .16, 3.2], EndPilotLamp: [1, .6, .18, 6], SecretLampGlow: [1, .78, .5, 6], DenLanternGlow: [1, .55, .22, 2.5],   // pass 6
   Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
   CradleStatus: [.35, 1, .45, 0], Spark: [.7, .85, 1, 0], FarGlow: [.45, .55, .6, .09], RelayA: [.75, 1, .82, 0],
@@ -4714,14 +4715,16 @@ function buildAtt(root) {
   // Lamps the game switches get their own materials.
   const lamp = (n, color) => { const o = get(n); if (!o) return null; const m = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0 }); o.traverse((q) => { if (q.isMesh) q.material = m; }); return m; };
   const chain = get('AttChain'); chain && chain.traverse((q) => { if (q.isMesh && q.material.map) { k.chainMap = q.material.map; k.chainMap.wrapT = THREE.RepeatWrapping; k.chainMap.needsUpdate = true; } });
-  k.lampPresent = lamp('AttLampPresent', 0xffd9a0); k.lampCoat = lamp('AttLampCoat', 0xffd9a0); k.pegLamp = lamp('AttPegLamp', 0xffc070); k.lessonLamp = lamp('AttLessonLamp', 0xffd9a0);
+  k.lampPresent = lamp('AttLampPresent', 0x8cffa0); k.lampCoat = lamp('AttLampCoat', 0xffad48); k.pegLamp = lamp('AttPegLamp', 0xffad48);   // COAT 7 and peg 7 share the amber: one cause, one effect k.lessonLamp = lamp('AttLessonLamp', 0xffd9a0);
   // Lights, as proxies for the pool (region 6 only).
   const P = (color, i, d, x, y, z) => { const l = new THREE.PointLight(color, 0, d, 2); l.position.set(x, y, z); l.userData.base = i; l.intensity = i; scene.add(l); l.layers.set(PROXY_LAYER); lightPool.proxies.push(l); return l; };
   const S = (color, i, d, at, to, ang, shadow = false) => { const l = new THREE.SpotLight(color, i, d, ang, 0.6, 2); l.position.set(...at); l.target.position.set(...to); if (shadow && !touchDevice) { l.castShadow = true; l.shadow.mapSize.set(512, 512); l.shadow.bias = -0.001; } scene.add(l, l.target); l.layers.set(PROXY_LAYER); lightPool.proxies.push(l); return l; };
   refs.attLights = [
-    P(0xffe0b8, 2.2, 6, 201.2, 2.6, 0.4), P(0xffd6a0, 1.8, 5, 205.0, 2.4, -0.2), P(0xffe6c4, 2.0, 5, 208.8, 2.5, 0.2), P(0xd8e0e8, 1.2, 5, 213.0, 2.4, -0.6),
+    // DL-12: the bench's globe, the coat on the bin, the strip and gate, down the well behind the arrival door, the corridor's globe, the caretaker's lamp and its spill.
+    P(0xffd199, 2.0, 5, 205.4, 2.5, -0.1), S(0xffd8a8, 4, 4, [202.6, 2.4, 0.6], [202.6, 0.55, -0.59], 0.5), S(0xfff0e0, 6, 5, [208.6, 2.6, 0.8], [208.7, 0.3, -0.2], 0.6),
+    P(0x99b8e6, 0.6, 3, 200.75, 1.6, -2.9), P(0xffd8b0, 1.6, 5, 212.4, 2.5, -0.1), P(0xffb873, 1.8, 3, 213.0, 1.2, -3.0), P(0xffb873, 0.5, 1.6, 212.0, 0.9, -1.5),
     // DL-13: the front seat, the apparatus (shadowed), the steps (shadowed), the case, the shoot, the doors, the desks.
-    S(0xffd8a8, 5, 4, [219.6, 2.6, 0.8], [219.6, 0.4, 0], 0.6), S(0xffe2c0, 9, 7, [222.6, 3.4, 1.6], [222.6, 1.0, -0.6], 0.7, true), S(0xffe6c8, 8, 7, [226.0, 4.1, 0.6], [226.0, 1.0, -0.3], 0.6, true),
+    S(0xffd8a8, 7, 4.5, [219.6, 2.6, 0.8], [219.6, 0.4, 0], 0.6), S(0xffe2c0, 14, 8, [222.6, 3.4, 1.6], [222.6, 1.0, -0.6], 0.7, true), S(0xffe6c8, 16, 8, [226.0, 4.1, 0.6], [226.0, 1.0, -0.3], 0.65, true), P(0xffe0c0, 2.2, 3.2, 226.2, 1.6, 0.9),
     P(0xffd090, 0.9, 1.5, 225.0, 3.42, -1.25), P(0xdcf0c8, 0.5, 0.8, 229.42, 3.0, -0.9), P(0xffd8b0, 0.9, 3.5, 216.6, 2.4, -0.2), P(0xffe0c0, 1.4, 4, 231.2, 3.9, 0.2), P(0xb8c8dc, 0.9, 3.5, 218.3, 3.3, -2.0),
     // DL-14: the globes, the hatch, the stair's top, the cupboard's lamp (the cue to it), and pools on the desk and the crank.
     P(0xffdcaa, 1.6, 5, 234.6, 3.1, 0), P(0xffdcaa, 1.6, 5, 240.75, 3.1, 0), P(0xbcd0e8, 0.8, 3, 239.7, 2.9, 0.3), P(0xffdcaa, 0.8, 3.5, 233.4, 3.4, 0.4),
@@ -4735,7 +4738,7 @@ function buildAtt(root) {
 function resetAtt(cp) {
   const on = ATT_CPS.includes(cp), p = (n) => on && ATT_CPS.indexOf(cp) >= ATT_CPS.indexOf(n);
   game.att = {
-    coat: { x: ATT.coat0, base: 0, state: p('register') ? 'peg' : 'floor', blend: 0, drop: null },
+    coat: { x: ATT.coat0, base: 0, state: p('register') ? 'peg' : 'bin', blend: 0, drop: null },
     pole: { x: ATT.pole0, base: 0, state: p('hatch14') ? 'jam' : 'floor', blend: 0, drop: null },
     fig: { x: p('register') ? ATT.fig.strip : ATT.fig.x, v: 0, state: 'free' },
     fig2: { x: p('gallery13') ? ATT.fig2.seat : ATT.fig2.x, v: 0, state: 'free' },
@@ -4778,6 +4781,7 @@ function limitsAtt(lo, hi) {
 }
 function nearAtt() {
   const a = game.att, x = game.x;
+  if (!game.hold && a.coat.state === 'bin' && game.y < 0.05 && Math.abs(x - ATT.coat0) < 0.35) return 'att:coat';   // off the lost-property bin
   if (game.carry && game.carry === a.coat && Math.abs(game.y - ATT.bench.h) < 0.05 && Math.abs(x - ATT.peg.x) < 0.4) return 'att:hang';
   if (game.carry && game.carry === a.pole && game.y < 0.05 && Math.abs(x - ATT.wheelA) < 0.45 && attOut(a.blinds.a) && !a.jammed) return 'att:jam';
   if (game.hold) return null;
@@ -4786,7 +4790,7 @@ function nearAtt() {
   return null;
 }
 function beginAtt(kind) {
-  const stand = { hang: ATT.peg.x, jam: ATT.wheelA - 0.22, pawl: ATT.pawlX - 0.2, crank: ATT.crankX - 0.22 }[kind];
+  const stand = { coat: ATT.coat0, hang: ATT.peg.x, jam: ATT.wheelA - 0.22, pawl: ATT.pawlX - 0.2, crank: ATT.crankX - 0.22 }[kind];
   game.act = { kind: 'att', what: kind, phase: 'approach', t: 0, standX: stand, face: 1 };
 }
 function updateAttAct(a, dt) {
@@ -4794,11 +4798,20 @@ function updateAttAct(a, dt) {
   if (a.phase === 'approach') {
     if (approachCh1(a, dt)) {
       a.phase = 'act'; a.t = 0;
+      if (a.what === 'coat') { game.yawOverride = Math.PI; setClip('Lift', 0.15); }
       if (a.what === 'hang') { game.yawOverride = Math.PI; setClip(actions.SetDownHigh ? 'SetDownHigh' : 'SetDown', 0.15); }
       if (a.what === 'jam') { game.yawOverride = Math.PI; setClip('SetDown', 0.15); }
       if (a.what === 'pawl') setClip(actions.Pull ? 'Pull' : 'Tug', 0.15);
       if (a.what === 'crank') setClip(actions.Crank ? 'Crank' : 'Tug', 0.15);
     }
+    return;
+  }
+  if (a.what === 'coat') {
+    // He reaches into the bin for the little coat on top of it.
+    const f = actions.Lift.time * FPS, it = s.coat;
+    if (f >= 13 && !a.s1) { a.s1 = true; Sound.lift(); }
+    if (f >= 22) { if (it.state !== 'carried') { it.state = 'carried'; it.x = game.x; } it.blend = smooth((f - 22) / 4); }
+    if (f >= 39) { game.act = null; game.yawOverride = null; game.hold = 'item'; game.carry = it; it.blend = 1; setClip('CarryIdle', 0.2); }
     return;
   }
   if (a.what === 'hang' || a.what === 'jam') {
@@ -4858,9 +4871,9 @@ function updateAtt(dt) {
     if (present && coat && !s.said.thanks) { s.said.thanks = true; Voice.play(g('att_gate_3'), { level: 0.8 }); Sound.bell?.(); }
   }
   const blink = (game.calm ? 1 : (Math.sin(game.clock * 7) > 0 ? 1 : 0.15));
-  if (k.lampPresent) k.lampPresent.emissiveIntensity = present ? 3 : 0.05;
-  if (k.lampCoat) k.lampCoat.emissiveIntensity = coat ? 3 : present ? 3 * blink : 0.05;
-  if (k.pegLamp) k.pegLamp.emissiveIntensity = !coat && present ? 4 * blink : coat ? 0.6 : 0.1;
+  if (k.lampPresent) k.lampPresent.emissiveIntensity = present ? 5.5 : 0.05;
+  if (k.lampCoat) k.lampCoat.emissiveIntensity = coat ? 5.5 : present ? 5.5 * blink : 0.05;
+  if (k.pegLamp) k.pegLamp.emissiveIntensity = !coat && present ? 6 * blink : coat ? 0.8 : 0.1;
   const want = present && coat ? ATT.gate.open : 0, prev = s.gateY;
   if (want > s.gateY) { s.gateV = 0; s.gateY = Math.min(want, s.gateY + 0.5 * dt); }
   else if (want < s.gateY) {
@@ -4924,12 +4937,13 @@ function updateAtt(dt) {
 const PEEL_AXIS = new THREE.Vector3(0.5437, 0.8392, 0).normalize();
 function placeAttItem(it, g, dt) {
   if (!g) return;
-  if (it.state === 'peg') { g.position.copy(ATT.peg); g.quaternion.copy(g.userData.rest.q); return; }
+  if (it.state === 'bin') { g.position.copy(g.userData.rest.p); g.quaternion.copy(g.userData.rest.q); return; }   // folded on the bin, as built
+  if (it.state === 'peg') { g.position.copy(ATT.peg); g.quaternion.identity(); return; }                          // built hanging on its hanger
   if (it.state === 'jam') { g.position.set(235.8, 0.41, -0.62); g.rotation.set(0, 0, -Math.PI / 2); return; }   // laid along the wall through both lugs of A's wheel bracket
   placeItem(it, g, dt);
   // Lying on the floor the coat is folded flat; the pole leans by the stair until he takes it, then rides level in his hands.
   if (g === refs.att.AttPole) { if (it.state === 'carried') g.rotation.set(0, 0, -Math.PI / 2); else g.quaternion.copy(g.userData.rest.q); }
-  if (g === refs.att.AttCoat) { if (it.state === 'carried') g.quaternion.copy(g.userData.rest.q); else g.rotation.set(0, 0, Math.PI / 2); }
+  if (g === refs.att.AttCoat) { if (it.state === 'carried') g.quaternion.identity(); else g.quaternion.copy(g.userData.rest.q); }
 }
 function finishAtt() {
   // Through the hatch: the end of what's built of chapter one, for now.
@@ -4948,7 +4962,7 @@ function frameAtt(x, lead) {
   cx += (THREE.MathUtils.clamp(x + lead, 211.0, 214.5) - cx) * kc; v = lerp3(v, fit([5.8, 1.35, 0.85], 6.4), kc);
   // DL-13: the seat, the brake, the dial and the steps; up on the gallery, the seedlings.
   const kl = smooth((x - 216.2) / 1.0);
-  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 221.6, 223.8) - cx) * kl; v = lerp3(v, fit([7.2, 1.85, 1.25], 10.4), kl); fog += (0.03 - fog) * kl;
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 223.4, 224.6) - cx) * kl; v = lerp3(v, fit([7.4, 2.0, 1.35], 11.0), kl); fog += (0.03 - fog) * kl;   // the seat, the brake, the dial and all three steps
   const kg = smooth((x - 227.4) / 1.0) * (game.y > 1.5 ? 1 : 0.3);
   cx += (THREE.MathUtils.clamp(x + lead, 229.0, 231.2) - cx) * kg; v = lerp3(v, fit([6.0, 2.6, 2.2], 6.4), kg);
   // DL-14: the pole, the desk, both blinds and ledges, the hatch and the crank.
@@ -4972,6 +4986,10 @@ const SECRETS = [
   { id: 'den', name: 'The den', region: 4, ready: true, voice: 'card_den', open: [106.86, 107.48], stand: 107.17, crouchTo: -1.9,
     path: [[107.17, -1.9], [107.6, -2.35]], face: Math.atan2(-0.6, -1.25),
     cam: new THREE.Vector3(109.55, 2.45, -1.75), look: new THREE.Vector3(108.0, 2.0, -3.8), focal: 24 },
+  // Chapter 1, DL-12: lost property, the caretaker's room off the corridor.
+  { id: 'lostprop', name: 'Lost property', region: 6, ready: true, voice: 'att_caretaker', open: [211.6, 212.3], stand: 211.8,
+    path: [[211.8, -2.0], [212.55, -2.45]], face: Math.atan2(0.67, -0.75),
+    cam: new THREE.Vector3(214.15, 1.3, -1.4), look: new THREE.Vector3(212.0, 0.8, -3.1), focal: 24 },
   // Chapter 1, DL-14: the stock cupboard under the stair, its lamp still on. The last teacher's unsent cards.
   { id: 'cupboard', name: 'The stock cupboard', region: 6, ready: true, voice: 'att_teacher', open: [234.95, 235.15], stand: 235.05,
     path: [[235.05, -0.72], [233.5, -0.72], [233.5, -1.45], [233.65, -2.2]], face: Math.atan2(-0.93, -0.45),
