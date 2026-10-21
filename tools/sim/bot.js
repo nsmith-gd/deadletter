@@ -604,7 +604,9 @@ window.__startBot = function (seed, opts = {}) {
     yield* useAt(['att:drawer'], 286.0, actIs('att'), 'the drawer', { max: 30 });
     yield* until(() => S().f17.drawer >= 1 && free(), 10, 'drawer out');
     yield* useAt(['att:read'], 286.0, actIs('att'), 'read it', { max: 20 });
-    yield* until(() => G.ended || S().ended, 30, 'the end of the chapter');
+    // Rev 0.3: forwarded, the stair door opens; he leaves the school by it.
+    yield* until(() => (S().f17.door17 || 0) > 0.75 && free(), 20, 'the stair door open');
+    yield* walk(1, () => G.ended || S().ended, 'up the stair to ring A', { max: 30 });
   }
 
   // Chapter 1 Attendance (DL-12 to DL-14), started from its own checkpoint.

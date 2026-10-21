@@ -291,7 +291,7 @@ const ATT = {
   gallery: { x0: 227.6, x1: 233.0, h: 2.05 }, cycle: { period: 12, out: [1.0, 2.6, 4.2], fold: [5.6, 6.2, 6.8] },
   stair14: { x0: 233.0, x1: 234.4, steps: 5 }, pole0: 234.4, desk: { x0: 235.4, x1: 236.2, h: 0.62 },
   ledgeA: { x0: 236.4, x1: 237.6, h: 1.1 }, ledgeB: { x0: 237.8, x1: 239.0, h: 1.6 }, hatch: { x0: 239.2, x1: 240.2, h: 2.15 },
-  wheelA: 235.0, wheelR: 0.25, crankX: 242.4, x0: 200.3, x1: 295.6,
+  wheelA: 235.0, wheelR: 0.25, crankX: 242.4, x0: 200.3, x1: 298.4,
 };
 const ATT_CPS = ['school', 'register', 'lesson', 'gallery13', 'window', 'hatch14', 'sickbay', 'class6', 'dismissed', 'crossing', 'store', 'workshop'];
 const PLATFORMS = [STEP];                    // the depot cart (DL-01) is a pushable: see the Chapter 1 rework
@@ -466,7 +466,7 @@ const PLAIN = { NewCable: [[.016, .016, .018], .28, 0], NewSteel: [[.26, .27, .2
   AtriumCloth: [[.2, .13, .065], .9, 0], AtriumWood: [[.085, .06, .04], .88, 0],
   Barricade: [[.4, .06, .04], .7, 0], AtriumVine: [[.055, .068, .036], .9, 0], AtriumMoss: [[.085, .1, .05], .95, 0], AtriumWet: [[.014, .016, .015], .35, 0], CandleWax: [[.55, .5, .4], .6, 0], GaugeNeedle: [[.02, .018, .016], .4, .3], BrassPolished: [[.8, .62, .32], .22, 1], Brass: [[.45, .32, .12], .45, .8], DeadBulb: [[.16, .16, .15], .25, 0] };
 const GLASSY = { Window: [[.8, .82, .8], .16, .06], Canister: [[.45, .48, .45], .5, .35] };
-const EMIT = { Att15HideLamp: [1, .7, .4, 5], Att16PitGlow: [1, .42, .14, 2.2], Att17GrowLamp: [.78, .84, 1, 3], Att17Bulb: [1, .78, .5, 5], AttBulbGlow: [1, .82, .58, 4], AttLessonLamp: [1, .78, .42, 0], AttShoot: [.78, .92, .62, .35], AttGlobeLamp: [1, .86, .62, 3], AttCupboardLamp: [1, .72, .42, 6], EndWindowGlow: [1, .64, .32, 9], EndCurtainGlow: [1, .42, .16, 3.2], EndPilotLamp: [1, .6, .18, 6], SecretLampGlow: [1, .78, .5, 6], DenLanternGlow: [1, .55, .22, 2.5],   // pass 6
+const EMIT = { Att15HideLamp: [1, .7, .4, 5], Att16PitGlow: [1, .42, .14, 2.2], Att17GrowLamp: [.78, .84, 1, 3], Att17Bulb: [1, .78, .5, 5], Att17StairLamp: [1, .8, .55, 6], AttBulbGlow: [1, .82, .58, 4], AttLessonLamp: [1, .78, .42, 0], AttShoot: [.78, .92, .62, .35], AttGlobeLamp: [1, .86, .62, 3], AttCupboardLamp: [1, .72, .42, 6], EndWindowGlow: [1, .64, .32, 9], EndCurtainGlow: [1, .42, .16, 3.2], EndPilotLamp: [1, .6, .18, 6], SecretLampGlow: [1, .78, .5, 6], DenLanternGlow: [1, .55, .22, 2.5],   // pass 6
   Glow: [1, .36, .08, 7], GlowDim: [.85, .3, .08, .9], ParcelLamp: [1, .55, .2, 6], LampA: [.85, .3, .08, .9],
   LampB: [.85, .3, .08, .9], LampC: [.85, .3, .08, .9], EyeGlint: [1, .84, .62, 2.5], WorkBulb: [1, .92, .8, 0],
   CradleStatus: [.35, 1, .45, 0], Spark: [.7, .85, 1, 0], FarGlow: [.45, .55, .6, .09], RelayA: [.75, 1, .82, 0],
@@ -2025,6 +2025,7 @@ function updateExit(dt) {
   if (game.region === 5) { updateEnd5(e, dt, v); return; }
   game.x += v * dt;
   if (game.region === 4) game.y = DECK - Math.max(0, game.x - STAIR_X) * 0.83;     // down the stair toward ring B
+  if (game.region === 6) game.y = Math.max(0, game.x - ATT2.door17.landing) * ATT2.door17.rise / ATT2.door17.tread;   // up the stair to ring A
   setClip('Walk', 0.2, v / CLIP_SPEED.Walk);
   stepSounds();
   if (e.t > 0.9 && !game.ended) { game.ended = true; finish(); }
@@ -3840,6 +3841,13 @@ const Letters = (() => {
     document.getElementById('letter-hint').textContent = game.mode === 'paused' ? 'Select to close' : touchDevice ? 'USE to put it away' : 'E to put it away';
     el.hidden = false; openAt = game.clock; at = game.x;
   }
+  // Records read in a close-up are kept without the overlay; a note in the corner says so.
+  function add(id) {
+    if (read.includes(id)) return;
+    read.push(id); Telemetry.event('letterRead', { id });
+    const el2 = document.getElementById('found');
+    if (el2) { el2.textContent = 'Scanned: ' + LETTER_TEXT[id].head; el2.style.opacity = 1; clearTimeout(el2._t); el2._t = setTimeout(() => (el2.style.opacity = 0), 3200); }
+  }
   function scan(id) {
     if (!read.includes(id)) { read.push(id); Telemetry.event('letterRead', { id }); }
     Sound.servo?.(0.35, 900, 1500, 0.02);
@@ -3863,7 +3871,7 @@ const Letters = (() => {
     }
   }
   el.addEventListener('click', () => { if (game.mode === 'paused') close(); });
-  return { scan, show, close, update, list, read: () => read.slice(), restore(ids) { read.length = 0; read.push(...ids.filter((i) => LETTER_TEXT[i])); }, clear() { read.length = 0; close(); }, get open() { return !el.hidden; } };
+  return { add, scan, show, close, update, list, read: () => read.slice(), restore(ids) { read.length = 0; read.push(...ids.filter((i) => LETTER_TEXT[i])); }, clear() { read.length = 0; close(); }, get open() { return !el.hidden; } };
 })();
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const FLAT_LETTER = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);   // flat on the floor, across the lane                                   // kept through respawns and checkpoints; a new game clears it
@@ -5027,7 +5035,7 @@ function buildAtt(root) {
   for (const n of ['AttFigure', 'AttGate', 'AttCoat', 'AttFigure2', 'AttStep1', 'AttStep2', 'AttStep3', 'AttDialHand', 'AttPawl',
     'AttTreeTrunk', 'AttTreeBranch1', 'AttTreeBranch2', 'AttTreeBranch3', 'AttTreeLeaves', 'AttBlindA', 'AttBlindB', 'AttLedgeA', 'AttLedgeB',
     'AttPanelPeel', 'AttCrank', 'AttWheelA', 'AttPole', 'Att15FigA', 'Att15FigB', 'Att15Lift', 'Att15LiftGate', 'Att15LiftCW', 'Att15Door', 'Att15Flap',
-    'Att16Lever', 'Att16Bridge', 'Att16Latch', 'Att16CW', 'Att17Drawer', 'Att17Tray']) { k[n] = get(n); if (k[n]) k[n].userData.rest = { p: k[n].position.clone(), q: k[n].quaternion.clone(), s: k[n].scale.clone() }; }
+    'Att16Lever', 'Att16Bridge', 'Att16Latch', 'Att16CW', 'Att17Drawer', 'Att17Tray', 'Att17Door']) { k[n] = get(n); if (k[n]) k[n].userData.rest = { p: k[n].position.clone(), q: k[n].quaternion.clone(), s: k[n].scale.clone() }; }
   // Lamps the game switches get their own materials.
   const lamp = (n, color) => { const o = get(n); if (!o) return null; const m = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0 }); o.traverse((q) => { if (q.isMesh) q.material = m; }); return m; };
   const chain = get('AttChain'); chain && chain.traverse((q) => { if (q.isMesh && q.material.map) { k.chainMap = q.material.map; k.chainMap.wrapT = THREE.RepeatWrapping; k.chainMap.needsUpdate = true; } });
@@ -5065,6 +5073,8 @@ function buildAtt(root) {
     S(0xffc27a, 5, 4, [285.95, 2.15, -0.8], [285.95, 0.0, -0.8], 1.0), S(0xffcc8c, 3, 2.5, [285.04, 1.34, -0.9], [285.5, 0.9, -0.7], 0.8),
     S(0xffd69e, 4, 4, [286.2, 1.8, 1.6], [286.2, 0.3, -0.45], 0.35), S(0xbdd1ff, 0, 3, [290.5, 1.57, -1.05], [290.5, 0.9, -1.05], 0.9),   // rev 0.3: the grow lamp is off (no one tends the trays)
     P(0xffc890, 0.6, 3, 295.25, 2.2, -0.95), P(0xffd8a8, 0.8, 4, 281.2, 2.6, -0.2),
+    // Rev 0.3: the stair up to ring A, warm from above, seen through the door's wired glass and then open.
+    S(0xffc890, 6, 7, [298.6, 4.6, -0.2], [298.2, 0.8, -0.1], 0.6), P(0xffd8a8, 0.6, 3, 299.3, 3.5, -0.84), P(0xffc890, 0.5, 2.5, 296.5, 0.8, -0.1),
     // Pass 8: A's wheel and the pole through it, in their own low pool, so the jam reads from across the room.
     S(0xffd8a8, 3.5, 4, [235.3, 2.6, 1.2], [234.95, 0.7, -0.62], 0.42),
   ];
@@ -5336,6 +5346,7 @@ const ATT2 = {
   hooks: [new THREE.Vector3(275.45, 0.34, -0.55), new THREE.Vector3(274.95, 0.34, -0.55)],   // the bay's two empty drop hooks (dl16.py REPORT)
   cw: { x0: 277.8, x1: 279.2, lift: 2.0 },
   drawer: { x: 286.0, out: 0.45 }, tray0: 285.7, trayKeepOut: [285.15, 286.85], trayPark: 284.7,
+  door17: { x: 295.8, landing: 297.1, tread: 0.26, rise: 0.18 },          // rev 0.3: the stair door and the stair up (dl17.py REPORT)
   x1: 295.6,
 };
 // Rev 0.3: the figures' rail docks only at the friends' two places; Mara's is an ordinary chair off the rail, with a
@@ -5415,6 +5426,8 @@ function limitsAtt2(lo, hi) {
   if (s.f16.cw < 0.75) { if (x < ATT2.cw.x0) hi = Math.min(hi, ATT2.cw.x0 - HALF); else lo = Math.max(lo, ATT2.cw.x1 + HALF); }
   // The pit's walls, if he has gone down into it.
   if (game.y < -0.3) { lo = Math.max(lo, ATT2.pit.x0 + HALF); hi = Math.min(hi, ATT2.pit.x1 - HALF); }
+  // Rev 0.3: DL-17's stair door, in the workshop's end wall (295.8), shut until she is forwarded.
+  if ((s.f17.door17 || 0) < 0.7) hi = Math.min(hi, ATT2.door17.x - HALF);
   return [lo, hi];
 }
 function nearAtt2Item() {
@@ -5506,6 +5519,7 @@ function updateAtt2Act(a, dt) {
     if (a.t > 0.2 && !a.done) { a.done = true; s.f17.readAt = game.clock; Telemetry.event('placement', {}); }
     if (a.t > 6.0 && !s.f17.read) {
       s.f17.read = true; s.f17.readDone = game.clock; game.act = null; game.yawOverride = null; setClip('Idle', 0.3);
+      Letters.add('drawing17'); setTimeout(() => Letters.add('placement17'), 1600);     // rev 0.3: the records scan themselves
     }
   }
 }
@@ -5580,8 +5594,13 @@ function updateAtt2(dt) {
     const t = game.clock - d.readDone;
     if (t > 0.3 && !d.checked && !game.act) { d.checked = true; if (playQuirk('CheckLabel', false)) Object.assign(game.act, { holdFor: 2.2, start: game.clock }); }
     if (t > 1.2 && !d.stamped) { d.stamped = true; stampLabel('FWD  WORKS  RING A', [0.42, 0.42], 0.12); Sound.clank(); }
-    if (t > 5.5) { s.ended = true; game.checkpoint = 'workshop'; finishAtt(); }
+    // Rev 0.3: the threshold, staged. Forwarded, the stair door at the end of the workshop swings open on a lit stair
+    // up to ring A's residential access; he looks round at it, and leaves the school by it himself.
+    if (t > 2.8 && !d.doorOpening) { d.doorOpening = true; d.doorAt = game.clock; Sound.creak?.(0.7); Telemetry.event('door17', {}); }
+    if (d.doorOpening && t > 3.2 && t < 6.2 && !game.act) game.lookAt = 'door17'; else if (game.lookAt === 'door17') game.lookAt = null;
+    if (game.region === 6 && game.x > ATT2.door17.landing + 0.12 && !game.act) { s.ended = true; game.checkpoint = 'workshop'; finishAtt(); }
   }
+  if (d.doorOpening) d.door17 = Math.min(1, (d.door17 || 0) + dt / 1.8);
   // Back out to the lane after letting go of a figure.
   if (game.region === 6 && !game.act && game.hold !== 'push' && game.z < 0 && game.x > 248) game.z = Math.min(0, game.z + 0.45 * dt);
   // Into the pit (the bridge up): back to the checkpoint.
@@ -5626,6 +5645,7 @@ function updateAtt2(dt) {
   if (k.Att16Latch) { k.Att16Latch.quaternion.copy(k.Att16Latch.userData.rest.q); k.Att16Latch.rotateZ(Math.PI / 2 * (b.latched ? 1 : 0)); }   // dropped onto the deck's eye
   if (k.Att16CW) k.Att16CW.position.y = k.Att16CW.userData.rest.p.y + ATT2.cw.lift * smooth(b.cw);
   if (k.Att17Drawer) k.Att17Drawer.position.z = k.Att17Drawer.userData.rest.p.z + ATT2.drawer.out * smooth(d.drawer);
+  if (k.Att17Door) { k.Att17Door.quaternion.copy(k.Att17Door.userData.rest.q); k.Att17Door.rotateY(Math.PI / 2 * smooth(d.door17 || 0)); }
   if (k.hideLamp) k.hideLamp.emissiveIntensity = 4;
   if (k.growLamp) k.growLamp.emissiveIntensity = 0;              // rev 0.3: off, over dead trays
   placeTray17(d.tray, k.Att17Tray, dt);
@@ -5651,7 +5671,8 @@ function frameAtt2(x, lead, cx, v, fog) {
   const k16 = smooth((x - 263.4) / 1.4);
   cx += (THREE.MathUtils.clamp(x + lead * 0.5, 267.4, 275.0) - cx) * k16; v = lerp3(v, fit([7.2, 1.8, 1.2], 10.0), k16);
   const k17 = smooth((x - 279.4) / 1.4);
-  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 284.2, 290.4) - cx) * k17; v = lerp3(v, fit([6.4, 1.6, 1.1], 8.6), k17);
+  const open17 = a && a.f17 ? smooth(a.f17.door17 || 0) : 0;
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 284.2, 290.4 + 3.4 * open17) - cx) * k17; v = lerp3(v, fit([6.4, 1.6, 1.1], 8.6), k17);
   return { cx, v, fog };
 }
 
@@ -6783,11 +6804,11 @@ function updateCharacter(dt, playing) {
   // Curiosity as the hint system: after a few idle seconds near something useful he looks at it.
   // When the rack lights come on, he looks before anything else.
   const rk = game.clock - game.revealTime;
-  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform' || game.lookAt === 'window' || game.lookAt === 'wheelA' || game.lookAt === 'tray';
+  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform' || game.lookAt === 'window' || game.lookAt === 'wheelA' || game.lookAt === 'tray' || game.lookAt === 'door17';
   // The window is far above: look along the line to it (a point 2 m out on it, within the head look's reach).
   const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2)
     : game.lookAt === 'window' ? tv4.copy(END5.win).sub(tv3.set(game.x, game.y + 0.6, game.z)).setLength(2).add(tv3)
-    : game.lookAt === 'wheelA' ? tv4.set(ATT.wheelA, 0.35, -0.6) : game.lookAt === 'tray' ? tv4.set(CW8.trayX, CG.top + 0.3, -0.6) : REVEAL_LOOK;
+    : game.lookAt === 'wheelA' ? tv4.set(ATT.wheelA, 0.35, -0.6) : game.lookAt === 'tray' ? tv4.set(CW8.trayX, CG.top + 0.3, -0.6) : game.lookAt === 'door17' ? tv4.set(ATT2.door17.x, 1.1, 0) : REVEAL_LOOK;
   // The early curiosities: he turns his head to each as he passes, the first time.
   const glance = !looking && glanceCurio();
   if (glance) glance.glanceT = (glance.glanceT || 0) + dt;                // one look each, the first time he passes
