@@ -111,6 +111,8 @@ FALLBACK_PLAIN = {
 }
 FALLBACK_EMIT = {}
 ATLAS = 'Dl12AtlasMat'
+LORE = 'Dl12LoreMat'
+LORE_PATH = os.path.join(TEX, 'dl12_lore.png')
 
 
 def material(name):
@@ -130,12 +132,13 @@ def material(name):
     if name in FALLBACK_PLAIN:
         c, r, mtl = FALLBACK_PLAIN[name]
         return simple_material(name, c, r, metallic=mtl)
-    if name == ATLAS:
-        if not os.path.exists(ATLAS_PATH):
-            make_atlas(ATLAS_PATH)
+    if name in (ATLAS, LORE):
+        path = ATLAS_PATH if name == ATLAS else LORE_PATH
+        if not os.path.exists(path):
+            (make_atlas if name == ATLAS else make_lore)(path)
         mt, nt, bsdf = d17._new_material(name)
         tex = nt.nodes.new('ShaderNodeTexImage')
-        tex.image = bpy.data.images.load(ATLAS_PATH, check_existing=True)
+        tex.image = bpy.data.images.load(path, check_existing=True)
         nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
         bsdf.inputs['Roughness'].default_value = 0.8
         return mt
@@ -1080,10 +1083,10 @@ def build_corridor(B):
     B.box((d0 - 0.002, d0), cy, (0.0, dh), 'HomePlaster')
     B.box((d1, d1 + 0.002), cy, (0.0, dh), 'HomePlaster')
     # a notice board, a stopped clock, a radiator, a stack of small chairs
-    B.box((209.95, 210.95), (CORR_Y - 0.03, CORR_Y), (1.1, 1.66), 'CrateWood')
-    B.face_quad((210.45, CORR_Y - 0.031, 1.38), 0.92, 0.48, (0, -1, 0), 'cork')
-    for (nx, nz, cell, w, h, a) in ((210.2, 1.45, 'notice', 0.22, 0.22, -3), (210.62, 1.5, 'notice2', 0.24, 0.085, 4),
-                                     (210.62, 1.3, 'ltag3', 0.12, 0.075, -8)):
+    B.box((210.62, 211.36), (CORR_Y - 0.03, CORR_Y), (1.1, 1.66), 'CrateWood')
+    B.face_quad((210.99, CORR_Y - 0.031, 1.38), 0.68, 0.48, (0, -1, 0), 'cork')
+    for (nx, nz, cell, w, h, a) in ((210.82, 1.45, 'notice', 0.22, 0.22, -3), (211.16, 1.5, 'notice2', 0.24, 0.085, 4),
+                                     (211.16, 1.3, 'ltag3', 0.12, 0.075, -8)):
         Mn = Matrix.Translation((nx, CORR_Y - 0.033, nz)) @ Matrix.Rotation(math.radians(a), 4, 'Y')
         pts = [Mn @ Vector(p) for p in ((-w / 2, 0, -h / 2), (w / 2, 0, -h / 2), (w / 2, 0, h / 2), (-w / 2, 0, h / 2))]
         B.quad(pts, ATLAS, cell_uv(cell))
@@ -1306,6 +1309,103 @@ def build_room(B, rnd):
     add_sphere(B.bm, (212.8, 2.4, zc - 0.34), 0.03, mat=B('DeadBulb'), seg=8)
 
 
+
+# =====================================================================================================================
+# The layers of time (the director's lore): the order era's motto and rules, the protective era's notice and headcount
+# =====================================================================================================================
+LW, LH = 1024, 256
+LCELLS = {
+    'motto': (0, 0, 1024, 72),          # ORDER ABOVE ALL, painted on the plaster, half painted over
+    'rules': (0, 72, 320, 256),         # the order era's enamel rules board
+    'safety': (320, 72, 576, 256),      # the protective era's notice, newer and brighter
+    'headcount': (576, 72, 832, 256),   # the roll, in chalk: 214 ... 1
+}
+
+
+def lore_uv(cell):
+    x0, y0, x1, y1 = LCELLS[cell]
+    return x0 / LW, 1 - y1 / LH, x1 / LW, 1 - y0 / LH
+
+
+def make_lore(path):
+    from PIL import Image, ImageDraw, ImageFilter
+    rnd = random.Random(1213)
+    img = Image.new('RGB', (LW, LH), (60, 56, 50))
+    d = ImageDraw.Draw(img, 'RGBA')
+    # The motto: big stencilled capitals in old oxide paint on a dark band, and over the right half a later coat of
+    # cream, brushed on in strokes, the letters ghosting through it.
+    x0, y0, x1, y1 = LCELLS['motto']
+    _noise_fill(img, LCELLS['motto'], (122, 108, 84), 8, 91)
+    d.rectangle((x0, y0 + 4, x1, y0 + 8), fill=(70, 52, 40, 160))
+    d.rectangle((x0, y1 - 8, x1, y1 - 4), fill=(70, 52, 40, 160))
+    d.text(((x0 + x1) / 2, (y0 + y1) / 2 + 2), 'ORDER  ABOVE  ALL', font=_font(60, 'serif'), fill=(66, 40, 30), anchor='mm')
+    over = Image.new('RGBA', (LW, LH), (0, 0, 0, 0))
+    od = ImageDraw.Draw(over)
+    xa = 430
+    for k in range(40):                                                     # brush strokes, ragged at the left edge
+        yy = y0 + k * 1.8
+        xs = xa + rnd.uniform(-40, 30) + 18 * math.sin(k * 0.7)
+        od.line((xs, yy, x1, yy + rnd.uniform(-1, 1)), fill=(150, 138, 112, rnd.randint(200, 236)), width=3)
+    img.paste(over, (0, 0), over)
+    # The rules board: enamel, the school's green, cream capitals.
+    x0, y0, x1, y1 = LCELLS['rules']
+    cream, green = (214, 204, 176), (36, 60, 46)
+    d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(24, 34, 28))
+    d.rounded_rectangle((x0 + 4, y0 + 4, x1 - 5, y1 - 5), radius=10, fill=green, outline=cream, width=4)
+    d.text(((x0 + x1) / 2, y0 + 26), 'RULES', font=_font(30), fill=cream, anchor='mm')
+    d.line((x0 + 40, y0 + 44, x1 - 40, y0 + 44), fill=cream, width=2)
+    for k, line in enumerate(('PUPILS WILL FORM', 'ONE LINE', 'AND WAIT IN SILENCE', 'ORDER ABOVE ALL')):
+        d.text(((x0 + x1) / 2, y0 + 70 + k * 30), line, font=_font(26 if k < 3 else 20), fill=cream, anchor='mm')
+    for _ in range(14):                                                     # chips in the enamel
+        cx, cy = rnd.uniform(x0 + 6, x1 - 6), rnd.uniform(y0 + 6, y1 - 6)
+        d.ellipse((cx - 3, cy - 2, cx + 3, cy + 2), fill=(18, 18, 16))
+    # The safety notice: newer, printed, pale yellow, a black border; worded anxiously.
+    x0, y0, x1, y1 = LCELLS['safety']
+    d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(222, 200, 92))
+    d.rectangle((x0 + 6, y0 + 6, x1 - 7, y1 - 7), outline=(26, 24, 20), width=5)
+    d.text(((x0 + x1) / 2, y0 + 30), 'NOTICE', font=_font(30), fill=(26, 24, 20), anchor='mm')
+    for k, line in enumerate(('PROTECTED PUPILS', 'MUST REMAIN WITH', 'AN ATTENDANT', 'AT ALL TIMES')):
+        d.text(((x0 + x1) / 2, y0 + 70 + k * 27), line, font=_font(23), fill=(26, 24, 20), anchor='mm')
+    # The headcount board: a slate in a wooden frame, ON ROLL painted, the chalk numbers crossed out, each one smaller.
+    x0, y0, x1, y1 = LCELLS['headcount']
+    d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(92, 66, 40))
+    _noise_fill(img, (x0 + 8, y0 + 8, x1 - 8, y1 - 8), (34, 40, 36), 10, 92)
+    d.text(((x0 + x1) / 2, y0 + 24), 'ON ROLL', font=_font(24), fill=(200, 192, 164), anchor='mm')
+    chalk = (206, 204, 194, 220)
+    rows = [('214', 40, 64, 60), ('160', 36, 150, 58), ('97', 32, 66, 106), ('31', 28, 140, 104), ('9', 24, 196, 98),
+            ('4', 20, 70, 144), ('1', 15, 128, 146)]
+    for k, (txt, size, tx, ty) in enumerate(rows):
+        d.text((x0 + tx, y0 + ty), txt, font=_font(size, 'hand'), fill=chalk, anchor='mm')
+        if txt != '1':
+            w = size * 0.32 * len(txt) + 6
+            d.line((x0 + tx - w, y0 + ty + 4, x0 + tx + w, y0 + ty - 5), fill=chalk, width=2)
+    for _ in range(30):                                                     # old chalk dust and smears
+        cx, cy = rnd.uniform(x0 + 10, x1 - 10), rnd.uniform(y0 + 40, y1 - 10)
+        d.ellipse((cx - 8, cy - 3, cx + 8, cy + 3), fill=(200, 200, 190, 18))
+    img = img.filter(ImageFilter.GaussianBlur(0.5))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    img.quantize(96, method=Image.Quantize.MEDIANCUT).save(path, optimize=True)
+
+
+def build_lore(B):
+    """Static dressing only: the motto high over the frieze, the rules board by the door, the safety notice on the
+    gate's front post, the headcount board on the corridor wall just past the gate."""
+    yf = WALL_Y - 0.003
+    B.quad([(202.3, yf, 2.72), (208.1, yf, 2.72), (208.1, yf, 2.96), (202.3, yf, 2.96)], LORE, lore_uv('motto'))
+    B.box((201.36, 201.96), (WALL_Y - 0.02, WALL_Y), (2.36, 2.79), 'DepotGreen')
+    B.quad([(201.38, WALL_Y - 0.021, 2.38), (201.94, WALL_Y - 0.021, 2.38), (201.94, WALL_Y - 0.021, 2.77),
+            (201.38, WALL_Y - 0.021, 2.77)], LORE, lore_uv('rules'))
+    gy0 = GATE[2] - 0.1
+    B.box((GATE_X - 0.17, GATE_X + 0.17), (gy0 - 0.012, gy0), (1.12, 1.5), 'WornIron')
+    B.quad([(GATE_X - 0.16, gy0 - 0.013, 1.13), (GATE_X + 0.16, gy0 - 0.013, 1.13), (GATE_X + 0.16, gy0 - 0.013, 1.49),
+            (GATE_X - 0.16, gy0 - 0.013, 1.49)], LORE, lore_uv('safety'))
+    B.box((209.78, 210.46), (CORR_Y - 0.03, CORR_Y), (1.08, 1.6), 'CrateWood')
+    B.quad([(209.8, CORR_Y - 0.031, 1.1), (210.44, CORR_Y - 0.031, 1.1), (210.44, CORR_Y - 0.031, 1.58),
+            (209.8, CORR_Y - 0.031, 1.58)], LORE, lore_uv('headcount'))
+    B.box((209.8, 210.44), (CORR_Y - 0.07, CORR_Y - 0.03), (1.06, 1.08), 'CrateWood')        # its chalk ledge
+    for k, dx in enumerate((0.12, 0.2)):
+        B.box((209.8 + dx, 209.8 + dx + 0.05), (CORR_Y - 0.06, CORR_Y - 0.045), (1.08, 1.094), 'HomePlaster')
+
 # =====================================================================================================================
 # Voice props (art/common/voice_props.py)
 # =====================================================================================================================
@@ -1339,6 +1439,8 @@ def place_voice_props(B):
 def build_set(dl01, m, coll):
     if not os.path.exists(ATLAS_PATH) or os.environ.get('DL12_RETEX'):
         make_atlas(ATLAS_PATH)
+    if not os.path.exists(LORE_PATH) or os.environ.get('DL12_RETEX'):
+        make_lore(LORE_PATH)
     rnd = random.Random(1201)
     B = Batch()
     def step(label, fn, *a):
@@ -1357,6 +1459,7 @@ def build_set(dl01, m, coll):
     step('corridor', build_corridor, B)
     step('lamps', build_lamps, B)
     step('room', build_room, B, rnd)
+    step('lore', build_lore, B)
     props = step('voice props', place_voice_props, B)
     static = B.done('AttCloakroom', coll)
     # The free pupil model, on the lane between the bench and the strip; the stand's metal is handled bright.
