@@ -60,7 +60,10 @@ RAIL_Y = 0.55                      # the figures' rail: two rails either side of
 RAIL_G = 0.08                      # half the gauge (rails at y 0.47 and 0.63)
 RAIL_H = 0.03                      # rail top above what it lies on
 CHAN = (0.39, 0.71)                # the timber channel the rails lie in
-HATCH = (248.55, 249.35, 1.6, 2.4)     # x0, x1, sill, head: the duct's end in the back wall
+HATCH = (248.55, 249.35, 1.6, 2.4)     # x0, x1, sill, head: the duct's end in the back wall (expansion: a vent, grilled)
+LDOOR = (-0.45, 0.45, 1.6, 2.45)       # expansion: the sick bay's door in LWALL from the corridor stair: y0, y1, sill, head
+LDOOR_LINING = 0.02                    # the linings stand outside the clear opening (the wall's hole is this much bigger)
+SIGN15 = (247.32, 247.94, 2.70, 2.855) # SICK BAY's blade sign off LWALL's corridor face (plane y 0): x0, x1, z0, z1
 DUCT_Y = (1.4, 2.6)
 BAL = (248.15, 251.4, -0.3, 1.4, 1.6)  # the sick bay balcony: x0, x1, y0, y1, top
 BAL_UNDER = 1.5                        # clear height under it
@@ -974,8 +977,14 @@ def build_shell(B):
     for x, s in ((ax0, 1), (ax1, -1)):
         B.box('PigeonWood', min(x, x + s * 0.02), max(x, x + s * 0.02), yb1, ay, 0.0, 0.12)
         B.box('CrateWood', min(x, x + s * 0.03), max(x, x + s * 0.03), yb0, ay, 0.98, 1.03)
-    # The left wall (its face 248.15) and the ceiling, with a plaster cornice along the back.
-    wall(B, LWALL[0], LWALL[1], FRONT_Y, yb0, 0.0, CEIL)
+    # The left wall (its face 248.15) and the ceiling, with a plaster cornice along the back. Expansion: the sick bay's
+    # door through it at balcony level (build_left_door), from the corridor stair.
+    dy0, dy1, dz0, dz1 = LDOOR
+    t = LDOOR_LINING
+    wall(B, LWALL[0], LWALL[1], FRONT_Y, dy0 - t, 0.0, CEIL)
+    wall(B, LWALL[0], LWALL[1], dy1 + t, yb0, 0.0, CEIL)
+    wall(B, LWALL[0], LWALL[1], dy0 - t, dy1 + t, 0.0, dz0)
+    wall(B, LWALL[0], LWALL[1], dy0 - t, dy1 + t, dz1 + t, CEIL)
     B.box('LessonPlaster', X0, PART[1], FRONT_Y, yb1, CEIL, CEIL + 0.15)
     B.box('LessonPlaster', X0, ax0, yb0 - 0.1, yb0, CEIL - 0.08, CEIL)
     B.box('LessonPlaster', ax1, PART[0], yb0 - 0.1, yb0, CEIL - 0.08, CEIL)
@@ -989,12 +998,12 @@ def build_shell(B):
     B.sbox('sw_dark', 247.85, hx1 + 0.1, yb1, DUCT_Y[1], hz1, hz1 + 0.1)
     B.sbox('sw_dark', 247.85, hx1 + 0.1, DUCT_Y[1], DUCT_Y[1] + 0.1, hz0 - 0.1, hz1 + 0.1)
     B.sbox('sw_dark', hx1, hx1 + 0.1, yb1, DUCT_Y[1], hz0, hz1)
-    # The hatch's iron frame and its door, hanging open inward against the duct's right side.
+    # The hatch's iron frame. Expansion: no longer the way in (he comes from the corridor stair, through LDOOR); its
+    # door is gone and the duct's end is closed by a cast-iron grille: a vent.
     for a, b, c, d in ((hx0 - 0.05, hx0, hz0 - 0.03, hz1 + 0.05), (hx1, hx1 + 0.05, hz0 - 0.03, hz1 + 0.05),
                        (hx0 - 0.05, hx1 + 0.05, hz1, hz1 + 0.05), (hx0 - 0.05, hx1 + 0.05, hz0 - 0.03, hz0 + 0.005)):
         B.box('WornIron', a, b, yb0 - 0.025, yb0, c, d)
-    B.box('PigeonWood', hx1 - 0.035, hx1 - 0.005, yb1 + 0.02, yb1 + 0.8, hz0 + 0.02, hz1 - 0.02)
-    B.box('WornIron', hx1 - 0.04, hx1 - 0.0, yb1 + 0.1, yb1 + 0.16, hz0 + 0.15, hz0 + 0.25)
+    build_vent_grille(B)
 
 
 def build_rails(B, x0, x1, z, stop_left=False, stop_right=False, channel=True):
@@ -1011,6 +1020,55 @@ def build_rails(B, x0, x1, z, stop_left=False, stop_right=False, channel=True):
             s = 1 if x == x0 else -1
             B.box('WornIron', min(x, x + s * 0.08), max(x, x + s * 0.08), RAIL_Y - 0.11, RAIL_Y + 0.11, z, z + 0.12)
             B.box('CrateWood', min(x + s * 0.08, x + s * 0.1), max(x + s * 0.08, x + s * 0.1), RAIL_Y - 0.09, RAIL_Y + 0.09, z + 0.03, z + 0.1)
+
+
+def build_vent_grille(B):
+    """The duct's end, closed: a cast-iron grille set in the hatch's frame, just behind the wall's face; a border
+    flat, upright bars and two cross flats, a bolt at each corner. The duct stays dark behind it."""
+    hx0, hx1, hz0, hz1 = HATCH
+    gy0, gy1 = BACK_Y + 0.01, BACK_Y + 0.035
+    w = 0.035
+    for a, b, c, d in ((hx0, hx0 + w, hz0, hz1), (hx1 - w, hx1, hz0, hz1), (hx0, hx1, hz0, hz0 + w), (hx0, hx1, hz1 - w, hz1)):
+        B.box('WornIron', a, b, gy0, gy1, c, d)
+    n = 13
+    for k in range(1, n):
+        x = hx0 + w + (hx1 - hx0 - 2 * w) * k / n
+        B.box('WornIron', x - 0.007, x + 0.007, gy0 + 0.004, gy1 - 0.004, hz0 + w, hz1 - w)
+    for z in (hz0 + (hz1 - hz0) / 3, hz0 + 2 * (hz1 - hz0) / 3):
+        B.box('WornIron', hx0 + w, hx1 - w, gy0 + 0.002, gy1 - 0.002, z - 0.012, z + 0.012)
+    for x in (hx0 + w / 2, hx1 - w / 2):
+        for z in (hz0 + w / 2, hz1 - w / 2):
+            B.cyl('WornIron', (x, gy0, z), (x, gy0 - 0.012, z), 0.009, seg=6)
+
+
+def build_left_door(B):
+    """Expansion (docs/chapter1_expansion_build.md, DL-15 changes): the sick bay's door in the left wall, at balcony
+    level, from the corridor stair (DL-14b): clear opening y -0.45..0.45, sill 1.6, head 2.45. Timber linings in the
+    reveal, a worn sill, an architrave on both faces; on the corridor face, a SICK BAY enamel on a blade bracket (in the
+    plane y 0, its face to the camera, as DL-17's stair sign hangs)."""
+    x0, x1 = LWALL
+    dy0, dy1, dz0, dz1 = LDOOR
+    t = LDOOR_LINING
+    # Linings (jambs and head) and the sill, flush with the balcony's deck (top 1.6).
+    B.box('PigeonWood', x0, x1, dy0 - t, dy0, dz0, dz1 + t)
+    B.box('PigeonWood', x0, x1, dy1, dy1 + t, dz0, dz1 + t)
+    B.box('PigeonWood', x0, x1, dy0 - t, dy1 + t, dz1, dz1 + t)
+    B.box('CrateWood', x0 - 0.02, x1 + 0.005, dy0 - t, dy1 + t, dz0 - 0.03, dz0)
+    # Architraves, both faces: two legs and a head, from the sill up.
+    aw = 0.07
+    for xa, xb in ((x1, x1 + 0.025), (x0 - 0.025, x0)):
+        B.box('PigeonWood', xa, xb, dy0 - t - aw, dy0 - t, dz0, dz1 + t + aw)
+        B.box('PigeonWood', xa, xb, dy1 + t, dy1 + t + aw, dz0, dz1 + t + aw)
+        B.box('PigeonWood', xa, xb, dy0 - t - aw, dy1 + t + aw, dz1 + t, dz1 + t + aw)
+    # The sign: SICK BAY (the atlas's enamel), hung off the corridor face over the door.
+    sx0, sx1, sz0, sz1 = SIGN15
+    B.box('WornIron', sx0 - 0.012, sx1 + 0.012, -0.012, 0.012, sz0 - 0.012, sz1 + 0.012)
+    B.decal(sx0, sx1, sz0, sz1, -0.0125, 'sickbay')
+    bz = sz1 + 0.055
+    B.box('WornIron', sx0 - 0.05, x0, -0.01, 0.01, bz - 0.01, bz + 0.01)        # the bracket arm
+    B.box('WornIron', x0 - 0.012, x0, -0.05, 0.05, sz1 - 0.06, bz + 0.03)       # its wall plate
+    for hx in (sx0 + 0.08, sx1 - 0.08):                                          # two hangers
+        B.cyl('WornIron', (hx, 0.0, bz - 0.01), (hx, 0.0, sz1 + 0.012), 0.004, seg=5)
 
 
 # =====================================================================================================================
@@ -1754,6 +1812,7 @@ def build_set(dl01, m, coll):
     make_drawing(DRAW_PATH)
     B = MB()
     build_shell(B)
+    build_left_door(B)
     build_balcony(B)
     build_lift_static(B)
     build_rails(B, FLOOR_RAIL[0], FLOOR_RAIL[1], 0.0)

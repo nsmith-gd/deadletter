@@ -90,6 +90,53 @@ PENDANT = (285.95, 0.80, 2.215)                 # the lit pendant's bulb over th
 LAMP_HEAD = Vector((285.0, 0.92, 1.40))         # the bench lamp's head
 LAMP_AIM = Vector((285.5, 0.70, 0.90))
 DOOR_LAMP = (295.25, 1.20, 2.25)
+BROOM = (295.52, 1.12)                          # the broom's head, in the corner by the stair door (it leant by the sink)
+
+# Vance's apprentice test rig (docs/chapter1_expansion_build.md, DL-17 changes), between the sink and the stair door.
+# The tank on the wall feeds a down-pipe; the valve on it (turned with his T-key) lets the tank through to a manifold
+# under the bench; three sluices A, B, C on the bench front open three brass pipes that rise behind the bench and cross:
+# A feeds bed 3, B bed 1, C bed 2. A float in bed 1 hangs on a chain that runs up to a pulley, along under the ceiling
+# and down to the latch on the stair door.
+VALVE = (292.55, 0.50, 0.70)                    # Att17Valve: the wheel's centre (the wheel faces the camera, -y)
+VALVE_R = 0.085                                 # the wheel's radius
+DOWN_Y = 0.60                                   # the down-pipe's axis y (the valve's body on it; its spindle comes forward)
+SPINDLE_TIP = 0.47                              # the spindle's square end (y): Att17ValveKey's socket goes on it here
+TANK = (293.0, 294.2, 0.76, 1.24, 1.7, 2.3)     # x0, x1, y0, y1, z0, z1: on two wall brackets, centre y 1.0
+SIGHT = (293.95, 0.735, 1.78, 2.22)             # the sight glass on the tank's front: x, axis y, z0 (its bottom), z1
+RIG = (293.05, 295.3, 0.35, 0.95, 0.55)         # the test bench: x0, x1, y0, y1, top
+BEDS = ((293.1, 293.75), (293.8, 294.45), (294.5, 295.15))   # beds 1, 2, 3: x0, x1
+BED_Y = (0.45, 0.85)
+BED_T = 0.015                                   # the trays' walls and floors
+BED_TOP = RIG[4] + 0.15                         # their rims (trays 0.15 deep)
+WATER_Z = RIG[4] + BED_T                        # the water's bottom, the trays' floor: Att17Water1/2/3's origins
+WATER_D = 0.13                                  # full
+SOIL_T = 0.015                                  # a skin of dry soil on each tray's floor
+BED_NAMES = ('M. D.', 'R. A.', 'T. O.')
+SLUICES = (('A', 293.45, 3), ('B', 294.1, 1), ('C', 294.8, 2))   # lever, pivot x, the bed its pipe feeds
+SLUICE_PIVOT = (0.33, 0.45)                     # the levers' pivots: y (on the bench's front panel), z
+LEVER_L = 0.15                                  # pivot to the top of the grip
+MANIFOLD = (0.60, 0.30)                         # the feed under the bench: y, z (from the down-pipe to the last cock)
+COCK_Z = 0.42                                   # the sluices' cocks on the manifold, behind the front panel
+RISE_Y = {'A': 1.02, 'C': 1.10, 'B': 1.18}      # the pipes' depth behind the bench (A in front, B at the back)
+RUN_Z = {'A': 0.95, 'C': 1.10, 'B': 1.25}       # the height each runs across at
+SPOUT_X = (293.25, 293.95, 294.98)              # each bed's spout (beds 1, 2, 3)
+MOUTH = (0.66, 0.86)                            # the spouts' mouths: y, z (Att17Stream1/2/3's origins)
+PIPE_R = 0.013                                  # the three sluice pipes, all the same brass
+BACKBOARD = (293.0, 295.35, 1.255, 1.27, 0.56, 1.40)   # a painted board behind the pipes: x0, x1, y0, y1, z0, z1
+FLOAT = (293.60, 0.64, WATER_Z + SOIL_T)        # Att17Float: its bottom, low (on bed 1's soil)
+FLOAT_R = 0.045
+FLOAT_RISE = 0.12
+CHAIN_Y = 0.64                                  # the chain's plane, from the float to the end wall
+PULLEY1 = (293.64, CHAIN_Y, 2.76, 0.04)         # x, y, z, r: hung from the beam at 293.6 (axle along y)
+PULLEY2 = (295.705, CHAIN_Y, 2.76, 0.04)        # on a bracket off the end wall (axle along y)
+PULLEY3 = (295.745, 0.62, 2.15, 0.02)           # beside the door's architrave (axle along x): the chain turns toward -y
+PULLEY4 = (295.933, -0.395, 2.11, 0.02)         # under the door's head, over the latch (axle along x)
+LATCH = (295.933, -0.29, 1.90)                  # Att17Latch's pivot, on the door leaf's room face; the bar runs to -y
+LATCH_L = 0.19                                  # pivot to the bar's end (in the keeper on the jamb, shut)
+LATCH_EYE = -0.415                              # the chain's eye on the bar (y)
+LATCH_UP = 70.0                                 # degrees, lifted (the game's turn)
+KEY_AT = (285.60, 1.04, CONTENT_Z + 0.0025 + 0.012, 0.5)   # Att17Key in the drawer, shut: its socket's centre, its turn
+RIGCARD = (293.10, 293.40, 1.92, 2.098)         # Vance's card on the tank's front: x0, x1, z0, z1
 
 # =====================================================================================================================
 # Materials
@@ -125,7 +172,8 @@ REUSE_WORN = {   # names already in index.html's WORN table (fallbacks for a lon
                         dust=(.2, .18, .15), grime_scale=10, chip_scale=40, chip_amount=.75, dust_amount=.7),
 }
 REUSE_PLAIN = {'DirtyGlass': ((.03, .035, .035), .25, .2), 'TeaEnamel': ((.58, .55, .47), .35, 0.0),
-               'Cable': ((.014, .013, .012), .55, 0.0), 'Copper': ((.55, .3, .18), .35, 1.0)}
+               'Cable': ((.014, .013, .012), .55, 0.0), 'Copper': ((.55, .3, .18), .35, 1.0),
+               'Water': ((.01, .012, .012), .04, .3)}     # the rig's water (the game's Water: dark, a little see-through)
 NEW_EMIT = {'Att17GrowLamp': ((0.78, 0.84, 1.0), 3.0), 'Att17Bulb': ((1.0, 0.78, 0.5), 5.0), 'Att17StairLamp': ((1.0, 0.8, 0.55), 6.0)}
 REUSE_EMIT = {}
 IMAGES = {'Att17Atlas': ('dl17_atlas.png', 0.85)}
@@ -187,6 +235,11 @@ CELLS = {
     'paper1': (1536, 1104, 1792, 1360), 'paper2': (1792, 1104, 2048, 1360),
     'seedlist': (1536, 1360, 2048, 1488),
     'soilcrack': (1040, 1704, 1328, 1992),    # dry soil, cracked (the trays' surface)
+    # The test rig (expansion): Vance's card on the tank, the beds' name cards, the levers' letters, the sight glass's scale.
+    'rigcard': (1336, 1696, 1848, 2000),      # 0.30 x 0.178 m
+    'bed1': (0, 1816, 192, 1876), 'bed2': (192, 1816, 384, 1876), 'bed3': (384, 1816, 576, 1876),
+    'plA': (576, 1816, 640, 1880), 'plB': (640, 1816, 704, 1880), 'plC': (704, 1816, 768, 1880),
+    'sightscale': (776, 1816, 808, 2008),
 }
 NAMES = ['M. D.', 'T. ORME', 'R. ABEL', 'Ada', 'Ben K.', 'Lotte', 'Pim', 'Joss', 'Nell', 'Ivo', 'Tam', 'Kit', 'Rosa',
          'Dov', 'Hana', 'Sami', 'Ewa', 'Oskar', 'Lin', 'Bea', 'Tobi', 'Mira', 'Fen', 'Cass', 'Aldo', 'Yusuf', 'Wren',
@@ -346,6 +399,7 @@ TREE = [
 
 GRAPHITE = (50, 50, 60)          # Mara's pencil
 BLUE = (26, 58, 150)              # Vance's blue pencil
+RED = (176, 40, 34)               # and his red one (the margin note on her working for his test rig)
 
 
 def _wob(pts, rnd, amp=1.0, step=8.0, over=0.0):
@@ -436,10 +490,24 @@ def make_drawing():
     def P(u, v):                                               # the tree's unit coordinates -> final px
         return (470 + u * 700, 800 + v * 740)
 
+    # Layout: her plan (the bed, the tank, and his notes on them) is drawn in its own coordinates and shrunk onto the
+    # sheet's upper left, to make room along the bottom for her working for the test rig; the right-hand column (her
+    # section, notes, title block; his section) is drawn as it was. Lettering in the plan shrinks less than its lines.
+    PLAN, SHEET = (0.78, -8.0, 10.0), (1.0, 0.0, 0.0)
+    XF = list(SHEET)                                           # the current layout: px = (ox + s x, oy + s y)
+
+    def T(x, y):
+        s_, ox, oy = XF
+        return ox + s_ * x, oy + s_ * y
+
+    def fs(size):
+        return size * (0.5 + 0.5 * XF[0])
+
     def k(pts):
-        return [(x * K, y * K) for x, y in pts]
+        return [(T(x, y)[0] * K, T(x, y)[1] * K) for x, y in pts]
 
     # 1. Her tree, sketched first: soft pencil, light, gone over; a hand's smudges.
+    XF[:] = PLAN
     child = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
     dc = ImageDraw.Draw(child)
     for pts, wgt in TREE:
@@ -492,21 +560,26 @@ def make_drawing():
         d.line(k(pts), fill=fill, width=max(1, int(round(w * K))), joint='curve')
 
     lab = []                                                   # her lettering, put on after the lines
+
+    def lbl(xy, text, size, anc='l', kind='letter'):
+        lab.append((T(*xy), text, fs(size), anc, kind))
     # The sheet's border and the bed, against a ruler.
+    XF[:] = SHEET
     for a, b in (((22, 24), (1257, 22)), ((1257, 22), (1258, 873)), ((1258, 873), (23, 874)), ((23, 874), (22, 24))):
         ruled(a, b, w=2.4, over=4)
+    XF[:] = PLAN
     for a, b in (((BED[0], BED[1]), (BED[2], BED[1])), ((BED[2], BED[1]), (BED[2], BED[3])),
                  ((BED[2], BED[3]), (BED[0], BED[3])), ((BED[0], BED[3]), (BED[0], BED[1]))):
         ruled(a, b, w=2.6, over=8)
-    lab.append(((164, 92), 'BED 1', 21, 'l'))
+    lbl((164, 92), 'BED 1', 21, 'l')
     arrow((475, 46), (BED[0] + 2, 46), 9)
     arrow((475, 46), (BED[2] - 2, 46), 9)
     ruled((BED[0], 36), (BED[0], 58), 1.6, 2)
     ruled((BED[2], 36), (BED[2], 58), 1.6, 2)
-    lab.append(((475, 36), '2400', 16, 'm'))
+    lbl((475, 36), '2400', 16, 'm')
     arrow((128, 365), (128, BED[1] + 2), 9)
     arrow((128, 365), (128, BED[3] - 2), 9)
-    lab.append(((106, 365), '2200', 16, 'm'))
+    lbl((106, 365), '2200', 16, 'm')
 
     # The channels: banks either side of each branch of the tree, the knot made a ring.
     kc, kr0, kr1 = P(0.2, -0.655), 30, 46
@@ -534,7 +607,7 @@ def make_drawing():
         d.polygon(k([(px + tx * 7, py + ty * 7), (px - tx * 5 + math.cos(a) * 4, py - ty * 5 + math.sin(a) * 4),
                      (px - tx * 5 - math.cos(a) * 4, py - ty * 5 - math.sin(a) * 4)]), fill=INK)
     pen([(kc[0] + 30, kc[1] + 38), (690, 392)], 1.6, amp=0.4)
-    lab.append(((694, 394), 'SETTLING LOOP', 16, 'l'))
+    lbl((694, 394), 'SETTLING LOOP', 16, 'l')
 
     def flow(pts, at=0.5):
         n = len(pts) - 1
@@ -580,29 +653,32 @@ def make_drawing():
             d.polygon(k([(cx, cy), (cx + nx * 11 * s - ux * 6, cy + ny * 11 * s - uy * 6),
                          (cx + nx * 11 * s + ux * 6, cy + ny * 11 * s + uy * 6)]), outline=INK, fill=GRAPHITE + (110,))
         circ((lx, ly), 12, 1.8)
-        lab.append(((lx, ly + 1), label, 17, 'm'))
+        lbl((lx, ly + 1), label, 17, 'm')
     sluice(branches[2], 2, 'A', 410, 532)
     sluice(branches[4], 2, 'B', 470, 372)
     sluice(branches[9], 2, 'C', 500, 650)
-    lab += [((176, 470), 'BEANS', 17, 'l'), ((300, 136), 'PEAS', 17, 'l'), ((688, 204), 'KALE', 17, 'l'),
-            ((640, 630), 'POTATOES', 17, 'l')]
+    lbl((176, 470), 'BEANS', 17, 'l')
+    lbl((300, 136), 'PEAS', 17, 'l')
+    lbl((688, 204), 'KALE', 17, 'l')
+    lbl((640, 630), 'POTATOES', 17, 'l')
     # The tank and its feed.
     for a, b in (((425, 818), (515, 818)), ((515, 818), (515, 860)), ((515, 860), (425, 860)), ((425, 860), (425, 818))):
         ruled(a, b, 2.4, 4)
-    lab.append(((470, 840), 'TANK', 15, 'm'))
+    lbl((470, 840), 'TANK', 15, 'm')
     arrow((236, 846), (421, 846), 9)
-    lab.append(((238, 828), 'FROM RING A MAIN', 14, 'l'))
-    lab.append(((198, 712), 'FALL 1 IN 40', 15, 'l'))
+    lbl((238, 828), 'FROM RING A MAIN', 14, 'l')
+    lbl((198, 712), 'FALL 1 IN 40', 15, 'l')
     arrow((184, 730), (184, 694), 8)
     # The section mark across the main.
     for sx in (412, 500):
         pen([(sx, 764), (sx + 24 * (1 if sx < 450 else -1), 764)], 3.4, amp=0.2)
         arrow((sx, 764), (sx, 748), 7)
-    lab.append(((402, 748), 'A', 15, 'm'))
-    lab.append(((510, 748), 'A', 15, 'm'))
+    lbl((402, 748), 'A', 15, 'm')
+    lbl((510, 748), 'A', 15, 'm')
 
     # Her section A-A: deep and narrow, clay-lined.
-    lab.append(((880, 62), 'SECTION A-A', 19, 'l'))
+    XF[:] = SHEET
+    lbl((880, 62), 'SECTION A-A', 19, 'l')
     pen([(880, 74), (1032, 74)], 1.6, amp=0.3)
     gy, by_ = 140, 214
     pen([(905, gy), (1000, gy)], 2.2, amp=0.5)
@@ -618,17 +694,17 @@ def make_drawing():
     d.polygon(k([(1042, gy + 26), (1058, gy + 26), (1050, gy + 38)]), outline=INK, width=K)
     arrow((1050, 104), (1000, 104), 6, w=1.4)
     arrow((1050, 104), (1100, 104), 6, w=1.4)
-    lab.append(((1050, 92), '300', 15, 'm'))
+    lbl((1050, 92), '300', 15, 'm')
     pen([(1094, by_ - 6), (1150, by_ + 12)], 1.4, amp=0.3)
-    lab.append(((1154, by_ + 14), 'CLAY 50', 14, 'l'))
+    lbl((1154, by_ + 14), 'CLAY 50', 14, 'l')
     pen([(1076, gy + 40), (1150, gy + 40)], 1.4, amp=0.3)
-    lab.append(((1154, gy + 40), 'WATER', 14, 'l'))
+    lbl((1154, gy + 40), 'WATER', 14, 'l')
 
     # Her notes.
     notes = ['NOTES', '1. MAIN FEED FROM TANK.', '2. SLUICES A B C: SHUT TWO,', '    WATER THE THIRD.', '3. THE KNOT IS A SETTLING',
              '    LOOP. SILT DROPS OUT', '    BEFORE THE KALE.', '4. WATER LITTLE, OFTEN.']
     for i, s in enumerate(notes):
-        lab.append(((884, 400 + i * 30), s, 18 if i else 21, 'l'))
+        lbl((884, 400 + i * 30), s, 18 if i else 21, 'l')
     pen([(884, 414), (946, 414)], 1.6, amp=0.3)
     # Her title block.
     tb = (880, 690, 1250, 866)
@@ -639,10 +715,18 @@ def make_drawing():
         ruled((tb[0], y), (tb[2], y), 1.6, 3)
     ruled((1094, 734), (1094, 778), 1.6, 2)
     ruled((1094, 822), (1094, 866), 1.6, 2)
-    lab += [((894, 712), 'IRRIGATION · BED 1', 21, 'l'), ((894, 756), 'DRAWN   M. D.', 19, 'l'), ((1106, 756), 'AGE 14', 19, 'l'),
-            ((894, 800), 'CHECKED', 19, 'l'), ((894, 844), 'SCALE 1:20', 19, 'l'), ((1106, 844), 'SHEET 1/1', 19, 'l')]
-    for (x, y), s, size, anc in lab:                            # her lettering: careful capitals, not quite level
-        _hand(rl, (x * K, y * K), s, _font(size * K, 'letter'), INK, rnd, jit=0.8 * K, rot=4.0, anchor=anc, track=1.07)
+    lbl((894, 712), 'IRRIGATION · BED 1', 21, 'l')
+    lbl((894, 756), 'DRAWN   M. D.', 19, 'l')
+    lbl((1106, 756), 'AGE 14', 19, 'l')
+    lbl((894, 800), 'CHECKED', 19, 'l')
+    lbl((894, 844), 'SCALE 1:20', 19, 'l')
+    lbl((1106, 844), 'SHEET 1/1', 19, 'l')
+    rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET)
+    for (x, y), s, size, anc, kind in lab:                      # her lettering: careful capitals, not quite level
+        if kind == 'hand':                                      # (her quick notes on the rig: her own running hand)
+            _hand(rl, (x * K, y * K), s, _font(size * K, 'hand'), INK, rnd, jit=0.7 * K, rot=3.0, anchor=anc, track=0.98)
+        else:
+            _hand(rl, (x * K, y * K), s, _font(size * K, 'letter'), INK, rnd, jit=0.8 * K, rot=4.0, anchor=anc, track=1.07)
     rl = _grain(rl.filter(ImageFilter.GaussianBlur(0.5 * K)), 1704, lo=0.6)
 
     # 4. Beside her lines, the volunteer's blue pencil: a looser hand, the practical things.
@@ -662,12 +746,14 @@ def make_drawing():
             bpen([(bx, by), (bx - ux * size + s * uy * size * 0.55, by - uy * size - s * ux * size * 0.55)], amp=0.2)
 
     def bnote(xy, s, size=26, rot=3.0):
-        _hand(bl, (xy[0] * K, xy[1] * K), s, _font(size * K, 'ink'), BL, rnd, jit=0.7 * K, rot=rot)
+        x, y = T(*xy)
+        _hand(bl, (x * K, y * K), s, _font(fs(size) * K, 'ink'), BL, rnd, jit=0.7 * K, rot=rot)
 
     def tick(x, y, s=1.0):
         bpen([(x, y), (x + 8 * s, y + 11 * s), (x + 26 * s, y - 14 * s)], 3.2, amp=0.3)
 
     # The fall, under hers.
+    XF[:] = PLAN
     bnote((196, 756), 'fall 1 in 100', 27)
     bnote((210, 786), 'or it scours', 22)
     barrow([(298, 742), (306, 734), (314, 726)], 9)
@@ -679,6 +765,7 @@ def make_drawing():
     db.polygon(k([(640, 784), (660, 784), (650, 798)]), outline=BL, width=K * 2)
     bpen([(632, 799), (668, 799)], 2.0)
     # His section, drawn next to hers: shallower, wider, gentler sides.
+    XF[:] = SHEET
     sy, sb = 286, 310
     bpen([(930, sy), (978, sy)], 2.2)
     bpen([(1124, sy), (1172, sy)], 2.2)
@@ -688,18 +775,111 @@ def make_drawing():
     bnote((934, 336), 'wider, shallower', 23)
     bnote((934, 362), 'sides 1 in 2', 21)
     # The knot: a tick, and what he thought of it.
+    XF[:] = PLAN
     bnote((592, 112), 'The knot works!', 28)
     tick(780, 112)
     barrow([(640, 132), (628, 186), (616, 236)], 10)
     bnote((660, 146), '- E.V.', 23)
     # Checked.
+    XF[:] = SHEET
     bnote((1004, 802), 'E. V.', 25)
     tick(1062, 796, 0.9)
     bl = _grain(bl.filter(ImageFilter.GaussianBlur(0.55 * K)), 1705, lo=0.55)
 
-    for lay in (child, ghost, rl, bl):
+    # 5. Beside her working for the rig, the volunteer again, in red pencil this time: a margin note.
+    rd = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
+    RD = RED + (235,)
+    for (x, y), t_, size in (((730, 676), 'Good eye.', 28), ((730, 712), 'Most of them', 24), ((730, 740), 'never look', 24),
+                             ((730, 768), 'behind the', 24), ((730, 796), 'bench.', 24), ((780, 830), '- E.V.', 22)):
+        _hand(rd, (x * K, y * K), t_, _font(size * K, 'ink'), RD, rnd, jit=0.7 * K, rot=3.0)
+    dr = ImageDraw.Draw(rd)
+    dr.line(k(_wob([(722, 690), (708, 708), (694, 726)], rnd, 0.6, 7.0)), fill=RD, width=int(2.6 * K), joint='curve')
+    for s_ in (1, -1):                                          # his arrow, to her "B goes to 1!"
+        dr.line(k([(694, 726), (694 + 4 + s_ * 5, 726 - 9 + s_ * 3)]), fill=RD, width=int(2.4 * K))
+    rd = _grain(rd.filter(ImageFilter.GaussianBlur(0.55 * K)), 1706, lo=0.55)
+
+    for lay in (child, ghost, rl, bl, rd):
         paper.alpha_composite(lay)
     return paper.convert('RGB').resize((W, H), Image.LANCZOS)
+
+
+def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET):
+    """Her working for Vance's test rig, along the bottom of her irrigation sheet (the expansion): the rig drawn from
+    the front, as it stands, to scale: the bench, the three beds with their names, the levers A B C under them, and the
+    three pipes traced from each lever up behind the bench to the bed it really feeds, each broken where it passes
+    behind another, gone over twice; an arrow down from each spout. Her notes beside it, in her running hand."""
+    XF[:] = SHEET
+    X = lambda x: 50 + (x - RIG[0]) * 165
+    Z = lambda z: 834 - (z - RIG[4]) * 165
+    top = Z(RIG[4])
+    # The bench and its legs; the beds on it, their names.
+    ruled((X(RIG[0]), top), (X(RIG[1]), top), 2.4, 5)
+    ruled((X(RIG[0]), top + 5), (X(RIG[1]), top + 5), 1.6, 3)
+    for x in (RIG[0] + 0.03, RIG[1] - 0.03):
+        pen([(X(x), top + 5), (X(x), 866)], 1.8, amp=0.4)
+    for i, (b0, b1) in enumerate(BEDS):
+        for a, b in (((X(b0), Z(BED_TOP)), (X(b1), Z(BED_TOP))), ((X(b0), Z(BED_TOP)), (X(b0), top)),
+                     ((X(b1), Z(BED_TOP)), (X(b1), top))):
+            ruled(a, b, 2.0, 2)
+        lbl(((X(b0) + X(b1)) / 2, (Z(BED_TOP) + top) / 2 + 1), '%d  %s' % (i + 1, BED_NAMES[i].replace(' ', '')), 14, 'm')
+    lv = Z(SLUICE_PIVOT[1]) + 3
+    for name, x, bed in SLUICES:
+        circ((X(x), lv), 11, 1.8)
+        lbl((X(x), lv + 1), name, 15, 'm')
+    # The pipes: up behind the bench (riser; hidden by the beds below their rims), across (run), forward and down over
+    # the bed (drop: in front of them all).
+    paths, depth = {}, {}
+    for name, x, bed in SLUICES:
+        sx = SPOUT_X[bed - 1]
+        paths[name] = [(X(x), Z(BED_TOP) - 1), (X(x), Z(RUN_Z[name])), (X(sx), Z(RUN_Z[name])), (X(sx), Z(MOUTH[1]))]
+        depth[name] = (RISE_Y[name], RISE_Y[name], MOUTH[0])
+
+    def cross(a, b, c, d):
+        """Where segment ab crosses cd (both axis-aligned): the parameter along ab, or None."""
+        (ax, ay), (bx, by), (cx, cy), (dx, dy) = a, b, c, d
+        if ax == bx and cy == dy:                                     # ab vertical, cd horizontal
+            if min(cx, dx) < ax < max(cx, dx) and min(ay, by) < cy < max(ay, by):
+                return (cy - ay) / (by - ay)
+        if ay == by and cx == dx:                                     # ab horizontal, cd vertical
+            if min(cy, dy) < ay < max(cy, dy) and min(ax, bx) < cx < max(ax, bx):
+                return (cx - ax) / (bx - ax)
+        return None
+    for n_, pts in paths.items():
+        for i, (a, b) in enumerate(zip(pts, pts[1:])):
+            L_ = math.hypot(b[0] - a[0], b[1] - a[1])
+            cuts = []
+            for m_, q in paths.items():
+                if m_ == n_:
+                    continue
+                for j, (c, d_) in enumerate(zip(q, q[1:])):
+                    t = cross(a, b, c, d_)
+                    if t is not None and depth[m_][j] < depth[n_][i]:     # the other one is in front: a break in this
+                        cuts.append(t)
+            g = 8.0 / L_
+            pieces, t0 = [], 0.0
+            for t in sorted(cuts):
+                pieces.append((t0, t - g))
+                t0 = t + g
+            pieces.append((t0, 1.0))
+            for p0, p1 in pieces:
+                if p1 <= p0:
+                    continue
+                pa = (a[0] + (b[0] - a[0]) * p0, a[1] + (b[1] - a[1]) * p0)
+                pb = (a[0] + (b[0] - a[0]) * p1, a[1] + (b[1] - a[1]) * p1)
+                for k_ in range(3 if n_ == 'B' else 2):                  # traced: gone over, B once more
+                    if i == 2 and p1 == 1.0 and k_ == 0:
+                        arrow(pa, (pb[0], pb[1] + 6), 8, w=2.4)
+                    else:
+                        pen([pa, pb], 2.4 if k_ == 0 else 1.6, amp=0.6)
+        mx, my = pts[-1]
+        for dz in (16, 24):                                           # drops, falling
+            pen([(mx, my + dz), (mx, my + dz + 4)], 1.6, amp=0.2)
+    lbl((246, 704), 'TEST RIG (FROM THE FRONT)', 14)
+    # Her notes, in her running hand; an arrow to where B goes.
+    lbl((446, 748), 'B goes to 1!  (they cross)', 24, 'l', 'hand')
+    lbl((446, 798), 'shut two, water the third', 24, 'l', 'hand')
+    arrow((440, 744), (234, 724), 9, w=1.8)
+    pen([(446, 762), (514, 760)], 1.6, amp=0.4)                       # "B goes to 1!", underlined
 
 
 CARD_A = (('M. D.', '14', 'WORKS DEPT., RING A', 'WATER AND IRRIGATION', 'E. VANCE', 'BY THE PUPIL',
@@ -972,10 +1152,45 @@ def make_atlas(path):
         ImageDraw.Draw(t).rectangle((0, 0, 127, 39), outline=(120, 110, 90), width=1)
         img.paste(t.convert('RGB'), (x0, y0))
 
+    make_rig_cells(img, rnd)
     for name, rgb in SWATCH.items():
         x0, y0, x1, y1 = CELLS[name]
         ImageDraw.Draw(img).rectangle((x0, y0, x1 - 1, y1 - 1), fill=rgb)
     img.save(path, optimize=True)
+
+
+def make_rig_cells(img, rnd):
+    """The test rig's pictures (the expansion): Vance's card in his ink, the beds' name cards, the levers' enamel
+    letters, the sight glass's scale."""
+    from PIL import ImageDraw
+    INKV = (26, 34, 72, 238)
+    x0, y0, x1, y1 = CELLS['rigcard']
+    c = _paper(x1 - x0, y1 - y0, (222, 212, 178), 1770, amp=0.08, edge=0.18, edge_px=18)
+    for (x, y), t, size in (((26, 58), 'APPRENTICE TEST:', 46), ((26, 128), 'WATER BED 1 ONLY.', 50), ((26, 198), 'ONE TANK.', 50)):
+        _hand(c, (x, y), t, _font(size, 'ink'), INKV, rnd, jit=0.8, rot=3.5)
+    _hand(c, (486, 262), '- E.V.', _font(34, 'ink'), INKV, rnd, jit=0.6, rot=3, anchor='r')
+    ImageDraw.Draw(c).line((30, 156, 440, 152), fill=INKV, width=3)               # WATER BED 1 ONLY, underlined
+    img.paste(c.convert('RGB'), (x0, y0))
+    for i, nm in enumerate(BED_NAMES):
+        x0, y0, x1, y1 = CELLS['bed%d' % (i + 1)]
+        c = _paper(x1 - x0, y1 - y0, (214, 204, 172), 1771 + i, amp=0.1, edge=0.2, edge_px=8)
+        _hand(c, ((x1 - x0) / 2, 31), nm, _font(42, 'ink'), INKV, rnd, jit=0.6, rot=3, anchor='m')
+        ImageDraw.Draw(c).rectangle((0, 0, x1 - x0 - 1, y1 - y0 - 1), outline=(120, 108, 84), width=2)
+        img.paste(c.convert('RGB'), (x0, y0))
+    for i, ch in enumerate('ABC'):
+        x0, y0, x1, y1 = CELLS['pl' + ch]
+        from PIL import Image
+        e = Image.new('RGB', (x1 - x0, y1 - y0), (60, 56, 50))
+        de = ImageDraw.Draw(e)
+        de.rounded_rectangle((1, 1, 62, 62), radius=12, fill=(26, 40, 66), outline=(214, 206, 180), width=4)
+        de.text((32, 34), ch, font=_font(44, 'carlito'), fill=(226, 218, 194), anchor='mm')
+        img.paste(_fade(e, 1774 + i, k=0.08, dust=0.12), (x0, y0))
+    x0, y0, x1, y1 = CELLS['sightscale']
+    d = ImageDraw.Draw(img)
+    d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(206, 200, 180))
+    for k in range(13):
+        y = y0 + 6 + k * (y1 - y0 - 12) / 12
+        d.line((x0 + 2, y, x0 + (26 if k % 4 == 0 else 14), y), fill=(24, 22, 20), width=3 if k % 4 == 0 else 2)
 
 
 def make_textures():
@@ -1775,7 +1990,7 @@ def build_window(B, rnd, names):
 
 
 def build_sink(B, tap):
-    """The butler sink, its tap (the drip line's T on it), a bucket."""
+    """The butler sink, its tap (the drip line's T on it), a bucket; a broom in the corner by the stair door."""
     x0, x1 = SINK
     y0, y1, z0, z1 = 0.84, 1.28, 0.62, 0.86
     B.box('TeaEnamel', x0, x1, y0, y1, z0, z0 + 0.04)
@@ -1796,11 +2011,12 @@ def build_sink(B, tap):
     B.cyl('WornIron', (292.5, 1.05, 0.0), (292.5, 1.05, 0.3), 0.12, 0.14, seg=14)
     B.torus('WornIron', (292.5, 1.05, 0.3), (0, 0, 1), 0.14, 0.006, seg=14, rseg=4)
     # A broom leaning in the corner by the door.
-    B.cyl('PigeonWood', (293.15, 1.15, 0.12), (293.35, 1.26, 1.45), 0.013, seg=6)
+    bx, by = BROOM
+    B.cyl('PigeonWood', (bx, by, 0.12), (bx + 0.16, by + 0.11, 1.45), 0.013, seg=6)
     n0 = B.mark()
     B.box('PigeonWood', -0.14, 0.14, -0.03, 0.03, 0.0, 0.06)
     B.sbox('sw_straw', -0.13, 0.13, -0.025, 0.025, -0.06, 0.0)
-    B.xform(n0, TR(293.15, 1.15, 0.06, 0.2))
+    B.xform(n0, TR(bx, by, 0.06, 0.2))
 
 
 def build_door(B):
@@ -2009,6 +2225,317 @@ def tray_matrix():
 
 
 # =====================================================================================================================
+# Vance's apprentice test rig (the expansion): its static parts (Att17Set)
+# =====================================================================================================================
+def pipe(B, pts, r=PIPE_R, mt='HandledBrass', seg=10):
+    """A run of pipe through pts, with a round elbow at each bend."""
+    pts = [Vector(p) for p in pts]
+    for a, b in zip(pts, pts[1:]):
+        B.cyl(mt, a, b, r, seg=seg)
+    for p in pts[1:-1]:
+        B.sphere(mt, p, r * 1.3, seg=seg)
+
+
+def chain(B, pts, pitch=0.03, w=0.012, t=0.0035, mt='WornIron'):
+    """A chain along a polyline: flat links, each turned a quarter about the chain from the last."""
+    k = 0
+    for a, b in zip(pts, pts[1:]):
+        a, b = Vector(a), Vector(b)
+        d = b - a
+        L = d.length
+        if L < 1e-6:
+            continue
+        u = d / L
+        n1 = u.cross(Vector((0, 0, 1)))
+        if n1.length < 1e-3:
+            n1 = u.cross(Vector((1, 0, 0)))
+        n1.normalize()
+        n2 = u.cross(n1)
+        n = max(1, round(L / pitch))
+        for i in range(n):
+            ax, az = (n1, n2) if k % 2 == 0 else (n2, -n1)
+            R = Matrix((u, ax, az)).transposed().to_4x4()
+            B._log(add_box(B.bm, a + d * ((i + 0.5) / n), (L / n * 1.18, w, t), mat=B.m(mt), rot=R))
+            k += 1
+
+
+def pulley(B, c, axis, r, cheeks=True):
+    """A small iron sheave: its wheel (a groove's two flanges), its hub; a strap either side of it."""
+    c, ax = Vector(c), Vector(axis).normalized()
+    B.cyl('WornIron', c - ax * 0.007, c - ax * 0.003, r * 1.12, seg=16)
+    B.cyl('WornIron', c - ax * 0.003, c + ax * 0.003, r * 0.85, seg=16)
+    B.cyl('WornIron', c + ax * 0.003, c + ax * 0.007, r * 1.12, seg=16)
+    B.cyl('WornIron', c - ax * 0.016, c + ax * 0.016, 0.006, seg=6)
+    if cheeks:
+        for s_ in (-1, 1):
+            B.cyl('WornIron', c + ax * 0.014 * s_, c + ax * 0.016 * s_ + Vector((0, 0, r + 0.03)), 0.005, seg=5)
+
+
+def build_rig(B, rnd):
+    """The test bench, its beds and levers, the pipes behind it, the tank on the wall, the valve's body and the feed,
+    the float's chain and pulleys, the latch's keeper on the door's jamb, and Vance's card on the tank."""
+    x0, x1, y0, y1, top = RIG
+    # The bench: a scrubbed top on four legs, a front panel (the levers are on it; the cocks behind it), a back rail,
+    # a low shelf with a bucket and a funnel.
+    B.box('PupilWood', x0, x1, y0, y1, top - 0.04, top)
+    for x in (x0 + 0.03, x1 - 0.03):
+        for y in (y0 + 0.045, y1 - 0.03):
+            B.box('PigeonWood', x - 0.025, x + 0.025, y - 0.025, y + 0.025, 0.0, top - 0.04)
+    B.box('PigeonWood', x0 + 0.005, x1 - 0.005, y0, y0 + 0.02, 0.2, top - 0.04)
+    B.box('PigeonWood', x0 + 0.05, x1 - 0.05, y1 - 0.05, y1 - 0.03, top - 0.1, top - 0.04)
+    B.box('PigeonWood', x0 + 0.06, x1 - 0.06, y0 + 0.06, y1 - 0.06, 0.08, 0.1)
+    B.cyl('WornIron', (294.7, 0.78, 0.1), (294.7, 0.78, 0.28), 0.09, 0.11, seg=14)
+    B.torus('WornIron', (294.7, 0.78, 0.28), (0, 0, 1), 0.11, 0.006, seg=14, rseg=4)
+    B.cyl('WornIron', (293.5, 0.7, 0.1), (293.5, 0.7, 0.16), 0.012, 0.012, seg=8)
+    B.cyl('WornIron', (293.5, 0.7, 0.16), (293.5, 0.7, 0.24), 0.012, 0.07, seg=12)
+    # The beds: wooden trays, a skin of dry soil in each, a few dead seedlings; the names on their fronts (to the right,
+    # clear of the levers' grips).
+    by0, by1 = BED_Y
+    for i, (bx0, bx1) in enumerate(BEDS):
+        t = BED_T
+        B.box('CrateWood', bx0, bx1, by0, by0 + t, top, BED_TOP)
+        B.box('CrateWood', bx0, bx1, by1 - t, by1, top, BED_TOP)
+        B.box('CrateWood', bx0, bx0 + t, by0 + t, by1 - t, top, BED_TOP)
+        B.box('CrateWood', bx1 - t, bx1, by0 + t, by1 - t, top, BED_TOP)
+        B.box('CrateWood', bx0 + t, bx1 - t, by0 + t, by1 - t, top, WATER_Z)
+        B.tbox('Att17Atlas', bx0 + t, bx1 - t, by0 + t, by1 - t, WATER_Z, WATER_Z + SOIL_T, {'+z': 'soilcrack', 'all': 'sw_crust'})
+        for _ in range(5):
+            dead_plant(B, rnd.uniform(bx0 + 0.06, bx1 - 0.06), rnd.uniform(by0 + 0.06, by1 - 0.08), WATER_Z + SOIL_T, rnd, n=1,
+                       h=rnd.uniform(0.03, 0.06), cell=rnd.choice(('sw_shrivel', 'sw_deadleaf')), droop=rnd.uniform(1.2, 1.7))
+        cx = bx1 - 0.11
+        B.box('PupilWood', cx - 0.07, cx + 0.07, by0 - 0.004, by0, 0.608, 0.672)
+        B.decal(cx - 0.064, cx + 0.064, 0.62, 0.66, by0 - 0.0045, 'bed%d' % (i + 1))
+    # The levers' brackets on the front panel (the levers are Att17SluiceA/B/C), the letters under them; behind the
+    # panel, the manifold and the cocks.
+    py, pz = SLUICE_PIVOT
+    my, mz = MANIFOLD
+    for name, x, bed in SLUICES:
+        B.box('WornIron', x - 0.04, x + 0.04, y0 - 0.006, y0, pz - 0.06, pz + 0.045)
+        for s_ in (-1, 1):
+            B.box('WornIron', x + s_ * 0.022 - 0.004, x + s_ * 0.022 + 0.004, py - 0.014, y0 - 0.006, pz - 0.02, pz + 0.02)
+        B.cyl('WornIron', (x - 0.03, py, pz), (x + 0.03, py, pz), 0.005, seg=6)
+        B.box('WornIron', x - 0.034, x + 0.034, y0 - 0.008, y0 - 0.006, 0.267, 0.333)
+        B.decal(x - 0.03, x + 0.03, 0.27, 0.33, y0 - 0.0085, 'pl' + name)
+        pipe(B, [(x, my, mz), (x, my, COCK_Z)], mt='Copper', r=0.014)
+        B.sphere('HandledBrass', (x, my, COCK_Z), 0.03, seg=10)
+        B.cyl('WornIron', (x, my - 0.03, COCK_Z), (x, y0 + 0.02, COCK_Z), 0.006, seg=6)
+    # The three pipes: from each cock back under the bench top, up behind it, across, forward over a bed, down; all the
+    # same brass. A feeds bed 3, B bed 1, C bed 2: A runs in front and lowest, B behind and highest; they cross.
+    my_, mz_ = MOUTH
+    for name, x, bed in SLUICES:
+        sx = SPOUT_X[bed - 1]
+        ry, rz = RISE_Y[name], RUN_Z[name]
+        pipe(B, [(x, my + 0.03, COCK_Z), (x, ry, COCK_Z), (x, ry, rz), (sx, ry, rz), (sx, my_, rz), (sx, my_, mz_ + 0.03)])
+        B.cyl('HandledBrass', (sx, my_, mz_ + 0.03), (sx, my_, mz_), PIPE_R, PIPE_R * 1.35, seg=10)          # the spout
+        B.torus('HandledBrass', (sx, my_, mz_ + 0.004), (0, 0, 1), PIPE_R * 1.3, 0.003, seg=10, rseg=4)
+        for cx_, cz_ in ((x, 0.80), ((x + sx) / 2 + (0.12 if name == 'C' else 0.0), rz)):         # clips to the board
+            B.cyl('WornIron', (cx_, ry + PIPE_R, cz_), (cx_, BACKBOARD[2], cz_), 0.004, seg=5)
+            B.torus('WornIron', (cx_, ry, cz_), (0, 0, 1) if cz_ == 0.80 else (1, 0, 0), PIPE_R + 0.003, 0.0025, seg=10, rseg=3)
+    bx0, bx1, bby0, bby1, bz0, bz1 = BACKBOARD                       # the board behind them, painted cream
+    B.box('TeaEnamel', bx0, bx1, bby0, bby1, bz0, bz1)
+    B.box('PigeonWood', bx0 - 0.015, bx1 + 0.015, bby0 - 0.01, bby1, bz1, bz1 + 0.02)
+    # The feed: from the ceiling into the tank's top (it refills), and the tank's down-pipe to the valve, the valve's
+    # body (its spindle and wheel are Att17Valve), on down under the bench to the manifold.
+    tx0, tx1, ty0, ty1, tz0, tz1 = TANK
+    pipe(B, [(294.05, 1.15, CEIL), (294.05, 1.15, tz1 - 0.02)], mt='Copper', r=0.012)
+    B.sphere('HandledBrass', (294.05, 1.15, 2.62), 0.024, seg=10)
+    B.cyl('HandledBrass', (294.05, 1.15, 2.62), (294.05, 1.08, 2.62), 0.007, seg=6)
+    B.cyl('WornIron', (294.0, 1.08, 2.62), (294.1, 1.08, 2.62), 0.006, seg=6)
+    vx, vy, vz = VALVE
+    pipe(B, [(tx0 + 0.02, 0.95, tz0 + 0.06), (vx, 0.95, tz0 + 0.06), (vx, DOWN_Y, tz0 + 0.06), (vx, DOWN_Y, mz),
+             (SLUICES[-1][1] + 0.05, my, mz)], mt='Copper', r=0.016)
+    B.box('WornIron', tx0 - 0.03, tx0, 0.91, 0.99, tz0 + 0.02, tz0 + 0.1)                        # the outlet's flange
+    B.sphere('WornIron', (vx, DOWN_Y, vz), 0.042, seg=12, scale=(1, 1, 1.25))                     # the valve's body
+    for dz in (-0.055, 0.055):
+        B.cyl('WornIron', (vx, DOWN_Y, vz + dz - 0.012), (vx, DOWN_Y, vz + dz + 0.012), 0.026, seg=8)
+    B.cyl('WornIron', (vx, DOWN_Y, vz), (vx, 0.545, vz), 0.024, seg=10)                            # its bonnet
+    B.cyl('HandledBrass', (vx, 0.545, vz), (vx, 0.53, vz), 0.016, seg=6)                           # the gland nut
+    B.cyl('WornIron', (vx, DOWN_Y + 0.016, 1.3), (vx, WALL_Y, 1.3), 0.005, seg=5)                     # a stay to the wall
+    # The tank: on two wall brackets, painted; rolled rim, two bands; the sight glass on its front with a scale behind.
+    B.box('DepotGreen', tx0, tx1, ty0, ty1, tz0, tz1)
+    B.box('WornIron', tx0 - 0.012, tx1 + 0.012, ty0 - 0.012, ty1 + 0.012, tz1 - 0.03, tz1)
+    for z in (tz0 + 0.18, tz0 + 0.4):
+        B.box('WornIron', tx0 - 0.005, tx1 + 0.005, ty0 - 0.005, ty1 + 0.005, z, z + 0.025)
+    for bxx in (tx0 + 0.15, tx1 - 0.15):
+        B.prism_yz('WornIron', [(WALL_Y, tz0), (ty0 + 0.02, tz0), (ty0 + 0.02, tz0 - 0.04), (WALL_Y - 0.08, tz0 - 0.04),
+                                (WALL_Y, tz0 - 0.3)], bxx - 0.008, bxx + 0.008)
+    sx_, sy_, sz0, sz1 = SIGHT
+    B.decal(sx_ - 0.028, sx_ + 0.028, sz0 - 0.02, sz1 + 0.02, ty0 - 0.0008, 'sightscale')
+    B.cyl('Window', (sx_, sy_, sz0 - 0.01), (sx_, sy_, sz1 + 0.01), 0.012, seg=12)
+    for z in (sz0 - 0.02, sz1 + 0.02):
+        B.cyl('HandledBrass', (sx_, sy_, z - 0.014), (sx_, sy_, z + 0.014), 0.017, seg=10)
+        B.cyl('HandledBrass', (sx_, sy_, z), (sx_, ty0, z), 0.01, seg=8)
+    for s_ in (-1, 1):                                                                              # its guard rods
+        B.cyl('WornIron', (sx_ + s_ * 0.02, sy_ - 0.012, sz0 - 0.01), (sx_ + s_ * 0.02, sy_ - 0.012, sz1 + 0.01), 0.003, seg=4)
+    # Vance's card in a brass holder on the tank's front: APPRENTICE TEST: WATER BED 1 ONLY. ONE TANK.
+    cx0, cx1, cz0, cz1 = RIGCARD
+    B.box('HandledBrass', cx0 - 0.012, cx1 + 0.012, ty0 - 0.004, ty0, cz0 - 0.012, cz1 + 0.006)
+    B.decal(cx0, cx1, cz0, cz1, ty0 - 0.0048, 'rigcard')
+    for (a, b, c, d) in ((cx0 - 0.012, cx0 + 0.004, cz0 - 0.012, cz1), (cx1 - 0.004, cx1 + 0.012, cz0 - 0.012, cz1),
+                         (cx0 - 0.012, cx1 + 0.012, cz0 - 0.012, cz0 + 0.004)):
+        B.box('HandledBrass', a, b, ty0 - 0.009, ty0 - 0.004, c, d)
+    # The float's chain: up from bed 1 to a pulley on the beam, along under the ceiling to a pulley on the end wall,
+    # down beside the door's architrave, across under the door's head and down to the latch's eye. (The float carries
+    # the chain's lowest 0.12, so there is no gap as it rises.)
+    fx, fy, fz = FLOAT
+    f_top = fz + 2 * FLOAT_R + 0.016 + FLOAT_RISE
+    p1, p2, p3, p4 = PULLEY1, PULLEY2, PULLEY3, PULLEY4
+    eye_z = LATCH[2] + 0.012 + 0.012
+    chain(B, [(fx, CHAIN_Y, f_top - 0.01), (p1[0] - p1[3], CHAIN_Y, p1[2])])
+    chain(B, [(p1[0], CHAIN_Y, p1[2] + p1[3]), (p2[0], CHAIN_Y, p2[2] + p2[3])])
+    chain(B, [(p2[0] + p2[3], CHAIN_Y, p2[2]), (p3[0], p3[1] + p3[3], p3[2])])
+    chain(B, [(p3[0], p3[1], p3[2] - p3[3]), (p4[0], p4[1], p4[2] + p4[3])])
+    chain(B, [(p4[0], p4[1] - p4[3], p4[2]), (p4[0], LATCH_EYE, eye_z)])
+    pulley(B, p1[:3], (0, 1, 0), p1[3])
+    B.box('WornIron', p1[0] - 0.03, p1[0] + 0.03, CHAIN_Y - 0.03, CHAIN_Y + 0.03, CEIL - 0.165, CEIL - 0.16)   # its plate
+    pulley(B, p2[:3], (0, 1, 0), p2[3], cheeks=False)
+    B.box('WornIron', p2[0] - 0.01, END_X, CHAIN_Y - 0.02, CHAIN_Y + 0.02, p2[2] - 0.006, p2[2] + 0.006)       # its arm
+    B.box('WornIron', END_X - 0.008, END_X, CHAIN_Y - 0.04, CHAIN_Y + 0.04, p2[2] - 0.06, p2[2] + 0.06)
+    pulley(B, p3[:3], (1, 0, 0), p3[3], cheeks=False)
+    B.cyl('WornIron', (p3[0], p3[1], p3[2]), (END_X, p3[1], p3[2]), 0.006, seg=6)                             # its axle
+    B.box('WornIron', END_X - 0.006, END_X, p3[1] - 0.03, p3[1] + 0.03, p3[2] - 0.04, p3[2] + 0.04)
+    pulley(B, p4[:3], (1, 0, 0), p4[3], cheeks=False)
+    for s_ in (-1, 1):                                                                                          # hung from the head
+        B.box('WornIron', p4[0] + s_ * 0.013 - 0.002, p4[0] + s_ * 0.013 + 0.002, p4[1] - 0.008, p4[1] + 0.008, p4[2], DOOR17[2])
+    # The latch's keeper on the door's free jamb: a hooked staple the bar drops into.
+    ky0, ky1 = DOOR17[0], DOOR17[0] + 0.032
+    lz = LATCH[2]
+    B.box('WornIron', 295.918, 295.952, ky0, ky1, lz - 0.04, lz - 0.014)
+    B.box('WornIron', 295.918, 295.925, ky0, ky1, lz - 0.014, lz + 0.03)
+    B.box('WornIron', 295.945, 295.952, ky0, ky1, lz - 0.014, lz + 0.012)
+    B.box('WornIron', 295.918, 295.952, ky0 - 0.004, ky0, lz - 0.06, lz + 0.04)
+
+
+# =====================================================================================================================
+# The rig's moving parts (own objects, origins at their pivots)
+# =====================================================================================================================
+def t_key(B):
+    """Vance's T-key, its socket's centre at the origin, its shaft toward -y, its bar along x."""
+    B.box('WornIron', -0.012, 0.012, -0.026, 0.012, -0.012, 0.012)
+    B.cyl('WornIron', (0, -0.026, 0), (0, -0.056, 0), 0.0065, seg=8)
+    B.sphere('HandledBrass', (0, -0.058, 0), 0.011, seg=8)
+    B.cyl('WornIron', (-0.07, -0.064, 0), (0.07, -0.064, 0), 0.0075, seg=8)
+    for x in (-0.07, 0.07):
+        B.sphere('WornIron', (x, -0.064, 0), 0.01, seg=8)
+
+
+def set_parent(child, parent):
+    """Parent child to parent, keeping where it is (parent unrotated): the child's location becomes relative."""
+    child.parent = parent
+    child.matrix_parent_inverse = Matrix.Identity(4)
+    child.location = child.location - parent.location
+
+
+def build_valve(coll):
+    """Att17Valve: the valve's wheel (spokes, rim, hub), its spindle and the spindle's square end; origin the wheel's
+    centre. It spins about Blender y (game z) while the water runs."""
+    B = MB()
+    vx, vy, vz = VALVE
+    r = VALVE_R
+    B.torus('WornIron', (vx, vy, vz), (0, 1, 0), r, 0.009, seg=24, rseg=6)
+    for k in range(4):
+        a = k * math.pi / 2 + math.pi / 4
+        B.cyl('WornIron', (vx, vy, vz), (vx + r * math.cos(a), vy, vz + r * math.sin(a)), 0.006, seg=6)
+    B.cyl('WornIron', (vx, vy + 0.012, vz), (vx, vy - 0.012, vz), 0.016, seg=10)
+    B.cyl('WornIron', (vx, 0.53, vz), (vx, SPINDLE_TIP + 0.01, vz), 0.006, seg=6)
+    B.box('WornIron', vx - 0.007, vx + 0.007, SPINDLE_TIP, SPINDLE_TIP + 0.012, vz - 0.007, vz + 0.007)
+    B.sphere('Att17Atlas', (vx + r * 0.7, vy - 0.006, vz + r * 0.7), 0.01, seg=6, cell='sw_red')   # a dab of red paint
+    return B.obj('Att17Valve', coll, origin=VALVE)
+
+
+def build_valve_key(coll, valve):
+    """Att17ValveKey: the T-key on the valve's spindle (hidden until he has it); origin on the spindle's end. A child of
+    Att17Valve, so it turns with the wheel."""
+    B = MB()
+    t_key(B)
+    ob = B.obj('Att17ValveKey', coll)
+    ob.location = (VALVE[0], SPINDLE_TIP, VALVE[2])
+    set_parent(ob, valve)
+    return ob
+
+
+def build_key(coll, drawer):
+    """Att17Key: the T-key in the drawer, lying on the papers (hidden once he has read: he takes it); origin its socket's
+    centre. A child of Att17Drawer, so it slides out with it."""
+    B = MB()
+    n0 = B.mark()
+    t_key(B)
+    B.xform(n0, Matrix.Rotation(KEY_AT[3], 4, 'Z'))
+    ob = B.obj('Att17Key', coll)
+    ob.location = KEY_AT[:3]
+    set_parent(ob, drawer)
+    return ob
+
+
+def build_sluice(coll, name, x):
+    """Att17Sluice<name>: the lever, OPEN (handle up): its hub on the pivot (along x), a flat iron arm, a turned grip;
+    origin the pivot. Shut = +80 degrees about x (the grip comes forward, toward the camera)."""
+    B = MB()
+    py, pz = SLUICE_PIVOT
+    B.cyl('WornIron', (x - 0.016, py, pz), (x + 0.016, py, pz), 0.016, seg=10)
+    B.box('WornIron', x - 0.008, x + 0.008, py - 0.006, py + 0.006, pz - 0.012, pz + LEVER_L - 0.05)
+    B.cyl('PupilWood', (x, py, pz + LEVER_L - 0.06), (x, py, pz + LEVER_L - 0.012), 0.013, 0.015, seg=10)
+    B.sphere('PupilWood', (x, py, pz + LEVER_L - 0.012), 0.016, seg=10, scale=(1, 1, 0.75))
+    return B.obj('Att17Sluice' + name, coll, origin=(x, py, pz))
+
+
+def build_tank_water(coll):
+    """Att17TankWater: the water in the sight glass, full; origin the glass's bottom; scales in z."""
+    B = MB()
+    sx_, sy_, sz0, sz1 = SIGHT
+    B.cyl('Water', (sx_, sy_, sz0), (sx_, sy_, sz1), 0.009, seg=10)
+    return B.obj('Att17TankWater', coll, origin=(sx_, sy_, sz0))
+
+
+def build_bed_water(coll, i):
+    """Att17Water<i>: bed i's water, full (0.13 deep); origin the middle of the tray's floor; scales in z (0 to 1)."""
+    B = MB()
+    bx0, bx1 = BEDS[i - 1]
+    by0, by1 = BED_Y
+    t = BED_T + 0.001
+    B.box('Water', bx0 + t, bx1 - t, by0 + t, by1 - t, WATER_Z, WATER_Z + WATER_D)
+    return B.obj('Att17Water%d' % i, coll, origin=((bx0 + bx1) / 2, (by0 + by1) / 2, WATER_Z))
+
+
+def build_stream(coll, i):
+    """Att17Stream<i>: the water falling from the spout over bed i to the tray's floor; origin the spout's mouth."""
+    B = MB()
+    x, (y, z) = SPOUT_X[i - 1], MOUTH
+    B.cyl('Water', (x, y, z), (x, y, WATER_Z + 0.004), 0.009, 0.006, seg=8)
+    B.cyl('Water', (x + 0.003, y - 0.002, z - 0.02), (x - 0.002, y + 0.003, WATER_Z + 0.004), 0.005, 0.004, seg=6)
+    return B.obj('Att17Stream%d' % i, coll, origin=(x, y, z))
+
+
+def build_float(coll):
+    """Att17Float: a copper ball float in bed 1, low, an eye on its top and the chain's lowest 0.12 hanging from it;
+    origin its bottom. It rises 0.12 with bed 1's water."""
+    B = MB()
+    fx, fy, fz = FLOAT
+    r = FLOAT_R
+    B.sphere('Copper', (fx, fy, fz + r), r, seg=14)
+    B.torus('Copper', (fx, fy, fz + 2 * r), (0, 0, 1), r * 0.4, 0.004, seg=12, rseg=4)
+    B.torus('WornIron', (fx, fy, fz + 2 * r + 0.008), (0, 1, 0), 0.008, 0.0025, seg=8, rseg=3)
+    chain(B, [(fx, fy, fz + 2 * r + 0.016), (fx, fy, fz + 2 * r + 0.016 + FLOAT_RISE)])
+    return B.obj('Att17Float', coll, origin=FLOAT)
+
+
+def build_latch(coll, door):
+    """Att17Latch: the stair door's latch, DOWN (locked): a flat iron bar on a pivot on the leaf's room face, its end in
+    the keeper on the free jamb; the chain's eye on it. Origin the pivot; up = -70 degrees about x (its end lifts). A
+    child of Att17Door, so it swings with the leaf."""
+    B = MB()
+    lx, ly, lz = LATCH
+    B.cyl('WornIron', (lx - 0.005, ly, lz), (lx + 0.005, ly, lz), 0.016, seg=12)
+    B.box('WornIron', lx - 0.005, lx + 0.005, ly - LATCH_L, ly, lz - 0.012, lz + 0.012)
+    B.box('WornIron', lx - 0.005, lx + 0.005, ly - LATCH_L + 0.03, ly - LATCH_L + 0.05, lz + 0.012, lz + 0.03)   # a thumb tab
+    B.torus('WornIron', (lx, LATCH_EYE, lz + 0.012 + 0.006), (1, 0, 0), 0.008, 0.0025, seg=8, rseg=3)
+    B.cyl('HandledBrass', (lx - 0.008, ly, lz), (lx - 0.004, ly, lz), 0.007, seg=8)              # the pin's head
+    ob = B.obj('Att17Latch', coll, origin=LATCH)
+    set_parent(ob, door)
+    return ob
+
+
+# =====================================================================================================================
 # What the game moves
 # =====================================================================================================================
 def build_drawer(coll):
@@ -2177,6 +2704,9 @@ def build_door_leaf(coll):
         B.cyl('HandledBrass', (fx + s * 0.012, hy_, 1.0), (fx + s * 0.055, hy_, 1.0), 0.009, seg=8)
         B.cyl('HandledBrass', (fx + s * 0.055, hy_, 1.0), (fx + s * 0.06, hy_ + 0.12, 1.0), 0.009, seg=8)
         B.box('HandledBrass', min(fx, fx + s * 0.004), max(fx, fx + s * 0.004), hy_ - 0.012, hy_ + 0.012, 0.86, 0.92)   # keyhole plate
+    lx, ly, lz = LATCH                                           # the latch's pivot plate (the latch is Att17Latch)
+    B.box('WornIron', fx0 - 0.004, fx0, ly - 0.04, ly + 0.04, lz - 0.05, lz + 0.05)
+    B.cyl('WornIron', (fx0 - 0.004, ly, lz), (lx + 0.005, ly, lz), 0.006, seg=6)
     for z in (0.25, 1.05, 1.85):                                 # hinge knuckles on the stair side
         B.cyl('WornIron', (hx + 0.006, hy - 0.004, z - 0.06), (hx + 0.006, hy - 0.004, z + 0.06), 0.011, seg=8)
         B.box('WornIron', fx1, fx1 + 0.003, hy - 0.09, hy - 0.006, z - 0.05, z + 0.05)
@@ -2231,14 +2761,25 @@ def build_set(dl01, m, coll):
     build_ceiling_lights(B)
     build_floor_things(B, rnd)
     heap_under_tray(B)
+    build_rig(B, random.Random(1790))
     PLAYER_INFO = place_card_player(B)
     objs = [B.obj('Att17Set', coll)]
-    objs.append(build_drawer(coll))
+    drawer = build_drawer(coll)
+    objs.append(drawer)
     objs.append(build_tray(coll))
     objs.append(build_growlamp(coll))
     objs.append(build_bulbs(coll))
-    objs.append(build_door_leaf(coll))
+    door = build_door_leaf(coll)
+    objs.append(door)
     objs.append(build_stairlamp(coll))
+    # The test rig's moving parts (the expansion).
+    valve = build_valve(coll)
+    objs += [valve, build_valve_key(coll, valve), build_key(coll, drawer), build_latch(coll, door)]
+    objs += [build_sluice(coll, name, x) for name, x, bed in SLUICES]
+    objs.append(build_tank_water(coll))
+    objs += [build_bed_water(coll, i) for i in (1, 2, 3)]
+    objs += [build_stream(coll, i) for i in (1, 2, 3)]
+    objs.append(build_float(coll))
     bpy.context.view_layer.update()
     total_t, total_p = 0, 0
     for ob in objs:
@@ -2247,8 +2788,9 @@ def build_set(dl01, m, coll):
         total_t += t
         total_p += prim
         bb = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
-        print('dl17: %-14s tris %6d mats %-2d loc %s x %.2f..%.2f y %.2f..%.2f z %.2f..%.2f %s' % (
-            ob.name, t, prim, tuple(round(c, 3) for c in ob.location),
+        print('dl17: %-14s tris %6d mats %-2d origin %s%s x %.3f..%.3f y %.3f..%.3f z %.3f..%.3f %s' % (
+            ob.name, t, prim, tuple(round(c, 4) for c in ob.matrix_world.translation),
+            ' (child of %s, local %s)' % (ob.parent.name, tuple(round(c, 4) for c in ob.location)) if ob.parent else '',
             min(v.x for v in bb), max(v.x for v in bb), min(v.y for v in bb), max(v.y for v in bb), min(v.z for v in bb),
             max(v.z for v in bb), [s.material.name for s in ob.material_slots]))
     print('dl17: total tris %d, draw calls (material slots) %d' % (total_t, total_p))
