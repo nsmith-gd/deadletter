@@ -66,3 +66,6 @@ the script exits non-zero if there are any. Run it after moving anything he can 
 - **`results_rev03_attendance_mechanical.jsonl`** and **`results_rev03_attendance_first_playthrough.jsonl`:** chapter 1 after the
   director's plan revision 0.3 (rail docks only at Abel's and Orme's places, the stair door out of DL-17): 4:40
   mechanical, 6:57 first-time. The bot now leaves DL-17 by the stair. The overlap audit is clean.
+- **`results_moments_mechanical.jsonl`** and **`results_moments_first_playthrough.jsonl`:** the prologue with the four
+  directed moments (kin, the city, ring C, the lit window) held on their cues: 8:41 mechanical (7:56 before; the holds
+  add about 37 s), and one first-time run. Under the sim a moment runs on the game's clock.

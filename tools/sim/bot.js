@@ -496,7 +496,7 @@ window.__startBot = function (seed, opts = {}) {
     yield* until(() => uo().door >= 1 && !G.act, 30, 'service door up'); note('service door open');
     yield* wait(think(3));
     yield* useAt(['ride10'], U.cw.stand, actIs('ride10'), 'counterweight UP', { hop: false });
-    yield* until(() => uo().phase === 'gone' && !G.act, 20, 'the ride'); note('rides the counterweight down');
+    yield* until(() => uo().phase === 'gone' && !G.act, 30, 'the ride'); note('rides the counterweight down');   // the ring C moment holds him 22 s
     yield* wait(look(2.0));
     yield* walk(1, () => G.region === 5, 'to ring C', { max: 60 });
   }

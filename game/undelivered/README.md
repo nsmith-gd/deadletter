@@ -759,23 +759,31 @@ README). It is sparse:
 - DL-03 and DL-04: a roll call when the rack lights come on, then a full swell as he walks in among the couriers.
 - DL-06: the refusal, a swell over the pit, near silence for the label check, then the theme in F major.
 - DL-08: a warm F major and the parcel's three notes when the pawl drops home.
-- DL-09: `refuge`: near silence, then phrase B broadening into F major, peaking as the camera reaches its widest over
-  the atrium. It plays out over the start of DL-10.
 - DL-11: `child`: when the desk clears the marks, the parcel's three notes become a lullaby on the music box, piano and strings.
-- DL-10: `prologue_lastcar` (10 s) as the car leaves for good with the suitcase (UP on the counterweight's panel),
-  then `prologue_collapse` straight after it. The ride down has its own shot: up at the car going, then, landed, high
-  over ring C's lane (a cold light comes up over it), held through the collapse's opening and handed back as the
-  lament begins (`LOOK10`: 16 s after UP, or 6.2 s into the collapse, never under 12 s).
 - After it, over the end card, the full theme ending in a music-box *Happy Birthday*.
 
-**The prologue's scene cues** (wake, hall, threshold, racks, kin, dead, latch, refuge, the DL-11 bedroom, the end card) are the composer's rewrites in the loops' language (`prologue_cue_*.mp3`, `art/music/prologue_cues.py`). Each starts out of the loop that is playing (the loop fades across its first bar) and, at its handover bar, the scene's loop restarts under its ringing tail; a queued cue (kin after racks) starts at that bar instead. Chapter one keeps the old `child` and end.
+**The prologue's scene cues** (wake, hall, threshold, racks, kin, dead, latch, refuge, the DL-11 bedroom, the end card) are the composer's rewrites in the loops' language (`prologue_cue_*.mp3`, `art/music/prologue_cues.py`). Each starts out of the loop that is playing (the loop fades across its first bar) and, at its handover bar, the scene's loop restarts under its ringing tail; a queued cue starts at that bar instead. Chapter one keeps the old `child` and end.
+
+**Directed moments (`docs/directed_moments.md`).** Four prologue beats are one camera-and-music timeline each:
+kin (DL-04, as he realises), refuge (DL-09, the awe stop over the city), ringc (DL-10, UP on the counterweight's panel;
+it replaces `lastcar` and `collapse`) and window (the end, as he looks up the well; the end card's cue then starts with
+the card). `startMoment(name)` stops any voice, and `Music.moment(name)` drops the queue, fades the playing cue and the
+ambience over 1 s, and starts the moment's cue from its top at full level, 0.1 s ahead. `Music.momentTime()` is the
+cue's audio clock as heard (the output timestamp, or the context's time less its latency; it never runs backwards,
+freezes while paused or hidden, and falls back to the game clock with no music). Each moment's shot, the counterweight's
+ride and ring C's cold light read that clock, and the shot's follow steps by it too, so a stalled frame can't leave
+the camera behind the swell. `MOMENTS` holds each one's times: control is locked to the peak plus a bar (`lock`), after
+which any input ends the hold; the shot lets go at `release`; control is back by `control`. No tannoys or distant
+clanks until `release`. Peaks measured in the headless probe (camera within 3 cm of the peak frame): kin 14.85 s (15),
+refuge 9.86 (10), ringc 9.13 onto the lane with the light full at 12.0 (12), window 6.39 (6.5). Chromium's MP3 decode
+trims the encoder's priming as ffmpeg does, so `PRIME` is 0. The marks' hold (DL-11) is 6 s, cancellable from 3 s.
 
 **Ambience (the prologue theme's loops, `docs/prologue_music.md`).** Under the cues, one looping layer crossfades
 between four loops cut from the prologue theme: `lower_works` (the depot and the lower works), `order` (the Order's
 rooms: the Ration Hall, the scanner's corridor, the relocation lobby), `heaps` (among the dead: the racks; ring C,
 low) and `failure` (DL-09's cage, from the moment its brake gives until the pawl holds, through every retry). It fades
 out under any cue in 1.5 s and comes back with the scene's loop about 4 s after the cue ends. `sceneAmbience()` picks
-the loop from where he is and what has happened. The tunnel, the balcony and C-114's bedroom are silent. Chapter one
+the loop from where he is and what has happened. The tunnel and the balcony up to the awe stop and C-114's bedroom are silent; after the city, order (the lobby); after the ride down, heaps, low. Chapter one
 keeps its old 48 s bed.
 
 The depot's relay pulse, which has sounded every six seconds since the wake, fades out on the returns belt.

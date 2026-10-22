@@ -782,14 +782,20 @@ const Music = (() => {
   // one keeps the old score's `child` (the window peel, the dismissal) and its own end.
   const FILES = { wake: 'prologue_cue_wake', bed: 'dl01_bed', hall: 'prologue_cue_hall', threshold: 'prologue_cue_threshold', racks: 'prologue_cue_racks',
     kin: 'prologue_cue_kin', dead: 'prologue_cue_dead', latch: 'prologue_cue_latch', refuge: 'prologue_cue_refuge', childP: 'prologue_cue_child', end: 'prologue_cue_end',
-    child: 'dl05_child', endAtt: 'dl01_end',
-    lastcar: 'prologue_lastcar', collapse: 'prologue_collapse', lower_works: 'prologue_loop_lower_works', order: 'prologue_loop_order',
+    ringc: 'prologue_cue_ringc', window: 'prologue_cue_window', child: 'dl05_child', endAtt: 'dl01_end',
+    lower_works: 'prologue_loop_lower_works', order: 'prologue_loop_order',
     heaps: 'prologue_loop_heaps', failure: 'prologue_loop_failure' };
-  const LEVEL = { wake: 0.9, hall: 0.9, threshold: 0.9, racks: 0.9, kin: 0.9, dead: 0.9, latch: 0.9, refuge: 0.9, childP: 0.9, end: 0.9, child: 0.6, endAtt: 0.6, lastcar: 0.6, collapse: 0.45 };
+  const LEVEL = { wake: 0.9, hall: 0.9, threshold: 0.9, racks: 0.9, kin: 0.9, dead: 0.9, latch: 0.9, refuge: 0.9, childP: 0.9, end: 0.9, ringc: 0.9, window: 0.9, child: 0.6, endAtt: 0.6 };
   // The scene cues' handovers (prologue_music.json, scene_cues): at `hand` seconds in, a bar line, the scene's loop starts
   // from its loop_start under the cue's ringing tail (or the queued cue starts); `intro` bars at the head share the
   // outgoing loop's texture, so the loop fades out across them (4 s a bar, or 2 s with none).
-  const HAND = { wake: [48, 0], hall: [32, 1], threshold: [24, 1], racks: [36, 1], kin: [40, 1], dead: [40, 0], latch: [8, 0], refuge: [32, 0], childP: [40, 1], end: [60, 0] };
+  const HAND = { wake: [48, 0], hall: [32, 1], threshold: [24, 1], racks: [36, 1], kin: [28, 0], dead: [40, 0], latch: [8, 0], refuge: [24, 0], ringc: [24, 0],
+    childP: [36, 0], window: [20, 0], end: [60, 0] };
+  // Directed moments (docs/directed_moments.md): a cue whose shot is written in its own seconds. The cue starts at full
+  // level (its opening is written quiet) a beat ahead, and the camera reads the cue's audio clock, so the two can't drift.
+  // PRIME: the MP3 decoder's leading samples, if this browser keeps them (measured with the moment probe).
+  const PRIME = 0;
+  let mom = null;
   // Each loop file is padded 2 s at each end, so the decoder's priming never lands on the seam. The prologue's loops are
   // mastered against each other and share one gain.
   // (At the composer's 0.5 the loops sat as low as the old bed and went unheard in play; 0.9 is about 5 dB up.)
@@ -832,7 +838,7 @@ const Music = (() => {
       note(); return;
     }
     if (cur) {
-      const out = cue && !cue.handed ? (HAND[cue.name] ? (HAND[cue.name][1] ? 4 : 2) : 1.5) : amb.fadeOut; fadeOut(cur.gain, out); cur.dead = true; amb.cur = null;
+      const out = cue && !cue.handed ? (cue.moment ? 1 : HAND[cue.name] ? (HAND[cue.name][1] ? 4 : 2) : 1.5) : amb.fadeOut; fadeOut(cur.gain, out); cur.dead = true; amb.cur = null;
       setTimeout(() => { try { cur.src && cur.src.stop(); } catch (e) { /* already stopped */ } cur.gain.disconnect(); }, out * 1000 + 300);
     }
     if (name) {
@@ -852,25 +858,28 @@ const Music = (() => {
     prefetch, init,
     // Play a cue from the top, fading out any cue already playing. The bed waits until it ends.
     // Every cue fades in (1.2 s unless asked otherwise), so none bursts in at full level.
-    play(name, fadeIn = 1.2) {
+    play(name, fadeIn = 1.2, m = null) {
       if (!ctx) return;
-      this.stop(1.5, true);                              // (the ambience stays hidden: a cue follows at once)
+      this.stop(m ? 1 : 1.5, true);                      // (the ambience stays hidden: a cue follows at once)
       const asked = ctx.currentTime;
-      const c = { name, src: null, gain: ctx.createGain() };
-      c.gain.gain.setValueAtTime(0.0001, asked); c.gain.gain.linearRampToValueAtTime(LEVEL[name], asked + Math.max(0.05, fadeIn)); c.gain.connect(bus);
+      const c = { name, src: null, gain: ctx.createGain(), moment: !!m };
+      if (m) c.gain.gain.setValueAtTime(LEVEL[name], asked);
+      else { c.gain.gain.setValueAtTime(0.0001, asked); c.gain.gain.linearRampToValueAtTime(LEVEL[name], asked + Math.max(0.05, fadeIn)); }
+      c.gain.connect(bus);
       cue = c; updateBed();
       get(name).then((b) => {
-        if (cue !== c || !b) { if (cue === c) { cue = null; updateBed(); } return; }
+        if (cue !== c || !b) { if (m) m.fallback = true; if (cue === c) { cue = null; updateBed(); } return; }
         c.src = ctx.createBufferSource(); c.src.buffer = b; c.src.connect(c.gain);
-        // Start where it would be had it decoded instantly, so the wake stays in step with the opening.
-        const off = Math.min(Math.max(0, ctx.currentTime - asked), b.duration - 0.1);
-        c.src.start(0, off);
+        // Start where it would be had it decoded instantly, so the wake stays in step with the opening. A moment starts
+        // from its top, 0.1 s ahead, and that is its clock's zero.
+        const off = m ? 0 : Math.min(Math.max(0, ctx.currentTime - asked), b.duration - 0.1);
+        if (m) { m.startAt = ctx.currentTime + 0.1; c.src.start(m.startAt, 0); } else c.src.start(0, off);
         if (HAND[name]) setTimeout(() => {
           if (cue !== c) return;
           c.handed = true;
           if (c.next) { const n = c.next; c.next = null; this.play(n); } else updateBed(1.5);
           note();
-        }, Math.max(0, HAND[name][0] - off) * 1000);
+        }, (Math.max(0, HAND[name][0] - off) + (m ? 0.1 : 0)) * 1000);
         c.src.onended = () => { if (cue === c) { cue = null; if (c.next) this.play(c.next); else updateBed(); } };     // a queued cue follows with no ambience between
       });
     },
@@ -892,14 +901,67 @@ const Music = (() => {
     },
     // Play a cue when the one now playing ends by itself (or now, if nothing is playing).
     queue(name) { if (cue) cue.next = name; else this.play(name); },
+    // A directed moment: no queue, the cue and the ambience out over 1 s, the moment's cue from its top.
+    moment(name) {
+      // (The simulated player runs the game faster than real time; its moments keep the game's clock.)
+      mom = { name, startAt: null, t: 0, t0: game.clock, fallback: !ctx || !!window.__sim, seenAt: game.clock };
+      if (cue) cue.next = null;
+      if (ctx) this.play(name, 0, mom);
+    },
+    // Seconds into the moment as heard (null if this moment isn't the one playing). The output timestamp, where the
+    // browser gives one, says when the sample now at the speaker was scheduled; otherwise the context's time less its
+    // latency. It never runs backwards, and freezes while the context is suspended (paused, or the tab hidden). With no
+    // music (no context, a failed decode, or a context that never starts) it runs on the game's clock from the trigger.
+    momentTime(name) {
+      const m = mom;
+      if (!m || (name && m.name !== name)) return null;
+      if (!m.fallback && ctx && ctx.state !== 'running' && game.clock - m.seenAt > (m.startAt == null ? 0.6 : 2.0)) { m.fallback = true; m.t0 = game.clock - m.t; }
+      if (m.fallback) { m.t = Math.max(m.t, game.clock - m.t0); return m.t; }
+      if (m.startAt == null || ctx.state !== 'running') return m.t;
+      m.seenAt = game.clock;
+      let heard = ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0);
+      const ts = ctx.getOutputTimestamp ? ctx.getOutputTimestamp() : null;
+      if (ts && ts.contextTime > 0 && ts.performanceTime > 0) heard = Math.min(ctx.currentTime, ts.contextTime + (performance.now() - ts.performanceTime) / 1000);
+      m.t = Math.max(m.t, heard - m.startAt + PRIME);
+      return m.t;
+    },
+    momentName: () => (mom ? mom.name : null),
+    endMoment() { mom = null; },
     bed(on) { this.ambience(on ? 'bed' : null, { fadeIn: 6, fadeOut: 3 }); },          // chapter one's
     setEnabled(on) { enabled = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
-    setPaused(on) { paused = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); },
+    setPaused(on) {
+      paused = on; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, 0.3);
+      // In a moment, pausing stops the score where it is, so the shot and the music pick up together.
+      if (ctx && on && mom && cue && cue.moment) { ctx.suspend(); mom.held = true; }
+      if (ctx && !on && mom && mom.held) { mom.held = false; if (!document.hidden) ctx.resume(); }
+    },
+    // A hidden tab stops the frames; the music stops with them, so the clocks don't split.
+    hidden(on) { if (!ctx) return; if (on) ctx.suspend(); else if (!(mom && mom.held)) ctx.resume(); },
     // Under a voice the music steps back.
     duck(on) { duck = on ? 0.4 : 1; if (bus) bus.gain.setTargetAtTime(level(), ctx.currentTime, on ? 0.4 : 1.5); },
   };
 })();
 Music.prefetch();
+// The directed moments' times, in seconds from the trigger (docs/directed_moments.md). Control is locked until `lock` (the
+// peak and a bar); after it, a touch of the controls ends the hold, the camera blends home and the music plays on. The
+// shot lets go at `release`, and control is back by `control` at the latest. No voices until `release`.
+const MOMENTS = { kin: { lock: 19, release: 21, control: 22.5 }, refuge: { lock: 14, release: 16, control: 18.5 },
+  ringc: { lock: 16, release: 20, control: 22 }, window: { lock: 99, release: 13.6, control: 99 } };
+function startMoment(name) { game.momentCut = false; Voice.stop(1.0); Music.moment(name); }
+// The moment's time while its shot holds (null once it lets go, or if the player cut it short).
+function momentShot(name) { const t = Music.momentTime(name); return t != null && !game.momentCut && t < MOMENTS[name].release ? t : null; }
+function momentFree(name, t) {
+  if (t == null || t >= MOMENTS[name].control) return true;
+  if (t >= MOMENTS[name].lock && (input.left || input.right || input.axis || input.usePressed || input.jumpPressed)) { game.momentCut = true; return true; }
+  return false;
+}
+function voicesHeld() { const n = Music.momentName(); return !!n && momentShot(n) != null; }
+// A shot written as keyframes { t, pos, look, focal }, smoothstep between neighbours (a hold is two equal keys).
+function keyShot(keys, t) {
+  let i = 0; while (i < keys.length - 2 && t >= keys[i + 1].t) i++;
+  const a = keys[i], b = keys[i + 1], k = smooth((t - a.t) / Math.max(1e-3, b.t - a.t));
+  return { pos: a.pos.clone().lerp(b.pos, k), look: a.look.clone().lerp(b.look, k), focal: a.focal + (b.focal - a.focal) * k };
+}
 
 // ---------------------------------------------------------------------------
 // Voices (pass 7): voice cards, tannoys and the radio. The director's raw recordings go through an old-recording chain
@@ -1165,7 +1227,7 @@ function releaseAll() {
   syncHeld(); touchEl.querySelectorAll('button.on').forEach((b) => b.classList.remove('on'));
 }
 addEventListener('blur', releaseAll);
-document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); Music.hidden(document.hidden); });
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(); e.preventDefault(); return; }
   if (e.code === 'Backquote') { dbg.hidden = !dbg.hidden; return; }
@@ -1893,7 +1955,7 @@ function updatePlayer(dt) {
   // DL-02: walking in among the couriers, he stops and understands.
   if (game.region === 2 && game.revealed && !game.revealPending && game.clock - game.revealTime > 1.0 && !game.realised && game.x > GATE_X + 0.6 && game.grounded && !game.hold) {   // pass 7: the camera goes to him the moment he is in among them
     game.realised = true;
-    if (once('realise')) { game.kinSlow = true; game.vx = 0; game.act = { kind: 'realise', phase: 'act', t: 0 }; setClip('Realise', 0.4); if (game.clock - game.revealTime < 45) Music.queue('kin'); else Music.play('kin'); return; }   // pass 5: the lament plays through; kin follows it
+    if (once('realise')) { game.kinSlow = true; game.vx = 0; game.act = { kind: 'realise', phase: 'act', t: 0 }; setClip('Realise', 0.4); startMoment('kin'); return; }   // a directed moment: racks gives way at once
   }
 
   Letters.update();
@@ -2036,14 +2098,15 @@ function updateEnd5(e, dt, v) {
   e.phase ||= 'out';
   if (e.phase === 'out') {
     game.x += v * dt; setClip('Walk', 0.2, v / CLIP_SPEED.Walk); stepSounds();
-    if (game.x >= END5.lookX) { game.x = END5.lookX; e.phase = 'look'; e.pt = 0; setClip('Idle', 0.5); game.lookAt = 'window'; }
+    if (game.x >= END5.lookX) { game.x = END5.lookX; e.phase = 'look'; e.pt = 0; setClip('Idle', 0.5); game.lookAt = 'window'; startMoment('window'); }
     return;
   }
   e.pt += dt;
   if (e.phase === 'look') {
     game.x = END5.lookX;
-    if (e.pt > 1.0 && !e.music) { e.music = true; Music.play('end', 4.0); Sound.distant(); }
-    if (e.pt > 10.5) { e.phase = 'label'; e.pt = 0; game.lookAt = null; game.act = { kind: 'quirk', clip: 'CheckLabel', phase: 'act', t: 0, cancel: false }; setClip('CheckLabel', 0.2); }
+    // The lit window (a directed moment): he checks his label at 13.6, on the cue's clock, just before the music box
+    // plays the parcel's notes.
+    if ((Music.momentTime('window') ?? e.pt) >= 13.6) { e.phase = 'label'; e.pt = 0; game.lookAt = null; game.act = { kind: 'quirk', clip: 'CheckLabel', phase: 'act', t: 0, cancel: false }; setClip('CheckLabel', 0.2); }
     return;
   }
   if (e.phase === 'label') {
@@ -2241,7 +2304,10 @@ function updateAct2(a, dt) {
     if (f >= 52 && !a.sigh) { a.sigh = true; Sound.worried(); }
     if (f >= 83) { a.phase = 'out'; }
   } else if (a.kind === 'realise') {
-    if (actions.Realise.time * FPS >= 155) { game.act = null; setClip('Idle', 0.5); input.lastActivity = game.clock; }
+    // Held on the cue's clock: the hand stays on his chest through the close-up, and he stands while the camera pulls away.
+    const t = Music.momentTime('kin');
+    if (!a.idle && actions.Realise.time * FPS >= 155 && (t == null || t > 9.5)) { a.idle = true; setClip('Idle', 1.2); }
+    if (a.idle && momentFree('kin', t)) { game.act = null; setClip('Idle', 0.5); input.lastActivity = game.clock; }
   } else updateAct3(a, dt);
 }
 
@@ -3313,7 +3379,14 @@ function updateAct4(a, dt) {
     if (Math.abs(game.yaw - turnTo) < 0.05) { a.phase = 'act'; setClip(clip, 0.35); } else setClip('Walk', 0.2, 0.45);
     return;
   }
-  if (a.phase === 'act') { if (actions[clip].time * FPS >= end) { a.phase = 'back'; game.yawOverride = Math.PI / 2; } return; }
+  if (a.phase === 'act') {
+    // The city's hold runs on the cue's clock: he turns home as the shot comes back to him (16 to 18.5).
+    const t = a.kind === 'awe' ? Music.momentTime('refuge') : null;
+    let done = actions[clip].time * FPS >= end;
+    if (done && t != null && t < MOMENTS.refuge.release + 0.6) done = momentFree('refuge', t);
+    if (done) { a.phase = 'back'; game.yawOverride = Math.PI / 2; }
+    return;
+  }
   if (Math.abs(game.yaw - Math.PI / 2) < 0.05) {
     game.act = null; game.yawOverride = null; game.facing = 1; setClip('Idle', 0.35); input.lastActivity = game.clock;
   } else setClip('Walk', 0.2, 0.45);
@@ -3350,10 +3423,10 @@ function updateTriggers4() {
     d.hopped = true;
     if (once('hopscotch')) { startHopscotch(x); return true; }
   }
-  if (x > VISTA_X0 - 0.6 && !d.refuge) { d.refuge = true; Music.play('refuge', 3.0); }
+  // The city (a directed moment): the cue starts with the stop, in silence from the tunnel.
   if (x > AWE_X && !d.awed) {
     d.awed = true;
-    if (once('awe')) { game.aweStart = game.clock; game.vx = 0; game.act = { kind: 'awe', phase: 'turn', t: 0 }; return true; }
+    if (once('awe')) { game.aweStart = game.clock; game.vx = 0; game.act = { kind: 'awe', phase: 'turn', t: 0 }; startMoment('refuge'); return true; }
     game.aweStart = game.clock - 60;                    // seen before: no crane, he just walks on
   }
   return false;
@@ -3388,7 +3461,7 @@ const BARRICADE5 = { x0: OFF5 + 80.2, x1: OFF5 + 81.0, gap: 0.62 };
 const END5 = { lookX: 173.2, stairX: 174.4, stairRise: 0.714, win: new THREE.Vector3(173.6, 24.0, -10.3), box: new THREE.Vector3(170.85, 1.46, -0.93),
   cam: new THREE.Vector3(172.4, 0.6, 0.8) };            // keep the camera at z <= 0.9: the well's lintel is above the landing
 const KNOCK5_X = OFF5 + 103.26, INNER5_X = OFF5 + 109.5, TOY5_X = OFF5 + 111.1, TERM5_X = OFF5 + 113.6, END5_X = OFF5 + 116.1;
-const MARKS_HOLD = 2.6;
+const MARKS_HOLD = 6.0;          // childP's music box finds the true E at 2.3 s, on the held shot
 const DESK5 = { x: OFF5 + 113.6, half: 0.55, z: -0.62, min: OFF5 + 112.45, clear: OFF5 + 112.55 }, PUSH_GAP5 = 0.9, DRAG_SPEED = 0.26;   // the grip bar is 0.585 left of its centre
 const C114DOOR = { x: OFF5 + 103.6075, open: THREE.MathUtils.degToRad(95), handle: THREE.MathUtils.degToRad(-35) };
 const KNOCK5_Z = 0.07;                                                                      // a step toward the camera, square to C-114's shut front door
@@ -3473,7 +3546,7 @@ function updateDL05(dt) {
     if (game.hold === 'desk') { game.hold = null; game.pushKey = null; setClip('Idle', 0.3); }
   }
   // The held look at the marks gives way the moment the player does anything.
-  if (game.clock - game.marksShotAt > 0.8 && game.clock - game.marksShotAt < MARKS_HOLD && (input.left || input.right || input.axis || input.usePressed || input.jumpPressed)) game.marksShotAt = -100;
+  if (game.clock - game.marksShotAt > 3.0 && game.clock - game.marksShotAt < MARKS_HOLD && (input.left || input.right || input.axis || input.usePressed || input.jumpPressed)) game.marksShotAt = -100;
   // The toy sits up while he sets it straight.
   if (refs.Toy && refs.toySlump) {
     const a = game.act, k = a && a.kind === 'toy' && a.phase === 'act' ? smooth((actions.Straighten.time * FPS - 14) / 12) : game.dl5.toyUp ? 1 : 0;
@@ -3608,27 +3681,39 @@ function updateTriggers5() {
   return false;
 }
 // ---------------------------------------------------------------------------
+// DL-02's moment (kin), from the trigger: round to his face 3.7 to 5.3; the pull back 9 to 15, the peak's wide.
+const REALISE_KEYS = (X) => [
+  { t: 0, pos: V3(X + 1.7, 0.42, 1.0), look: V3(X - 0.1, 0.6, -1.4), focal: 30 }, { t: 3.7, pos: V3(X + 1.7, 0.42, 1.0), look: V3(X - 0.1, 0.6, -1.4), focal: 30 },
+  { t: 5.3, pos: V3(X + 0.9, 0.62, 1.3), look: V3(X, 0.5, 0), focal: 50 }, { t: 9.0, pos: V3(X + 0.85, 0.64, 1.36), look: V3(X, 0.5, 0), focal: 50 },
+  { t: 15, pos: V3(X - 0.7, 3.6, 4.6), look: V3(X + 3.2, 0.0, -1.4), focal: 22 }, { t: 21, pos: V3(X - 0.75, 3.62, 4.65), look: V3(X + 3.2, 0.0, -1.4), focal: 22 }];
 // Authored camera shots. While a moment is playing, the camera leaves its side-on framing for a
 // composed shot (its own position, aim and lens), easing in and back out; play carries on beneath.
 // ---------------------------------------------------------------------------
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
-const shotCam = { w: 0, live: false, pos: new THREE.Vector3(), look: new THREE.Vector3(), focal: 35, name: null, shake: 0, seed: 0 };
+const shotCam = { clock: null, w: 0, live: false, pos: new THREE.Vector3(), look: new THREE.Vector3(), focal: 35, name: null, shake: 0, seed: 0 };
 function currentShot() {
   const X = game.x, Y = game.y, a = game.act, sc = game.scan;
   // Only the story's emotional beats take the camera away from the side view; gameplay never does.
   // DL-02: the realisation. Over his shoulder toward the racks, then round to his face as he touches his chest.
-  if (a && a.kind === 'realise') {
-    // Low and in front of him, the rows filling the frame behind; then in close as he touches his chest.
-    const k = smooth((actions.Realise.time - 3.7) / 1.6);
-    return { name: 'realise', pos: V3(X + 1.7 - 0.8 * k, 0.42 + 0.2 * k, 1.0 + 0.3 * k),
-      look: V3(X - 0.1 + 0.1 * k, 0.6 - 0.1 * k, -1.4 + 1.4 * k), focal: 30 + 20 * k, ease: 1.1 };
+  const kt = game.region === 2 ? momentShot('kin') : null;
+  if (kt != null && (a ? a.kind === 'realise' : !game.momentCut)) {
+    // The moment (kin): low and in front of him, the rows behind; round to his face as he touches his chest; held close
+    // while the cello comes in; then a slow pull back and up until he is small and the rows run away into the dark,
+    // landing on the peak at 15; held there to 21.
+    const K = REALISE_KEYS(X);
+    return { name: 'realise', ...keyShot(K, kt), ease: 4, clock: kt };
   }
   // DL-10: riding the counterweight down, he looks up at the car leaving with the suitcase; landed, the camera rises
   // over his shoulder and looks down the length of ring C, held through the collapse's opening.
   const uo = game.ch1 && game.ch1.uo;
-  if (a && a.kind === 'ride10' && a.phase === 'ride' && uo && uo.upAt != null) {
-    if (uo.phase === 'up') return { name: 'car10', pos: V3(X + 0.9, Y + 0.35, 1.5), look: V3(UO.car.mid, DECK + 1.3 + uo.d, -0.9), focal: 24, ease: 0.9 };
-    return { name: 'ringc10', pos: V3(X - 0.2, 3.3, 3.6), look: V3(X + 7.5, 0.2, -1.4), focal: 22, ease: 0.45 };
+  const ct = uo && uo.upAt != null ? momentShot('ringc') : null;
+  if (ct != null && (a ? a.kind === 'ride10' : !game.momentCut)) {
+    // On the cue's clock: the car going (0 to 5.5), a beat on landing, the rise over his shoulder to look down the lane
+    // (6 to 9), and held there through the chime and the collapse (12) to 20.
+    const car = { pos: V3(X + 0.9, Y + 0.35, 1.5), look: V3(UO.car.mid, DECK + 1.3 + uo.d, -0.9), focal: 24 };
+    const lane = { pos: V3(X - 0.2, 3.3, 3.6), look: V3(X + 7.5, 0.2, -1.4), focal: 22 };
+    const k = smooth((ct - 6.0) / 3.0);
+    return { name: k > 0.5 ? 'ringc10' : 'car10', pos: car.pos.lerp(lane.pos, k), look: car.look.lerp(lane.look, k), focal: car.focal + (lane.focal - car.focal) * k, ease: 4, clock: ct };
   }
   // Chapter 1, DL-15: sat in Mara's place, at child-desk height, the room emptying past him.
   if (a && a.kind === 'att' && a.what === 'sit' && a.phase === 'act' && a.t > 0.5) return { name: 'sit15', pos: V3(255.15, 0.62, 1.45), look: V3(258.6, 0.72, -0.9), focal: 28, ease: 0.9 };
@@ -3655,9 +3740,11 @@ function currentShot() {
   if (game.region === 5 && game.exit && game.exit.phase === 'look') {
     // Pass 6: the look up. From low behind him, the camera rises with his look up the well to the one lit window and
     // holds there; then comes back down to him.
-    const t = game.exit.pt, up = smooth((t - 0.8) / 4.5) * (1 - smooth((t - 8.6) / 1.8));
+    // On the window cue's clock: still (0 to 1.5), the rise (1.5 to 6.5) onto the window for the true E, held to 11.5,
+    // and back down to him by 13.5.
+    const mt = Music.momentTime('window'), t = mt ?? game.exit.pt, up = smooth((t - 1.5) / 5.0) * (1 - smooth((t - 11.5) / 2.0));
     const look = V3(X + 0.3, Y + 0.7, -0.4).lerp(END5.win, up);
-    return { name: 'ending', pos: END5.cam.clone().add(V3(0, 1.6 * up, 0)), look, focal: 28 + 10 * up, ease: 0.9 };
+    return { name: 'ending', pos: END5.cam.clone().add(V3(0, 1.6 * up, 0)), look, focal: 28 + 10 * up, ease: 4, clock: mt };
   }
   if (game.region === 5) {
     // The marks and the tree, held, the first time.
@@ -3691,11 +3778,14 @@ function currentShot() {
     if (a && a.kind === 'lookback') return { name: 'lookback', pos: V3(X + 1.6, Y + 0.5, 1.15), look: V3(X - 4.0, Y + 0.7, -0.5), focal: 34, ease: 1.2 };
     // The refuge: from his shoulder out over the city, craning up and back to a high, wide view; it lets go of
     // the view a few seconds after he does, and the camera comes back to him.
-    if ((a && a.kind === 'awe') || (game.dl4.awed && game.clock - game.aweStart < 10.5)) {
-      const k = smooth((game.clock - game.aweStart - 1.0) / 7.0);
+    // On the cue's clock: on his shoulder while the music holds its breath (0 to 2), the crane up and back (2 to 10),
+    // easing onto the widest frame for the peak at 10, held to 16.
+    const rt = momentShot('refuge');
+    if (rt != null && game.dl4.awed) {
+      const k = smooth((rt - 2.0) / 8.0);
       const pos = V3(X + 0.45, Y + 0.95, 1.35).lerp(V3(X + 3.2, Y + 7.9, 8.5), k);
       const look = V3(OFF4 + 95, 12, -160).lerp(ATRIUM4, k);
-      return { name: 'vista', pos, look, focal: 32 - 8 * k, ease: 0.8 };
+      return { name: 'vista', pos, look, focal: 32 - 8 * k, ease: 4, clock: rt };
     }
   }
   if (game.region === 3) {
@@ -3716,6 +3806,10 @@ function currentShot() {
 function shake(amount) { if (!game.calm) shotCam.shake = Math.max(shotCam.shake, amount); }
 function applyShots(dt, basePos, baseLook, baseFocal) {
   const s = currentShot();
+  // A directed moment's shot follows the cue's clock, not the frame's clamped step, so a stall can't leave it behind.
+  const clock = s && s.clock != null ? s.clock : null;
+  if (clock != null && shotCam.clock != null) dt = Math.min(0.5, Math.max(0, clock - shotCam.clock));
+  shotCam.clock = clock;
   if (s) {
     if (!shotCam.live) { shotCam.pos.copy(camera.position); shotCam.look.copy(baseLook); shotCam.focal = baseFocal; shotCam.live = true; }
     const k = Math.min(1, dt * s.ease * 1.6);
@@ -3963,7 +4057,7 @@ function buildCh1(setRoot) {
   refs.endLights = [P(0xffb066, 2.5, 8, 173.6, 24.2, -9.3), P(0xa8b8cc, 0.7, 3.5, 172.4, 1.4, -0.3)];
   // Pass 10: the first two secret rooms spill warm light out of their gaps onto the lane, so the gap reads as a way in;
   // and the night-shift cot at the back of the depot floor (DL-01's curiosity in depth) has a lamp of its own.
-  // DL-10's look down over ring C (LOOK10): a cold light comes up over the lane while the shot holds, so the street reads.
+  // DL-10's look down over ring C (RINGC_LIGHT): a cold light comes up over the lane, full as the collapse lands.
   refs.ringcLook = new THREE.PointLight(0xb8c8d8, 0, 9, 1.6); refs.ringcLook.position.set(UO.cw.stand + 5, 2.6, -0.3); scene.add(refs.ringcLook);
   refs.spillLights = [P(0xffcf8a, 1.3, 2.6, 66.9, 0.75, -0.95), P(0xffa860, 1.2, 2.6, 107.17, DECK + 0.7, -1.45)];
   refs.cotLight = P(0xffc890, 1.1, 2.6, 4.75, 1.15, -2.2);
@@ -4484,9 +4578,9 @@ function updateAct10(a, dt) {
       a.pressed = true; Sound.click();
       if (uo.loaded && uo.gate >= 1 && uo.phase === 'idle') {
         uo.phase = 'up'; uo.t = 0; uo.riding = a.kind === 'ride10'; Sound.clunk(); Sound.chain(2.0); shake(0.15);
-        // The car leaves for good with the suitcase (he rides the counterweight down): the anthem's last phrase, then the
-        // collapse as he comes down into ring C.
-        if (uo.riding) { Music.play('lastcar', 0.3); Music.queue('collapse'); uo.upAt = game.clock; uo.lookEnd = game.clock + LOOK10.hold; }
+        // The car leaves for good with the suitcase (he rides the counterweight down): ring C, a directed moment. The
+        // ride, the shot and the light all run on the cue's clock.
+        if (uo.riding) { uo.upAt = game.clock; startMoment('ringc'); }
       }
       else { uo.buzz = game.clock; Sound.buzzShort(); Telemetry.event('liftBuzz', { from: a.kind }); if (!uo.loaded) Pips.flash('car10'); }
     }
@@ -4500,20 +4594,26 @@ function updateAct10(a, dt) {
   if (a.phase === 'ride') {
     // Down the open shaft on the counterweight's frame, his claws on its rails, looking up at the car going away.
     game.x = UO.cw.stand; game.y = DECK - uo.d; game.vx = 0; game.grounded = true; game.facing = 1;
-    // Landed, he stays a while: the shot looks down over ring C through the collapse's opening (the chime alone, the
-    // crash at about +3.5 s) and hands back as the lament begins, 6 s in. Timed from the cue when the music plays.
-    if (Music.playing() === 'collapse' && !a.collapseAt) { a.collapseAt = game.clock; uo.lookEnd = Math.max(uo.upAt + LOOK10.min, Math.min(uo.lookEnd, a.collapseAt + LOOK10.afterCollapse)); }
+    // Landed (5.5), he stays: the silence, the look down ring C's lane, the chime alone, and the light full on the lane
+    // and its dead as the collapse lands (12); held to 20, his again by 22 (or from 16, at a touch of the controls).
     if (uo.phase === 'gone' && !a.landed) { a.landed = true; setClip('Idle', 0.5); }
-    if (refs.ringcLook) refs.ringcLook.intensity = 2.6 * smooth(Math.min(1, (game.clock - uo.upAt - UO.ride) / 2.5)) * (1 - smooth((game.clock - uo.lookEnd + 1.5) / 1.5));
-    if (uo.phase === 'gone' && game.clock >= Math.min(uo.lookEnd, uo.upAt + LOOK10.cap)) { game.act = null; setClip('Idle', 0.4); input.lastActivity = game.clock; if (refs.ringcLook) refs.ringcLook.intensity = 0; }
+    const t = Music.momentTime('ringc');
+    if (uo.phase === 'gone' && momentFree('ringc', t)) { game.act = null; setClip('Idle', 0.4); input.lastActivity = game.clock; uo.lightOff ??= t ?? 0; }
   }
 }
-// DL-10's last car (docs/prologue_music.md, beat 15): up at the car going, then down over ring C on landing.
-const LOOK10 = { hold: 16, afterCollapse: 6.2, min: 12, cap: 21 };      // seconds from UP
+// DL-10's moment (ringc, docs/directed_moments.md): up at the car leaving, then down ring C's lane on landing.
+const RINGC_LIGHT = { from: 9.5, full: 12.0, off: 20 };
 function updateUpOnly(dt) {
   const uo = game.ch1.uo, k = refs.ch1, it = uo.case;
   Pips.set('car10', uo.loaded ? 1 : 0);
   uo.t += dt;
+  // Riding, the car's climb is the cue's: it leaves the frame as the tape runs down and he lands at 5.5.
+  const mt = uo.riding ? Music.momentTime('ringc') : null;
+  if (mt != null && uo.phase === 'up') uo.t = Math.max(uo.t - dt, mt);
+  if (refs.ringcLook) {
+    const off = Math.min(uo.lightOff ?? RINGC_LIGHT.off, RINGC_LIGHT.off);
+    refs.ringcLook.intensity = mt == null ? 0 : 2.6 * smooth((mt - RINGC_LIGHT.from) / (RINGC_LIGHT.full - RINGC_LIGHT.from)) * (1 - smooth((mt - off) / 1.5));
+  }
   // The floor plate feels a passenger: the needle swings over and the gate draws shut.
   if (uo.loaded && uo.gate < 1 && game.clock - uo.loadedAt > 0.8) {
     if (uo.gate === 0) Sound.creak(0.5);
@@ -5935,7 +6035,7 @@ function updateTannoys() {
     if (v.kind !== 'tannoy' || v.x == null || v.region !== game.region || (v.upper !== undefined && !!v.upper !== !!game.upper) || (v.when && !v.when())) continue;
     const d = Math.abs(game.x - (v.at ?? v.x)), near = d < (v.trigger || 2.5);
     if (d > (v.reach || 9)) v.away = true;
-    if (!near || Voice.playing()) continue;
+    if (!near || Voice.playing() || voicesHeld()) continue;
     // Once as he passes; again, fainter, only if he has gone out of earshot and come back, and not for a while.
     if (v.last === undefined || (v.away && game.clock - v.last > 150)) {
       v.last = game.clock; v.away = false;
@@ -7207,7 +7307,7 @@ function updateAtmosphere(dt) {
   refs.doorLight.intensity = 1.2 * game.doorOpen;
   refs.crankLight.intensity = 9 * (1 - 0.7 * game.doorOpen) * (0.9 + 0.1 * Math.sin(t * 1.7));
   // Distant machinery.
-  if (t > atmos.nextClank && (game.mode === 'play')) { atmos.nextClank = t + 6 + Math.random() * 8; Math.random() < 0.6 ? Sound.distant() : Sound.groan(); }
+  if (t > atmos.nextClank && game.mode === 'play' && !voicesHeld()) { atmos.nextClank = t + 6 + Math.random() * 8; Math.random() < 0.6 ? Sound.distant() : Sound.groan(); }
   Sound.hiss(Math.max(0, 1 - Math.abs(8.7 - game.x) / 2.5) * (game.mode === 'play' ? 1 : 0) * (atmos.hissLevel ?? 1));
 }
 
@@ -7257,6 +7357,7 @@ const CHECKPOINTS = {
 };
 function resetWorld(name = 'start') {
   const c = CHECKPOINTS[name];
+  Music.endMoment(); game.momentCut = false;
   resetAtt(name);
   Object.assign(game, { x: c.x, y: 0, z: 0, vx: 0, vy: 0, facing: 1, yaw: Math.PI / 2, yawOverride: null, grounded: true,
     crouched: false, mantle: null, act: null, exit: null, jumpBuffer: 0, coyote: 0, landTimer: 0, hintWeight: 0, ended: false, peakY: 0, pitch: 0 });
@@ -7286,7 +7387,7 @@ function resetWorld(name = 'start') {
   Object.assign(game, { pawlLever: c.latched ? LEVER_NEAR : LEVER_AWAY, pawlHold: null, pawlDip: 0, pawlDrop: -100, pawlClickAt: -100, aweStart: -100 });
   game.belt4 = { state: c.belt4 ? 'run' : 'idle', t: 0, next: 0.5 };
   if (refs.crates) { refs.crates.forEach((k) => scene.remove(k.m)); refs.crates.length = 0; }
-  game.dl4 = { entered: game.region === 4, patted: !!c.latched, lookedBack: !!c.tunnel, hopped: false, refuge: false, awed: false, triedPawl: false };
+  game.dl4 = { entered: game.region === 4, patted: !!c.latched, lookedBack: !!c.tunnel, hopped: false, refuge: false, awed: c.x > AWE_X, triedPawl: false };   // (a checkpoint past the city doesn't replay it)
   camera.far = 60; camera.updateProjectionMatrix(); refs.humLevel = undefined; refs.chainKey = null;
   // DL-05: the desk against the wall, or dragged clear and the terminal answered.
   Object.assign(game.desk5, { x: c.forwarded ? DESK5.min : DESK5.x, v: 0, lastX: undefined });
@@ -7393,7 +7494,8 @@ function sceneAmbience() {
   if (r === 3) return [past(cp, 'scanned') ? 'lower_works' : 'order'];                                           // the scanner's corridor is the Order's
   if (r === 4) {
     if (x < CG.x0) return ['lower_works'];
-    if (x > UPONLY.x0) return [game.ch1.uo.riding ? null : 'order'];                                             // the lobby, until the last car goes
+    if (x > UPONLY.x0) return game.ch1.uo.riding ? ['heaps', { scale: 0.6 }] : ['order'];                       // the lobby, until the last car goes; ring C, low
+    if (game.dl4.awed && x > AWE_X - 0.1) return ['order'];                                                       // the city's cue hands to the march
     if (game.ch1.cage.phase === 'caught' || past(cp, 'landing8')) return [null];                                 // silence into the tunnel
     if (persist.cageDanger) return ['failure', { fadeIn: 1 }];                                                   // from the slip, through every retry
     return ['lower_works'];
@@ -7425,7 +7527,9 @@ function finish() {
   fadeEl.style.opacity = 1;
   Sound.distant();
   const endCue = game.region === 6 ? 'endAtt' : 'end';
-  if (Music.playing() !== endCue) Music.queue(endCue);
+  // After the lit window, the end card's cue starts with the card; otherwise it follows whatever is playing.
+  if (Music.playing() === 'window') setTimeout(() => Music.play(endCue, 2.0), 5200);
+  else if (Music.playing() !== endCue) Music.queue(endCue);
   // The prologue's card offers chapter one; chapter one's (finishAtt) says where it stops for now.
   const att = game.region === 6, cont = document.getElementById('continue-att');
   if (!att) for (const [id, v] of Object.entries(END_CARD)) document.getElementById(id).innerHTML = v;
@@ -7442,7 +7546,7 @@ function finish() {
 // and a summariser.
 // ---------------------------------------------------------------------------
 const Telemetry = (() => {
-  const BUILD = 'prologue-pass10';
+  const BUILD = 'directed-moments';
   const url = (() => { try { return new URLSearchParams(location.search).get('telemetry') || window.DL_TELEMETRY_URL || ''; } catch (e) { return ''; } })();
   const sid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)) ;
   let enabled = true, queue = [], log = [], seq = 0, sent = 0, chap = null;
