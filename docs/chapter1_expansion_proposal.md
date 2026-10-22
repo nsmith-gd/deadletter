@@ -1,6 +1,9 @@
 # Chapter 1 expansion: a proposal
 
-Status: proposal for the director (22 October 2026). Source: the director's playtest notes in Puzzle Notes
+Status: approved as proposed (the user, 22 October 2026: "address them all"), with the proposal's defaults: nine
+scenes, the escort trolley as a simple rail machine, DL-17's rig with water. Being built: `docs/chapter1_expansion_build.md`.
+Changes found while building: DL-16a's load is taken back out from inside the car (Use when the gauge reads OVER), and
+the trolley takes the nearer of what it sees, so the figure shields him. Originally a proposal for the director (22 October 2026). Source: the director's playtest notes in Puzzle Notes
 (chapter 1 in 12 minutes; DL-12 to DL-14 good, then "same-same"; DL-17 not a puzzle; up to 10 scenes, each harder or
 longer than the last; the ingredient families and skills), `docs/full_game_plan.md` revision 0.3 and
 `docs/gameplay_breakdown.md`.

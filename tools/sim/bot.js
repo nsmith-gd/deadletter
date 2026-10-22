@@ -559,55 +559,179 @@ window.__startBot = function (seed, opts = {}) {
     mark('end');
   }
 
-  // Chapter 1, part 2: DL-15 One Pupil Missing, DL-16 After the Bell, DL-17 A Different Lesson.
-  function* part2() {
-    const S = () => G.att, F = () => G.att.f15, L = 251.9;
-    const pushTo = function* (key, dir, label) {
-      const f = F()[key[3]];
-      yield* useAt(['grabPush:' + key], f.x - (dir > 0 ? 0.6 : -0.6), actIs('grabPush'), label, { hop: false, max: 40 });
-      yield* until(() => G.hold === 'push', 10, 'grip ' + label);
-      yield* walk(dir, () => G.hold !== 'push', label, { hop: false, keepHolding: true, max: 40 });
-      yield* settle();
-    };
+  // Chapter 1 after DL-14 (docs/chapter1_expansion_build.md): DL-14a Lights Out, DL-14b Unaccompanied, DL-15 One Pupil
+  // Missing, DL-16 After the Bell, DL-16a Her Way Round, DL-17 A Different Lesson.
+  const S = () => G.att, F = () => G.att.f15;
+  const pushTo = function* (key, f, dir, label) {
+    yield* useAt(['grabPush:' + key], f().x - (dir > 0 ? 0.6 : -0.6), actIs('grabPush'), label, { hop: false, max: 40 });
+    yield* until(() => G.hold === 'push', 10, 'grip ' + label);
+    yield* walk(dir, () => G.hold !== 'push', label, { hop: false, keepHolding: true, max: 40 });
+    yield* settle();
+  };
+  // DL-14a: brake the night-light in its dark; crank (W1 down, W2 up); the gown from the nurse's chair onto W1's hem
+  // peg from the friends' bunks; crank again (the clutch slips at W1, W2 comes down alone); dark, the door opens.
+  function* dorm14a() {
+    const A = () => S().f14a;
+    yield* wait(look(4));
+    yield* walk(1, () => G.x > 251.2 && G.y < 0.05, 'down off the bunk', { max: 40 });
+    if (mistakes) { yield* goTo(262.2, 'to the door', { max: 40 }); yield* wait(think(6)); note('the door is shut; the eye shows three lights'); yield* wander(252, 261, 0.5); }
+    yield* goTo(252.4, 'to the brake', { max: 40 });
+    if (mistakes && chance(0.5)) { yield* useAt(['att:pawl14a'], 252.3, actIs('att'), 'brake, any time', { hop: false }); yield* settle(); note('braked in the light'); yield* wait(think(4)); yield* useAt(['att:pawl14a'], 252.3, actIs('att'), 'release', { hop: false }); yield* settle(); }
+    yield* until(() => { const t = A().t; return t > 4.8 && t < 6.6; }, 20, 'the dark');
+    yield* useAt(['att:pawl14a'], 252.3, actIs('att'), 'brake in the dark', { hop: false }); yield* settle(); note('the night-light held dark');
+    yield* walk(1, () => G.x > 258.3 && G.y < 0.05, 'over the bunks to the crank', { max: 60 });
+    yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank'); yield* until(() => free() && A().w1 > 0.98, 10, 'W1 down'); note('W1 down, W2 up');
+    if (mistakes) { yield* wait(think(4)); yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank again'); yield* until(() => free() && A().w2 > 0.98, 10, 'swap'); note('they just swap'); yield* wait(think(6)); yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank back'); yield* until(() => free() && A().w1 > 0.98, 10, 'W1 down again'); }
+    yield* useAt(['att:gownChair'], 260.6, actIs('att'), 'the gown'); yield* until(() => G.hold === 'item' && free(), 10, 'carry gown'); note('has the gown');
+    if (mistakes && chance(0.55)) {
+      yield* walk(-1, () => D.near() === 'att:hangWall', 'to the gown pegs', { max: 60 });
+      yield* useAt(['att:hangWall'], 251.5, actIs('att'), 'hang on a peg'); yield* settle(); note('hung on the wall pegs: nothing'); yield* wait(think(6));
+      yield* useAt(['att:takeWall'], 251.5, actIs('att'), 'take it back'); yield* until(() => G.hold === 'item' && free(), 10, 'carry gown again');
+    }
+    yield* walk(Math.sign(256.2 - G.x) || 1, () => D.near() === 'att:hangHem', 'up onto the bunks under W1', { max: 60 });
+    yield* until(() => !G.mantle && G.grounded, 5, 'on the bunks');
+    yield* useAt(['att:hangHem'], 256.2, actIs('att'), 'the gown on the hem', { hop: false }); yield* until(() => A().gown.state === 'hem', 10, 'hung'); yield* settle(); note('the gown holds W1 down');
+    yield* walk(1, () => G.x > 258.3 && G.y < 0.05, 'down to the crank', { max: 40 });
+    yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank with W1 held'); yield* until(() => free() && A().w2 > 0.98, 10, 'W2 down');
+    yield* until(() => A().open, 10, 'dark'); note('dark: the door opens');
+    yield* walk(1, () => G.x > 263.6, 'into the corridor', { max: 30 });
+  }
+  // DL-14b: the trolley's lamp finds anyone on the lane. Tuck into niche A until it turns away; follow it to the bay;
+  // nudge the figure out onto the rail and take its place; it takes the figure back to the dormitory instead.
+  function* corridor14b() {
+    const B = () => S().f14b, hiding = () => !!(G.act && G.act.what === 'hide' && G.act.phase === 'act');
+    yield* wait(look(3));
+    if (mistakes && chance(0.7 - 0.4 * P.skill)) {
+      note('runs for it');
+      try { yield* walk(1, () => (G.act && G.act.what === 'escorted') || G.x > 276, 'run for it', { max: 30 }); } catch (e) { /* */ }
+      if (G.act && G.act.what === 'escorted') { yield* until(() => !G.act, 30, 'escorted back'); note('caught; walked back to the dormitory'); yield* wait(think(5)); }
+    }
+    for (let tries = 0; tries < 6 && B().fig.state === 'bay'; tries++) {
+      yield* useAt(['att:hide'], 264.05, actIs('att'), 'into niche A', { max: 30 });
+      yield* until(hiding, 5, 'hidden');
+      yield* until(() => B().mode === 'patrol' && B().dir > 0 && B().tx > 265.3 && B().tx < 266.2, 40, 'it turns away');
+      I.right = true; yield* until(() => !G.act || G.act.phase === 'out', 3, 'step out of the niche'); I.right = false;
+      yield* until(() => !G.act, 5, 'out of the niche');
+      yield* walk(1, () => G.x >= 269.75 || !!G.act, 'behind it to the bay', { max: 20, hop: false });
+      if (G.act && G.act.what === 'escorted') { yield* until(() => !G.act, 30, 'escorted'); note('caught following it'); continue; }
+      yield* useAt(['att:nudge14b'], 269.9, actIs('att'), 'nudge the figure out', { hop: false, max: 10 });
+      yield* until(() => !G.act, 5, 'nudged');
+      yield* until(() => B().fig.state !== 'rolling', 5, 'rolled clear');
+      yield* useAt(['att:hide'], 269.9, actIs('att'), 'into the bay', { hop: false, max: 10 });
+      yield* until(hiding, 5, 'hidden in the bay'); note('the figure out; he hides in its place');
+    }
+    yield* until(() => B().fig.kept || (B().mode === 'escortFig' && B().fig.x < 268.0), 40, 'it takes the figure');
+    if (G.act && G.act.what === 'hide') { I.right = true; yield* until(() => !G.act || G.act.phase === 'out', 3, 'step out of the bay'); I.right = false; }
+    yield* until(() => !G.act, 5, 'out of the bay'); note('the trolley takes the figure back');
+    yield* walk(1, () => G.x > 278.3 && G.y > 1.5, 'up the stair to the sick bay', { max: 40 });
+  }
+  function* sickbay15() {
+    const L = 281.9;
     yield* wait(look(3));
     // DL-15: the lift won't go unaccompanied; the sick bay figure onto it; ride down with it.
-    if (mistakes) { yield* goTo(L, 'onto the lift alone', { max: 20 }); yield* wait(think(4)); note('the lift buzzes: no pupil'); yield* goTo(249.3, 'back', { max: 20 }); yield* settle(); }
-    yield* pushTo('f15B', 1, 'the sick bay figure onto the lift');
+    if (mistakes) { yield* goTo(L, 'onto the lift alone', { max: 20 }); yield* wait(think(4)); note('the lift buzzes: no pupil'); yield* goTo(279.3, 'back', { max: 20 }); yield* settle(); }
+    yield* pushTo('f15B', () => F().B, 1, 'the sick bay figure onto the lift');
     note('the figure on the lift');
     yield* goTo(L + 0.1, 'onto the lift beside it', { hop: false, max: 20 });
     yield* until(() => F().lift < 0.02 && free() && G.grounded, 15, 'down'); note('down the lift with the pupil');
-    yield* goTo(251.25, 'off the lift, behind it', { hop: false, max: 20 });
-    yield* pushTo('f15B', 1, 'B to the first seat');
+    yield* goTo(281.25, 'off the lift, behind it', { hop: false, max: 20 });
+    yield* pushTo('f15B', () => F().B, 1, 'B to the first seat');
     note('B in the first seat');
     // A, from the board: it stops in Mara's seat first; on to the second.
-    yield* pushTo('f15Ar', -1, 'A from the board');
-    if (Math.abs(F().A.x - 256.0) < 0.05) { note('A in Mara\'s seat'); yield* wait(think(5)); yield* pushTo('f15Ar', -1, 'A on to the second seat'); }
-    yield* useAt(['att:sit'], 256.0, actIs('att'), 'sit in her chair', { max: 30 });
+    yield* pushTo('f15Ar', () => F().A, -1, 'A from the board');
+    if (Math.abs(F().A.x - 286.0) < 0.05) { note('A in Mara\'s seat'); yield* wait(think(5)); yield* pushTo('f15Ar', () => F().A, -1, 'A on to the second seat'); }
+    yield* useAt(['att:sit'], 286.0, actIs('att'), 'sit in her chair', { max: 30 });
     yield* until(() => F().dismissed, 15, 'the bell'); note('dismissed, sat in her place');
     yield* wait(look(5));
-    yield* walk(1, () => G.x > 264.4, 'out of the classroom', { max: 40, keepHolding: true });
+    yield* walk(1, () => G.x > 294.4, 'out of the classroom', { max: 40, keepHolding: true });
+  }
+  function* after16() {
     // DL-16: let them go first; hold the lever until both are over; the rack takes them.
     yield* wait(look(3));
-    yield* useAt(['att:lever16'], 266.0, actIs('att'), 'the crossing lever', { max: 30 });
+    yield* useAt(['att:lever16'], 296.0, actIs('att'), 'the crossing lever', { max: 30 });
     I.useHeld = true;
-    if (mistakes) { yield* until(() => S().f16.bridge < 0.05, 6, 'bridge down'); yield* wait(1.2); I.useHeld = false; note('let go too soon'); yield* settle(); yield* wait(think(4)); yield* useAt(['att:lever16'], 266.0, actIs('att'), 'hold it again', { max: 30 }); I.useHeld = true; }
+    if (mistakes) {
+      yield* until(() => S().f16.bridge < 0.05, 6, 'bridge down'); yield* wait(1.2); I.useHeld = false; note('let go too soon'); yield* settle(); yield* wait(think(4));
+      if (!S().f16.latched && S().f16.storedN < 2) { yield* useAt(['att:lever16'], 296.0, actIs('att'), 'hold it again', { max: 30 }); I.useHeld = true; }
+    }
     yield* until(() => S().f16.storedN >= 2, 60, 'both over'); I.useHeld = false;
     yield* until(() => S().f16.cw > 0.9, 10, 'counterweight up'); note('the rack took them');
     yield* wait(look(3));
-    yield* walk(1, () => G.x > 281.2, 'over the bridge to the workshop', { max: 60 });
-    // DL-17: the tray off the drawer, the drawer, the drawer's contents.
+    yield* walk(1, () => G.x > 310.6, 'on into the servery', { max: 60 });
+  }
+  // DL-16a: the gate is shut to pupils; her chalk trees point to the dumbwaiter. Load it to the line (the books and a tin),
+  // get in, ring.
+  function* kitchen16a() {
+    const Fa = () => S().f16a, carry = (key) => G.carry === Fa()[key];
+    const load = function* (label) {
+      yield* walk(Math.sign(312.9 - G.x) || 1, () => D.near() === 'att:load16a', 'to the car with ' + label, { max: 40 });
+      yield* useAt(['att:load16a'], 312.9, actIs('att'), 'load ' + label, { hop: false }); yield* settle(); note(label + ' in the car');
+    };
+    const ride = function* (label) {
+      yield* walk(1, () => D.near() === 'att:bell16a', 'into the car', { max: 30, hop: false });
+      yield* useAt(['att:bell16a'], 313.05, actIs('att'), label, { hop: false });
+      yield* until(() => !G.act && (Fa().mode === 'bottom' || Fa().mode === 'top'), 15, label + ' over');
+    };
     yield* wait(look(4));
-    yield* useAt(['att:tray'], 285.55, actIs('att'), 'the tray', { max: 30 });
+    if (mistakes) { yield* goTo(313.55, 'to the gate', { max: 30 }); yield* wait(think(5)); note('the gate: pupils not permitted'); }
+    if (mistakes && chance(0.6)) { yield* goTo(312.4, 'back to the car', { max: 30 }); yield* ride('ring with nothing in it'); note('too light: up, the catch, down again'); yield* wait(think(6)); yield* goTo(312.2, 'out of the car', { max: 20 }); }
+    // The tins first (they are on the floor); two make 2, not enough.
+    yield* useAt(['liftItem:tin1'], 311.2, () => G.hold === 'item' || actIs('liftItem')(), 'a tin', { max: 40 });
+    yield* until(() => G.hold === 'item' && free(), 10, 'carry tin'); yield* load('a tin');
+    if (mistakes && chance(0.5)) {
+      yield* goTo(312.0, 'back for the other tin', { max: 30 });
+      yield* useAt(['liftItem:tin2'], 311.45, () => G.hold === 'item' || actIs('liftItem')(), 'the other tin', { max: 40 });
+      yield* until(() => G.hold === 'item' && free(), 10, 'carry tin 2'); yield* load('the other tin');
+      yield* ride('ring with two'); note('still too light'); yield* wait(think(6));
+      yield* goTo(312.2, 'out of the car', { max: 20 });
+    }
+    // The books, on the high shelf: the stool under it.
+    yield* goTo(312.55, 'behind the stool', { max: 20, hop: false });
+    yield* pushTo('stool16ar', () => Fa().stool, -1, 'the stool under the shelf');
+    yield* walk(-1, () => D.near() === 'att:books16a', 'up onto the stool', { max: 30 });
+    yield* useAt(['att:books16a'], 310.55, actIs('att'), 'the books', { hop: false }); yield* until(() => G.hold === 'item' && free(), 10, 'carry books'); note('has the books');
+    yield* load('the books');
+    if (S().f16a.tin2.state === 'car') {
+      // All three: OVER. In the car, Use takes a tin back out.
+      yield* walk(1, () => D.near() === 'att:unload16a', 'into the car', { max: 20, hop: false }); note('the gauge reads OVER');
+      yield* wait(think(4)); yield* useAt(['att:unload16a'], 313.05, actIs('att'), 'take a tin out', { hop: false }); yield* until(() => G.hold === 'item' && free(), 10, 'tin out');
+      yield* goTo(312.0, 'out with it', { max: 20 }); yield* useAt(['setdownItem'], G.x, () => G.hold !== 'item' || actIs('setdownItem')(), 'set it down'); yield* settle();
+    }
+    yield* ride('ring, loaded to the line');
+    if (Fa().mode !== 'top') throw new Error('the car did not go up: load ' + D.load16a?.());
+    note('up in the dumbwaiter');
+    yield* walk(1, () => G.x > 323.8 && G.y < 0.05, 'along the passage and down the stair', { max: 60 });
+    yield* walk(1, () => G.x > 325.2, 'into the workshop', { max: 30 });
+  }
+  function* workshop17() {
+    // DL-17: the tray off the drawer, the drawer, the drawer's contents (and Vance's key); the rig.
+    const d = () => S().f17;
+    yield* wait(look(4));
+    yield* useAt(['att:tray'], 329.55, actIs('att'), 'the tray', { max: 30 });
     yield* until(() => G.hold === 'item' && free(), 10, 'carry tray');
-    yield* goTo(283.6, 'out of the way', { max: 20 });
+    yield* goTo(327.6, 'out of the way', { max: 20 });
     yield* useAt(['setdownItem'], G.x, () => G.hold !== 'item' || actIs('setdownItem')(), 'set it down'); yield* settle();
-    yield* useAt(['att:drawer'], 286.0, actIs('att'), 'the drawer', { max: 30 });
-    yield* until(() => S().f17.drawer >= 1 && free(), 10, 'drawer out');
-    yield* useAt(['att:read'], 286.0, actIs('att'), 'read it', { max: 20 });
-    // Rev 0.3: forwarded, the stair door opens; he leaves the school by it.
-    yield* until(() => (S().f17.door17 || 0) > 0.75 && free(), 20, 'the stair door open');
+    yield* useAt(['att:drawer'], 330.0, actIs('att'), 'the drawer', { max: 30 });
+    yield* until(() => d().drawer >= 1 && free(), 10, 'drawer out');
+    yield* useAt(['att:read'], 330.0, actIs('att'), 'read it', { max: 20 });
+    yield* until(() => d().read && free(), 15, 'read'); note('read; has the key');
+    yield* wait(look(5));
+    if (mistakes && chance(0.7 - 0.3 * P.skill)) {
+      yield* useAt(['att:valve17'], 336.55, actIs('att'), 'open the valve, everything open', { max: 30 }); yield* settle();
+      yield* until(() => d().run === 0, 10, 'the tank runs out'); note('a third in each bed; the float barely moves'); yield* wait(think(8));
+    }
+    for (const [i, kind] of [[0, 'att:sluiceA'], [2, 'att:sluiceC']]) {
+      if (!d().sluice[i]) continue;
+      yield* useAt([kind], [337.45, 338.1, 338.8][i], actIs('att'), 'shut sluice ' + 'ABC'[i], { max: 30 }); yield* settle();
+    }
+    note('A and C shut: B feeds bed 1');
+    yield* until(() => d().tank > 0.95, 20, 'the tank refilled');
+    yield* useAt(['att:valve17'], 336.55, actIs('att'), 'open the valve', { max: 30 }); yield* settle();
+    yield* until(() => d().latched, 15, 'the float lifts the latch'); note('bed 1 full; the latch lifts');
+    yield* until(() => (d().door17 || 0) > 0.75 && free(), 20, 'the stair door open');
     yield* walk(1, () => G.ended || S().ended, 'up the stair to ring A', { max: 30 });
   }
+  function* part2() { yield* sickbay15(); yield* after16(); yield* kitchen16a(); yield* workshop17(); }
 
   // Chapter 1 Attendance (DL-12 to DL-14), started from its own checkpoint.
   function* attendance() {
@@ -675,14 +799,21 @@ window.__startBot = function (seed, opts = {}) {
     note('both ledges out');
     yield* goTo(A.desk.x0 - 0.5, 'back to the desk', { max: 40 });
     yield* walk(1, () => G.act && G.act.what === 'duct', 'up the ledges into the hatch', { max: 60 });
-    yield* until(() => !G.act && G.checkpoint === 'sickbay', 30, 'along the duct'); note('out of the duct, on the sick bay balcony');
-    yield* part2();
+    yield* until(() => !G.act && G.checkpoint === 'dorm', 30, 'along the duct'); note('out of the duct, on a bunk in the dormitory');
+    yield* dorm14a(); yield* corridor14b(); yield* part2();
     mark('end');
   }
 
   const script = (function* () {
     if (opts.chapter === 'att') { yield* attendance(); return; }
-    if (opts.chapter === 'att2') { yield* until(() => G.mode === 'play' && G.region === 6 && G.att, 120, 'the sick bay'); mark('play'); yield* part2(); mark('end'); return; }
+    // Chapter 1 from a later checkpoint (CHAPTER=att2 is the sick bay; or a checkpoint's name).
+    const from = { att2: 'sickbay', dorm: 'dorm', corridor: 'corridor', sickbay: 'sickbay', crossing: 'crossing', kitchen: 'kitchen', workshop: 'workshop' }[opts.chapter];
+    if (from) {
+      yield* until(() => G.mode === 'play' && G.region === 6 && G.att, 120, 'the school'); mark('play');
+      const order = ['dorm', 'corridor', 'sickbay', 'crossing', 'kitchen', 'workshop'], go = { dorm: dorm14a, corridor: corridor14b, sickbay: sickbay15, crossing: after16, kitchen: kitchen16a, workshop: workshop17 };
+      for (const n of order.slice(order.indexOf(from))) yield* go[n]();
+      mark('end'); return;
+    }
     yield* opening(); yield* wake(); yield* sortingHall(); yield* weightRoom(); yield* racks(); yield* rationHall();
     yield* returnToSender(); yield* heap(); yield* handbrake(); yield* cage(); yield* childAtTheAddress();
   })();
@@ -693,7 +824,7 @@ window.__startBot = function (seed, opts = {}) {
       if (jumpUp > 0 && --jumpUp === 0) I.jumpHeld = false;
       if (out.done) return;
       if (G.mode === 'play' && G.checkpoint) mark('cp ' + G.checkpoint);
-      if (G.mode === 'play' && out.marks.play !== undefined) mark(D.scene().slice(0, 5));
+      if (G.mode === 'play' && out.marks.play !== undefined) mark(D.scene().split(' ')[0]);
       try {
         const r = script.next();
         if (r.done) { out.deaths = G.deaths; out.found = Object.keys(D.curios || {}).length; out.done = true; }

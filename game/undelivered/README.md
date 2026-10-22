@@ -142,6 +142,33 @@ The design is in `docs/prologue_pass10_plan.md`. What changed:
   parcel label and DL-09's drop mark were still printing R.Y. years (their generators skip existing files);
   regenerated, and the prologue set rebuilt.
 
+## Chapter 1 expansion: DL-14a, DL-14b, DL-16a and DL-17's rig
+
+From the director's Puzzle Notes (the chapter took 12 minutes and went "same-same" after DL-14; DL-17 wasn't a puzzle).
+Design: `docs/chapter1_expansion_proposal.md`; build sheet: `docs/chapter1_expansion_build.md`. Three new scenes go in
+between the old ones; DL-15 and DL-16 move +30 in x and DL-17 +44 (`art/ch1/build_attendance.py` SHIFT, and the game's
+constants). The game's code is the `ATT3` section.
+- **DL-14a Lights Out** (x 248 to 263, `dl14a.py`). The duct comes out onto a bunk in the dormitory. The door opens once
+  the eye over it reads DARK: the night-light (a 10 s cycle with a brake and dial, as DL-13's lesson) held in its
+  dark, and both blinds down. One crank winds both blinds and swaps them (as DL-14); the nurse's dressing gown hung on
+  W1's hem peg, from the friends' bunks, holds W1 down so the clutch slips there and W2 comes down alone. The coat as
+  a weight, not a condition. The gown pegs on the wall are the wrong first try. `att_rest` on arrival.
+- **DL-14b Unaccompanied** (263 to 278, `dl14b.py`). The escort trolley patrols the floor rail at 1.1 m/s and looks
+  2.6 m ahead with its lamp. Seen, he is walked back to the dormitory door (`att_trolley`). Niche A and the bay (once
+  empty) hide him (Use: he steps back in and crouches). The figure nudged out of its bay rolls onto the rail; the
+  trolley takes the nearer thing it sees, so it takes the figure back to the dormitory instead (a 6 s stop there), and
+  he goes up the stair to the sick bay's door, high in DL-15's wall.
+- **DL-16a Her Way Round** (310 to 324, `dl16a.py`). The gate is shut to pupils; her chalk trees point to the
+  servery's dumbwaiter. Its load gauge counts portions: a tin 1, the books 2 (on the high shelf: push the stool under
+  it). 3 is the line: in the car, ring, and it carries him up to the passage over the gate. Too light, it leaps, the
+  catch bites and it lowers him back; over (both tins and the books), the OVER lamp lights and Use in the car takes a
+  tin back out.
+- **DL-17's rig.** Reading the drawer now gives him Vance's T-key, and he looks round at the test rig. One tank (6 s)
+  is shared between whichever sluices are open; sluice A feeds bed 3, B bed 1, C bed 2 (the pipes cross behind the
+  bench, and her drawing says so). Bed 1's float lifts the stair door's latch only if it gets the whole tank: shut A and
+  C. Beds drain in 20 s, the tank refills in 10 s.
+- **Sims:** `CHAPTER=dorm`, `corridor`, `sickbay`, `crossing`, `kitchen` or `workshop` start at that checkpoint.
+
 ## Chapter 1, part 2: DL-15 to DL-17 (pass 9)
 
 The rest of Chapter 1, Attendance (design: `docs/chapter1_part2_plan.md`; art: `art/ch1/dl15.py` to `dl17.py`, built by

@@ -14,7 +14,7 @@ await page.goto((process.env.GAME || 'http://127.0.0.1:8765') + '/index.html');
 await page.waitForFunction(() => !document.getElementById('begin').disabled, null, { timeout: 300000 });
 const order = await page.evaluate(() => window.__dl01.cpOrder);
 let total = 0;
-for (let i = 0; i < order.length; i++) {
+for (let i = Math.max(0, order.indexOf(process.env.FROM || order[0])); i < order.length; i++) {
   const cp = order[i];
   await page.evaluate((c) => window.__dl01.startAt(c), cp);
   await page.waitForFunction(() => window.__dl01.game.mode === 'play', null, { timeout: 120000 });

@@ -184,7 +184,7 @@
       </div>
       <div class="row scene-pick">
         <label for="scene-select">For testing, start at</label>
-        <select id="scene-select"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option><option value="sickbay">DL-15 One Pupil Missing</option><option value="crossing">DL-16 After the Bell</option><option value="workshop">DL-17 A Different Lesson</option></select>
+        <select id="scene-select"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option><option value="dorm">DL-14a Lights Out</option><option value="corridor">DL-14b Unaccompanied</option><option value="sickbay">DL-15 One Pupil Missing</option><option value="crossing">DL-16 After the Bell</option><option value="kitchen">DL-16a Her Way Round</option><option value="workshop">DL-17 A Different Lesson</option></select>
         <button class="act secondary" id="scene-go" type="button" disabled>Start there</button>
       </div>
       <p class="note">The eleven scenes of the prologue, from The Wake to The Child at the Address, run as one, with no cut between them. Headphones recommended.</p>
@@ -215,7 +215,7 @@
       </div>
       <div class="row scene-pick">
         <label for="scene-select-p">Jump to</label>
-        <select id="scene-select-p"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option><option value="sickbay">DL-15 One Pupil Missing</option><option value="crossing">DL-16 After the Bell</option><option value="workshop">DL-17 A Different Lesson</option></select>
+        <select id="scene-select-p"><option value="start">DL-01 The Wake</option><option value="room">DL-02 The Sorting Hall</option><option value="weighroom">DL-03 The Weight of the Job</option><option value="solved">DL-04 The Racks</option><option value="ration">DL-05 The Ration Hall</option><option value="hatch">DL-06 Return to Sender</option><option value="scanned">DL-07 The Heap</option><option value="goods">DL-08 The Handbrake</option><option value="cage">DL-09 The Slipping Cage</option><option value="uponly">DL-10 Up Only</option><option value="ringc">DL-11 The Child at the Address</option><option value="school">DL-12 Coats Without Children</option><option value="lesson">DL-13 The Repeated Lesson</option><option value="window">DL-14 The Window</option><option value="dorm">DL-14a Lights Out</option><option value="corridor">DL-14b Unaccompanied</option><option value="sickbay">DL-15 One Pupil Missing</option><option value="crossing">DL-16 After the Bell</option><option value="kitchen">DL-16a Her Way Round</option><option value="workshop">DL-17 A Different Lesson</option></select>
         <button class="act secondary" id="scene-go-p" type="button">Go</button>
         <button class="act secondary" id="export-log" type="button">Save play log</button>
       </div>
@@ -291,9 +291,9 @@ const ATT = {
   gallery: { x0: 227.6, x1: 233.0, h: 2.05 }, cycle: { period: 12, out: [1.0, 2.6, 4.2], fold: [5.6, 6.2, 6.8] },
   stair14: { x0: 233.0, x1: 234.4, steps: 5 }, pole0: 234.4, desk: { x0: 235.4, x1: 236.2, h: 0.62 },
   ledgeA: { x0: 236.4, x1: 237.6, h: 1.1 }, ledgeB: { x0: 237.8, x1: 239.0, h: 1.6 }, hatch: { x0: 239.2, x1: 240.2, h: 2.15 },
-  wheelA: 235.0, wheelR: 0.25, crankX: 242.4, x0: 200.3, x1: 298.4,
+  wheelA: 235.0, wheelR: 0.25, crankX: 242.4, x0: 200.3, x1: 342.4,
 };
-const ATT_CPS = ['school', 'register', 'lesson', 'gallery13', 'window', 'hatch14', 'sickbay', 'class6', 'dismissed', 'crossing', 'store', 'workshop'];
+const ATT_CPS = ['school', 'register', 'lesson', 'gallery13', 'window', 'hatch14', 'dorm', 'corridor', 'sickbay', 'class6', 'dismissed', 'crossing', 'store', 'kitchen', 'workshop'];
 const PLATFORMS = [STEP];                    // the depot cart (DL-01) is a pushable: see the Chapter 1 rework
 const HALL_X = 7.3;
 const CRANK_X = 9.62, CRANK_STROKES = 5;
@@ -3716,11 +3716,11 @@ function currentShot() {
     return { name: k > 0.5 ? 'ringc10' : 'car10', pos: car.pos.lerp(lane.pos, k), look: car.look.lerp(lane.look, k), focal: car.focal + (lane.focal - car.focal) * k, ease: 4, clock: ct };
   }
   // Chapter 1, DL-15: sat in Mara's place, at child-desk height, the room emptying past him.
-  if (a && a.kind === 'att' && a.what === 'sit' && a.phase === 'act' && a.t > 0.5) return { name: 'sit15', pos: V3(255.15, 0.62, 1.45), look: V3(258.6, 0.72, -0.9), focal: 28, ease: 0.9 };
+  if (a && a.kind === 'att' && a.what === 'sit' && a.phase === 'act' && a.t > 0.5) return { name: 'sit15', pos: V3(285.15, 0.62, 1.45), look: V3(288.6, 0.72, -0.9), focal: 28, ease: 0.9 };
   // DL-17: the drawer, close: the drawing beside the mended pot, then the placement card.
   if (a && a.kind === 'att' && a.what === 'read' && a.phase === 'act') {
     const k = smooth((a.t - 3.0) / 1.2);       // (art/ch1/dl17.py REPORT) the drawing beside the mended pot, then the card
-    return { name: 'drawer17', pos: V3(286.62 - 0.69 * k, 0.92 - 0.17 * k, -0.06 + 0.01 * k), look: V3(286.62 - 0.69 * k, 0.33 + 0.066 * k, -0.42 + 0.05 * k), focal: 24 + 11 * k, ease: 1.2 };
+    return { name: 'drawer17', pos: V3(330.62 - 0.69 * k, 0.92 - 0.17 * k, -0.06 + 0.01 * k), look: V3(330.62 - 0.69 * k, 0.33 + 0.066 * k, -0.42 + 0.05 * k), focal: 24 + 11 * k, ease: 1.2 };
   }
   // Pass 6: a secret room, framed from inside once he's in the doorway.
   if (a && a.kind === 'secret' && a.se.cam && (a.phase === 'look' || game.z < a.se.path[0][1] + 0.1)) {
@@ -3916,7 +3916,7 @@ const LETTER_TEXT = {
   heap: { img: 'letter_heap.png', head: 'To C-114, ring C', text: 'Postmarked P.A. 311, a heart in the corner. Sealed. On the back, in crayon: a courier bringing a parcel to a house, a flower in its window, the sun out.' },
   c110: { img: 'letter_c110.png', head: 'To C-110, ring C', text: 'Postmarked P.A. 310. Sealed, and never delivered.' },
   // Rev 0.3: DL-17's records scan themselves as he reads them (the plan: records auto-scan; replay from the pause card).
-  drawing17: { img: 'record_drawing17.png', record: true, head: 'Mara\u2019s drawing, the workshop', text: 'Her crooked tree become a garden bed, with water channels running round its roots, in her pencil. Beside it, in another hand: \u201Cfall 1 in 100\u201D, \u201Clevels!\u201D, a channel drawn again in section, and a tick.' },
+  drawing17: { img: 'record_drawing17.png', record: true, head: 'Mara\u2019s drawing, the workshop', text: 'Her crooked tree become a garden bed, with water channels running round its roots, in her pencil. Beside it, in another hand: \u201Cfall 1 in 100\u201D, \u201Clevels!\u201D, a channel drawn again in section, and a tick. Under it, her working for the test rig: three beds, the pipes traced behind the bench, \u201CB goes to 1! (they cross)\u201D, \u201Cshut two, water the third\u201D. In red pencil beside it: \u201CGood eye. Most of them never look behind the bench.\u201D' },
   placement17: { img: 'record_placement17.png', record: true, head: 'Placement, P.A. 316', text: 'PLACEMENT \u00B7 M. D. \u00B7 AGE 14. Works Dept., ring A: water and irrigation. At the pupil\u2019s own request. Sponsor: E. Vance. Report via residential access, ring A.' },
 };
 const Letters = (() => {
@@ -3971,7 +3971,7 @@ const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const FLAT_LETTER = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);   // flat on the floor, across the lane                                   // kept through respawns and checkpoints; a new game clears it
 const CP_ORDER = ['start', 'shutter', 'hall', 'door', 'room', 'weighroom', 'solved', 'bay', 'ration', 'hatch', 'scanned', 'landing', 'gallery',
   'goods', 'latched', 'cage', 'landing8', 'tunnel', 'uponly', 'ringc', 'bedroom', 'forwarded', 'school', 'register', 'lesson', 'gallery13', 'window', 'hatch14',
-  'sickbay', 'class6', 'dismissed', 'crossing', 'store', 'workshop'];
+  'dorm', 'corridor', 'sickbay', 'class6', 'dismissed', 'crossing', 'store', 'kitchen', 'workshop'];
 const past = (cp, name) => CP_ORDER.indexOf(cp) >= CP_ORDER.indexOf(name);
 
 // Build: find the movable pieces and give each a group to move by.
@@ -4262,6 +4262,7 @@ function itemsHere() {
     out.push(Object.assign(game.att.coat, { key: 'coat', h: 0.1, r: 0.16, below: 0.16, light: true, g: refs.att.AttCoat }));
     out.push(Object.assign(game.att.pole, { key: 'pole', h: 0.06, r: 0.3, below: 0.08, light: true, g: refs.att.AttPole }));
     out.push(Object.assign(game.att.f17.tray, { key: 'tray', h: 0.09, r: 0.21, below: 0.12, g: refs.att.Att17Tray }));
+    itemsAtt3(out);
   }
   return out;
 }
@@ -5136,7 +5137,10 @@ function buildAtt(root) {
   for (const n of ['AttFigure', 'AttGate', 'AttCoat', 'AttFigure2', 'AttStep1', 'AttStep2', 'AttStep3', 'AttDialHand', 'AttPawl',
     'AttTreeTrunk', 'AttTreeBranch1', 'AttTreeBranch2', 'AttTreeBranch3', 'AttTreeLeaves', 'AttBlindA', 'AttBlindB', 'AttLedgeA', 'AttLedgeB',
     'AttPanelPeel', 'AttCrank', 'AttWheelA', 'AttClutch', 'AttPole', 'Att15FigA', 'Att15FigB', 'Att15Lift', 'Att15LiftGate', 'Att15LiftCW', 'Att15Door', 'Att15Flap',
-    'Att16Lever', 'Att16Bridge', 'Att16Latch', 'Att16CW', 'Att17Drawer', 'Att17Tray', 'Att17Door']) { k[n] = get(n); if (k[n]) k[n].userData.rest = { p: k[n].position.clone(), q: k[n].quaternion.clone(), s: k[n].scale.clone() }; }
+    'Att16Lever', 'Att16Bridge', 'Att16Latch', 'Att16CW', 'Att17Drawer', 'Att17Tray', 'Att17Door',
+    'Att14aPawl', 'Att14aDialHand', 'Att14aCrank', 'Att14aBlindW1', 'Att14aHemW1', 'Att14aBlindW2', 'Att14aGown', 'Att14aDoor', 'Att14bTrolley', 'Att14bCone', 'Att14bFig',
+    'Att16aCar', 'Att16aCW', 'Att16aStool', 'Att16aTin1', 'Att16aTin2', 'Att16aBooks', 'Att17SluiceA', 'Att17SluiceB', 'Att17SluiceC', 'Att17Valve', 'Att17ValveKey', 'Att17Key',
+    'Att17TankWater', 'Att17Water1', 'Att17Water2', 'Att17Water3', 'Att17Stream1', 'Att17Stream2', 'Att17Stream3', 'Att17Float', 'Att17Latch']) { k[n] = get(n); if (k[n]) k[n].userData.rest = { p: k[n].position.clone(), q: k[n].quaternion.clone(), s: k[n].scale.clone() }; }
   // Lamps the game switches get their own materials.
   const lamp = (n, color) => { const o = get(n); if (!o) return null; const m = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0 }); o.traverse((q) => { if (q.isMesh) q.material = m; }); return m; };
   const chain = get('AttChain'); chain && chain.traverse((q) => { if (q.isMesh && q.material.map) { k.chainMap = q.material.map; k.chainMap.wrapT = THREE.RepeatWrapping; k.chainMap.needsUpdate = true; } });
@@ -5145,6 +5149,12 @@ function buildAtt(root) {
   k.lampPupil = lamp('Att15LampPupil', 0xb8ffc8); k.lampEscort = lamp('Att15LampEscort', 0xffa848);
   k.lamp15a = lamp('Att15Lamp1', 0xffdca0); k.lamp15b = lamp('Att15Lamp2', 0xffdca0); k.lamp15c = lamp('Att15Lamp3', 0xffdca0);
   k.hideLamp = lamp('Att15HideLamp', 0xffb060); k.growLamp = lamp('Att17GrowLamp', 0xd8f0ff);
+  // The expansion: the night-light's sun, the eye's four lamps, the dumbwaiter's load gauge.
+  k.sunLamp = lamp('Att14aSunLamp', 0xffe2a0); k.eyeSun = lamp('Att14aEyeSun', 0xffa848); k.eyeW1 = lamp('Att14aEyeW1', 0xffa848); k.eyeW2 = lamp('Att14aEyeW2', 0xffa848);
+  k.eyeDark = lamp('Att14aEyeDark', 0x8cffa0);
+  k.load1 = lamp('Att16aLoad1', 0xffb048); k.load2 = lamp('Att16aLoad2', 0xffb048); k.load3 = lamp('Att16aLoad3', 0xffb048); k.loadOver = lamp('Att16aLoadOver', 0xff4a30);
+  // The trolley's beam: a faint warm cone, added light, never hiding what is behind it.
+  if (k.Att14bCone) { k.coneMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.11, blending: THREE.AdditiveBlending, depthWrite: false }); k.Att14bCone.traverse((q) => { if (q.isMesh) { q.material = k.coneMat; q.castShadow = false; } }); }
   // Voice players in the chapter's set whose cranks turn.
   for (const v of VOICES) if (v.region === 6 && v.crank) { const o = get(v.crank); if (o) refs.voiceCranks[v.id] = { o, axis: new THREE.Vector3(...v.axis).normalize() }; }
   // Lights, as proxies for the pool (region 6 only).
@@ -5162,26 +5172,36 @@ function buildAtt(root) {
     P(0xffb870, 2.0, 3.5, 232.62, 0.98, -2.78), S(0xffd8a8, 6, 7, [237.4, 3.7, 1.4], [237.4, 0.8, -0.6], 0.75), S(0xffe0b8, 4, 5, [242.4, 2.4, 1.6], [242.4, 0.5, -0.32], 0.5),
     // DL-15 (art/ch1/dl15.py REPORT): the sick bay pendant, the duct mouth, the lift's sign and lamps, the front row, Mara's place, the
     // attendance board, the blackboard and figure A, the door end, the dim alcove of empty desks, the hiding place's lamp and its slit.
-    P(0xffd8b0, 1.8, 4.5, 250.2, 2.95, -0.45), P(0xbcd0e8, 0.5, 2.0, 248.95, 2.0, -1.3), S(0xffe0b8, 5, 5, [252.0, 3.2, 1.2], [252.0, 2.1, -0.8], 0.45),
-    S(0xffd8a8, 7, 6, [254.6, 3.0, 0.6], [254.6, 0.35, -0.9], 0.75, true), S(0xffe0b8, 5, 5, [256.0, 2.9, 0.9], [256.0, 0.45, -0.7], 0.4, true),
-    S(0xffe2c0, 4.5, 5, [258.1, 3.2, 1.0], [258.1, 2.1, -1.38], 0.4), S(0xffe6c8, 8, 7, [260.3, 3.3, 1.4], [260.3, 1.4, -1.38], 0.6, true),
-    P(0xffd8b0, 1.0, 3.5, 262.9, 2.6, 0.0), P(0xb8c8dc, 0.35, 4, 254.8, 2.6, -2.6), P(0xffb870, 1.8, 2.4, 250.62, 0.25, -0.95), P(0xffb873, 0.5, 1.4, 249.8, 0.15, -0.25),
+    P(0xffd8b0, 1.8, 4.5, 280.2, 2.95, -0.45), P(0xbcd0e8, 0.5, 2.0, 278.95, 2.0, -1.3), S(0xffe0b8, 5, 5, [282.0, 3.2, 1.2], [282.0, 2.1, -0.8], 0.45),
+    S(0xffd8a8, 7, 6, [284.6, 3.0, 0.6], [284.6, 0.35, -0.9], 0.75, true), S(0xffe0b8, 5, 5, [286.0, 2.9, 0.9], [286.0, 0.45, -0.7], 0.4, true),
+    S(0xffe2c0, 4.5, 5, [288.1, 3.2, 1.0], [288.1, 2.1, -1.38], 0.4), S(0xffe6c8, 8, 7, [290.3, 3.3, 1.4], [290.3, 1.4, -1.38], 0.6, true),
+    P(0xffd8b0, 1.0, 3.5, 292.9, 2.6, 0.0), P(0xb8c8dc, 0.35, 4, 284.8, 2.6, -2.6), P(0xffb870, 1.8, 2.4, 280.62, 0.25, -0.95), P(0xffb873, 0.5, 1.4, 279.8, 0.15, -0.25),
     // DL-16 (art/ch1/dl16.py REPORT): the two lit globes, the lever, the rack (shadowed), the counterweight, the boiler's glow down the well, a wash on the mural.
-    P(0xffdcaa, 1.6, 5, 265.0, 2.45, 0), P(0xffdcaa, 1.6, 5, 270.05, 2.45, 0), S(0xffe0b8, 4, 4, [266.0, 2.4, 1.4], [266.0, 0.4, -0.35], 0.5),
-    S(0xffd8a8, 7, 6, [275.3, 2.9, 1.6], [275.6, 1.2, -1.0], 0.7, true), S(0xffd8a8, 4, 5, [278.5, 2.7, 1.6], [278.5, 0.8, 0], 0.6),
-    P(0xff7a30, 1.2, 2.5, 268.5, -1.1, -0.3), P(0xe8dcc8, 0.6, 6, 269.0, 2.4, 2.0),
+    P(0xffdcaa, 1.6, 5, 295.0, 2.45, 0), P(0xffdcaa, 1.6, 5, 300.05, 2.45, 0), S(0xffe0b8, 4, 4, [296.0, 2.4, 1.4], [296.0, 0.4, -0.35], 0.5),
+    S(0xffd8a8, 7, 6, [305.3, 2.9, 1.6], [305.6, 1.2, -1.0], 0.7, true), S(0xffd8a8, 4, 5, [308.5, 2.7, 1.6], [308.5, 0.8, 0], 0.6),
+    P(0xff7a30, 1.2, 2.5, 298.5, -1.1, -0.3), P(0xe8dcc8, 0.6, 6, 299.0, 2.4, 2.0),
     // DL-17 (art/ch1/dl17.py REPORT): the pendant's pool, the bench lamp, the drawer, the grow lamp's cool light, the stair door, the way in.
-    S(0xffc27a, 5, 4, [285.95, 2.15, -0.8], [285.95, 0.0, -0.8], 1.0), S(0xffcc8c, 3, 2.5, [285.04, 1.34, -0.9], [285.5, 0.9, -0.7], 0.8),
-    S(0xffd69e, 4, 4, [286.2, 1.8, 1.6], [286.2, 0.3, -0.45], 0.35), S(0xbdd1ff, 0, 3, [290.5, 1.57, -1.05], [290.5, 0.9, -1.05], 0.9),   // rev 0.3: the grow lamp is off (no one tends the trays)
-    P(0xffc890, 0.6, 3, 295.25, 2.2, -0.95), P(0xffd8a8, 0.8, 4, 281.2, 2.6, -0.2),
+    S(0xffc27a, 5, 4, [329.95, 2.15, -0.8], [329.95, 0.0, -0.8], 1.0), S(0xffcc8c, 3, 2.5, [329.04, 1.34, -0.9], [329.5, 0.9, -0.7], 0.8),
+    S(0xffd69e, 4, 4, [330.2, 1.8, 1.6], [330.2, 0.3, -0.45], 0.35), S(0xbdd1ff, 0, 3, [334.5, 1.57, -1.05], [334.5, 0.9, -1.05], 0.9),   // rev 0.3: the grow lamp is off (no one tends the trays)
+    P(0xffc890, 0.6, 3, 339.25, 2.2, -0.95), P(0xffd8a8, 0.8, 4, 325.2, 2.6, -0.2),
     // Rev 0.3: the stair up to ring A, warm from above, seen through the door's wired glass and then open.
-    P(0xffc890, 3.2, 5.5, 297.8, 2.7, -0.15), P(0xffd8a8, 1.2, 3.5, 299.3, 3.5, -0.84), P(0xffc890, 1.0, 2.5, 296.5, 0.8, -0.1),
-    P(0xffd8a8, 0.9, 2.0, 295.2, 2.2, 0.35),                                  // the RESIDENTIAL ACCESS sign over the door
+    P(0xffc890, 3.2, 5.5, 341.8, 2.7, -0.15), P(0xffd8a8, 1.2, 3.5, 343.3, 3.5, -0.84), P(0xffc890, 1.0, 2.5, 340.5, 0.8, -0.1),
+    P(0xffd8a8, 0.9, 2.0, 339.2, 2.2, 0.35),                                  // the RESIDENTIAL ACCESS sign over the door
     // Rev 0.3: the children's refuge behind the hatch, a warm lantern-light so its three seats read.
     P(0xffb070, 1.4, 2.2, 239.6, 2.5, -1.9),
     // Pass 8: A's wheel and the pole through it, in their own low pool, so the jam reads from across the room.
     S(0xffd8a8, 3.5, 4, [235.3, 2.6, 1.2], [234.95, 0.7, -0.62], 0.42),
   ];
+  // The expansion's lights. DL-14a: the night-light's sun, the cold light through W1 and the warm light through W2 (each
+  // as bright as its blind lets it be), a dim fill; DL-14b: the corridor's globes, the stair, the trolley's beam (it
+  // follows the trolley); DL-16a: the servery, the car, the passage; DL-17: the rig.
+  k.sunLight = P(0xffe2b0, 2.6, 6, 253.9, 2.3, -0.9); k.w1Light = P(0xbcd4ff, 2.4, 5, 256.2, 2.5, -0.5); k.w2Light = P(0xffc890, 2.0, 5, 260.1, 2.5, -0.7);
+  k.beamLight = P(0xffd9a0, 1.6, 2.8, 266.0, 0.95, -0.2);
+  refs.attLights.push(k.sunLight, k.w1Light, k.w2Light, k.beamLight,
+    P(0x8fa6c8, 0.5, 6, 255.5, 3.0, 0.8), P(0x8fa6c8, 0.35, 4, 249.5, 2.4, 0.4),
+    P(0xffdcaa, 1.3, 5, 266.8, 2.5, 0), P(0xffdcaa, 1.3, 5, 272.8, 2.5, 0), P(0xffd8a8, 1.4, 4, 276.8, 2.9, 0.2), P(0xb8c8dc, 0.5, 2.5, 269.9, 1.4, -0.7),
+    P(0xffd8a8, 1.8, 5, 311.4, 3.0, 0.1), P(0xffe0b8, 1.4, 2.2, 313.0, 1.0, -0.2), P(0xffdcaa, 1.4, 5, 317.0, 3.4, 0.3), P(0xffdcaa, 1.0, 4, 322.6, 2.4, 0.2),
+    P(0xffe0c0, 1.6, 3.5, 338.0, 1.9, 0.6));
   // Playtest (22 Oct): DL-14's jam needs to shout. A hot lamp at A's wheel: it flares with the grinding while the chain
   // drags against the pole, and pulses at the wheel's bracket when the pole should go back in.
   k.jamLight = P(0xff9a3c, 0, 1.8, 235.0, 0.75, -0.35); refs.attLights.push(k.jamLight);
@@ -5204,6 +5224,7 @@ function resetAtt(cp) {
     jammed: true, peel: p('hatch14') ? 1 : 0, peeled: p('hatch14'), crank: 0, ended: false,
   };
   resetAtt2(game.att, p);
+  resetAtt3(game.att, p);
 }
 const attOut = (k) => k >= 0.95;
 function floorAtt(x) {
@@ -5248,15 +5269,16 @@ function nearAttItem() {
   const atWheel = game.y < 0.05 && Math.abs(x - ATT.wheelA) < ATT.wheelR && !past(game.checkpoint, 'hatch14');
   if (atWheel && game.carry && game.carry === a.pole && !a.jammed) return 'att:jam';
   if (atWheel && !game.hold && a.pole.state === 'jam') return 'att:unjam';
-  return nearAtt2Item();
+  return nearAtt2Item() || nearAtt3Item();
 }
 function nearAttFixed() {
   const a = game.att, x = game.x;
   if (game.y < 0.05 && Math.abs(x - ATT.pawlX) < 0.32) return a.lesson.on ? 'att:pawl' : 'att:pawlIdle';
   if (game.y < 0.05 && Math.abs(x - ATT.crankX) < 0.36) return 'att:crank';
-  return nearAtt2Fixed();
+  return nearAtt2Fixed() || nearAtt3Fixed();
 }
 function beginAtt(kind) {
+  if (ATT3_ACTS.has(kind)) { beginAtt3(kind); return; }
   if (ATT2_STAND[kind] !== undefined) { game.act = { kind: 'att', what: kind, phase: 'approach', t: 0, standX: ATT2_STAND[kind], face: 1 }; return; }
   if (kind === 'reachpeg') { game.act = { kind: 'att', what: 'reachpeg', phase: 'act', t: 0 }; return; }
   const stand = { coat: ATT.coat0, hang: ATT.peg.x, jam: ATT.wheelA - 0.22, unjam: ATT.wheelA - 0.22, pawl: ATT.pawlX - 0.2, pawlIdle: ATT.pawlX - 0.2, crank: ATT.crankX - 0.22 }[kind];
@@ -5264,6 +5286,7 @@ function beginAtt(kind) {
 }
 function updateAttAct(a, dt) {
   const s = game.att;
+  if (a.att3) { updateAtt3Act(a, dt); return; }
   if (a.what === 'duct' || ATT2_STAND[a.what] !== undefined) { updateAtt2Act(a, dt); return; }
   if (a.what === 'reachpeg') {
     // Up on his toes with the coat held up, short of the peg; then a look along the bench.
@@ -5450,11 +5473,15 @@ function updateAtt(dt) {
     }
   }
   updateAtt2(dt);
+  updateAtt3(dt);
 }
+const ATT_COAT_BIN = new THREE.Vector3(202.92, 0.98, -0.27);
 const PEEL_AXIS = new THREE.Vector3(0.5437, 0.8392, 0).normalize(), ATT_JAM = new THREE.Vector3(234.78, 1.16, -0.64), ATT_JAM_LEAN = 0.26;
 function placeAttItem(it, g, dt) {
   if (!g) return;
-  if (it.state === 'bin') { g.position.copy(g.userData.rest.p); g.quaternion.copy(g.userData.rest.q); return; }   // folded on the bin, as built
+  // Playtest (22 Oct): folded inside the lost-property cage it read as less of a coat than the ones on the wall. It hangs
+  // on the front of the cage instead, in its own light: the one coat that is waiting for someone.
+  if (it.state === 'bin') { g.position.copy(ATT_COAT_BIN); g.quaternion.identity(); return; }
   if (it.state === 'peg') { g.position.copy(ATT.peg); g.quaternion.identity(); return; }                          // built hanging on its hanger
   // Stood up through the spokes of A's wheel and leant on the wall above it, its foot through the bracket: in plain
   // sight above the desk. While the chain runs it rattles against the locked wheel.
@@ -5474,20 +5501,20 @@ function placeAttItem(it, g, dt) {
 // Mara's chair); the dismissal procession into a storage rack; the workshop drawer with her placement.
 // ---------------------------------------------------------------------------------------------------------------------
 const ATT2 = {
-  duct: { x0: 239.7, x1: 248.95, h0: 2.15, h1: 1.6, z: -1.3 },
+  duct: { x0: 239.7, x1: 248.95, h0: 2.15, h1: 1.15, z: -1.3 },     // the expansion: it comes out onto bunk 1 in the dormitory
   wall: { x0: 247.85, x1: 248.15 },
-  balcony: { x0: 248.15, x1: 251.4, h: 1.6 },
-  lift: { x0: 251.4, x1: 252.4, mid: 251.9, top: 1.6, speed: 0.65 },
+  balcony: { x0: 278.15, x1: 281.4, h: 1.6 },
+  lift: { x0: 281.4, x1: 282.4, mid: 281.9, top: 1.6, speed: 0.65 },
   railZ: -0.55, figHalf: 0.22, figGap: 0.5,
-  stub0: 248.62, seats: [253.2, 254.6, 256.0], chair: { x: 256.0, z: -0.3 },
-  figA0: 259.2, figB0: 249.9, buffer: 263.0,
-  part: { x0: 263.75, x1: 263.9 }, flapX: 263.9,
-  lever: 266.0, pit: { x0: 267.9, x1: 269.9, floor: -1.6 }, edge: 267.62, rackIn: 275.6,
-  hooks: [new THREE.Vector3(275.45, 0.34, -0.55), new THREE.Vector3(274.95, 0.34, -0.55)],   // the bay's two empty drop hooks (dl16.py REPORT)
-  cw: { x0: 277.8, x1: 279.2, lift: 2.0 },
-  drawer: { x: 286.0, out: 0.45 }, tray0: 285.7, trayKeepOut: [285.15, 286.85], trayPark: 284.7,
-  door17: { x: 295.8, landing: 297.1, tread: 0.26, rise: 0.18 },          // rev 0.3: the stair door and the stair up (dl17.py REPORT)
-  x1: 295.6,
+  stub0: 278.62, seats: [283.2, 284.6, 286.0], chair: { x: 286.0, z: -0.3 },
+  figA0: 289.2, figB0: 279.9, buffer: 293.0,
+  part: { x0: 293.75, x1: 293.9 }, flapX: 293.9,
+  lever: 296.0, pit: { x0: 297.9, x1: 299.9, floor: -1.6 }, edge: 297.62, rackIn: 305.6,
+  hooks: [new THREE.Vector3(305.45, 0.34, -0.55), new THREE.Vector3(304.95, 0.34, -0.55)],   // the bay's two empty drop hooks (dl16.py REPORT)
+  cw: { x0: 307.8, x1: 309.2, lift: 2.0 },
+  drawer: { x: 330.0, out: 0.45 }, tray0: 329.7, trayKeepOut: [329.15, 330.85], trayPark: 328.7,
+  door17: { x: 339.8, landing: 341.1, tread: 0.26, rise: 0.18 },          // rev 0.3: the stair door and the stair up (dl17.py REPORT)
+  x1: 339.6,
 };
 // Rev 0.3: the figures' rail docks only at the friends' two places; Mara's is an ordinary chair off the rail, with a
 // seat plate, so after the stand-ins the third place is his (docs/chapter1_rev03_plan.md).
@@ -5518,10 +5545,10 @@ function figRange15(f, other) {
   let lo, hi;
   if (onLift15(f)) {
     if (s.lift > L.top - 0.02) { lo = ATT2.stub0; hi = L.mid; }
-    else if (s.lift < 0.02) { lo = L.mid; hi = s.dismissed ? 300 : ATT2.buffer; }
+    else if (s.lift < 0.02) { lo = L.mid; hi = s.dismissed ? 344 : ATT2.buffer; }
     else { lo = hi = f.x; }
   } else if (f.base > 1) { lo = ATT2.stub0; hi = s.lift > L.top - 0.02 ? L.mid : ATT2.balcony.x1 - H; }
-  else { lo = s.lift < 0.02 ? L.mid : L.x1 + H; hi = s.dismissed ? 300 : ATT2.buffer; }
+  else { lo = s.lift < 0.02 ? L.mid : L.x1 + H; hi = s.dismissed ? 344 : ATT2.buffer; }
   if (other && other.state === 'free' && Math.abs(other.base - f.base) < 0.05) {
     if (other.x > f.x) hi = Math.min(hi, other.x - ATT2.figGap); else lo = Math.max(lo, other.x + ATT2.figGap);
   }
@@ -5547,9 +5574,10 @@ function surfaceAtt2(x, h) {
   // The balcony and the lift's deck are boards in the air: solid only to someone already up on them.
   if (game.y > 1.0 && x >= ATT2.balcony.x0 && x <= ATT2.balcony.x1) h = Math.max(h, ATT2.balcony.h);
   if (x >= L.x0 && x <= L.x1 && game.y > s.lift - 0.3) h = Math.max(h, s.lift);
-  return h;
+  return surfaceAtt3(x, h);
 }
 function floorAtt2(x) {
+  const f3 = floorAtt3(x); if (f3 !== null) return f3;
   const b = game.att && game.att.f16;
   if (b && b.bridge > 0.05 && x > ATT2.pit.x0 && x < ATT2.pit.x1) return ATT2.pit.floor;
   return 0;
@@ -5568,7 +5596,7 @@ function limitsAtt2(lo, hi) {
   if (game.y < -0.3) { lo = Math.max(lo, ATT2.pit.x0 + HALF); hi = Math.min(hi, ATT2.pit.x1 - HALF); }
   // Rev 0.3: DL-17's stair door, in the workshop's end wall (295.8), shut until she is forwarded.
   if ((s.f17.door17 || 0) < 0.7) hi = Math.min(hi, ATT2.door17.x - HALF);
-  return [lo, hi];
+  return limitsAtt3(lo, hi);
 }
 function nearAtt2Item() {
   const t = game.att.f17.tray, x = game.x;
@@ -5577,7 +5605,7 @@ function nearAtt2Item() {
 }
 function nearAtt2Fixed() {
   const s = game.att, x = game.x, f = s.f15;
-  if (game.y > 0.05) return null;
+  if (game.y > 0.05) return null;            // (the expansion's raised ones are in nearAtt3Fixed)
   const chairFree = ![f.A, f.B].some((q) => q.base < 0.05 && Math.abs(q.x - ATT2.chair.x) < 0.3);
   if (!f.dismissed && chairFree && Math.abs(x - ATT2.chair.x) < 0.25) return 'att:sit';
   if (f.dismissed && !s.f16.latched && Math.abs(x - ATT2.lever) < 0.3) return 'att:lever16';
@@ -5603,7 +5631,7 @@ function updateAtt2Act(a, dt) {
       game.yawOverride = 0; game.z = Math.min(0, game.z + 0.7 * dt);
       if (game.z >= -1e-3) {
         game.z = 0; game.act = null; game.yawOverride = null; game.grounded = true; setClip('Idle', 0.3);
-        if (!past(game.checkpoint, 'sickbay')) game.checkpoint = 'sickbay';
+        if (!past(game.checkpoint, 'dorm')) game.checkpoint = 'dorm';
         Telemetry.event('duct', {});
       }
     }
@@ -5660,6 +5688,7 @@ function updateAtt2Act(a, dt) {
     if (a.t > 6.0 && !s.f17.read) {
       s.f17.read = true; s.f17.readDone = game.clock; game.act = null; game.yawOverride = null; setClip('Idle', 0.3);
       Letters.add('drawing17'); setTimeout(() => Letters.add('placement17'), 1600);     // rev 0.3: the records scan themselves
+      s.f17.key = true; Sound.tap();                                                   // the expansion: Vance's T-key for the rig's valve
     }
   }
 }
@@ -5719,10 +5748,10 @@ function updateAtt2(dt) {
   });
   figs.forEach((f) => { if (f.stored && f.stored.t < 1) f.stored.t = Math.min(1, f.stored.t + dt / 1.8); });
   if (b.fullAt !== null && !b.latched && game.clock - b.fullAt > 2.0) { b.latched = true; b.held = false; Sound.clank(); Sound.chain(2.5); shake(0.2); game.checkpoint = past(game.checkpoint, 'store') ? game.checkpoint : game.checkpoint; Telemetry.event('rackFull', {}); }
-  if (b.hushed && game.region === 6 && game.x > 281.0) { b.hushed = false; Music.bed(true); }
+  if (b.hushed && game.region === 6 && game.x > 311.0) { b.hushed = false; Music.bed(true); }
   if (b.latched) { const was = b.cw; b.cw = Math.min(1, b.cw + dt / 2.6); if (was < 1 && Math.random() < dt * 6) Sound.ratchet(); }
   // His courtesy: the first time he comes up behind the waiting figures, he lets them go first.
-  if (game.region === 6 && f15.dismissed && !b.bowed && game.x > 264.6 && game.x < ATT2.lever + 0.4 && order.length && !game.act && !game.hold && game.grounded) {
+  if (game.region === 6 && f15.dismissed && !b.bowed && game.x > 294.6 && game.x < ATT2.lever + 0.4 && order.length && !game.act && !game.hold && game.grounded) {
     if (playQuirk(actions.AfterYou ? 'AfterYou' : 'Idle')) b.bowed = true;
   }
   // The balcony framing: up there, or riding the lift down with the pupil.
@@ -5736,8 +5765,12 @@ function updateAtt2(dt) {
     if (t > 1.2 && !d.stamped) { d.stamped = true; stampLabel('FWD  WORKS  RING A', [0.42, 0.42], 0.12); Sound.clank(); }
     // Rev 0.3: the threshold, staged. Forwarded, the stair door at the end of the workshop swings open on a lit stair
     // up to ring A's residential access; he looks round at it, and leaves the school by it himself.
-    if (t > 2.8 && !d.doorOpening) { d.doorOpening = true; d.doorAt = game.clock; Sound.creak?.(0.7); Telemetry.event('door17', {}); }
-    if (d.doorOpening && t > 3.2 && t < 6.2 && !game.act) game.lookAt = 'door17'; else if (game.lookAt === 'door17') game.lookAt = null;
+    // The expansion: forwarded, he looks round at the rig her drawing explains; the door opens when bed 1's float lifts
+    // its latch.
+    if (t > 2.8 && t < 5.0 && !d.latched && !game.act) game.lookAt = 'rig17'; else if (game.lookAt === 'rig17') game.lookAt = null;
+    if (d.latched && game.clock - d.latchAt > 0.8 && !d.doorOpening) { d.doorOpening = true; d.doorAt = game.clock; Sound.creak?.(0.7); Telemetry.event('door17', {}); }
+    const dt17 = d.doorOpening ? game.clock - d.doorAt : -1;
+    if (dt17 > 0.4 && dt17 < 3.4 && !game.act) game.lookAt = 'door17'; else if (game.lookAt === 'door17') game.lookAt = null;
     if (game.region === 6 && game.x > ATT2.door17.landing + 0.12 && !game.act) { s.ended = true; game.checkpoint = 'workshop'; finishAtt(); }
   }
   if (d.doorOpening) d.door17 = Math.min(1, (d.door17 || 0) + dt / 1.8);
@@ -5748,10 +5781,10 @@ function updateAtt2(dt) {
   // Checkpoints.
   if (game.region === 6) {
     const x = game.x, cp = game.checkpoint;
-    if (x > ATT2.lift.x1 + 0.2 && game.y < 0.05 && x < 263 && past(cp, 'sickbay') && !past(cp, 'class6')) game.checkpoint = 'class6';
-    if (x > 265.0 && f15.dismissed && !past(cp, 'crossing')) game.checkpoint = 'crossing';
+    if (x > ATT2.lift.x1 + 0.2 && game.y < 0.05 && x < 293 && past(cp, 'sickbay') && !past(cp, 'class6')) game.checkpoint = 'class6';
+    if (x > 295.0 && f15.dismissed && !past(cp, 'crossing')) game.checkpoint = 'crossing';
     if (x > ATT2.pit.x1 + 0.4 && b.latched && !past(cp, 'store')) game.checkpoint = 'store';
-    if (x > 280.6 && !past(cp, 'workshop')) game.checkpoint = 'workshop';
+    if (x > 324.6 && !past(cp, 'workshop')) game.checkpoint = 'workshop';
   }
   // The art.
   if (!k) return;
@@ -5802,26 +5835,554 @@ function placeTray17(it, g, dt) {
 function frameAtt2(x, lead, cx, v, fog) {
   const a = game.att;
   if (game.act && game.act.kind === 'att' && game.act.what === 'duct') return { cx: x, v: fit([7.0, 2.4, 1.6], 9.0), fog: 0.03 };
-  const k15 = smooth((x - 248.0) / 0.8);
+  // The expansion. DL-14a: the bunks, W1's blind, the crank, the eye and the door in one frame; DL-14b: the corridor
+  // with the trolley's whole round in view.
+  const kd = smooth((x - 248.2) / 0.6);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 252.2, 259.4) - cx) * kd; v = lerp3(v, fit([7.6, 2.1, 1.5], 11.2), kd);
+  const kn = smooth((x - 262.6) / 1.2);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.5, 268.2, 273.4) - cx) * kn; v = lerp3(v, fit([7.6, 1.9, 1.3], 13.0), kn);
+  const k15 = smooth((x - 278.0) / 0.8);
   const high = a ? smooth(a.k15 ?? 1) : 1;
-  const balc = [THREE.MathUtils.clamp(x + lead * 0.4, 250.2, 251.3), fit([6.2, 2.5, 2.0], 7.2)];
-  const room = [THREE.MathUtils.clamp(x + lead * 0.5, 254.4, 259.0), fit([7.0, 1.7, 1.2], 9.6)];
+  const balc = [THREE.MathUtils.clamp(x + lead * 0.4, 280.2, 281.3), fit([6.2, 2.5, 2.0], 7.2)];
+  const room = [THREE.MathUtils.clamp(x + lead * 0.5, 284.4, 289.0), fit([7.0, 1.7, 1.2], 9.6)];
   const c15 = room[0] + (balc[0] - room[0]) * high, v15 = lerp3(room[1], balc[1], high);
   cx += (c15 - cx) * k15; v = lerp3(v, v15, k15);
-  const k16 = smooth((x - 263.4) / 1.4);
-  cx += (THREE.MathUtils.clamp(x + lead * 0.5, 267.4, 275.0) - cx) * k16; v = lerp3(v, fit([7.2, 1.8, 1.2], 10.0), k16);
-  const k17 = smooth((x - 279.4) / 1.4);
+  const k16 = smooth((x - 293.4) / 1.4);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.5, 297.4, 305.0) - cx) * k16; v = lerp3(v, fit([7.2, 1.8, 1.2], 10.0), k16);
+  // DL-16a: the servery and the car, the gate, the passage over it and the stair down, high enough for the top.
+  const ks = smooth((x - 309.6) / 1.2);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 314.6, 319.4) - cx) * ks; v = lerp3(v, fit([7.8, 2.5, 1.7], 11.5), ks);
+  const k17 = smooth((x - 323.4) / 1.4);
   const open17 = a && a.f17 ? smooth(a.f17.door17 || 0) : 0;
-  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 284.2, 290.4 + 4.6 * open17) - cx) * k17; v = lerp3(v, fit([6.4, 1.6, 1.1], 8.6), k17);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 328.2, 335.6 + 3.4 * open17) - cx) * k17; v = lerp3(v, fit([6.6, 1.6, 1.1], 9.4), k17);
   return { cx, v, fog };
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Chapter 1 expansion (docs/chapter1_expansion_build.md): DL-14a Lights Out, DL-14b Unaccompanied, DL-16a Her Way Round
+// and DL-17's test rig. The ramp the director asked for: each scene combines what came before or turns a thing to a new
+// use. The coat is a weight, the figure a decoy, the prologue's counterweight a ride, her drawing the instructions.
+// ---------------------------------------------------------------------------------------------------------------------
+const ATT3 = {
+  // DL-14a: the dormitory. Bunks are solid blocks; the lockers are the steps up to them.
+  bunk1: { x0: 248.3, x1: 250.3, h: 1.15 }, locker1: { x0: 250.3, x1: 250.8, h: 0.55 },
+  locker2: { x0: 254.3, x1: 254.8, h: 0.55 }, bunk2: { x0: 254.8, x1: 257.6, h: 1.15 }, locker3: { x0: 257.6, x1: 258.1, h: 0.55 },
+  pawlX: 252.3, crankX: 258.7, hemX: 256.2, hemZ: -1.0, roller: 3.25, hemDown: 1.93, w2Down: 1.95,
+  wallPeg: new THREE.Vector3(251.5, 0.8, -1.38), chairX: 260.6, chairHook: new THREE.Vector3(260.6, 0.95, -0.4),
+  door: { x0: 262.85, x1: 263.0 }, eyeX: 261.9,
+  cycle: { period: 10, dark: [4.5, 8.0] },
+  // DL-14b: the night corridor and the escort trolley.
+  nicheA: [263.6, 264.5], bay: [269.4, 270.4], bayX: 269.9, hideZ: -0.62, railZ: -0.55, bayZ: -0.85,
+  rail: [261.8, 275.0], patrol: [265.0, 274.9], speed: 1.1, escortSpeed: 0.8, beam: 2.6, lampDX: 0.35, pause: 1.2, keepX: 262.2, keepStop: 6,
+  stair: { x0: 275.3, x1: 277.6, n: 9, h: 1.6 }, landing: { x0: 277.6, x1: 278.0, h: 1.6 }, wall15: { x0: 278.0, x1: 278.15 },
+  // DL-16a: the servery and the dumbwaiter.
+  shelf: { x0: 310.2, x1: 310.9, h: 1.25, booksX: 310.55 }, stool0: 312.0, stoolHalf: 0.25, stoolH: 0.45, stoolMin: 310.45, stoolMax: 312.2,
+  car: { x0: 312.6, x1: 313.4, mid: 313.0, floor: 0.05, top: 2.45 }, gateX: 314.0, passage: { x0: 313.5, x1: 321.2, h: 2.4 },
+  stair16a: { x0: 321.2, x1: 323.6, n: 12, h: 2.4 }, weight: { tin1: 1, tin2: 1, books: 2 }, need: 3,
+  // DL-17: Vance's apprentice test rig (dl17.py, +44): sluice A waters bed 3, B bed 1, C bed 2.
+  valveX: 336.55, sluices: [337.45, 338.1, 338.8], feeds: [2, 0, 1], run: 6, refill: 10, drain: 20,
+};
+const ATT3_ACTS = new Set(['pawl14a', 'crank14a', 'gownChair', 'hangHem', 'reachHem', 'takeHem', 'hangWall', 'takeWall', 'nudge14b', 'hide', 'escorted',
+  'books16a', 'bell16a', 'ride16a', 'load16a', 'unload16a', 'sluiceA', 'sluiceB', 'sluiceC', 'sluice17', 'valve17', 'valveLocked']);
+// Where he looks when a moment needs him to (the head look's targets for the expansion).
+const LOOK3 = { crank14a: new THREE.Vector3(258.7, 0.5, -0.32), drawer17: new THREE.Vector3(330.0, 0.45, -0.5), rig17: new THREE.Vector3(338.1, 0.75, -0.6) };
+function resetAtt3(s, p) {
+  const dark = p('corridor'), passed = p('sickbay'), up = p('workshop');
+  s.f14a = { t: dark ? 6 : 0, braked: dark, w1: dark ? 1 : 0, w2: dark ? 1 : 0, t1: dark ? 1 : 0, t2: dark ? 1 : 0, door: dark ? 1 : 0, open: dark, darkSince: null, winds: 0,
+    gown: { x: ATT3.hemX, base: 0, state: dark ? 'hem' : 'chair', blend: 0, drop: null } };
+  s.f14b = { tx: 270.0, dir: 1, mode: 'patrol', mt: 0, turned: 0, fig: { x: passed ? ATT3.keepX : ATT3.bayX, base: 0, v: 0, state: passed ? 'free' : 'bay', out: passed ? 1 : 0, kept: passed }, hide: 0 };
+  const C = ATT3.car;
+  s.f16a = { stool: { x: up ? ATT3.stoolMin : ATT3.stool0, v: 0, state: 'free' }, h: up ? C.top : C.floor, mode: up ? 'top' : 'bottom', mt: 0, flashAt: -9, overAt: -9,
+    tin1: { x: 311.2, base: 0, state: up ? 'car' : 'floor', slot: 1, blend: 0, drop: null },
+    tin2: { x: 311.45, base: 0, state: 'floor', blend: 0, drop: null },
+    books: { x: ATT3.shelf.booksX, base: ATT3.shelf.h, state: up ? 'car' : 'shelf', slot: 0, blend: 0, drop: null } };
+  Object.assign(s.f17, { key: false, sluice: [1, 1, 1], tank: 1, run: 0, beds: [0, 0, 0], latch: 0, refillAt: null });
+}
+// Items, as the generic carried things (game.carry): the gown, the tins, the books.
+function itemsAtt3(out) {
+  const s = game.att, k = refs.att;
+  out.push(Object.assign(s.f14a.gown, { key: 'gown', h: 0.1, r: 0.16, below: 0.02, light: true, g: k.Att14aGown }));
+  // (Small enough to carry up onto the stool or into the car: 'light' lets him climb with them.)
+  out.push(Object.assign(s.f16a.tin1, { key: 'tin1', h: 0.18, r: 0.08, below: 0.12, light: true, g: k.Att16aTin1 }));
+  out.push(Object.assign(s.f16a.tin2, { key: 'tin2', h: 0.18, r: 0.08, below: 0.12, light: true, g: k.Att16aTin2 }));
+  out.push(Object.assign(s.f16a.books, { key: 'books', h: 0.14, r: 0.14, below: 0.12, light: true, g: k.Att16aBooks }));
+}
+// The cycle: BRIGHT 0..3, DIMMING 3..4.5, DARK 4.5..8, BRIGHTENING 8..10. The sun's light, 1 at full, 0 dark.
+function sun14a(t) { return t < 3 ? 1 : t < 4.5 ? 1 - (t - 3) / 1.5 : t < 8 ? 0 : (t - 8) / 2; }
+const hem14a = (w) => ATT3.roller - (ATT3.roller - ATT3.hemDown) * w;
+// What is loaded into the dumbwaiter's car rides in it, in three slots along its back; that is its load.
+const ITEMS16a = ['tin1', 'tin2', 'books'], SLOTS16a = [312.8, 313.02, 313.24];
+const inCar16a = (it) => it.state === 'car';
+function load16a() { const s = game.att.f16a; return ITEMS16a.reduce((n, key) => n + (inCar16a(s[key]) ? ATT3.weight[key] : 0), 0); }
+const inBox = (x, b) => x >= b.x0 && x <= b.x1;
+function surfaceAtt3(x, h) {
+  const s = game.att;
+  for (const b of [ATT3.bunk1, ATT3.locker1, ATT3.locker2, ATT3.bunk2, ATT3.locker3]) if (inBox(x, b)) h = Math.max(h, b.h);
+  const st = s.f16a.stool;
+  if (Math.abs(x - st.x) <= ATT3.stoolHalf) h = Math.max(h, ATT3.stoolH);
+  if (x >= ATT3.car.x0 && x < ATT3.passage.x0 && game.y > s.f16a.h - 0.35) h = Math.max(h, s.f16a.h);
+  if (game.y > 2.0 && inBox(x, ATT3.passage)) h = Math.max(h, ATT3.passage.h);
+  return h;
+}
+function floorAtt3(x) {
+  const S = ATT3.stair, L = ATT3.landing, D = ATT3.stair16a;
+  if (x >= S.x0 && x < S.x1) return Math.min(S.h, (S.h / S.n) * Math.ceil((x - S.x0) / ((S.x1 - S.x0) / S.n)));
+  if (x >= L.x0 && x < L.x1) return L.h;
+  if (x >= D.x0 && x < D.x1) return Math.max(0, D.h - (D.h / D.n) * Math.ceil((x - D.x0) / ((D.x1 - D.x0) / D.n)));
+  return null;
+}
+function limitsAtt3(lo, hi) {
+  const s = game.att, x = game.x, y = game.y;
+  // The dormitory's door, shut until the room has been dark.
+  if (s.f14a.door < 0.7) { if (x < ATT3.door.x1) hi = Math.min(hi, ATT3.door.x0 - HALF); }
+  // The sick bay's door is high in its wall: in from the landing, not from the floor.
+  if (y < 1.45) {
+    if (x >= ATT3.wall15.x0 && x < 294) lo = Math.max(lo, ATT3.wall15.x1 + HALF);
+    else if (x > 274 && x < ATT3.wall15.x0) hi = Math.min(hi, ATT3.wall15.x0 - HALF);
+  }
+  // DL-16a: the gate (to pupils on the floor), and the empty shaft while the car is up.
+  if (y < 2.0) {
+    if (x < ATT3.gateX && x > 309) hi = Math.min(hi, ATT3.gateX - 0.05 - HALF);
+    else if (x >= ATT3.gateX && x < 324.5) lo = Math.max(lo, ATT3.gateX + 0.05 + HALF);
+    if (s.f16a.h > 0.15 && y < 0.3 && x < ATT3.car.x0) hi = Math.min(hi, ATT3.car.x0 - 0.1 - HALF);
+  }
+  return [lo, hi];
+}
+// Hidden: stepped back into niche A or the empty bay, crouched.
+const hidden14b = () => game.act && game.act.kind === 'att' && game.act.what === 'hide' && game.z < -0.4;
+function nearAtt3Item() {
+  const s = game.att, x = game.x, y = game.y, g = s.f14a.gown, c = game.carry;
+  if (!game.hold && g.state === 'chair' && y < 0.05 && Math.abs(x - ATT3.chairX) < 0.4) return 'att:gownChair';
+  if (c === g && Math.abs(y - ATT3.bunk2.h) < 0.05 && Math.abs(x - ATT3.hemX) < 0.45) return s.f14a.w1 > 0.95 ? 'att:hangHem' : 'att:reachHem';
+  if (c === g && y < 0.05 && Math.abs(x - ATT3.wallPeg.x) < 0.35) return 'att:hangWall';
+  if (!game.hold && g.state === 'hem' && Math.abs(y - ATT3.bunk2.h) < 0.05 && Math.abs(x - ATT3.hemX) < 0.45) return 'att:takeHem';
+  if (!game.hold && g.state === 'wallpeg' && y < 0.05 && Math.abs(x - ATT3.wallPeg.x) < 0.35) return 'att:takeWall';
+  const F = s.f16a, b = F.books, C = ATT3.car;
+  if (!game.hold && b.state === 'shelf' && Math.abs(y - ATT3.stoolH) < 0.05 && Math.abs(x - ATT3.shelf.booksX) < 0.32) return 'att:books16a';
+  // Into the car, from in it or reaching in from beside it.
+  if (c && ITEMS16a.some((key) => F[key] === c) && F.mode === 'bottom' && x > C.x0 - 0.4 && x < C.x1 + 0.05 && y < 0.1) return 'att:load16a';
+  return null;
+}
+function nearAtt3Fixed() {
+  const s = game.att, x = game.x, y = game.y, B = s.f14b;
+  if (y < 0.05 && Math.abs(x - ATT3.pawlX) < 0.3) return 'att:pawl14a';
+  if (y < 0.05 && Math.abs(x - ATT3.crankX) < 0.34) return 'att:crank14a';
+  if (y < 0.05 && B.fig.state === 'bay' && Math.abs(x - ATT3.bayX) < 0.3) return 'att:nudge14b';
+  if (y < 0.05 && (inBox(x, { x0: ATT3.nicheA[0] + 0.15, x1: ATT3.nicheA[1] - 0.15 }) || (B.fig.state !== 'bay' && inBox(x, { x0: ATT3.bay[0] + 0.15, x1: ATT3.bay[1] - 0.15 })))) return 'att:hide';
+  const C = ATT3.car, f = s.f16a;
+  // In the car: the bell; or, while the gauge reads OVER, he takes a tin back out (the only way to be over is all three).
+  if (!game.hold && x > C.x0 + 0.15 && x < C.x1 - 0.15 && Math.abs(y - f.h) < 0.05 && (f.mode === 'bottom' || f.mode === 'top')) return f.mode === 'bottom' && load16a() > ATT3.need ? 'att:unload16a' : 'att:bell16a';
+  if (y < 0.05) {
+    for (let i = 0; i < 3; i++) if (Math.abs(x - ATT3.sluices[i]) < 0.24) return 'att:sluice' + 'ABC'[i];
+    if (Math.abs(x - ATT3.valveX) < 0.26) return s.f17.key ? 'att:valve17' : 'att:valveLocked';
+  }
+  return null;
+}
+// Hanging the gown or taking it back: he steps back toward the peg (the hem hangs out in front of W1; the pegs are on
+// the back wall).
+const STEP_IN14a = { hangHem: -0.55, takeHem: -0.55, hangWall: -1.0, takeWall: -1.0 };
+const ATT3_STAND = { pawl14a: ATT3.pawlX - 0.2, crank14a: ATT3.crankX - 0.22, gownChair: ATT3.chairX - 0.3, hangHem: ATT3.hemX, takeHem: ATT3.hemX,
+  hangWall: ATT3.wallPeg.x, takeWall: ATT3.wallPeg.x, nudge14b: ATT3.bayX, valve17: ATT3.valveX - 0.2, valveLocked: ATT3.valveX - 0.2 };
+function beginAtt3(kind) {
+  if (kind.startsWith('sluice') && kind !== 'sluice17') { const i = 'ABC'.indexOf(kind.slice(-1)); game.act = { kind: 'att', what: 'sluice17', att3: true, phase: 'approach', t: 0, standX: ATT3.sluices[i] - 0.18, face: 1, i }; return; }
+  const a = { kind: 'att', what: kind, att3: true, phase: 'approach', t: 0, standX: ATT3_STAND[kind] ?? game.x, face: 1 };
+  if (kind === 'hide') { const n = game.x < 266 ? ATT3.nicheA : ATT3.bay; a.standX = (n[0] + n[1]) / 2; a.face = game.facing; }
+  if (['reachHem', 'bell16a', 'books16a', 'load16a', 'unload16a'].includes(kind)) a.phase = 'act';
+  game.act = a;
+}
+function updateAtt3Act(a, dt) {
+  const s = game.att, A = s.f14a, g = A.gown;
+  if (a.phase === 'approach') {
+    if (approachCh1(a, dt)) {
+      a.phase = 'act'; a.t = 0;
+      if (['pawl14a', 'sluice17'].includes(a.what)) setClip(actions.Pull ? 'Pull' : 'Tug', 0.15);
+      if (a.what === 'crank14a' || a.what === 'valve17') setClip(actions.Crank ? 'Crank' : 'Tug', 0.15);
+      if (a.what === 'valveLocked') setClip(actions.Tug ? 'Tug' : 'Pull', 0.15);
+      if (a.what === 'gownChair') { game.yawOverride = Math.PI; setClip('Lift', 0.15); }
+      if (STEP_IN14a[a.what]) { a.phase = 'in'; game.yawOverride = Math.PI; }
+      if (a.what === 'nudge14b') { game.yawOverride = Math.PI; setClip(actions.Nudge ? 'Nudge' : 'Tug', 0.2); }
+      if (a.what === 'hide') { a.phase = 'in'; game.yawOverride = 0; }
+    }
+    return;
+  }
+  // Up on the friends' bunks, he steps back toward the blind (its hem hangs out on brackets in front of the window).
+  if (STEP_IN14a[a.what]) {
+    if (a.phase === 'in' || a.phase === 'out') {
+      const to = a.phase === 'in' ? STEP_IN14a[a.what] : 0, dz = to - game.z;
+      game.z += Math.sign(dz) * Math.min(Math.abs(dz), 0.5 * dt); setClip(a.phase === 'in' ? 'CarryWalk' : 'Walk', 0.2, 0.5);
+      if (Math.abs(dz) < 0.005) {
+        game.z = to;
+        if (a.phase === 'in') { a.phase = 'act'; a.t = 0; setClip(a.what.startsWith('hang') ? (actions.SetDownHigh ? 'SetDownHigh' : 'SetDown') : 'Lift', 0.15); }
+        else { game.act = null; game.yawOverride = null; setClip(game.hold ? 'CarryIdle' : 'Idle', 0.3); input.lastActivity = game.clock; }
+      }
+      return;
+    }
+    if (a.what.startsWith('hang')) {
+      const f = (actions.SetDownHigh || actions.SetDown).time * FPS, hem = a.what === 'hangHem';
+      if (f >= 14 && game.carry === g) { g.state = hem ? 'hem' : 'wallpeg'; g.blend = 0; game.carry = null; game.hold = null; Sound.setDown(false); Sound.tap(); if (hem) { Sound.creak?.(0.4); Telemetry.event('gownHem', {}); } }
+      if (f >= 35) { a.phase = 'out'; setClip('Walk', 0.2); }
+    } else {
+      const f = actions.Lift.time * FPS;
+      if (f >= 22 && g.state !== 'carried') { g.state = 'carried'; g.x = game.x; }
+      if (g.state === 'carried') g.blend = smooth((f - 22) / 4);
+      if (f >= 39) { game.hold = 'item'; game.carry = g; g.blend = 1; a.phase = 'out'; }
+    }
+    return;
+  }
+  if (a.what === 'reachHem') {
+    // The hem is up out of reach: he stretches for it, then looks at the crank that winds it.
+    if (a.t < 0.02) { setClip(actions.Present ? 'Present' : 'CarryIdle', 0.15); Sound.servo(0.25, 500, 820, 0.02); A.reachAt = game.clock; }
+    game.lookAt = a.t > 0.9 && a.t < 2.4 ? 'crank14a' : game.lookAt === 'crank14a' ? null : game.lookAt;
+    if (a.t > 1.1 && !a.down) { a.down = true; setClip('CarryIdle', 0.3); }
+    if (a.t > 2.4) { game.act = null; game.lookAt = null; input.lastActivity = game.clock; }
+    return;
+  }
+  if (a.what === 'pawl14a') {
+    if (a.t > 0.35 && !a.done) { a.done = true; A.braked = !A.braked; Sound.pawlClick(); shake(0.12); if (A.braked) Sound.groan(); Telemetry.event('nightBrake', { t: +A.t.toFixed(2), dark: sun14a(A.t) < 0.05 }); }
+    if (a.t > 1.0) { game.act = null; setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'crank14a') {
+    // One wind: the blind that is up comes down and the other goes up; with W1 held down by the gown, the clutch slips
+    // there and W2 goes alone.
+    if (a.t > 0.3 && !a.done) {
+      a.done = true; A.winds++;
+      if (g.state === 'hem') A.t2 = A.t2 > 0.5 ? 0 : 1;
+      else if (A.t1 < 0.5) { A.t1 = 1; A.t2 = 0; } else { A.t1 = 0; A.t2 = 1; }
+      Sound.chain(2.2); Sound.ratchet(); Telemetry.event('blinds14a', { w1: A.t1, w2: A.t2, held: g.state === 'hem' });
+    }
+    if (a.t > 0.9 && !a.r2) { a.r2 = true; Sound.ratchet(); }
+    if (a.t > 1.5) { game.act = null; setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'gownChair') {
+    const f = actions.Lift.time * FPS;
+    if (f >= 13 && !a.s1) { a.s1 = true; Sound.lift(); }
+    if (f >= 22) { if (g.state !== 'carried') { g.state = 'carried'; g.x = game.x; } g.blend = smooth((f - 22) / 4); }
+    if (f >= 39) { game.act = null; game.yawOverride = null; game.hold = 'item'; game.carry = g; g.blend = 1; setClip('CarryIdle', 0.2); }
+    return;
+  }
+  if (a.what === 'nudge14b') {
+    if (a.t > 0.6 && !a.done) { a.done = true; s.f14b.fig.state = 'rolling'; Sound.squeak?.(); Sound.tap(); Telemetry.event('figOut14b', {}); }
+    if (a.t > 1.4) { game.act = null; game.yawOverride = null; setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'hide') {
+    // Back into the recess, facing out, crouched; any move brings him out again.
+    const moving = input.left || input.right || input.axis || input.jumpPressed || input.usePressed;
+    if (a.phase === 'in') {
+      game.z = Math.max(ATT3.hideZ, game.z - 0.6 * dt); setClip('Walk', 0.2, -0.5 / CLIP_SPEED.Walk);
+      if (game.z <= ATT3.hideZ + 1e-3) { a.phase = 'act'; a.t = 0; game.crouched = true; setClip(actions.CrouchIdle ? 'CrouchIdle' : 'Idle', 0.25); Telemetry.event('hide14b', {}); }
+    } else if (a.phase === 'act') {
+      game.crouched = true;
+      if (moving && a.t > 0.3) { a.phase = 'out'; game.crouched = false; }
+    } else {
+      game.z = Math.min(0, game.z + 0.7 * dt); setClip('Walk', 0.2, 0.5 / CLIP_SPEED.Walk);
+      if (game.z >= -1e-3) { game.z = 0; game.act = null; game.yawOverride = null; setClip('Idle', 0.2); input.lastActivity = game.clock; }
+    }
+    return;
+  }
+  if (a.what === 'escorted') {
+    // Found by the escort: walked back to the dormitory door ahead of it, unhurt.
+    const B = s.f14b;
+    game.facing = -1; game.crouched = false; game.z += (0 - game.z) * Math.min(1, dt * 4);
+    if (a.t < 0.7) { setClip('Idle', 0.2); return; }
+    game.x = Math.max(263.45, game.x - ATT3.escortSpeed * dt); setClip('Walk', 0.2, ATT3.escortSpeed / CLIP_SPEED.Walk); stepSounds();
+    B.tx = Math.max(B.tx, game.x + 0.75); B.tx = Math.min(B.tx, game.x + 0.9);
+    if (game.x <= 263.46) { game.act = null; game.facing = 1; setClip('Idle', 0.3); B.mode = 'stop'; B.mt = 0; B.stopFor = 2.0; input.lastActivity = game.clock; }
+    return;
+  }
+  if (a.what === 'books16a') {
+    if (a.t < 0.02) { game.yawOverride = Math.PI; setClip('Lift', 0.15); }
+    const f = actions.Lift.time * FPS, b = s.f16a.books;
+    if (f >= 13 && !a.s1) { a.s1 = true; Sound.lift(); }
+    if (f >= 22) { if (b.state !== 'carried') { b.state = 'carried'; b.x = game.x; } b.blend = smooth((f - 22) / 4); }
+    if (f >= 39) { game.act = null; game.yawOverride = null; game.hold = 'item'; game.carry = b; b.blend = 1; setClip('CarryIdle', 0.2); }
+    return;
+  }
+  if (a.what === 'load16a' || a.what === 'unload16a') {
+    // Into the car's next slot, or the last one in back out.
+    const F = s.f16a, load = a.what === 'load16a', clip = load ? 'SetDown' : 'Lift';
+    if (a.t < 0.02) { game.yawOverride = Math.PI; setClip(clip, 0.15); a.it = load ? game.carry : [F.tin2, F.tin1].find(inCar16a); }
+    const f = actions[clip].time * FPS, it = a.it;
+    if (!it) { game.act = null; game.yawOverride = null; return; }
+    if (load && f >= 14 && it.state === 'carried') {
+      it.slot = ITEMS16a.map((key) => F[key]).filter(inCar16a).length; it.state = 'car'; it.blend = 0; game.carry = null; game.hold = null;
+      Sound.setDown(true); Sound.clank(); Telemetry.event('load16a', { n: load16a() });
+    }
+    if (!load && f >= 22 && it.state === 'car') { it.state = 'carried'; it.x = game.x; it.base = 0; }
+    if (!load && it.state === 'carried') it.blend = smooth((f - 22) / 4);
+    if (f >= (load ? 35 : 39)) { game.act = null; game.yawOverride = null; if (!load) { game.hold = 'item'; game.carry = it; it.blend = 1; setClip('CarryIdle', 0.2); } else setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'bell16a') {
+    // The bell push inside the car. Up with the right load; too light, it shoots up and the catch bites; too heavy, nothing.
+    const f16 = s.f16a, clip = actions.PressButtonHigh ? 'PressButtonHigh' : 'Tug';
+    if (a.t < 0.02) { game.yawOverride = Math.PI; setClip(clip, 0.15); }
+    if (a.t > 0.55 && !a.done) {
+      a.done = true; Sound.click(); Sound.bell?.();
+      const n = load16a();
+      Telemetry.event('dumbwaiter', { load: n, at: f16.mode });
+      if (f16.mode === 'top') { f16.mode = 'down'; f16.mt = 0; Sound.chain(2.0); }
+      else if (n > ATT3.need) { f16.overAt = game.clock; Sound.buzzShort(); shake(0.08); }
+      else if (n < ATT3.need) { f16.mode = 'shoot'; f16.mt = 0; f16.flashAt = game.clock; Sound.chain(1.0); }
+      else { f16.mode = 'rise'; f16.mt = 0; Sound.clunk(); Sound.chain(3.0); }
+      // He goes with it, from the moment it moves.
+      if (['rise', 'shoot', 'down'].includes(f16.mode) && inBox(game.x, ATT3.car)) { a.what = 'ride16a'; a.t = 0; game.yawOverride = null; return; }
+    }
+    if (a.t > 1.1) {
+      game.yawOverride = null;
+      const moving16 = ['rise', 'shoot', 'down'].includes(s.f16a.mode) && Math.abs(game.y - s.f16a.h) < 0.1 && inBox(game.x, ATT3.car);
+      if (moving16) { a.what = 'ride16a'; a.t = 0; setClip(actions.Ride ? 'Ride' : 'Idle', 0.3); } else { game.act = null; setClip('Idle', 0.3); }
+    }
+    return;
+  }
+  if (a.what === 'ride16a') {
+    // He rides the car; it's over when it stops.
+    game.x = THREE.MathUtils.clamp(game.x, ATT3.car.x0 + 0.18, ATT3.car.x1 - 0.18); game.y = s.f16a.h; game.vx = 0; game.grounded = true;
+    if (s.f16a.mode === 'top' || s.f16a.mode === 'bottom') { game.act = null; setClip('Idle', 0.3); input.lastActivity = game.clock; if (s.f16a.mode === 'top') { game.facing = 1; game.lookAt = null; } }
+    return;
+  }
+  if (a.what === 'sluice17') {
+    if (a.t > 0.35 && !a.done) { a.done = true; s.f17.sluice[a.i] = s.f17.sluice[a.i] ? 0 : 1; Sound.pawlClick(); Sound.clunk(); Telemetry.event('sluice17', { i: a.i, open: s.f17.sluice[a.i] }); }
+    if (a.t > 1.0) { game.act = null; setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'valve17') {
+    const d = s.f17;
+    if (a.t > 0.4 && !a.done) {
+      a.done = true;
+      if (d.run > 0) { /* already running */ }
+      else if (d.tank < 0.95) { Sound.clunk(); Sound.worried(); }
+      else if (!d.sluice.some(Boolean)) { Sound.clunk(); Sound.groan(); }
+      else { d.run = ATT3.run; Sound.ratchet(); Sound.splash?.(0.5); Telemetry.event('valve17', { sluices: d.sluice.join('') }); }
+    }
+    if (a.t > 1.5) { game.act = null; setClip('Idle', 0.3); }
+    return;
+  }
+  if (a.what === 'valveLocked') {
+    // A square spindle and no handle: the key is somewhere else. He looks round at the plan chest.
+    if (a.t > 0.3 && !a.done) { a.done = true; Sound.tap(); Sound.servo(0.2, 400, 520, 0.02); }
+    game.lookAt = a.t > 0.8 && a.t < 2.2 ? 'drawer17' : game.lookAt === 'drawer17' ? null : game.lookAt;
+    if (a.t > 2.2) { game.act = null; game.lookAt = null; setClip('Idle', 0.3); }
+  }
+}
+function updateAtt3(dt) {
+  const s = game.att, k = refs.att, x = game.x, here = game.region === 6;
+  // ---- DL-14a: the night-light, the blinds and the eye.
+  const A = s.f14a, g = A.gown;
+  if (!A.braked) A.t = (A.t + dt) % ATT3.cycle.period;
+  A.w1 += Math.sign(A.t1 - A.w1) * Math.min(Math.abs(A.t1 - A.w1), dt / 2.2);
+  A.w2 += Math.sign(A.t2 - A.w2) * Math.min(Math.abs(A.t2 - A.w2), dt / 2.2);
+  if (g.state === 'hem') { A.t1 = 1; A.w1 = 1; }                     // the gown's weight holds W1 down
+  const sun = sun14a(A.t), leak = [sun > 0.05, A.w1 < 0.95, A.w2 < 0.95], dark = !leak.some(Boolean);
+  if (dark) A.darkSince ??= game.clock; else A.darkSince = null;
+  if (!A.open && A.darkSince !== null && game.clock - A.darkSince > 1.2) { A.open = true; Sound.clank(); Sound.bell?.(); Sound.doorOpen?.(); Telemetry.event('dark14a', {}); }
+  if (A.open) A.door = Math.min(1, A.door + dt / 1.4);
+  const winding = Math.abs(A.w1 - A.t1) > 1e-3 || Math.abs(A.w2 - A.t2) > 1e-3;
+  if (here && x > 248 && x < 263 && winding && Math.random() < dt * 6) Sound.tap();
+  // ---- DL-14b: the escort trolley.
+  updateTrolley14b(dt); updateEscortHim14b();
+  // ---- DL-16a: the dumbwaiter.
+  const F = s.f16a, C = ATT3.car;
+  F.mt += dt;
+  if (F.mode === 'rise') { F.h = C.floor + (C.top - C.floor) * smooth(Math.min(1, F.mt / 4.2)); if (F.mt >= 4.2) { F.mode = 'top'; F.h = C.top; Sound.clunk(); shake(0.12); Telemetry.event('rode16a', {}); } }
+  else if (F.mode === 'down') { F.h = C.top - (C.top - C.floor) * smooth(Math.min(1, F.mt / 4.2)); if (F.mt >= 4.2) { F.mode = 'bottom'; F.h = C.floor; Sound.clunk(); } }
+  else if (F.mode === 'shoot') {
+    // Too light: it leaps, the catch bites with a bang, and it is lowered back on the brake.
+    const peak = 1.5;
+    if (F.mt < 0.8) F.h = C.floor + peak * Math.min(1, (F.mt / 0.8) ** 1.6);
+    else if (!F.caught) { F.caught = true; Sound.clank(); Sound.ratchet(); shake(0.45); }
+    if (F.mt > 1.4) F.h = C.floor + peak * (1 - smooth((F.mt - 1.4) / 2.6));
+    if (F.mt > 4.0) { F.mode = 'bottom'; F.h = C.floor; F.caught = false; Sound.clunk(); }
+  }
+  if (here && game.act && game.act.what === 'ride16a') game.y = F.h;
+  // ---- DL-17: the test rig.
+  const d = s.f17;
+  if (d.run > 0) {
+    const open = d.sluice.map((v, i) => (v ? i : -1)).filter((i) => i >= 0), rate = 1 / ATT3.run;
+    const step = Math.min(dt, d.run); d.run -= step; d.tank = Math.max(0, d.run / ATT3.run);
+    for (const i of open) d.beds[ATT3.feeds[i]] = Math.min(1, d.beds[ATT3.feeds[i]] + step * rate / Math.max(1, open.length) * 1.06);
+    if (Math.random() < dt * 8) Sound.splash?.(0.15);
+    if (d.run <= 0) { d.run = 0; d.refillAt = game.clock; }
+  } else if (d.tank < 1 && d.refillAt !== null) d.tank = Math.min(1, (game.clock - d.refillAt) / ATT3.refill);
+  const fed = d.run > 0 ? d.sluice.map((v, i) => (v ? ATT3.feeds[i] : -1)) : [];
+  d.beds = d.beds.map((v, b) => (fed.includes(b) ? v : Math.max(0, v - dt / ATT3.drain)));
+  if (d.beds[0] >= 0.95 && !d.latched) { d.latched = true; d.latchAt = game.clock; Sound.clank(); Sound.creak?.(0.6); Telemetry.event('float17', {}); }
+  if (d.latched) d.latch = Math.min(1, d.latch + dt / 0.8);
+  // ---- Checkpoints.
+  if (here) {
+    const cp = game.checkpoint;
+    if (x > ATT3.door.x1 + 0.4 && A.open && !past(cp, 'corridor')) game.checkpoint = 'corridor';
+    if (x > ATT3.wall15.x1 + 0.15 && game.y > 1.5 && !past(cp, 'sickbay')) game.checkpoint = 'sickbay';
+    if (x > 310.4 && x < 314 && !past(cp, 'kitchen')) game.checkpoint = 'kitchen';
+  }
+  // ---- The art.
+  if (!k) return;
+  const R = (o) => { o.position.copy(o.userData.rest.p); o.quaternion.copy(o.userData.rest.q); };
+  if (k.Att14aPawl) { R(k.Att14aPawl); k.Att14aPawl.rotateX(A.braked ? THREE.MathUtils.degToRad(40) : 0); }
+  if (k.Att14aDialHand) { R(k.Att14aDialHand); k.Att14aDialHand.rotateZ(-2 * Math.PI * A.t / ATT3.cycle.period); }
+  if (k.sunLamp) k.sunLamp.emissiveIntensity = 0.15 + 4.5 * sun;
+  if (k.sunLight) k.sunLight.intensity = k.sunLight.userData.base * (0.06 + 0.94 * sun);
+  if (k.w1Light) k.w1Light.intensity = k.w1Light.userData.base * (1 - A.w1);
+  if (k.w2Light) k.w2Light.intensity = k.w2Light.userData.base * (1 - A.w2);
+  if (k.Att14aCrank && winding) k.Att14aCrank.rotateZ(dt * 4);
+  for (const [o, v] of [[k.Att14aBlindW1, A.w1], [k.Att14aBlindW2, A.w2]]) if (o) { o.scale.copy(o.userData.rest.s); o.scale.y = Math.max(0.04, v); o.visible = v > 0.06; }
+  if (k.Att14aHemW1) { R(k.Att14aHemW1); k.Att14aHemW1.position.y += hem14a(A.w1) - ATT3.hemDown; }
+  const blink = game.calm ? 1 : Math.sin(game.clock * 7) > 0 ? 1 : 0.2;
+  [k.eyeSun, k.eyeW1, k.eyeW2].forEach((m, i) => { if (m) m.emissiveIntensity = leak[i] ? 4.5 * (A.open ? 0.4 : blink) : 0.04; });
+  if (k.eyeDark) k.eyeDark.emissiveIntensity = dark || A.open ? 5 : 0.05;
+  if (k.Att14aDoor) { R(k.Att14aDoor); k.Att14aDoor.rotateY(-Math.PI / 2 * smooth(A.door)); }
+  placeGown14a(g, k.Att14aGown, dt, A);
+  placeTrolley14b(k);
+  // DL-16a.
+  if (k.Att16aCar) { R(k.Att16aCar); k.Att16aCar.position.y += F.h - C.floor; }
+  if (k.Att16aCW) { R(k.Att16aCW); k.Att16aCW.position.y -= F.h - C.floor; }
+  if (k.Att16aStool) { R(k.Att16aStool); k.Att16aStool.position.x += F.stool.x - ATT3.stool0; }
+  for (const key of ITEMS16a) {
+    const it = F[key], o = k['Att16a' + key[0].toUpperCase() + key.slice(1)]; if (!o) continue;
+    if (it.state === 'shelf') R(o);
+    else if (it.state === 'car') { o.position.set(SLOTS16a[it.slot] ?? C.mid, F.h, -0.3); o.quaternion.identity(); }
+    else { placeItem(it, o, dt); o.quaternion.identity(); }
+  }
+  const n = load16a(), flash = game.clock - F.flashAt < 2.4 ? (Math.sin(game.clock * 14) > 0 ? 6 : 0.4) : 0, over = game.clock - F.overAt < 2.4;
+  [k.load1, k.load2, k.load3].forEach((m, i) => { if (m) m.emissiveIntensity = i < n ? 5 : flash ? flash : 0.05; });
+  if (k.loadOver) k.loadOver.emissiveIntensity = n > ATT3.need ? (over ? (Math.sin(game.clock * 14) > 0 ? 7 : 1) : 4) : 0.05;
+  // DL-17.
+  ['Att17SluiceA', 'Att17SluiceB', 'Att17SluiceC'].forEach((name, i) => { const o = k[name]; if (o) { R(o); o.rotateX(THREE.MathUtils.degToRad(80) * (1 - d.sluice[i])); } });
+  if (k.Att17Valve) { if (d.run > 0) k.Att17Valve.rotateZ(dt * 3); }
+  if (k.Att17ValveKey) { k.Att17ValveKey.visible = d.key; }
+  if (k.Att17Key) k.Att17Key.visible = !d.key;
+  if (k.Att17TankWater) { const o = k.Att17TankWater; o.scale.copy(o.userData.rest.s); o.scale.y = Math.max(0.02, d.tank); }
+  for (let b = 0; b < 3; b++) {
+    const o = k['Att17Water' + (b + 1)]; if (o) { o.scale.copy(o.userData.rest.s); o.scale.y = Math.max(0.01, d.beds[b]); o.visible = d.beds[b] > 0.01; }
+    const st = k['Att17Stream' + (b + 1)]; if (st) st.visible = fed.includes(b);
+  }
+  if (k.Att17Float) { R(k.Att17Float); k.Att17Float.position.y += 0.12 * d.beds[0]; }
+  if (k.Att17Latch) { R(k.Att17Latch); k.Att17Latch.rotateZ(THREE.MathUtils.degToRad(70) * smooth(d.latch)); }
+}
+function placeGown14a(g, o, dt, A) {
+  if (!o) return;
+  o.quaternion.copy(o.userData.rest.q);
+  if (g.state === 'chair') { o.position.copy(o.userData.rest.p); return; }
+  if (g.state === 'hem') { o.position.set(ATT3.hemX, hem14a(A.w1), ATT3.hemZ); return; }
+  if (g.state === 'wallpeg') { o.position.copy(ATT3.wallPeg); return; }
+  placeItem(g, o, dt);
+  if (g.state === 'floor' && !g.drop) { o.position.y = g.base + 0.06; o.rotation.set(0, 0, -Math.PI / 2); }    // laid down along the lane
+}
+// The escort trolley (DL-14b). It patrols its rail and looks ahead with its lamp. Whatever pupil-sized thing it finds in
+// the beam (him, not tucked into a recess; or a figure on the rail) it rings for and takes back to the dormitory.
+function beam14b(B) {
+  const a = B.tx + B.dir * ATT3.lampDX, b = a + B.dir * ATT3.beam;
+  return [Math.min(a, b), Math.max(a, b)];
+}
+function updateTrolley14b(dt) {
+  const s = game.att, B = s.f14b, P = ATT3.patrol, fig = B.fig;
+  B.mt += dt;
+  // The figure, nudged out of its bay, rolls forward onto the rail.
+  if (fig.state === 'rolling') {
+    if (fig.out < 1) { fig.out = Math.min(1, fig.out + dt / 0.9); if (fig.out >= 1) { Sound.clunk(); fig.coast = 1.0; } }
+    else { const step = Math.min(fig.coast, dt * 0.8 * Math.max(0.25, fig.coast)); fig.x += step; fig.coast -= step; if (fig.coast <= 1e-3) { fig.state = 'free'; Sound.tap(); } }
+  }
+  const seenHim = () => {
+    if (game.region !== 6 || hidden14b() || game.respawnAt) return false;
+    if (game.act && game.act.what === 'escorted') return false;
+    const [a, b] = beam14b(B); return game.x > Math.max(a, ATT3.door.x1 + 0.1) && game.x < b && game.y < 1.25;   // (not through the dormitory's wall)
+  };
+  const seenFig = () => { if (!(fig.state === 'free' || (fig.state === 'rolling' && fig.out >= 1)) || fig.kept) return false; const [a, b] = beam14b(B); return fig.x > a && fig.x < b; };
+  if (B.mode === 'patrol') {
+    B.tx += B.dir * ATT3.speed * dt;
+    if (B.tx >= P[1] && B.dir > 0) { B.tx = P[1]; B.mode = 'turn'; B.mt = 0; }
+    if (B.tx <= P[0] && B.dir < 0) { B.tx = P[0]; B.mode = 'turn'; B.mt = 0; }
+    if (Math.random() < dt * 2.5) Sound.squeak?.();
+  } else if (B.mode === 'turn') {
+    if (B.mt > ATT3.pause) { B.dir = -B.dir; B.turned = 1; B.mode = 'patrol'; B.mt = 0; Sound.servo?.(0.3, 300, 420, 0.02); }
+  } else if (B.mode === 'stop') {
+    if (B.mt > (B.stopFor ?? 2)) { B.dir = 1; B.mode = 'patrol'; B.mt = 0; }
+  } else if (B.mode === 'escortFig') {
+    // Pushing the figure ahead of it, back to the dormitory.
+    if (B.mt > 0.8) {
+      const to = ATT3.keepX;
+      fig.x = Math.max(to, fig.x - ATT3.escortSpeed * dt); B.tx = fig.x + 0.65;
+      if (Math.random() < dt * 3) Sound.squeak?.();
+      if (fig.x <= to + 1e-3) { fig.kept = true; B.mode = 'stop'; B.mt = 0; B.stopFor = ATT3.keepStop; Sound.bell?.(); Telemetry.event('figKept14b', {}); }
+    }
+    return;
+  } else if (B.mode === 'escortHim') return;
+  if (B.mode !== 'patrol' && B.mode !== 'turn') return;
+  // Looking: him first if both are in the beam and he is nearer.
+  const him = seenHim(), it = seenFig();
+  const dHim = Math.abs(game.x - B.tx), dFig = Math.abs(fig.x - B.tx);
+  if (him && (!it || dHim < dFig)) {
+    B.mode = 'escortHim'; B.mt = 0; Sound.bell?.(); setTimeout(() => Sound.bell?.(), 260); Telemetry.event('caught14b', {});
+    if (game.hold === 'push') { game.hold = null; game.pushKey = null; }
+    if (game.hold === 'item' && game.carry) { const c = game.carry; c.state = 'floor'; c.x = game.x; c.base = game.y; c.blend = 0; game.carry = null; game.hold = null; }
+    game.act = { kind: 'att', what: 'escorted', att3: true, phase: 'act', t: 0 }; game.vx = 0;
+    Voice.play(Object.assign(voiceById('att_trolley'), { x: B.tx, reach: 9 }), { level: 0.8 });
+    B.himUntil = true;
+    return;
+  }
+  if (it) {
+    B.mode = 'escortFig'; B.mt = 0; B.dir = -1; Sound.bell?.(); setTimeout(() => Sound.bell?.(), 260);
+    fig.state = 'escorted'; fig.coast = 0; Telemetry.event('figSeen14b', {});
+    if (game.hold === 'push' && (game.pushKey || '').startsWith('fig14b')) { game.hold = null; game.pushKey = null; setClip('Idle', 0.2); }
+    Voice.play(Object.assign(voiceById('att_trolley'), { x: B.tx, reach: 9 }), { level: 0.7 });
+  }
+}
+function updateEscortHim14b() {   // (a respawn or a cut act leaves no one to escort)
+  const B = game.att.f14b;
+  if (B.mode === 'escortHim' && !(game.act && game.act.what === 'escorted')) { B.mode = 'stop'; B.mt = 0; B.stopFor = 2.0; }
+}
+function placeTrolley14b(k) {
+  const B = game.att.f14b, fig = B.fig;
+  if (B.mode === 'turn') B.turned = Math.min(1, B.mt / ATT3.pause);
+  // Facing: turns through 180 degrees during the pause at each end.
+  const facing = B.mode === 'turn' ? (B.dir > 0 ? smooth(B.turned) : 1 - smooth(B.turned)) : (B.dir > 0 ? 0 : 1);
+  // Both turn about the trolley's centre (the beam's mouth is ahead of it, so it swings round).
+  const T = k.Att14bTrolley, th = Math.PI * facing, c0 = T ? T.userData.rest.p : null;
+  for (const o of [T, k.Att14bCone]) {
+    if (!o || !c0) continue;
+    const r = o.userData.rest.p;
+    o.quaternion.copy(o.userData.rest.q); o.rotateY(th);
+    o.position.set(B.tx + (r.x - c0.x) * Math.cos(th), r.y, c0.z - (r.x - c0.x) * Math.sin(th) + (r.z - c0.z));
+  }
+  if (k.coneMat) k.coneMat.opacity = B.mode === 'escortHim' || B.mode === 'escortFig' ? 0.2 + 0.08 * Math.sin(game.clock * 16) : 0.11;
+  if (k.beamLight) { const L = k.beamLight; L.position.set(B.tx + (B.dir > 0 ? 1 : -1) * 1.1, 0.95, -0.2); L.intensity = L.userData.base; }
+  if (k.Att14bFig) {
+    const o = k.Att14bFig; o.position.copy(o.userData.rest.p); o.quaternion.copy(o.userData.rest.q);
+    o.position.x += fig.x - ATT3.bayX; o.position.z = THREE.MathUtils.lerp(ATT3.bayZ, ATT3.railZ, smooth(fig.out));
+  }
+}
+// Where each of the expansion's things glints: on the thing itself, wherever it is in depth.
+const ANCHOR3 = {
+  pawl14a: () => V3(ATT3.pawlX, 0.62, -1.3), crank14a: () => V3(ATT3.crankX, 0.5, -0.32), gownChair: () => ATT3.chairHook.clone().setY(0.72),
+  hangHem: () => V3(ATT3.hemX, hem14a(game.att.f14a.w1), ATT3.hemZ), reachHem: () => V3(ATT3.hemX, hem14a(game.att.f14a.w1), ATT3.hemZ),
+  takeHem: () => V3(ATT3.hemX, ATT3.hemDown - 0.25, ATT3.hemZ), hangWall: () => ATT3.wallPeg.clone(), takeWall: () => ATT3.wallPeg.clone().setY(0.55),
+  nudge14b: () => V3(ATT3.bayX, 0.75, ATT3.bayZ), hide: (run) => V3((run.x0 + run.x1) / 2, 0.6, -0.75),
+  books16a: () => V3(ATT3.shelf.booksX, ATT3.shelf.h + 0.1, -0.35), bell16a: () => V3(ATT3.car.mid, game.att.f16a.h + 0.6, -0.55),
+  sluiceA: () => V3(ATT3.sluices[0], 0.45, -0.33), sluiceB: () => V3(ATT3.sluices[1], 0.45, -0.33), sluiceC: () => V3(ATT3.sluices[2], 0.45, -0.33),
+  valve17: () => V3(ATT3.valveX, 0.7, -0.5), valveLocked: () => V3(ATT3.valveX, 0.7, -0.5),
+  load16a: () => V3(ATT3.car.mid, game.att.f16a.h + 0.3, -0.3), unload16a: () => V3(ATT3.car.mid, game.att.f16a.h + 0.3, -0.3),
+};
+// DL-14b's figure on the corridor's rail: pushed from either side, between the dormitory's stub and the stair.
+function pushable14b(side) {
+  const fig = () => game.att.f14b.fig;
+  return { region: 6, side, gap: 0.6, speed: 0.35, z: ATT3.railZ, state: () => fig(), min: ATT3.rail[0], max: () => ATT3.rail[1], floor: 0,
+    avail: () => !!game.att && fig().state === 'free' };
+}
+function pushable16a(side) {
+  const st = () => game.att.f16a.stool;
+  return { region: 6, side, gap: 0.5, speed: 0.4, z: 0, detent: true, state: () => st(), min: ATT3.stoolMin, max: () => ATT3.stoolMax, floor: 0, avail: () => !!game.att };   // it stops under the shelf, and he lets go
+}
+// (The stool is gripped from its right only: it goes toward the shelf, and a grip on its left would sit on the tins.)
+Object.assign(PUSHABLES, { fig14b: pushable14b(1), fig14br: pushable14b(-1), stool16ar: pushable16a(-1) });
 
 function finishAtt() {
   // Through the hatch: the end of what's built of chapter one, for now.
   game.exit = { t: 0, att: true };
   document.getElementById('end-title').textContent = 'End of chapter one';
   document.getElementById('end-sub').textContent = 'Attendance';
-  document.getElementById('end-text').textContent = 'The register took a stand-in. The lesson stopped mid-sentence. D-17 sat in her place until the bell, and watched the class go to a playground that was a store. In the workshop drawer, her tree had become a plan for water, and her name was down for the Works. His label was forwarded again: ring A.';
+  document.getElementById('end-text').textContent = 'The register took a stand-in. The lesson stopped mid-sentence. A gown held the dark for rest hour, and the escort took a figure back to bed instead of him. D-17 sat in her place until the bell, and watched the class go to a playground that was a store. In the workshop drawer, her tree had become a plan for water, and her name was down for the Works. Her test still worked. His label was forwarded again: ring A.';
   document.getElementById('end-next').innerHTML = 'Next: chapter two, <strong>Someone Home</strong>, being made.';
   game.ended = true; finish();
 }
@@ -5871,8 +6432,8 @@ const SECRETS = [
 ];
 SECRETS.push(
   // Chapter 1, DL-15: under the sick bay balcony, where a protected pupil hid from her escorts.
-  { id: 'hide15', name: 'Under the balcony', region: 6, ready: true, voice: 'att_escort', open: [249.75, 249.85], stand: 249.8,
-    path: [[249.8, -0.45], [249.8, -0.62]], face: Math.PI, cam: new THREE.Vector3(251.7, 0.7, 0.9), look: new THREE.Vector3(249.9, 0.4, -1.0), focal: 26,
+  { id: 'hide15', name: 'Under the balcony', region: 6, ready: true, voice: 'att_escort', open: [279.75, 279.85], stand: 279.8,
+    path: [[279.8, -0.45], [279.8, -0.62]], face: Math.PI, cam: new THREE.Vector3(281.7, 0.7, 0.9), look: new THREE.Vector3(279.9, 0.4, -1.0), focal: 26,
     cond: () => game.y < 0.05 && !game.hold });
 const secretFound = {};
 // Pass 7: the voices (docs/voice_script.md, placed per docs/audio_audit.md). Cards play when he winds their player
@@ -5902,6 +6463,10 @@ const VOICE_LINES = {
   att_caretaker: { who: 'Voice card', treat: 'elder', lines: [['Lost property, week forty.', 2.6], ['One mitten, red. One shoe, small, left foot. A lunch tin, M.D. on the lid.', 6], ['I keep it all. Somebody’ll come back for it.', 4], ['Register’s down to one this week. Just the little one with the drawings. Sits at the front, never says a word.', 7], ['Good kid.', 2]] },
   att_lesson: { who: 'Lesson', treat: 'card', lines: [['Good morning, class. Today we will learn how a tree grows.', 4], ['First, the root. Then, the trunk.', 3.2], ['Then the branches reach for the light. And then, the leaves.', 4.4], ['A tree always grows straight, and tall, toward the sun.', 4], ['Let us watch it again.', 2.4]] },
   att_escort: { who: 'Voice card', treat: 'card_worn', lines: [['Escort log. Fourteen hundred.', 2.6], ['Pupil M.D. not in sick bay at the check. Not in class. Not in the cloakroom.', 5.4], ['Found under the sick bay balcony. Again. Third time this week.', 4.6], ['She says she was listening to the pipes.', 3.4], ['Recommend…', 1.6], ['No recommendation. Let her listen.', 3.4]] },
+  // The expansion: rest hour in the dormitory (its last line is the rule the eye keeps), and the escort trolley's own
+  // recorded voice when it finds a pupil out of bed.
+  att_rest: { who: 'Tannoy', treat: 'tannoy', lines: [['Rest hour.', 1.6], ['Lights out, please. Blinds down.', 2.8], ['Pupils will remain in their own beds.', 3.0], ['Rest hour begins when the room is dark.', 3.2]] },
+  att_trolley: { who: 'Escort', treat: 'machine', lines: [['Pupil found. Returning you to the dormitory.', 3.0]] },
   att_bell: { who: 'Tannoy', treat: 'tannoy', lines: [['End of lessons.', 2.0], ['Pupils will walk, not run, to the playground.', 3.6], ['Escorts to the gate, please.', 2.6], ['Order above all.', 2.0]] },
   att_volunteer: { who: 'Voice card', treat: 'elder', lines: [['Mara. Vance here. The bench.', 3.0], ['You asked me about the Works again, so I asked them for you.', 4.4], ['Your drawing’s good. Better than mine.', 3.2], ['Water’s patient, love. Give it a slope and it’ll go round anything.', 5.0], ['They said yes. Ring A, water and the growing beds. After your birthday.', 5.2], ['They’ll grumble you’re young. Let them.', 3.4], ['Your tree can be crooked. The channels can’t. Mind the levels.', 4.6]] },   // rev 0.3: she asked; he helped
   att_teacher: { who: 'Voice card', treat: 'card', lines: [['To the family of Mara D., class four.', 3.4], ['She’s doing well. She doesn’t speak much in class, but she listens to everything.', 5.6], ['She asked me today why the windows don’t open. I told her the truth. I hope that was right.', 6.4], ['The protocol says she isn’t to be left alone, so I eat my lunch with her. I don’t mind.', 5], ['She’s drawn on the wall behind the window panel. A tree. I haven’t had it cleaned.', 5.6], ['I’ll keep recording these until someone writes back. Take care of yourselves.', 5]] },
@@ -5920,8 +6485,9 @@ const VOICES = [
   { id: 'card_queue', kind: 'card', region: 2, x: 51.55, standX: 51.55, z: -0.25, loose: true },
   { id: 'card_heap', kind: 'card', region: 3, upper: false, x: 68.0, standX: 68.0, crank: 'VoicePlayerHeapCrank', axis: [0, 1, 0] },
   { id: 'card_lastcar', kind: 'card', region: 4, x: 121.74, standX: 122.25, loose: true },   // stood clear of the suitcase's grip
-  { id: 'att_bell', kind: 'tannoy', region: 6, x: 265.4, trigger: 1.2, reach: 12, when: () => !!game.att && game.att.f15.dismissed },
-  { id: 'att_volunteer', kind: 'card', region: 6, x: 288.0, standX: 288.0, z: -0.12 },
+  { id: 'att_rest', kind: 'tannoy', region: 6, x: 250.6, trigger: 2.0, reach: 12, when: () => !!game.att && !game.att.f14a.open },
+  { id: 'att_bell', kind: 'tannoy', region: 6, x: 295.4, trigger: 1.2, reach: 12, when: () => !!game.att && game.att.f15.dismissed },
+  { id: 'att_volunteer', kind: 'card', region: 6, x: 332.0, standX: 332.0, z: -0.12 },
   { id: 'card_mara_parent', kind: 'card', region: 5, x: 158.07, standX: 158.07, z: -0.2, crank: 'VoicePlayerMaraCrank', axis: [0, 0, 1] },
 ];
 const voiceFound = {};
@@ -6315,6 +6881,7 @@ const Glints = (() => {
     if (kind === 'liftItem') { const it = itemsHere().find((q) => q.key === arg); return it && V3(it.x, it.base + (it.h || 0.2) + 0.06, it.z ?? 0); }
     if (kind === 'grabPush') { const p = PUSHABLES[arg]; if (!p) return null; const st = p.state(); return V3(st.x - p.side * Math.max(0.12, p.gap - 0.38), y + 0.45, p.z ?? 0); }
     if (FIXED[kind]) { try { return FIXED[kind](); } catch (e) { return null; } }
+    if (kind === 'att' && ANCHOR3[arg]) { try { return ANCHOR3[arg](run); } catch (e) { return null; } }
     return V3((run.x0 + run.x1) / 2, y + 0.55, -0.35);
   }
   function build() {
@@ -6946,9 +7513,9 @@ function updateCharacter(dt, playing) {
   // Curiosity as the hint system: after a few idle seconds near something useful he looks at it.
   // When the rack lights come on, he looks before anything else.
   const rk = game.clock - game.revealTime;
-  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform' || game.lookAt === 'window' || game.lookAt === 'wheelA' || game.lookAt === 'tray' || game.lookAt === 'door17' || game.lookAt === 'bench12';
+  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || !!LOOK3[game.lookAt] || game.lookAt === 'heap' || game.lookAt === 'platform' || game.lookAt === 'window' || game.lookAt === 'wheelA' || game.lookAt === 'tray' || game.lookAt === 'door17' || game.lookAt === 'bench12';
   // The window is far above: look along the line to it (a point 2 m out on it, within the head look's reach).
-  const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2)
+  const lookAt = LOOK3[game.lookAt] ? tv4.copy(LOOK3[game.lookAt]) : game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2)
     : game.lookAt === 'window' ? tv4.copy(END5.win).sub(tv3.set(game.x, game.y + 0.6, game.z)).setLength(2).add(tv3)
     : game.lookAt === 'wheelA' ? tv4.set(ATT.wheelA, 0.35, -0.6) : game.lookAt === 'tray' ? tv4.set(CW8.trayX, CG.top + 0.3, -0.6) : game.lookAt === 'door17' ? tv4.set(ATT2.door17.x, 1.1, 0) : game.lookAt === 'bench12' ? tv4.set((ATT.bench.x0 + ATT.bench.x1) / 2, ATT.bench.h, -0.2) : REVEAL_LOOK;
   // The early curiosities: he turns his head to each as he passes, the first time.
@@ -7348,12 +7915,15 @@ const CHECKPOINTS = {
   gallery13: { y: 2.05, x: 228.4, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
   window: { y: 0, x: 234.8, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
   hatch14: { y: 0, x: 234.8, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
-  sickbay: { y: 1.6, x: 249.0, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
-  class6: { y: 0, x: 252.7, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
-  dismissed: { y: 0, x: 262.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
-  crossing: { y: 0, x: 264.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
-  store: { y: 0, x: 270.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
-  workshop: { y: 0, x: 281.0, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  dorm: { y: 1.15, x: 249.4, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  corridor: { y: 0, x: 263.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  sickbay: { y: 1.6, x: 279.0, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  class6: { y: 0, x: 282.7, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  dismissed: { y: 0, x: 292.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  crossing: { y: 0, x: 294.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  store: { y: 0, x: 300.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  kitchen: { y: 0, x: 310.6, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
+  workshop: { y: 0, x: 325.0, released: true, door: 1, region: 6, solved: true, scanned: true, latched: true, belt4: true, tunnel: true, ringc: true, forwarded: true },
 };
 function resetWorld(name = 'start') {
   const c = CHECKPOINTS[name];
@@ -7477,7 +8047,7 @@ function togglePause() {
 // Which of Chapter 1's nine scenes he is in.
 function sceneName() {
   const x = game.x, r = game.region;
-  if (r === 6) return x < 216 ? 'DL-12 Coats Without Children' : x < 232 ? 'DL-13 The Repeated Lesson' : x < 248 ? 'DL-14 The Window' : x < 264 ? 'DL-15 One Pupil Missing' : x < 280 ? 'DL-16 After the Bell' : 'DL-17 A Different Lesson';
+  if (r === 6) return x < 216 ? 'DL-12 Coats Without Children' : x < 232 ? 'DL-13 The Repeated Lesson' : x < 248 ? 'DL-14 The Window' : x < 263 ? 'DL-14a Lights Out' : x < 278 ? 'DL-14b Unaccompanied' : x < 294 ? 'DL-15 One Pupil Missing' : x < 310 ? 'DL-16 After the Bell' : x < 324 ? 'DL-16a Her Way Round' : 'DL-17 A Different Lesson';
   if (r === 1) return 'DL-01 The Wake';
   if (r === 2) return x < SH.x1 ? 'DL-02 The Sorting Hall' : x < GATE_X ? 'DL-03 The Weight of the Job' : x < RATION5.x0 ? 'DL-04 The Racks' : 'DL-05 The Ration Hall';
   // The heap begins once the belt runs to the exit: the loading on the sorting floor is DL-07's.

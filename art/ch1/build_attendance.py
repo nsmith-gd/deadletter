@@ -23,7 +23,10 @@ import bpy  # noqa: E402
 import build_dl01 as dl01  # noqa: E402
 
 OFF6 = 200.0
-SCENES = ('dl12', 'dl13', 'dl14', 'dl15', 'dl16', 'dl17')
+SCENES = ('dl12', 'dl13', 'dl14', 'dl14a', 'dl14b', 'dl15', 'dl16', 'dl16a', 'dl17')
+# The expansion (docs/chapter1_expansion_build.md): DL-14a and DL-14b go in after DL-14, DL-16a after DL-16. The modules
+# written before it keep their own coordinates; what they build is moved along x by this much.
+SHIFT = {'dl15': 30.0, 'dl16': 30.0, 'dl17': 44.0}
 
 
 def main():
@@ -47,8 +50,15 @@ def main():
             continue
         mod = importlib.import_module(name)
         bpy.context.view_layer.update()
+        before = set(bpy.data.objects)
         mod.build_set(dl01, m, coll)
-        print('built', name)
+        dx = SHIFT.get(name, 0.0)
+        if dx:
+            for o in set(bpy.data.objects) - before:
+                if o.parent is None:
+                    o.location.x += dx
+            bpy.context.view_layer.update()
+        print('built', name, f'(moved +{dx} in x)' if dx else '')
     objs = [o for o in coll.all_objects if o.type in ('MESH', 'CURVE', 'EMPTY')]
     if not objs:
         print('nothing to export')

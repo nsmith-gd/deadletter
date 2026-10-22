@@ -240,6 +240,19 @@ Treatment `card`. About 35 s.
 > She's drawn on the wall behind the window panel. A tree. I haven't had it cleaned. *[pause]*
 > I'll keep recording these until someone writes back. *[pause]* Take care of yourselves.
 
+### `att_rest`: rest hour (DL-14a, the dormitory tannoy)
+
+Treatment `tannoy`. About 11 s. The last line is the rule the eye over the door keeps.
+> Rest hour. *[pause]*
+> Lights out, please. Blinds down.
+> Pupils will remain in their own beds.
+> Rest hour begins when the room is dark.
+
+### `att_trolley`: the escort trolley (DL-14b, each time it finds a pupil)
+
+Treatment `machine`. About 3 s. Kind, flat, recorded once and played every time.
+> Pupil found. Returning you to the dormitory.
+
 ### `att_escort`: an escort's log (DL-15, under the sick bay balcony)
 
 Treatment `card_worn`. About 22 s. A tired attendant recording a report for the file, and stopping short of filing it.

@@ -20,7 +20,9 @@ for (let n = 0; n < +count; n++) {
   await page.evaluate(([s, m, s0, ch]) => window.__startBot(s, { mechanical: m === 'mechanical', steps: 10, trace: s0, chapter: ch }), [seed, mode, process.env.TRACE || '', process.env.CHAPTER || '']);
   // CHAPTER=att plays Chapter 1 Attendance from its first checkpoint instead of the prologue.
   // CHAPTER=att2 starts at DL-15 (the sick bay balcony, out of the duct).
-  if (process.env.CHAPTER === 'att' || process.env.CHAPTER === 'att2') { await page.selectOption('#scene-select', process.env.CHAPTER === 'att' ? 'school' : 'sickbay'); await page.click('#scene-go'); } else await page.click('#begin');
+  // Or a later chapter 1 checkpoint by name: dorm, corridor, sickbay, crossing, kitchen, workshop.
+  const CP = { att: 'school', att2: 'sickbay', dorm: 'dorm', corridor: 'corridor', sickbay: 'sickbay', crossing: 'crossing', kitchen: 'kitchen', workshop: 'workshop' }[process.env.CHAPTER];
+  if (CP) { await page.selectOption('#scene-select', CP); await page.click('#scene-go'); } else await page.click('#begin');
   const t0 = Date.now();
   let out;
   while (Date.now() - t0 < 40 * 60000) {
