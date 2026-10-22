@@ -5034,7 +5034,7 @@ function buildAtt(root) {
   const get = (n) => root.getObjectByName(n);
   for (const n of ['AttFigure', 'AttGate', 'AttCoat', 'AttFigure2', 'AttStep1', 'AttStep2', 'AttStep3', 'AttDialHand', 'AttPawl',
     'AttTreeTrunk', 'AttTreeBranch1', 'AttTreeBranch2', 'AttTreeBranch3', 'AttTreeLeaves', 'AttBlindA', 'AttBlindB', 'AttLedgeA', 'AttLedgeB',
-    'AttPanelPeel', 'AttCrank', 'AttWheelA', 'AttPole', 'Att15FigA', 'Att15FigB', 'Att15Lift', 'Att15LiftGate', 'Att15LiftCW', 'Att15Door', 'Att15Flap',
+    'AttPanelPeel', 'AttCrank', 'AttWheelA', 'AttClutch', 'AttPole', 'Att15FigA', 'Att15FigB', 'Att15Lift', 'Att15LiftGate', 'Att15LiftCW', 'Att15Door', 'Att15Flap',
     'Att16Lever', 'Att16Bridge', 'Att16Latch', 'Att16CW', 'Att17Drawer', 'Att17Tray', 'Att17Door']) { k[n] = get(n); if (k[n]) k[n].userData.rest = { p: k[n].position.clone(), q: k[n].quaternion.clone(), s: k[n].scale.clone() }; }
   // Lamps the game switches get their own materials.
   const lamp = (n, color) => { const o = get(n); if (!o) return null; const m = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0 }); o.traverse((q) => { if (q.isMesh) q.material = m; }); return m; };
@@ -5075,6 +5075,8 @@ function buildAtt(root) {
     P(0xffc890, 0.6, 3, 295.25, 2.2, -0.95), P(0xffd8a8, 0.8, 4, 281.2, 2.6, -0.2),
     // Rev 0.3: the stair up to ring A, warm from above, seen through the door's wired glass and then open.
     S(0xffc890, 6, 7, [298.6, 4.6, -0.2], [298.2, 0.8, -0.1], 0.6), P(0xffd8a8, 0.6, 3, 299.3, 3.5, -0.84), P(0xffc890, 0.5, 2.5, 296.5, 0.8, -0.1),
+    // Rev 0.3: the children's refuge behind the hatch, a warm lantern-light so its three seats read.
+    P(0xffb070, 1.4, 2.2, 239.6, 2.5, -1.9),
     // Pass 8: A's wheel and the pole through it, in their own low pool, so the jam reads from across the room.
     S(0xffd8a8, 3.5, 4, [235.3, 2.6, 1.2], [234.95, 0.7, -0.62], 0.42),
   ];
@@ -5294,6 +5296,8 @@ function updateAtt(dt) {
   if (s.rattleAt && game.region === 6) { const t = game.clock - s.rattleAt; game.lookAt = t > 1.0 && t < 3.6 ? 'wheelA' : game.lookAt === 'wheelA' ? null : game.lookAt; }
   if (s.rattle && Math.random() < dt * 9) Sound.tap();
   if (k.AttWheelA && !s.jammed) { k.AttWheelA.quaternion.copy(k.AttWheelA.userData.rest.q); k.AttWheelA.rotateZ(B.a * 6); }
+  // Rev 0.3: the clutch behind A's wheel turns with it, and spins on its own while the chain slips past the jam.
+  if (k.AttClutch) { s.clutch = (s.clutch || 0) + (s.rattle ? dt * 9 : 0); k.AttClutch.quaternion.copy(k.AttClutch.userData.rest.q); k.AttClutch.rotateZ((s.jammed ? 0 : B.a * 6) + s.clutch); }
   if (B.b > 0.9 && !s.peeled) { s.peeled = true; s.peelAt = game.clock; Sound.creak?.(); Music.bed(false); Music.play('child', 2.5); Telemetry.event('peel', {}); }
   if (s.peeled) s.peel = Math.min(1, s.peel + dt / 1.6);
   if (k.AttPanelPeel) { k.AttPanelPeel.quaternion.copy(k.AttPanelPeel.userData.rest.q); k.AttPanelPeel.rotateOnWorldAxis(PEEL_AXIS, -2.68 * smooth(s.peel)); }   // about its diagonal hinge, toward the camera

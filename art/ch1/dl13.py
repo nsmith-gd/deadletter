@@ -1417,20 +1417,20 @@ def gallery(S, M, coll):
             h = rnd.uniform(0.09, 0.14)
             p1 = p0 + dv * 0.012 + Vector((0, 0, h))
             p2 = p1 + dv * rnd.uniform(0.03, 0.045) + Vector((0, 0, -0.035))
-            add_cyl(bm, p0, p1, 0.0045, 0.0032, mat=st, seg=4)
-            add_cyl(bm, p1, p2, 0.0032, 0.0022, mat=st, seg=4)
+            add_cyl(bm, p0, p1, 0.006, 0.0042, mat=st, seg=5)
+            add_cyl(bm, p1, p2, 0.0042, 0.003, mat=st, seg=5)
             for sg in (-1, 1):
                 q = p0 + (p1 - p0) * rnd.uniform(0.45, 0.7)
                 add_box(bm, q + Vector((-dv.y, dv.x, 0)) * sg * 0.012 + Vector((0, 0, -0.008)), (0.022, 0.008, 0.003), mat=lf,
                         rot=_rz(a + math.pi / 2) @ _rx(sg * 0.9))
         elif kind == 'fallen':              # flat on the soil
             L = rnd.uniform(0.09, 0.13)
-            add_cyl(bm, p0 + Vector((0, 0, 0.004)), p0 + dv * L + Vector((0, 0, 0.004)), 0.004, 0.0025, mat=st, seg=4)
+            add_cyl(bm, p0 + Vector((0, 0, 0.004)), p0 + dv * L + Vector((0, 0, 0.004)), 0.0055, 0.0035, mat=st, seg=5)
             add_box(bm, p0 + dv * L * 0.6 + Vector((0, 0, 0.003)), (0.024, 0.011, 0.002), mat=lf, rot=_rz(a + 0.5))
         else:                               # snapped: a stub, its top lying by it
             h = rnd.uniform(0.035, 0.05)
-            add_cyl(bm, p0, p0 + Vector((0, 0, h)), 0.0045, 0.0038, mat=st, seg=4)
-            add_cyl(bm, p0 + dv * 0.02 + Vector((0, 0, 0.004)), p0 + dv * 0.09 + Vector((0, 0, 0.004)), 0.0035, 0.0022, mat=st, seg=4)
+            add_cyl(bm, p0, p0 + Vector((0, 0, h)), 0.006, 0.005, mat=st, seg=5)
+            add_cyl(bm, p0 + dv * 0.02 + Vector((0, 0, 0.004)), p0 + dv * 0.09 + Vector((0, 0, 0.004)), 0.0048, 0.003, mat=st, seg=5)
     for k in range(9):                      # dry leaves dropped on the soil
         x, y = rnd.uniform(s0 + 0.12, s1 - 0.12), rnd.uniform(sy0 + 0.1, sy1 - 0.1)
         add_box(bm, (x, y, soil + 0.002), (0.022, 0.012, 0.002), mat=lf, rot=_rz(rnd.uniform(0, math.pi)))

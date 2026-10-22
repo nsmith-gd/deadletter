@@ -1859,6 +1859,6 @@ Att15LampPupil: [.72, 1, .78, 0], Att15LampEscort: [1, .66, .26, 0], Att15Lamp1:
 Att15Lamp2: [1, .86, .62, 0], Att15Lamp3: [1, .86, .62, 0], Att15HideLamp: [1, .7, .4, 5],
 Suggested lamp() colours: Pupil 0xb8ffc8, Escort 0xffa848, Lamp1-3 0xffdca0.
 
-TRIANGLES: 28.3k in 20 objects (Att15Set 7.4k, Rows 5.5k, Hide 5.0k, each figure 3.5k); ~50 material slots.
+TRIANGLES: 29.3k in 21 objects (Att15Set 8.1k, Rows 5.5k, Hide 4.4k, Drawing 0.4k, each figure 3.5k); 55 material slots.
 Cables above the ceiling sit in a black trunk (invisible on the game's background).
 """
