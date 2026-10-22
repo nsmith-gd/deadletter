@@ -5052,7 +5052,7 @@ function buildAtt(root) {
   const S = (color, i, d, at, to, ang, shadow = false) => { const l = new THREE.SpotLight(color, i, d, ang, 0.6, 2); l.position.set(...at); l.target.position.set(...to); if (shadow && !touchDevice) { l.castShadow = true; l.shadow.mapSize.set(512, 512); l.shadow.bias = -0.001; } scene.add(l, l.target); l.layers.set(PROXY_LAYER); lightPool.proxies.push(l); return l; };
   refs.attLights = [
     // DL-12: the bench's globe, the coat on the bin, the strip and gate, down the well behind the arrival door, the corridor's globe, the caretaker's lamp and its spill.
-    P(0xffd199, 2.0, 5, 205.4, 2.5, -0.1), S(0xffd8a8, 4, 4, [202.6, 2.4, 0.6], [202.6, 0.55, -0.59], 0.5), S(0xfff0e0, 6, 5, [208.6, 2.6, 0.8], [208.7, 0.3, -0.2], 0.6),
+    P(0xffd199, 2.0, 5, 205.4, 2.5, -0.1), S(0xffd8a8, 7, 4, [202.6, 2.4, 0.6], [202.6, 0.55, -0.59], 0.5),     // playtest: brighter, so coat 7 reads as the one S(0xfff0e0, 6, 5, [208.6, 2.6, 0.8], [208.7, 0.3, -0.2], 0.6),
     P(0x99b8e6, 0.6, 3, 200.75, 1.6, -2.9), P(0xffd8b0, 1.6, 5, 212.4, 2.5, -0.1), P(0xffb873, 1.8, 3, 213.0, 1.2, -3.0), P(0xffb873, 0.5, 1.6, 212.0, 0.9, -1.5),
     // DL-13: the front seat, the apparatus (shadowed), the steps (shadowed), the case, the shoot, the doors, the desks.
     S(0xffd8a8, 7, 4.5, [219.6, 2.6, 0.8], [219.6, 0.4, 0], 0.6), S(0xffe2c0, 14, 8, [222.6, 3.4, 1.6], [222.6, 1.0, -0.6], 0.7, true), S(0xffe6c8, 16, 8, [226.0, 4.1, 0.6], [226.0, 1.0, -0.3], 0.65, true), P(0xffe0c0, 2.2, 3.2, 226.2, 1.6, 0.9),
@@ -5082,6 +5082,10 @@ function buildAtt(root) {
     // Pass 8: A's wheel and the pole through it, in their own low pool, so the jam reads from across the room.
     S(0xffd8a8, 3.5, 4, [235.3, 2.6, 1.2], [234.95, 0.7, -0.62], 0.42),
   ];
+  // Playtest (22 Oct): DL-14's jam needs to shout. A hot lamp at A's wheel: it flares with the grinding while the chain
+  // drags against the pole, and pulses at the wheel's bracket when the pole should go back in.
+  k.jamLight = P(0xff9a3c, 0, 1.8, 235.0, 0.75, -0.35); refs.attLights.push(k.jamLight);
+  if (k.AttPole) { k.poleMats = []; k.AttPole.traverse((q) => { if (q.isMesh) { q.material = q.material.clone(); q.material.emissive = new THREE.Color(1, 0.45, 0.12); q.material.emissiveIntensity = 0; k.poleMats.push(q.material); } }); }
   // Culling, like the prologue's: by x, near the camera.
   const box = new THREE.Box3();
   root.updateMatrixWorld(true);
@@ -5137,6 +5141,9 @@ function nearAttItem() {
   const a = game.att, x = game.x;
   if (!game.hold && a.coat.state === 'bin' && game.y < 0.05 && Math.abs(x - ATT.coat0) < 0.35) return 'att:coat';   // off the lost-property bin
   if (game.carry && game.carry === a.coat && Math.abs(game.y - ATT.bench.h) < 0.05 && Math.abs(x - ATT.peg.x) < 0.4) return 'att:hang';
+  // Playtest (22 Oct): Use beside the bench with the coat used to put it down, which read as "it doesn't work". He
+  // reaches up for peg 7 instead, can't, and looks at the bench: the step is the bench.
+  if (game.carry && game.carry === a.coat && game.y < 0.05 && x > ATT.bench.x0 - 0.45 && x < ATT.bench.x1 + 0.45) return 'att:reachpeg';
   // A's chain wheel: the pole goes through its bracket, and comes back out. It holds A wherever A is.
   const atWheel = game.y < 0.05 && Math.abs(x - ATT.wheelA) < ATT.wheelR && !past(game.checkpoint, 'hatch14');
   if (atWheel && game.carry && game.carry === a.pole && !a.jammed) return 'att:jam';
@@ -5151,12 +5158,21 @@ function nearAttFixed() {
 }
 function beginAtt(kind) {
   if (ATT2_STAND[kind] !== undefined) { game.act = { kind: 'att', what: kind, phase: 'approach', t: 0, standX: ATT2_STAND[kind], face: 1 }; return; }
+  if (kind === 'reachpeg') { game.act = { kind: 'att', what: 'reachpeg', phase: 'act', t: 0 }; return; }
   const stand = { coat: ATT.coat0, hang: ATT.peg.x, jam: ATT.wheelA - 0.22, unjam: ATT.wheelA - 0.22, pawl: ATT.pawlX - 0.2, pawlIdle: ATT.pawlX - 0.2, crank: ATT.crankX - 0.22 }[kind];
   game.act = { kind: 'att', what: kind, phase: 'approach', t: 0, standX: stand, face: 1 };
 }
 function updateAttAct(a, dt) {
   const s = game.att;
   if (a.what === 'duct' || ATT2_STAND[a.what] !== undefined) { updateAtt2Act(a, dt); return; }
+  if (a.what === 'reachpeg') {
+    // Up on his toes with the coat held up, short of the peg; then a look along the bench.
+    if (a.t < 0.02) { game.facing = Math.sign(ATT.peg.x - game.x) || 1; setClip(actions.Present ? 'Present' : 'CarryIdle', 0.15); s.reachAt = game.clock; Sound.servo(0.25, 500, 820, 0.02); }
+    game.lookAt = a.t > 0.9 && a.t < 2.2 ? 'bench12' : game.lookAt === 'bench12' ? null : game.lookAt;
+    if (a.t > 1.1 && !a.down) { a.down = true; setClip('CarryIdle', 0.3); }
+    if (a.t > 2.2) { game.act = null; game.lookAt = null; input.lastActivity = game.clock; }
+    return;
+  }
   if (a.phase === 'approach') {
     if (approachCh1(a, dt)) {
       a.phase = 'act'; a.t = 0;
@@ -5242,7 +5258,8 @@ function updateAtt(dt) {
   const blink = (game.calm ? 1 : (Math.sin(game.clock * 7) > 0 ? 1 : 0.15));
   if (k.lampPresent) k.lampPresent.emissiveIntensity = present ? 5.5 : 0.05;
   if (k.lampCoat) k.lampCoat.emissiveIntensity = coat ? 5.5 : present ? 5.5 * blink : 0.05;
-  if (k.pegLamp) k.pegLamp.emissiveIntensity = !coat && present ? 6 * blink : coat ? 0.8 : 0.1;
+  const reaching = game.clock - (s.reachAt ?? -9) < 2.4 ? (Math.sin(game.clock * 14) > 0 ? 7 : 1) : 0;
+  if (k.pegLamp) k.pegLamp.emissiveIntensity = reaching || (!coat && present ? 6 * blink : coat ? 0.8 : 0.1);
   const want = present && coat ? ATT.gate.open : 0, prev = s.gateY;
   if (want > s.gateY) { s.gateV = 0; s.gateY = Math.min(want, s.gateY + 0.5 * dt); }
   else if (want < s.gateY) {
@@ -5297,6 +5314,23 @@ function updateAtt(dt) {
   if (s.rattle && !s.rattleAt) s.rattleAt = game.clock;
   if (s.rattleAt && game.region === 6) { const t = game.clock - s.rattleAt; game.lookAt = t > 1.0 && t < 3.6 ? 'wheelA' : game.lookAt === 'wheelA' ? null : game.lookAt; }
   if (s.rattle && Math.random() < dt * 9) Sound.tap();
+  // Playtest (22 Oct): grinding, sparks and heat where the chain drags the locked wheel against the pole, and the pole
+  // glowing with it; then, once A is down and the pole is out, A's bracket pulses to say where the pole goes back.
+  const contact = tv5.set(ATT.wheelA - 0.02, 0.62, -0.62);
+  if (s.rattle) {
+    s.grindT = (s.grindT || 0) + dt;
+    if (Math.random() < dt * 14) burstSparks(contact, 3, 0.9);
+    if (s.grindT - (s.grindSnd || 0) > 0.32) { s.grindSnd = s.grindT; Sound.scrape(); if (Math.random() < 0.4) Sound.strain?.(); }
+    if (!game.calm && Math.random() < dt * 3) shake(0.06);
+  }
+  const reJam = !s.jammed && B.a > 0.9 && s.pole.state !== 'jam' && game.region === 6 && game.x > 230 && game.x < 246;
+  const heat = s.rattle ? 0.6 + 0.4 * Math.sin(game.clock * 31) : 0;
+  const pulse = reJam ? 0.5 + 0.5 * Math.sin(game.clock * 4) : 0;
+  if (k.jamLight) k.jamLight.intensity += ((s.rattle ? 2.2 * heat : reJam ? 1.3 * pulse : 0) - k.jamLight.intensity) * Math.min(1, dt * 10);
+  if (k.poleMats) for (const m of k.poleMats) m.emissiveIntensity += ((s.rattle ? 1.6 * heat : reJam && s.pole.state !== 'carried' ? 0.5 * pulse : 0) - m.emissiveIntensity) * Math.min(1, dt * 8);
+  // Carrying the pole near A's wheel with A down: he looks at the bracket it came out of.
+  if (reJam && s.pole.state === 'carried' && Math.abs(game.x - ATT.wheelA) < 2.2 && !game.act) { if (!s.reJamLook) { s.reJamLook = game.clock; } }
+  if (s.reJamLook && game.region === 6) { const t = game.clock - s.reJamLook; game.lookAt = t < 2.6 ? 'wheelA' : game.lookAt === 'wheelA' ? null : game.lookAt; if (t > 2.6 && !reJam) s.reJamLook = 0; }
   if (k.AttWheelA && !s.jammed) { k.AttWheelA.quaternion.copy(k.AttWheelA.userData.rest.q); k.AttWheelA.rotateZ(B.a * 6); }
   // Rev 0.3: the clutch behind A's wheel turns with it, and spins on its own while the chain slips past the jam.
   if (k.AttClutch) { s.clutch = (s.clutch || 0) + (s.rattle ? dt * 9 : 0); k.AttClutch.quaternion.copy(k.AttClutch.userData.rest.q); k.AttClutch.rotateZ((s.jammed ? 0 : B.a * 6) + s.clutch); }
@@ -6021,6 +6055,8 @@ function curioPoint(c) { return tv4.set(c.x, (c.upper ? DECK : 0) + (c.lookY ?? 
 const SECRET_GLANCES = [
   { id: 'reader', region: 3, x: 66.87, lookY: 0.7, deep: true, z: -1.3, early: true, found: () => secretFound.reader },
   { id: 'den', region: 4, x: 107.17, upper: true, lookY: 0.5, deep: true, z: -1.9, early: true, found: () => secretFound.den },
+  // Playtest (22 Oct): coat 7, folded in the lost-property bin, read as more hidden than the coats on their pegs.
+  { id: 'coat7', region: 6, x: 202.92, lookY: 0.55, deep: true, z: -0.55, early: true, found: () => !game.att || game.att.coat.state !== 'bin' },
 ];
 function glanceCurio() {
   if (game.act || game.hold) return null;
@@ -6810,11 +6846,11 @@ function updateCharacter(dt, playing) {
   // Curiosity as the hint system: after a few idle seconds near something useful he looks at it.
   // When the rack lights come on, he looks before anything else.
   const rk = game.clock - game.revealTime;
-  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform' || game.lookAt === 'window' || game.lookAt === 'wheelA' || game.lookAt === 'tray' || game.lookAt === 'door17';
+  const looking = (game.revealed && rk > 0.6 && rk < 8.5 && !game.act && game.region === 2) || game.lookAt === 'heap' || game.lookAt === 'platform' || game.lookAt === 'window' || game.lookAt === 'wheelA' || game.lookAt === 'tray' || game.lookAt === 'door17' || game.lookAt === 'bench12';
   // The window is far above: look along the line to it (a point 2 m out on it, within the head look's reach).
   const lookAt = game.lookAt === 'heap' ? HEAP_LOOK : game.lookAt === 'platform' ? tv4.set(OFF3 + 54.05, platTop() + 0.3, -0.2)
     : game.lookAt === 'window' ? tv4.copy(END5.win).sub(tv3.set(game.x, game.y + 0.6, game.z)).setLength(2).add(tv3)
-    : game.lookAt === 'wheelA' ? tv4.set(ATT.wheelA, 0.35, -0.6) : game.lookAt === 'tray' ? tv4.set(CW8.trayX, CG.top + 0.3, -0.6) : game.lookAt === 'door17' ? tv4.set(ATT2.door17.x, 1.1, 0) : REVEAL_LOOK;
+    : game.lookAt === 'wheelA' ? tv4.set(ATT.wheelA, 0.35, -0.6) : game.lookAt === 'tray' ? tv4.set(CW8.trayX, CG.top + 0.3, -0.6) : game.lookAt === 'door17' ? tv4.set(ATT2.door17.x, 1.1, 0) : game.lookAt === 'bench12' ? tv4.set((ATT.bench.x0 + ATT.bench.x1) / 2, ATT.bench.h, -0.2) : REVEAL_LOOK;
   // The early curiosities: he turns his head to each as he passes, the first time.
   const glance = !looking && glanceCurio();
   if (glance) glance.glanceT = (glance.glanceT || 0) + dt;                // one look each, the first time he passes
