@@ -179,17 +179,48 @@
     {
       "name": "kin",
       "file": "prologue_cue_kin.mp3",
-      "beat": "DL-04: among the couriers he touches his chest.",
-      "seconds": 46.0,
-      "handover": 40.0,
+      "beat": "Moment (grief), DL-04: one of many.",
+      "seconds": 34.0,
+      "handover": 28.0,
       "hands_to": "heaps",
-      "intro_bars": 1,
+      "intro_bars": 0,
       "starts_from": "loop",
       "hits": {
-        "peak": 24.0
+        "cello": 6.0,
+        "wide": 15.0,
+        "music_box": 22.0
       },
       "old_seconds": 70,
-      "level": 0.9
+      "level": 0.9,
+      "moment": "grief",
+      "camera": [
+        {
+          "t": 0.0,
+          "shot": "over his shoulder along the rows (the realise shot as now)"
+        },
+        {
+          "t": 3.7,
+          "shot": "round to his face as he touches his chest (as now; settled by 5.3)"
+        },
+        {
+          "t": 5.3,
+          "shot": "hold close on his face and chest"
+        },
+        {
+          "t": 9.0,
+          "shot": "start a slow pull back and up from him: he gets small, the rows stretch away"
+        },
+        {
+          "t": 15.0,
+          "shot": "arrive on the wide over the racks, easing to a stop over the last 1 s"
+        },
+        {
+          "t": 21.0,
+          "shot": "hold ends; ease back to the side view over 2.5 s"
+        }
+      ],
+      "control": 22.5,
+      "notes": "Stop racks (1 s fade) and the ambience at once; no voices from 0 to 21 s."
     },
     {
       "name": "dead",
@@ -226,34 +257,153 @@
     {
       "name": "refuge",
       "file": "prologue_cue_refuge.mp3",
-      "beat": "DL-09: the balcony over the dark city, into DL-10 lobby.",
-      "seconds": 38.0,
-      "handover": 32.0,
+      "beat": "Moment (wonder), DL-09: the city.",
+      "seconds": 30.0,
+      "handover": 24.0,
       "hands_to": "order",
       "intro_bars": 0,
       "starts_from": "silence",
       "hits": {
-        "widest": 8.0
+        "crane_starts": 2.0,
+        "widest": 10.0,
+        "release": 16.0
       },
       "old_seconds": 40,
-      "level": 0.9
+      "level": 0.9,
+      "moment": "wonder",
+      "camera": [
+        {
+          "t": 0.0,
+          "shot": "he stops and turns; the camera on his shoulder looking out into the dark (as now)"
+        },
+        {
+          "t": 2.0,
+          "shot": "start the crane up and back (the vista shot as now, but driven by this clock)"
+        },
+        {
+          "t": 10.0,
+          "shot": "arrive on the widest frame, easing to a stop over the last 1 s"
+        },
+        {
+          "t": 16.0,
+          "shot": "hold ends; come back to him over 2.5 s"
+        }
+      ],
+      "control": 18.5,
+      "notes": "Trigger at the awe stop (AWE_X), not at VISTA_X0; drop the separate refuge trigger."
+    },
+    {
+      "name": "ringc",
+      "file": "prologue_cue_ringc.mp3",
+      "beat": "Moment (grief and horror), DL-10: the car leaves; ring C.",
+      "seconds": 30.0,
+      "handover": 24.0,
+      "hands_to": "heaps",
+      "intro_bars": 0,
+      "starts_from": "loop",
+      "hits": {
+        "run_down": 2.5,
+        "landing": 5.5,
+        "chime": 9.5,
+        "collapse": 12.0,
+        "release": 20.0
+      },
+      "old_seconds": 26,
+      "level": 0.9,
+      "moment": "grief",
+      "camera": [
+        {
+          "t": 0.0,
+          "shot": "low beside him, up at the car leaving (car10, as now)"
+        },
+        {
+          "t": 5.5,
+          "shot": "he lands; hold a beat in the silence"
+        },
+        {
+          "t": 6.0,
+          "shot": "rise over his shoulder to look down ring C's lane, in the dark (ringc10), arriving by 9.0"
+        },
+        {
+          "t": 9.5,
+          "shot": "hold; the cold light starts to come up over the lane"
+        },
+        {
+          "t": 12.0,
+          "shot": "the light is full on the lane and its dead: the collapse lands on this frame"
+        },
+        {
+          "t": 20.0,
+          "shot": "hold ends; ease back to him over 2.5 s"
+        }
+      ],
+      "control": 22.0,
+      "notes": "Replaces lastcar + collapse with one cue; no queue. The light ramp ends exactly at 12.0."
     },
     {
       "name": "child",
       "file": "prologue_cue_child.mp3",
       "beat": "DL-11: the desk clears; the growth marks and the tree; no one at this address.",
-      "seconds": 46.0,
-      "handover": 40.0,
+      "seconds": 42.0,
+      "handover": 36.0,
       "hands_to": null,
-      "intro_bars": 1,
+      "intro_bars": 0,
       "starts_from": "loop",
       "hits": {
-        "true_e": 5.1,
-        "tree": 24.0,
-        "terminal": 30.0
+        "true_e": 2.3,
+        "tree": 20.0,
+        "terminal": 26.0
       },
       "old_seconds": 50,
-      "level": 0.9
+      "level": 0.9,
+      "camera": [
+        {
+          "t": 0.0,
+          "shot": "the marks shot (as now), held to 6.0 s instead of 2.6, so the true E lands on it"
+        }
+      ]
+    },
+    {
+      "name": "window",
+      "file": "prologue_cue_window.mp3",
+      "beat": "Moment (intrigue and hope), the end: the one lit window.",
+      "seconds": 26.0,
+      "handover": 20.0,
+      "hands_to": null,
+      "intro_bars": 0,
+      "starts_from": "loop",
+      "hits": {
+        "rise": 1.5,
+        "window": 6.5,
+        "label": 13.8
+      },
+      "old_seconds": 0,
+      "level": 0.9,
+      "moment": "intrigue",
+      "camera": [
+        {
+          "t": 0.0,
+          "shot": "he stops on the landing and looks up; camera still, low behind him (ending, as now)"
+        },
+        {
+          "t": 1.5,
+          "shot": "rise with his look up the well"
+        },
+        {
+          "t": 6.5,
+          "shot": "arrive on the one lit window, easing to a stop over the last 1 s"
+        },
+        {
+          "t": 11.5,
+          "shot": "hold ends; come back down to him over 2 s"
+        },
+        {
+          "t": 13.6,
+          "shot": "he checks his label (as now)"
+        }
+      ],
+      "control": null,
+      "notes": "Replaces end here; prologue_cue_end then plays on the end card after the fade."
     },
     {
       "name": "end",

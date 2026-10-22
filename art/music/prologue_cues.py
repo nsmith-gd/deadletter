@@ -26,8 +26,8 @@ import numpy as np
 from compose_dl01 import (SR, cymbal_swell, env_curve, far_bell, hiss, human, legato_line, master, music_box,
                           piano, string_note, timp_roll, wind, write_wav)
 from compose_prologue import (ANTHEM, ANTHEM_CHORDS, BAR, LAMENT, MARCH, PrologueMix, anvil, at, choir, drone, line,
-                              machine_thud, march_bar, organ, snare_march, tannoy_chime)
-from sketch_identity import horn, pizz, taiko
+                              machine_thud, march_bar, organ, run_down, snare_march, tannoy_chime)
+from sketch_identity import crash, horn, pizz, snare_roll, taiko
 
 RING = 6.0       # how long a cue rings on past its handover
 CASCADE = [('D6', 1.0), ('C6', 0.75), ('A5', 0.55), ('G5', 0.42), ('F5', 0.9), ('E5', 0.6), ('D5', 1.8)]
@@ -184,42 +184,6 @@ def cue_racks(m, rng):
     return dict(handover=L, hands_to='heaps', intro_bars=1, hits={'first_row': at(1), 'rows_every': 2.0})
 
 
-def cue_kin(m, rng):
-    """DL-04: among the couriers he stops and touches his chest. Out of the heaps' choir: four low piano
-    notes (A, F, D, E-flat), then the lament broadens on the cello, violins in octaves take it up, the
-    choir grows, a timpani roll and a cymbal swell lift it to one moderate peak on B-flat over D. It
-    lets go through G minor to D minor, and leaves room for the music box: the parcel's notes, the E
-    sagging. Back into the heaps."""
-    L = at(10)
-    pedal(m, L + RING, rng, fade_out=L)
-    m['choir'].add(choir(['D3', 'A3', 'F4'], 2 * BAR, 0.75, rng, attack=1.0, release=2.0), 0.0, 0.0)
-    for k, name in enumerate(('A2', 'F2', 'D2', 'Eb2')):
-        m['piano'].add(piano(name, 0.36 - 0.03 * k, 4, rng), at(1) + 1.2 * k, -0.3)
-    ln, l0 = legato_line(line([(n, b * 1.2) for n, b in LAMENT], at(2)), 0, 'cello', 0.42, rng, vib_cents=16, tail=2.0,
-                         shape=[(at(2), 0.7), (at(4), 0.9), (at(6), 1.0), (at(7), 0.8)])
-    m['lament'].add(ln, l0, -0.2)
-    vl, v0 = legato_line(line([('D5', 3), ('C5', 1.5), ('A4', 1.5), ('G4', 2), ('F4', 2)], at(4)), 0, 'violin', 0.3, rng,
-                         vib_cents=16, tail=1.5)
-    m['solo'].add(vl, v0, 0.2)
-    for bar, names, dyn in ((3, ['D3', 'A3', 'F4'], 0.18), (4, ['Eb3', 'Bb3', 'G4'], 0.22), (5, ['D3', 'F3', 'Bb3', 'D4'], 0.26)):
-        chord(m, names, at(bar), BAR + 0.3, dyn, rng, attack=1.2, release=1.0)
-        m['choir'].add(choir(names[:3], BAR, 0.5 + 0.12 * (bar - 3), rng, attack=0.8, release=1.0), at(bar), 0.0)
-    # The peak, moderate: B-flat over D.
-    peak = at(6)
-    timp_roll(m['perc'], 'F2', peak - 3.0, peak, 0.05, 0.55, rng, hit=0.5)
-    m['perc'].add(cymbal_swell(8, 3.0, 0.016, rng, decay=1.6), peak - 3.0, 0.2)
-    chord(m, ['D2', 'Bb2', 'F3', 'D4', 'F4', 'Bb4', 'D5'], peak, BAR + 1, 0.34, rng, attack=0.4, release=2.0,
-          shape=[1, 0.85, 0.6])
-    m['choir'].add(choir(['Bb3', 'D4', 'F4'], BAR, 0.8, rng, attack=0.3, release=2.0), peak, 0.0)
-    for name in ('Bb3', 'D4'):
-        m['horns'].add(horn(name, BAR, 0.45, rng, attack=0.3, release=1.5, shape=[1, 0.8, 0.5]), peak, -0.1)
-    chord(m, ['D2', 'G2', 'D3', 'Bb3', 'G4'], at(7), BAR, 0.18, rng, attack=1.0, release=2.0)
-    chord(m, ['D2', 'A2', 'F3', 'A3'], at(8), 2 * BAR, 0.12, rng, attack=1.5, release=2.5)
-    parcel(m, at(8) + 0.5, rng, vel=0.3, gaps=(1.1, 1.4))
-    m['choir'].add(choir(['D3', 'A3', 'F4'], BAR + 1, 0.7, rng, attack=2.0, release=2.0), at(9), 0.0)
-    return dict(handover=L, hands_to='heaps', intro_bars=1, hits={'peak': peak})
-
-
 def cue_dead(m, rng):
     """DL-06: the scanner refuses his label. A blow at once (anvil, low horns on D against E-flat), the
     march cut off; carriers rise from the return hatch over trembling low strings and a choir swell on
@@ -269,54 +233,239 @@ def cue_latch(m, rng):
     return dict(handover=L, hands_to='lower_works', intro_bars=0, hits={'click': 0.0})
 
 
-def cue_refuge(m, rng):
-    """DL-09: out of the tunnel onto the balcony; the camera cranes up and back over the dark city,
-    widest at about 8 s. Out of silence: air, a high string light, a far choir on an open fifth, and the
-    Steward's anthem heard from the city above on a far organ and horns, cresting gently at 8 s. It
-    thins, and the march comes in quietly to hand to the lobby's order loop (which opens on the tannoy's
-    chime)."""
-    L = at(8)
-    m['air'].add(wind(L + RING, 0.06, rng) * env_curve(int((L + RING) * SR), 2.0, 3), 0)
-    pedal(m, L + RING, rng, fade_in=6.0, fade_out=L)
-    string_note(m['strings'], 'A5', 0.0, 14, 0.03, 'violin', 0.45, 2.5, 4, players=1, rng=rng)
-    string_note(m['strings'], 'D6', 0.6, 12, 0.02, 'violin', 0.55, 2.5, 4, players=1, rng=rng)
-    m['choir'].add(choir(['D4', 'A4'], 10.0, 0.6, rng, attack=4.0, release=4.0, shape=[0.5, 1, 0.7, 0.5]), 1.0, 0.0)
-    for bar, chordn in enumerate(ANTHEM_CHORDS[:5]):
-        m['organ'].add(organ(chordn, BAR, 0.35 * (1.0 if bar == 1 else 0.75), rng, attack=0.8, release=1.6), 2.0 + bar * BAR, 0.1)
-    t = 2.0
-    for name, beats in ANTHEM[:10]:
-        m['horns'].add(horn(name, beats * 0.95, 0.3, rng, attack=0.2, release=0.5), t + human(rng, 5), 0.15)
-        t += beats
-    for bar in (6, 7):
-        march_bar(m, bar, MARCH[bar % 2], 0.12 + 0.05 * (bar - 6), rng)
-    snare_march(m, 7, 0.22, rng)
-    thuds(m, at(6), L, rng, level=0.6)
-    return dict(handover=L, hands_to='order', intro_bars=0, starts_from='silence', hits={'widest': 8.0})
-
-
 def cue_child(m, rng):
     """DL-11: C-114's bedroom. Out of the heaps, low: the desk scrapes clear and the music box finds the
     parcel's notes, and for the first time it holds the true E. They become the lullaby's cascade, slowly,
     over soft strings (D minor, B-flat, F, G minor), warming to F at the tree. The terminal answers (no one
     at this address): it thins to one high note over D, and to silence."""
-    L = at(10)
-    pedal(m, L + RING, rng, level=0.6, fade_out=at(8), fade_len=8.0)
-    m['choir'].add(choir(['D3', 'A3', 'F4'], BAR, 0.42, rng, attack=1.0, release=2.0), 0.0, 0.0)
-    parcel(m, at(1), rng, vel=0.32, gaps=(1.1, 1.4), true_e=True)
-    box_line(m, CASCADE, at(2, 2), 0.28, rng, stretch=1.6)
-    for bar, names in ((2, ['D3', 'A3', 'E4', 'F4']), (3, ['Bb2', 'F3', 'A3', 'D4']), (4, ['A2', 'F3', 'C4', 'F4']),
-                       (5, ['G2', 'D3', 'Bb3', 'F4'])):
+    L = at(9)
+    pedal(m, L + RING, rng, level=0.6, fade_out=at(7), fade_len=8.0)
+    m['choir'].add(choir(['D3', 'A3', 'F4'], BAR, 0.42, rng, attack=0.3, release=2.0), 0.0, 0.0)
+    parcel(m, 1.2, rng, vel=0.32, gaps=(1.1, 1.4), true_e=True)       # on the held marks: the true E at 2.3 s
+    box_line(m, CASCADE, at(1, 2), 0.28, rng, stretch=1.6)
+    for bar, names in ((1, ['D3', 'A3', 'E4', 'F4']), (2, ['Bb2', 'F3', 'A3', 'D4']), (3, ['A2', 'F3', 'C4', 'F4']),
+                       (4, ['G2', 'D3', 'Bb3', 'F4'])):
         chord(m, names, at(bar), BAR + 0.3, 0.1, rng, attack=1.5, release=1.8)
         m['piano'].add(piano(names[0], 0.24, 3.5, rng), at(bar), -0.3)
         m['piano'].add(piano(names[2], 0.16, 2.5, rng), at(bar, 1.5), 0.0)
     # The tree: F, warm, a little more.
-    chord(m, ['F2', 'C3', 'A3', 'C4', 'G4'], at(6), BAR + 1, 0.16, rng, attack=1.2, release=2.5)
-    m['horns'].add(horn('A3', BAR, 0.25, rng, attack=1.0, release=2.0), at(6), -0.1)
-    box_line(m, [('A5', 1.0), ('C6', 1.0), ('D6', 2.5)], at(6, 1), 0.24, rng, stretch=1.2)
+    chord(m, ['F2', 'C3', 'A3', 'C4', 'G4'], at(5), BAR + 1, 0.16, rng, attack=1.2, release=2.5)
+    m['horns'].add(horn('A3', BAR, 0.25, rng, attack=1.0, release=2.0), at(5), -0.1)
+    box_line(m, [('A5', 1.0), ('C6', 1.0), ('D6', 2.5)], at(5, 1), 0.24, rng, stretch=1.2)
     # The terminal answers: one high note over D, and silence.
-    string_note(m['strings'], 'A5', at(7, 2), 12, 0.03, 'violin', 0.4, 2.0, 6, shape=[1, 0.9, 0.6, 0.3], players=1, rng=rng)
-    string_note(m['strings'], 'D3', at(7, 2), 10, 0.07, 'cello', -0.3, 2.0, 6, shape=[1, 0.8, 0.4], rng=rng)
-    return dict(handover=L, hands_to=None, intro_bars=1, hits={'true_e': at(1) + 1.1, 'tree': at(6), 'terminal': at(7, 2)})
+    string_note(m['strings'], 'A5', at(6, 2), 12, 0.03, 'violin', 0.4, 2.0, 6, shape=[1, 0.9, 0.6, 0.3], players=1, rng=rng)
+    string_note(m['strings'], 'D3', at(6, 2), 10, 0.07, 'cello', -0.3, 2.0, 6, shape=[1, 0.8, 0.4], rng=rng)
+    return dict(handover=L, hands_to=None, intro_bars=0, hits={'true_e': 2.3, 'tree': at(5), 'terminal': at(6, 2)},
+                camera=[dict(t=0.0, shot='the marks shot (as now), held to 6.0 s instead of 2.6, so the true E lands on it')])
+
+
+# ---------------------------------------------------------------------------
+# Directed moments. Each is written to one timeline that the camera shares: the game reads the cue's
+# own audio clock (seconds since it started) to drive the shot, so the swell and the frame cannot
+# drift apart. `camera` gives the keyframes in the cue's seconds; `control` is when the player gets
+# the character back. Four moments, rationed: two full swells (the city, ring C), two quiet ones
+# (one of many, the lit window).
+# ---------------------------------------------------------------------------
+def cue_kin(m, rng):
+    """Moment, grief: one of many (DL-04). He stops among the couriers and the camera comes round to his
+    face as he touches his chest. The music is taken away first: only the pedal under the over-the-
+    shoulder look along the rows. A beat after the touch, on the held close-up, a solo cello enters.
+    As the camera pulls back and up from him to the rows stretching away, strings and choir gather under
+    it into one gentle swell that lands on B-flat over D exactly as the wide frame settles, holds while
+    the violins sigh E-flat to D, then lets go to the music box (its E sagging) as he walks on."""
+    L = at(7)
+    pedal(m, L + RING, rng, fade_out=L)
+    m['choir'].add(choir(['D3', 'A3'], 4.0, 0.35, rng, attack=0.5, release=2.5, shape=[1, 0.7, 0.3]), 0.0, 0.0)
+    # 6.0: the cello, a beat after the touch, on the close-up.
+    cello = [('D4', 3), ('C4', 1.5), ('A3', 1.5), ('G3', 2), ('A3', 1), ('D4', 4), ('C4', 2), ('Bb3', 3)]
+    ln, l0 = legato_line(line(cello, 6.0), 0, 'cello', 0.36, rng, vib_cents=16, tail=2.5,
+                         shape=[(6.0, 0.6), (8.0, 0.9), (15.0, 1.0), (19.0, 0.8), (22.0, 0.5)])
+    m['lament'].add(ln, l0, -0.15)
+    # 9.0 to 15.0: the pull back; the strings and choir gather under it.
+    for t, names, dyn in ((9.0, ['D2', 'A2'], 0.09), (11.0, ['D2', 'A2', 'F3'], 0.12), (13.0, ['D2', 'Bb2', 'Eb3', 'G3'], 0.16)):
+        chord(m, names, t, 2.4, dyn, rng, attack=1.4, release=1.0)
+    m['choir'].add(choir(['D3', 'A3', 'F4'], 6.0, 0.4, rng, attack=4.0, release=1.0, shape=[0.3, 0.6, 1.0]), 9.0, 0.0)
+    timp_roll(m['perc'], 'F2', 12.6, 15.0, 0.03, 0.45, rng, hit=0.4)
+    m['perc'].add(cymbal_swell(8, 2.4, 0.014, rng, decay=1.8), 12.6, 0.2)
+    # 15.0: the wide frame. B-flat over D, held; the violins sigh E-flat to D.
+    chord(m, ['D2', 'Bb2', 'F3', 'D4', 'F4', 'Bb4'], 15.0, 6.0, 0.48, rng, attack=0.35, release=3.0, shape=[1, 0.9, 0.7, 0.5])
+    m['choir'].add(choir(['Bb3', 'D4', 'F4'], 6.0, 1.15, rng, attack=0.3, release=3.0, shape=[1, 0.8, 0.5]), 15.0, 0.0)
+    for name in ('Bb3', 'D4'):
+        m['horns'].add(horn(name, 5.0, 0.55, rng, attack=0.3, release=2.0, shape=[1, 0.75, 0.45]), 15.0, -0.1)
+    vl, v0 = legato_line(line([('F5', 2), ('Eb5', 2.5), ('D5', 3.5)], 15.0), 0, 'violin', 0.28, rng, vib_cents=16, tail=2.0)
+    m['solo'].add(vl, v0, 0.2)
+    v8, v80 = legato_line(line([('F6', 2), ('Eb6', 2.5), ('D6', 3.5)], 15.0), 0, 'violin', 0.12, rng, vib_cents=14, tail=2.0)
+    m['strings'].add(v8, v80, 0.35)
+    # 21: it lets go; the music box as he walks on.
+    chord(m, ['D2', 'A2', 'F3', 'A3'], 21.0, 6.0, 0.1, rng, attack=1.5, release=2.5)
+    parcel(m, 22.0, rng, vel=0.3, gaps=(1.1, 1.4))
+    m['choir'].add(choir(['D3', 'A3', 'F4'], 4.5, 0.6, rng, attack=2.0, release=2.0), 24.0, 0.0)
+    return dict(handover=L, hands_to='heaps', intro_bars=0, moment='grief',
+                hits={'cello': 6.0, 'wide': 15.0, 'music_box': 22.0},
+                camera=[dict(t=0.0, shot='over his shoulder along the rows (the realise shot as now)'),
+                        dict(t=3.7, shot='round to his face as he touches his chest (as now; settled by 5.3)'),
+                        dict(t=5.3, shot='hold close on his face and chest'),
+                        dict(t=9.0, shot='start a slow pull back and up from him: he gets small, the rows stretch away'),
+                        dict(t=15.0, shot='arrive on the wide over the racks, easing to a stop over the last 1 s'),
+                        dict(t=21.0, shot='hold ends; ease back to the side view over 2.5 s')],
+                control=22.5, notes='Stop racks (1 s fade) and the ambience at once; no voices from 0 to 21 s.')
+
+
+def cue_refuge(m, rng):
+    """Moment, wonder: the city (DL-09). It starts when he stops and turns at the balcony, not as he
+    walks up. Two seconds of held breath: air and one high note. Then, as the camera cranes up and back
+    for eight seconds, the music climbs with it, a violin line rising a step a beat over D minor, B-flat,
+    F and C, choir and strings gathering, a timpani roll and a cymbal swell, and lands on F major exactly
+    as the frame reaches its widest. It holds six seconds while the horns, far off, play the anthem's
+    opening (the city is the Order's), then lets go through B-flat to F as the camera comes back, and the
+    march creeps in for the lobby."""
+    L = at(6)
+    m['air'].add(wind(L + RING, 0.06, rng) * env_curve(int((L + RING) * SR), 1.0, 3), 0)
+    pedal(m, L + RING, rng, fade_in=3.0, fade_out=L, start=2.0)
+    string_note(m['strings'], 'A5', 0.0, 10.5, 0.03, 'violin', 0.45, 1.2, 2.0, players=1, rng=rng)
+    # 2.0 to 10.0: the crane, a chord every two seconds and a step every beat.
+    for t, names, dyn in ((2.0, ['D3', 'A3', 'F4'], 0.12), (4.0, ['Bb2', 'F3', 'D4'], 0.16), (6.0, ['A2', 'F3', 'C4'], 0.2),
+                          (8.0, ['C3', 'G3', 'C4', 'F4'], 0.25)):
+        chord(m, names, t, 2.3, dyn, rng, attack=0.9, release=0.6)
+    m['choir'].add(choir(['D4', 'A4'], 8.0, 0.7, rng, attack=3.0, release=0.4, shape=[0.3, 0.6, 1.0]), 2.0, 0.0)
+    climb = [('D5', 1), ('F5', 1), ('G5', 1), ('A5', 1), ('Bb5', 1), ('C6', 1), ('D6', 1), ('C6', 1)]
+    for tr, kind, dyn, pan in (('', 'violin', 0.38, 0.15), ('low', 'violin', 0.2, -0.1)):
+        notes = climb if not tr else [(n[:-1] + str(int(n[-1]) - 1), b) for n, b in climb]
+        ln, l0 = legato_line(line(notes, 2.0), 0, kind, dyn, rng, vib_cents=14, tail=0.2,
+                             shape=[(2.0, 0.5), (6.0, 0.75), (10.0, 1.0)])
+        m['solo'].add(ln, l0, pan)
+    timp_roll(m['perc'], 'C2', 7.4, 10.0, 0.04, 0.7, rng, hit=0.6)
+    m['perc'].add(cymbal_swell(9, 2.6, 0.02, rng, decay=2.0), 7.4, 0.2)
+    # 10.0: the widest frame. F major, everything, held.
+    chord(m, ['F1', 'F2', 'C3', 'A3', 'C4', 'G4', 'A4'], 10.0, 6.0, 0.36, rng, attack=0.25, release=3.0, shape=[1, 0.9, 0.75, 0.6])
+    m['choir'].add(choir(['F3', 'A3', 'C4', 'F4'], 6.0, 1.0, rng, attack=0.25, release=3.0, shape=[1, 0.85, 0.6]), 10.0, 0.0)
+    m['organ'].add(organ(['F2', 'C3', 'F3', 'A3'], 6.0, 0.6, rng, attack=0.3, release=3.0), 10.0, 0.1)
+    for name in ('F3', 'A3', 'C4'):
+        m['horns'].add(horn(name, 2.5, 0.55, rng, attack=0.2, release=1.0), 10.0, -0.1)
+    for tr, dyn, pan in ((0, 0.42, 0.15), (1, 0.2, 0.35)):
+        ln, l0 = legato_line(line([('F6' if tr else 'F5', 6)], 10.0), 0, 'violin', dyn, rng, vib_cents=16, tail=2.5,
+                             shape=[(10.0, 1.0), (14.0, 0.85), (16.0, 0.6)])
+        m['solo'].add(ln, l0, pan)
+    for j, name in enumerate(('F1', 'F2', 'C3', 'A3')):
+        m['piano'].add(piano(name, 0.5 - 0.05 * j, 5, rng), 10.0 + 0.02 * j, -0.3 + 0.15 * j)
+    t = 11.5                                    # the city's own voice, far off: the anthem's opening
+    for name, beats in (('F4', 1.5), ('Bb4', 0.75), ('A4', 0.75), ('G4', 1.5)):
+        m['horns'].add(horn(name, beats * 0.95, 0.3, rng, attack=0.15, release=0.6), t, 0.25)
+        t += beats
+    # 16.0: it lets go as the camera comes back; 20.0: the march creeps in for the lobby.
+    chord(m, ['Bb1', 'Bb2', 'F3', 'D4'], 16.0, 2.2, 0.14, rng, attack=1.0, release=1.5)
+    chord(m, ['F2', 'C3', 'A3'], 18.0, 2.5, 0.1, rng, attack=1.0, release=2.0)
+    for bar in (5,):
+        march_bar(m, bar, MARCH[bar % 2], 0.12, rng)
+    snare_march(m, 5, 0.18, rng)
+    return dict(handover=L, hands_to='order', intro_bars=0, starts_from='silence', moment='wonder',
+                hits={'crane_starts': 2.0, 'widest': 10.0, 'release': 16.0},
+                camera=[dict(t=0.0, shot='he stops and turns; the camera on his shoulder looking out into the dark (as now)'),
+                        dict(t=2.0, shot='start the crane up and back (the vista shot as now, but driven by this clock)'),
+                        dict(t=10.0, shot='arrive on the widest frame, easing to a stop over the last 1 s'),
+                        dict(t=16.0, shot='hold ends; come back to him over 2.5 s')],
+                control=18.5, notes='Trigger at the awe stop (AWE_X), not at VISTA_X0; drop the separate refuge trigger.')
+
+
+def cue_ringc(m, rng):
+    """Moment, grief and horror: ring C (DL-10). From UP on the counterweight's panel. The anthem's
+    closing bars on the organ and horns as the car rises with the suitcase; three seconds in, the tape
+    runs down, and it dies as the car leaves the frame. He lands into silence: the absence. The camera
+    rises over his shoulder to look down the lane in the dark; the tannoy's chime sounds alone; the cold
+    light comes up over the lane as the riser, snare and timpani climb; and on the frame where the lane's
+    dead are lit, the collapse: E-flat major over D, everything. It holds eight seconds, the anthem's
+    opening falling in Phrygian, then lets go to the cello's lament as he is handed back."""
+    L = at(6)
+    # 0 to 5.5: the anthem's close, running down (rendered apart, then laid in; see premix).
+    sub = PrologueMix(20.0)
+    for t, chordn in ((0.0, ['C3', 'G3', 'C4', 'Eb4']), (4.0, ['F2', 'C3', 'F3', 'A3'])):
+        sub['organ'].add(organ(chordn, 4.0, 0.8, rng, attack=0.1, release=0.6), t, 0.1)
+    t = 0.0
+    for name, beats in (('C5', 1), ('Bb4', 1), ('A4', 1), ('G4', 1), ('F4', 4)):
+        sub['horns'].add(horn(name, beats * 0.95, 0.6, rng, attack=0.06, release=0.3), t, 0.1)
+        sub['horns'].add(horn(name[:-1] + str(int(name[-1]) - 1), beats * 0.95, 0.45, rng, attack=0.06, release=0.3), t, -0.15)
+        t += beats
+    for bar in (0, 1):
+        march_bar(sub, bar, MARCH[bar % 2], 0.16, rng)
+    anthem = run_down(sub.render(), 2.5, 3.0)
+    # 9.5: the chime, alone in the dark.
+    m['chime'].add(tannoy_chime(0.75, rng), 9.5, 0.3)
+    # 9.5 to 12.0: the climb, as the light comes up.
+    pedal(m, L + RING, rng, fade_in=2.0, fade_out=L, start=10.0)
+    m['tail'].add(cymbal_swell(2.9, 2.5, 0.05, rng, decay=0.3), 9.5, 0.2)
+    snare_roll(m['drums'], 10.2, 11.95, 0.03, 0.75, rng, 12, 30)
+    timp_roll(m['perc'], 'D2', 9.6, 12.0, 0.0, 1.0, rng)
+    # 12.0: the lane's dead are lit. The collapse.
+    hit = 12.0
+    for name in ('D1', 'D2'):
+        string_note(m['strings'], name, hit, 8.0, 1.0, 'bass' if name == 'D1' else 'cello', -0.2, 0.05, 3.0, shape=[1, 0.85, 0.6], rng=rng)
+    chord(m, ['Eb3', 'G3', 'Bb3', 'Eb4', 'G4', 'Bb4'], hit, 4.0, 0.55, rng, attack=0.06, release=1.0)
+    chord(m, ['G2', 'D3', 'G3', 'Bb3', 'D4', 'G4'], hit + 4.0, 4.0, 0.36, rng, attack=0.6, release=3.0, shape=[1, 0.7, 0.45])
+    m['choir'].add(choir(['Eb3', 'G3', 'Bb3', 'Eb4'], 4.0, 1.8, rng, attack=0.06, release=1.0), hit, 0.0)
+    m['choir'].add(choir(['G3', 'Bb3', 'D4'], 4.0, 1.1, rng, attack=0.6, release=3.0, shape=[1, 0.6, 0.35]), hit + 4.0, 0.0)
+    for name in ('Eb3', 'G3', 'Bb3'):
+        m['horns'].add(horn(name, 3.6, 0.9, rng, attack=0.05, release=0.6), hit, -0.1)
+    m['drums'].add(taiko(1.0, rng, f0=55), hit, 0.0)
+    m['metal'].add(anvil(0.9, rng, f0=610), hit, 0.1)
+    m['crash'].add(crash(1.0, rng, length=6.0), hit, 0.0)
+    m['bells'].add(far_bell('D3', 1.0, rng, length=11), hit, -0.1)
+    m['bells'].add(far_bell('A2', 0.8, rng, length=9), hit + 2.0, 0.15)
+    m['drums'].add(taiko(0.6, rng), hit + 2.0, 0.0)
+    fall = [('F4', 1.5), ('Bb4', 0.75), ('A4', 0.75), ('G4', 1.5), ('F4', 0.75), ('Eb4', 0.75), ('D4', 4.0)]
+    for shift, kind, dyn, pan in ((0, 'violin', 0.7, 0.15), (12, 'violin', 0.32, 0.35), (-12, 'cello', 0.55, -0.3)):
+        notes = [(n if not shift else n[:-1] + str(int(n[-1]) + shift // 12), b) for n, b in fall]
+        ln, l0 = legato_line(line(notes, hit + 0.5), 0, kind, dyn, rng, vib_cents=16, tail=2.5,
+                             shape=[(hit, 1.0), (hit + 5, 0.85), (hit + 9, 0.5)])
+        m['lament'].add(ln, l0, pan)
+    # 20.0: it lets go to the lament as he is handed back.
+    ln, l0 = legato_line(line(LAMENT[:4], 20.0), 0, 'cello', 0.36, rng, vib_cents=14, tail=2.0)
+    m['lament'].add(ln, l0, -0.2)
+    m['choir'].add(choir(['D3', 'A3', 'F4'], 5.0, 0.6, rng, attack=2.0, release=2.0), 20.0, 0.0)
+    return dict(handover=L, hands_to='heaps', intro_bars=0, moment='grief', premix=[(anthem, 0.0)],
+                hits={'run_down': 2.5, 'landing': 5.5, 'chime': 9.5, 'collapse': hit, 'release': 20.0},
+                camera=[dict(t=0.0, shot='low beside him, up at the car leaving (car10, as now)'),
+                        dict(t=5.5, shot='he lands; hold a beat in the silence'),
+                        dict(t=6.0, shot='rise over his shoulder to look down ring C\'s lane, in the dark (ringc10), arriving by 9.0'),
+                        dict(t=9.5, shot='hold; the cold light starts to come up over the lane'),
+                        dict(t=12.0, shot='the light is full on the lane and its dead: the collapse lands on this frame'),
+                        dict(t=20.0, shot='hold ends; ease back to him over 2.5 s')],
+                control=22.0, notes='Replaces lastcar + collapse with one cue; no queue. The light ramp ends exactly at 12.0.')
+
+
+def cue_window(m, rng):
+    """Moment, intrigue and hope: the lit window (the prologue's end). He stops and looks up. A second and
+    a half of near silence. As the camera rises with his look, the music box climbs, one note a beat, over a
+    thin high string and a soft choir; on the frame where the one lit window is held, it opens onto F with a
+    major seventh, and a high violin sings the true E: someone up there turned the lights on. It does not
+    resolve. While it holds, the music box sounds a few irregular notes, like a signal. As the camera comes
+    back down he checks his label, and the music box plays the parcel's notes with the true E. Then the
+    stair, the dark, and the end card."""
+    L = at(5)
+    pedal(m, L + RING, rng, level=0.45, fade_out=16.0, fade_len=4.0)
+    string_note(m['strings'], 'A5', 1.5, 9.0, 0.025, 'violin', 0.45, 2.5, 3.0, players=1, rng=rng)
+    box_line(m, [('D5', 1), ('F5', 1), ('G5', 1), ('A5', 1), ('C6', 1)], 1.5, 0.26, rng)
+    m['choir'].add(choir(['F4', 'A4'], 5.0, 0.28, rng, attack=3.0, release=0.5, shape=[0.4, 0.8, 1.0]), 1.5, 0.0)
+    chord(m, ['D3', 'A3'], 1.5, 2.6, 0.06, rng, attack=1.5, release=0.6)
+    chord(m, ['Bb2', 'F3', 'D4'], 4.0, 2.6, 0.08, rng, attack=1.0, release=0.5)
+    # 6.5: the window. F with a major seventh; the true E, high.
+    chord(m, ['F2', 'C3', 'A3', 'E4', 'G4'], 6.5, 5.5, 0.22, rng, attack=0.8, release=3.0, shape=[1, 0.9, 0.7])
+    m['choir'].add(choir(['F3', 'C4', 'E4', 'A4'], 5.5, 0.9, rng, attack=0.8, release=3.0, shape=[1, 0.85, 0.6]), 6.5, 0.0)
+    ln, l0 = legato_line(line([('E6', 5.0)], 6.5), 0, 'violin', 0.16, rng, vib_cents=10, tail=3.0, shape=[(6.5, 1.0), (11.5, 0.6)])
+    m['solo'].add(ln, l0, 0.3)
+    m['box'].add(music_box('C6', 0.24, rng), 6.5, 0.4)
+    for t, name in ((7.6, 'A5'), (8.3, 'E6'), (9.9, 'C6'), (10.4, 'A5'), (11.6, 'G5')):     # irregular, like a signal
+        m['box'].add(music_box(name, 0.18, rng), t, 0.45)
+    # 11.5 to 13.5: the camera comes down; 13.8: the label, and the parcel's notes, true.
+    chord(m, ['D3', 'A3'], 12.0, 6.0, 0.06, rng, attack=1.5, release=3.0)
+    parcel(m, 13.8, rng, vel=0.3, gaps=(1.0, 1.2), true_e=True)
+    return dict(handover=L, hands_to=None, intro_bars=0, moment='intrigue',
+                hits={'rise': 1.5, 'window': 6.5, 'label': 13.8},
+                camera=[dict(t=0.0, shot='he stops on the landing and looks up; camera still, low behind him (ending, as now)'),
+                        dict(t=1.5, shot='rise with his look up the well'),
+                        dict(t=6.5, shot='arrive on the one lit window, easing to a stop over the last 1 s'),
+                        dict(t=11.5, shot='hold ends; come back down to him over 2 s'),
+                        dict(t=13.6, shot='he checks his label (as now)')],
+                control=None, notes='Replaces end here; prologue_cue_end then plays on the end card after the fade.')
 
 
 HAPPY = [  # Happy Birthday (public domain), in F, as (note, beats in 3/4)
@@ -358,11 +507,13 @@ CUE_LIST = [  # name, builder, the old cue's length (s), the beat
     ('hall', cue_hall, 60, 'DL-01: the dark depot hall, under the night-shift tannoy.'),
     ('threshold', cue_threshold, 44, 'DL-01: the bulkhead cranks open; through into the sorting hall.'),
     ('racks', cue_racks, 60, 'DL-03: the gate opens; the rack lights come on row by row over the couriers.'),
-    ('kin', cue_kin, 70, 'DL-04: among the couriers he touches his chest.'),
+    ('kin', cue_kin, 70, 'Moment (grief), DL-04: one of many.'),
     ('dead', cue_dead, 78, 'DL-06: the scanner refuses his label; the pit; the label check; purpose.'),
     ('latch', cue_latch, 11, 'DL-08: the pawl drops home.'),
-    ('refuge', cue_refuge, 40, 'DL-09: the balcony over the dark city, into DL-10 lobby.'),
+    ('refuge', cue_refuge, 40, 'Moment (wonder), DL-09: the city.'),
+    ('ringc', cue_ringc, 26, 'Moment (grief and horror), DL-10: the car leaves; ring C.'),
     ('child', cue_child, 50, "DL-11: the desk clears; the growth marks and the tree; no one at this address."),
+    ('window', cue_window, 0, 'Moment (intrigue and hope), the end: the one lit window.'),
     ('end', cue_end, 100, "The prologue's end card."),
 ]
 
@@ -371,7 +522,12 @@ def render_cue(build, seed):
     rng = np.random.default_rng(seed)
     m = PrologueMix(75.0)
     meta = build(m, rng)
-    st = master(m.render())
+    st = m.render()
+    for buf, start in meta.pop('premix', []):            # parts rendered apart (e.g. run down), laid in before mastering
+        i = int(start * SR)
+        n = min(buf.shape[1], st.shape[1] - i)
+        st[:, i:i + n] += buf[:, :n]
+    st = master(st)
     n = int((meta['handover'] + RING) * SR)
     st = st[:, :n]
     k = int(2.0 * SR)
@@ -414,6 +570,9 @@ def main():
                                 handover=meta['handover'], hands_to=meta['hands_to'], intro_bars=meta['intro_bars'],
                                 starts_from=meta.get('starts_from', 'loop'), hits=meta.get('hits', {}),
                                 old_seconds=old, level=0.9)
+        for key in ('moment', 'camera', 'control', 'notes'):
+            if key in meta:
+                scene_cues[name][key] = meta[key]
     manifest['scene_cues'] = [scene_cues[n] for n, *_ in CUE_LIST if n in scene_cues]
     manifest['scene_cue_notes'] = (
         'Play each scene cue at the loops\' gain (level 0.9 at the game\'s current loop gain), since they are mastered '
