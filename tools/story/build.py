@@ -202,13 +202,18 @@ t = t.replace('/*BIBLE*/""', json.dumps(BIBLE, ensure_ascii=False))
 open('/home/user/deadletter/docs/story_board.html', 'w').write(t)
 print(len(t), len(levels))
 
-# The puzzle notebook: every puzzle's sheet, for notes per puzzle (docs/puzzle_notes.html).
+# The puzzle notebook: every puzzle's sheet and every chapter's, for notes on each (docs/puzzle_notes.html).
 def sheet(g):
     return dict(type=g['type'].replace('Planned · ', ''), goalLabel=g['box'][0] if g['box'][0] == 'Goal' else 'New here',
                 goal=g['box'][1] if not g['box'][2] else '', steps=g['steps'], pairs=g['pairs'])
 PUZZLES = [dict(id=l['id'], name=l['name'], part=l['part'], built=l['built'], **sheet(l['game']),
                 proposal=sheet(l['game']['proposal']) if l['game'].get('proposal') else None) for l in levels]
+# Each chapter gets a page of its own; its id is a bare token so the page can open it from the link's #anchor.
+PARTS_NOTES = [dict(id='prologue' if p[2] == 'Prologue' else 'ch' + p[2].split()[1], name=p[2], first=p[0], last=p[1],
+                    place=p[4], idea=p[5], belief=p[6], feeling=p[7]) for p in PARTS]
 t = open('puzzle_notes.html').read()
-assert '/*PUZZLES*/[]' in t
-open('/home/user/deadletter/docs/puzzle_notes.html', 'w').write(t.replace('/*PUZZLES*/[]', json.dumps(PUZZLES, ensure_ascii=False)))
+for k, v in [('PUZZLES', PUZZLES), ('CHAPTERS', PARTS_NOTES)]:
+    assert f'/*{k}*/[]' in t, k
+    t = t.replace(f'/*{k}*/[]', json.dumps(v, ensure_ascii=False))
+open('/home/user/deadletter/docs/puzzle_notes.html', 'w').write(t)
 print(len(PUZZLES), 'puzzles')

@@ -64,7 +64,13 @@ button { cursor: pointer; }
 .chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .picker { display: none; width: 100%; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
 nav { display: flex; flex-direction: column; gap: 14px; }
-.part h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-2); font-weight: 600; margin-bottom: 4px; }
+.part { display: grid; gap: 2px; }
+.chap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 4px 4px 0 0; padding: 5px 6px; color: var(--ink-2); }
+.chap:hover { background: var(--sheet); }
+.chap[aria-current="true"] { background: var(--accent-soft); color: var(--ink); }
+.chap .nm { font-family: var(--display); font-size: 15px; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+.chap .ct { font-family: var(--mono); font-size: 11px; display: inline-flex; gap: 6px; font-variant-numeric: tabular-nums; }
+.chap .ct .open { color: var(--problem); font-weight: 500; }
 .pz { display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; text-align: left; background: none; border: 0; border-radius: 4px; padding: 5px 6px; color: var(--ink); }
 .pz:hover { background: var(--sheet); }
 .pz[aria-current="true"] { background: var(--accent-soft); }
@@ -80,6 +86,7 @@ main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 20px; display: grid; gap: 12px; min-width: 0; }
 .kick { display: flex; flex-wrap: wrap; gap: 6px 14px; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
 .kick .built { color: var(--solved); }
+.linkish { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
 .sheet h2 { font-size: clamp(28px, 4vw, 38px); line-height: 1; }
 .goal { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; max-width: 75ch; }
 .label { display: block; font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
@@ -91,6 +98,17 @@ details.more[open] > summary { margin-bottom: 10px; }
 .pairs p, .goal p { margin: 0; }
 .proposal { margin-top: 12px; border: 1.5px dashed var(--accent); border-radius: 6px; padding: 12px 14px; display: grid; gap: 10px; }
 .proposal h3 { font-size: 17px; color: var(--accent); font-weight: 600; }
+.turn { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px 20px; }
+.turn p { margin: 0; }
+.in-chapter { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 6px 16px; }
+.in-chapter button { display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px dashed var(--rule); padding: 5px 2px; color: var(--ink); }
+.in-chapter button:hover { color: var(--accent); }
+.in-chapter .id { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.in-chapter .ct { font-family: var(--mono); font-size: 11px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.in-chapter .ct .open { color: var(--problem); font-weight: 500; }
+details.from-puzzles > summary { cursor: pointer; font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 14px; color: var(--accent); font-weight: 600; margin: 14px 0 10px; }
+.from-head { font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin: 6px 0 -2px; }
+.from-head button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
 
 /* The note box */
 .compose { background: var(--sheet); border: 1.5px solid var(--accent); border-radius: 6px; padding: 14px 16px; display: grid; gap: 10px; }
@@ -151,20 +169,20 @@ details.solved-group > summary { cursor: pointer; font-family: var(--display); t
   <header class="mast">
     <div>
       <h1>Dead Letter · Puzzle Notes</h1>
-      <p>One page per puzzle, DL-01 to DL-51. Open a puzzle and leave a note, a problem or an idea. Type it, or speak it with your device's dictation.</p>
+      <p>A page for every chapter and every puzzle, DL-01 to DL-51. Open one and leave a note, a problem or an idea. Type it, or speak it with your device's dictation.</p>
       <div class="status" id="status" aria-live="polite">Opening the notebook…</div>
     </div>
     <div class="tally" id="tally" aria-label="Notes so far"></div>
   </header>
 
   <div class="grid">
-    <aside class="index" aria-label="Puzzles">
+    <aside class="index" aria-label="Chapters and puzzles">
       <div class="show" role="group" aria-label="Show">
-        <button class="chip" type="button" data-show="all" aria-pressed="true">All puzzles</button>
+        <button class="chip" type="button" data-show="all" aria-pressed="true">Everything</button>
         <button class="chip" type="button" data-show="notes" aria-pressed="false">With notes</button>
         <button class="chip" type="button" data-show="open" aria-pressed="false">Open problems</button>
       </div>
-      <select class="picker" id="picker" aria-label="Choose a puzzle"></select>
+      <select class="picker" id="picker" aria-label="Choose a chapter or puzzle"></select>
       <nav id="nav"></nav>
     </aside>
 
@@ -207,6 +225,11 @@ details.solved-group > summary { cursor: pointer; font-family: var(--display); t
 
 <script>
 const PUZZLES = /*PUZZLES*/[];
+const CHAPTERS = /*CHAPTERS*/[];
+// A page is a chapter or a puzzle; notes carry its id in "level" either way.
+const chapterOf = (p) => CHAPTERS.find((c) => c.name === p.part);
+const pageName = (id) => { const c = CHAPTERS.find((x) => x.id === id); if (c) return c.name; const p = PUZZLES.find((x) => x.id === id); return p ? `${p.id} ${p.name}` : id; };
+const isPage = (id) => PUZZLES.some((p) => p.id === id) || CHAPTERS.some((c) => c.id === id);
 const KIND = { note: 'Note', problem: 'Problem', idea: 'Idea' };
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -227,11 +250,12 @@ const store = {
 const state = { ready: false, level: null, show: 'all', kind: 'note', notes: [], loaded: false, db: null, user: null, me: null, canWrite: true, sample: null,
   people: {}, editing: null, confirmDel: null, busy: false, preTidy: null };
 const hash = (location.hash || '').slice(1);
-state.level = PUZZLES.some((p) => p.id === hash) ? hash : (PUZZLES.some((p) => p.id === store.get('pn-level')) ? store.get('pn-level') : 'DL-12');
+state.level = isPage(hash) ? hash : (isPage(store.get('pn-level')) ? store.get('pn-level') : 'DL-12');
 
 function setStatus(t) { $('#status').textContent = t; }
 const notesFor = (id) => state.notes.filter((n) => n.level === id);
 const openProblems = (id) => notesFor(id).filter((n) => n.kind === 'problem' && !n.solved).length;
+const puzzlesIn = (c) => PUZZLES.filter((p) => p.part === c.name);
 function when(ms) {
   if (!ms) return '';
   const d = new Date(ms), now = new Date(), same = d.toDateString() === now.toDateString();
@@ -245,11 +269,16 @@ function renderNav() {
   nav.replaceChildren(); picker.replaceChildren();
   const keep = (p) => state.show === 'all' || (state.show === 'notes' ? notesFor(p.id).length : openProblems(p.id));
   let shown = 0;
-  for (const part of [...new Set(PUZZLES.map((p) => p.part))]) {
-    const ps = PUZZLES.filter((p) => p.part === part && (keep(p) || p.id === state.level));
-    const og = h('optgroup', { label: part });
-    if (!ps.length) continue;
-    const box = h('div', { class: 'part' }, h('h2', {}, part));
+  for (const c of CHAPTERS) {
+    const ps = puzzlesIn(c).filter((p) => keep(p) || p.id === state.level);
+    const showChap = keep(c) || c.id === state.level;
+    const og = h('optgroup', { label: c.name });
+    if (!ps.length && !showChap) continue;
+    const cn = notesFor(c.id).length, co = openProblems(c.id);
+    if (keep(c)) shown++;
+    const box = h('div', { class: 'part' }, h('button', { type: 'button', class: 'chap', 'aria-current': String(c.id === state.level), title: `Notes on all of ${c.name}`, onclick: () => openPuzzle(c.id) },
+      h('span', { class: 'nm' }, c.name), h('span', { class: 'ct' }, co ? h('span', { class: 'open' }, `${co}!`) : null, cn ? String(cn) : '')));
+    og.append(h('option', { value: c.id, selected: c.id === state.level }, `${c.name}: the whole chapter${cn ? ` (${cn})` : ''}`));
     for (const p of ps) {
       const n = notesFor(p.id).length, open = openProblems(p.id);
       if (keep(p)) shown++;
@@ -260,7 +289,7 @@ function renderNav() {
     }
     nav.append(box); picker.append(og);
   }
-  if (!shown && state.loaded) nav.prepend(h('div', { class: 'none-here' }, state.show === 'open' ? 'No open problems. Nothing waiting on a fix.' : 'No notes on any puzzle yet.'));
+  if (!shown && state.loaded) nav.prepend(h('div', { class: 'none-here' }, state.show === 'open' ? 'No open problems. Nothing waiting on a fix.' : 'No notes yet, on any chapter or puzzle.'));
   const all = state.notes.length, problems = state.notes.filter((n) => n.kind === 'problem' && !n.solved).length, ideas = state.notes.filter((n) => n.kind === 'idea' && !n.solved).length;
   $('#tally').replaceChildren(h('span', {}, h('b', {}, String(all)), ` note${all === 1 ? '' : 's'}`), h('span', {}, h('b', {}, String(problems)), ` open problem${problems === 1 ? '' : 's'}`), h('span', {}, h('b', {}, String(ideas)), ` idea${ideas === 1 ? '' : 's'}`));
 }
@@ -287,14 +316,33 @@ function panel(g) {
     g.steps.length ? h('ol', { class: 'steps' }, g.steps.map((s) => h('li', {}, s))) : null,
     g.pairs.length ? h('div', { class: 'pairs' }, g.pairs.map(([k, v]) => h('div', {}, h('span', { class: 'label' }, k), h('p', {}, v)))) : null];
 }
+function renderChapter(c) {
+  const ps = puzzlesIn(c);
+  $('#puzzle').replaceChildren(
+    h('div', { class: 'kick' }, h('span', {}, `The whole chapter · DL-${String(c.first).padStart(2, '0')} to DL-${String(c.last).padStart(2, '0')}`),
+      h('span', { class: ps.every((p) => p.built) ? 'built' : null }, ps.every((p) => p.built) ? 'In the game' : ps.some((p) => p.built) ? 'Partly built' : 'Planned')),
+    h('h2', { id: 'pz-h' }, c.name),
+    h('div', { class: 'goal' }, h('span', { class: 'label' }, c.place), h('p', {}, c.idea + (/[?.!]$/.test(c.idea) ? '' : '.'))),
+    h('div', { class: 'turn' },
+      h('div', {}, h('span', { class: 'label' }, 'The player comes to believe'), h('p', {}, c.belief + '.')),
+      h('div', {}, h('span', { class: 'label' }, 'Feeling'), h('p', {}, c.feeling + '.'))),
+    h('div', {}, h('span', { class: 'label' }, 'Its puzzles'), h('ul', { class: 'in-chapter' }, ps.map((p) => {
+      const n = notesFor(p.id).length, o = openProblems(p.id);
+      return h('li', {}, h('button', { type: 'button', onclick: () => openPuzzle(p.id) }, h('span', { class: 'id' }, p.id), h('span', {}, p.name),
+        h('span', { class: 'ct' }, o ? h('span', { class: 'open' }, `${o}! `) : null, n ? `${n} note${n > 1 ? 's' : ''}` : '')));
+    }))));
+  $('#note-label').textContent = `Your note on ${c.name} as a whole`;
+}
 function renderPuzzle() {
+  const c = CHAPTERS.find((x) => x.id === state.level);
+  if (c) return renderChapter(c);
   const p = PUZZLES.find((x) => x.id === state.level), el = $('#puzzle');
   const more = h('details', { class: 'more', open: store.get('pn-more') === 'open' ? true : null, ontoggle: (e) => store.set('pn-more', e.target.open ? 'open' : null) },
     h('summary', {}, p.proposal ? 'The puzzle, and what the plan proposes' : 'The puzzle: steps, wrong first try, aha'),
     ...panel(p).slice(1),
     p.proposal ? h('div', { class: 'proposal' }, h('h3', {}, 'The plan proposes'), h('span', { class: 'hint' }, p.proposal.type), ...panel(p.proposal)) : null);
   el.replaceChildren(
-    h('div', { class: 'kick' }, h('span', {}, p.part), h('span', { class: p.built ? 'built' : null }, p.built ? 'In the game' : 'Planned'), h('span', {}, p.type)),
+    h('div', { class: 'kick' }, h('button', { type: 'button', class: 'linkish', onclick: () => openPuzzle(chapterOf(p).id) }, p.part), h('span', { class: p.built ? 'built' : null }, p.built ? 'In the game' : 'Planned'), h('span', {}, p.type)),
     h('h2', { id: 'pz-h' }, `${p.id} ${p.name}`),
     panel(p)[0], more);
   $('#note-label').textContent = `Your note on ${p.id}`;
@@ -341,7 +389,7 @@ async function addNote() {
   try {
     await state.db.collection('notes').add({ level: state.level, kind: state.kind, text: body, author: state.me, createdAt: now, updatedAt: now, solved: false });
     text.value = ''; state.preTidy = null; store.set(draftKey(), null); setKind('note');
-    setStatus(`Added to ${state.level}.`);
+    setStatus(`Added to ${pageName(state.level)}.`);
   } catch (x) { saveError(x); }
   finally { state.busy = false; syncCompose(); }
 }
@@ -358,10 +406,10 @@ function saveError(x) {
 $('#tidy').addEventListener('click', async () => {
   const raw = text.value.trim();
   if (!raw || !state.sample || state.busy) return;
-  const p = PUZZLES.find((x) => x.id === state.level);
+  const chap = CHAPTERS.find((x) => x.id === state.level), about = chap ? `the chapter "${chap.name}" as a whole` : `the puzzle ${pageName(state.level)}`;
   state.busy = true; state.preTidy = text.value; syncCompose(); setStatus('Tidying…');
   try {
-    const prompt = `Below is a playtest note, probably dictated by voice, about the puzzle ${p.id} "${p.name}" in the game Dead Letter. Clean it up: fix punctuation, capitals and obvious mis-heard words; remove filler words, false starts and repetitions. Keep the speaker's own words, meaning, order and tone. Add nothing, summarise nothing, and keep it in the first person. Reply with the cleaned note only.\n\nNOTE:\n${raw}`;
+    const prompt = `Below is a playtest note, probably dictated by voice, about ${about} in the game Dead Letter. Clean it up: fix punctuation, capitals and obvious mis-heard words; remove filler words, false starts and repetitions. Keep the speaker's own words, meaning, order and tone. Add nothing, summarise nothing, and keep it in the first person. Reply with the cleaned note only.\n\nNOTE:\n${raw}`;
     const r = await state.sample(prompt, { modelTier: 'quick', cache: false, onText: ({ text: t }) => { text.value = t; } });
     text.value = (r.text || '').trim() || raw;
     saveDraft(); setStatus('Tidied. Undo tidy puts your words back.');
@@ -378,14 +426,26 @@ $('#untidy').addEventListener('click', () => { if (state.preTidy == null) return
 async function renderNotes() {
   const box = $('#notes'), list = notesFor(state.level);
   const open = list.filter((n) => !n.solved), solved = list.filter((n) => n.solved);
+  $('#notes-h').textContent = CHAPTERS.some((c) => c.id === state.level) ? 'Notes on the chapter' : 'Notes';
   $('#notes-count').textContent = list.length ? `${open.length} open · ${solved.length} solved` : '';
   if (!state.loaded) { box.replaceChildren(h('div', { class: 'empty' }, state.db === null && state.ready ? 'Notes are kept when this page is opened in Claude. You can still read every puzzle here.' : 'Loading the notes…')); return; }
-  if (!list.length) { box.replaceChildren(h('div', { class: 'empty' }, `No notes on ${state.level} yet. Write the first one above, or tap the microphone on your keyboard and say it.`)); return; }
-  const ids = [...new Set(list.map((n) => n.author).filter(Boolean))];
+  const chap = CHAPTERS.find((x) => x.id === state.level);
+  const inner = chap ? puzzlesIn(chap).map((p) => [p, notesFor(p.id)]).filter(([, ns]) => ns.length) : [];
+  const innerCount = inner.reduce((a, [, ns]) => a + ns.length, 0);
+  const ids = [...new Set([...list, ...inner.flatMap(([, ns]) => ns)].map((n) => n.author).filter(Boolean))];
   const people = state.user && ids.length ? await state.user.profiles(ids) : {};
   const order = (a, b) => (b.createdAt || 0) - (a.createdAt || 0);
-  const out = open.sort(order).map((n) => note(n, people));
+  const out = list.length ? open.sort(order).map((n) => note(n, people))
+    : [h('div', { class: 'empty' }, `No notes on ${chap ? chap.name + ' as a whole' : state.level} yet. Write the first one above, or tap the microphone on your keyboard and say it.`)];
   if (solved.length) out.push(h('details', { class: 'solved-group' }, h('summary', {}, `Solved (${solved.length})`), h('div', { class: 'notes' }, solved.sort(order).map((n) => note(n, people)))));
+  if (innerCount) {
+    const key = 'pn-from-' + chap.id;
+    out.push(h('details', { class: 'from-puzzles', open: store.get(key) === 'open' ? true : null, ontoggle: (e) => store.set(key, e.target.open ? 'open' : null) },
+      h('summary', {}, `Notes on its puzzles (${innerCount})`),
+      h('div', { class: 'notes' }, inner.flatMap(([p, ns]) => [
+        h('div', { class: 'from-head' }, h('button', { type: 'button', onclick: () => openPuzzle(p.id) }, `${p.id} ${p.name}`)),
+        ...ns.sort((a, b) => (a.solved - b.solved) || order(a, b)).map((n) => note(n, people))]))));
+  }
   box.replaceChildren(...out);
 }
 function note(n, people) {
@@ -440,7 +500,7 @@ render();
   }
   if (!db) { state.loaded = false; setStatus('Read-only here: notes are kept when this page is opened in Claude.'); render(); return; }
   db.collection('notes').orderBy('createdAt', 'asc').limit(1000).onSnapshot((snap) => {
-    state.notes = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((n) => PUZZLES.some((p) => p.id === n.level));
+    state.notes = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((n) => isPage(n.level));
     state.loaded = true;
     if (!snap.metadata.fromCache) setStatus(state.canWrite ? 'Notes save for everyone who opens this page.' : 'You can read these notes.');
     render();

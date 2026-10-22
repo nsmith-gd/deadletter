@@ -39,10 +39,11 @@ Imports show a preview (new, changed, unchanged, removed) before anything is wri
 
 # Puzzle notes
 
-`docs/puzzle_notes.html` is the published puzzle notebook (https://claude.ai/artifact/CkvjkY4KPiR177m6NsYvZA): one page
-per puzzle, DL-01 to DL-51, where people leave notes, problems and ideas. `build.py` writes it from
+`docs/puzzle_notes.html` is the published puzzle notebook (https://claude.ai/artifact/CkvjkY4KPiR177m6NsYvZA): a page
+for every chapter and every puzzle, DL-01 to DL-51, where people leave notes, problems and ideas. A chapter's page also
+folds in the notes on its puzzles. `build.py` writes it from
 `puzzle_notes.html` with each puzzle's sheet (the same gameplay the story board shows). Notes live in the artifact's
-database, collection `notes` (`level`, `kind`: note, problem or idea, `text`, `author`, `createdAt`, `updatedAt`,
+database, collection `notes` (`level`: a puzzle id such as `DL-15`, or a chapter: `prologue`, `ch1` to `ch6`; `kind`: note, problem or idea, `text`, `author`, `createdAt`, `updatedAt`,
 `solved`). Claude reads them with the ArtifactData tool.
 
 Voice notes use the device's own dictation (the keyboard's microphone, or the system shortcut), which types into the
