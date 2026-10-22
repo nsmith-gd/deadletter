@@ -201,3 +201,14 @@ for k, v in [('LEVELS', levels), ('TIMELINE', TIMELINE), ('LADDER', LADDER), ('R
 t = t.replace('/*BIBLE*/""', json.dumps(BIBLE, ensure_ascii=False))
 open('/home/user/deadletter/docs/story_board.html', 'w').write(t)
 print(len(t), len(levels))
+
+# The puzzle notebook: every puzzle's sheet, for notes per puzzle (docs/puzzle_notes.html).
+def sheet(g):
+    return dict(type=g['type'].replace('Planned · ', ''), goalLabel=g['box'][0] if g['box'][0] == 'Goal' else 'New here',
+                goal=g['box'][1] if not g['box'][2] else '', steps=g['steps'], pairs=g['pairs'])
+PUZZLES = [dict(id=l['id'], name=l['name'], part=l['part'], built=l['built'], **sheet(l['game']),
+                proposal=sheet(l['game']['proposal']) if l['game'].get('proposal') else None) for l in levels]
+t = open('puzzle_notes.html').read()
+assert '/*PUZZLES*/[]' in t
+open('/home/user/deadletter/docs/puzzle_notes.html', 'w').write(t.replace('/*PUZZLES*/[]', json.dumps(PUZZLES, ensure_ascii=False)))
+print(len(PUZZLES), 'puzzles')

@@ -1,0 +1,449 @@
+<title>Dead Letter Puzzle Notes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a playtest clipboard. The puzzles down the left like a drawer of index tabs; the open puzzle's sheet at the
+   top right, the note box under it, and the notes pinned beneath. Teal is the depot's enamel signage. */
+:root {
+  --paper: #e9eeec;        /* the clipboard */
+  --sheet: #fafcfb;        /* a sheet on it */
+  --ink: #18211f;
+  --ink-2: #4d5b57;
+  --rule: #c6d0cc;
+  --accent: #0d6e66;       /* depot enamel teal */
+  --accent-soft: #d3ebe7;
+  --on-accent: #ffffff;
+  --problem: #a13f28; --problem-soft: #f6e0d9;
+  --idea: #7d5e0c; --idea-soft: #f3e9cc;
+  --solved: #2f6f45; --solved-soft: #dcefe2;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111715; --sheet: #19211f; --ink: #e2e9e6; --ink-2: #9fb0aa; --rule: #2c3835;
+    --accent: #5cc4b8; --accent-soft: #16302c; --on-accent: #0b1513;
+    --problem: #ec8f78; --problem-soft: #3b211b; --idea: #e2bf62; --idea-soft: #352b12; --solved: #7ccf98; --solved-soft: #183223;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111715; --sheet: #19211f; --ink: #e2e9e6; --ink-2: #9fb0aa; --rule: #2c3835;
+  --accent: #5cc4b8; --accent-soft: #16302c; --on-accent: #0b1513;
+  --problem: #ec8f78; --problem-soft: #3b211b; --idea: #e2bf62; --idea-soft: #352b12; --solved: #7ccf98; --solved-soft: #183223;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--paper); color: var(--ink); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1200px; margin: 0 auto; padding-block: 20px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3, h4 { font-family: var(--display); font-weight: 700; letter-spacing: .01em; text-wrap: balance; margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--mono); }
+
+/* Masthead */
+.mast { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; padding-bottom: 14px; border-bottom: 2px solid var(--ink); }
+.mast h1 { font-size: clamp(30px, 5vw, 44px); line-height: .95; text-transform: uppercase; letter-spacing: .03em; }
+.mast p { margin: 6px 0 0; color: var(--ink-2); max-width: 64ch; }
+.tally { display: flex; gap: 8px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; }
+.tally span { border: 1px solid var(--rule); border-radius: 99px; padding: 3px 10px; background: var(--sheet); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tally b { font-weight: 500; }
+.status { font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin-top: 8px; min-height: 1.5em; }
+
+.grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; margin-top: 20px; align-items: start; }
+
+/* The drawer of puzzles */
+.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto; padding-right: 4px; display: grid; gap: 12px; }
+.show { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--mono); font-size: 12px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2); }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.picker { display: none; width: 100%; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+nav { display: flex; flex-direction: column; gap: 14px; }
+.part h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-2); font-weight: 600; margin-bottom: 4px; }
+.pz { display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; width: 100%; text-align: left; background: none; border: 0; border-radius: 4px; padding: 5px 6px; color: var(--ink); }
+.pz:hover { background: var(--sheet); }
+.pz[aria-current="true"] { background: var(--accent-soft); }
+.pz .id { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.pz .nm { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pz.planned .nm { color: var(--ink-2); }
+.pz .ct { font-family: var(--mono); font-size: 11px; color: var(--ink-2); display: inline-flex; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+.pz .ct .open { color: var(--problem); font-weight: 500; }
+.none-here { font-size: 14px; color: var(--ink-2); padding: 6px; }
+
+/* The open puzzle */
+main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 20px; display: grid; gap: 12px; min-width: 0; }
+.kick { display: flex; flex-wrap: wrap; gap: 6px 14px; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.kick .built { color: var(--solved); }
+.sheet h2 { font-size: clamp(28px, 4vw, 38px); line-height: 1; }
+.goal { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; max-width: 75ch; }
+.label { display: block; font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; }
+details.more > summary { cursor: pointer; font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--accent); font-weight: 600; width: max-content; }
+details.more[open] > summary { margin-bottom: 10px; }
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 4px; max-width: 78ch; }
+.steps li::marker { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.pairs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px 20px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--rule); }
+.pairs p, .goal p { margin: 0; }
+.proposal { margin-top: 12px; border: 1.5px dashed var(--accent); border-radius: 6px; padding: 12px 14px; display: grid; gap: 10px; }
+.proposal h3 { font-size: 17px; color: var(--accent); font-weight: 600; }
+
+/* The note box */
+.compose { background: var(--sheet); border: 1.5px solid var(--accent); border-radius: 6px; padding: 14px 16px; display: grid; gap: 10px; }
+.compose h3 { font-size: 20px; }
+.kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.kind-btn { font-family: var(--display); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: 14px; padding: 5px 12px; border-radius: 4px; border: 1px solid var(--rule); background: transparent; color: var(--ink-2); }
+.kind-btn[aria-pressed="true"][data-kind="note"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.kind-btn[aria-pressed="true"][data-kind="problem"] { background: var(--problem-soft); color: var(--problem); border-color: var(--problem); }
+.kind-btn[aria-pressed="true"][data-kind="idea"] { background: var(--idea-soft); color: var(--idea); border-color: var(--idea); }
+textarea { width: 100%; min-height: 120px; resize: vertical; font-family: var(--body); font-size: 16px; line-height: 1.5; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 10px 12px; }
+textarea:disabled { opacity: .6; }
+.dictate { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--ink-2); max-width: 75ch; }
+.dictate svg { flex: none; margin-top: 2px; }
+.dictate kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; background: var(--paper); color: var(--ink); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15px; border-radius: 4px; padding: 7px 14px; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+.btn.small { font-size: 12px; padding: 3px 9px; }
+.btn.danger { color: var(--problem); border-color: var(--problem); background: transparent; }
+.btn:disabled { opacity: .45; cursor: default; }
+.hint { font-size: 12px; color: var(--ink-2); font-family: var(--mono); }
+.err { color: var(--problem); font-size: 14px; }
+
+/* The notes */
+.notes-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.notes-head h3 { font-size: 22px; }
+.notes { display: grid; gap: 10px; }
+.note { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.note[data-kind="problem"] { border-left: 4px solid var(--problem); }
+.note[data-kind="idea"] { border-left: 4px solid var(--idea); }
+.note[data-kind="note"] { border-left: 4px solid var(--accent); }
+.note.solved { opacity: .72; border-left-color: var(--solved); }
+.note-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13px; color: var(--ink-2); }
+.who { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-weight: 500; }
+.who img { width: 20px; height: 20px; border-radius: 50%; }
+.tag { font-family: var(--mono); font-size: 11px; padding: 1px 8px; border-radius: 99px; }
+.tag.note { background: var(--accent-soft); color: var(--accent); }
+.tag.problem { background: var(--problem-soft); color: var(--problem); }
+.tag.idea { background: var(--idea-soft); color: var(--idea); }
+.tag.solved { background: var(--solved-soft); color: var(--solved); }
+.note p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 78ch; }
+.note .acts { justify-content: flex-start; }
+.note textarea { min-height: 90px; }
+.empty { border: 1.5px dashed var(--rule); border-radius: 6px; padding: 18px; color: var(--ink-2); }
+details.solved-group > summary { cursor: pointer; font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--ink-2); font-weight: 600; margin: 4px 0 10px; }
+
+@media (max-width: 820px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .index { position: static; max-height: none; }
+  nav { display: none; }
+  .picker { display: block; }
+}
+@media (prefers-reduced-motion: no-preference) { .pz, .chip, .btn { transition: background-color .12s, border-color .12s; } }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <h1>Dead Letter · Puzzle Notes</h1>
+      <p>One page per puzzle, DL-01 to DL-51. Open a puzzle and leave a note, a problem or an idea. Type it, or speak it with your device's dictation.</p>
+      <div class="status" id="status" aria-live="polite">Opening the notebook…</div>
+    </div>
+    <div class="tally" id="tally" aria-label="Notes so far"></div>
+  </header>
+
+  <div class="grid">
+    <aside class="index" aria-label="Puzzles">
+      <div class="show" role="group" aria-label="Show">
+        <button class="chip" type="button" data-show="all" aria-pressed="true">All puzzles</button>
+        <button class="chip" type="button" data-show="notes" aria-pressed="false">With notes</button>
+        <button class="chip" type="button" data-show="open" aria-pressed="false">Open problems</button>
+      </div>
+      <select class="picker" id="picker" aria-label="Choose a puzzle"></select>
+      <nav id="nav"></nav>
+    </aside>
+
+    <main>
+      <section class="sheet" id="puzzle" aria-labelledby="pz-h"></section>
+
+      <section class="compose" aria-labelledby="compose-h">
+        <div class="row">
+          <h3 id="compose-h">Add a note</h3>
+          <div class="kinds" role="group" aria-label="Kind of note">
+            <button class="kind-btn" type="button" data-kind="note" aria-pressed="true">Note</button>
+            <button class="kind-btn" type="button" data-kind="problem" aria-pressed="false">Problem</button>
+            <button class="kind-btn" type="button" data-kind="idea" aria-pressed="false">Idea</button>
+          </div>
+        </div>
+        <label class="label" for="note-text" id="note-label">Your note</label>
+        <textarea id="note-text" placeholder="What happened when you played it, what confused you, what you'd change…" autocomplete="off" autocapitalize="sentences" spellcheck="true"></textarea>
+        <div class="dictate">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span><b>Speak instead of typing.</b> Tap the box, then the microphone on your keyboard (iPhone, iPad, Android), or press <kbd>Fn</kbd> twice on a Mac or <kbd>Win</kbd>+<kbd>H</kbd> on Windows. The words appear as you talk.</span>
+        </div>
+        <div class="row">
+          <span class="hint" id="draft-hint"></span>
+          <div class="acts">
+            <button class="btn ghost" type="button" id="tidy" hidden>Tidy up</button>
+            <button class="btn ghost" type="button" id="untidy" hidden>Undo tidy</button>
+            <button class="btn" type="button" id="save" disabled>Add note</button>
+          </div>
+        </div>
+        <div class="err" id="save-err" hidden></div>
+      </section>
+
+      <section aria-labelledby="notes-h">
+        <div class="notes-head"><h3 id="notes-h">Notes</h3><span class="hint" id="notes-count"></span></div>
+        <div class="notes" id="notes"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+const PUZZLES = /*PUZZLES*/[];
+const KIND = { note: 'Note', problem: 'Problem', idea: 'Idea' };
+
+const $ = (s, el = document) => el.querySelector(s);
+const h = (tag, attrs = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v; else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return el;
+};
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} },
+};
+
+const state = { ready: false, level: null, show: 'all', kind: 'note', notes: [], loaded: false, db: null, user: null, me: null, canWrite: true, sample: null,
+  people: {}, editing: null, confirmDel: null, busy: false, preTidy: null };
+const hash = (location.hash || '').slice(1);
+state.level = PUZZLES.some((p) => p.id === hash) ? hash : (PUZZLES.some((p) => p.id === store.get('pn-level')) ? store.get('pn-level') : 'DL-12');
+
+function setStatus(t) { $('#status').textContent = t; }
+const notesFor = (id) => state.notes.filter((n) => n.level === id);
+const openProblems = (id) => notesFor(id).filter((n) => n.kind === 'problem' && !n.solved).length;
+function when(ms) {
+  if (!ms) return '';
+  const d = new Date(ms), now = new Date(), same = d.toDateString() === now.toDateString();
+  const t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return same ? `today ${t}` : `${d.toLocaleDateString([], { day: 'numeric', month: 'short' })} ${t}`;
+}
+
+// ---- The drawer --------------------------------------------------------------------------------------------------
+function renderNav() {
+  const nav = $('#nav'), picker = $('#picker');
+  nav.replaceChildren(); picker.replaceChildren();
+  const keep = (p) => state.show === 'all' || (state.show === 'notes' ? notesFor(p.id).length : openProblems(p.id));
+  let shown = 0;
+  for (const part of [...new Set(PUZZLES.map((p) => p.part))]) {
+    const ps = PUZZLES.filter((p) => p.part === part && (keep(p) || p.id === state.level));
+    const og = h('optgroup', { label: part });
+    if (!ps.length) continue;
+    const box = h('div', { class: 'part' }, h('h2', {}, part));
+    for (const p of ps) {
+      const n = notesFor(p.id).length, open = openProblems(p.id);
+      if (keep(p)) shown++;
+      box.append(h('button', { type: 'button', class: 'pz' + (p.built ? '' : ' planned'), 'aria-current': String(p.id === state.level), onclick: () => openPuzzle(p.id) },
+        h('span', { class: 'id' }, p.id), h('span', { class: 'nm', title: p.name }, p.name),
+        h('span', { class: 'ct' }, open ? h('span', { class: 'open', title: `${open} open problem${open > 1 ? 's' : ''}` }, `${open}!`) : null, n ? String(n) : '')));
+      og.append(h('option', { value: p.id, selected: p.id === state.level }, `${p.id} ${p.name}${n ? ` (${n})` : ''}`));
+    }
+    nav.append(box); picker.append(og);
+  }
+  if (!shown && state.loaded) nav.prepend(h('div', { class: 'none-here' }, state.show === 'open' ? 'No open problems. Nothing waiting on a fix.' : 'No notes on any puzzle yet.'));
+  const all = state.notes.length, problems = state.notes.filter((n) => n.kind === 'problem' && !n.solved).length, ideas = state.notes.filter((n) => n.kind === 'idea' && !n.solved).length;
+  $('#tally').replaceChildren(h('span', {}, h('b', {}, String(all)), ` note${all === 1 ? '' : 's'}`), h('span', {}, h('b', {}, String(problems)), ` open problem${problems === 1 ? '' : 's'}`), h('span', {}, h('b', {}, String(ideas)), ` idea${ideas === 1 ? '' : 's'}`));
+}
+document.querySelectorAll('[data-show]').forEach((b) => b.addEventListener('click', () => {
+  state.show = b.dataset.show;
+  document.querySelectorAll('[data-show]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  renderNav();
+}));
+$('#picker').addEventListener('change', (e) => openPuzzle(e.target.value));
+
+function openPuzzle(id) {
+  saveDraft();
+  state.level = id; state.editing = null; state.confirmDel = null; state.preTidy = null;
+  store.set('pn-level', id);
+  loadDraft();
+  render();
+  if (window.innerWidth < 820) $('#puzzle').scrollIntoView({ block: 'start' });
+}
+
+// ---- The puzzle sheet --------------------------------------------------------------------------------------------
+function panel(g) {
+  return [
+    g.goal ? h('div', { class: 'goal' }, h('span', { class: 'label' }, g.goalLabel), h('p', {}, g.goal)) : null,
+    g.steps.length ? h('ol', { class: 'steps' }, g.steps.map((s) => h('li', {}, s))) : null,
+    g.pairs.length ? h('div', { class: 'pairs' }, g.pairs.map(([k, v]) => h('div', {}, h('span', { class: 'label' }, k), h('p', {}, v)))) : null];
+}
+function renderPuzzle() {
+  const p = PUZZLES.find((x) => x.id === state.level), el = $('#puzzle');
+  const more = h('details', { class: 'more', open: store.get('pn-more') === 'open' ? true : null, ontoggle: (e) => store.set('pn-more', e.target.open ? 'open' : null) },
+    h('summary', {}, p.proposal ? 'The puzzle, and what the plan proposes' : 'The puzzle: steps, wrong first try, aha'),
+    ...panel(p).slice(1),
+    p.proposal ? h('div', { class: 'proposal' }, h('h3', {}, 'The plan proposes'), h('span', { class: 'hint' }, p.proposal.type), ...panel(p.proposal)) : null);
+  el.replaceChildren(
+    h('div', { class: 'kick' }, h('span', {}, p.part), h('span', { class: p.built ? 'built' : null }, p.built ? 'In the game' : 'Planned'), h('span', {}, p.type)),
+    h('h2', { id: 'pz-h' }, `${p.id} ${p.name}`),
+    panel(p)[0], more);
+  $('#note-label').textContent = `Your note on ${p.id}`;
+}
+
+// ---- The note box ------------------------------------------------------------------------------------------------
+const text = $('#note-text');
+const draftKey = () => 'pn-draft-' + state.level;
+function saveDraft() { store.set(draftKey(), text.value.trim() ? JSON.stringify({ text: text.value, kind: state.kind }) : null); }
+function loadDraft() {
+  let d = null;
+  try { d = JSON.parse(store.get(draftKey()) || 'null'); } catch (e) {}
+  text.value = d ? d.text : '';
+  setKind(d ? d.kind : 'note');
+  syncCompose();
+}
+function setKind(k) {
+  state.kind = KIND[k] ? k : 'note';
+  document.querySelectorAll('.kind-btn').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === state.kind)));
+}
+document.querySelectorAll('.kind-btn').forEach((b) => b.addEventListener('click', () => { setKind(b.dataset.kind); saveDraft(); }));
+function syncCompose() {
+  const has = !!text.value.trim(), can = !!state.db && state.canWrite;
+  text.disabled = !can && state.loaded;
+  $('#save').disabled = !has || !can || state.busy;
+  $('#tidy').hidden = !state.sample || !can;
+  $('#tidy').disabled = !has || state.busy;
+  $('#untidy').hidden = state.preTidy == null;
+  $('#draft-hint').textContent = !can && state.loaded ? 'This notebook is read-only for you.' : has ? 'Draft kept on this device · Ctrl+Enter adds it' : '';
+}
+let draftTimer = null;
+text.addEventListener('input', () => {
+  if (state.preTidy != null && !state.busy) state.preTidy = null;
+  syncCompose(); clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 400);
+});
+text.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addNote(); } });
+$('#save').addEventListener('click', addNote);
+
+async function addNote() {
+  const body = text.value.trim();
+  if (!body || !state.db || !state.canWrite || state.busy) return;
+  state.busy = true; syncCompose(); $('#save-err').hidden = true;
+  const now = Date.now();
+  try {
+    await state.db.collection('notes').add({ level: state.level, kind: state.kind, text: body, author: state.me, createdAt: now, updatedAt: now, solved: false });
+    text.value = ''; state.preTidy = null; store.set(draftKey(), null); setKind('note');
+    setStatus(`Added to ${state.level}.`);
+  } catch (x) { saveError(x); }
+  finally { state.busy = false; syncCompose(); }
+}
+function saveError(x) {
+  const e = $('#save-err');
+  e.hidden = false;
+  if (x && x.code === 'invalid_argument') { state.canWrite = false; e.textContent = 'You can read this notebook but not add to it. Ask its owner to make you a Contributor.'; }
+  else if (x && x.code === 'quota_exceeded') e.textContent = 'The notebook is full. Delete some solved notes, then add this one.';
+  else e.textContent = 'That didn’t save. Your text is still here; try again in a moment.';
+  syncCompose();
+}
+
+// Tidy up: Claude cleans dictated text (punctuation, filler words) without changing what was said.
+$('#tidy').addEventListener('click', async () => {
+  const raw = text.value.trim();
+  if (!raw || !state.sample || state.busy) return;
+  const p = PUZZLES.find((x) => x.id === state.level);
+  state.busy = true; state.preTidy = text.value; syncCompose(); setStatus('Tidying…');
+  try {
+    const prompt = `Below is a playtest note, probably dictated by voice, about the puzzle ${p.id} "${p.name}" in the game Dead Letter. Clean it up: fix punctuation, capitals and obvious mis-heard words; remove filler words, false starts and repetitions. Keep the speaker's own words, meaning, order and tone. Add nothing, summarise nothing, and keep it in the first person. Reply with the cleaned note only.\n\nNOTE:\n${raw}`;
+    const r = await state.sample(prompt, { modelTier: 'quick', cache: false, onText: ({ text: t }) => { text.value = t; } });
+    text.value = (r.text || '').trim() || raw;
+    saveDraft(); setStatus('Tidied. Undo tidy puts your words back.');
+  } catch (x) {
+    text.value = state.preTidy; state.preTidy = null;
+    if (x && (x.code === 'not_granted' || x.code === 'sampling_disabled' || x.code === 'not_declared' || x.code === 'capability_disabled' || x.code === 'capability_removed')) { state.sample = null; setStatus('Tidy up isn’t available here.'); }
+    else if (x && x.code === 'rate_limited') setStatus('Too many tidies just now. Try again in a little while.');
+    else setStatus('Tidy up didn’t finish. Your text is unchanged.');
+  } finally { state.busy = false; syncCompose(); }
+});
+$('#untidy').addEventListener('click', () => { if (state.preTidy == null) return; text.value = state.preTidy; state.preTidy = null; saveDraft(); syncCompose(); setStatus('Back to your words.'); });
+
+// ---- The notes ---------------------------------------------------------------------------------------------------
+async function renderNotes() {
+  const box = $('#notes'), list = notesFor(state.level);
+  const open = list.filter((n) => !n.solved), solved = list.filter((n) => n.solved);
+  $('#notes-count').textContent = list.length ? `${open.length} open · ${solved.length} solved` : '';
+  if (!state.loaded) { box.replaceChildren(h('div', { class: 'empty' }, state.db === null && state.ready ? 'Notes are kept when this page is opened in Claude. You can still read every puzzle here.' : 'Loading the notes…')); return; }
+  if (!list.length) { box.replaceChildren(h('div', { class: 'empty' }, `No notes on ${state.level} yet. Write the first one above, or tap the microphone on your keyboard and say it.`)); return; }
+  const ids = [...new Set(list.map((n) => n.author).filter(Boolean))];
+  const people = state.user && ids.length ? await state.user.profiles(ids) : {};
+  const order = (a, b) => (b.createdAt || 0) - (a.createdAt || 0);
+  const out = open.sort(order).map((n) => note(n, people));
+  if (solved.length) out.push(h('details', { class: 'solved-group' }, h('summary', {}, `Solved (${solved.length})`), h('div', { class: 'notes' }, solved.sort(order).map((n) => note(n, people)))));
+  box.replaceChildren(...out);
+}
+function note(n, people) {
+  const p = people[n.author], mine = !!state.me && n.author === state.me, can = state.canWrite && !!state.db;
+  const top = h('div', { class: 'note-top' },
+    h('span', { class: 'tag ' + (KIND[n.kind] ? n.kind : 'note') }, KIND[n.kind] || 'Note'),
+    n.solved ? h('span', { class: 'tag solved' }, 'Solved') : null,
+    h('span', { class: 'who' }, p ? h('img', { src: p.avatarUrl, alt: '' }) : null, (p && p.name) || (mine ? 'You' : 'Someone')),
+    h('span', {}, when(n.createdAt) + (n.updatedAt && n.updatedAt - n.createdAt > 60000 ? ' · edited' : '')));
+  if (state.editing === n.id) {
+    const ta = h('textarea', { id: 'edit-' + n.id, 'aria-label': 'Edit note' });
+    ta.value = n.text;
+    setTimeout(() => ta.focus(), 0);
+    return h('article', { class: 'note', 'data-kind': n.kind }, top, ta,
+      h('div', { class: 'acts' }, h('button', { class: 'btn small', type: 'button', onclick: () => update(n, { text: ta.value.trim() }, true) }, 'Save'),
+        h('button', { class: 'btn small ghost', type: 'button', onclick: () => { state.editing = null; renderNotes(); } }, 'Cancel')));
+  }
+  const acts = can ? h('div', { class: 'acts' },
+    h('button', { class: 'btn small ghost', type: 'button', onclick: () => update(n, { solved: !n.solved }) }, n.solved ? 'Reopen' : 'Mark solved'),
+    mine ? h('button', { class: 'btn small ghost', type: 'button', onclick: () => { state.editing = n.id; state.confirmDel = null; renderNotes(); } }, 'Edit') : null,
+    mine ? (state.confirmDel === n.id
+      ? [h('button', { class: 'btn small danger', type: 'button', onclick: () => remove(n) }, 'Delete it'), h('button', { class: 'btn small ghost', type: 'button', onclick: () => { state.confirmDel = null; renderNotes(); } }, 'Keep')]
+      : h('button', { class: 'btn small ghost', type: 'button', onclick: () => { state.confirmDel = n.id; renderNotes(); } }, 'Delete')) : null) : null;
+  return h('article', { class: 'note' + (n.solved ? ' solved' : ''), 'data-kind': n.kind }, top, h('p', {}, n.text), acts);
+}
+async function update(n, patch, closeEdit) {
+  if (patch.text === '') return;
+  try {
+    await state.db.collection('notes').doc(n.id).update({ ...patch, updatedAt: Date.now() });
+    if (closeEdit) state.editing = null;
+  } catch (x) { setStatus(x && x.code === 'invalid_argument' ? 'You can’t change notes in this notebook.' : 'That change didn’t save. Try again.'); }
+  renderNotes();
+}
+async function remove(n) {
+  try { await state.db.collection('notes').doc(n.id).delete(); state.confirmDel = null; setStatus('Deleted.'); }
+  catch (x) { setStatus('That didn’t delete. Try again.'); }
+}
+
+function render() { renderNav(); renderPuzzle(); renderNotes(); syncCompose(); }
+
+// ---- Start: render the puzzles now, light up the notebook when the capabilities answer ----------------------------
+loadDraft();
+render();
+(async () => {
+  const use = (name) => (window.claude && window.claude.use ? window.claude.use(name) : Promise.resolve(null));
+  const [db, user, sample] = await Promise.all([use('db'), use('user'), use('sample')]);
+  state.ready = true; state.db = db; state.user = user; state.sample = sample;
+  if (user) {
+    state.me = await user.id();
+    const w = await user.can('data.write');
+    if (w === false) state.canWrite = false;
+  }
+  if (!db) { state.loaded = false; setStatus('Read-only here: notes are kept when this page is opened in Claude.'); render(); return; }
+  db.collection('notes').orderBy('createdAt', 'asc').limit(1000).onSnapshot((snap) => {
+    state.notes = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((n) => PUZZLES.some((p) => p.id === n.level));
+    state.loaded = true;
+    if (!snap.metadata.fromCache) setStatus(state.canWrite ? 'Notes save for everyone who opens this page.' : 'You can read these notes.');
+    render();
+  }, (e) => { setStatus(e.code === 'revoked' ? 'The notebook closed for this visit.' : 'The notes stopped updating. Reload the page to reconnect.'); });
+})();
+</script>
