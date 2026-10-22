@@ -63,3 +63,6 @@ the script exits non-zero if there are any. Run it after moving anything he can 
   (glints and prompts, two-sided pushables, the cot, weight lamps): 7:56 mechanical; three first-time runs at 15:02 to
   16:29 of play. The overlap audit is clean, including the twin pushables and the cot (the cart's grip reaches less far
   back to leave it room). `CONTINUE=1` (prologue end into chapter one through the end card's button) passes.
+- **`results_rev03_attendance_mechanical.jsonl`** and **`results_rev03_attendance_first_playthrough.jsonl`:** chapter 1 after the
+  director's plan revision 0.3 (rail docks only at Abel's and Orme's places, the stair door out of DL-17): 4:40
+  mechanical, 6:57 first-time. The bot now leaves DL-17 by the stair. The overlap audit is clean.

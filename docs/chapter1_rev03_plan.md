@@ -1,6 +1,6 @@
 # Prologue and chapter 1 against the director's plan, revision 0.3
 
-Source: `docs/full_game_plan.md` (revision 0.3) and the director's cards on the story board (those marked *director*,
+Status: built (22 October 2026, game Version 30). Source: `docs/full_game_plan.md` (revision 0.3) and the director's cards on the story board (those marked *director*,
 DL-01 to DL-17). The prologue is "preserve": its puzzles, order and solutions stay. Chapter 1 keeps its puzzles and
 order but gets the plan's refinements, and its story evidence moves to the new canon (Mara born P.A. 302, relocated
 at nine in P.A. 311, alive now at about 85; the parcel is a pair of little outdoor boots).
