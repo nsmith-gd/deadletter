@@ -3,10 +3,10 @@
 
 The kitchen corridor behind the dismissal corridor: a two-storey school servery. On the left, in through DL-16's end
 doorway, the kitchen: a dresser whose shelf runs out over the floor as a high pass shelf (a string-tied bundle of books
-on it), the servery's hot cupboard under a band of crazed cream tiles, two catering tins on the floor, a step stool,
-then the dumbwaiter: an open iron shaft to the ceiling with a small tray car in it (open to the front), its
-counterweight hanging behind at the top, and over the car's opening a brass load gauge (three amber windows, a line,
-OVER). Then the barred gate, PUPILS NOT PERMITTED BEYOND THIS POINT, with the lower corridor going on behind it under
+on it), the servery's hot cupboard under a band of crazed cream tiles, two catering tins on the floor, then the
+dumbwaiter: an open iron shaft to the ceiling with a small tray car in it (open to the front), its counterweight hanging
+behind at the top, and over the car's opening a brass load gauge (one amber window, the line, a red OVER): he alone is
+too light; he and one tin reach the line; two tins is over. Then the barred gate, PUPILS NOT PERMITTED BEYOND THIS POINT, with the lower corridor going on behind it under
 an upper passage (floor 2.4) that runs from the top of the shaft over the gate to a stair down to the workshop's door.
 At child height, in chalk: a crooked tree on the dresser, another on the hot cupboard, a third, an arrow to the car.
 At the top, on the hatch frame where the car lets out onto the passage, a fourth tree and a small handprint.
@@ -19,12 +19,12 @@ What the game moves (origin = pivot, world coordinates; REPORT at the bottom has
                    moves in z (+2.4 to floor top 2.45). Its lamp (EMIT Att16aCarLamp), bell push, brass plate, rope
                    and crosshead are in its mesh; the empty Att16aBellPush is its child.
     Att16aCW       its counterweight; origin bottom centre (313.0, 0.655, 3.0); built at the top; moves -2.4.
-    Att16aStool    the step stool; origin bottom centre (312.0, 0, 0); slides in x.
-    Att16aTin1/2   catering tins; origin bottom centre (311.2, 0, 0) / (311.45, 0, 0); carried.
-    Att16aBooks    the string-tied bundle; origin bottom centre (310.55, 0.35, 1.25), on the shelf; carried.
-    Att16aLoad1/2/3, Att16aLoadOver   the gauge's lamps (own objects, own EMIT materials, built off).
+    Att16aTin1/2   catering tins; origin bottom centre (311.2, 0, 0) / (311.45, 0, 0); carried (one is the ballast).
+    Att16aLoad1, Att16aLoadOver   the gauge's two lamps (own objects, own EMIT materials, built off).
     Att16aBellPush (empty) at the bell push's face, parented to Att16aCar.
-Static: Att16aSet (the room), Att16aChalk (the chalk, image material Chalk16a with alpha), Att16aLamps (EMIT AttBulbGlow).
+Static: Att16aSet (the room; the present-day service cable, NewCable / NewSteel, and its relay box), Att16aBooks (set
+dressing on the shelf), Att16aChalk (image material Chalk16a with alpha), Att16aLamps (EMIT AttBulbGlow),
+Att16aRelayLamp (EMIT, the relay box's green pilot lamp, its own object).
 """
 import math
 import os
@@ -60,8 +60,6 @@ SHELF = (310.2, 310.9, 0.1, 0.6, 1.25)      # (*) the high pass shelf: x0, x1, y
 SHELF_T = 0.035
 DRESSER = (310.15, 310.95, 0.62, 2.45)      # the dresser it runs out from: x0, x1, front posts' y, top
 BOOKS = (310.55, 0.35, 1.25)                # (*) Att16aBooks' origin
-STOOL = (312.0, 0.0, 0.0)                   # (*) Att16aStool's origin
-STOOL_HW, STOOL_TOP, STOOL_Y = 0.25, 0.45, (-0.25, 0.25)   # (*)
 TINS = ((311.2, 0.0), (311.45, 0.0))        # (*) on the floor, y 0
 TIN_R, TIN_H = 0.075, 0.17
 COUNTER = (310.95, 312.42, 0.70, 0.9)       # the hot cupboard: x0, x1, door face y, top
@@ -79,8 +77,8 @@ POST = 0.08
 HEAD_Z = 3.74                               # the shaft's head frame under the ceiling
 HDR = (1.3, 1.5)                            # the lower landing's header across the shaft's front (the gauge on it)
 GAUGE = (312.72, 313.28, 1.33, 1.47)        # the brass plate: x0, x1, z0, z1 (centre z 1.4)
-LOAD_X = (312.80, 312.92, 313.04)           # Att16aLoad1..3
-OVER_X = 313.20                             # Att16aLoadOver
+LOAD_X = (312.88,)                          # Att16aLoad1 (one amber window: he and one tin)
+OVER_X = 313.12                             # Att16aLoadOver (the line between them at 313.0)
 LAMP_Z = 1.39
 CW = (312.72, 313.28, 0.62, 0.69, 0.7)      # x0, x1, y0, y1, height
 CW_ORIGIN = (313.0, 0.655, 3.0)             # bottom centre, at the top of the shaft
@@ -97,6 +95,9 @@ TREE4 = (313.6, 2.6, 2.9)                   # (*) the fourth tree and the handpr
 PENDANT = (311.5, 0.3, 2.75)                # the kitchen's pendant bulb
 PASS_LAMP = (317.4, 0.45, 3.5)              # the lamp over the upper passage
 STAIR_LAMP = (322.75, WALL_Y - 0.08, 1.95)  # a bulkhead by the stair's foot, toward DL-17's door
+CABLE_Z, CABLE_Y, CABLE_R = 3.70, WALL_Y - 0.03, 0.011   # the new service cable, just under the ceiling's beams
+RELAY = (314.02, 314.26, 3.40, 3.62)        # its relay box on the passage's back wall: x0, x1, z0, z1
+RELAY_LAMP = (314.2, 3.455)                 # the green pilot lamp on its front: x, z
 
 # =====================================================================================================================
 # Materials (names are the game's: index.html's WORN / PLAIN / EMIT tables)
@@ -115,14 +116,14 @@ GAME_WORN = {   # copied from index.html's WORN table: fallbacks for a lone buil
     'DustyCream': dict(base=[.5, .46, .35], dirt=[.3, .26, .18], chip=[.03, .027, .022], rough=.85, chipRough=.55, metal=0, grime=4, chipScale=24, chipAmt=.64, dust=[.56, .54, .48], dustAmt=.95, streak=.4),
     'DarkMetal': dict(base=[.017, .016, .014], dirt=[.03, .024, .016], chip=[.075, .068, .055], rough=.72, chipRough=.45, metal=.25, grime=5, chipScale=34, chipAmt=.78, dust=[.075, .072, .062], dustAmt=.7),
 }
-GAME_PLAIN = {'Copper': ((.55, .3, .18), .35, 1.0)}
+GAME_PLAIN = {'Copper': ((.55, .3, .18), .35, 1.0),
+              'NewCable': ((.016, .016, .018), .28, 0.0), 'NewSteel': ((.26, .27, .28), .4, .8)}   # pass 6's new line
 GAME_EMIT = {'AttBulbGlow': ((1.0, 0.82, 0.58), 4.0)}
 NEW_EMIT = {   # new: (colour, strength) as index.html EMIT; the gauge's lamps are built off (the game switches them)
     'Att16aCarLamp': ((1.0, 0.8, 0.52), 4.0),
     'Att16aLoad1': ((1.0, 0.62, 0.16), 0.0),
-    'Att16aLoad2': ((1.0, 0.62, 0.16), 0.0),
-    'Att16aLoad3': ((1.0, 0.62, 0.16), 0.0),
     'Att16aLoadOver': ((1.0, 0.12, 0.06), 0.0),
+    'Att16aRelayLamp': ((0.35, 1.0, 0.45), 3.0),
 }
 ATLAS_PNG, CHALK_PNG = 'dl16a_atlas.png', 'dl16a_chalk.png'   # new image materials Att16aAtlas, Chalk16a (alpha)
 
@@ -181,7 +182,7 @@ CELLS = {
     'menu': (1280, 296, 1792, 664),      # the dinners board, 0.70 x 0.50
     'staff': (1792, 296, 2048, 392),     # STAFF ONLY
     'gauge': (0, 640, 768, 832),         # TRAYS ONLY - LOAD TO THE LINE, 0.56 x 0.14
-    'max3': (768, 640, 1280, 736),       # MAX 3 PORTIONS, 0.32 x 0.06
+    'max3': (768, 640, 1280, 736),       # the car's plate (NO PASSENGERS), 0.32 x 0.06
     'tinlabel': (0, 832, 512, 960),      # the tins' paper label, wrapped
     'ring': (512, 832, 640, 896),        # RING, over the bell push
     'cwsign': (640, 832, 1024, 960),     # the counterweight's hazard plate
@@ -367,7 +368,7 @@ def make_atlas(path):
     _screws(d, w, h, 20, 7, col=(70, 66, 60), rust=(140, 90, 50))
     put('pupils', t, k=0.1, dust=0.18)
 
-    # --- the gauge's plate: engraved brass, three windows, the line, OVER --------------------------------------------
+    # --- the gauge's plate: engraved brass, one window, the line, OVER --------------------------------------------
     x0, y0, x1, y1 = CELLS['gauge']
     w, h = x1 - x0, y1 - y0
     t = _brass(w, h, rnd)
@@ -381,20 +382,17 @@ def make_atlas(path):
         cx_ = px(x)
         d.ellipse((cx_ - 31, ly - 31, cx_ + 31, ly + 31), outline=(70, 50, 22), width=4)
         d.ellipse((cx_ - 25, ly - 25, cx_ + 25, ly + 25), fill=(24, 18, 12))
-        lab = ('1', '2', '3', 'OVER')[k]
-        d.text((cx_, ly + 54), lab, font=_font(30 if k < 3 else 28, 'sans-bold'), fill=ink if k < 3 else (150, 30, 22), anchor='mm')
-    for k in range(len(LOAD_X) - 1):                                             # ticks between the portions
-        xa = (px(LOAD_X[k]) + px(LOAD_X[k + 1])) / 2
-        d.line((xa, ly - 14, xa, ly + 14), fill=ink, width=3)
-    lx = (px(LOAD_X[-1]) + px(OVER_X)) / 2 - 6                                   # the line, red, engraved deep
+        over = k == len(LOAD_X)
+        d.text((cx_, ly + 54), 'OVER' if over else 'LOAD', font=_font(28, 'sans-bold'), fill=(150, 30, 22) if over else ink, anchor='mm')
+    lx = (px(LOAD_X[-1]) + px(OVER_X)) / 2                                       # the line, red, engraved deep
     d.rectangle((lx - 5, 50, lx + 5, h - 12), fill=(150, 30, 22))
     d.polygon([(lx - 16, 50), (lx + 16, 50), (lx, 64)], fill=(150, 30, 22))
-    d.rectangle((px(OVER_X) - 44, ly - 40, w - 18, ly + 70), outline=(150, 30, 22), width=3)
+    d.rectangle((px(OVER_X) - 52, ly - 40, px(OVER_X) + 52, ly + 70), outline=(150, 30, 22), width=3)
     _screws(d, w, h, 13, 6, col=(96, 72, 32))
     put('gauge', t, k=0.04, dust=0.08)
 
-    # --- MAX 3 PORTIONS, RING ----------------------------------------------------------------------------------------
-    for name, text, size in (('max3', 'MAX 3 PORTIONS', 54), ('ring', 'RING', 34)):
+    # --- NO PASSENGERS (the car's plate), RING ----------------------------------------------------------------------------------------
+    for name, text, size in (('max3', 'NO PASSENGERS', 54), ('ring', 'RING', 34)):
         x0, y0, x1, y1 = CELLS[name]
         w, h = x1 - x0, y1 - y0
         t = _brass(w, h, rnd)
@@ -935,14 +933,14 @@ def build_shaft(B):
 
 def build_gauge(B, coll):
     """The load gauge's plate on the lower landing's header (z 1.4): brass, engraved TRAYS ONLY - LOAD TO THE LINE;
-    three amber windows, the line, a red OVER window. The four lenses are their own objects (Att16aLoad1..3,
+    one amber window (LOAD), the line, a red OVER window. The two lenses are their own objects (Att16aLoad1,
     Att16aLoadOver), in brass bezels; behind each window a dark socket in the plate."""
     gx0, gx1, gz0, gz1 = GAUGE
     fy = SHAFT[2] - POST - 0.012                                                           # the header's front face
     B.box('HandledBrass', gx0 - 0.008, gx1 + 0.008, fy - 0.014, fy, gz0 - 0.008, gz1 + 0.008)
     B.decal('Att16aAtlas', gx0, gx1, gz0, gz1, fy - 0.0145, cell='gauge')
     out = []
-    for name, x in (('Att16aLoad1', LOAD_X[0]), ('Att16aLoad2', LOAD_X[1]), ('Att16aLoad3', LOAD_X[2]), ('Att16aLoadOver', OVER_X)):
+    for name, x in (('Att16aLoad1', LOAD_X[0]), ('Att16aLoadOver', OVER_X)):
         B.torus('HandledBrass', (x, fy - 0.016, LAMP_Z), (0, 1, 0), 0.024, 0.005, seg=16, rseg=4)
         L = MB()
         c = (x, fy - 0.017, LAMP_Z)
@@ -1113,6 +1111,80 @@ def build_lower_corridor(B, rnd):
     B.cyl('PupilWood', (bx + 0.05, 0.95, 0.1), (bx + 0.42, 1.12, 1.25), 0.014, seg=6)
 
 
+def _wire(B, pts, r, mt, seg=6):
+    """A run of cable through the points: straight lengths, a ball at each bend."""
+    pts = [Vector(p) for p in pts]
+    for a, b in zip(pts, pts[1:]):
+        B.cyl(mt, a, b, r, seg=seg)
+    for p in pts[1:-1]:
+        B.sphere(mt, p, r, seg=seg)
+
+
+def cable_path():
+    """The new service cable: in through the wall over DL-16's partition, along the kitchen's back wall just under the
+    ceiling's beams (z 3.70), behind the shaft's head, down into the relay box by the hatch and out again, along the
+    upper passage over the gate, down the stair's wall parallel to its pitch (1.3 over the nosings), level at 2.4 to the
+    corner, and along DL-17's wall toward its doorway, where it goes in over the door. (x, y, z, wall normal)"""
+    z, y = CABLE_Z, CABLE_Y
+    r0, r1, rz0, rz1 = RELAY
+    a, b = r0 + 0.05, r1 - 0.05
+    xe = X1 - 0.03
+    return [(X0 + 0.15, y, z), (a, y, z), (a, y, rz1 + 0.02), (b, y, rz1 + 0.02), (b, y, z), (STAIR[0], y, z),
+            (STAIR[0] + 1.3, y, z - 1.3), (xe, y, z - 1.3), (xe, R_DOOR[1] + 0.08, z - 1.3)]
+
+
+def build_cable(B):
+    """A present-day service line through the school (the prologue's new cable, pass 6): glossy black, galvanised
+    clips about every metre, two taped joints; a small new relay box near the top of the dumbwaiter's shaft (its green
+    pilot lamp is Att16aRelayLamp); glands where it goes into the walls."""
+    pts = [Vector(p) for p in cable_path()]
+    _wire(B, pts, CABLE_R, 'NewCable')
+    acc, nxt = 0.0, 0.45
+    for a, b in zip(pts, pts[1:]):
+        seg = (b - a).length
+        n = Vector((-1, 0, 0)) if abs(a.x - b.x) < 1e-6 and abs(a.y - b.y) > 1e-6 else Vector((0, -1, 0))   # out of its wall
+        d = (b - a).normalized()
+        side = d.cross(n).normalized()
+        while acc + seg >= nxt:
+            p = a.lerp(b, (nxt - acc) / seg)
+            if not (RELAY[0] - 0.08 < p.x < RELAY[1] + 0.08):
+                for sg in (-1, 1):
+                    c = p + side * sg * 0.022 - n * 0.004
+                    add_box(B.bm, c, (0.012, 0.012, 0.012), mat=B.m('NewSteel'))
+                B.cyl('NewSteel', p - side * 0.026 + n * 0.004, p + side * 0.026 + n * 0.004, 0.0065, seg=4)
+            nxt += 1.05
+        acc += seg
+    for k, f in ((0, 0.62), (4, 0.55)):                                                # taped joints: two black bands
+        a, b = pts[k], pts[k + 1]
+        p = a.lerp(b, f)
+        d = (b - a).normalized()
+        for o in (-0.04, 0.04):
+            B.cyl('NewCable', p + d * (o - 0.025), p + d * (o + 0.025), CABLE_R + 0.005, seg=6)
+    for p, ax in ((pts[0], Vector((-1, 0, 0))), (pts[-1], Vector((1, 0, 0)))):        # glands into the walls
+        B.cyl('NewSteel', p, p + ax * 0.03, 0.02, seg=8)
+    # the relay box: galvanised, a lid on four screws, two glands on top, a printed label, the pilot lamp's bezel
+    x0, x1, z0, z1 = RELAY
+    yb = WALL_Y
+    B.box('NewSteel', x0, x1, yb - 0.09, yb, z0, z1)
+    B.box('NewSteel', x0 + 0.008, x1 - 0.008, yb - 0.096, yb - 0.09, z0 + 0.008, z1 - 0.008)
+    for xx in (x0 + 0.022, x1 - 0.022):
+        for zz in (z0 + 0.022, z1 - 0.022):
+            B.cyl('NewSteel', (xx, yb - 0.096, zz), (xx, yb - 0.1, zz), 0.006, seg=6)
+    for xx in (x0 + 0.05, x1 - 0.05):
+        B.cyl('NewSteel', (xx, CABLE_Y, z1), (xx, CABLE_Y, z1 + 0.022), 0.017, seg=8)
+    B.box('Att16aAtlas', x0 + 0.04, x0 + 0.14, yb - 0.097, yb - 0.096, z0 + 0.12, z0 + 0.16, cell='sw_paper')
+    lx, lz = RELAY_LAMP
+    B.torus('NewSteel', (lx, yb - 0.098, lz), (0, 1, 0), 0.012, 0.003, seg=12, rseg=3)
+
+
+def build_relay_lamp(coll):
+    """Att16aRelayLamp: the relay box's tiny green pilot lamp (EMIT, lit as built), its own object; origin its centre."""
+    L = MB()
+    c = (RELAY_LAMP[0], WALL_Y - 0.099, RELAY_LAMP[1])
+    L.sphere('Att16aRelayLamp', c, 0.008, seg=10, scale=(1, 0.5, 1))
+    return L.obj('Att16aRelayLamp', coll, origin=c)
+
+
 def build_chalk(coll):
     """Att16aChalk: her chalk on the dresser's door, the hot cupboard's doors (an arrow over the third), and on the
     hatch frame at the top. Image material Chalk16a (alpha)."""
@@ -1135,7 +1207,7 @@ def build_chalk(coll):
 def build_car(coll):
     """Att16aCar: a small tray car, open to the front (and at its sides in front of y 0.25, so D-17 walks in along the
     lane): a timber floor in an iron edge (top 0.05), an iron frame, a lined back wall with rubbing strips, short side
-    returns at the back, an iron roof; the brass plate MAX 3 PORTIONS on its front fascia, a caged lamp (EMIT
+    returns at the back, an iron roof; the brass plate NO PASSENGERS on its front fascia, a caged lamp (EMIT
     Att16aCarLamp) under the roof at the back left, the bell push on its back wall at z 0.6, a crosshead with the
     rope's shackle, the rope running up into the ceiling, guide shoes on the back corners. Origin: the middle of the
     floor's top (313.0, 0.1, 0.05). Built at the bottom."""
@@ -1238,37 +1310,6 @@ def build_cw(coll):
     return B.obj('Att16aCW', coll, origin=CW_ORIGIN)
 
 
-def build_stool(coll):
-    """Att16aStool: a kitchen step stool, 0.5 x 0.5, top 0.45: a thick scrubbed top, four square legs a little
-    splayed, aprons, a low stretcher frame, iron corner plates, a hand hole in the front apron. Origin bottom centre
-    (312.0, 0, 0)."""
-    B = MB()
-    cx, cy, _ = STOOL
-    hw = STOOL_HW
-    y0, y1 = STOOL_Y
-    top = STOOL_TOP
-    B.box('PupilWood', cx - hw, cx + hw, y0, y1, top - 0.04, top)
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            xa = cx + sx * (hw - 0.045)
-            ya = cy + sy * (0.25 - 0.045)
-            xb, yb = cx + sx * (hw - 0.025), cy + sy * (0.25 - 0.025)
-            B.cyl('CrateWood', (xa, ya, top - 0.04), (xb, yb, 0.0), 0.022, 0.025, seg=4)
-    for sy in (-1, 1):
-        y = cy + sy * (0.25 - 0.045)
-        B.box('CrateWood', cx - hw + 0.04, cx + hw - 0.04, y - 0.012, y + 0.012, top - 0.12, top - 0.04)
-        B.box('CrateWood', cx - hw + 0.03, cx + hw - 0.03, y - 0.01, y + 0.01, 0.1, 0.14)
-    for sx in (-1, 1):
-        x = cx + sx * (hw - 0.045)
-        B.box('CrateWood', x - 0.012, x + 0.012, y0 + 0.04, y1 - 0.04, top - 0.12, top - 0.04)
-        B.box('CrateWood', x - 0.01, x + 0.01, y0 + 0.03, y1 - 0.03, 0.1, 0.14)
-    for sx in (-1, 1):                                                                      # iron corner plates on the front
-        x = cx + sx * (hw - 0.05)
-        B.box('WornIron', x - 0.035, x + 0.035, y0 + 0.03, y0 + 0.033, top - 0.115, top - 0.045)
-    B.box('Att16aAtlas', cx - 0.1, cx + 0.1, y0 + 0.0315, y0 + 0.0325, top - 0.1, top - 0.06, cell='sw_dark')   # its hand hole
-    return B.obj('Att16aStool', coll, origin=STOOL)
-
-
 def build_tin(coll, name, x, y, rnd):
     """A catering tin, olive, with rolled rims and a paper label (SCHOOL MEALS SERVICE, RATIONS) facing the camera;
     a little dented. Origin bottom centre."""
@@ -1358,9 +1399,10 @@ def build_set(dl01, m, coll):
     build_passage(B)
     build_stair(B)
     build_lower_corridor(B, rnd)
+    build_cable(B)
     objs = [B.obj('Att16aSet', coll), build_chalk(coll), build_lamps(coll)]
     car, bell = build_car(coll)
-    objs += [car, build_cw(coll), build_stool(coll)]
+    objs += [car, build_cw(coll), build_relay_lamp(coll)]
     for k, (x, y) in enumerate(TINS):
         objs.append(build_tin(coll, 'Att16aTin%d' % (k + 1), x, y, rnd))
     objs.append(build_books(coll))
@@ -1387,7 +1429,7 @@ MOVED (origin = pivot, world; built pose = rotation 0, as listed):
   floor top 0.05, roof underside 1.21 (clear 1.16 over the floor; D-17 to 1.12), roof top 1.245, crosshead to 1.30.
   Open at the front; its sides are open in front of y 0.25 (short returns 0.25 .. 0.6 only), so he walks in along the lane
   from either side (a 4 mm iron edge at the floor's sides, top 0.054). Top: +2.4 in z (floor top 2.45, roof 3.645).
-  Carries in its mesh: the lamp (EMIT Att16aCarLamp, bulb at (312.72, 0.42, 1.175)), the brass plate MAX 3 PORTIONS on its
+  Carries in its mesh: the lamp (EMIT Att16aCarLamp, bulb at (312.72, 0.42, 1.175)), the brass plate NO PASSENGERS on its
   front fascia (z 1.18 .. 1.249), the bell push (brass rose on the back wall's lining, face y 0.55, at x 313.25 z 0.6) with
   RING over it, and its rope (up into the ceiling; see ROPES).
 - Att16aBellPush: EMPTY, child of Att16aCar, local (0.25, 0.45, 0.55); world at build (313.25, 0.55, 0.6) = game
@@ -1395,21 +1437,23 @@ MOVED (origin = pivot, world; built pose = rotation 0, as listed):
 - Att16aCW: origin bottom centre (313.0, 0.655, 3.0) = game (313.0, 3.0, -0.655). Built at the TOP of the shaft, behind the car:
   x 312.72 .. 313.28 (shoes to 312.70 / 313.30), y 0.62 .. 0.69, z 3.0 .. 3.7. Moves opposite the car: -2.4 (bottom 0.6, top
   1.3, clear of its spring buffers at 0.27 and of the car, which passes in front of it).
-- Att16aStool: origin (312.0, 0, 0) = game (312.0, 0, 0); x 311.75 .. 312.25, y -0.25 .. 0.25, top 0.45. Slides in x.
 - Att16aTin1 (311.2, 0, 0), Att16aTin2 (311.45, 0, 0) = game (311.2 / 311.45, 0, 0): catering tins, r 0.075 (rims 0.078),
-  0.17 high, origin bottom centre. Same mesh shape, separate meshes.
-- Att16aBooks: origin (310.55, 0.35, 1.25) = game (310.55, 1.25, -0.35), bottom centre, on the shelf; four books tied with
-  string, x 310.42 .. 310.69, y 0.26 .. 0.45, 0.14 high (bow to 1.39).
-- Att16aLoad1 / Load2 / Load3 / Att16aLoadOver: the gauge's lamps, own objects, own EMIT materials of the same names
-  (built OFF, strength 0), origins at the lenses' centres: x 312.80 / 312.92 / 313.04 / 313.20, y -0.559, z 1.39
-  = game (x, 1.39, 0.559). Suggested lamp() colours: Load 0xffa030 (amber), Over 0xff2a18 (red).
+  0.17 high, origin bottom centre. Same mesh shape, separate meshes. One of them is the ballast (D-17 + one tin = the line).
+- Att16aBooks: set dressing now (not carried), still its own object at (310.55, 0.35, 1.25) on the shelf; four books tied
+  with string, x 310.42 .. 310.69, y 0.26 .. 0.45, 0.14 high (bow to 1.39).
+- Att16aLoad1 (amber, LOAD) and Att16aLoadOver (red, OVER): the gauge's two lamps, own objects, own EMIT materials of the
+  same names (built OFF, strength 0), origins at the lenses' centres: x 312.88 / 313.12, y -0.559, z 1.39
+  = game (x, 1.39, 0.559); the red line engraved between them at x 313.0. Load2/Load3 are dropped (no objects).
+  Suggested lamp() colours: Load1 0xffa030, Over 0xff2a18. Rule: Load1 lit when the car holds D-17 + one tin; Over with more.
+- Att16aRelayLamp: the relay box's green pilot lamp (EMIT Att16aRelayLamp, lit as built), own object, origin (314.2, 1.101, 3.455)
+  = game (314.2, 3.455, -1.101). Static unless the game switches it (suggested lamp() colour 0x60ff78).
 
 SURFACES / COLLISION (as the build sheet; all built to these numbers):
 - Floor 0 from 310.0 to 324.0 (lino; the shaft's footprint 312.42 .. 313.58 an iron plate flush at 0). Thresholds: 310.0 .. 310.04
   at 0.004 (meets DL-16's), 323.96 .. 324.0 at 0.012 (meets DL-17's iron strip). Ceiling 3.9 (beams to 3.74 at 311.2, 315.4,
   317.8, 320.2, 322.6, all clear of the passage's walking height; the shaft's head frame 3.74 .. 3.9).
 - High shelf: x 310.2 .. 310.9, y 0.1 .. 0.6, top 1.25 (a 12 mm lip along its front edge at y 0.09 .. 0.112). Nothing under
-  it in the lane (iron bearers at x 310.22 / 310.88, tie rods up and back to the dresser at y 0.65). Stool fits under it.
+  it in the lane (iron bearers at x 310.22 / 310.88, tie rods up and back to the dresser at y 0.65). Dressing only now.
 - Car floor 0.05 at the bottom / 2.45 at the top. Shaft clear inside 312.5 .. 313.5, y -0.45 .. 0.7; its posts outside that
   (front y -0.53 .. -0.45, back 0.7 .. 0.78, x 312.42 .. 312.5 and 313.5 .. 313.58). Lower landing's header across the shaft's
   front at z 1.3 .. 1.5 (y -0.542 .. -0.454, in front of the lane), the gauge's plate on it (centre z 1.4). Upper sill 2.3 .. 2.4.
@@ -1430,8 +1474,8 @@ STORY: chalk (Att16aChalk, image material Chalk16a, alpha): trees at 0.4 .. 0.6 
 door, face y 0.62), 311.6 and 312.3 (on the hot cupboard's doors, face y 0.70), an arrow over the third (x 312.03 .. 312.41,
 z 0.61 .. 0.73) pointing at the car; on the hatch jamb's front (face y -0.45): the fourth tree x 313.52 .. 313.68,
 z 2.6 .. 2.76, and a small handprint x 313.555 .. 313.635, z 2.815 .. 2.9.
-Signs: the gate's enamel; the gauge TRAYS ONLY - LOAD TO THE LINE (windows 1 2 3, a red line, OVER); MAX 3 PORTIONS on the
-car; STAFF ONLY (lower corridor), STAFF STAIR (passage), WORKSHOP with an arrow (stair foot); a DINNERS board in the kitchen.
+Signs: the gate's enamel; the gauge TRAYS ONLY - LOAD TO THE LINE (one window LOAD, a red line, OVER); NO PASSENGERS on the
+car (was MAX 3 PORTIONS: no longer true of the puzzle); STAFF ONLY (lower corridor), STAFF STAIR (passage), WORKSHOP with an arrow (stair foot); a DINNERS board in the kitchen.
 
 ROPES: no rope objects to scale. Each rope is part of its mover's mesh and runs 2.85 up from its shackle, through the head frame
 and the ceiling into a black trunk above it (x 312.78 .. 313.22, y 0.36 .. 0.82, z 4.05 .. 6.82, swatch black like DL-16's
@@ -1447,12 +1491,18 @@ LIGHTS (index.html P/S, game coords):
   P(0xffd0a0, 0.8, 3.5, 322.75, 1.9, -1.0)                                    // the bulkhead by the stair's foot
   P(0xffc890, 0.5, 1.8, 312.72, 1.15, -0.42)                                  // in the car (move it with the car)
 
-MATERIALS: new EMIT Att16aCarLamp: [1, .8, .52, 4], Att16aLoad1: [1, .62, .16, 0], Att16aLoad2: [1, .62, .16, 0],
-  Att16aLoad3: [1, .62, .16, 0], Att16aLoadOver: [1, .12, .06, 0]. New image materials (pass through as maps):
+MATERIALS: new EMIT Att16aCarLamp: [1, .8, .52, 4], Att16aLoad1: [1, .62, .16, 0], Att16aLoadOver: [1, .12, .06, 0],
+  Att16aRelayLamp: [.35, 1, .45, 3]. Reused PLAIN NewCable, NewSteel (pass 6's new line, same values). New image materials (pass through as maps):
   Att16aAtlas (textures/dl16a_atlas.png, 2048 x 1024: tiles, signs, plates, swatches) and Chalk16a (textures/dl16a_chalk.png,
   1024 x 512 RGBA, alpha BLEND; its name starts with Chalk, so materialFor() keeps its alpha as a decal).
   Reused WORN: WinPlaster WinDado WinLino PigeonWood CrateWood WornIron CastIron HandledBrass PupilWood SafetyYellow
   DustyCream DarkMetal; PLAIN Copper; EMIT AttBulbGlow (Att16aLamps).
+
+SERVICE CABLE (in Att16aSet; NewCable r 0.011, NewSteel clips every 1.05 m, two taped joints): in through the wall over DL-16's
+partition at (310.15, 1.17, 3.70), along the back wall at z 3.70 (under the beams' 3.74), down into the relay box (x 314.02 ..
+314.26, y 1.11 .. 1.2, z 3.40 .. 3.62, by the hatch at the top of the shaft) and out, along the passage over the gate to 321.2,
+down the stair's wall parallel to the pitch (1.3 over the nosings) to (322.5, 2.4), level to the corner, then along DL-17's
+wall face (x 323.97) to y 0.63, into the wall over its doorway (a gland). All behind the lane.
 
 DEVIATIONS: none from the build sheet's numbers. Interpretations: the bell push is at z 0.6 world with the car at the bottom
 (0.55 above the car floor); the stair's 12th tread is the floor (tops 2.2 .. 0.0); the gauge's plate sits 12 mm proud of the

@@ -18,8 +18,9 @@ What the game moves (origin = pivot, world coordinates; REPORT at the bottom has
     Att14bCone     the lamp's beam; origin at the lamp's mouth (266.35, 0.55, 1.0); pointing +x
     Att14bFig      the teaching figure (DL-15's rail figure); origin on the rail top under its bogie (269.9, 0.85, 0.03);
                    standing in the bay on the spur, facing +x
-Static: Att14bSet (the corridor, niche A, the bay and its spur, the dock, the stair and landing, signs, dressing),
-Att14bLamps (EMIT AttGlobeLamp: two dim globes, one over the stair).
+Static: Att14bSet (the corridor, niche A, the bay and its spur, the dock, the stair and landing, signs, dressing, the
+present-day service cable and its relay box), Att14bLamps (EMIT AttGlobeLamp: two dim globes, one over the stair),
+Att14bRelayLamp (EMIT, the relay box's green pilot lamp, lit).
 """
 import math
 import os
@@ -70,6 +71,9 @@ TREADS = [(STAIR[0] + i * RUN, (STAIR[0] + (i + 1) * RUN) if i < N_TREAD - 1 els
           for i in range(N_TREAD)]        # (x0, x1, top): the 9th (277.34..277.6) is at 1.6, flush with the landing
 STAIR_Y = (-0.45, 0.6)
 LAND = (277.6, 278.0, 1.6)
+SERVICE_Y, SERVICE_Z = WALL_Y - 0.013, 2.7   # the new service cable along the back wall, under the cornice
+RELAY = (270.88, 271.12, 0.89, 2.58, 2.8)     # its relay box: x0, x1, front y, z0, z1
+RELAY_LAMP = (271.0, 2.635, 0.014)            # Att14bRelayLamp on the box's front: x, z, radius
 LAMPS = (267.35, 276.9)        # the two lit globes (one over the stair); a dead one at 272.3
 DEAD_LAMP = 272.3
 GLOBE_Z = 2.62
@@ -96,10 +100,13 @@ GAME_WORN = {
     'CreamPaint': dict(base=[.66, .58, .40], dirt=[.36, .30, .19], chip=[.028, .025, .02], rough=.78, chipRough=.5, metal=0, grime=3, chipScale=20, chipAmt=.63, dust=[.62, .57, .45], dustAmt=.3, streak=.55),
     'SorterCushion': dict(base=[.16, .045, .035], dirt=[.07, .03, .022], chip=[.24, .17, .12], rough=.62, chipRough=.85, metal=0, grime=8, chipScale=30, chipAmt=.72, dust=[.12, .1, .09], dustAmt=.4),
 }
-GAME_PLAIN = {'Brass': ((.45, .32, .12), .45, .8), 'Rubber': ((.012, .012, .011), .7, 0.0)}
+GAME_PLAIN = {'Brass': ((.45, .32, .12), .45, .8), 'Rubber': ((.012, .012, .011), .7, 0.0),
+              'NewCable': ((0.016, 0.016, 0.018), 0.28, 0.0),      # the present-day service cable (pass 6's 'new cable')
+              'NewSteel': ((0.26, 0.27, 0.28), 0.4, 0.8)}          # galvanised: its clips, the relay box
 GAME_EMIT = {'AttGlobeLamp': ((1.0, 0.86, 0.62), 3.0)}
 NEW_EMIT = {'Att14bTrolleyLamp': ((1.0, 0.8, 0.5), 4.0),     # the trolley's lamp glass (part of Att14bTrolley)
-            'Att14bBeam': ((1.0, 0.85, 0.6), 1.0)}           # Att14bCone (the game gives it its own additive material)
+            'Att14bBeam': ((1.0, 0.85, 0.6), 1.0),           # Att14bCone (the game gives it its own additive material)
+            'Att14bRelayLamp': ((0.45, 1.0, 0.5), 5.0)}      # the new relay box's pilot lamp, lit
 ATLAS_MAT = 'Att14bAtlas'
 
 
@@ -809,6 +816,69 @@ def build_dressing(B):
         x += ln + rnd.uniform(0.1, 0.5)
 
 
+def service_cable(bm, runs, mc, ms, out=Vector((0, -1, 0)), r=0.011, pitch=1.05, sag=0.007, joints=(0.33, 0.71)):
+    """The present-day service thread (the prologue's 'new cable', art/pass6/build_ending_secrets.py): glossy black
+    cable (material index mc) run in straight lengths along a wall, `out` the wall's normal into the room; galvanised
+    clips (ms) about every `pitch` m, the cable sagging a little between them (run by hand, not the school's tidy
+    conduit); two taped joints (black bands) at fractions `joints` of the whole length. runs: lists of points."""
+    total = sum((Vector(b) - Vector(a)).length for run in runs for a, b in zip(run, run[1:]))
+    done, tapes = 0.0, [t * total for t in joints]
+    for run in runs:
+        run = [Vector(p) for p in run]
+        pts = [run[0]]
+        clips = []
+        for a, b in zip(run, run[1:]):
+            L = (b - a).length
+            n = max(1, int(round(L / pitch)))
+            for k in range(1, n + 1):
+                mid = a.lerp(b, (k - 0.5) / n)
+                if abs((b - a).normalized().z) < 0.3:
+                    mid = mid - Vector((0, 0, sag))
+                pts += [mid, a.lerp(b, k / n)]
+            d = (b - a).normalized()
+            for k in range(n + 1):
+                p = a + d * 0.12 if k == 0 else (b - d * 0.12 if k == n else a.lerp(b, k / n))
+                clips.append((p, d))
+        for a, b in zip(pts, pts[1:]):
+            add_cyl(bm, a, b, r, mat=mc, seg=6)
+            add_sphere(bm, b, r, mat=mc, seg=6)
+            seg = (b - a).length
+            for t in tapes:
+                if done <= t < done + seg:
+                    p = a.lerp(b, (t - done) / seg)
+                    d = (b - a).normalized()
+                    add_cyl(bm, p - d * 0.03, p + d * 0.03, r * 1.45, mat=mc, seg=6)
+            done += seg
+        for p, d in clips:
+            side = d.cross(out).normalized()
+            for sgn in (-1, 1):
+                add_box(bm, p + side * sgn * 0.02 - out * (r - 0.004), (0.014, 0.014, 0.014), mat=ms)
+            add_cyl(bm, p - side * 0.024 + out * 0.006, p + side * 0.024 + out * 0.006, 0.0065, mat=ms, seg=4)
+
+
+def build_service(B, coll):
+    """The present-day service thread: the new cable along the back wall just under the cornice, the whole length,
+    through one small new galvanised relay box at 271 with a green pilot lamp (Att14bRelayLamp, EMIT, lit). Recent
+    work on an old building: glossy black, clipped by hand, nothing like the school's own wiring."""
+    x0, x1, yf, z0, z1 = RELAY
+    y, z = SERVICE_Y, SERVICE_Z
+    service_cable(B.bm, [[(X0, y, z), (x0, y, z)], [(x1, y, z), (X1, y, z)]], B.m('NewCable'), B.m('NewSteel'))
+    B.box('NewSteel', x0, x1, yf + 0.004, WALL_Y, z0, z1)                        # the box
+    B.box('NewSteel', x0 + 0.012, x1 - 0.012, yf, yf + 0.004, z0 + 0.012, z1 - 0.012)   # its lid
+    for xx, zz in ((x0 + 0.025, z0 + 0.025), (x1 - 0.025, z0 + 0.025), (x0 + 0.025, z1 - 0.025), (x1 - 0.025, z1 - 0.025)):
+        B.cyl('NewSteel', (xx, yf, zz), (xx, yf - 0.006, zz), 0.007, seg=6)
+    for xx in (x0, x1):                                                           # glands where the cable goes in
+        s = -1 if xx == x0 else 1
+        B.cyl('NewSteel', (xx, y - 0.04, z), (xx + s * 0.025, y - 0.04, z), 0.017, seg=8)
+    lx, lz, lr = RELAY_LAMP
+    B.cyl('NewSteel', (lx, yf, lz), (lx, yf - 0.008, lz), lr + 0.007, seg=12)      # the lamp's bezel
+    B.cyl('NewSteel', (lx, yf, lz + 0.075), (lx, yf - 0.004, lz + 0.075), 0.022, seg=6)    # a small switch
+    L = MB()
+    c = (lx, yf - 0.012, lz)
+    L.sphere('Att14bRelayLamp', c, lr, seg=10, scale=(1, 0.6, 1))
+    return L.obj('Att14bRelayLamp', coll, origin=c)
+
+
 def build_lighting(B, coll):
     """Globe pendants on short rods (the lit globes are their own object, EMIT AttGlobeLamp); a dead one between."""
     for x in LAMPS + (DEAD_LAMP,):
@@ -1025,8 +1095,9 @@ def build_set(dl01, m, coll):
     build_stair(B)
     build_signs(B)
     build_dressing(B)
+    relay = build_service(B, coll)
     lamps = build_lighting(B, coll)
-    objs = [B.obj('Att14bSet', coll), lamps]
+    objs = [B.obj('Att14bSet', coll), lamps, relay]
     objs.append(build_trolley(coll))
     objs.append(build_cone(coll))
     objs.append(build_figure(coll))
@@ -1052,9 +1123,10 @@ MOVED (origin = pivot, world, built pose):
 - Att14bTrolley: origin (266.0, 0.03, -0.55) = the rail top under the middle of its base; facing +x. Slides along x;
   rotate 180 deg about game y (Blender z) to face -x. Footprint: x -0.347..+0.36 about the origin (0.70 long: push
   handle at the back, padded paddle's face at +0.36; the lamp visor's lip reaches +0.37 at z 1.07), depth z +-0.145
-  (Blender y 0.405..0.695), cabinet +-0.14. Height 1.2 (bell top 1.20 above the floor). Lamp mouth +0.35 at y 1.0.
+  (Blender y 0.405..0.695), cabinet +-0.14. Height 1.2 above the rail top (bell top 1.23 above the floor). Lamp mouth +0.35 at y 1.0.
   Paddle: x +0.29..+0.36, y 0.18..0.48 above the floor, z +-0.13. Bogie: wheels at x +-0.19 (r 0.03) on the rails at
-  z -0.47 / -0.63; nothing below the rail top but flanges (inside the rails). The bell (Att14bBell) is part of the
+  z -0.47 / -0.63; nothing below the rail top but flanges (inside the rails). Passing the bay it clears the figure
+  (whose arm reaches z -0.703) by 8 mm. The bell (Att14bBell) is part of the
   trolley: its mouth about (x -0.06, y 1.14) in the trolley's frame, for a sound emitter.
 - Att14bCone: origin (266.35, 1.0, -0.55) = the lamp's mouth (trolley x + 0.35). Points +x: a 16-sided truncated cone,
   r 0.064 at the mouth, r 0.6 at its far end, a circle in the plane x + 2.6 centred at y 0.55 (0.45 below the mouth;
@@ -1063,7 +1135,7 @@ MOVED (origin = pivot, world, built pose):
   Its far circle reaches y -0.05 (just under the floor) and z -1.15 (0.15 into the back wall), as the build sheet's
   numbers give; it reads fine additive. Parent it to the trolley at local (+0.35, +0.97, 0) or copy its transform.
 - Att14bFig: origin (269.9, 0.03, -0.85) = on the spur's rail top under its bogie; facing +x; DL-15's figure mesh
-  (0.95 tall above the rail top, body z +-0.13, bogie 0.40 long with buffers) plus plaster on its cheek and arm and
+  (0.95 tall above the rail top, body z +-0.15 at its arms, bogie 0.40 long with buffers) plus plaster on its cheek and arm and
   the PUPIL card on a string (hung at its chest, turned 50 deg toward the camera). Slide it to z -0.55 (out of the
   bay onto the main rail), then along x; at 262.2 it is in dl14a's rail stub.
 
@@ -1098,6 +1170,12 @@ y 1.15-1.45; SICK BAY with an arrow up the stair, red, x 275.55-276.45, y 2.05-2
 DRESSING: a lost slipper by niche A (263.93, 0, -0.1); chalk feet in pairs with a cross by each at x 266.9, 268.55,
 271.15, 272.75, 274.25 (along the lane, facing +x) and a scuffed chalk line at z -0.33.
 
+SERVICE THREAD (the director's addition): the prologue's new cable (PLAIN NewCable, glossy black, r 0.011; NewSteel
+galvanised clips about every 1.05 m, sagging a little between; two taped joints) along the back wall at y 2.7, z
+-0.987, the whole length 263.0-278.0, through a new galvanised relay box at x 270.88-271.12, y 2.58-2.80 (0.11 deep).
+Att14bRelayLamp: its green pilot lamp, own object, EMIT Att14bRelayLamp [.45, 1, .5, 5] (lit), origin
+(271.0, 2.635, -0.878). Static; nothing for the game to do but keep it lit.
+
 LAMPS: Att14bLamps (EMIT AttGlobeLamp, existing): two globes at (267.35, 2.62, 0) and (276.9, 2.62, 0) (over the
 stair); a dead globe at 272.3. Trolley lamp glass: material Att14bTrolleyLamp inside Att14bTrolley (r 0.064, at the
 mouth). Suggested lights (index.html P/S format):
@@ -1109,5 +1187,6 @@ P(0xb8c8dc, 0.3, 3, 270.0, 1.2, -1.3)      the bay's recess, cool
 MATERIALS: reused WORN WinPlaster, WinDado, WinLino, PigeonWood, CrateWood, WornIron, CastIron, HandledBrass,
 PupilWood, CreamPaint (the trolley's faded enamel), SorterCushion (its paddle); PLAIN Brass (the bell), Rubber; EMIT
 AttGlobeLamp. New: image Att14bAtlas (textures/dl14b_atlas.png, passes through as a map); EMIT
-Att14bTrolleyLamp: [1, .8, .5, 4] and Att14bBeam: [1, .85, .6, 1] (the cone; the game overrides it).
+Att14bTrolleyLamp: [1, .8, .5, 4], Att14bBeam: [1, .85, .6, 1] (the cone; the game overrides it) and
+Att14bRelayLamp: [.45, 1, .5, 5]. PLAIN NewCable and NewSteel (existing, pass 6).
 """

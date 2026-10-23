@@ -151,6 +151,14 @@ LATCH_EYE = 295.925                             # keeper on the leaf. The chain'
 LATCH_UP = 70.0                                 # degrees, lifted: about Blender -y (game +z), the bar's end rising
 KEY_AT = (285.60, 1.04, CONTENT_Z + 0.0025 + 0.012, 0.5)   # Att17Key in the drawer, shut: its socket's centre, its turn
 RIGCARD = (293.10, 293.40, 1.92, 2.098)         # Vance's card on the tank's front: x0, x1, z0, z1
+# The present-day service thread (the director's addition; the prologue's new cable, art/pass6/build_ending_secrets.py):
+# a new cable comes in through the left wall, runs along the top of the back wall to a small new pump-and-relay box by
+# the tank (which refills the tank through a recently repaired pipe), and carries on through the end wall by the stair
+# door and up the stairwell toward ring A. The way on follows it.
+PUMP = (294.38, 294.76, 1.10, 1.92, 2.32)       # the box: x0, x1, front face y (its back on the wall), z0, z1
+RELAY_LAMP = (294.70, 1.094, 2.27)              # Att17RelayLamp: the tiny green pilot lamp on its front (centre)
+CABLE_Y, CABLE_Z = WALL_Y - 0.03, 2.80          # the cable along the top of the back wall
+WELL_CABLE_Y = 0.87                             # and along the stairwell's back wall (face y 0.9), 1.5 over the nosings
 
 # =====================================================================================================================
 # Materials
@@ -187,8 +195,11 @@ REUSE_WORN = {   # names already in index.html's WORN table (fallbacks for a lon
 }
 REUSE_PLAIN = {'DirtyGlass': ((.03, .035, .035), .25, .2), 'TeaEnamel': ((.58, .55, .47), .35, 0.0),
                'Cable': ((.014, .013, .012), .55, 0.0), 'Copper': ((.55, .3, .18), .35, 1.0),
-               'Water': ((.01, .012, .012), .04, .3)}     # the rig's water (the game's Water: dark, a little see-through)
-NEW_EMIT = {'Att17GrowLamp': ((0.78, 0.84, 1.0), 3.0), 'Att17Bulb': ((1.0, 0.78, 0.5), 5.0), 'Att17StairLamp': ((1.0, 0.8, 0.55), 6.0)}
+               'Water': ((.01, .012, .012), .04, .3),     # the rig's water (the game's Water: dark, a little see-through)
+               'NewCable': ((.016, .016, .018), .28, 0.0),   # the prologue's new cable: glossy black (and the fresh tape)
+               'NewSteel': ((.26, .27, .28), .4, .8)}        # galvanised: its clips, the new box, the new coupling
+NEW_EMIT = {'Att17GrowLamp': ((0.78, 0.84, 1.0), 3.0), 'Att17Bulb': ((1.0, 0.78, 0.5), 5.0), 'Att17StairLamp': ((1.0, 0.8, 0.55), 6.0),
+            'Att17RelayLamp': ((0.35, 1.0, 0.45), 4.0)}
 REUSE_EMIT = {}
 IMAGES = {'Att17Atlas': ('dl17_atlas.png', 0.85)}
 
@@ -737,7 +748,7 @@ def make_drawing():
     lbl((1106, 844), 'SHEET 1/1', 19, 'l')
     rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET)
     for (x, y), s, size, anc, kind in lab:                      # her lettering: careful capitals, not quite level
-        if kind == 'hand':                                      # (her quick notes on the rig: her own running hand)
+        if kind == 'hand':                                      # (her running hand, for quick notes)
             _hand(rl, (x * K, y * K), s, _font(size * K, 'hand'), INK, rnd, jit=0.7 * K, rot=3.0, anchor=anc, track=0.98)
         else:
             _hand(rl, (x * K, y * K), s, _font(size * K, 'letter'), INK, rnd, jit=0.8 * K, rot=4.0, anchor=anc, track=1.07)
@@ -803,13 +814,13 @@ def make_drawing():
     # 5. Beside her working for the rig, the volunteer again, in red pencil this time: a margin note.
     rd = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
     RD = RED + (235,)
-    for (x, y), t_, size in (((730, 676), 'Good eye.', 28), ((730, 712), 'Most of them', 24), ((730, 740), 'never look', 24),
-                             ((730, 768), 'behind the', 24), ((730, 796), 'bench.', 24), ((780, 830), '- E.V.', 22)):
+    for (x, y), t_, size in (((476, 714), 'Good eye.', 28), ((476, 750), 'Most of them never', 24),
+                             ((476, 778), 'look behind the', 24), ((476, 806), 'bench.', 24), ((560, 838), '- E.V.', 22)):
         _hand(rd, (x * K, y * K), t_, _font(size * K, 'ink'), RD, rnd, jit=0.7 * K, rot=3.0)
     dr = ImageDraw.Draw(rd)
-    dr.line(k(_wob([(722, 690), (708, 708), (694, 726)], rnd, 0.6, 7.0)), fill=RD, width=int(2.6 * K), joint='curve')
-    for s_ in (1, -1):                                          # his arrow, to her "B goes to 1!"
-        dr.line(k([(694, 726), (694 + 4 + s_ * 5, 726 - 9 + s_ * 3)]), fill=RD, width=int(2.4 * K))
+    dr.line(k(_wob([(468, 722), (432, 736), (396, 752)], rnd, 0.6, 7.0)), fill=RD, width=int(2.6 * K), joint='curve')
+    for s_ in (1, -1):                                          # his arrow, to her pipes behind the bench
+        dr.line(k([(396, 752), (396 + 10 + s_ * 2, 752 - 2 + s_ * 6)]), fill=RD, width=int(2.4 * K))
     rd = _grain(rd.filter(ImageFilter.GaussianBlur(0.55 * K)), 1706, lo=0.55)
 
     for lay in (child, ghost, rl, bl, rd):
@@ -821,7 +832,8 @@ def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET):
     """Her working for Vance's test rig, along the bottom of her irrigation sheet (the expansion): the rig drawn from
     the front, as it stands, to scale: the bench, the three beds with their names, the levers A B C under them, and the
     three pipes traced from each lever up behind the bench to the bed it really feeds, each broken where it passes
-    behind another, gone over twice; an arrow down from each spout. Her notes beside it, in her running hand."""
+    behind another, gone over twice; an arrow down from each spout. It depicts the rig; it doesn't spell out the
+    answer (no notes: the crossing is only drawn)."""
     XF[:] = SHEET
     X = lambda x: 50 + (x - RIG[0]) * 165
     Z = lambda z: 834 - (z - RIG[4]) * 165
@@ -880,7 +892,7 @@ def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET):
                     continue
                 pa = (a[0] + (b[0] - a[0]) * p0, a[1] + (b[1] - a[1]) * p0)
                 pb = (a[0] + (b[0] - a[0]) * p1, a[1] + (b[1] - a[1]) * p1)
-                for k_ in range(3 if n_ == 'B' else 2):                  # traced: gone over, B once more
+                for k_ in range(2):                                       # traced: gone over
                     if i == 2 and p1 == 1.0 and k_ == 0:
                         arrow(pa, (pb[0], pb[1] + 6), 8, w=2.4)
                     else:
@@ -889,11 +901,6 @@ def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET):
         for dz in (16, 24):                                           # drops, falling
             pen([(mx, my + dz), (mx, my + dz + 4)], 1.6, amp=0.2)
     lbl((246, 704), 'TEST RIG (FROM THE FRONT)', 14)
-    # Her notes, in her running hand; an arrow to where B goes.
-    lbl((446, 748), 'B goes to 1!  (they cross)', 24, 'l', 'hand')
-    lbl((446, 798), 'shut two, water the third', 24, 'l', 'hand')
-    arrow((440, 744), (234, 724), 9, w=1.8)
-    pen([(446, 762), (514, 760)], 1.6, amp=0.4)                       # "B goes to 1!", underlined
 
 
 CARD_A = (('M. D.', '14', 'WORKS DEPT., RING A', 'WATER AND IRRIGATION', 'E. VANCE', 'BY THE PUPIL',
@@ -2348,13 +2355,9 @@ def build_rig(B, rnd):
     bx0, bx1, bby0, bby1, bz0, bz1 = BACKBOARD                       # the board behind them, painted cream
     B.box('TeaEnamel', bx0, bx1, bby0, bby1, bz0, bz1)
     B.box('PigeonWood', bx0 - 0.015, bx1 + 0.015, bby0 - 0.01, bby1, bz1, bz1 + 0.02)
-    # The feed: from the ceiling into the tank's top (it refills), and the tank's down-pipe to the valve, the valve's
-    # body (its spindle and wheel are Att17Valve), on down under the bench to the manifold.
+    # The tank's down-pipe to the valve, the valve's body (its spindle and wheel are Att17Valve), on down under the
+    # bench to the manifold. (Its refill, from the new pump: build_service.)
     tx0, tx1, ty0, ty1, tz0, tz1 = TANK
-    pipe(B, [(294.05, 1.15, CEIL), (294.05, 1.15, tz1 - 0.02)], mt='Copper', r=0.012)
-    B.sphere('HandledBrass', (294.05, 1.15, 2.62), 0.024, seg=10)
-    B.cyl('HandledBrass', (294.05, 1.15, 2.62), (294.05, 1.08, 2.62), 0.007, seg=6)
-    B.cyl('WornIron', (294.0, 1.08, 2.62), (294.1, 1.08, 2.62), 0.006, seg=6)
     vx, vy, vz = VALVE
     pipe(B, [(tx0 + 0.02, 0.95, tz0 + 0.06), (vx, 0.95, tz0 + 0.06), (vx, DOWN_Y, tz0 + 0.06), (vx, DOWN_Y, mz),
              (SLUICES[-1][1] + 0.05, my, mz)], mt='Copper', r=0.016)
@@ -2416,6 +2419,93 @@ def build_rig(B, rnd):
     B.box('WornIron', lx - 0.025, lx + 0.03, DOOR17[0], DOOR17[0] + 0.006, lz - 0.05, lz + 0.05)
     B.cyl('WornIron', (lx, DOOR17[0] + 0.006, lz), (lx, ly + 0.012, lz), 0.006, seg=6)
     B.cyl('HandledBrass', (lx, ly + 0.012, lz), (lx, ly + 0.018, lz), 0.009, seg=8)
+
+
+def build_service(B):
+    """The present-day service thread: the new cable (glossy black, galvanised clips about every metre, two taped
+    joints) in through the left wall, along the top of the back wall, a jumper down to the new pump-and-relay box by
+    the tank, on through the end wall by the stair door and up the stairwell, clipped to the well's wall, toward ring A.
+    The box (galvanised, clean): the old main comes down into it, the little pump under it, and out of it the tank's
+    refill, a recently repaired pipe: a bright new coupling, fresh tape. Its pilot lamp is Att17RelayLamp."""
+    # The cable's path: dipping a little between its clips on the long runs.
+    x0w = LWALL[1]
+    run = [Vector((x0w - 0.02, CABLE_Y, CABLE_Z))]
+    x = x0w + 0.35
+    clips = []
+    while x < END_X - 0.25:
+        run.append(Vector((x - 0.5, CABLE_Y, CABLE_Z - 0.012)) if x - 0.5 > x0w + 0.1 else None)
+        run.append(Vector((x, CABLE_Y, CABLE_Z)))
+        clips.append((Vector((x, CABLE_Y, CABLE_Z)), Vector((1, 0, 0)), Vector((0, -1, 0))))
+        x += 1.05
+    run = [p for p in run if p is not None]
+    run += [Vector((END_X - 0.03, CABLE_Y, CABLE_Z)), Vector((END_X - 0.03, WELL_CABLE_Y, CABLE_Z)),
+            Vector((X1 + 0.04, WELL_CABLE_Y, CABLE_Z))]
+    clips.append((Vector((END_X - 0.03, (CABLE_Y + WELL_CABLE_Y) / 2, CABLE_Z)), Vector((0, 1, 0)), Vector((-1, 0, 0))))
+    slope = RISE / GOING
+    xr = STAIR_X0 + (CABLE_Z - (RISE + 1.5)) / slope                 # where 1.5 over the nosings reaches the cable
+    xt = xr + (WELL[5] - 0.05 - CABLE_Z) / slope                     # and where it goes out of the top of the well
+    well = [Vector((X1 + 0.04, WELL_CABLE_Y, CABLE_Z)), Vector((xr, WELL_CABLE_Y, CABLE_Z)), Vector((xt, WELL_CABLE_Y, WELL[5] - 0.05))]
+    for a, b in zip(well, well[1:]):
+        L_ = (b - a).length
+        k = 1
+        while k * 1.05 < L_:
+            p = a.lerp(b, k * 1.05 / L_)
+            clips.append((p, (b - a).normalized(), Vector((0, -1, 0))))
+            k += 1
+    path = run + well[1:]
+    for a, b in zip(path, path[1:]):
+        B.cyl('NewCable', a, b, 0.011, seg=6)
+    for p in path[1:-1]:
+        B.sphere('NewCable', p, 0.011, seg=6)
+    for p, d, n in clips:                                             # galvanised saddles, screwed to the wall
+        side = d.cross(n).normalized()
+        for s_ in (-1, 1):
+            B._log(add_box(B.bm, p + side * s_ * 0.022 - n * 0.004, (0.012, 0.012, 0.012), mat=B.m('NewSteel')))
+        B.cyl('NewSteel', p - side * 0.026 + n * 0.004, p + side * 0.026 + n * 0.004, 0.0065, seg=4)
+    for t in (0.3, 0.72):                                             # taped joints
+        k = int(len(run) * t)
+        a, b = run[k], run[k + 1]
+        B.cyl('NewCable', a.lerp(b, 0.4), a.lerp(b, 0.4) + (b - a).normalized() * 0.06, 0.016, seg=6)
+    B.torus('NewSteel', (x0w + 0.004, CABLE_Y, CABLE_Z), (1, 0, 0), 0.016, 0.005, seg=10, rseg=4)     # its grommets
+    B.torus('NewSteel', (END_X - 0.03, WELL_CABLE_Y, CABLE_Z), (0, 1, 0), 0.016, 0.005, seg=10, rseg=4)
+    # The pump-and-relay box: galvanised, clean, a screwed lid, a gland for the jumper; the pump under it.
+    bx0, bx1, by, bz0, bz1 = PUMP
+    B.box('NewSteel', bx0, bx1, by, WALL_Y, bz0, bz1)
+    B.box('NewSteel', bx0 + 0.012, bx1 - 0.012, by - 0.006, by, bz0 + 0.012, bz1 - 0.012)
+    for xx in (bx0 + 0.03, bx1 - 0.03):
+        for zz in (bz0 + 0.03, bz1 - 0.03):
+            B.cyl('NewSteel', (xx, by - 0.006, zz), (xx, by - 0.011, zz), 0.007, seg=6)
+    lx, ly, lz = RELAY_LAMP
+    B.torus('NewSteel', (lx, by - 0.007, lz), (0, 1, 0), 0.016, 0.004, seg=12, rseg=4)            # the pilot's bezel
+    gx = bx1 - 0.08
+    B.cyl('NewSteel', (gx, (by + WALL_Y) / 2, bz1), (gx, (by + WALL_Y) / 2, bz1 + 0.03), 0.018, seg=8)
+    pipe(B, [(gx, (by + WALL_Y) / 2, bz1 + 0.03), (gx, CABLE_Y, bz1 + 0.12), (gx, CABLE_Y, CABLE_Z - 0.01)], mt='NewCable', r=0.008)
+    my_ = (by + WALL_Y) / 2
+    B.cyl('NewSteel', (bx0 + 0.04, my_, bz0 - 0.09), (bx1 - 0.06, my_, bz0 - 0.09), 0.055, seg=14)  # the pump
+    for xx in (bx0 + 0.04, bx1 - 0.06):
+        B.cyl('NewSteel', (xx - 0.006, my_, bz0 - 0.09), (xx + 0.006, my_, bz0 - 0.09), 0.06, seg=14)
+    B.box('NewSteel', bx0 + 0.08, bx1 - 0.1, my_ - 0.03, WALL_Y, bz0 - 0.16, bz0 - 0.14)          # its foot, to the wall
+    B.cyl('NewSteel', ((bx0 + bx1) / 2, my_, bz0 - 0.04), ((bx0 + bx1) / 2, my_, bz0), 0.014, seg=8)
+    # The old main comes down into it; out of its side, the tank's refill (old copper, a newly repaired joint).
+    ix = bx0 + 0.1
+    pipe(B, [(ix, my_ + 0.02, CEIL), (ix, my_ + 0.02, bz1)], mt='Copper', r=0.012)
+    tx1, tz1, ry = TANK[1], TANK[5], 1.17
+    ox = tx1 + 0.1
+    pipe(B, [(bx0, ry, bz1 - 0.05), (ox, ry, bz1 - 0.05), (ox, ry, tz1 + 0.12), (TANK[0] + 1.05, ry, tz1 + 0.12),
+             (TANK[0] + 1.05, ry, tz1 - 0.02)], mt='Copper', r=0.012)
+    cx = (ox + TANK[0] + 1.05) / 2
+    B.cyl('NewSteel', (cx - 0.028, ry, tz1 + 0.12), (cx + 0.028, ry, tz1 + 0.12), 0.019, seg=10)    # the new coupling
+    for xx in (cx - 0.028, cx + 0.028):
+        B.cyl('NewSteel', (xx - 0.004, ry, tz1 + 0.12), (xx + 0.004, ry, tz1 + 0.12), 0.022, seg=6)
+    for xx in (cx - 0.06, cx + 0.06):                                                               # fresh tape
+        B.cyl('NewCable', (xx - 0.013, ry, tz1 + 0.12), (xx + 0.013, ry, tz1 + 0.12), 0.0155, seg=8)
+
+
+def build_relay_lamp(coll):
+    """Att17RelayLamp: the new box's tiny green pilot lamp (EMIT Att17RelayLamp); origin its centre."""
+    B = MB()
+    B.sphere('Att17RelayLamp', RELAY_LAMP, 0.011, seg=10, scale=(1, 0.6, 1))
+    return B.obj('Att17RelayLamp', coll, origin=RELAY_LAMP)
 
 
 # =====================================================================================================================
@@ -2775,6 +2865,7 @@ def build_set(dl01, m, coll):
     build_floor_things(B, rnd)
     heap_under_tray(B)
     build_rig(B, random.Random(1790))
+    build_service(B)
     PLAYER_INFO = place_card_player(B)
     objs = [B.obj('Att17Set', coll)]
     drawer = build_drawer(coll)
@@ -2793,6 +2884,7 @@ def build_set(dl01, m, coll):
     objs += [build_bed_water(coll, i) for i in (1, 2, 3)]
     objs += [build_stream(coll, i) for i in (1, 2, 3)]
     objs.append(build_float(coll))
+    objs.append(build_relay_lamp(coll))
     bpy.context.view_layer.update()
     total_t, total_p = 0, 0
     for ob in objs:
@@ -2911,8 +3003,9 @@ DRAWER CONTENTS (Blender; open = shut y - 0.45)
   Expansion: her plan (all of the above but the right-hand column) is shrunk to 0.78 into the upper left; along the
   bottom, her working for the test rig: the rig from the front to scale (bench, beds "1 M.D.", "2 R.A.", "3 T.O.",
   levers A B C), the three pipes traced from each lever up behind the bench to the bed it feeds, broken where one
-  passes behind another; her notes "B goes to 1!  (they cross)" (an arrow to B's run) and "shut two, water the third";
-  beside them, his red pencil: "Good eye. Most of them never look behind the bench. - E.V." The atlas cell is where it
+  passes behind another (A to bed 3, B to bed 1, C to bed 2, as in the world: drawn, never written out; no notes of
+  hers on it). Beside it, his red pencil, an arrow to her pipes: "Good eye. Most of them never look behind the bench.
+  - E.V." The atlas cell is where it
   was: drawing (0, 0, 1280, 896); her card (1280, 0, 2048, 480).
 - Card 0.20 x 0.125, turned -0.09 rad: shut (285.93, 0.82, 0.3957), open (285.93, 0.37, 0.396) = game (285.93, 0.396, -0.37).
   Typed: NAME M. D., AGE 14, PLACED WITH WORKS DEPT., RING A, TRADE WATER AND IRRIGATION, SPONSOR E. VANCE,

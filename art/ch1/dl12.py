@@ -21,6 +21,11 @@ Objects (origins are pivots, in world coordinates):
     AttLampPresent  the PRESENT lamp's dome (EMIT AttLampPresent), origin at the dome's centre
     AttLampCoat     the COAT 7 lamp's dome (EMIT AttLampCoat)
     AttPegLamp      peg 7's little bulb (EMIT AttPegLamp)
+    Att12SpliceLamp the present-day service thread's first sign: the new galvanised splice box's pilot lamp (EMIT
+                    Att12SpliceLamp, green, lit: [.45, 1, .5, 5]), origin at its centre (201.65, 1.058, 2.69). In
+                    AttCloakroom: the school's old supply box (201.0-201.42, z 2.34-2.84) with its door hanging open, the
+                    splice box (201.52-201.78, z 2.5-2.76) jumpered into it, and the new cable (PLAIN NewCable, clips
+                    NewSteel) at z 2.68 along the wall to 216, through the gate's partition.
     AttCoat         the carried coat, built hanging on its hanger (origin at the inside top of the hanger's hook, the coat
                     hanging along -z, its front to -y); placed as found, laid flat along x on top of the bin. Coat 7 is M.'s:
                     its sleeves let down three times (bands of other cloth past each cuff, coat7_cuffs), its left pocket
@@ -96,6 +101,7 @@ NEW_EMIT = {       # name: (colour, strength), as index.html EMIT (0: the game s
     'AttLampCoat': ((1.0, 0.68, 0.28), 0.0),
     'AttPegLamp': ((1.0, 0.68, 0.28), 0.0),
     'AttBulbGlow': ((1.0, 0.82, 0.58), 4.0),
+    'Att12SpliceLamp': ((0.45, 1.0, 0.5), 5.0),      # the new splice box's pilot lamp, lit (the service thread)
 }
 # Existing names (the game's tables), for a build where an earlier builder hasn't made them.
 FALLBACK_WORN = {
@@ -110,6 +116,7 @@ FALLBACK_WORN = {
 }
 FALLBACK_PLAIN = {
     'AtriumDark': ((0.006, 0.006, 0.006), 0.8, 0.0), 'Brass': ((.45, .32, .12), .45, .8), 'DeadBulb': ((.16, .16, .15), .25, 0),
+    'NewCable': ((0.016, 0.016, 0.018), 0.28, 0.0), 'NewSteel': ((0.26, 0.27, 0.28), 0.4, 0.8), 'Copper': ((.55, .3, .18), .35, 1.0),
 }
 FALLBACK_EMIT = {}
 ATLAS = 'Dl12AtlasMat'
@@ -1493,6 +1500,59 @@ def build_lore(B):
 # =====================================================================================================================
 # Voice props (art/common/voice_props.py)
 # =====================================================================================================================
+# The present-day service thread (the director's addition; the prologue's 'new cable'): the school's old supply box high
+# on the back wall by the way in, its door hanging open; a new galvanised splice box bolted beside it, jumpered in, its
+# pilot lamp lit (Att12SpliceLamp); the new cable on from it along the wall to the end of the set.
+OLD_SUPPLY = (201.0, 201.42, 2.34, 2.84)      # x0, x1, z0, z1 (0.18 deep off the wall)
+SPLICE = (201.52, 201.78, 2.5, 2.76)          # x0, x1, z0, z1 (0.13 deep)
+SERVICE_Z = 2.68                              # the cable's height (under the gate lead's 2.74)
+
+
+def build_service(B, coll):
+    from dl14b import service_cable
+    yw = WALL_Y
+    x0, x1, z0, z1 = OLD_SUPPLY
+    B.box((x0, x1), (yw - 0.18, yw), (z0, z1), 'WornIron')
+    B.box((x0 + 0.03, x1 - 0.03), (yw - 0.185, yw - 0.15), (z0 + 0.03, z1 - 0.03), 'AtriumDark')     # its open mouth
+    for k in range(3):                                                                               # the old busbars
+        xx = x0 + 0.1 + k * 0.11
+        B.box((xx - 0.01, xx + 0.01), (yw - 0.15, yw - 0.12), (z0 + 0.1, z1 - 0.08), 'Copper')
+    hinge = Matrix.Translation((x0, yw - 0.18, z0)) @ Matrix.Rotation(math.radians(-108), 4, 'Z') @ Matrix.Rotation(math.radians(3), 4, 'Y')
+    tmp = B.sub()
+    add_box(tmp, ((x1 - x0) / 2, -0.01, (z1 - z0) / 2), (x1 - x0, 0.02, z1 - z0), mat=B('WornIron'))
+    add_box(tmp, ((x1 - x0) / 2, -0.025, (z1 - z0) / 2 + 0.05), (0.2, 0.01, 0.13), mat=B('HomePlaster'))   # the old circuit card
+    B.merge(tmp, hinge)
+    for xx in (x0 + 0.1, x0 + 0.28):                                                                 # its old conduits, up
+        B.cyl((xx, yw - 0.06, z1), (xx, yw - 0.06, CEIL), 0.022, 'WornIron', seg=8)
+    a0, a1, b0, b1 = SPLICE
+    B.box((a0, a1), (yw - 0.126, yw), (b0, b1), 'NewSteel')
+    B.box((a0 + 0.01, a1 - 0.01), (yw - 0.13, yw - 0.126), (b0 + 0.01, b1 - 0.01), 'NewSteel')
+    for xx, zz in ((a0 + 0.02, b0 + 0.02), (a1 - 0.02, b0 + 0.02), (a0 + 0.02, b1 - 0.02), (a1 - 0.02, b1 - 0.02)):
+        B.cyl((xx, yw - 0.13, zz), (xx, yw - 0.137, zz), 0.008, 'NewSteel', seg=6)
+    for xx in (a0 - 0.012, a1 + 0.012):                                                              # the bolts into the wall
+        for zz in (b0 + 0.04, b1 - 0.04):
+            B.box((xx - 0.012, xx + 0.012), (yw - 0.02, yw), (zz - 0.012, zz + 0.012), 'NewSteel')
+    lx, lz = (a0 + a1) / 2, b1 - 0.07
+    B.cyl((lx, yw - 0.13, lz), (lx, yw - 0.138, lz), 0.024, 'NewSteel', seg=12)                       # the lamp's bezel
+    # the jumper into the old box's side through a fresh hole, a coil of tape on the box
+    jump = [Vector((a0, yw - 0.07, b0 + 0.07)), Vector((a0 - 0.04, yw - 0.08, b0 - 0.01)), Vector((x1 + 0.03, yw - 0.09, b0 - 0.03)),
+            Vector((x1, yw - 0.09, b0 + 0.04))]
+    for p, q in zip(jump, jump[1:]):
+        B.cyl(p, q, 0.009, 'NewCable', seg=6)
+        add_sphere(B.bm, q, 0.009, mat=B('NewCable'), seg=6)
+    add_torus(B.bm, (a1 - 0.07, yw - 0.07, b1 + 0.014), (0, 0, 1), 0.026, 0.01, mat=B('NewCable'), seg=12, rseg=5)
+    # the new cable: out of the splice box's right side, along the wall, through the gate's partition, to the set's end
+    yc, yc2 = yw - 0.013, CORR_Y - 0.013
+    service_cable(B.bm, [[(a1, yc, SERVICE_Z), (PART[0], yc, SERVICE_Z)], [(PART[1], yc2, SERVICE_Z), (X1, yc2, SERVICE_Z)]],
+                  B('NewCable'), B('NewSteel'))
+    for xx, yy in ((PART[0], yc), (PART[1], yc2)):                                                  # rubber grommets
+        add_torus(B.bm, (xx, yy, SERVICE_Z), (1, 0, 0), 0.016, 0.006, mat=B('NewCable'), seg=10, rseg=4)
+    L = Batch()
+    c = Vector((lx, yw - 0.142, lz))
+    add_sphere(L.bm, c, 0.015, mat=L('Att12SpliceLamp'), seg=10, scale=(1, 0.6, 1))
+    return L.done('Att12SpliceLamp', coll, origin=c)
+
+
 SPEAKER = (209.0, WALL_Y, 2.32)             # the gate's speaker, on the back wall over the lamp post, facing the camera
 CARD_PLAYER = (212.84, 3.2, DESK[4])       # the caretaker's card player, on his desk
 
@@ -1542,6 +1602,7 @@ def build_set(dl01, m, coll):
     gate = step('gate', build_gate, B, coll)
     step('corridor', build_corridor, B)
     step('lamps', build_lamps, B)
+    step('service', build_service, B, coll)
     step('room', build_room, B, rnd)
     step('lore', build_lore, B)
     props = step('voice props', place_voice_props, B)
@@ -1562,7 +1623,7 @@ def build_set(dl01, m, coll):
     coat.location = COAT_REST
     bpy.context.view_layer.update()
     total, calls = 0, 0
-    for ob in [static, fig, gate, coat] + [bpy.data.objects.get(n) for n in ('AttLampPresent', 'AttLampCoat', 'AttPegLamp')]:
+    for ob in [static, fig, gate, coat] + [bpy.data.objects.get(n) for n in ('AttLampPresent', 'AttLampCoat', 'AttPegLamp', 'Att12SpliceLamp')]:
         t = tri_count(ob)
         total += t
         calls += len(ob.data.materials)

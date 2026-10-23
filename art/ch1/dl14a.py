@@ -5,7 +5,7 @@ The school dormitory at rest hour. He comes out of the duct (from DL-14's hatch)
 onto bunk 1's top deck. Along the lane: bunk 1 (two iron bunks pushed together), locker 1, the wall of rest-hour
 things (the decoy gown pegs, the REST HOUR rules, the red brake lever, the night-light's dial, the painted tin sun),
 locker 2, the three friends' bunks pushed together (R. ABEL, T. ORME, M. DALE on their ends; a torch and three biscuits
-under them), locker 3, the crank on its iron standard with its drive plate, the nurse's chair with the dressing gown,
+under them), locker 3, the crank on its iron standard with its drive plate, the nurse's chair with her weighted wool cape,
 the eye (a lux meter) and its four lamps, and the door in the end wall (LIGHTS OUT) with the figures' rail stub beside
 it. Over bunks 2, W1's blackout blind hangs out on brackets (y 1.0) in front of the frosted window to the light well;
 at the right, W2's blind in front of the reeded glass to the night corridor. One cord drives both. Through three
@@ -22,7 +22,7 @@ What the game moves (origin = pivot, world coordinates; REPORT at the bottom has
     Att14aBlindW1     W1's blind fabric, built DOWN (to 1.97); origin the middle of its roller axis; scale z to roll
     Att14aHemW1       W1's hem bar and its peg; origin the peg's hook point (256.2, 1.0, 1.93); moves with the blind
     Att14aBlindW2     W2's blind, built DOWN (hem bar included, to 1.95); origin the middle of its roller axis
-    Att14aGown        the dressing gown on its hanger; origin the hanger's hook point; built on the chair's hook
+    Att14aGown        the nurse's weighted wool cape on its hanger; origin the hanger's hook point; on the chair's hook
     Att14aDoor        the door, built shut; origin on its hinge (262.92, 0.45, 0)
     Att14aEyeSun, Att14aEyeW1, Att14aEyeW2 (small amber), Att14aEyeDark (big green): the eye's lamps, own emissives
 Static: Att14aSet (the room), Att14aWard (the back ward's shell) and Att14aWardBed01..16 (linked duplicates of one
@@ -225,7 +225,8 @@ SWATCH = {'sw_wood': (104, 74, 46), 'sw_brass': (170, 132, 64), 'sw_iron': (38, 
           'sw_ray': (206, 124, 40), 'sw_black': (16, 16, 18), 'sw_chalk': (214, 210, 198), 'sw_lockerpaint': (86, 106, 88),
           'sw_blanket': (84, 82, 80), 'sw_biscuit': (186, 138, 78), 'sw_torch': (40, 66, 104), 'sw_lens': (226, 220, 176),
           'sw_spring': (58, 58, 56), 'sw_paper': (204, 196, 172), 'sw_cup': (196, 196, 190), 'sw_ink': (24, 24, 36),
-          'sw_gowncord': (176, 150, 96), 'sw_ward': (70, 70, 72), 'sw_wardsheet': (150, 148, 140), 'sw_rubber': (20, 20, 19)}
+          'sw_gowncord': (176, 150, 96), 'sw_ward': (70, 70, 72), 'sw_wardsheet': (150, 148, 140), 'sw_rubber': (20, 20, 19),
+          'sw_lining': (128, 30, 30), 'sw_lead': (96, 98, 100)}
 for _i, _k in enumerate(SWATCH):
     CELLS[_k] = (32 * (_i % 32), 960 - 32 * (_i // 32), 32 * (_i % 32) + 32, 992 - 32 * (_i // 32))
 
@@ -378,8 +379,15 @@ def make_atlas(path):
         tk[:, k:k + 5] = np.array((70, 84, 120), float)
     tk *= (0.85 + 0.25 * _noise(256, 128, 3, 14105))[..., None]
     put('ticking', Image.fromarray(np.clip(tk, 0, 255).astype('uint8')))
-    # The dressing gown: a dark red and navy tartan; the four small gowns on the pegs.
-    put('gown', _weave(256, 256, (112, 34, 34), 14106, check=(48, (34, 40, 70)), nap=0.12))
+    # The nurse's cape: heavy navy wool; at the bottom its hem band, stitched into pockets, lumpy with the lead weights.
+    cape = _weave(256, 256, (38, 44, 70), 14106, nap=0.14)
+    dc = ImageDraw.Draw(cape)
+    dc.rectangle((0, 222, 255, 255), fill=(26, 30, 50))
+    dc.line((0, 222, 255, 222), fill=(70, 76, 104), width=2)
+    for k in range(0, 256, 28):
+        dc.line((k, 224, k, 255), fill=(64, 70, 96), width=1)
+        dc.ellipse((k + 6, 230, k + 22, 248), fill=(44, 50, 74))
+    put('gown', cape)
     put('gown1', _weave(128, 128, (40, 50, 86), 14107, nap=0.15))
     put('gown2', _weave(128, 128, (58, 82, 60), 14108, check=(32, (90, 70, 40)), nap=0.15))
     put('gown3', _weave(128, 128, (118, 92, 64), 14109, check=(26, (80, 54, 36)), nap=0.15))
@@ -430,13 +438,6 @@ def _moon(d, cx, cy, r, fill, bg):
     d.ellipse((cx - r * 0.45, cy - r * 1.1, cx + r * 1.55, cy + r * 0.9), fill=bg)
 
 
-def _arrow_v(d, x, ya, yb, w, fill):
-    s = 1 if yb > ya else -1
-    head = w * 1.25
-    d.rectangle((x - w * 0.32, min(ya, yb - s * head), x + w * 0.32, max(ya, yb - s * head)), fill=fill)
-    d.polygon([(x - w, yb - s * head), (x + w, yb - s * head), (x, yb)], fill=fill)
-
-
 def _cord(d, pts, fill, w=3):
     d.line(pts, fill=fill, width=w, joint='curve')
 
@@ -468,8 +469,9 @@ def make_rules(img):
 
 
 def make_drive(img):
-    """The drive plate by the crank: one cord round two blinds, W1 down = W2 up; the clutch slips when a blind is held.
-    Pictures first, the spec's words under them (1 px ~ 1.46 mm)."""
+    """The drive plate by the crank: ONE CORD - TWO BLINDS, and a picture of just that: two blinds, W1 and W2, on their
+    rollers, one cord round both drums and down to the crank. Nothing about which way they go or what the clutch does
+    (the design review: that was the solution). 1 px ~ 1.46 mm."""
     from PIL import Image, ImageDraw
     x0, y0, x1, y1 = SCELLS['drive']
     w, h = x1 - x0, y1 - y0
@@ -477,52 +479,32 @@ def make_drive(img):
     p = Image.new('RGB', (w, h), cream)
     d = ImageDraw.Draw(p)
     d.rounded_rectangle((3, 3, w - 4, h - 4), radius=18, outline=green, width=7)
-    d.rounded_rectangle((13, 13, w - 14, 60), radius=9, fill=green)
-    _text(d, (w // 2, 37), 'ONE CORD - TWO BLINDS', 30, cream, max_w=w - 40)
-    # Two blinds on their rollers; W1 coming down, W2 going up; one cord from both drums down to the crank.
-    ry = 80
-    for cx, label, down in ((62, 'W1', True), (186, 'W2', False)):
-        d.rounded_rectangle((cx - 44, ry - 8, cx + 44, ry + 8), radius=7, fill=(96, 70, 44), outline=ink, width=2)
-        bot = 178 if down else 112
-        d.rectangle((cx - 38, ry + 8, cx + 38, bot), fill=cloth, outline=ink, width=2)
-        d.rectangle((cx - 41, bot, cx + 41, bot + 7), fill=(96, 70, 44), outline=ink, width=2)
-        if down:
-            _arrow_v(d, cx, ry + 24, 166, 19, cream)
-        else:
-            _arrow_v(d, cx, 168, 126, 19, ink)
-        d.ellipse((cx - 17, 204 - 17, cx + 17, 204 + 17), fill=ink)
-        _text(d, (cx, 205), label, 20, cream)
-    cw = (124, 212)                                                        # the crank's handwheel
-    for sx in (110, 138):                                                  # the drums
-        d.ellipse((sx - 8, ry - 8, sx + 8, ry + 8), fill=(120, 116, 106), outline=ink, width=2)
-    _cord(d, [(110, ry - 8), (cw[0] - 12, ry - 8), (cw[0] - 12, cw[1])], (60, 58, 54))
-    _cord(d, [(138, ry - 8), (cw[0] + 12, ry - 8), (cw[0] + 12, cw[1])], (60, 58, 54))
-    _cord(d, [(110, ry + 8), (138, ry + 8)], (60, 58, 54), w=2)
-    d.ellipse((cw[0] - 20, cw[1] - 20, cw[0] + 20, cw[1] + 20), fill=cream, outline=ink, width=5)
+    d.rounded_rectangle((13, 13, w - 14, 74), radius=9, fill=green)
+    _text(d, (w // 2, 44), 'ONE CORD - TWO BLINDS', 40, cream, max_w=w - 40)
+    # Two blinds, both half down, on their rollers; their drums side by side in the middle; the cord round both.
+    ry = 104
+    for cx, label in ((82, 'W1'), (w - 82, 'W2')):
+        d.rounded_rectangle((cx - 62, ry - 10, cx + 62, ry + 10), radius=8, fill=(96, 70, 44), outline=ink, width=2)
+        bot = 196
+        d.rectangle((cx - 54, ry + 10, cx + 54, bot), fill=cloth, outline=ink, width=2)
+        d.rectangle((cx - 58, bot, cx + 58, bot + 9), fill=(96, 70, 44), outline=ink, width=2)
+        d.ellipse((cx - 22, 150 - 22, cx + 22, 150 + 22), fill=cream)
+        _text(d, (cx, 151), label, 24, ink)
+    cw = (w // 2, 262)                                                     # the crank's handwheel
+    da, db = w // 2 - 32, w // 2 + 32                                      # the two drums
+    for sx in (da, db):
+        d.ellipse((sx - 11, ry - 11, sx + 11, ry + 11), fill=(120, 116, 106), outline=ink, width=2)
+    cord = (60, 58, 54)
+    _cord(d, [(da, ry - 11), (cw[0] - 16, ry - 11), (cw[0] - 16, cw[1])], cord, w=4)
+    _cord(d, [(db, ry - 11), (cw[0] + 16, ry - 11), (cw[0] + 16, cw[1])], cord, w=4)
+    _cord(d, [(da, ry + 11), (db, ry + 11)], cord, w=3)
+    d.ellipse((cw[0] - 28, cw[1] - 28, cw[0] + 28, cw[1] + 28), fill=cream, outline=ink, width=6)
     for a in range(3):
         aa = math.radians(90 + 120 * a)
-        d.line((cw[0], cw[1], cw[0] + 18 * math.cos(aa), cw[1] + 18 * math.sin(aa)), fill=ink, width=4)
-    d.arc((cw[0] - 31, cw[1] - 31, cw[0] + 31, cw[1] + 31), 200, 320, fill=amber, width=5)
-    d.polygon([(cw[0] + 22, cw[1] - 29), (cw[0] + 31, cw[1] - 16), (cw[0] + 15, cw[1] - 18)], fill=amber)
-    # Right: the clutch, slipping.
-    d.rounded_rectangle((248, 68, w - 14, 236), radius=10, outline=green, width=3)
-    ex = (248 + w - 14) // 2
-    _text(d, (ex, 84), 'CLUTCH', 22, green)
-    ey = 144
-    for dx in (-15, 15):
-        d.rounded_rectangle((ex + dx - 6, ey - 30, ex + dx + 6, ey + 30), radius=3, fill=(120, 116, 106), outline=ink, width=2)
-    d.line((ex - 10, ey, ex + 10, ey), fill=ink, width=4)
-    for k in range(4):
-        d.line((ex - 9 + 5 * k, ey - 7, ex - 7 + 5 * k, ey + 7), fill=ink, width=2)
-    d.arc((ex - 40, ey - 40, ex + 40, ey + 40), 200, 300, fill=amber, width=5)
-    d.arc((ex - 40, ey - 40, ex + 40, ey + 40), 20, 120, fill=amber, width=5)
-    d.polygon([(ex + 16, ey - 46), (ex + 3, ey - 34), (ex + 21, ey - 31)], fill=amber)
-    d.polygon([(ex - 16, ey + 46), (ex - 3, ey + 34), (ex - 21, ey + 31)], fill=amber)
-    _text(d, (ex, 210), 'SLIPS', 24, amber)
-    # The words.
-    _text(d, (w // 2, 258), 'W1 DOWN MEANS W2 UP.', 27, green, max_w=w - 36)
-    _text(d, (w // 2, 284), 'THE CLUTCH SLIPS WHEN', 21, ink, max_w=w - 36)
-    _text(d, (w // 2, 306), 'A BLIND IS HELD.', 21, ink, max_w=w - 36)
+        d.line((cw[0], cw[1], cw[0] + 25 * math.cos(aa), cw[1] + 25 * math.sin(aa)), fill=ink, width=5)
+    d.ellipse((cw[0] - 7, cw[1] - 7, cw[0] + 7, cw[1] + 7), fill=ink)
+    d.arc((cw[0] - 42, cw[1] - 42, cw[0] + 42, cw[1] + 42), 200, 320, fill=amber, width=6)
+    d.polygon([(cw[0] + 30, cw[1] - 40), (cw[0] + 42, cw[1] - 22), (cw[0] + 21, cw[1] - 24)], fill=amber)
     for sx, sy in ((18, 18), (w - 19, 18), (18, h - 19), (w - 19, h - 19)):
         d.ellipse((sx - 5, sy - 5, sx + 5, sy + 5), fill=(150, 146, 136), outline=(70, 66, 60), width=2)
     img.paste(_fade(p, 14130, k=0.1, dust=0.12), (x0, y0))
@@ -1694,32 +1676,84 @@ def build_blinds(coll):
     return [w1, hem, w2]
 
 
+CAPE = ((-0.095, 0.15, 0.07), (-0.2, 0.17, 0.09), (-0.4, 0.19, 0.1), (-0.6, 0.2, 0.105), (-0.665, 0.2, 0.105))
+CAPE_BACK = 0.03          # the cape's back sits only this far behind its hook (so it hangs in front of a blind)
+
+
+def cape_ring(z, w, df, k, n=24, fold=0.0):
+    """A ring of the cape at height z (local to its hook): half-width w, front depth df, back depth CAPE_BACK, with
+    folds (fold: their amplitude)."""
+    pts = []
+    for i in range(n):
+        t = 2 * math.pi * i / n
+        ry = df if math.sin(t) < 0 else CAPE_BACK
+        r = 1 + fold * math.sin(7 * t + 0.6 * k)
+        pts.append(Vector((w * math.cos(t) * r, ry * math.sin(t) * r, z)))
+    return pts
+
+
 def build_gown(coll):
-    """Att14aGown: a child's dressing gown (tartan wool, a cord belt with tassels, a hood) on a wooden hanger with a
-    wire hook; origin at the inside top of the hook (the hook point), hanging along -z, its front to -y. Built on the
-    chair's hook."""
+    """Att14aGown (the design review: a heavy wool nurse's cape, so it plainly can hold a blind down): navy wool with a
+    red lining showing at its front edges, a collar with a brass clasp and chain, and a weighted hem: a stitched hem
+    band with lead weights sewn in along the front and a chain run round the hem. On a wooden hanger with a wire hook;
+    origin at the inside top of the hook (the hook point), hanging along -z (0.665 long), its front to -y, its back
+    only 3 cm behind the hook. Built on the chair's hook."""
     import dl12
     B = MB()
-    s, wide, length = 1.1, 0.92, 1.22
     hx, hy, hz = GOWN_HOOK
     M = Matrix.Translation(GOWN_HOOK)
+    # The body: rings from the shoulders to the hem, folds growing toward the hem; closed at both ends.
     tmp = bmesh.new()
-    dl12.coat_body(tmp, s=s, hanger=True, hood=True, wide=wide, length=length)
-    B.merge(tmp, ATLAS_MAT, proj_xz('gown', (hx, hy, hz - 0.36), 0.36, 0.72), M=M)
+    rings = []
+    for k, (z, w, df) in enumerate(CAPE):
+        rings.append([tmp.verts.new(p) for p in cape_ring(z, w, df, k, fold=0.07 * k / (len(CAPE) - 1))])
+    n = len(rings[0])
+    for a, b in zip(rings, rings[1:]):
+        for i in range(n):
+            tmp.faces.new((a[i], a[(i + 1) % n], b[(i + 1) % n], b[i]))
+    tmp.faces.new(rings[0])
+    tmp.faces.new(rings[-1][::-1])
+    zc = (CAPE[0][0] + CAPE[-1][0]) / 2
+    B.merge(tmp, ATLAS_MAT, proj_xz('gown', (hx, hy, hz + zc), 0.42, CAPE[0][0] - CAPE[-1][0]), M=M)
+    # The collar (a stand-up band round the hanger's neck), the clasp: two brass discs and a short chain.
+    tmp = d17.rounded_box((0.13, 0.09, 0.05), (0.0, -0.012, -0.075), p=3.0, cuts=2, mat=0)
+    B.merge(tmp, ATLAS_MAT, proj_xz('gown', (hx, hy, hz - 0.075), 0.42, 0.6), M=M)
+    for dx in (-0.025, 0.025):
+        B.cyl('Brass', (hx + dx, hy - 0.056, hz - 0.085), (hx + dx, hy - 0.066, hz - 0.085), 0.013, seg=10)
+    for k in range(3):
+        B.torus('Brass', (hx - 0.012 + 0.012 * k, hy - 0.067, hz - 0.085), (0, 1, 0) if k % 2 else (0, 0, 1), 0.007, 0.0018, seg=8, rseg=3)
+    # The red lining, turned back along the two front edges, from the collar to the hem.
+    for side in (-1, 1):
+        pts = []
+        for z, w, df in CAPE:
+            pts.append((hx + side * 0.012, hy - df - 0.002, hz + z))
+        for (ax, ay, az), (bx, by, bz) in zip(pts, pts[1:]):
+            B.box(ATLAS_MAT, min(ax, bx) - 0.006, max(ax, bx) + 0.006, min(ay, by) - 0.004, max(ay, by) + 0.002, bz, az, cell='sw_lining')
+    B.box(ATLAS_MAT, hx - 0.003, hx + 0.003, hy - 0.112, hy - 0.06, hz + CAPE[-1][0], hz + CAPE[1][0], cell='sw_dark')   # the opening
+    # The weighted hem: lead weights sewn in along the front (each a lump showing through the band), and a chain
+    # stitched round the hem's edge.
+    zh = hz + CAPE[-1][0]
+    w, df = CAPE[-1][1], CAPE[-1][2]
+    for i in range(9):
+        t = math.pi + math.pi * (i + 0.5) / 9
+        x, y = w * math.cos(t), df * math.sin(t)
+        nrm = Vector((math.cos(t) / w, math.sin(t) / df, 0)).normalized()
+        c = Vector((hx + x, hy + y, zh + 0.035)) + nrm * 0.004
+        B.cyl(ATLAS_MAT, c - nrm * 0.006, c + nrm * 0.008, 0.019, seg=10, cell='sw_lead')
+    m = 40
+    for i in range(m):
+        t = 2 * math.pi * i / m
+        x, y = (w + 0.006) * math.cos(t), ((df if math.sin(t) < 0 else CAPE_BACK) + 0.006) * math.sin(t)
+        tang = Vector((-w * math.sin(t), (df if math.sin(t) < 0 else CAPE_BACK) * math.cos(t), 0)).normalized()
+        axis = tang.cross(Vector((0, 0, 1))) if i % 2 else Vector((0, 0, 1))
+        B.torus('WornIron', (hx + x, hy + y, zh + 0.008), axis, 0.011, 0.0028, seg=8, rseg=3)
+    # The hanger: a broad wooden bar and its wire hook.
     tmp = bmesh.new()
     dl12.hanger_bar(tmp, s=1.0)
     B.merge(tmp, ATLAS_MAT, 'sw_wood', M=M)
     tmp = bmesh.new()
     dl12.hanger_hook(tmp)
     B.merge(tmp, ATLAS_MAT, 'sw_brass', M=M)
-    # The cord belt: a band round the front at the waist, a knot, two cords with tassels.
-    wz = hz - 0.36 * s
-    B.box(ATLAS_MAT, hx - 0.15, hx + 0.15, hy - 0.06, hy - 0.05, wz - 0.012, wz + 0.012, cell='sw_gowncord')
-    B.sphere(ATLAS_MAT, (hx + 0.03, hy - 0.064, wz), 0.018, seg=8, cell='sw_gowncord')
-    for dx, ln in ((0.02, 0.2), (0.05, 0.24)):
-        a, b = (hx + 0.03, hy - 0.066, wz - 0.01), (hx + dx + 0.02, hy - 0.07, wz - ln)
-        B.cyl(ATLAS_MAT, a, b, 0.006, seg=6, cell='sw_gowncord')
-        B.cyl(ATLAS_MAT, b, (b[0], b[1], b[2] - 0.05), 0.012, 0.016, seg=8, cell='sw_gowncord')
     return B.obj('Att14aGown', coll, origin=GOWN_HOOK)
 
 
@@ -1846,16 +1880,20 @@ MOVED (origin = pivot; built pose):
 - Att14aBlindW2: origin = the middle of its roller axis B(260.1, 1.3, 3.25) = game (260.1, 3.25, -1.3). Fabric
   x 259.2-261.0 at B y 1.265, built DOWN to 1.95 with the hem bar (1.95-1.995) and a small brass pull ring on the
   bar's face included (nothing below 1.95). Scale game y. No peg.
-- Att14aGown: origin = the hanger's hook point (inside top of the wire hook, as AttCoat), built hanging on the
-  chair's hook at B(261.0, 0.4, 0.95) = game (261.0, 0.95, -0.4); hangs along -z to height 0.20 (0.75 long, x
-  260.78-261.22), front toward the camera, rotation 0. To hang it anywhere put its origin on the hook point: W1's
-  peg = Att14aHemW1's origin (then its hem is at 1.18, just above bunks 2's deck); a wall peg = (x, 0.80, -1.345).
+- Att14aGown: now a heavy wool NURSE'S CAPE with a weighted hem (design review): navy wool, red lining at the
+  front edges, a brass collar clasp, a stitched hem band with nine lead weights sewn in along the front and a chain
+  round the hem's edge. Origin = the hanger's hook point (inside top of the wire hook, as AttCoat), built hanging on
+  the chair's hook at B(261.0, 0.4, 0.95) = game (261.0, 0.95, -0.4); hangs along -z 0.665 to its hem (height 0.285;
+  chain to 0.27), x 260.79-261.21, front toward the camera, rotation 0; its back is only 3 cm behind the hook, its
+  front 0.11 in front. To hang it, put its origin on a hook point: W1's peg = Att14aHemW1's origin (its hem then at
+  1.265, above bunks 2's deck 1.15; its back at B y 1.03, in front of the blind's fabric at 1.04); a wall peg =
+  (x, 0.80, -1.345) game (the game's wallPeg z -1.38 is 3.5 cm behind the pegs' hook point).
   DEVIATION: the spec gives the hook at x 260.6 (the chair's x). The chair's seat is centred at 260.6 as specified;
   a hook on its back (x 260.8) would hang the gown into the chair's back or side-on to the camera, so the hook is on
   a brass arm out of the back's top rail and the gown hangs at x 261.0, facing the room. Use 261.0 for the pick-up.
 - Att14aDoor: hinge B(262.92, 0.45, 0) = game (262.92, 0, -0.45). Leaf x 262.90-262.94, B y -0.442..0.442,
   height 0.008-1.742, knobs both sides, shut. Open: rotate about game y by +90 deg (Blender z +90): the free end
-  swings into the corridor (+x); open, the leaf lies at B y 0.41-0.45 (game z -0.41..-0.45), x 262.92-263.80.
+  swings into the corridor (+x). CHECK: index.html now does rotateY(-PI/2), which swings it into the room (-x); open, the leaf lies at B y 0.41-0.45 (game z -0.41..-0.45), x 262.92-263.80.
   NOTE for DL-14b: that is right beside the figures' rail (rails at 0.47 / 0.63; a figure's body reaches to 0.42),
   so either the figure's envelope or the door's open angle needs a centimetre or two there.
 - Eye lamps (own objects, own materials, as built): Att14aEyeSun B(261.6, 1.37, 1.86), Att14aEyeW1 B(261.9, 1.37,
@@ -1911,8 +1949,8 @@ Att14aEyeW1: [1, .6, .18, 0], Att14aEyeW2: [1, .6, .18, 0], Att14aEyeDark: [.36,
 Att14aWellGlow: [.72, .84, 1, 2.2], Att14aCorridorGlow: [1, .72, .4, 1.8], Att14aWardNight: [.4, .48, .66, .22].
 
 SIGNS (textures): REST HOUR ("1. Lights out. 2. No talking. 3. Stay in your own bed. 4. Pupils are never
-unaccompanied."); the drive plate by the crank (x 259.0-259.56, 0.42-0.91; "ONE CORD - TWO BLINDS", "W1 DOWN MEANS W2
-UP.", "THE CLUTCH SLIPS WHEN A BLIND IS HELD.", with pictures); the eye's board ("LIGHT METER", the lamps' labels,
+unaccompanied."); the drive plate by the crank (x 259.0-259.56, 0.42-0.91): only "ONE CORD - TWO BLINDS" (design review),
+with a picture of two blinds W1 and W2 on one cord round to the crank; nothing about which way they move or the clutch; the eye's board ("LIGHT METER", the lamps' labels,
 "DARK (REST HOUR)", "REST HOUR BEGINS WHEN THE ROOM IS DARK"); LIGHTS OUT on a flag sign over the doorway (both
 faces, x 262.38-262.82, 1.86-1.99, at B y 0); REST HOUR BRAKE (OFF up / ON forward) over the lever.
 
