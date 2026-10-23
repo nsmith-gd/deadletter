@@ -5826,6 +5826,8 @@ function updateAtt2(dt) {
   if (k.lampEscort) k.lampEscort.emissiveIntensity = escort ? (pupil ? 5 : (Math.sin(game.clock * 14) > 0 ? 5 : 0.3)) : 0.05;
   const blink = f15.dismissed && game.clock - f15.dismissedAt < 3 ? (Math.sin(game.clock * 10) > 0 ? 1 : 0.2) : 1;
   [k.lamp15a, k.lamp15b, k.lamp15c].forEach((m, i) => { if (m) m.emissiveIntensity = f15.lamps[i] ? 6 * blink : 0.05; });
+  // Playtest (23 Oct): with the two friends' places filled, her lamp breathes: one pupil is missing, and it's him.
+  if (k.lamp15c && !f15.dismissed && f15.lamps[0] && f15.lamps[1] && !f15.seated) k.lamp15c.emissiveIntensity = 1.2 + 1.2 * Math.sin(game.clock * 3);
   if (k.Att15Door) { k.Att15Door.quaternion.copy(k.Att15Door.userData.rest.q); k.Att15Door.rotateY(THREE.MathUtils.degToRad(95) * smooth(f15.door)); }
   const nearFlap = figs.some((f) => !f.stored && f.base < 0.05 && Math.abs(f.x - ATT2.flapX) < 0.4);
   f15.flap += ((nearFlap ? 1 : 0) - f15.flap) * Math.min(1, dt * 5);
