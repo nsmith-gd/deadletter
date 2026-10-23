@@ -22,11 +22,12 @@ Objects (origins are pivots, in world coordinates):
     AttLampCoat     the COAT 7 lamp's dome (EMIT AttLampCoat)
     AttPegLamp      peg 7's little bulb (EMIT AttPegLamp)
     Att12SpliceLamp the present-day service thread's first sign: the new galvanised splice box's pilot lamp (EMIT
-                    Att12SpliceLamp, green, lit: [.45, 1, .5, 5]), origin at its centre (202.62, 1.058, 2.63). In
-                    AttCloakroom: the school's old supply box (202.0-202.4, z 2.34-2.7, right of the rules board, under
-                    the motto) with its door hanging open, the splice box (202.5-202.74, z 2.42-2.7) jumpered into it,
-                    and the new cable (PLAIN NewCable, clips NewSteel) at z 2.68 along the wall to 216, through the
-                    gate's partition.
+                    Att12SpliceLamp, green, lit: [.45, 1, .5, 5]), origin at its centre (201.78, 1.086, 2.895). In
+                    AttCloakroom: the school's old supply box (200.99-201.33, z 2.28-2.78, between the arch's roundel
+                    and the rules board) with its door hanging open, the splice box over the rules board (201.63-201.93,
+                    z 2.82-2.97) jumpered into it, and the new cable (PLAIN NewCable, clips NewSteel) down past the
+                    rules board's edge and along the wall at z 2.69 (between the frieze and the motto) to 216, through
+                    the gate's partition.
     AttCoat         the carried coat, built hanging on its hanger (origin at the inside top of the hanger's hook, the coat
                     hanging along -z, its front to -y); placed as found, laid flat along x on top of the bin. Coat 7 is M.'s:
                     its sleeves let down three times (bands of other cloth past each cuff, coat7_cuffs), its left pocket
@@ -1504,9 +1505,9 @@ def build_lore(B):
 # The present-day service thread (the director's addition; the prologue's 'new cable'): the school's old supply box high
 # on the back wall by the way in, its door hanging open; a new galvanised splice box bolted beside it, jumpered in, its
 # pilot lamp lit (Att12SpliceLamp); the new cable on from it along the wall to the end of the set.
-OLD_SUPPLY = (202.0, 202.4, 2.34, 2.7)        # x0, x1, z0, z1 (0.18 deep): right of the rules board, under the motto
-SPLICE = (202.5, 202.74, 2.42, 2.7)           # x0, x1, z0, z1 (0.13 deep)
-SERVICE_Z = 2.68                              # the cable's height (under the gate lead's 2.74)
+OLD_SUPPLY = (200.99, 201.33, 2.28, 2.78)     # x0, x1, z0, z1 (0.18 deep): between the arch's roundel and the rules board
+SPLICE = (201.63, 201.93, 2.82, 2.97)         # x0, x1, z0, z1 (0.1 deep): over the rules board, under the beam
+SERVICE_Z = 2.69                              # the cable's height: in the gap between the frieze (2.66) and the motto (2.72)
 
 
 def build_service(B, coll):
@@ -1516,39 +1517,40 @@ def build_service(B, coll):
     B.box((x0, x1), (yw - 0.18, yw), (z0, z1), 'WornIron')
     B.box((x0 + 0.03, x1 - 0.03), (yw - 0.185, yw - 0.15), (z0 + 0.03, z1 - 0.03), 'AtriumDark')     # its open mouth
     for k in range(3):                                                                               # the old busbars
-        xx = x0 + 0.1 + k * 0.11
+        xx = x0 + 0.08 + k * 0.09
         B.box((xx - 0.01, xx + 0.01), (yw - 0.15, yw - 0.12), (z0 + 0.1, z1 - 0.08), 'Copper')
     hinge = Matrix.Translation((x0, yw - 0.18, z0)) @ Matrix.Rotation(math.radians(-100), 4, 'Z') @ Matrix.Rotation(math.radians(3), 4, 'Y')
     tmp = B.sub()
     add_box(tmp, ((x1 - x0) / 2, -0.01, (z1 - z0) / 2), (x1 - x0, 0.02, z1 - z0), mat=B('WornIron'))
-    add_box(tmp, ((x1 - x0) / 2, -0.025, (z1 - z0) / 2 + 0.05), (0.2, 0.01, 0.13), mat=B('HomePlaster'))   # the old circuit card
+    add_box(tmp, ((x1 - x0) / 2, -0.025, (z1 - z0) / 2 + 0.05), (0.18, 0.01, 0.13), mat=B('HomePlaster'))   # the old circuit card
     B.merge(tmp, hinge)
-    B.cyl((x0 + 0.05, yw - 0.05, z1), (x0 + 0.05, yw - 0.05, CEIL), 0.022, 'WornIron', seg=8)        # its old conduit, up
+    B.cyl((x0 + 0.06, yw - 0.05, z1), (x0 + 0.06, yw - 0.05, CEIL), 0.022, 'WornIron', seg=8)        # its old conduit, up
     a0, a1, b0, b1 = SPLICE
-    B.box((a0, a1), (yw - 0.126, yw), (b0, b1), 'NewSteel')
-    B.box((a0 + 0.01, a1 - 0.01), (yw - 0.13, yw - 0.126), (b0 + 0.01, b1 - 0.01), 'NewSteel')
+    d = 0.1
+    B.box((a0, a1), (yw - d, yw), (b0, b1), 'NewSteel')
+    B.box((a0 + 0.01, a1 - 0.01), (yw - d - 0.004, yw - d), (b0 + 0.01, b1 - 0.01), 'NewSteel')
     for xx, zz in ((a0 + 0.02, b0 + 0.02), (a1 - 0.02, b0 + 0.02), (a0 + 0.02, b1 - 0.02), (a1 - 0.02, b1 - 0.02)):
-        B.cyl((xx, yw - 0.13, zz), (xx, yw - 0.137, zz), 0.008, 'NewSteel', seg=6)
-    for xx in (a0 - 0.012, a1 + 0.012):                                                              # the bolts into the wall
-        for zz in (b0 + 0.04, b1 - 0.04):
-            B.box((xx - 0.012, xx + 0.012), (yw - 0.02, yw), (zz - 0.012, zz + 0.012), 'NewSteel')
-    lx, lz = (a0 + a1) / 2, b1 - 0.07
-    B.cyl((lx, yw - 0.13, lz), (lx, yw - 0.138, lz), 0.024, 'NewSteel', seg=12)                       # the lamp's bezel
-    # the jumper into the old box's side through a fresh hole, a coil of tape on the box
-    jump = [Vector((a0, yw - 0.07, b0 + 0.05)), Vector((a0 - 0.03, yw - 0.08, b0 - 0.02)), Vector((x1 + 0.03, yw - 0.09, b0 - 0.03)),
-            Vector((x1, yw - 0.09, b0 + 0.02))]
+        B.cyl((xx, yw - d - 0.004, zz), (xx, yw - d - 0.01, zz), 0.007, 'NewSteel', seg=6)
+    for xx in (a0 - 0.012, a1 + 0.012):                                                              # its lugs, bolted on
+        B.box((xx - 0.012, xx + 0.012), (yw - 0.02, yw), ((b0 + b1) / 2 - 0.012, (b0 + b1) / 2 + 0.012), 'NewSteel')
+    lx, lz = (a0 + a1) / 2, (b0 + b1) / 2
+    B.cyl((lx, yw - d - 0.004, lz), (lx, yw - d - 0.012, lz), 0.022, 'NewSteel', seg=12)              # the lamp's bezel
+    # the jumper down into the old box's top through a fresh hole, a coil of tape on the old box
+    jump = [Vector((a0, yw - 0.05, b0 + 0.04)), Vector((a0 - 0.12, yw - 0.06, b0 + 0.01)), Vector((x1 + 0.03, yw - 0.075, z1 + 0.035)),
+            Vector((x1 - 0.04, yw - 0.08, z1))]
     for p, q in zip(jump, jump[1:]):
         B.cyl(p, q, 0.009, 'NewCable', seg=6)
         add_sphere(B.bm, q, 0.009, mat=B('NewCable'), seg=6)
-    add_torus(B.bm, (a1 - 0.07, yw - 0.07, b1 + 0.014), (0, 0, 1), 0.026, 0.01, mat=B('NewCable'), seg=12, rseg=5)
-    # the new cable: out of the splice box's right side, along the wall, through the gate's partition, to the set's end
-    yc, yc2 = yw - 0.013, CORR_Y - 0.013
-    service_cable(B.bm, [[(a1, yc, SERVICE_Z), (PART[0], yc, SERVICE_Z)], [(PART[1], yc2, SERVICE_Z), (X1, yc2, SERVICE_Z)]],
-                  B('NewCable'), B('NewSteel'))
+    add_torus(B.bm, (x0 + 0.16, yw - 0.1, z1 + 0.012), (0, 0, 1), 0.026, 0.01, mat=B('NewCable'), seg=12, rseg=5)
+    # the new cable: out of the splice box's right side, down past the rules board's edge, along the wall in the gap
+    # under the motto, through the gate's partition, to the set's end
+    yc, yc2, z = yw - 0.013, CORR_Y - 0.013, SERVICE_Z
+    service_cable(B.bm, [[(a1, yc, lz), (201.985, yc, lz - 0.03), (201.985, yc, 2.73), (202.04, yc, z), (PART[0], yc, z)],
+                         [(PART[1], yc2, z), (X1, yc2, z)]], B('NewCable'), B('NewSteel'))
     for xx, yy in ((PART[0], yc), (PART[1], yc2)):                                                  # rubber grommets
-        add_torus(B.bm, (xx, yy, SERVICE_Z), (1, 0, 0), 0.016, 0.006, mat=B('NewCable'), seg=10, rseg=4)
+        add_torus(B.bm, (xx, yy, z), (1, 0, 0), 0.016, 0.006, mat=B('NewCable'), seg=10, rseg=4)
     L = Batch()
-    c = Vector((lx, yw - 0.142, lz))
+    c = Vector((lx, yw - d - 0.014, lz))
     add_sphere(L.bm, c, 0.015, mat=L('Att12SpliceLamp'), seg=10, scale=(1, 0.6, 1))
     return L.done('Att12SpliceLamp', coll, origin=c)
 

@@ -836,7 +836,7 @@ def service_cable(bm, runs, mc, ms, out=Vector((0, -1, 0)), r=0.011, pitch=1.05,
                     mid = mid - Vector((0, 0, sag))
                 pts += [mid, a.lerp(b, k / n)]
             d = (b - a).normalized()
-            for k in range(n + 1):
+            for k in range(n + 1 if L > 0.4 else 0):
                 p = a + d * 0.12 if k == 0 else (b - d * 0.12 if k == n else a.lerp(b, k / n))
                 clips.append((p, d))
         for a, b in zip(pts, pts[1:]):
