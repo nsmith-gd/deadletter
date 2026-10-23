@@ -1,5 +1,10 @@
 # Chapter 1 expansion: a proposal
 
+> **Superseded in part (23 October 2026).** The post-prologue design review, accepted by the director, replaces this
+> proposal's step-count escalation with inference progression: each principal puzzle must ask for a new deduction, and
+> short applications are legitimate. DL-16a is now a short ballast application; DL-17's drawing no longer states the
+> answer. See `docs/chapter1_expansion_build.md`, "After the design review".
+
 Status: approved as proposed (the user, 22 October 2026: "address them all"), with the proposal's defaults: nine
 scenes, the escort trolley as a simple rail machine, DL-17's rig with water. Being built: `docs/chapter1_expansion_build.md`.
 Changes found while building: DL-16a's load is taken back out from inside the car (Use when the gauge reads OVER), and

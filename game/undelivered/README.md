@@ -159,14 +159,19 @@ constants). The game's code is the `ATT3` section.
   trolley takes the nearer thing it sees, so it takes the figure back to the dormitory instead (a 6 s stop there), and
   he goes up the stair to the sick bay's door, high in DL-15's wall.
 - **DL-16a Her Way Round** (310 to 324, `dl16a.py`). The gate is shut to pupils; her chalk trees point to the
-  servery's dumbwaiter. Its load gauge counts portions: a tin 1, the books 2 (on the high shelf: push the stool under
-  it). 3 is the line: in the car, ring, and it carries him up to the passage over the gate. Too light, it leaps, the
-  catch bites and it lowers him back; over (both tins and the books), the OVER lamp lights and Use in the car takes a
-  tin back out.
-- **DL-17's rig.** Reading the drawer now gives him Vance's T-key, and he looks round at the test rig. One tank (6 s)
-  is shared between whichever sluices are open; sluice A feeds bed 3, B bed 1, C bed 2 (the pipes cross behind the
-  bench, and her drawing says so). Bed 1's float lifts the stair door's latch only if it gets the whole tank: shut A and
-  C. Beds drain in 20 s, the tank refills in 10 s.
+  servery's dumbwaiter. A short application (after the review): he alone is too light (it leaps, the catch bites, it
+  lowers him back); one ration tin is the line; both tins read OVER, and Use in the car takes one back out.
+- **DL-17's rig.** Reading the drawer gives him Vance's T-key. One tank (6 s) is shared between whichever sluices are
+  open; sluice A feeds bed 3, B bed 1, C bed 2: the pipes cross behind the bench, and her drawing shows them crossing
+  without spelling out the answer. Bed 1's float lifts the stair door's latch only if it gets the whole tank. Beds drain
+  in 20 s; the tank refills in 10 s, on a pump whose relay runs while it does. If he stands about after reading, he
+  glances at the rig once (no automatic look at the answer).
+- **The service line** (the review's present-day thread, approved by the director). The prologue's new cable runs on
+  through the school: a new splice box jumpered into DL-12's old supply, relay boxes in DL-14b and DL-16a, and the rig's
+  pump in DL-17, from which it carries on up the stair to ring A. Each box has a green pilot lamp whose relay clicks on
+  a 7 s cycle of its own, whatever D-17 is doing: someone keeps this supplied now.
+- **Review trims.** DL-14a's drive plate says only "one cord, two blinds"; the gown is a weighted nurse's cape; the
+  rest-hour tannoy no longer states the goal. DL-16's procession bows and latches sooner (the missable window stays).
 - **Sims:** `CHAPTER=dorm`, `corridor`, `sickbay`, `crossing`, `kitchen` or `workshop` start at that checkpoint.
 
 ## Chapter 1, part 2: DL-15 to DL-17 (pass 9)

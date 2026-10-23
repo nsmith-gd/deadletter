@@ -7,6 +7,17 @@ origin, built pose) and the lamps it switches.
 Taken as decided (the user: "address them all"): nine scenes, three new; the escort trolley as a simple rail machine;
 DL-17's rig works with water (a small preview of chapter 3's water).
 
+## After the design review (23 October 2026)
+
+`Dead_Letter_Post_Prologue_Change_Report.md`, accepted by the director: step count is not difficulty; neighbouring
+puzzles need distinct inferences; clues depict, they don't solve. So: DL-16a is cut to a short ballast application (one
+tin is the line); DL-17's drawing shows the crossed pipes without writing the answer; DL-14a's drive plate and tannoy
+no longer state the solution, and the gown is a weighted cape; DL-16's dead waiting is trimmed, its window kept. And the
+present-day service thread is approved: the prologue's new cable (NewCable, NewSteel clips, taped joints) runs through
+the school with splice and relay boxes (Att12SpliceLamp, Att14bRelayLamp, Att16aRelayLamp, Att17RelayLamp: green pilot
+lamps on their own 7 s relay cycle), feeds DL-17's refill pump, and goes on up the stair to ring A. Its changes follow
+equipment cycles, never D-17's arrival.
+
 ## Conventions (as the other chapter 1 modules)
 
 - Blender (x, y, z) is the game's (x, z, -y): +y is away from the camera, z is up. The lane is y = 0, the floor z = 0.

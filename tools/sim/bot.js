@@ -659,46 +659,35 @@ window.__startBot = function (seed, opts = {}) {
     yield* wait(look(3));
     yield* walk(1, () => G.x > 310.6, 'on into the servery', { max: 60 });
   }
-  // DL-16a: the gate is shut to pupils; her chalk trees point to the dumbwaiter. Load it to the line (the books and a tin),
-  // get in, ring.
+  // DL-16a: the gate is shut to pupils; her chalk trees point to the dumbwaiter. He alone is too light for it: one tin
+  // of ballast is the line (two is over).
   function* kitchen16a() {
-    const Fa = () => S().f16a, carry = (key) => G.carry === Fa()[key];
+    const Fa = () => S().f16a;
     const load = function* (label) {
       yield* walk(Math.sign(312.9 - G.x) || 1, () => D.near() === 'att:load16a', 'to the car with ' + label, { max: 40 });
       yield* useAt(['att:load16a'], 312.9, actIs('att'), 'load ' + label, { hop: false }); yield* settle(); note(label + ' in the car');
     };
     const ride = function* (label) {
-      yield* walk(1, () => D.near() === 'att:bell16a', 'into the car', { max: 30, hop: false });
+      yield* walk(1, () => D.near() === 'att:bell16a' || D.near() === 'att:unload16a', 'into the car', { max: 30, hop: false });
       yield* useAt(['att:bell16a'], 313.05, actIs('att'), label, { hop: false });
       yield* until(() => !G.act && (Fa().mode === 'bottom' || Fa().mode === 'top'), 15, label + ' over');
+    };
+    const tin = function* (key, x) {
+      yield* useAt(['liftItem:' + key], x, () => G.hold === 'item' || actIs('liftItem')(), 'a tin', { max: 40 });
+      yield* until(() => G.hold === 'item' && free(), 10, 'carry tin'); yield* load('a tin');
     };
     yield* wait(look(4));
     if (mistakes) { yield* goTo(313.55, 'to the gate', { max: 30 }); yield* wait(think(5)); note('the gate: pupils not permitted'); }
     if (mistakes && chance(0.6)) { yield* goTo(312.4, 'back to the car', { max: 30 }); yield* ride('ring with nothing in it'); note('too light: up, the catch, down again'); yield* wait(think(6)); yield* goTo(312.2, 'out of the car', { max: 20 }); }
-    // The tins first (they are on the floor); two make 2, not enough.
-    yield* useAt(['liftItem:tin1'], 311.2, () => G.hold === 'item' || actIs('liftItem')(), 'a tin', { max: 40 });
-    yield* until(() => G.hold === 'item' && free(), 10, 'carry tin'); yield* load('a tin');
-    if (mistakes && chance(0.5)) {
-      yield* goTo(312.0, 'back for the other tin', { max: 30 });
-      yield* useAt(['liftItem:tin2'], 311.45, () => G.hold === 'item' || actIs('liftItem')(), 'the other tin', { max: 40 });
-      yield* until(() => G.hold === 'item' && free(), 10, 'carry tin 2'); yield* load('the other tin');
-      yield* ride('ring with two'); note('still too light'); yield* wait(think(6));
-      yield* goTo(312.2, 'out of the car', { max: 20 });
-    }
-    // The books, on the high shelf: the stool under it.
-    yield* goTo(312.55, 'behind the stool', { max: 20, hop: false });
-    yield* pushTo('stool16ar', () => Fa().stool, -1, 'the stool under the shelf');
-    yield* walk(-1, () => D.near() === 'att:books16a', 'up onto the stool', { max: 30 });
-    yield* useAt(['att:books16a'], 310.55, actIs('att'), 'the books', { hop: false }); yield* until(() => G.hold === 'item' && free(), 10, 'carry books'); note('has the books');
-    yield* load('the books');
-    if (S().f16a.tin2.state === 'car') {
-      // All three: OVER. In the car, Use takes a tin back out.
+    yield* tin('tin1', 311.2);
+    if (mistakes && chance(0.4)) {
+      yield* goTo(312.0, 'back for the other tin', { max: 30 }); yield* tin('tin2', 311.45);
       yield* walk(1, () => D.near() === 'att:unload16a', 'into the car', { max: 20, hop: false }); note('the gauge reads OVER');
       yield* wait(think(4)); yield* useAt(['att:unload16a'], 313.05, actIs('att'), 'take a tin out', { hop: false }); yield* until(() => G.hold === 'item' && free(), 10, 'tin out');
       yield* goTo(312.0, 'out with it', { max: 20 }); yield* useAt(['setdownItem'], G.x, () => G.hold !== 'item' || actIs('setdownItem')(), 'set it down'); yield* settle();
     }
     yield* ride('ring, loaded to the line');
-    if (Fa().mode !== 'top') throw new Error('the car did not go up: load ' + D.load16a?.());
+    if (Fa().mode !== 'top') throw new Error('the car did not go up');
     note('up in the dumbwaiter');
     yield* walk(1, () => G.x > 323.8 && G.y < 0.05, 'along the passage and down the stair', { max: 60 });
     yield* walk(1, () => G.x > 325.2, 'into the workshop', { max: 30 });
