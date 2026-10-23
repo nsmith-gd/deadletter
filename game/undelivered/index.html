@@ -5163,7 +5163,7 @@ function buildAtt(root) {
   const streamMat = new THREE.MeshStandardMaterial({ color: 0xbfd6e6, emissive: new THREE.Color(0x3a5466), emissiveIntensity: 0.6, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.8 });
   for (const n of ['Att17Stream1', 'Att17Stream2', 'Att17Stream3']) { const o = get(n); if (o) o.traverse((q) => { if (q.isMesh) q.material = streamMat; }); }
   // The trolley's beam: a faint warm cone, added light, never hiding what is behind it.
-  if (k.Att14bCone) { k.coneMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.11, blending: THREE.AdditiveBlending, depthWrite: false }); k.Att14bCone.traverse((q) => { if (q.isMesh) { q.material = k.coneMat; q.castShadow = false; } }); }
+  if (k.Att14bCone) { k.coneMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }); k.Att14bCone.traverse((q) => { if (q.isMesh) { q.material = k.coneMat; q.castShadow = false; } }); }   // (no fog: added fog washed it to a solid cone)
   // Voice players in the chapter's set whose cranks turn.
   for (const v of VOICES) if (v.region === 6 && v.crank) { const o = get(v.crank); if (o) refs.voiceCranks[v.id] = { o, axis: new THREE.Vector3(...v.axis).normalize() }; }
   // Lights, as proxies for the pool (region 6 only).
@@ -6241,7 +6241,7 @@ function updateAtt3(dt) {
   const blink = game.calm ? 1 : Math.sin(game.clock * 7) > 0 ? 1 : 0.2;
   [k.eyeSun, k.eyeW1, k.eyeW2].forEach((m, i) => { if (m) m.emissiveIntensity = leak[i] ? 4.5 * (A.open ? 0.4 : blink) : 0.04; });
   if (k.eyeDark) k.eyeDark.emissiveIntensity = dark || A.open ? 5 : 0.05;
-  if (k.Att14aDoor) { R(k.Att14aDoor); k.Att14aDoor.rotateY(Math.PI / 2 * smooth(A.door));     // into the corridor (dl14a.py REPORT) }
+  if (k.Att14aDoor) { R(k.Att14aDoor); k.Att14aDoor.rotateY(Math.PI / 2 * smooth(A.door)); }     // into the corridor (dl14a.py REPORT)
   placeGown14a(g, k.Att14aGown, dt, A);
   placeTrolley14b(k);
   // DL-16a.
@@ -6366,7 +6366,7 @@ function placeTrolley14b(k) {
     o.quaternion.copy(o.userData.rest.q); o.rotateY(th);
     o.position.set(B.tx + (r.x - c0.x) * Math.cos(th), r.y, c0.z - (r.x - c0.x) * Math.sin(th) + (r.z - c0.z));
   }
-  if (k.coneMat) k.coneMat.opacity = B.mode === 'escortHim' || B.mode === 'escortFig' ? 0.2 + 0.08 * Math.sin(game.clock * 16) : 0.11;
+  if (k.coneMat) k.coneMat.opacity = B.mode === 'escortHim' || B.mode === 'escortFig' ? 0.14 + 0.05 * Math.sin(game.clock * 16) : 0.08;
   if (k.beamLight) { const L = k.beamLight; L.position.set(B.tx + (B.dir > 0 ? 1 : -1) * 1.1, 0.95, -0.2); L.intensity = L.userData.base; }
   if (k.Att14bFig) {
     const o = k.Att14bFig; o.position.copy(o.userData.rest.p); o.quaternion.copy(o.userData.rest.q);
@@ -8135,7 +8135,7 @@ function finish() {
 // and a summariser.
 // ---------------------------------------------------------------------------
 const Telemetry = (() => {
-  const BUILD = 'directed-moments';
+  const BUILD = 'ch1-expansion';
   const url = (() => { try { return new URLSearchParams(location.search).get('telemetry') || window.DL_TELEMETRY_URL || ''; } catch (e) { return ''; } })();
   const sid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)) ;
   let enabled = true, queue = [], log = [], seq = 0, sent = 0, chap = null;

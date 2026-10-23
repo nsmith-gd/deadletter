@@ -730,7 +730,7 @@ def make_drawing():
     lbl((1154, gy + 40), 'WATER', 14, 'l')
 
     # Her notes.
-    notes = ['NOTES', '1. MAIN FEED FROM TANK.', '2. SLUICES A B C: SHUT TWO,', '    WATER THE THIRD.', '3. THE KNOT IS A SETTLING',
+    notes = ['NOTES', '1. MAIN FEED FROM TANK.', '2. SLUICES A B C UNDER', '    THE BENCH.', '3. THE KNOT IS A SETTLING',
              '    LOOP. SILT DROPS OUT', '    BEFORE THE KALE.', '4. WATER LITTLE, OFTEN.']
     for i, s in enumerate(notes):
         lbl((884, 400 + i * 30), s, 18 if i else 21, 'l')

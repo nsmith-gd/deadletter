@@ -69,3 +69,6 @@ the script exits non-zero if there are any. Run it after moving anything he can 
 - **`results_moments_mechanical.jsonl`** and **`results_moments_first_playthrough.jsonl`:** the prologue with the four
   directed moments (kin, the city, ring C, the lit window) held on their cues: 8:41 mechanical (7:56 before; the holds
   add about 37 s), and one first-time run. Under the sim a moment runs on the game's clock.
+- **`results_expansion_attendance_mechanical.jsonl`** and **`results_expansion_attendance_first_playthrough.jsonl`:**
+  chapter 1 with the expansion (DL-14a, DL-14b, DL-16a, DL-17's rig) and the design review's trims, on the new sets:
+  6:40 mechanical; three first-time runs at 9:45 to 11:15 (about 7:00 before). The overlap audit is clean.
