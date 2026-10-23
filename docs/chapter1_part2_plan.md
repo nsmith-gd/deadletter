@@ -131,7 +131,7 @@ mended with wire and putty. A grow-lamp still on over the window shelf, and unde
 | 280.0 | In through the doorway. Back wall face y 1.3, ceiling 3.0, timber floor. |
 | 281.0 to 282.4 | A tall slatted shelf of seedling trays and pots, each with a child's name tag; most are dead and dry. |
 | 282.8 to 288.6 | **The bench** against the back wall (y 0.65 to 1.3, top 0.9): vice, tools on a board above it, a soldering iron, a kettle, a mug, a radio, a pair of reading glasses. Under the bench, a plan chest of shallow drawers. |
-| 285.3 to 286.7 | **The big drawer** (`Att17Drawer`), the plan chest's lowest, front face at y 0.62, front from z 0.12 to 0.48, label PLACEMENTS. Built **shut**; origin on the middle of its front face; the game slides it 0.45 toward the camera (Blender −y). Inside it (parented to it, moved with it): papers; on top, Mara's **irrigation drawing** (her crooked tree turned into a garden bed with water channels, pencil, ruled lines over the childish ones) and her **placement card** (texture, readable in a close-up: PLACEMENT · M. D. · age 14 · WORKS DEPT., RING A · water and irrigation · sponsor E. VANCE, with a stamp). |
+| 285.3 to 286.7 | **The big drawer** (`Att17Drawer`), the plan chest's lowest, front face at y 0.62, front from z 0.12 to 0.48, label PLACEMENTS. Built **shut**; origin on the middle of its front face; the game slides it 0.45 toward the camera (Blender −y). Inside it (parented to it, moved with it): papers; on top, Mara's **irrigation drawing** (her crooked tree turned into a garden bed with water channels, pencil, ruled lines over the childish ones) and her **placement card** (texture, readable in a close-up: PLACEMENT · M. D. · age 14 · WORKS DEPT., RING A · water and irrigation · sponsor E. LISLE, with a stamp). |
 | 286.9 | **The repaired pot** on the floor at the bench's end (y 0.35), the crack wired: when the drawer is out, the drawing sits beside it in the close-up. |
 | 285.7, y −0.05 | **`Att17Tray`**: a heavy seed tray of damp soil that slid off the bench and wedged against the drawer's handle, lying on the floor in front of it (a carried item, about 0.42 by 0.30 by 0.09; origin at its bottom centre). |
 | 287.6 to 288.4 | A low stool (top 0.45) at the bench end with a **voice-card player** on it: `att_volunteer`. |
@@ -152,7 +152,7 @@ mended with wire and putty. A grow-lamp still on over the window shelf, and unde
 
 - `att_escort` (DL-15, under the balcony; treatment `card_worn`): an escort's log card, recorded for the file.
 - `att_bell` (DL-16, the corridor tannoy; treatment `tannoy`): the end-of-lessons announcement.
-- `att_volunteer` (DL-17, on the stool; treatment `elder`): the volunteer, Mr Vance, to Mara.
+- `att_volunteer` (DL-17, on the stool; treatment `elder`): the volunteer, Mr Lisle, to Mara.
 
 ## Art: what the game moves (names and pivots)
 

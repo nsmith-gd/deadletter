@@ -11,7 +11,7 @@ The drawing is all hers, in her own pencil: her crooked tree with the knot made 
 channel, the branches laterals with sluices, the knot a settling loop. Beside her lines, never over them, the
 volunteer's blue pencil in his own hand: "fall 1 in 100", "levels!" at the tank, a shallower channel section drawn
 next to hers, a tick at the knot. The card: she applied for the placement herself (APPLICATION: BY THE PUPIL, her
-signature beside his); Works Dept., ring A, water and irrigation, sponsor E. Vance, P.A. 316; REPORT VIA residential
+signature beside his); Works Dept., ring A, water and irrigation, sponsor E. Lisle, P.A. 316; REPORT VIA residential
 access, ring A (Works gate sealed). The way on is the stair door in the right end wall: it opens on a lit stair up
 and out of frame, RESIDENTIAL ACCESS . RING A on a blade sign over it.
 
@@ -26,7 +26,7 @@ What the game moves (origin = pivot, world coordinates; numbers in REPORT at the
     Att17GrowLamp  the grow-lamp's two tubes (EMIT Att17GrowLamp); origin at their centre.
     Att17Door      the stair door's leaf, built SHUT; origin on its hinge axis at the floor (HINGE); opens +90 deg
                    about +z, away from the room, toward the stair.
-The expansion (docs/chapter1_expansion_build.md, DL-17 changes): Vance's apprentice test rig between the sink and the
+The expansion (docs/chapter1_expansion_build.md, DL-17 changes): Lisle's apprentice test rig between the sink and the
 stair door (build_rig), and its moving parts:
     Att17Valve     the valve's wheel and spindle, on the tank's down-pipe; origin the wheel's centre; spins about y.
     Att17ValveKey  the T-key on the valve's spindle (hidden until he has it); a child of Att17Valve.
@@ -110,7 +110,7 @@ LAMP_AIM = Vector((285.5, 0.70, 0.90))
 DOOR_LAMP = (295.25, 1.20, 2.25)
 BROOM = (295.52, 1.12)                          # the broom's head, in the corner by the stair door (it leant by the sink)
 
-# Vance's apprentice test rig (docs/chapter1_expansion_build.md, DL-17 changes), between the sink and the stair door.
+# Lisle's apprentice test rig (docs/chapter1_expansion_build.md, DL-17 changes), between the sink and the stair door.
 # The tank on the wall feeds a down-pipe; the valve on it (turned with his T-key) lets the tank through to a manifold
 # under the bench; three sluices A, B, C on the bench front open three brass pipes that rise behind the bench and cross:
 # A feeds bed 3, B bed 1, C bed 2. A float in bed 1 hangs on a chain that runs up to a pulley, along under the ceiling
@@ -154,7 +154,7 @@ LATCH_L = 0.127                                 # the bar runs +x from it across
 LATCH_EYE = 295.925                             # keeper on the leaf. The chain's eye on the bar (x).
 LATCH_UP = 70.0                                 # degrees, lifted: about Blender -y (game +z), the bar's end rising
 KEY_AT = (285.60, 1.04, CONTENT_Z + 0.0025 + 0.012, 0.5)   # Att17Key in the drawer, shut: its socket's centre, its turn
-RIGCARD = (293.10, 293.40, 1.92, 2.098)         # Vance's card on the tank's front: x0, x1, z0, z1
+RIGCARD = (293.10, 293.40, 1.92, 2.098)         # Lisle's card on the tank's front: x0, x1, z0, z1
 # The present-day service thread (the director's addition; the prologue's new cable, art/pass6/build_ending_secrets.py):
 # a new cable comes in through the left wall, runs along the top of the back wall to a small new pump-and-relay box by
 # the tank (which refills the tank through a recently repaired pipe), and carries on through the end wall by the stair
@@ -264,7 +264,7 @@ CELLS = {
     'paper1': (1536, 1104, 1792, 1360), 'paper2': (1792, 1104, 2048, 1360),
     'seedlist': (1536, 1360, 2048, 1488),
     'soilcrack': (1040, 1704, 1328, 1992),    # dry soil, cracked (the trays' surface)
-    # The test rig (expansion): Vance's card on the tank, the beds' name cards, the levers' letters, the sight glass's scale.
+    # The test rig (expansion): Lisle's card on the tank, the beds' name cards, the levers' letters, the sight glass's scale.
     'rigcard': (1336, 1696, 1848, 2000),      # 0.30 x 0.178 m
     'bed1': (0, 1816, 192, 1876), 'bed2': (192, 1816, 384, 1876), 'bed3': (384, 1816, 576, 1876),
     'plA': (576, 1816, 640, 1880), 'plB': (640, 1816, 704, 1880), 'plC': (704, 1816, 768, 1880),
@@ -427,7 +427,7 @@ TREE = [
 
 
 GRAPHITE = (50, 50, 60)          # Mara's pencil
-BLUE = (26, 58, 150)              # Vance's blue pencil
+BLUE = (26, 58, 150)              # Lisle's blue pencil
 RED = (176, 40, 34)               # and his red one (the margin note on her working for his test rig)
 
 
@@ -808,10 +808,10 @@ def make_drawing():
     bnote((592, 112), 'The knot works!', 28)
     tick(780, 112)
     barrow([(640, 132), (628, 186), (616, 236)], 10)
-    bnote((660, 146), '- E.V.', 23)
+    bnote((660, 146), '- E.L.', 23)
     # Checked.
     XF[:] = SHEET
-    bnote((1004, 802), 'E. V.', 25)
+    bnote((1004, 802), 'E. L.', 25)
     tick(1062, 796, 0.9)
     bl = _grain(bl.filter(ImageFilter.GaussianBlur(0.55 * K)), 1705, lo=0.55)
 
@@ -819,7 +819,7 @@ def make_drawing():
     rd = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
     RD = RED + (235,)
     for (x, y), t_, size in (((476, 714), 'Good eye.', 28), ((476, 750), 'Most of them never', 24),
-                             ((476, 778), 'look behind the', 24), ((476, 806), 'bench.', 24), ((560, 838), '- E.V.', 22)):
+                             ((476, 778), 'look behind the', 24), ((476, 806), 'bench.', 24), ((560, 838), '- E.L.', 22)):
         _hand(rd, (x * K, y * K), t_, _font(size * K, 'ink'), RD, rnd, jit=0.7 * K, rot=3.0)
     dr = ImageDraw.Draw(rd)
     dr.line(k(_wob([(468, 722), (432, 736), (396, 752)], rnd, 0.6, 7.0)), fill=RD, width=int(2.6 * K), joint='curve')
@@ -833,7 +833,7 @@ def make_drawing():
 
 
 def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET):
-    """Her working for Vance's test rig, along the bottom of her irrigation sheet (the expansion): the rig drawn from
+    """Her working for Lisle's test rig, along the bottom of her irrigation sheet (the expansion): the rig drawn from
     the front, as it stands, to scale: the bench, the three beds with their names, the levers A B C under them, and the
     three pipes traced from each lever up behind the bench to the bed it really feeds, each broken where it passes
     behind another, gone over twice; an arrow down from each spout. It depicts the rig; it doesn't spell out the
@@ -907,11 +907,11 @@ def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET):
     lbl((246, 704), 'TEST RIG (FROM THE FRONT)', 14)
 
 
-CARD_A = (('M. D.', '14', 'WORKS DEPT., RING A', 'WATER AND IRRIGATION', 'E. VANCE', 'BY THE PUPIL',
+CARD_A = (('M. D.', '14', 'WORKS DEPT., RING A', 'WATER AND IRRIGATION', 'E. LISLE', 'BY THE PUPIL',
            'RESIDENTIAL ACCESS, RING A', '(WORKS GATE SEALED)'), '0417', 1730)
 CARD_B = (('R. ABEL', '13', 'KITCHENS, RING A', 'COOK (JUNIOR)', 'M. PRICE', 'BY THE PUPIL', 'KITCHEN DOOR, RING A', ''),
           '0409', 1731)
-CARD_C = (('T. ORME', '13', 'STORES, RING A', 'STOREKEEPING', 'E. VANCE', 'BY THE PUPIL', 'STORES YARD, RING A', ''),
+CARD_C = (('T. ORME', '13', 'STORES, RING A', 'STOREKEEPING', 'E. LISLE', 'BY THE PUPIL', 'STORES YARD, RING A', ''),
           '0412', 1732)
 
 
@@ -962,7 +962,7 @@ def make_card(w, h, entries, number, seed, stamp=True, sign=True, pupil='Mara D.
     if pupil:                                                  # hers in pencil, careful and joined
         _hand(ink, (84, 438), pupil, _font(36, 'hand'), (54, 54, 64, 225), rnd, jit=0.6, rot=3, track=0.96)
     if sign:
-        _hand(ink, (370, 436), 'E. Vance', _font(38, 'ink'), (28, 34, 70, 230), rnd, jit=0.8, rot=5)
+        _hand(ink, (370, 436), 'E. Lisle', _font(38, 'ink'), (28, 34, 70, 230), rnd, jit=0.8, rot=5)
     card.alpha_composite(ink.filter(ImageFilter.GaussianBlur(0.45)))
     if stamp:
         st = Image.new('RGBA', (204, 94), (0, 0, 0, 0))
@@ -1068,7 +1068,7 @@ def make_atlas(path):
     # The volunteer's notice, in ink.
     x0, y0, x1, y1 = CELLS['rota']
     r_ = _paper(x1 - x0, y1 - y0, (214, 206, 182), 1736, amp=0.08, edge=0.2, edge_px=12)
-    for i, (t, sz) in enumerate((('Workshop', 30), ('Tues & Thurs', 22), ('E. Vance', 22), ("Kettle's always on.", 20),
+    for i, (t, sz) in enumerate((('Workshop', 30), ('Tues & Thurs', 22), ('E. Lisle', 22), ("Kettle's always on.", 20),
                                  ('Ask before the iron.', 20))):
         _hand(r_, (14, 24 + i * 32), t, _font(sz, 'ink'), (26, 34, 72, 235), rnd, jit=0.6, rot=3)
     ImageDraw.Draw(r_).ellipse((120, 2, 134, 14), fill=(150, 40, 30))  # a drawing pin
@@ -1185,7 +1185,7 @@ def make_atlas(path):
 
 
 def make_rig_cells(img, rnd):
-    """The test rig's pictures (the expansion): Vance's card in his ink, the beds' name cards, the levers' enamel
+    """The test rig's pictures (the expansion): Lisle's card in his ink, the beds' name cards, the levers' enamel
     letters, the sight glass's scale."""
     from PIL import ImageDraw
     INKV = (26, 34, 72, 238)
@@ -1193,7 +1193,7 @@ def make_rig_cells(img, rnd):
     c = _paper(x1 - x0, y1 - y0, (222, 212, 178), 1770, amp=0.08, edge=0.18, edge_px=18)
     for (x, y), t, size in (((26, 58), 'APPRENTICE TEST:', 46), ((26, 128), 'WATER BED 1 ONLY.', 50), ((26, 198), 'ONE TANK.', 50)):
         _hand(c, (x, y), t, _font(size, 'ink'), INKV, rnd, jit=0.8, rot=3.5)
-    _hand(c, (486, 262), '- E.V.', _font(34, 'ink'), INKV, rnd, jit=0.6, rot=3, anchor='r')
+    _hand(c, (486, 262), '- E.L.', _font(34, 'ink'), INKV, rnd, jit=0.6, rot=3, anchor='r')
     ImageDraw.Draw(c).line((30, 156, 440, 152), fill=INKV, width=3)               # WATER BED 1 ONLY, underlined
     img.paste(c.convert('RGB'), (x0, y0))
     for i, nm in enumerate(BED_NAMES):
@@ -2250,7 +2250,7 @@ def tray_matrix():
 
 
 # =====================================================================================================================
-# Vance's apprentice test rig (the expansion): its static parts (Att17Set)
+# Lisle's apprentice test rig (the expansion): its static parts (Att17Set)
 # =====================================================================================================================
 def pipe(B, pts, r=PIPE_R, mt='HandledBrass', seg=10):
     """A run of pipe through pts, with a round elbow at each bend."""
@@ -2298,7 +2298,7 @@ def pulley(B, c, axis, r, cheeks=True):
 
 def build_rig(B, rnd):
     """The test bench, its beds and levers, the pipes behind it, the tank on the wall, the valve's body and the feed,
-    the float's chain and pulleys, the latch's keeper on the door's jamb, and Vance's card on the tank."""
+    the float's chain and pulleys, the latch's keeper on the door's jamb, and Lisle's card on the tank."""
     x0, x1, y0, y1, top = RIG
     # The bench: a scrubbed top on four legs, a front panel (the levers are on it; the cocks behind it), a back rail,
     # a low shelf with a bucket and a funnel.
@@ -2388,7 +2388,7 @@ def build_rig(B, rnd):
         B.cyl('HandledBrass', (sx_, sy_, z), (sx_, ty0, z), 0.01, seg=8)
     for s_ in (-1, 1):                                                                              # its guard rods
         B.cyl('WornIron', (sx_ + s_ * 0.02, sy_ - 0.012, sz0 - 0.01), (sx_ + s_ * 0.02, sy_ - 0.012, sz1 + 0.01), 0.003, seg=4)
-    # Vance's card in a brass holder on the tank's front: APPRENTICE TEST: WATER BED 1 ONLY. ONE TANK.
+    # Lisle's card in a brass holder on the tank's front: APPRENTICE TEST: WATER BED 1 ONLY. ONE TANK.
     cx0, cx1, cz0, cz1 = RIGCARD
     B.box('HandledBrass', cx0 - 0.012, cx1 + 0.012, ty0 - 0.004, ty0, cz0 - 0.012, cz1 + 0.006)
     B.decal(cx0, cx1, cz0, cz1, ty0 - 0.0048, 'rigcard')
@@ -2516,7 +2516,7 @@ def build_relay_lamp(coll):
 # The rig's moving parts (own objects, origins at their pivots)
 # =====================================================================================================================
 def t_key(B):
-    """Vance's T-key, its socket's centre at the origin, its shaft toward -y, its bar along x."""
+    """Lisle's T-key, its socket's centre at the origin, its shaft toward -y, its bar along x."""
     B.box('WornIron', -0.012, 0.012, -0.026, 0.012, -0.012, 0.012)
     B.cyl('WornIron', (0, -0.026, 0), (0, -0.056, 0), 0.0065, seg=8)
     B.sphere('HandledBrass', (0, -0.058, 0), 0.011, seg=8)
@@ -2945,7 +2945,7 @@ builder adds +44 (292.55 here is 336.55 in the game). Blender (x, y, z) -> game 
 - Att17Valve: origin = the wheel's centre, Blender (292.55, 0.50, 0.70) = game (292.55, 0.70, -0.50). A spoked iron
   wheel r 0.085 facing the camera (rim y 0.491-0.509), its hub and spindle back to the valve's body on the down-pipe
   (Blender y 0.60); the spindle's square end at y 0.47-0.482. Spins about Blender y = game z (three.js rotateZ).
-- Att17ValveKey: Vance's T-key on the spindle, built visible. A CHILD of Att17Valve (it turns with the wheel): local
+- Att17ValveKey: Lisle's T-key on the spindle, built visible. A CHILD of Att17Valve (it turns with the wheel): local
   Blender (0, -0.03, 0) = glTF local (0, 0, +0.03); world origin (292.55, 0.47, 0.70) = game (292.55, 0.70, -0.47), the
   socket over the spindle's end. Shaft toward the camera, the bar along x: x 292.47-292.63, Blender y 0.396-0.42 (its
   nearest point to the lane, game z -0.396), z 0.69-0.71.
@@ -2969,7 +2969,7 @@ builder adds +44 (292.55 here is 336.55 in the game). Blender (x, y, z) -> game 
   tray's floor (0.569). Built visible; material Water.
 - The test bench: x 293.05-295.30, Blender y 0.35-0.95, top 0.55 (front panel y 0.35-0.37, z 0.2-0.51). Beds on it:
   bed 1 x 293.10-293.75 (M. D.), bed 2 293.80-294.45 (R. A.), bed 3 294.50-295.15 (T. O.); y 0.45-0.85; trays 0.015
-  thick, floor top 0.565, rims 0.70; a skin of dry soil to 0.58 and a few dead seedlings; name cards in Vance's ink on
+  thick, floor top 0.565, rims 0.70; a skin of dry soil to 0.58 and a few dead seedlings; name cards in Lisle's ink on
   the trays' fronts (right of centre, clear of the levers), z 0.62-0.66.
 - Att17Water1 / 2 / 3: built FULL (0.13 deep, z 0.565-0.695). Origins = the middle of each tray's floor, Blender
   (293.425 / 294.125 / 294.825, 0.65, 0.565) = game (x, 0.565, -0.65); each 0.618 x 0.368. Scale y (game) 0..1.
@@ -2981,8 +2981,8 @@ builder adds +44 (292.55 here is 336.55 in the game). Blender (x, y, z) -> game 
   the three cocks. The sight glass on its front: x 293.95, axis y 0.735, z 1.78-2.22, a scale behind it.
 - Att17TankWater: the water in the sight glass, FULL: origin = the glass's bottom, Blender (293.95, 0.735, 1.78) =
   game (293.95, 1.78, -0.735); 0.44 tall, r 0.009. Scale y (game) 0..1.
-- Vance's card in a brass holder on the tank's front: x 293.10-293.40, z 1.92-2.10 (face y 0.755): "APPRENTICE TEST:
-  WATER BED 1 ONLY. ONE TANK. - E.V." (atlas cell rigcard).
+- Lisle's card in a brass holder on the tank's front: x 293.10-293.40, z 1.92-2.10 (face y 0.755): "APPRENTICE TEST:
+  WATER BED 1 ONLY. ONE TANK. - E.L." (atlas cell rigcard).
 - The chain (static, in Att17Set): from the float up at (293.60, y 0.64) to a pulley hung from the beam at 293.6
   (centre z 2.76, r 0.04), along under the ceiling at z 2.80 to a pulley on the end wall (295.705, z 2.76), down beside
   the door's architrave (x 295.745, y 0.64) to a pulley at z 2.15, across under the door's head (z 2.13) to a pulley
@@ -3020,18 +3020,18 @@ DRAWER CONTENTS (Blender; open = shut y - 0.45)
   sluices A B C, the settling loop, her section A-A, NOTES 1-4, title block (DRAWN M. D., AGE 14, CHECKED). His blue
   pencil, beside her lines: "fall 1 in 100 / or it scours" under her "FALL 1 IN 40" (bottom left); "levels!" and a
   datum mark by the TANK (bottom middle); his shallower section with "wider, shallower / sides 1 in 2" under hers
-  (top right); "The knot works! - E.V." and a tick over the loop (top middle); "E. V." and a tick at CHECKED.
+  (top right); "The knot works! - E.L." and a tick over the loop (top middle); "E. L." and a tick at CHECKED.
   Expansion: her plan (all of the above but the right-hand column) is shrunk to 0.78 into the upper left; along the
   bottom, her working for the test rig: the rig from the front to scale (bench, beds "1 M.D.", "2 R.A.", "3 T.O.",
   levers A B C), the three pipes traced from each lever up behind the bench to the bed it feeds, broken where one
   passes behind another (A to bed 3, B to bed 1, C to bed 2, as in the world: drawn, never written out; no notes of
   hers on it). Beside it, his red pencil, an arrow to her pipes: "Good eye. Most of them never look behind the bench.
-  - E.V." The atlas cell is where it
+  - E.L." The atlas cell is where it
   was: drawing (0, 0, 1280, 896); her card (1280, 0, 2048, 480).
 - Card 0.20 x 0.125, turned -0.09 rad: shut (285.93, 0.82, 0.3957), open (285.93, 0.37, 0.396) = game (285.93, 0.396, -0.37).
-  Typed: NAME M. D., AGE 14, PLACED WITH WORKS DEPT., RING A, TRADE WATER AND IRRIGATION, SPONSOR E. VANCE,
+  Typed: NAME M. D., AGE 14, PLACED WITH WORKS DEPT., RING A, TRADE WATER AND IRRIGATION, SPONSOR E. LISLE,
   APPLICATION BY THE PUPIL, REPORT VIA RESIDENTIAL ACCESS, RING A (WORKS GATE SEALED). Signed: Pupil "Mara D."
-  (pencil), Sponsor "E. Vance" (ink). Stamp: ACCEPTED, WORKS DEPT . RING A, P.A. 316. No. 0417.
+  (pencil), Sponsor "E. Lisle" (ink). Stamp: ACCEPTED, WORKS DEPT . RING A, P.A. 316. No. 0417.
 - Mended pot on the floor: centre (286.9, 0.35), r 0.13, rim 0.255 = game (286.9, 0, -0.35).
 CLOSE-UP CAMERAS (drawer open; game coordinates; vertical FOV for 16:9)
 - Drawing beside the pot: pos (286.62, 0.92, -0.06), look (286.62, 0.33, -0.42), 24 mm = vFOV 45.7 deg (0.69 m).

@@ -188,11 +188,11 @@ at the bell push.
 
 ## DL-17 changes (dl17.py, old coordinates, +44 at build)
 
-Her drawing becomes the instructions. Vance's apprentice test rig stands between the sink and the stair door.
+Her drawing becomes the instructions. Lisle's apprentice test rig stands between the sink and the stair door.
 
 | Thing | x (old) | Height | Depth y | Notes |
 |---|---|---|---|---|
-| The valve (on the tank's down-pipe) | 292.55 | wheel centre 0.7 | y 0.5 | Turned by Vance's T-key, which is in the drawer |
+| The valve (on the tank's down-pipe) | 292.55 | wheel centre 0.7 | y 0.5 | Turned by Lisle's T-key, which is in the drawer |
 | The tank | 293.0 to 294.2 | 1.7 to 2.3 | on wall brackets, y 1.0 | A sight glass on its front |
 | The test bench | 293.05 to 295.3 | top 0.55 | 0.35 to 0.95 | |
 | Bed 1 (M. D.), bed 2 (R. A.), bed 3 (T. O.) | 293.1 to 293.75, 293.8 to 294.45, 294.5 to 295.15 | trays on the bench, 0.15 deep | y 0.45 to 0.85 | Name cards on their fronts |
@@ -214,9 +214,9 @@ What the game moves:
 | Att17Float | its bottom, in bed 1 | low | rises 0.12 with bed 1's water |
 | Att17Latch | its pivot on the door | down (locked) | rotates up by 70 degrees when the float is up |
 
-The card on the rig (Vance's hand): "APPRENTICE TEST: WATER BED 1 ONLY. ONE TANK." The drawing in the drawer (the
+The card on the rig (Lisle's hand): "APPRENTICE TEST: WATER BED 1 ONLY. ONE TANK." The drawing in the drawer (the
 drawing17 record) now includes her working for the rig: the three beds, the crossed pipes traced in pencil, "B goes to
-1! (they cross)", "shut two, water the third", and Vance's margin note beside it: "Good eye. Most of them never look
+1! (they cross)", "shut two, water the third", and Lisle's margin note beside it: "Good eye. Most of them never look
 behind the bench."
 
 ## Game summary (index.html)

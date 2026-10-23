@@ -53,7 +53,7 @@ The forest at the ending has grown over decades. Some managed propagation beds s
 | Sealing and Order | Refuge sealed over capacity. Grades assigned access, rations, air, space, and birth licences. Some measures sustained life while distributing protection cruelly. | Graded doors, different material quality by ring, queues, sealed stairs, functioning ration machinery among the dead. |
 | The last childhoods | Births dwindled across the shelter network. Mara and a small final cohort grew up under intensifying protection. | Extended sleeves, padded corners, three desks, false windows, escorted lifts, drawings of a world never seen. |
 | Failure, P.A. 309–311 | Systems failed and grade-based triage abandoned lower rings. Mara was relocated at nine; the birthday parcel remained below. | Existing prologue; preserve its concrete darkness. |
-| The Commons, P.A. 311–328 | Survivors removed grades, shared services, improvised homes, argued, and helped each other. Mara entered irrigation work at fourteen with Vance's support. | Names over numbers, kitchen rotas, public service tracks, mixed repair styles, placement drawing. |
+| The Commons, P.A. 311–328 | Survivors removed grades, shared services, improvised homes, argued, and helped each other. Mara entered irrigation work at fourteen with Lisle's support. | Names over numbers, kitchen rotas, public service tracks, mixed repair styles, placement drawing. |
 | Failed survey, proposed P.A. 319 | Young adults attempted an unauthorised surface survey. A damaged seal contaminated a local ward. People were injured and died; the participants also tried to rescue them. | Breach tools in the lobby; rescue rope, sealing repairs, and cared-for possessions later in the ward. Mara's participation is suggested through recurring marks, not an explicit confession log. |
 | Change of purpose, P.A. 320s onward | Demographic recovery became implausible. The community kept caring for its living members while converting abandoned expansion capacity into surface restoration. | Cancelled residential routes retained as nursery pipes; propagation trays on former ration tracks; dwindling shelter replies alongside continuing planting dates. |
 | Mara's adulthood | She shared a home and work with Rowan, a propagation worker. Rowan later died. Mara kept some things, altered others, and adapted shared tools for solo work. | Two coats, repaired bowls, disagreements in drawings, withdrawn second chair, two-worker jig adapted for one worker. |
@@ -118,7 +118,7 @@ Her work can contain guilt, love, joy, competence, and habit in different propor
 ### People carried through traces
 
 - **Parent:** the birthday gift imagines an ordinary future for one child. The sender is hopeful, not an omniscient prophet.
-- **Vance:** encourages Mara by helping her test an idea. His corrections sit beside her drawing rather than obliterating it. She asked for the placement.
+- **Lisle:** encourages Mara by helping her test an idea. His corrections sit beside her drawing rather than obliterating it. She asked for the placement.
 - **Abel and Orme:** friends with recognisable marks. One adds extravagant creatures to drawings; the other corrects impossible mechanisms, then contributes jokes. These marks mature into adult work. Neither exists only to become a death statistic.
 - **Rowan, proposed partner:** a propagation worker with personal habits and an affectionately competing view of roots and pipework. Their chipped bowl, coat, handwriting, and failed experiments must establish a person before the empty place asks us to grieve them.
 - **Attendant:** follows stable protective rules. It can constrain or support without secretly becoming a villain or a philosopher. Human repair and its own pad maintenance show mutual dependence.
@@ -280,7 +280,7 @@ Prologue usability work: reproduce/fix crash; progressive early secret cues; sca
 - **Disposition:** preserve; quiet vocational discovery.
 - **Builds on:** carry/place and forwarding.
 - **Goal / play:** move seed tray off placements drawer, open it, inspect model drawing and placement record. No manufactured failure.
-- **Insight / story:** crooked tree became irrigation channels; Vance's practical corrections sit beside Mara's lines. Optional message says she asked for the placement and he helped arrange it. This is support for agency, not a benevolent adult assigning her entire future.
+- **Insight / story:** crooked tree became irrigation channels; Lisle's practical corrections sit beside Mara's lines. Optional message says she asked for the placement and he helped arrange it. This is support for agency, not a benevolent adult assigning her entire future.
 - **Mandatory revelation:** she lived beyond childhood and became an apprentice at fourteen. Forwarding identifies residential access to Ring A Works.
 - **Recovery / forward:** records auto-scan; drawer remains open. Keep living shoots out of inexplicably unmaintained ancient trays. Later fresh plants have maintained supply. End school on possibility.
 

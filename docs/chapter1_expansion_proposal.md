@@ -114,7 +114,7 @@ much.
 
 ### DL-17 A Different Lesson (reworked into a puzzle)
 
-**Story.** Her drawing, read as instructions. Vance's test rig on the bench: a small tank, three sluices A, B, C, a bed
+**Story.** Her drawing, read as instructions. Lisle's test rig on the bench: a small tank, three sluices A, B, C, a bed
 with a float. "Apprentice test: water bed 1." The stair door to ring A is on the same test's latch: the float lifts it.
 
 **Play.** Lift the tray off the drawer, read the drawing and the card (as now). Open the tank: the water goes everywhere

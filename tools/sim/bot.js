@@ -693,7 +693,7 @@ window.__startBot = function (seed, opts = {}) {
     yield* walk(1, () => G.x > 325.2, 'into the workshop', { max: 30 });
   }
   function* workshop17() {
-    // DL-17: the tray off the drawer, the drawer, the drawer's contents (and Vance's key); the rig.
+    // DL-17: the tray off the drawer, the drawer, the drawer's contents (and Lisle's key); the rig.
     const d = () => S().f17;
     yield* wait(look(4));
     yield* useAt(['att:tray'], 329.55, actIs('att'), 'the tray', { max: 30 });

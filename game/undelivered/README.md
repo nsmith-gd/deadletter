@@ -161,7 +161,7 @@ constants). The game's code is the `ATT3` section.
 - **DL-16a Her Way Round** (310 to 324, `dl16a.py`). The gate is shut to pupils; her chalk trees point to the
   servery's dumbwaiter. A short application (after the review): he alone is too light (it leaps, the catch bites, it
   lowers him back); one ration tin is the line; both tins read OVER, and Use in the car takes one back out.
-- **DL-17's rig.** Reading the drawer gives him Vance's T-key. One tank (6 s) is shared between whichever sluices are
+- **DL-17's rig.** Reading the drawer gives him Lisle's T-key. One tank (6 s) is shared between whichever sluices are
   open; sluice A feeds bed 3, B bed 1, C bed 2: the pipes cross behind the bench, and her drawing shows them crossing
   without spelling out the answer. Bed 1's float lifts the stair door's latch only if it gets the whole tank. Beds drain
   in 20 s; the tank refills in 10 s, on a pump whose relay runs while it does. If he stands about after reading, he

@@ -1964,7 +1964,10 @@ function updatePlayer(dt) {
   // A standing jump beside a carrier hops on; a running jump is just a jump, so hopping over the sorting weights by the dock
   // never boards one by accident.
   if (game.region === 3 && input.jumpPressed && move === 0 && game.grounded && !game.hold && boardable()) { beginUse3('board'); return; }
-  if (game.hold) { updateHold(dt, move); return; }
+  // Playtest (23 Oct): something light (a coat, the pole, a tin) no longer slows him down or stops him jumping; he moves
+  // as usual, at a walk, holding it. Heavy things keep the carry.
+  const lightCarry = game.hold === 'item' && game.carry && game.carry.light;
+  if (game.hold && !lightCarry) { updateHold(dt, move); return; }
 
   if (move !== 0) game.facing = Math.sign(move);
   const clearance = minCeiling(game.x - 0.12, game.x + game.facing * 0.22) - game.y;
@@ -1973,7 +1976,7 @@ function updatePlayer(dt) {
     else if (game.crouched && clearance > 0.85) game.crouched = false;
   }
   const slow = paceSlow();
-  const run = wantsRun(move) && !slow;
+  const run = wantsRun(move) && !slow && !lightCarry;
   const topSpeed = game.crouched ? CROUCH_WALK : slow ? (game.region === 3 ? REVEAL_WALK : SLOW_WALK) : run ? RUN : WALK;
   const target = Math.sign(move) * topSpeed * Math.min(1, Math.abs(move) * 1.15);
   const acc = game.grounded ? (run ? 6 : 4.5) : 2.2;
@@ -1998,7 +2001,7 @@ function updatePlayer(dt) {
   const dir = Math.sign(nx - game.x);
   if (dir) {
     const lead = nx + dir * HALF;
-    if (surfaceAt(lead) > game.y + STEP_UP) { nx = game.x; game.vx = 0; }
+    if (surfaceAt(lead) > game.y + (onRamp(lead) ? 0.45 : STEP_UP)) { nx = game.x; game.vx = 0; }
   }
   if (carry && surfaceAt(nx + carry - HALF) <= game.y + STEP_UP) nx += carry;
   if (!game.grounded || game.crouched) {
@@ -2051,7 +2054,8 @@ function updatePlayer(dt) {
     game.landTimer -= dt;
     if (game.landTimer <= 0) {
       const speed = Math.abs(game.vx);
-      if (game.crouched) setClip(speed > 0.03 ? 'CrouchWalk' : 'CrouchIdle', 0.22, speed > 0.03 ? speed / CLIP_SPEED.CrouchWalk : 1);
+      if (lightCarry) setClip(speed > 0.03 ? 'CarryWalk' : 'CarryIdle', 0.22, speed > 0.03 ? Math.max(0.5, speed / CLIP_SPEED2.CarryWalk) : 1);
+      else if (game.crouched) setClip(speed > 0.03 ? 'CrouchWalk' : 'CrouchIdle', 0.22, speed > 0.03 ? speed / CLIP_SPEED.CrouchWalk : 1);
       else if (slow) setClip(speed > 0.03 ? 'SadWalk' : 'Idle', 0.3, speed > 0.03 ? Math.max(0.5, speed / CLIP_SPEED2.SadWalk) : 1);
       else if (speed > 1.15) setClip('Run', 0.18, speed / CLIP_SPEED.Run);
       else setClip(speed > 0.03 ? 'Walk' : 'Idle', 0.22, speed > 0.03 ? Math.max(0.4, speed / CLIP_SPEED.Walk) : 1);
@@ -3917,7 +3921,7 @@ const LETTER_TEXT = {
   c110: { img: 'letter_c110.png', head: 'To C-110, ring C', text: 'Postmarked P.A. 310. Sealed, and never delivered.' },
   // Rev 0.3: DL-17's records scan themselves as he reads them (the plan: records auto-scan; replay from the pause card).
   drawing17: { img: 'record_drawing17.png', record: true, head: 'Mara\u2019s drawing, the workshop', text: 'Her crooked tree become a garden bed, with water channels running round its roots, in her pencil. Beside it, in another hand: \u201Cfall 1 in 100\u201D, \u201Clevels!\u201D, a channel drawn again in section, and a tick. Under it, her working for the test rig: the three beds, and the pipes behind the bench drawn in, crossing. In red pencil beside it: \u201CGood eye. Most of them never look behind the bench.\u201D' },
-  placement17: { img: 'record_placement17.png', record: true, head: 'Placement, P.A. 316', text: 'PLACEMENT \u00B7 M. D. \u00B7 AGE 14. Works Dept., ring A: water and irrigation. At the pupil\u2019s own request. Sponsor: E. Vance. Report via residential access, ring A.' },
+  placement17: { img: 'record_placement17.png', record: true, head: 'Placement, P.A. 316', text: 'PLACEMENT \u00B7 M. D. \u00B7 AGE 14. Works Dept., ring A: water and irrigation. At the pupil\u2019s own request. Sponsor: E. Lisle. Report via residential access, ring A.' },
 };
 const Letters = (() => {
   const el = document.getElementById('letter'), read = [];
@@ -5282,7 +5286,7 @@ function nearAttItem() {
 }
 function nearAttFixed() {
   const a = game.att, x = game.x;
-  if (game.y < 0.05 && Math.abs(x - ATT.pawlX) < 0.32) return a.lesson.on ? 'att:pawl' : 'att:pawlIdle';
+  if (game.y < 0.05 && Math.abs(x - ATT.pawlX) < 0.4) return a.lesson.on ? 'att:pawl' : 'att:pawlIdle';
   if (game.y < 0.05 && Math.abs(x - ATT.crankX) < 0.36) return 'att:crank';
   return nearAtt2Fixed() || nearAtt3Fixed();
 }
@@ -5321,7 +5325,7 @@ function updateAttAct(a, dt) {
     const f = actions.Lift.time * FPS, it = a.what === 'coat' ? s.coat : s.pole;
     if (a.what === 'unjam' && f >= 16 && s.jammed) { s.jammed = false; Sound.clank(); Telemetry.event('unjam', {}); }
     if (f >= 13 && !a.s1) { a.s1 = true; Sound.lift(); }
-    if (f >= 22) { if (it.state !== 'carried') { it.fromJam = a.what === 'unjam'; it.state = 'carried'; it.x = game.x; } it.blend = smooth((f - 22) / 4); }
+    if (f >= 22) { if (it.state !== 'carried') { const bin = it.state === 'bin'; it.fromJam = a.what === 'unjam'; it.state = 'carried'; it.x = bin ? ATT_COAT_BIN.x : game.x; if (bin) it.base = ATT_COAT_BIN.y - 0.45; } it.blend = smooth((f - 22) / 4); }
     if (f >= 39) { game.act = null; game.yawOverride = null; game.hold = 'item'; game.carry = it; it.blend = 1; setClip('CarryIdle', 0.2); }
     return;
   }
@@ -5458,10 +5462,10 @@ function updateAtt(dt) {
   const reJam = !s.jammed && B.a > 0.9 && s.pole.state !== 'jam' && game.region === 6 && game.x > 230 && game.x < 246;
   const heat = s.rattle ? 0.6 + 0.4 * Math.sin(game.clock * 31) : 0;
   const pulse = reJam ? 0.5 + 0.5 * Math.sin(game.clock * 4) : 0;
-  if (k.jamLight) k.jamLight.intensity += ((s.rattle ? 2.2 * heat : reJam ? 1.3 * pulse : 0) - k.jamLight.intensity) * Math.min(1, dt * 10);
-  if (k.poleMats) for (const m of k.poleMats) m.emissiveIntensity += ((s.rattle ? 1.6 * heat : reJam && s.pole.state !== 'carried' ? 0.5 * pulse : 0) - m.emissiveIntensity) * Math.min(1, dt * 8);
+  if (k.jamLight) k.jamLight.intensity += ((s.rattle ? 1.2 * heat : 0) - k.jamLight.intensity) * Math.min(1, dt * 10);   // playtest (23 Oct): sparks' light only; no pulse at the bracket
+  if (k.poleMats) for (const m of k.poleMats) m.emissiveIntensity = 0;                   // playtest (23 Oct): the whole pole glowing gave it away
   // Carrying the pole near A's wheel with A down: he looks at the bracket it came out of.
-  if (reJam && s.pole.state === 'carried' && Math.abs(game.x - ATT.wheelA) < 2.2 && !game.act) { if (!s.reJamLook) { s.reJamLook = game.clock; } }
+  // (Playtest, 23 Oct: no look at the bracket either.)
   if (s.reJamLook && game.region === 6) { const t = game.clock - s.reJamLook; game.lookAt = t < 2.6 ? 'wheelA' : game.lookAt === 'wheelA' ? null : game.lookAt; if (t > 2.6 && !reJam) s.reJamLook = 0; }
   if (k.AttWheelA && !s.jammed) { k.AttWheelA.quaternion.copy(k.AttWheelA.userData.rest.q); k.AttWheelA.rotateZ(B.a * 6); }
   // Rev 0.3: the clutch behind A's wheel turns with it, and spins on its own while the chain slips past the jam.
@@ -5630,12 +5634,12 @@ function updateAtt2Act(a, dt) {
     if (a.phase === 'in') {
       game.yawOverride = Math.PI; setClip(actions.CrouchWalk ? 'CrouchWalk' : 'Walk', 0.2, 0.8);
       game.z = Math.max(D.z, game.z - 0.7 * dt);
-      if (game.z <= D.z + 1e-3) { a.phase = 'along'; d17.visible = false; Sound.servo?.(0.3, 300, 500, 0.02); }
+      if (game.z <= D.z + 1e-3) { a.phase = 'along'; game.yawOverride = Math.PI / 2; Sound.servo?.(0.3, 300, 500, 0.02); }   // he turns along it (playtest: he used to vanish)
     } else if (a.phase === 'along') {
       game.x = Math.min(D.x1, game.x + 1.9 * dt);
       game.y = THREE.MathUtils.lerp(D.h0, D.h1, smooth((game.x - 241) / 7));
       if (Math.random() < dt * 3) Sound.tap();
-      if (game.x >= D.x1) { a.phase = 'out'; d17.visible = true; game.facing = 1; }
+      if (game.x >= D.x1) { a.phase = 'out'; game.facing = 1; }
     } else if (a.phase === 'out') {
       game.yawOverride = 0; game.z = Math.min(0, game.z + 0.7 * dt);
       if (game.z >= -1e-3) {
@@ -5697,7 +5701,7 @@ function updateAtt2Act(a, dt) {
     if (a.t > 6.0 && !s.f17.read) {
       s.f17.read = true; s.f17.readDone = game.clock; game.act = null; game.yawOverride = null; setClip('Idle', 0.3);
       Letters.add('drawing17'); setTimeout(() => Letters.add('placement17'), 1600);     // rev 0.3: the records scan themselves
-      s.f17.key = true; Sound.tap();                                                   // the expansion: Vance's T-key for the rig's valve
+      s.f17.key = true; Sound.tap();                                                   // the expansion: Lisle's T-key for the rig's valve
     }
   }
 }
@@ -5892,7 +5896,7 @@ const ATT3 = {
   shelf: { x0: 310.2, x1: 310.9, h: 1.25, booksX: 310.55 }, stool0: 312.0, stoolHalf: 0.25, stoolH: 0.45, stoolMin: 310.45, stoolMax: 312.2,
   car: { x0: 312.6, x1: 313.4, mid: 313.0, floor: 0.05, top: 2.45 }, gateX: 314.0, passage: { x0: 313.5, x1: 321.2, h: 2.4 },
   stair16a: { x0: 321.2, x1: 323.6, n: 12, h: 2.4 }, weight: { tin1: 1, tin2: 1 }, need: 1,     // (review: a short ballast application; the point is her way round)
-  // DL-17: Vance's apprentice test rig (dl17.py, +44): sluice A waters bed 3, B bed 1, C bed 2.
+  // DL-17: Lisle's apprentice test rig (dl17.py, +44): sluice A waters bed 3, B bed 1, C bed 2.
   valveX: 336.55, sluices: [337.45, 338.1, 338.8], feeds: [2, 0, 1], run: 6, refill: 10, drain: 20,
 };
 const ATT3_ACTS = new Set(['pawl14a', 'crank14a', 'gownChair', 'hangHem', 'reachHem', 'takeHem', 'hangWall', 'takeWall', 'nudge14b', 'hide', 'escorted',
@@ -5936,9 +5940,10 @@ function surfaceAtt3(x, h) {
 }
 function floorAtt3(x) {
   const S = ATT3.stair, L = ATT3.landing, D = ATT3.stair16a;
-  if (x >= S.x0 && x < S.x1) return Math.min(S.h, (S.h / S.n) * Math.ceil((x - S.x0) / ((S.x1 - S.x0) / S.n)));
+  // (Playtest, 23 Oct: walked up and down as slopes, not hopped tread by tread.)
+  if (x >= S.x0 && x < S.x1) return S.h * (x - S.x0) / (S.x1 - S.x0);
   if (x >= L.x0 && x < L.x1) return L.h;
-  if (x >= D.x0 && x < D.x1) return Math.max(0, D.h - (D.h / D.n) * Math.ceil((x - D.x0) / ((D.x1 - D.x0) / D.n)));
+  if (x >= D.x0 && x < D.x1) return D.h * (1 - (x - D.x0) / (D.x1 - D.x0));
   return null;
 }
 function limitsAtt3(lo, hi) {
@@ -6290,6 +6295,8 @@ function placeGown14a(g, o, dt, A) {
   placeItem(g, o, dt);
   if (g.state === 'floor' && !g.drop) { o.position.y = g.base + 0.06; o.rotation.set(0, 0, -Math.PI / 2); }    // laid down along the lane
 }
+// The stairs he walks: DL-14b's up to the sick bay, DL-16a's down to the workshop.
+function onRamp(x) { return game.region === 6 && ((x >= ATT3.stair.x0 - 0.2 && x < ATT3.stair.x1 + 0.1) || (x >= ATT3.stair16a.x0 - 0.1 && x < ATT3.stair16a.x1 + 0.2)); }
 // The escort trolley (DL-14b). It patrols its rail and looks ahead with its lamp. Whatever pupil-sized thing it finds in
 // the beam (him, not tucked into a recess; or a figure on the rail) it rings for and takes back to the dormitory.
 function beam14b(B) {
@@ -6487,7 +6494,7 @@ const VOICE_LINES = {
   att_rest: { who: 'Tannoy', treat: 'tannoy', lines: [['Rest hour.', 1.6], ['Lights out, please. Blinds down.', 2.8], ['Pupils will remain in their own beds.', 3.0]] },
   att_trolley: { who: 'Escort', treat: 'machine', lines: [['Pupil found. Returning you to the dormitory.', 3.0]] },
   att_bell: { who: 'Tannoy', treat: 'tannoy', lines: [['End of lessons.', 2.0], ['Pupils will walk, not run, to the playground.', 3.6], ['Escorts to the gate, please.', 2.6], ['Order above all.', 2.0]] },
-  att_volunteer: { who: 'Voice card', treat: 'elder', lines: [['Mara. Vance here. The bench.', 3.0], ['You asked me about the Works again, so I asked them for you.', 4.4], ['Your drawing’s good. Better than mine.', 3.2], ['Water’s patient, love. Give it a slope and it’ll go round anything.', 5.0], ['They said yes. Ring A, water and the growing beds. After your birthday.', 5.2], ['They’ll grumble you’re young. Let them.', 3.4], ['Your tree can be crooked. The channels can’t. Mind the levels.', 4.6]] },   // rev 0.3: she asked; he helped
+  att_volunteer: { who: 'Voice card', treat: 'elder', lines: [['Mara. Lisle here. The bench.', 3.0], ['You asked me about the Works again, so I asked them for you.', 4.4], ['Your drawing’s good. Better than mine.', 3.2], ['Water’s patient, love. Give it a slope and it’ll go round anything.', 5.0], ['They said yes. Ring A, water and the growing beds. After your birthday.', 5.2], ['They’ll grumble you’re young. Let them.', 3.4], ['Your tree can be crooked. The channels can’t. Mind the levels.', 4.6]] },   // rev 0.3: she asked; he helped
   att_teacher: { who: 'Voice card', treat: 'card', lines: [['To the family of Mara D., class four.', 3.4], ['She’s doing well. She doesn’t speak much in class, but she listens to everything.', 5.6], ['She asked me today why the windows don’t open. I told her the truth. I hope that was right.', 6.4], ['The protocol says she isn’t to be left alone, so I eat my lunch with her. I don’t mind.', 5], ['She’s drawn on the wall behind the window panel. A tree. I haven’t had it cleaned.', 5.6], ['I’ll keep recording these until someone writes back. Take care of yourselves.', 5]] },
 };
 // Cards he winds (Use): where the player is and where he stands. Tannoys: where they hang; they play as he passes.

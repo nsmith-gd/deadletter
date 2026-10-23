@@ -268,10 +268,10 @@ Treatment `tannoy`, small and bright, the register's voice. About 10 s. Plays as
 > End of lessons. *[pause]* Pupils will walk, not run, to the playground.
 > Escorts to the gate, please. *[pause]* Order above all.
 
-### `att_volunteer`: Mr Vance, to Mara (DL-17, the stool by the bench)
+### `att_volunteer`: Mr Lisle, to Mara (DL-17, the stool by the bench)
 
 Treatment `elder`. About 30 s. An old volunteer who mends things, fond and plain. She asked for the placement; he helped arrange it (the director's plan, revision 0.3).
-> Mara. Vance here. The bench. *[pause]*
+> Mara. Lisle here. The bench. *[pause]*
 > You asked me about the Works again, so I asked them for you.
 > Your drawing's good. Better than mine.
 > Water's patient, love. Give it a slope and it'll go round anything.
