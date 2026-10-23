@@ -994,10 +994,10 @@ def build_shell(B):
     trims(B, ax1, PART[0], yb0)
     # The sick bay's own rail, at its child's height over the deck.
     B.box('PigeonWood', LWALL[1], BAL[1], yb0 - 0.03, yb0, 2.55, 2.6)
-    # The duct behind the hatch: a dark box (Blender y 1.4..2.6), open to the left where it runs on toward DL-14.
-    B.sbox('sw_dark', 247.85, hx1 + 0.1, yb1, DUCT_Y[1], hz0 - 0.1, hz0)
-    B.sbox('sw_dark', 247.85, hx1 + 0.1, yb1, DUCT_Y[1], hz1, hz1 + 0.1)
-    B.sbox('sw_dark', 247.85, hx1 + 0.1, DUCT_Y[1], DUCT_Y[1] + 0.1, hz0 - 0.1, hz1 + 0.1)
+    # The duct behind the hatch: a dark box (Blender y 1.4..2.6), open to the left where it runs on (behind the corridor).
+    B.sbox('sw_dark', X0, hx1 + 0.1, yb1, DUCT_Y[1], hz0 - 0.1, hz0)
+    B.sbox('sw_dark', X0, hx1 + 0.1, yb1, DUCT_Y[1], hz1, hz1 + 0.1)
+    B.sbox('sw_dark', X0, hx1 + 0.1, DUCT_Y[1], DUCT_Y[1] + 0.1, hz0 - 0.1, hz1 + 0.1)
     B.sbox('sw_dark', hx1, hx1 + 0.1, yb1, DUCT_Y[1], hz0, hz1)
     # The hatch's iron frame. Expansion: no longer the way in (he comes from the corridor stair, through LDOOR); its
     # door is gone and the duct's end is closed by a cast-iron grille: a vent.

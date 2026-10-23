@@ -5159,6 +5159,9 @@ function buildAtt(root) {
     const o = get(n), m = lamp(n, 0x7dff9a); if (!o || !m) return null;
     return { m, x: new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3()).x, phase: i * 2.3, last: 0, pump: n === 'Att17RelayLamp' };
   }).filter(Boolean);
+  // DL-17's streams: pale running water, not the troughs' dark water.
+  const streamMat = new THREE.MeshStandardMaterial({ color: 0xbfd6e6, emissive: new THREE.Color(0x3a5466), emissiveIntensity: 0.6, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.8 });
+  for (const n of ['Att17Stream1', 'Att17Stream2', 'Att17Stream3']) { const o = get(n); if (o) o.traverse((q) => { if (q.isMesh) q.material = streamMat; }); }
   // The trolley's beam: a faint warm cone, added light, never hiding what is behind it.
   if (k.Att14bCone) { k.coneMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.11, blending: THREE.AdditiveBlending, depthWrite: false }); k.Att14bCone.traverse((q) => { if (q.isMesh) { q.material = k.coneMat; q.castShadow = false; } }); }
   // Voice players in the chapter's set whose cranks turn.
