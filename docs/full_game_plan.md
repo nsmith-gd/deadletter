@@ -849,3 +849,16 @@ Original source duration labels below are historical estimates, not validated ta
 - **Wrong first try:** push the duct first. The splash brings the White straight to him.
 - **The aha:** a noise he makes on purpose, somewhere else, buys the quiet he needs here.
 - **Carries forward:** DL-15 (a seat to take), DL-17 (forwarding again), DL-33 (a terminal), DL-35 (lure the attendant with the dummy), DL-42 (present to a person), DL-51 (deliver).
+
+## Addendum, 23 October 2026: the present-day service thread (approved)
+
+From the post-prologue design review, approved by the director. After the school entrance, one consistent present-day
+thread runs through the journey: the prologue's **new cable** (glossy black, bright galvanised clips, taped joints, new
+splice and relay boxes with green pilot lamps). It is Mara's ongoing maintenance. Its relays and pumps cycle on their
+own; changes follow equipment cycles or work being done elsewhere, never D-17's arrival (she doesn't know a courier is
+coming). Introduce it in the school as a recent intervention beside obsolete routines (DL-12's splice into the old
+supply; the relay boxes; DL-17's refill pump, from which it goes on up the stair to ring A); repeat it in a changed
+context in the homes (selected service lines kept and repurposed while personal routines were retired); reveal its
+ecological destination in the Works; confirm its author through her working habits and the repaired circuit in the
+workshop. Don't attach it to every scene: each recurrence must add a relationship, not repeat a symbol. Each chapter
+should carry a live question in and out (the review's table, section 5.2).
