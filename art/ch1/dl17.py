@@ -37,6 +37,10 @@ stair door (build_rig), and its moving parts:
     Att17Stream1/2/3 the water falling from the spout over each bed; origin the spout's mouth.
     Att17Float     the copper float in bed 1, low; origin its bottom; rises 0.12.
     Att17Latch     the stair door's drop latch, down (locked), on the frame; origin its pivot; up = 70 deg about -y.
+    Att17RelayLamp the tiny green pilot lamp on the new pump-and-relay box (EMIT Att17RelayLamp).
+The present-day service thread (build_service): the prologue's new cable in through the left wall, along the top of the
+back wall to the new pump-and-relay box by the tank (it refills the tank through a newly repaired pipe), on through the
+end wall by the stair door and up the stairwell toward ring A.
 Her drawing gains her working for the rig along its bottom (her plan shrunk to 0.78 to make room) and his red-pencil
 margin note; the atlas gains the rig's cells (rigcard, bed1-3, plA-C, sightscale). The drawing and card cells are
 where they were.
@@ -2988,6 +2992,23 @@ builder adds +44 (292.55 here is 336.55 in the game). Blender (x, y, z) -> game 
   free jamb's lining (Blender y -0.5) at the wall's face. A flat iron bar runs +x across the reveal to x 295.947; its
   nib drops into a keeper (pocket) on the leaf's room face (part of Att17Door's mesh, x 295.928-295.955, z 1.825-1.895).
   UP = 70 deg about Blender -y = game +z (three.js rotateZ(+70 deg)): the bar's end rises to z ~2.02, the nib clear.
+- THE SERVICE THREAD (director's addition; the prologue's new cable, materials NewCable / NewSteel as in
+  art/pass6/build_ending_secrets.py, PLAIN [.016, .016, .018] .28 0 and [.26, .27, .28] .4 .8):
+  the cable (r 0.011, glossy black) comes in through a galvanised grommet in the left wall at Blender (280.15, 1.27, 2.80)
+  = game (280.15, 2.80, -1.27) (DL-16a's side of that wall: it should arrive there), runs along the top of the back wall
+  at y 1.27, z 2.80 (under the beams' 2.84, over the old conduit at 2.72), dipping 0.012 between galvanised saddles
+  every 1.05 m, two taped joints; turns at the end wall (x 295.77) toward the stair, through the end wall at y 0.87, z
+  2.80, and runs along the stairwell's back wall (y 0.87) level to x 298.72, then up the pitch 1.5 over the nosings
+  (0.6 over the handrail; under the stair lamp: z 3.20 at x 299.3) to x 302.11, z 5.15, out of the top of the well.
+  A jumper (r 0.008) drops from it at x 294.68 into the box's gland.
+  The pump-and-relay box (NewSteel, clean, a screwed lid): x 294.38-294.76, front face Blender y 1.10 (back on the wall
+  1.30), z 1.92-2.32; the little pump under it (x 294.42-294.70, z 1.775-1.885). The old main (copper) comes down from
+  the ceiling into its top at x 294.48; out of its left side the tank's refill (old copper, r 0.012): x 294.38 -> 294.30
+  at z 2.27, up to 2.42, left over the tank to 294.05 and down into its top; on that run a bright new galvanised
+  coupling (x 294.147-294.203) and fresh black tape either side (x 294.115, 294.235).
+- Att17RelayLamp: EMIT Att17RelayLamp [.35, 1, .45, 4] (new: index.html EMIT), a tiny green pilot (r 0.011) in a
+  galvanised bezel on the box's front: origin = its centre, Blender (294.70, 1.094, 2.27) = game (294.70, 2.27, -1.094).
+  Lit as built; the game can leave it on (the pump works; somebody keeps it working).
 - Moved for the rig: the broom (now in the corner by the stair door, x 295.4-295.7, behind the lane).
 - Clear of the lane and the existing interactions: nothing new is in front of Blender y 0.30 except the shut sluices'
   grips (to y 0.18) and the latch in the doorway's reveal (x 295.8-295.95, z 1.83-1.93, above him). The tray (285.7),
@@ -3072,6 +3093,8 @@ WORN (already in index.html; DampSoil is no longer used by DL-17):
 EMIT:
   Att17GrowLamp: [.78, .84, 1, 3], Att17Bulb: [1, .78, .5, 5],
   Att17StairLamp: [1, .8, .55, 6],   // NEW (rev 0.3): the lamp over the stair
+  Att17RelayLamp: [.35, 1, .45, 4],   // NEW (expansion): the new pump-and-relay box's green pilot
+PLAIN (already in index.html): Water, NewCable, NewSteel.
 Reused materials: WinDado, PigeonWood, CrateWood, PupilWood, WornIron, HandledBrass, DarkMetal, WornStrap,
 DepotGreen, ParcelBrown, DirtyGlass, TeaEnamel, Cable, Copper, Window (GLASSY: the bean jars, the door's light, the
 sight glass), Water (PLAIN, the game's see-through water: the rig's tank, beds and streams),
@@ -3079,6 +3102,6 @@ plus the voice-prop materials (Brass, HandWorn, ParcelPaper). No longer used: At
 Att17Atlas (textures/dl17_atlas.png, 2048 square; new cells: soilcrack, and the sign_works cell redrawn as the
 RESIDENTIAL ACCESS sign).
 
-BUDGET: 40,092 triangles (set 37,062; drawer 428; tray 1,470; lamp 72; bulbs 320; door 620; stair lamp 120);
-34 material slots.
+BUDGET: 56,152 triangles (set 50,618 with the rig and the service thread; drawer 428; tray 1,470; lamp 72; bulbs 320;
+door 656; stair lamp 120; the rig's moving parts 2,468); 59 material slots. (Before the expansion: 40,092 and 34.)
 """

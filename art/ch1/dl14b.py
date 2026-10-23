@@ -841,7 +841,6 @@ def service_cable(bm, runs, mc, ms, out=Vector((0, -1, 0)), r=0.011, pitch=1.05,
                 clips.append((p, d))
         for a, b in zip(pts, pts[1:]):
             add_cyl(bm, a, b, r, mat=mc, seg=6)
-            add_sphere(bm, b, r, mat=mc, seg=6)
             seg = (b - a).length
             for t in tapes:
                 if done <= t < done + seg:
