@@ -453,7 +453,8 @@ function note(n, people) {
   const top = h('div', { class: 'note-top' },
     h('span', { class: 'tag ' + (KIND[n.kind] ? n.kind : 'note') }, KIND[n.kind] || 'Note'),
     n.solved ? h('span', { class: 'tag solved' }, 'Solved') : null,
-    h('span', { class: 'who' }, p ? h('img', { src: p.avatarUrl, alt: '' }) : null, (p && p.name) || (mine ? 'You' : 'Someone')),
+    // A note with no author but a source ("from") came from the story board's revisions, written by Claude.
+    n.author || !n.from ? h('span', { class: 'who' }, p ? h('img', { src: p.avatarUrl, alt: '' }) : null, (p && p.name) || (mine ? 'You' : 'Someone')) : h('span', { class: 'who' }, String(n.from)),
     h('span', {}, when(n.createdAt) + (n.updatedAt && n.updatedAt - n.createdAt > 60000 ? ' · edited' : '')));
   if (state.editing === n.id) {
     const ta = h('textarea', { id: 'edit-' + n.id, 'aria-label': 'Edit note' });
