@@ -1,7 +1,8 @@
 """Chapter 1 Attendance, DL-15 One Pupil Missing (game x 248.0 to 264.0). Design: docs/chapter1_part2_plan.md.
 
-Class 6, the last class: a small classroom built for forty. Over the door he came in by (the duct from DL-14's hatch), a
-raised sick bay balcony at 1.6 with a child's cot, a folding screen and a dripping basin; a pupil lift down from its
+Class 6, the last class: a small classroom built for forty. On the left, a raised sick bay balcony at 1.6 (the expansion:
+he comes in onto it through a doorway in the left wall, from the corridor stair of DL-14b; the duct's end in the back
+wall, the old way in, is a grilled vent now) with a child's cot, a folding screen and a dripping basin; a pupil lift down from its
 right end; the figures' rail along the floor from the lift to the end partition; three front-row places kept ready
 (S1 R. ABEL, S2 T. ORME, S3 Mara's, with her crooked tree carved in the lid and her chair pulled out and turned); rows of
 empty desks going back into the dark of an alcove behind; the attendance board with its three lamps and a bell; the
@@ -26,7 +27,7 @@ What the game moves (origin = pivot, world coordinates; REPORT at the bottom has
     Att15LampPupil, Att15LampEscort, Att15Lamp1..3, Att15HideLamp   emissive lamps, own objects and materials
     Att15Door              the class door in the end partition, built shut; origin on its hinge (x 263.9)
     Att15Flap              the rail's flap in the end partition, built shut; origin on its top hinge
-Static: Att15Set (the room), Att15Rows (the empty desks behind, merged), Att15Lights (the pendant bulbs, EMIT AttBulbGlow),
+Static: Att15Set (the room, with the left wall's doorway, its SICK BAY blade sign and the vent grille), Att15Rows (the empty desks behind, merged), Att15Lights (the pendant bulbs, EMIT AttBulbGlow),
 Att15Hide (the hiding place, with the card player), Att15Chair (Mara's chair, its seat plate: D-17 sits on it), Att15Bell,
 Att15Drawing (the cork board and the drawing; image Att15Drawing, textures/dl15_drawing.png).
 """
@@ -1889,9 +1890,25 @@ SURFACES (x0, x1, top):
 - Rails everywhere +0.03 (no climb). Mara's chair seat 0.30 (Blender y 0.20-0.42: just behind the lane). The seat
   plate's flex crosses the channel at x 256.12 under a brass cover strip 7 mm high (figures pass over it).
 - Behind the lane, not walkable from it: front-row desks 0.49-0.60 sloped, teacher's desk 0.72, cot 1.98.
-WALLS/LIMITS: left wall face x 248.15 (both levels); end partition face 263.75 (door 2.0 high when open); ceiling 3.6;
-hatch in back wall x 248.55-249.35, sill 1.6, head 2.4, duct z -1.4..-2.6, open toward -x behind the wall. Gate blocks
+WALLS/LIMITS: left wall face x 248.15 (both levels) with the sick bay's doorway (below); end partition face 263.75 (door
+2.0 high when open); ceiling 3.6; the old hatch in the back wall (x 248.55-249.35, sill 1.6, head 2.4) is closed by a
+grille now (a vent, not a way through; the duct behind it, z -1.4..-2.6, stays dark). Gate blocks
 the lift's right edge while shut. Two slim columns at x 248.27, 251.29, z +0.36 (in front of the lane, not blocking).
+
+EXPANSION (docs/chapter1_expansion_build.md, DL-15 changes; numbers here in this file's OLD x: the builder adds +30, so
+248.0 here is 278.0 in the game):
+- The sick bay's doorway in the left wall (x 248.0-248.15): clear opening game z -0.45..0.45 (Blender y -0.45..0.45),
+  sill (floor) 1.6 flush with the balcony's deck, head 2.45 (clear height 0.85). Timber linings 0.02 outside the clear
+  opening (y +-0.45..0.47, head 2.45-2.47); a timber sill x 247.98-248.155, top 1.6. Architraves 0.07 wide, 0.025
+  proud, on both faces (room face x 248.15-248.175, corridor face x 247.975-248.0), legs y +-0.47..0.54 from 1.6 up,
+  head z 2.47-2.54. Nothing is built across the opening.
+- SICK BAY sign (the atlas's red enamel, as over the cot): a blade sign off the corridor face, in the plane y 0 with its
+  face to the camera (Blender y -0.0125, game z +0.0125): x 247.32-247.94, game y 2.70-2.855 (iron frame 0.012 round),
+  hung from a bracket arm (game y 2.90-2.92) off the wall's corridor face; wall plate x 247.988-248.0, game y 2.795-2.94.
+  It overhangs DL-14b's landing and stair top (game x 277.31-278.0 after the shift), above 2.688.
+- The hatch (x 248.55-249.35, sill 1.6, head 2.4, back wall y 1.4): its door is gone; a cast-iron grille in its frame,
+  Blender y 1.41-1.435 (border flat 0.035, 12 upright bars, two cross flats). It's a vent: the duct light (P 0xbcd0e8 at
+  248.95, 2.0, -1.3) can stay, through the bars.
 
 SECRET ROOM: floor x 248.3-251.2, z -0.4..-1.4, clear 1.5. Blanket at z -0.35; gap x 249.56-250.12 (the right
 blanket's corner now hooked back higher, so the secret's camera sees the stool). Path: from the lane at x 249.8 straight

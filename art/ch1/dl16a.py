@@ -354,15 +354,16 @@ def make_atlas(path):
     d.rectangle((30, 30, w - 31, h - 31), outline=(40, 34, 30), width=3)
     d.text((w // 2, 108), 'PUPILS NOT PERMITTED', font=_fit(d, 'PUPILS NOT PERMITTED', 'sans-bold', 92, w - 110), fill=red, anchor='mm')
     d.text((w // 2, 206), 'BEYOND THIS POINT', font=_fit(d, 'BEYOND THIS POINT', 'sans-bold', 74, w - 220), fill=(30, 28, 26), anchor='mm')
-    for _ in range(26):                                                          # chips, mostly round the edge
-        if rnd.random() < 0.7:
-            cx_ = rnd.choice((rnd.uniform(0, 40), rnd.uniform(w - 40, w), rnd.uniform(0, w)))
-            cy_ = rnd.choice((rnd.uniform(0, 30), rnd.uniform(h - 30, h))) if rnd.random() < 0.6 else rnd.uniform(0, h)
+    for _ in range(14):                                                          # chips, round the edge (knocked by trolleys)
+        if rnd.random() < 0.5:
+            cx_, cy_ = rnd.uniform(0, w), rnd.choice((rnd.uniform(2, 22), rnd.uniform(h - 22, h - 2)))
         else:
-            cx_, cy_ = rnd.uniform(0, w), rnd.uniform(0, h)
-        r = rnd.uniform(3, 12)
+            cx_, cy_ = rnd.choice((rnd.uniform(2, 22), rnd.uniform(w - 22, w - 2))), rnd.uniform(0, h)
+        r = rnd.uniform(3, 10)
         d.ellipse((cx_ - r, cy_ - r * 0.8, cx_ + r, cy_ + r * 0.8), fill=(36, 32, 28))
-        d.ellipse((cx_ - r * 1.6, cy_ - r * 0.2, cx_ + r * 1.6, cy_ + r * 2.4), outline=(120, 70, 40), width=2)
+    for _ in range(3):                                                           # rust run from the screws
+        sx_ = rnd.choice((20, w - 20))
+        d.line((sx_, 28, sx_ + rnd.uniform(-3, 3), 28 + rnd.uniform(20, 50)), fill=(130, 84, 48), width=4)
     _screws(d, w, h, 20, 7, col=(70, 66, 60), rust=(140, 90, 50))
     put('pupils', t, k=0.1, dust=0.18)
 
@@ -876,35 +877,37 @@ def build_shaft(B):
     p = POST
     fy0, fy1 = sy0 - p, sy0                    # the front posts' y
     by0, by1 = sy1, sy1 + p                    # the back posts'
-    B.box('WornIron', sx0 - p, sx0, fy0, fy1, 0.0, CEIL)                                  # front left, full height
-    B.box('WornIron', sx1, sx1 + p, fy0, fy1, 0.0, PASS[4])                               # front right, to the passage
+    top = CEIL + 0.02                          # into the ceiling slab
+    B.box('WornIron', sx0 - p, sx0, fy0, fy1, 0.0, top)                                   # front left, full height
+    B.box('WornIron', sx1, sx1 + p, fy0, fy1, 0.0, PASS[4] - 0.05)                        # front right, into the sill
     for x0, x1 in ((sx0 - p, sx0), (sx1, sx1 + p)):
-        B.box('WornIron', x0, x1, by0, by1, 0.0, CEIL)                                    # the back posts
+        B.box('WornIron', x0, x1, by0, by1, 0.0, top)                                     # the back posts
         B.box('CastIron', x0 - 0.02, x1 + 0.02, fy0 - 0.02, fy1 + 0.02, 0.0, 0.02)
         B.box('CastIron', x0 - 0.02, x1 + 0.02, by0 - 0.02, by1 + 0.02, 0.0, 0.02)
-    # the lower landing's header (the gauge is on it), the upper sill, the head frame
-    B.box('WornIron', sx0 - p, sx1 + p, fy0, fy1, HDR[0], HDR[1])
-    B.box('SafetyYellow', sx0 - p, sx1 + p, fy0 - 0.001, fy1, HDR[0], HDR[0] + 0.025)
-    B.box('WornIron', sx0 - p, sx1 + p, fy0, fy1, PASS[4] - 0.1, PASS[4])
-    B.box('SafetyYellow', sx0 - p, sx1 + p, fy0 - 0.001, fy1, PASS[4] - 0.1, PASS[4] - 0.075)
-    for y0, y1 in ((fy0, fy1), (by0, by1)):
-        B.box('CastIron', sx0 - p, sx1 + p, y0, y1, HEAD_Z, CEIL)
-    for x0, x1 in ((sx0 - p, sx0), (sx1, sx1 + p)):
-        B.box('CastIron', x0, x1, fy0, by1, HEAD_Z, CEIL)
-    B.box('CastIron', sx0, sx1, 0.36, 0.78, HEAD_Z + 0.06, CEIL)                           # the head's cross beam, ropes through
-    for x in (sx0 - p / 2, sx1 + p / 2):                                                   # rivets on the front
-        for z in (0.1, HDR[0] + 0.05, PASS[4] - 0.05, HEAD_Z + 0.08):
+    # the lower landing's header (the gauge is on it), the upper sill, the head frame: proud of the posts
+    hy0, hy1, ex = fy0 - 0.012, fy1 - 0.004, 0.01
+    B.box('WornIron', sx0 - p - ex, sx1 + p + ex, hy0, hy1, HDR[0], HDR[1])
+    B.box('SafetyYellow', sx0 - p - ex, sx1 + p + ex, hy0 - 0.002, hy0 + 0.01, HDR[0], HDR[0] + 0.025)
+    B.box('WornIron', sx0 - p - ex, sx1 + p + ex, hy0, hy1, PASS[4] - 0.1, PASS[4])
+    B.box('SafetyYellow', sx0 - p - ex, sx1 + p + ex, hy0 - 0.002, hy0 + 0.01, PASS[4] - 0.1, PASS[4] - 0.075)
+    B.box('CastIron', sx0 - p - ex, sx1 + p + ex, hy0, hy1, HEAD_Z, top)
+    B.box('CastIron', sx0 - p - ex, sx1 + p + ex, by0 + 0.004, by1 + 0.012, HEAD_Z, top)
+    for x0, x1 in ((sx0 - p + 0.005, sx0 - 0.005), (sx1 + 0.005, sx1 + p - 0.005)):
+        B.box('CastIron', x0, x1, hy1, by0 + 0.004, HEAD_Z, top)
+    B.box('CastIron', sx0 + 0.01, sx1 - 0.01, 0.36, 0.76, HEAD_Z + 0.06, top)              # the head's cross beam, ropes through
+    for x in (sx0 - p / 2, sx1 + p / 2):                                                   # rivets on the posts' fronts
+        for z in (0.1, 0.7, 1.9, 2.9, 3.4):
             if z > PASS[4] and x > sx1:
                 continue
             B.cyl('CastIron', (x, fy0, z), (x, fy0 - 0.008, z), 0.01, seg=6)
     # the car's guide rails (T-section) at its back corners; the counterweight's guides and buffers behind
     for x0, x1 in ((sx0, sx0 + 0.04), (sx1 - 0.04, sx1)):
         B.box('WornIron', x0, x1, 0.47, 0.53, 0.0, HEAD_Z)
-        for z in (0.6, 1.6, 2.6, 3.4):                                                     # its brackets to the back posts
-            B.box('CastIron', x0, x1, 0.53, sy1, z, z + 0.05)
+        for z in (0.6, 1.6, 2.6, 3.4):                                                     # its brackets to the boarding
+            B.box('CastIron', x0 + 0.004, x1 - 0.004, 0.53, sy1 + 0.02, z, z + 0.05)
     cx0, cx1, cy0, cy1, _h = CW
     for gx0, gx1 in ((cx0 - 0.05, cx0 - 0.01), (cx1 + 0.01, cx1 + 0.05)):
-        B.box('WornIron', gx0, gx1, cy0, sy1, 0.0, HEAD_Z)
+        B.box('WornIron', gx0, gx1, cy0, sy1 + 0.02, 0.0, HEAD_Z)
         B.box('WornIron', (gx0 + gx1) / 2 - 0.006, (gx0 + gx1) / 2 + 0.006, cy0 - 0.02, cy0, 0.0, HEAD_Z)
     for bx in (312.85, 313.15):                                                            # the counterweight's spring buffers
         B.cyl('CastIron', (bx, CW_ORIGIN[1], 0.0), (bx, CW_ORIGIN[1], 0.04), 0.035, seg=10)
@@ -924,9 +927,9 @@ def build_shaft(B):
     hx0, hx1, hy0, hy1, hz = HATCH
     B.box('PigeonWood', hx0, hx1, hy0, hy1, PASS[4], hz)
     B.box('WornIron', hx0, hx1, hy0, PASS[2], PASS[4] - 0.1, PASS[4])                      # its foot, on the shaft's sill
-    B.box('PigeonWood', hx0, hx1, hy0, by1, hz, HEAD_Z)
-    B.box('PigeonWood', hx0, hx1, hy0, PASS[3], HEAD_Z, CEIL)
-    B.box('WinPlaster', hx0 + 0.02, hx1, by1, PASS[3], PASS[4], HEAD_Z)
+    B.box('PigeonWood', hx0, hx1, hy0, by1, hz, HEAD_Z + 0.03)
+    B.box('PigeonWood', hx0, hx1, hy0, PASS[3], HEAD_Z + 0.03, CEIL + 0.02)
+    B.box('WinPlaster', hx0 + 0.02, hx1, by1, PASS[3], PASS[4], HEAD_Z + 0.03)
     B.box('PigeonWood', hx0 - 0.015, hx1 + 0.015, hy0 - 0.015, hy0, hz - 0.03, hz)        # the lintel's moulding
 
 
@@ -935,7 +938,7 @@ def build_gauge(B, coll):
     three amber windows, the line, a red OVER window. The four lenses are their own objects (Att16aLoad1..3,
     Att16aLoadOver), in brass bezels; behind each window a dark socket in the plate."""
     gx0, gx1, gz0, gz1 = GAUGE
-    fy = SHAFT[2] - POST                                                                   # the header's front face
+    fy = SHAFT[2] - POST - 0.012                                                           # the header's front face
     B.box('HandledBrass', gx0 - 0.008, gx1 + 0.008, fy - 0.014, fy, gz0 - 0.008, gz1 + 0.008)
     B.decal('Att16aAtlas', gx0, gx1, gz0, gz1, fy - 0.0145, cell='gauge')
     out = []
@@ -957,7 +960,7 @@ def build_gate(B):
     B.box('WornIron', x - t, x + t, y0, y0 + 0.05, 0.0, GATE_TOP)                          # the stiles
     B.box('WornIron', x - t, x + t, y1 - 0.05, y1, 0.0, GATE_TOP)
     for z0, z1 in ((0.04, 0.09), (1.08, 1.13), (GATE_TOP - 0.06, GATE_TOP)):
-        B.box('WornIron', x - 0.02, x + 0.02, y0, y1, z0, z1)
+        B.box('WornIron', x - 0.02, x + 0.02, y0 + 0.05, y1 - 0.05, z0, z1)
     y = y0 + 0.11
     while y < y1 - 0.06:
         B.cyl('WornIron', (x, y, 0.09), (x, y, GATE_TOP - 0.06), 0.011, seg=6)
@@ -991,12 +994,12 @@ def build_passage(B):
         B.sbox('sw_dark', x0, x1, yy - 0.002, yy + 0.002, fl, fl + 0.0005)
         yy += 0.14
     B.box('WornIron', x0, x1, y0 - 0.005, y0 + 0.03, fl - DECK_T - JOIST, fl + 0.01)        # the front channel
-    B.box('WornIron', x0, x1, y0 + 0.03, y0 + 0.08, fl - DECK_T - JOIST, fl - DECK_T - JOIST + 0.012)
+    B.box('WornIron', x0, x1, y0 + 0.03, y0 + 0.08, fl - DECK_T - JOIST - 0.008, fl - DECK_T - JOIST + 0.004)
     B.box('WornIron', x0 + 0.24, x1, y1 - 0.06, y1, fl - DECK_T - JOIST - 0.04, fl - DECK_T)  # bearer on the wall
     xs = [GATE_X] + [x0 + 1.0 + 0.95 * k for k in range(1, 9) if x0 + 1.0 + 0.95 * k < x1 - 0.1]
     for xx in xs:                                                                          # the joists across
         B.box('WornIron', xx - 0.03, xx + 0.03, y0 + 0.03, y1 - 0.06, fl - DECK_T - JOIST, fl - DECK_T)
-        B.box('WornIron', xx - 0.04, xx + 0.04, y0 + 0.03, y1 - 0.06, fl - DECK_T - JOIST, fl - DECK_T - JOIST + 0.01)
+        B.box('WornIron', xx - 0.04, xx + 0.04, y0 + 0.03, y1 - 0.06, fl - DECK_T - JOIST - 0.004, fl - DECK_T - JOIST + 0.01)
     # the column at mid-span, just inside the front edge
     cx, cy = 317.6, y0 + 0.04
     B.cyl('CastIron', (cx, cy, 0.0), (cx, cy, 0.06), 0.08, 0.07, seg=12)
@@ -1044,7 +1047,7 @@ def build_stair(B):
         a, b, top = tread(i)
         if top > 0.0:
             B.box('PupilWood', a, b, y0 + 0.03, y1 - 0.03, top - 0.04, top)
-            B.box('WornIron', b - 0.035, b + 0.003, y0 + 0.03, y1 - 0.03, top - 0.042, top + 0.0015)
+            B.box('WornIron', b - 0.035, b + 0.003, y0 + 0.026, y1 - 0.026, top - 0.042, top + 0.0015)
         for sy0, sy1 in ((y0, y0 + 0.03), (y1 - 0.03, y1)):
             zt = top - 0.04 if top > 0.0 else 0.0
             if zt - soff(b) > 0.005:
@@ -1142,13 +1145,13 @@ def build_car(coll):
     y0, y1 = CAR_Y
     f, rf = CAR_FLOOR, CAR_ROOF
     # floor: boards along x in an iron edge
-    B.box('WornIron', ox0, ox1, y0, y1, 0.0, f - 0.012)
+    B.box('WornIron', ix0, ix1, y0 + 0.025, y1, 0.004, f - 0.012)
     n = 7
     for k in range(n):
         ya = y0 + 0.01 + k * (y1 - y0 - 0.02) / n
         yb = y0 + 0.01 + (k + 1) * (y1 - y0 - 0.02) / n - 0.004
         B.box('PupilWood', ix0, ix1, ya, yb, f - 0.014, f)
-    B.box('WornIron', ox0, ox1, y0, y0 + 0.025, 0.0, f + 0.004)                            # the front sill angle
+    B.box('WornIron', ix0, ix1, y0, y0 + 0.025, 0.0, f + 0.004)                            # the front sill angle
     for x0, x1 in ((ox0, ix0), (ix1, ox1)):
         B.box('WornIron', x0, x1, y0, y1, 0.0, f + 0.004)
     # the back wall (lined), rubbing strips, side returns, corner posts
@@ -1160,15 +1163,15 @@ def build_car(coll):
     for z in (0.32, 0.86):
         B.box('PigeonWood', ix0, ix1, y1 - 0.05, y1 - 0.03, z, z + 0.05)
     for x0, x1 in ((ox0, ix0), (ix1, ox1)):
-        B.box('CrateWood', x0, x1, 0.25, y1, f, rf)
-        B.box('WornIron', x0, x1, y0, y0 + 0.03, f, rf)                                    # the front posts
+        B.box('CrateWood', x0, x1, 0.25, y1 - 0.012, f + 0.004, rf)
+        B.box('WornIron', x0, x1, y0, y0 + 0.03, f + 0.004, rf)                            # the front posts
         B.box('WornIron', x0 - 0.004, x1 + 0.004, 0.22, 0.26, f, rf)                       # the returns' edge angles
     # roof, front fascia with the plate, the crosshead and the rope
     B.box('WornIron', ox0, ox1, y0, y1, rf, rf + 0.035)
-    B.box('WornIron', ox0, ox1, y0, y0 + 0.015, rf - 0.03, rf + 0.035)
+    B.box('WornIron', ox0 - 0.004, ox1 + 0.004, y0 - 0.004, y0 + 0.015, rf - 0.03, rf + 0.039)
     px0, px1 = 312.84, 313.16
-    B.box('HandledBrass', px0 - 0.006, px1 + 0.006, y0 - 0.005, y0, rf - 0.024, rf + 0.03)
-    B.decal('Att16aAtlas', px0, px1, rf - 0.02, rf + 0.026, y0 - 0.0055, cell='max3')
+    B.box('HandledBrass', px0 - 0.006, px1 + 0.006, y0 - 0.009, y0 - 0.004, rf - 0.024, rf + 0.03)
+    B.decal('Att16aAtlas', px0, px1, rf - 0.02, rf + 0.026, y0 - 0.0095, cell='max3')
     ch = rf + 0.035
     B.box('CastIron', ix0 + 0.02, ix1 - 0.02, 0.45, 0.55, ch, ch + 0.055)
     for xx in (ix0 + 0.06, ix1 - 0.06):
@@ -1375,4 +1378,83 @@ def build_set(dl01, m, coll):
     print('dl16a: tris %d; bell push (world) %s' % (total, tuple(round(c, 3) for c in bell.matrix_world.translation)))
 
 
-REPORT = """(filled in after the build)"""
+REPORT = """DL-16a Her Way Round (art/ch1/dl16a.py), game x 310.0 .. 324.0, built in FINAL coordinates (no SHIFT).
+Blender (x, y, z) = game (x, z, -y). Numbers below are Blender unless marked "game".
+
+MOVED (origin = pivot, world; built pose = rotation 0, as listed):
+- Att16aCar: origin (313.0, 0.1, 0.05) = the middle of its floor's top = game (313.0, 0.05, -0.1). Built at the BOTTOM.
+  Inside x 312.6 .. 313.4 (side/back skins 0.03: outer 312.57 .. 313.43; guide shoes to 312.54 / 313.46), depth y -0.4 .. 0.6,
+  floor top 0.05, roof underside 1.21 (clear 1.16 over the floor; D-17 to 1.12), roof top 1.245, crosshead to 1.30.
+  Open at the front; its sides are open in front of y 0.25 (short returns 0.25 .. 0.6 only), so he walks in along the lane
+  from either side (a 4 mm iron edge at the floor's sides, top 0.054). Top: +2.4 in z (floor top 2.45, roof 3.645).
+  Carries in its mesh: the lamp (EMIT Att16aCarLamp, bulb at (312.72, 0.42, 1.175)), the brass plate MAX 3 PORTIONS on its
+  front fascia (z 1.18 .. 1.249), the bell push (brass rose on the back wall's lining, face y 0.55, at x 313.25 z 0.6) with
+  RING over it, and its rope (up into the ceiling; see ROPES).
+- Att16aBellPush: EMPTY, child of Att16aCar, local (0.25, 0.45, 0.55); world at build (313.25, 0.55, 0.6) = game
+  (313.25, 0.6, -0.55). Moves with the car (use getWorldPosition).
+- Att16aCW: origin bottom centre (313.0, 0.655, 3.0) = game (313.0, 3.0, -0.655). Built at the TOP of the shaft, behind the car:
+  x 312.72 .. 313.28 (shoes to 312.70 / 313.30), y 0.62 .. 0.69, z 3.0 .. 3.7. Moves opposite the car: -2.4 (bottom 0.6, top
+  1.3, clear of its spring buffers at 0.27 and of the car, which passes in front of it).
+- Att16aStool: origin (312.0, 0, 0) = game (312.0, 0, 0); x 311.75 .. 312.25, y -0.25 .. 0.25, top 0.45. Slides in x.
+- Att16aTin1 (311.2, 0, 0), Att16aTin2 (311.45, 0, 0) = game (311.2 / 311.45, 0, 0): catering tins, r 0.075 (rims 0.078),
+  0.17 high, origin bottom centre. Same mesh shape, separate meshes.
+- Att16aBooks: origin (310.55, 0.35, 1.25) = game (310.55, 1.25, -0.35), bottom centre, on the shelf; four books tied with
+  string, x 310.42 .. 310.69, y 0.26 .. 0.45, 0.14 high (bow to 1.39).
+- Att16aLoad1 / Load2 / Load3 / Att16aLoadOver: the gauge's lamps, own objects, own EMIT materials of the same names
+  (built OFF, strength 0), origins at the lenses' centres: x 312.80 / 312.92 / 313.04 / 313.20, y -0.559, z 1.39
+  = game (x, 1.39, 0.559). Suggested lamp() colours: Load 0xffa030 (amber), Over 0xff2a18 (red).
+
+SURFACES / COLLISION (as the build sheet; all built to these numbers):
+- Floor 0 from 310.0 to 324.0 (lino; the shaft's footprint 312.42 .. 313.58 an iron plate flush at 0). Thresholds: 310.0 .. 310.04
+  at 0.004 (meets DL-16's), 323.96 .. 324.0 at 0.012 (meets DL-17's iron strip). Ceiling 3.9 (beams to 3.74 at 311.2, 315.4,
+  317.8, 320.2, 322.6, all clear of the passage's walking height; the shaft's head frame 3.74 .. 3.9).
+- High shelf: x 310.2 .. 310.9, y 0.1 .. 0.6, top 1.25 (a 12 mm lip along its front edge at y 0.09 .. 0.112). Nothing under
+  it in the lane (iron bearers at x 310.22 / 310.88, tie rods up and back to the dresser at y 0.65). Stool fits under it.
+- Car floor 0.05 at the bottom / 2.45 at the top. Shaft clear inside 312.5 .. 313.5, y -0.45 .. 0.7; its posts outside that
+  (front y -0.53 .. -0.45, back 0.7 .. 0.78, x 312.42 .. 312.5 and 313.5 .. 313.58). Lower landing's header across the shaft's
+  front at z 1.3 .. 1.5 (y -0.542 .. -0.454, in front of the lane), the gauge's plate on it (centre z 1.4). Upper sill 2.3 .. 2.4.
+  The front-right post stops at the passage (2.35); above it the hatch frame's jamb (x 313.5 .. 313.74, y -0.45 .. -0.33,
+  2.4 .. 3.62) and lintel (3.62): the car's top landing opens to the right onto the passage under a 3.62 head.
+- Gate: x 313.97 .. 314.03, floor to 2.3, y -0.45 .. 0.9, then a fixed post to the wall (0.9 .. 1.2). A wall for D-17.
+  Its sign PUPILS NOT PERMITTED BEYOND THIS POINT at x 313.62 .. 314.38, z 1.5 .. 1.72, y -0.5 (in front of the lane).
+- Upper passage: x 313.5 .. 321.2, floor 2.4, y -0.3 .. 1.2 (boards 2.36 .. 2.4 on joists to 2.30; the joist at 314.0 is the
+  gate's head). Railing along y -0.29: posts, top rail 3.3, middle rail 2.85 (in front of the lane). A cast column at
+  (317.6, -0.26) under its front edge. Clear height on the passage 1.5 (to the ceiling) / 1.34 under the beams.
+- Stair: tread i (1..12) at x 321.2 + 0.2 (i - 1) .. 321.2 + 0.2 i, top 2.4 - 0.2 i (2.2, 2.0, .. 0.2, 0.0); y -0.45 .. 0.6.
+  Tread 12 (323.4 .. 323.6) is the floor itself (top 0), so 11 timber treads are built. Strings under the treads (front
+  y -0.45 .. -0.42, back 0.57 .. 0.6), soffit 0.32 below the nosing line. Railing on its open front (y -0.435).
+- Lower corridor beyond the gate: 314.0 .. 324.0 at 0, under the passage (head 2.30, joists), then by the stair's foot to
+  DL-17's doorway (y -0.45 .. 0.55, head 2.1). Everything in it is behind the lane (y > 0.7) except the column (y -0.26).
+
+STORY: chalk (Att16aChalk, image material Chalk16a, alpha): trees at 0.4 .. 0.6 centred x 310.7 (on the dresser's cupboard
+door, face y 0.62), 311.6 and 312.3 (on the hot cupboard's doors, face y 0.70), an arrow over the third (x 312.03 .. 312.41,
+z 0.61 .. 0.73) pointing at the car; on the hatch jamb's front (face y -0.45): the fourth tree x 313.52 .. 313.68,
+z 2.6 .. 2.76, and a small handprint x 313.555 .. 313.635, z 2.815 .. 2.9.
+Signs: the gate's enamel; the gauge TRAYS ONLY - LOAD TO THE LINE (windows 1 2 3, a red line, OVER); MAX 3 PORTIONS on the
+car; STAFF ONLY (lower corridor), STAFF STAIR (passage), WORKSHOP with an arrow (stair foot); a DINNERS board in the kitchen.
+
+ROPES: no rope objects to scale. Each rope is part of its mover's mesh and runs 2.85 up from its shackle, through the head frame
+and the ceiling into a black trunk above it (x 312.78 .. 313.22, y 0.36 .. 0.82, z 4.05 .. 6.82, swatch black like DL-16's
+slot), so whichever way they move, the ropes always reach up out of sight.
+
+LIGHTS (index.html P/S, game coords):
+  P(0xffdcaa, 1.6, 5, 311.5, 2.6, -0.3)                                       // the kitchen pendant (bulb in Att16aLamps)
+  S(0xffe0b8, 5, 5, [313.0, 3.2, 2.4], [313.0, 0.9, -0.2], 0.5)               // the car and the gauge
+  S(0xffd8a8, 4, 5, [310.8, 2.8, 2.2], [310.8, 1.0, -0.4], 0.6)               // the shelf, the books, the first tree
+  S(0xffe0b8, 3.5, 5, [315.0, 3.0, 2.6], [314.1, 1.4, 0.45], 0.5)             // the gate and its sign
+  S(0xffe0b8, 3, 4, [314.4, 3.8, 1.8], [313.62, 2.75, 0.45], 0.4)             // the hatch: the fourth tree and the hand
+  P(0xffdcaa, 1.2, 4, 317.4, 3.35, -0.45)                                     // over the upper passage
+  P(0xffd0a0, 0.8, 3.5, 322.75, 1.9, -1.0)                                    // the bulkhead by the stair's foot
+  P(0xffc890, 0.5, 1.8, 312.72, 1.15, -0.42)                                  // in the car (move it with the car)
+
+MATERIALS: new EMIT Att16aCarLamp: [1, .8, .52, 4], Att16aLoad1: [1, .62, .16, 0], Att16aLoad2: [1, .62, .16, 0],
+  Att16aLoad3: [1, .62, .16, 0], Att16aLoadOver: [1, .12, .06, 0]. New image materials (pass through as maps):
+  Att16aAtlas (textures/dl16a_atlas.png, 2048 x 1024: tiles, signs, plates, swatches) and Chalk16a (textures/dl16a_chalk.png,
+  1024 x 512 RGBA, alpha BLEND; its name starts with Chalk, so materialFor() keeps its alpha as a decal).
+  Reused WORN: WinPlaster WinDado WinLino PigeonWood CrateWood WornIron CastIron HandledBrass PupilWood SafetyYellow
+  DustyCream DarkMetal; PLAIN Copper; EMIT AttBulbGlow (Att16aLamps).
+
+DEVIATIONS: none from the build sheet's numbers. Interpretations: the bell push is at z 0.6 world with the car at the bottom
+(0.55 above the car floor); the stair's 12th tread is the floor (tops 2.2 .. 0.0); the gauge's plate sits 12 mm proud of the
+header (lenses at y -0.559); the passage railing's posts stand on its front channel at y -0.29.
+"""

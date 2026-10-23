@@ -26,6 +26,20 @@ What the game moves (origin = pivot, world coordinates; numbers in REPORT at the
     Att17GrowLamp  the grow-lamp's two tubes (EMIT Att17GrowLamp); origin at their centre.
     Att17Door      the stair door's leaf, built SHUT; origin on its hinge axis at the floor (HINGE); opens +90 deg
                    about +z, away from the room, toward the stair.
+The expansion (docs/chapter1_expansion_build.md, DL-17 changes): Vance's apprentice test rig between the sink and the
+stair door (build_rig), and its moving parts:
+    Att17Valve     the valve's wheel and spindle, on the tank's down-pipe; origin the wheel's centre; spins about y.
+    Att17ValveKey  the T-key on the valve's spindle (hidden until he has it); a child of Att17Valve.
+    Att17Key       the T-key in the drawer, on the papers; a child of Att17Drawer (it slides out with it).
+    Att17SluiceA/B/C  the levers, built OPEN (handle up); origin the pivot; +80 deg about x shuts (the grip comes forward).
+    Att17TankWater the water in the tank's sight glass, full; origin the glass's bottom; scales in z.
+    Att17Water1/2/3  each bed's water, full (0.13); origin the middle of the tray's floor; scales in z.
+    Att17Stream1/2/3 the water falling from the spout over each bed; origin the spout's mouth.
+    Att17Float     the copper float in bed 1, low; origin its bottom; rises 0.12.
+    Att17Latch     the stair door's drop latch, down (locked), on the frame; origin its pivot; up = 70 deg about -y.
+Her drawing gains her working for the rig along its bottom (her plan shrunk to 0.78 to make room) and his red-pencil
+margin note; the atlas gains the rig's cells (rigcard, bed1-3, plA-C, sightscale). The drawing and card cells are
+where they were.
 Static: Att17Set (the room and the stairwell), Att17Bulbs (EMIT Att17Bulb: the pendant, the bench lamp, the bulkhead
 by the door), Att17StairLamp (EMIT Att17StairLamp: the lamp over the flight), and the card player from
 art/common/voice_props.py.
@@ -130,11 +144,11 @@ CHAIN_Y = 0.64                                  # the chain's plane, from the fl
 PULLEY1 = (293.64, CHAIN_Y, 2.76, 0.04)         # x, y, z, r: hung from the beam at 293.6 (axle along y)
 PULLEY2 = (295.705, CHAIN_Y, 2.76, 0.04)        # on a bracket off the end wall (axle along y)
 PULLEY3 = (295.745, 0.62, 2.15, 0.02)           # beside the door's architrave (axle along x): the chain turns toward -y
-PULLEY4 = (295.933, -0.395, 2.11, 0.02)         # under the door's head, over the latch (axle along x)
-LATCH = (295.933, -0.29, 1.90)                  # Att17Latch's pivot, on the door leaf's room face; the bar runs to -y
-LATCH_L = 0.19                                  # pivot to the bar's end (in the keeper on the jamb, shut)
-LATCH_EYE = -0.415                              # the chain's eye on the bar (y)
-LATCH_UP = 70.0                                 # degrees, lifted (the game's turn)
+PULLEY4 = (295.925, -0.45, 2.11, 0.02)          # under the door's head, over the latch's eye (axle along x)
+LATCH = (295.82, -0.47, 1.90)                   # Att17Latch's pivot: on a bracket on the free jamb, at the wall's face;
+LATCH_L = 0.127                                 # the bar runs +x from it across the reveal, its nib dropping into a
+LATCH_EYE = 295.925                             # keeper on the leaf. The chain's eye on the bar (x).
+LATCH_UP = 70.0                                 # degrees, lifted: about Blender -y (game +z), the bar's end rising
 KEY_AT = (285.60, 1.04, CONTENT_Z + 0.0025 + 0.012, 0.5)   # Att17Key in the drawer, shut: its socket's centre, its turn
 RIGCARD = (293.10, 293.40, 1.92, 2.098)         # Vance's card on the tank's front: x0, x1, z0, z1
 
@@ -2236,7 +2250,7 @@ def pipe(B, pts, r=PIPE_R, mt='HandledBrass', seg=10):
         B.sphere(mt, p, r * 1.3, seg=seg)
 
 
-def chain(B, pts, pitch=0.03, w=0.012, t=0.0035, mt='WornIron'):
+def chain(B, pts, pitch=0.032, w=0.015, t=0.0045, mt='WornIron'):
     """A chain along a polyline: flat links, each turned a quarter about the chain from the last."""
     k = 0
     for a, b in zip(pts, pts[1:]):
@@ -2385,7 +2399,7 @@ def build_rig(B, rnd):
     chain(B, [(p1[0], CHAIN_Y, p1[2] + p1[3]), (p2[0], CHAIN_Y, p2[2] + p2[3])])
     chain(B, [(p2[0] + p2[3], CHAIN_Y, p2[2]), (p3[0], p3[1] + p3[3], p3[2])])
     chain(B, [(p3[0], p3[1], p3[2] - p3[3]), (p4[0], p4[1], p4[2] + p4[3])])
-    chain(B, [(p4[0], p4[1] - p4[3], p4[2]), (p4[0], LATCH_EYE, eye_z)])
+    chain(B, [(p4[0], p4[1] - p4[3], p4[2]), (LATCH_EYE, p4[1] - p4[3], eye_z)])
     pulley(B, p1[:3], (0, 1, 0), p1[3])
     B.box('WornIron', p1[0] - 0.03, p1[0] + 0.03, CHAIN_Y - 0.03, CHAIN_Y + 0.03, CEIL - 0.165, CEIL - 0.16)   # its plate
     pulley(B, p2[:3], (0, 1, 0), p2[3], cheeks=False)
@@ -2397,13 +2411,11 @@ def build_rig(B, rnd):
     pulley(B, p4[:3], (1, 0, 0), p4[3], cheeks=False)
     for s_ in (-1, 1):                                                                                          # hung from the head
         B.box('WornIron', p4[0] + s_ * 0.013 - 0.002, p4[0] + s_ * 0.013 + 0.002, p4[1] - 0.008, p4[1] + 0.008, p4[2], DOOR17[2])
-    # The latch's keeper on the door's free jamb: a hooked staple the bar drops into.
-    ky0, ky1 = DOOR17[0], DOOR17[0] + 0.032
-    lz = LATCH[2]
-    B.box('WornIron', 295.918, 295.952, ky0, ky1, lz - 0.04, lz - 0.014)
-    B.box('WornIron', 295.918, 295.925, ky0, ky1, lz - 0.014, lz + 0.03)
-    B.box('WornIron', 295.945, 295.952, ky0, ky1, lz - 0.014, lz + 0.012)
-    B.box('WornIron', 295.918, 295.952, ky0 - 0.004, ky0, lz - 0.06, lz + 0.04)
+    # The latch's bracket on the door's free jamb (the steel lining's face, y -0.5), its pin across to the bar.
+    lx, ly, lz = LATCH
+    B.box('WornIron', lx - 0.025, lx + 0.03, DOOR17[0], DOOR17[0] + 0.006, lz - 0.05, lz + 0.05)
+    B.cyl('WornIron', (lx, DOOR17[0] + 0.006, lz), (lx, ly + 0.012, lz), 0.006, seg=6)
+    B.cyl('HandledBrass', (lx, ly + 0.012, lz), (lx, ly + 0.018, lz), 0.009, seg=8)
 
 
 # =====================================================================================================================
@@ -2519,20 +2531,20 @@ def build_float(coll):
     return B.obj('Att17Float', coll, origin=FLOAT)
 
 
-def build_latch(coll, door):
-    """Att17Latch: the stair door's latch, DOWN (locked): a flat iron bar on a pivot on the leaf's room face, its end in
-    the keeper on the free jamb; the chain's eye on it. Origin the pivot; up = -70 degrees about x (its end lifts). A
-    child of Att17Door, so it swings with the leaf."""
+def build_latch(coll):
+    """Att17Latch: the stair door's drop latch, DOWN (locked): a flat iron bar pivoted on a bracket on the free jamb at
+    the wall's face, running +x across the reveal; its nib drops into the keeper on the leaf's room face (part of
+    Att17Door), so the leaf can't be pushed open; the chain's eye on its top. Origin the pivot. Up: 70 degrees about
+    Blender -y (game +z: three.js rotateZ(+70 deg)), its end rising 0.12 and back out of the keeper. On the frame, not
+    the door: it stays where it is when the door swings."""
     B = MB()
     lx, ly, lz = LATCH
-    B.cyl('WornIron', (lx - 0.005, ly, lz), (lx + 0.005, ly, lz), 0.016, seg=12)
-    B.box('WornIron', lx - 0.005, lx + 0.005, ly - LATCH_L, ly, lz - 0.012, lz + 0.012)
-    B.box('WornIron', lx - 0.005, lx + 0.005, ly - LATCH_L + 0.03, ly - LATCH_L + 0.05, lz + 0.012, lz + 0.03)   # a thumb tab
-    B.torus('WornIron', (lx, LATCH_EYE, lz + 0.012 + 0.006), (1, 0, 0), 0.008, 0.0025, seg=8, rseg=3)
-    B.cyl('HandledBrass', (lx - 0.008, ly, lz), (lx - 0.004, ly, lz), 0.007, seg=8)              # the pin's head
-    ob = B.obj('Att17Latch', coll, origin=LATCH)
-    set_parent(ob, door)
-    return ob
+    B.cyl('WornIron', (lx, ly - 0.012, lz), (lx, ly + 0.012, lz), 0.018, seg=12)                 # its hub on the pin
+    B.box('WornIron', lx, lx + LATCH_L, ly - 0.005, ly + 0.005, lz - 0.012, lz + 0.012)
+    B.box('WornIron', lx + LATCH_L - 0.012, lx + LATCH_L, ly - 0.005, ly + 0.005, lz - 0.042, lz - 0.012)   # its nib
+    B.torus('WornIron', (LATCH_EYE, ly, lz + 0.012 + 0.006), (0, 1, 0), 0.008, 0.0025, seg=8, rseg=3)
+    B.box('WornIron', lx + 0.02, lx + 0.05, ly - 0.005, ly + 0.005, lz + 0.012, lz + 0.024)       # a thumb tab
+    return B.obj('Att17Latch', coll, origin=LATCH)
 
 
 # =====================================================================================================================
@@ -2704,9 +2716,10 @@ def build_door_leaf(coll):
         B.cyl('HandledBrass', (fx + s * 0.012, hy_, 1.0), (fx + s * 0.055, hy_, 1.0), 0.009, seg=8)
         B.cyl('HandledBrass', (fx + s * 0.055, hy_, 1.0), (fx + s * 0.06, hy_ + 0.12, 1.0), 0.009, seg=8)
         B.box('HandledBrass', min(fx, fx + s * 0.004), max(fx, fx + s * 0.004), hy_ - 0.012, hy_ + 0.012, 0.86, 0.92)   # keyhole plate
-    lx, ly, lz = LATCH                                           # the latch's pivot plate (the latch is Att17Latch)
-    B.box('WornIron', fx0 - 0.004, fx0, ly - 0.04, ly + 0.04, lz - 0.05, lz + 0.05)
-    B.cyl('WornIron', (fx0 - 0.004, ly, lz), (lx + 0.005, ly, lz), 0.006, seg=6)
+    lx, ly, lz = LATCH                                           # the keeper the latch's nib drops into (a pocket)
+    B.box('WornIron', fx0 - 0.004, fx0, ly - 0.022, ly + 0.022, lz - 0.075, lz - 0.005)
+    B.box('WornIron', fx0 - 0.027, fx0, ly - 0.022, ly + 0.022, lz - 0.075, lz - 0.065)
+    B.box('WornIron', fx0 - 0.027, fx0 - 0.022, ly - 0.022, ly + 0.022, lz - 0.065, lz - 0.018)
     for z in (0.25, 1.05, 1.85):                                 # hinge knuckles on the stair side
         B.cyl('WornIron', (hx + 0.006, hy - 0.004, z - 0.06), (hx + 0.006, hy - 0.004, z + 0.06), 0.011, seg=8)
         B.box('WornIron', fx1, fx1 + 0.003, hy - 0.09, hy - 0.006, z - 0.05, z + 0.05)
@@ -2774,7 +2787,7 @@ def build_set(dl01, m, coll):
     objs.append(build_stairlamp(coll))
     # The test rig's moving parts (the expansion).
     valve = build_valve(coll)
-    objs += [valve, build_valve_key(coll, valve), build_key(coll, drawer), build_latch(coll, door)]
+    objs += [valve, build_valve_key(coll, valve), build_key(coll, drawer), build_latch(coll)]
     objs += [build_sluice(coll, name, x) for name, x, bed in SLUICES]
     objs.append(build_tank_water(coll))
     objs += [build_bed_water(coll, i) for i in (1, 2, 3)]
@@ -2831,6 +2844,63 @@ the flight: Blender (299.3, 0.84, 3.62) = game (299.3, 3.62, -0.84)); Att17Set (
 REMOVED: Att17Shoot (the living shoot) and its use of AttShoot. M. D.'s pot under the grow lamp now holds dry soil
 and a dead stalk, like the rest.
 
+THE TEST RIG (the expansion, docs/chapter1_expansion_build.md "DL-17 changes"). Numbers in this file's OLD x: the
+builder adds +44 (292.55 here is 336.55 in the game). Blender (x, y, z) -> game (x, z, -y).
+- Att17Valve: origin = the wheel's centre, Blender (292.55, 0.50, 0.70) = game (292.55, 0.70, -0.50). A spoked iron
+  wheel r 0.085 facing the camera (rim y 0.491-0.509), its hub and spindle back to the valve's body on the down-pipe
+  (Blender y 0.60); the spindle's square end at y 0.47-0.482. Spins about Blender y = game z (three.js rotateZ).
+- Att17ValveKey: Vance's T-key on the spindle, built visible. A CHILD of Att17Valve (it turns with the wheel): local
+  Blender (0, -0.03, 0) = glTF local (0, 0, +0.03); world origin (292.55, 0.47, 0.70) = game (292.55, 0.70, -0.47), the
+  socket over the spindle's end. Shaft toward the camera, the bar along x: x 292.47-292.63, Blender y 0.396-0.42 (its
+  nearest point to the lane, game z -0.396), z 0.69-0.71.
+- Att17Key: the same T-key in the drawer, lying on the papers (left of her card), turned 0.5 rad. A CHILD of
+  Att17Drawer (it slides out with it): local Blender (-0.40, 0.42, 0.1065) = glTF local (-0.40, 0.1065, -0.42). World
+  origin (its socket's centre) shut (285.60, 1.04, 0.4065), open (285.60, 0.59, 0.4065) = game (285.60, 0.4065, -0.59);
+  footprint x 285.56-285.70, y 0.94-1.06 shut (0.49-0.61 open, out of the carcass), z 0.395-0.419.
+- Att17SluiceA / B / C: built OPEN, handle up. Origins = the pivots, Blender (293.45 / 294.10 / 294.80, 0.33, 0.45) =
+  game (x, 0.45, -0.33): a hub on a pin along x in an iron bracket on the bench's front panel, a flat iron arm, a
+  turned wooden grip to z 0.60. SHUT = +80 deg about x (three.js rotateX(+80 deg)): the grip comes forward, toward the
+  camera, to Blender y ~0.18 (game z -0.18), z 0.48. Enamel letters A, B, C under them on the panel (z 0.27-0.33).
+- The pipes, all the same brass (HandledBrass, r 0.013), plainly crossing on a cream board behind the bench
+  (x 293.0-295.35, z 0.56-1.40, face y 1.255): from each sluice's cock, back under the bench top, up behind it:
+    A: riser x 293.45 at y 1.02 (in front), runs RIGHT at z 0.95 to x 294.98, forward, spout over BED 3.
+    B: riser x 294.10 at y 1.18 (at the back), runs LEFT at z 1.25 to x 293.25, forward, spout over BED 1.
+    C: riser x 294.80 at y 1.10, runs LEFT at z 1.10 to x 293.95, forward, spout over BED 2.
+  A's run passes in front of B's and C's risers; C's run in front of B's; C's spout comes forward over A's run.
+  Spout mouths at Blender y 0.66, z 0.86.
+- Att17Stream1 / 2 / 3 (EVERY one is "the water over bed N", not by lever): origins = the spout's mouth, Blender
+  (293.25 / 293.95 / 294.98, 0.66, 0.86) = game (x, 0.86, -0.66); a falling thread (r 0.009 to 0.006) down to the
+  tray's floor (0.569). Built visible; material Water.
+- The test bench: x 293.05-295.30, Blender y 0.35-0.95, top 0.55 (front panel y 0.35-0.37, z 0.2-0.51). Beds on it:
+  bed 1 x 293.10-293.75 (M. D.), bed 2 293.80-294.45 (R. A.), bed 3 294.50-295.15 (T. O.); y 0.45-0.85; trays 0.015
+  thick, floor top 0.565, rims 0.70; a skin of dry soil to 0.58 and a few dead seedlings; name cards in Vance's ink on
+  the trays' fronts (right of centre, clear of the levers), z 0.62-0.66.
+- Att17Water1 / 2 / 3: built FULL (0.13 deep, z 0.565-0.695). Origins = the middle of each tray's floor, Blender
+  (293.425 / 294.125 / 294.825, 0.65, 0.565) = game (x, 0.565, -0.65); each 0.618 x 0.368. Scale y (game) 0..1.
+- Att17Float: a copper ball r 0.045 with an eye, LOW: origin = its bottom on bed 1's soil, Blender (293.60, 0.64, 0.58)
+  = game (293.60, 0.58, -0.64); the chain's lowest 0.12 hangs from it (to z 0.806), so it rises 0.12 without a gap.
+- The tank: x 293.0-294.2, Blender y 0.76-1.24, z 1.70-2.30, painted (DepotGreen), on two wall brackets; a copper feed
+  into its top from the ceiling (it refills); its down-pipe (copper r 0.016) leaves its left end at z 1.76, runs to x
+  292.55, forward to y 0.60, down through the valve (body at z 0.70) to z 0.30, then along under the bench (y 0.60) to
+  the three cocks. The sight glass on its front: x 293.95, axis y 0.735, z 1.78-2.22, a scale behind it.
+- Att17TankWater: the water in the sight glass, FULL: origin = the glass's bottom, Blender (293.95, 0.735, 1.78) =
+  game (293.95, 1.78, -0.735); 0.44 tall, r 0.009. Scale y (game) 0..1.
+- Vance's card in a brass holder on the tank's front: x 293.10-293.40, z 1.92-2.10 (face y 0.755): "APPRENTICE TEST:
+  WATER BED 1 ONLY. ONE TANK. - E.V." (atlas cell rigcard).
+- The chain (static, in Att17Set): from the float up at (293.60, y 0.64) to a pulley hung from the beam at 293.6
+  (centre z 2.76, r 0.04), along under the ceiling at z 2.80 to a pulley on the end wall (295.705, z 2.76), down beside
+  the door's architrave (x 295.745, y 0.64) to a pulley at z 2.15, across under the door's head (z 2.13) to a pulley
+  over the latch (295.925, y -0.45, z 2.11), down to the latch's eye (z 1.924).
+- Att17Latch: the stair door's drop latch, DOWN (locked), on the frame (NOT a child of the door: it stays put when the
+  door swings). Origin = its pivot, Blender (295.82, -0.47, 1.90) = game (295.82, 1.90, 0.47), on a bracket on the
+  free jamb's lining (Blender y -0.5) at the wall's face. A flat iron bar runs +x across the reveal to x 295.947; its
+  nib drops into a keeper (pocket) on the leaf's room face (part of Att17Door's mesh, x 295.928-295.955, z 1.825-1.895).
+  UP = 70 deg about Blender -y = game +z (three.js rotateZ(+70 deg)): the bar's end rises to z ~2.02, the nib clear.
+- Moved for the rig: the broom (now in the corner by the stair door, x 295.4-295.7, behind the lane).
+- Clear of the lane and the existing interactions: nothing new is in front of Blender y 0.30 except the shut sluices'
+  grips (to y 0.18) and the latch in the doorway's reveal (x 295.8-295.95, z 1.83-1.93, above him). The tray (285.7),
+  the drawer (286.0), the card player (288.0) and the stair door (295.8) are untouched.
+
 DRAWER CONTENTS (Blender; open = shut y - 0.45)
 - Drawing 0.50 x 0.35, face up, top of image toward +y, turned 0.03 rad: centre shut (286.385, 0.86, 0.3945),
   open (286.385, 0.41, 0.3945) = game (286.385, 0.3945, -0.41). All in her pencil (graphite): the tree made a bed,
@@ -2838,6 +2908,12 @@ DRAWER CONTENTS (Blender; open = shut y - 0.45)
   pencil, beside her lines: "fall 1 in 100 / or it scours" under her "FALL 1 IN 40" (bottom left); "levels!" and a
   datum mark by the TANK (bottom middle); his shallower section with "wider, shallower / sides 1 in 2" under hers
   (top right); "The knot works! - E.V." and a tick over the loop (top middle); "E. V." and a tick at CHECKED.
+  Expansion: her plan (all of the above but the right-hand column) is shrunk to 0.78 into the upper left; along the
+  bottom, her working for the test rig: the rig from the front to scale (bench, beds "1 M.D.", "2 R.A.", "3 T.O.",
+  levers A B C), the three pipes traced from each lever up behind the bench to the bed it feeds, broken where one
+  passes behind another; her notes "B goes to 1!  (they cross)" (an arrow to B's run) and "shut two, water the third";
+  beside them, his red pencil: "Good eye. Most of them never look behind the bench. - E.V." The atlas cell is where it
+  was: drawing (0, 0, 1280, 896); her card (1280, 0, 2048, 480).
 - Card 0.20 x 0.125, turned -0.09 rad: shut (285.93, 0.82, 0.3957), open (285.93, 0.37, 0.396) = game (285.93, 0.396, -0.37).
   Typed: NAME M. D., AGE 14, PLACED WITH WORKS DEPT., RING A, TRADE WATER AND IRRIGATION, SPONSOR E. VANCE,
   APPLICATION BY THE PUPIL, REPORT VIA RESIDENTIAL ACCESS, RING A (WORKS GATE SEALED). Signed: Pupil "Mara D."
@@ -2852,7 +2928,8 @@ CLOSE-UP CAMERAS (drawer open; game coordinates; vertical FOV for 16:9)
 SURFACES / LIMITS
 - Floor top 0 from x 280.0 to 297.1 (the room to 295.8, the doorway's threshold strip x 295.79-296.01 0.012 high,
   then the stair landing x 296.0-297.1). The lane (y -0.3..0.3) is clear from 280 to the first riser at 297.1 except
-  the tray (x ~285.49-285.91, top 0.09 when level) and the shut door leaf (x 295.955-296.0).
+  the tray (x ~285.49-285.91, top 0.09 when level), the shut door leaf (x 295.955-296.0), and the rig's shut sluice
+  grips (x 293.45 / 294.1 / 294.8 +-0.016, down to y 0.18, z ~0.48).
 - Left wall x 280.0-280.15, with a doorway in it at Blender y -0.45..0.55 (game z -0.55..0.45), head 2.1.
 - Right end wall x 295.8-296.0 (its room face x 295.8), with the stair doorway at Blender y -0.5..0.5 (game z
   -0.5..0.5), head 2.15: clear width 1.0 for D-17 (0.35 wide, 0.6 tall). Ceiling 3.0, with beams across the lane
@@ -2871,7 +2948,8 @@ SURFACES / LIMITS
   (3.0) carries on over the landing to x 298.2 (fascia beam bottom 2.84 at x 298.06-298.2); beyond it the shaft
   is open up to 5.2. Headroom under the fascia over tread 5 (top 0.9): 1.94.
 - Behind the lane (not on his path): bench top 0.9 (x 282.8-288.6, y 0.65-1.3); stool top 0.45
-  (x 287.6-288.4, y 0.30-0.70); window shelf top 0.92 (x 289.0-292.0, y 0.82-1.3); sink top 0.86 (292.1-292.9).
+  (x 287.6-288.4, y 0.30-0.70); window shelf top 0.92 (x 289.0-292.0, y 0.82-1.3); sink top 0.86 (292.1-292.9);
+  the test bench top 0.55, its beds' rims 0.70 (x 293.05-295.3, y 0.35-0.95).
   The back wall (y 1.3) is now plain where the old stair door was (x 293.75-294.85).
 - The game's ATT2.x1 / ATT.x1 (295.6) stop him short of the doorway: extend them for the exit through it and the climb.
 
@@ -2891,6 +2969,8 @@ RECOMMENDED GAME LIGHTS (game x, y, z)
   (299.3, 3.5, -0.7), and a low warm fill on the landing and first treads, e.g. a point at (297.0, 1.6, -0.2),
   so he reads as he steps through. Through the door's glass while it is shut, a warm patch; when it opens, the pool.
 - Entry: warm point at (281.2, 2.6, -0.2), dim.
+- The test rig (expansion): a warm spot at (294.2, 2.7, 0.9) aimed at (294.2, 0.85, -0.9), about 70 deg, so the
+  brass pipes on the cream board, the beds and the levers read; a dim point near the valve, (292.6, 1.2, 0.3).
 
 NEW MATERIALS (index.html format)
 WORN (already in index.html; DampSoil is no longer used by DL-17):
@@ -2900,7 +2980,8 @@ EMIT:
   Att17GrowLamp: [.78, .84, 1, 3], Att17Bulb: [1, .78, .5, 5],
   Att17StairLamp: [1, .8, .55, 6],   // NEW (rev 0.3): the lamp over the stair
 Reused materials: WinDado, PigeonWood, CrateWood, PupilWood, WornIron, HandledBrass, DarkMetal, WornStrap,
-DepotGreen, ParcelBrown, DirtyGlass, TeaEnamel, Cable, Copper, Window (GLASSY: the bean jars, the door's light),
+DepotGreen, ParcelBrown, DirtyGlass, TeaEnamel, Cable, Copper, Window (GLASSY: the bean jars, the door's light, the
+sight glass), Water (PLAIN, the game's see-through water: the rig's tank, beds and streams),
 plus the voice-prop materials (Brass, HandWorn, ParcelPaper). No longer used: AttShoot, DampSoil. Image material:
 Att17Atlas (textures/dl17_atlas.png, 2048 square; new cells: soilcrack, and the sign_works cell redrawn as the
 RESIDENTIAL ACCESS sign).

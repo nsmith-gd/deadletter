@@ -884,7 +884,7 @@ def build_trolley(coll):
         for a, b, c, d in ((-0.24, 0.16, 0.19, 0.198), (-0.24, 0.16, 0.522, 0.53), (-0.24, -0.232, 0.19, 0.53),
                            (0.152, 0.16, 0.19, 0.53)):
             B.box('CastIron', a, b, yf - 0.0015, yf + 0.0015, c, d)
-        B.sphere('HandledBrass', (0.12, sy * (hw + 0.003), 0.36), 0.014, seg=8, scale=(1, 0.55, 1))
+        B.cyl('HandledBrass', (0.12, sy * hw, 0.36), (0.12, sy * (hw + 0.005), 0.36), 0.013, 0.011, seg=8)
         for z in (0.80, 0.83, 0.86):
             B.box('CastIron', -0.24, -0.08, yf - 0.0015, yf + 0.0015, z, z + 0.012)
         # ESCORT 3 on a brass-rimmed plate
@@ -991,7 +991,7 @@ def build_figure(coll):
     # Sticking plaster, crossed, on the side of its head toward the corridor; a strip round its upper arm.
     for a in (35, -35):
         B.cbox(ATLAS_MAT, (0.0, -0.064, 0.88), (0.075, 0.006, 0.018), rot=Matrix.Rotation(math.radians(a), 4, 'Y'), cell='sw_tape')
-    B.cyl(ATLAS_MAT, (0.0, -0.12, 0.6), (0.0, -0.122, 0.56), 0.03, seg=8, cell='sw_tape')
+    B.cyl(ATLAS_MAT, (0.0, -0.118, 0.6), (0.0, -0.12, 0.56), 0.027, seg=8, cell='sw_tape')
     # The card on its string.
     turn = math.radians(50.0)
     c = Vector((0.115, -0.045, 0.6))

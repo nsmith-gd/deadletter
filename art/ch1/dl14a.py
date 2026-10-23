@@ -85,7 +85,7 @@ RULES = (250.95, 252.2, 1.25, 2.2)                 # the REST HOUR rules sign: x
 BUNKS2 = (254.8, 257.6, -0.35, 1.3)                # the three friends' bunks, pushed together
 NAMES = ('R. ABEL', 'T. ORME', 'M. DALE')
 W1 = (255.4, 257.0, 1.6, 3.1)                      # window to the light well: x0, x1, sill, head
-W1_BLACK = 1.95                                    # its lower panes are blacked out up to here (the blind covers the rest)
+W1_BLACK = 2.05                                    # its lower panes are blacked out up to here (the blind covers the rest)
 W2 = (259.3, 260.9, 1.9, 3.1)                      # borrowed light from the night corridor
 ROLLER_Z, ROLLER_R = 3.25, 0.035
 W1_BLIND = (255.3, 257.1)                          # fabric x
@@ -168,7 +168,7 @@ SWITCHED_EMIT = {   # the lamps the game switches: own objects, own materials (a
 STATIC_EMIT = {     # new static glows (EMIT entries in REPORT); AttGlobeLamp is already in the game's table
     'Att14aWellGlow': ((0.72, 0.84, 1.0), 2.2),
     'Att14aCorridorGlow': ((1.0, 0.72, 0.4), 1.8),
-    'Att14aWardNight': ((0.4, 0.48, 0.66), 0.5),
+    'Att14aWardNight': ((0.4, 0.48, 0.66), 0.22),
     'AttGlobeLamp': ((1.0, 0.86, 0.62), 3.0),
 }
 
@@ -726,12 +726,11 @@ class MB:
         return self.names.index(name)
 
     def mark(self):
-        self.bm.verts.ensure_lookup_table()
-        return len(self.bm.verts)
+        """The verts so far (a set: primitives may remove verts, so indices are not a safe mark)."""
+        return set(self.bm.verts)
 
     def since(self, n0):
-        self.bm.verts.ensure_lookup_table()
-        return self.bm.verts[n0:]
+        return [v for v in self.bm.verts if v not in n0]
 
     def xform(self, n0, M):
         for v in self.since(n0):
@@ -906,11 +905,11 @@ def sweep_bm(pts, r, seg=6):
 
 
 def pillow(B, c, size, cell='pillow'):
-    tmp = d17.rounded_box(size, (0, 0, 0), p=3.0, cuts=3, mat=0)
+    tmp = d17.rounded_box(size, (0, 0, 0), p=2.6, cuts=4, mat=0)
     for v in tmp.verts:                                     # dented where a head was
         r2 = (v.co.x / (size[0] / 2)) ** 2 + (v.co.y / (size[1] / 2)) ** 2
         if v.co.z > 0:
-            v.co.z -= 0.25 * size[2] * max(0.0, 1 - r2)
+            v.co.z -= 0.12 * size[2] * max(0.0, 1 - r2)
     B.merge(tmp, ATLAS_MAT, proj_xy(cell, c, size[0], size[1]), M=Matrix.Translation(c))
 
 
@@ -1335,7 +1334,7 @@ def build_windows(B):
     for name, (x0, x1, sill, head), glow, black in (('W1', W1, 'Att14aWellGlow', W1_BLACK), ('W2', W2, 'Att14aCorridorGlow', None)):
         gy = BACK_Y + 0.1
         G = glows.setdefault(glow, MB())
-        z0 = black if black else sill + 0.05
+        z0 = black if black else sill + 0.1
         G.face(glow, [(x0, gy, z0), (x1, gy, z0), (x1, gy, head), (x0, gy, head)])
         if black:
             B.box(ATLAS_MAT, x0, x1, gy, gy + 0.004, sill, black, cell='sw_black')
@@ -1344,7 +1343,7 @@ def build_windows(B):
         B.box('PigeonWood', x0, x0 + 0.05, fy0, fy1, sill, head)
         B.box('PigeonWood', x1 - 0.05, x1, fy0, fy1, sill, head)
         B.box('PigeonWood', x0, x1, fy0, fy1, head - 0.05, head)
-        B.box('PigeonWood', x0, x1, fy0, fy1, sill, sill + 0.05)
+        B.box('PigeonWood', x0, x1, fy0, fy1, sill, sill + (0.05 if black else 0.1))
         B.box('PigeonWood', xc - 0.02, xc + 0.02, fy0 + 0.01, fy1, sill, head)
         for tz in ((black or sill), (sill + head) / 2 + 0.25):
             if sill < tz < head:
@@ -1678,10 +1677,10 @@ def build_blinds(coll):
     H.box(ATLAS_MAT, x0 - 0.01, x1 + 0.01, hy0, hy1, hz0, hz1, cell='sw_wood')
     for x in (x0 + 0.02, x1 - 0.02):
         H.box(ATLAS_MAT, x - 0.012, x + 0.012, hy0 - 0.004, hy1 + 0.004, hz0 - 0.004, hz1 + 0.004, cell='sw_brass')
-    H.box('Brass', hx - 0.03, hx + 0.03, hy0 - 0.006, hy0, 1.9, 1.99)                       # the peg's plate
-    r = 0.01
+    H.box('Brass', hx - 0.035, hx + 0.035, hy0 - 0.006, hy0, 1.895, 1.995)                  # the peg's plate
+    r = 0.012
     H.cyl('Brass', (hx, hy0 - 0.006, hz - r), (hx, 0.95, hz - r), r, seg=10)                 # the peg: its top at 1.93
-    H.sphere('Brass', (hx, 0.948, hz - r + 0.004), 0.016, seg=10)
+    H.sphere('Brass', (hx, 0.946, hz - r + 0.006), 0.02, seg=10)
     for z in (1.915, 1.975):
         H.sphere('HandledBrass', (hx, hy0 - 0.007, z), 0.006, seg=6)
     hem = H.obj('Att14aHemW1', coll, origin=HEM_W1)
@@ -1820,4 +1819,110 @@ def build_set(dl01, m, coll):
     return objs
 
 
-REPORT = """(filled in below)"""
+REPORT = """DL-14a Lights Out (art/ch1/dl14a.py), x 248.0-263.0, final coordinates (no shift).
+Game coords: (x, y, z) = Blender (x, z, -y). Blender numbers are given as B(x, y, z).
+
+MOVED (origin = pivot; built pose):
+- Att14aPawl: pivot B(252.3, 1.36, 0.6) = game (252.3, 0.6, -1.36), on the back wall's cast-iron plate. Built OFF,
+  the handle straight up (grip bar at height 1.05). Braked: rotateX(+40 deg) after restoring the rest quaternion,
+  exactly as AttPawl (the handle leans toward the camera, over the brass toothed quadrant).
+- Att14aDialHand: B(253.0, 1.356, 1.35) = game (253.0, 1.35, -1.356), the dial's centre, just in front of the face
+  (face r 0.26 at B y 1.368; bezel r 0.27). Built pointing up at the fixed brass mark. Clockwise one turn per cycle:
+  rotateZ(-2*PI*t/10) as AttDialHand. Face bands clockwise from the top: BRIGHT 0-3 s (0-108 deg) warm yellow,
+  DIMMING 3-4.5 (108-162) gradient, DARK 4.5-8 (162-288) black with a small moon, BRIGHTENING 8-10 (288-360) gradient.
+- Att14aSunLamp: B(253.9, 1.355, 2.55) = game (253.9, 2.55, -1.355); a low glass dome r 0.15 in the tin sun (rays to
+  r 0.36). Its own material Att14aSunLamp, EMIT [1, .8, .42, 4] (built bright). A sleeping face in dark tin strips
+  lies on the glass (in Att14aSet): it shows as a silhouette when the glass glows.
+- Att14aCrank: B(258.7, 0.32, 0.5) = game (258.7, 0.5, -0.32), handwheel r 0.19 (as AttCrank); spins about game z
+  (rotateZ) while the blinds move. Its gearbox (B x 258.52-258.88, y 0.5-0.8, z 0.26-1.08) and clutch sit on an
+  iron standard at B(258.7, 0.66) running to the ceiling; the cord's pulley on top at height 1.2.
+- Att14aBlindW1: origin = the middle of its roller axis B(256.2, 1.075, 3.25) = game (256.2, 3.25, -1.075). Fabric
+  x 255.3-257.1 at B y 1.04, built DOWN from 3.25 to 1.97 (1.28 tall; the hem bar is NOT in it). Scale game y
+  (Blender z) from 1 (down) to 0.04 (rolled up: fabric bottom 3.199).
+- Att14aHemW1: origin = the peg's hook point B(256.2, 1.0, 1.93) = game (256.2, 1.93, -1.0) exactly: the top of the
+  brass peg at that point (the peg runs from the hem bar out to B y 0.95, a knob at its end). It carries the hem bar
+  (x 255.29-257.11, B y 1.02-1.06, height 1.95-2.0; the fabric ends inside it at 1.97) and the peg. Lowest metal 1.90.
+  Move it with the blind: hem.y = 1.93 + (1 - s) * 1.28 (s = W1's scale); rolled up (s 0.04) = 3.159.
+- Att14aBlindW2: origin = the middle of its roller axis B(260.1, 1.3, 3.25) = game (260.1, 3.25, -1.3). Fabric
+  x 259.2-261.0 at B y 1.265, built DOWN to 1.95 with the hem bar (1.95-1.995) and a small brass pull ring on the
+  bar's face included (nothing below 1.95). Scale game y. No peg.
+- Att14aGown: origin = the hanger's hook point (inside top of the wire hook, as AttCoat), built hanging on the
+  chair's hook at B(261.0, 0.4, 0.95) = game (261.0, 0.95, -0.4); hangs along -z to height 0.20 (0.75 long, x
+  260.78-261.22), front toward the camera, rotation 0. To hang it anywhere put its origin on the hook point: W1's
+  peg = Att14aHemW1's origin (then its hem is at 1.18, just above bunks 2's deck); a wall peg = (x, 0.80, -1.345).
+  DEVIATION: the spec gives the hook at x 260.6 (the chair's x). The chair's seat is centred at 260.6 as specified;
+  a hook on its back (x 260.8) would hang the gown into the chair's back or side-on to the camera, so the hook is on
+  a brass arm out of the back's top rail and the gown hangs at x 261.0, facing the room. Use 261.0 for the pick-up.
+- Att14aDoor: hinge B(262.92, 0.45, 0) = game (262.92, 0, -0.45). Leaf x 262.90-262.94, B y -0.442..0.442,
+  height 0.008-1.742, knobs both sides, shut. Open: rotate about game y by +90 deg (Blender z +90): the free end
+  swings into the corridor (+x); open, the leaf lies at B y 0.41-0.45 (game z -0.41..-0.45), x 262.92-263.80.
+  NOTE for DL-14b: that is right beside the figures' rail (rails at 0.47 / 0.63; a figure's body reaches to 0.42),
+  so either the figure's envelope or the door's open angle needs a centimetre or two there.
+- Eye lamps (own objects, own materials, as built): Att14aEyeSun B(261.6, 1.37, 1.86), Att14aEyeW1 B(261.9, 1.37,
+  1.86), Att14aEyeW2 B(262.2, 1.37, 1.86): small amber domes r 0.034, labelled NIGHT-LIGHT / WELL WINDOW / CORRIDOR
+  WINDOW on the board under them; Att14aEyeDark B(261.9, 1.37, 1.53): the big green dome r 0.07, DARK (REST HOUR)
+  beside it. Game: (x, height, -1.37). Built: EyeSun lit (sun bright), W1/W2/Dark off (both blinds down).
+  EMIT: Att14aEyeSun/W1/W2 [1, .6, .18, 3 lit / 0 off], Att14aEyeDark [.36, 1, .46, 0 off; ~4 lit],
+  Att14aSunLamp [1, .8, .42, 4 bright; 0 dark].
+- Att14aSpeaker (empty): the tannoy's horn mouth, printed at build (about B(252.59, 0.95, 2.84) = game
+  (252.59, 2.84, -0.95)); the tannoy hangs high on the rest-hour wall at x 252.75, turned to the beds.
+
+SURFACES (as the spec; the mesh is built to these):
+- Floor 0 from 248.15 to 262.85. Left wall face x 248.15; end wall 262.85-263.0; ceiling 3.5; back wall face B y 1.4.
+- Bunk 1: x 248.3-250.3, top deck 1.15, B y -0.35..1.4 (two iron bunks pushed together, split at 249.3). Lower beds
+  at 0.5 (decor). Over the deck, only the foot end's iron rail (B y -0.35, to 1.31) and the right bed's head (B y 1.4,
+  to 1.43); the left bed's head stops at the deck so the vent is clear. The vent's grille lies on the deck (2 cm).
+- The vent: x 248.55-249.35, sill 1.15, head 1.8, in the linen cupboard's face (B y 1.4; cupboard x 248.15-249.65,
+  top 2.62); the dark duct behind it rises to the left.
+- Lockers 1/2/3: x 250.3-250.8, 254.3-254.8, 257.6-258.1; top 0.55; B y -0.3..0.5. (A tin cup on 2, a towel on 3:
+  decor, 7 cm and 3.5 cm.)
+- Bunks 2: x 254.8-257.6, top deck 1.15, B y -0.35..1.3: three beds 0.933 wide (R. ABEL, T. ORME, M. DALE, left to
+  right; the cards on the foot's middle rail at height 0.7). A ladder hooked on M. DALE's foot (x 257.28-257.54, B y
+  -0.39; decor). Under them, the torch and three biscuits at x 255.86-256.35.
+- Chair: seat centre x 260.6, B y 0.4, seat 0.4 x 0.4 (x 260.4-260.8), top 0.42; its back at x 260.755-260.795, to 0.98.
+- Rail stub x 261.6-263.0, rails B y 0.47 / 0.63, top 0.03, channel 0.39-0.71; buffer stop at 261.6 (x 261.6-261.7,
+  0.12 high). It runs on through a low opening in the end wall beside the door: B y 0.45-0.76, height 1.08 (iron
+  framed). The door's hinge jamb stands above it (1.08-1.75).
+- Wall things (all on the back wall, B y ~1.36-1.4): decoy pegs at x 251.02, 251.26, 251.5 (free), 251.74, 251.98,
+  hook points (x, 0.80, game z -1.345), small gowns on all but 251.5; REST HOUR rules x 250.95-252.2, 1.25-2.2;
+  the brake's plate x 252.13-252.47, 1.1-1.2; dial centre (253.0, 1.35); NIGHT-LIGHT plate under it; sun (253.9,
+  2.55); eye centre (261.9, 2.25) on its board x 261.35-262.45, 1.2-2.65.
+- Windows: W1 x 255.4-257.0, sill 1.6, head 3.1 (frosted wired glass, EMIT Att14aWellGlow, cold; its lower panes
+  painted black up to 2.05, so the down blind (hem 1.93) covers all the light); W2 x 259.3-260.9, sill 1.9, head 3.1
+  (reeded glass from 2.0, EMIT Att14aCorridorGlow, warm; a deep bottom rail 1.9-2.0 under the blind's hem). The glass is at B y 1.5. W1's roller on long iron brackets with
+  struts (x 255.25, 257.25); the cord drum at x 257.12-257.2; W2's drum at 259.08-259.16, a pelmet over W2.
+- The cord (static, in Att14aSet): up the crank's standard from its pulley (1.2) to two pulleys under the ceiling
+  (3.37), across to W1's drum and W2's drum, and a return run between the drums.
+- Arches to the back ward: x 249.75-250.85, 254.4-255.2, 257.25-258.55, crowns 2.85 (round heads). WARD 2 over the
+  right one. The ward: x 248.15-259.0, B y 1.6-6.4: 16 made-up beds in two rows (feet at B y 2.15 and 4.55, x 248.9
+  to 257.65 every 1.25), each with its locker; three tall night windows in its far wall (EMIT Att14aWardNight, dim).
+
+STATIC OBJECTS: Att14aSet (the room; materials WinPlaster, WinDado, WinLino, PigeonWood, CrateWood, WornIron,
+CastIron, HandledBrass, Brass, LeverRed, EyeDark, GaugeNeedle, the tannoy's TannoyEnamel/DepotSteel/DarkMetal/Cable,
+and two images), Att14aGlobe (EMIT AttGlobeLamp, at B(251.3, 0.05, 3.1); two dead globes at 256.2 and 260.3 in the
+set), Att14aWellGlow, Att14aCorridorGlow, Att14aWardNight (EMIT), Att14aWard (the ward's shell), Att14aWardBed01..16
+(linked duplicates of one mesh 'Att14aWardBed', 780 tris, one material).
+
+MATERIALS: images Att14aAtlas (textures/dl14a_atlas.png: bedding, gowns, lockers, swatches) and Att14aSigns
+(textures/dl14a_signs.png: REST HOUR, the drive plate, the eye's board, the dial, the name cards, LIGHTS OUT, the
+brake, NIGHT-LIGHT, LINEN, W1/W2, WARD 2, Mara's pencil tree), both pass through as maps. PLAIN EyeDark, Brass,
+GaugeNeedle (existing). New EMIT entries: Att14aSunLamp: [1, .8, .42, 4], Att14aEyeSun: [1, .6, .18, 3],
+Att14aEyeW1: [1, .6, .18, 0], Att14aEyeW2: [1, .6, .18, 0], Att14aEyeDark: [.36, 1, .46, 0],
+Att14aWellGlow: [.72, .84, 1, 2.2], Att14aCorridorGlow: [1, .72, .4, 1.8], Att14aWardNight: [.4, .48, .66, .22].
+
+SIGNS (textures): REST HOUR ("1. Lights out. 2. No talking. 3. Stay in your own bed. 4. Pupils are never
+unaccompanied."); the drive plate by the crank (x 259.0-259.56, 0.42-0.91; "ONE CORD - TWO BLINDS", "W1 DOWN MEANS W2
+UP.", "THE CLUTCH SLIPS WHEN A BLIND IS HELD.", with pictures); the eye's board ("LIGHT METER", the lamps' labels,
+"DARK (REST HOUR)", "REST HOUR BEGINS WHEN THE ROOM IS DARK"); LIGHTS OUT on a flag sign over the doorway (both
+faces, x 262.38-262.82, 1.86-1.99, at B y 0); REST HOUR BRAKE (OFF up / ON forward) over the lever.
+
+LIGHTS (suggested, index.html P/S format, game coords):
+P(0xffd8a8, 1.2, 4.0, 251.3, 2.95, -0.05)    the dim globe
+P(0xffc070, 1.6, 3.5, 253.9, 2.5, -0.9)      the sun's glow (scale with the cycle; 0 when DARK)
+S(0xc0d4ff, 3.5, 5, [256.2, 2.6, -1.3], [256.2, 0.9, 0.4], 0.7)   W1's cold light (when its blind is up)
+S(0xffc890, 3.0, 5, [260.1, 2.6, -1.3], [260.1, 0.6, 0.4], 0.7)   W2's warm light (when its blind is up)
+P(0x8094c0, 0.4, 5, 253.5, 2.8, -4.2)        the back ward, dim and cool
+P(0xffd8b0, 0.6, 3.0, 261.8, 2.8, -0.3)      the eye and the door
+
+TRIANGLES: ~40k in 37 objects (Att14aSet ~22k; ward beds 16 x 780, linked); about 60 material slots.
+"""
