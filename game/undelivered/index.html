@@ -5142,6 +5142,7 @@ function buildAtt(root) {
     'AttTreeTrunk', 'AttTreeBranch1', 'AttTreeBranch2', 'AttTreeBranch3', 'AttTreeLeaves', 'AttBlindA', 'AttBlindB', 'AttLedgeA', 'AttLedgeB',
     'AttPanelPeel', 'AttCrank', 'AttWheelA', 'AttClutch', 'AttPole', 'Att15FigA', 'Att15FigB', 'Att15Lift', 'Att15LiftGate', 'Att15LiftCW', 'Att15Door', 'Att15Flap',
     'Att16Lever', 'Att16Bridge', 'Att16Latch', 'Att16CW', 'Att17Drawer', 'Att17Tray', 'Att17Door',
+    'Att14aBag', 'Att14aCord', 'Att14aCordHook', 'Att16aCallPush', 'Att17PipeFlowA', 'Att17PipeFlowB', 'Att17PipeFlowC', 'Att17DrawingWall',
     'Att14aPawl', 'Att14aDialHand', 'Att14aCrank', 'Att14aBlindW1', 'Att14aHemW1', 'Att14aBlindW2', 'Att14aGown', 'Att14aDoor', 'Att14bTrolley', 'Att14bCone', 'Att14bFig',
     'Att16aCar', 'Att16aCW', 'Att16aStool', 'Att16aTin1', 'Att16aTin2', 'Att16aBooks', 'Att17SluiceA', 'Att17SluiceB', 'Att17SluiceC', 'Att17Valve', 'Att17ValveKey', 'Att17Key',
     'Att17TankWater', 'Att17Water1', 'Att17Water2', 'Att17Water3', 'Att17Stream1', 'Att17Stream2', 'Att17Stream3', 'Att17Float', 'Att17Latch']) { k[n] = get(n); if (k[n]) k[n].userData.rest = { p: k[n].position.clone(), q: k[n].quaternion.clone(), s: k[n].scale.clone() }; }
@@ -5887,6 +5888,9 @@ const ATT3 = {
   bunk1: { x0: 248.3, x1: 250.3, h: 1.15 }, locker1: { x0: 250.3, x1: 250.8, h: 0.55 },
   locker2: { x0: 254.3, x1: 254.8, h: 0.55 }, bunk2: { x0: 254.8, x1: 257.6, h: 1.15 }, locker3: { x0: 257.6, x1: 258.1, h: 0.55 },
   pawlX: 252.3, crankX: 258.7, hemX: 256.2, hemZ: -1.0, roller: 3.21, hemDown: 1.93, w2Down: 1.95,   // (the hem travels 1.28)
+  // The redesign (docs/research/puzzle_design_2d.md): W1's cord comes down to a hook by the crank. A child's light gown
+  // hangs on it (W1 lifts it: something light can't hold the blind); the laundry bag in the basket is heavy enough.
+  hookX: 259.4, hookZ: -0.9, hookDown: 0.75, hookUp: 2.0, bagX: 260.3,
   wallPeg: new THREE.Vector3(251.5, 0.8, -1.345), chairX: 261.0, chairHook: new THREE.Vector3(261.0, 0.95, -0.4),   // the cape hangs on the chair's brass arm
   door: { x0: 262.85, x1: 263.0 }, eyeX: 261.9,
   cycle: { period: 10, dark: [4.5, 8.0] },
@@ -5897,21 +5901,22 @@ const ATT3 = {
   // DL-16a: the servery and the dumbwaiter.
   shelf: { x0: 310.2, x1: 310.9, h: 1.25, booksX: 310.55 }, stool0: 312.0, stoolHalf: 0.25, stoolH: 0.45, stoolMin: 310.45, stoolMax: 312.2,
   car: { x0: 312.6, x1: 313.4, mid: 313.0, floor: 0.05, top: 2.45 }, gateX: 314.0, passage: { x0: 313.5, x1: 321.2, h: 2.4 },
-  stair16a: { x0: 321.2, x1: 323.6, n: 12, h: 2.4 }, weight: { tin1: 1, tin2: 1 }, need: 1,     // (review: a short ballast application; the point is her way round)
+  stair16a: { x0: 321.2, x1: 323.6, n: 12, h: 2.4 }, weight: { tin1: 1, tin2: 1 }, need: 0,     // (review: a short ballast application; the point is her way round)
   // DL-17: Lisle's apprentice test rig (dl17.py, +44): sluice A waters bed 3, B bed 1, C bed 2.
   valveX: 336.55, sluices: [337.45, 338.1, 338.8], feeds: [2, 0, 1], run: 6, refill: 10, drain: 20,
 };
-const ATT3_ACTS = new Set(['pawl14a', 'crank14a', 'gownChair', 'hangHem', 'reachHem', 'takeHem', 'hangWall', 'takeWall', 'nudge14b', 'hide', 'escorted',
+const ATT3_ACTS = new Set(['pawl14a', 'crank14a', 'gownChair', 'hangHem', 'reachHem', 'takeHem', 'hangWall', 'takeWall', 'bagBasket', 'hangHook', 'reachHook', 'takeHook', 'call16a', 'nudge14b', 'hide', 'escorted',
   'books16a', 'bell16a', 'ride16a', 'load16a', 'unload16a', 'sluiceA', 'sluiceB', 'sluiceC', 'sluice17', 'valve17', 'valveLocked']);
 // Where he looks when a moment needs him to (the head look's targets for the expansion).
 const LOOK3 = { crank14a: new THREE.Vector3(258.7, 0.5, -0.32), drawer17: new THREE.Vector3(330.0, 0.45, -0.5), rig17: new THREE.Vector3(338.1, 0.75, -0.6) };
 function resetAtt3(s, p) {
   const dark = p('corridor'), passed = p('sickbay'), up = p('workshop');
   s.f14a = { t: dark ? 6 : 0, braked: dark, w1: dark ? 1 : 0, w2: dark ? 1 : 0, t1: dark ? 1 : 0, t2: dark ? 1 : 0, door: dark ? 1 : 0, open: dark, darkSince: null, winds: 0,
-    gown: { x: ATT3.hemX, base: 0, state: dark ? 'hem' : 'chair', blend: 0, drop: null } };
+    gown: { x: ATT3.hookX + 0.3, base: 0, state: dark ? 'floor' : 'hook', blend: 0, drop: null },
+    bag: { x: ATT3.hookX, base: 0, state: dark ? 'hook' : 'basket', blend: 0, drop: null } };
   s.f14b = { tx: 270.0, dir: 1, mode: 'patrol', mt: 0, turned: 0, fig: { x: passed ? ATT3.keepX : ATT3.bayX, base: 0, v: 0, state: passed ? 'free' : 'bay', out: passed ? 1 : 0, kept: passed }, hide: 0 };
   const C = ATT3.car;
-  s.f16a = { stool: { x: up ? ATT3.stoolMin : ATT3.stool0, v: 0, state: 'free' }, h: up ? C.top : C.floor, mode: up ? 'top' : 'bottom', mt: 0, flashAt: -9, overAt: -9,
+  s.f16a = { stool: { x: up ? ATT3.stoolMin : ATT3.stool0, v: 0, state: 'free' }, h: C.top, mode: 'top',      // sent up: he calls it down mt: 0, flashAt: -9, overAt: -9,
     tin1: { x: 311.2, base: 0, state: up ? 'car' : 'floor', slot: 0, blend: 0, drop: null },
     tin2: { x: 311.45, base: 0, state: 'floor', blend: 0, drop: null },
     books: { x: ATT3.shelf.booksX, base: ATT3.shelf.h, state: 'shelf', blend: 0, drop: null } };
@@ -5921,12 +5926,11 @@ function resetAtt3(s, p) {
 function itemsAtt3(out) {
   const s = game.att, k = refs.att;
   out.push(Object.assign(s.f14a.gown, { key: 'gown', h: 0.1, r: 0.16, below: 0.02, light: true, g: k.Att14aGown }));
-  // (Small enough to carry up onto the stool or into the car: 'light' lets him climb with them.)
-  out.push(Object.assign(s.f16a.tin1, { key: 'tin1', h: 0.18, r: 0.08, below: 0.12, light: true, g: k.Att16aTin1 }));
-  out.push(Object.assign(s.f16a.tin2, { key: 'tin2', h: 0.18, r: 0.08, below: 0.12, light: true, g: k.Att16aTin2 }));
+  out.push(Object.assign(s.f14a.bag, { key: 'bag', h: 0.45, r: 0.18, below: 0.02, g: k.Att14aBag }));          // heavy: a slow, two-handed carry
 }
 // The cycle: BRIGHT 0..3, DIMMING 3..4.5, DARK 4.5..8, BRIGHTENING 8..10. The sun's light, 1 at full, 0 dark.
 function sun14a(t) { return t < 3 ? 1 : t < 4.5 ? 1 - (t - 3) / 1.5 : t < 8 ? 0 : (t - 8) / 2; }
+const hook14a = (w) => ATT3.hookUp - (ATT3.hookUp - ATT3.hookDown) * w;
 const hem14a = (w) => ATT3.roller - (ATT3.roller - ATT3.hemDown) * w;
 // What is loaded into the dumbwaiter's car rides in it, in three slots along its back; that is its load.
 const ITEMS16a = ['tin1', 'tin2'], SLOTS16a = [312.85, 313.15];
@@ -5969,14 +5973,15 @@ function limitsAtt3(lo, hi) {
 const hidden14b = () => game.act && game.act.kind === 'att' && game.act.what === 'hide' && game.z < -0.4;
 function nearAtt3Item() {
   const s = game.att, x = game.x, y = game.y, g = s.f14a.gown, c = game.carry;
-  if (!game.hold && g.state === 'chair' && y < 0.05 && Math.abs(x - ATT3.chairX) < 0.4) return 'att:gownChair';
-  if (c === g && Math.abs(y - ATT3.bunk2.h) < 0.05 && Math.abs(x - ATT3.hemX) < 0.45) return s.f14a.w1 > 0.95 ? 'att:hangHem' : 'att:reachHem';
-  if (c === g && y < 0.05 && Math.abs(x - ATT3.wallPeg.x) < 0.35) return 'att:hangWall';
-  if (!game.hold && g.state === 'hem' && Math.abs(y - ATT3.bunk2.h) < 0.05 && Math.abs(x - ATT3.hemX) < 0.45) return 'att:takeHem';
+  const bag = s.f14a.bag, low = s.f14a.w1 > 0.95, atHook = y < 0.05 && Math.abs(x - ATT3.hookX) < 0.32;
+  if (!game.hold && bag.state === 'basket' && y < 0.05 && Math.abs(x - ATT3.bagX) < 0.35) return 'att:bagBasket';
+  if (atHook && c && (c === g || c === bag)) return low ? 'att:hangHook' : 'att:reachHook';
+  if (atHook && !game.hold && low && (g.state === 'hook' || bag.state === 'hook')) return 'att:takeHook';
+  if (c === g && y < 0.05 && Math.abs(x - ATT3.wallPeg.x) < 0.35) return 'att:hangWall';   // (a wrong first try: a peg is for a gown)
   if (!game.hold && g.state === 'wallpeg' && y < 0.05 && Math.abs(x - ATT3.wallPeg.x) < 0.35) return 'att:takeWall';
   const F = s.f16a, b = F.books, C = ATT3.car;
   // Into the car, from in it or reaching in from beside it.
-  if (c && ITEMS16a.some((key) => F[key] === c) && F.mode === 'bottom' && x > C.x0 - 0.4 && x < C.x1 + 0.05 && y < 0.1) return 'att:load16a';
+  // (Redesign: no ballast. The car is called down from outside, and sent up from inside.)
   return null;
 }
 function nearAtt3Fixed() {
@@ -5987,23 +5992,24 @@ function nearAtt3Fixed() {
   if (y < 0.05 && (inBox(x, { x0: ATT3.nicheA[0] + 0.15, x1: ATT3.nicheA[1] - 0.15 }) || (B.fig.state !== 'bay' && inBox(x, { x0: ATT3.bay[0] + 0.15, x1: ATT3.bay[1] - 0.15 })))) return 'att:hide';
   const C = ATT3.car, f = s.f16a;
   // In the car: the bell; or, while the gauge reads OVER, he takes a tin back out (the only way to be over is all three).
-  if (!game.hold && x > C.x0 + 0.15 && x < C.x1 - 0.15 && Math.abs(y - f.h) < 0.05 && (f.mode === 'bottom' || f.mode === 'top')) return f.mode === 'bottom' && load16a() > ATT3.need ? 'att:unload16a' : 'att:bell16a';
+  if (!game.hold && x > C.x0 + 0.15 && x < C.x1 - 0.15 && Math.abs(y - f.h) < 0.05 && (f.mode === 'bottom' || f.mode === 'top')) return 'att:bell16a';
+  if (!game.hold && y < 0.05 && Math.abs(x - 312.42) < 0.24 && (f.mode === 'top' || f.mode === 'bottom')) return 'att:call16a';
   if (y < 0.05) {
     for (let i = 0; i < 3; i++) if (Math.abs(x - ATT3.sluices[i]) < 0.24) return 'att:sluice' + 'ABC'[i];
-    if (Math.abs(x - ATT3.valveX) < 0.26) return s.f17.key ? 'att:valve17' : 'att:valveLocked';
+    if (Math.abs(x - ATT3.valveX) < 0.26) return 'att:valve17';           // (redesign: no key errand)
   }
   return null;
 }
 // Hanging the gown or taking it back: he steps back toward the peg (the hem hangs out in front of W1; the pegs are on
 // the back wall).
-const STEP_IN14a = { hangHem: -0.55, takeHem: -0.55, hangWall: -1.0, takeWall: -1.0 };
-const ATT3_STAND = { pawl14a: ATT3.pawlX - 0.2, crank14a: ATT3.crankX - 0.22, gownChair: ATT3.chairX - 0.3, hangHem: ATT3.hemX, takeHem: ATT3.hemX,
+const STEP_IN14a = { hangHem: -0.55, takeHem: -0.55, hangWall: -1.0, takeWall: -1.0, hangHook: -0.5, takeHook: -0.5 };
+const ATT3_STAND = { bagBasket: ATT3.bagX - 0.3, hangHook: ATT3.hookX, takeHook: ATT3.hookX, call16a: 312.3, pawl14a: ATT3.pawlX - 0.2, crank14a: ATT3.crankX - 0.22, gownChair: ATT3.chairX - 0.3, hangHem: ATT3.hemX, takeHem: ATT3.hemX,
   hangWall: ATT3.wallPeg.x, takeWall: ATT3.wallPeg.x, nudge14b: ATT3.bayX, valve17: ATT3.valveX - 0.2, valveLocked: ATT3.valveX - 0.2 };
 function beginAtt3(kind) {
   if (kind.startsWith('sluice') && kind !== 'sluice17') { const i = 'ABC'.indexOf(kind.slice(-1)); game.act = { kind: 'att', what: 'sluice17', att3: true, phase: 'approach', t: 0, standX: ATT3.sluices[i] - 0.18, face: 1, i }; return; }
   const a = { kind: 'att', what: kind, att3: true, phase: 'approach', t: 0, standX: ATT3_STAND[kind] ?? game.x, face: 1 };
   if (kind === 'hide') { const n = game.x < 266 ? ATT3.nicheA : ATT3.bay; a.standX = (n[0] + n[1]) / 2; a.face = game.facing; }
-  if (['reachHem', 'bell16a', 'books16a', 'load16a', 'unload16a'].includes(kind)) a.phase = 'act';
+  if (['reachHem', 'reachHook', 'bell16a', 'books16a', 'load16a', 'unload16a'].includes(kind)) a.phase = 'act';
   game.act = a;
 }
 function updateAtt3Act(a, dt) {
@@ -6014,7 +6020,8 @@ function updateAtt3Act(a, dt) {
       if (['pawl14a', 'sluice17'].includes(a.what)) setClip(actions.Pull ? 'Pull' : 'Tug', 0.15);
       if (a.what === 'crank14a' || a.what === 'valve17') setClip(actions.Crank ? 'Crank' : 'Tug', 0.15);
       if (a.what === 'valveLocked') setClip(actions.Tug ? 'Tug' : 'Pull', 0.15);
-      if (a.what === 'gownChair') { game.yawOverride = Math.PI; setClip('Lift', 0.15); }
+      if (a.what === 'gownChair' || a.what === 'bagBasket') { game.yawOverride = Math.PI; setClip('Lift', 0.15); }
+      if (a.what === 'call16a') { game.yawOverride = Math.PI; setClip(actions.PressButtonHigh ? 'PressButtonHigh' : 'Tug', 0.15); }
       if (STEP_IN14a[a.what]) { a.phase = 'in'; game.yawOverride = Math.PI; }
       if (a.what === 'nudge14b') { game.yawOverride = Math.PI; setClip(actions.Nudge ? 'Nudge' : 'Tug', 0.2); }
       if (a.what === 'hide') { a.phase = 'in'; game.yawOverride = 0; }
@@ -6033,9 +6040,24 @@ function updateAtt3Act(a, dt) {
       }
       return;
     }
-    if (a.what.startsWith('hang')) {
+    if (a.what === 'hangHook') {
+      // Whatever he carries goes on W1's cord hook; anything already there comes off onto the floor.
+      const f = (actions.SetDownHigh || actions.SetDown).time * FPS, it = game.carry;
+      if (f >= 14 && it && it.state === 'carried') {
+        for (const q of [A.gown, A.bag]) if (q !== it && q.state === 'hook') { q.state = 'floor'; q.x = ATT3.hookX + 0.3; q.base = 0; q.drop = { from: new THREE.Vector3(ATT3.hookX, hook14a(A.w1), ATT3.hookZ), t: 0 }; Sound.setDown(false); }
+        it.state = 'hook'; it.blend = 0; game.carry = null; game.hold = null; Sound.tap(); Sound.creak?.(0.4);
+        if (it === A.bag) { Sound.thud(); shake(0.08); }
+        Telemetry.event('hook14a', { what: it === A.bag ? 'bag' : 'gown' });
+      }
+      if (f >= 35) { a.phase = 'out'; setClip('Walk', 0.2); }
+    } else if (a.what === 'takeHook') {
+      const f = actions.Lift.time * FPS, it = a.it ||= (A.bag.state === 'hook' ? A.bag : A.gown);
+      if (f >= 22 && it.state !== 'carried') { it.state = 'carried'; it.x = game.x; it.base = hook14a(A.w1) - 0.5; }
+      if (it.state === 'carried') it.blend = smooth((f - 22) / 4);
+      if (f >= 39) { game.hold = 'item'; game.carry = it; it.blend = 1; a.phase = 'out'; }
+    } else if (a.what.startsWith('hang')) {
       const f = (actions.SetDownHigh || actions.SetDown).time * FPS, hem = a.what === 'hangHem';
-      if (f >= 14 && game.carry === g) { g.state = hem ? 'hem' : 'wallpeg'; g.blend = 0; game.carry = null; game.hold = null; Sound.setDown(false); Sound.tap(); if (hem) { Sound.creak?.(0.4); Telemetry.event('gownHem', {}); } }
+      if (f >= 14 && game.carry === g) { if (!hem) failAtt('14a'); g.state = hem ? 'hem' : 'wallpeg'; g.blend = 0; game.carry = null; game.hold = null; Sound.setDown(false); Sound.tap(); if (hem) { Sound.creak?.(0.4); Telemetry.event('gownHem', {}); } }
       if (f >= 35) { a.phase = 'out'; setClip('Walk', 0.2); }
     } else {
       const f = actions.Lift.time * FPS;
@@ -6045,7 +6067,7 @@ function updateAtt3Act(a, dt) {
     }
     return;
   }
-  if (a.what === 'reachHem') {
+  if (a.what === 'reachHem' || a.what === 'reachHook') {
     // The hem is up out of reach: he stretches for it, then looks at the crank that winds it.
     if (a.t < 0.02) { setClip(actions.Present ? 'Present' : 'CarryIdle', 0.15); Sound.servo(0.25, 500, 820, 0.02); A.reachAt = game.clock; }
     game.lookAt = a.t > 0.9 && a.t < 2.4 ? 'crank14a' : game.lookAt === 'crank14a' ? null : game.lookAt;
@@ -6063,16 +6085,19 @@ function updateAtt3Act(a, dt) {
     // there and W2 goes alone.
     if (a.t > 0.3 && !a.done) {
       a.done = true; A.winds++;
-      if (g.state === 'hem') A.t2 = A.t2 > 0.5 ? 0 : 1;
-      else if (A.t1 < 0.5) { A.t1 = 1; A.t2 = 0; } else { A.t1 = 0; A.t2 = 1; }
-      Sound.chain(2.2); Sound.ratchet(); Telemetry.event('blinds14a', { w1: A.t1, w2: A.t2, held: g.state === 'hem' });
+      const held = A.bag.state === 'hook';                         // the bag's weight on W1's cord holds it down
+      if (held) A.t2 = A.t2 > 0.5 ? 0 : 1;
+      else if (A.t1 < 0.5) { A.t1 = 1; A.t2 = 0; } else { A.t1 = 0; A.t2 = 1; if (g.state === 'hook') { A.liftedGown = game.clock; } }
+      if (A.winds > 1 && !held) failAtt('14a');                     // they just swap (and the light gown rides up with W1)
+      Sound.chain(2.2); Sound.ratchet(); Telemetry.event('blinds14a', { w1: A.t1, w2: A.t2, held });
     }
     if (a.t > 0.9 && !a.r2) { a.r2 = true; Sound.ratchet(); }
     if (a.t > 1.5) { game.act = null; setClip('Idle', 0.3); }
     return;
   }
-  if (a.what === 'gownChair') {
-    const f = actions.Lift.time * FPS;
+  if (a.what === 'gownChair' || a.what === 'bagBasket') {
+    const g = a.what === 'bagBasket' ? A.bag : A.gown, f = actions.Lift.time * FPS;
+    if (a.what === 'bagBasket' && f >= 13 && !a.s0) { a.s0 = true; Sound.strain?.(); }
     if (f >= 13 && !a.s1) { a.s1 = true; Sound.lift(); }
     if (f >= 22) { if (g.state !== 'carried') { g.state = 'carried'; g.x = game.x; } g.blend = smooth((f - 22) / 4); }
     if (f >= 39) { game.act = null; game.yawOverride = null; game.hold = 'item'; game.carry = g; g.blend = 1; setClip('CarryIdle', 0.2); }
@@ -6114,6 +6139,12 @@ function updateAtt3Act(a, dt) {
     if (f >= 13 && !a.s1) { a.s1 = true; Sound.lift(); }
     if (f >= 22) { if (b.state !== 'carried') { b.state = 'carried'; b.x = game.x; } b.blend = smooth((f - 22) / 4); }
     if (f >= 39) { game.act = null; game.yawOverride = null; game.hold = 'item'; game.carry = b; b.blend = 1; setClip('CarryIdle', 0.2); }
+    return;
+  }
+  if (a.what === 'call16a') {
+    // The call push outside: the car comes down to him (or, already here, a ding).
+    if (a.t > 0.45 && !a.done) { a.done = true; Sound.click(); Sound.bell?.(); const F = s.f16a; if (F.mode === 'top') { F.mode = 'down'; F.mt = 0; Sound.chain(3.0); Telemetry.event('call16a', {}); } }
+    if (a.t > 1.1) { game.act = null; game.yawOverride = null; setClip('Idle', 0.3); }
     return;
   }
   if (a.what === 'load16a' || a.what === 'unload16a') {
@@ -6190,10 +6221,10 @@ function updateAtt3(dt) {
   if (!A.braked) A.t = (A.t + dt) % ATT3.cycle.period;
   A.w1 += Math.sign(A.t1 - A.w1) * Math.min(Math.abs(A.t1 - A.w1), dt / 2.2);
   A.w2 += Math.sign(A.t2 - A.w2) * Math.min(Math.abs(A.t2 - A.w2), dt / 2.2);
-  if (g.state === 'hem') { A.t1 = 1; A.w1 = 1; }                     // the gown's weight holds W1 down
+  if (A.bag.state === 'hook') { A.t1 = 1; A.w1 = 1; }                // the laundry bag's weight holds W1 down
   const sun = sun14a(A.t), leak = [sun > 0.05, A.w1 < 0.95, A.w2 < 0.95], dark = !leak.some(Boolean);
   if (dark) A.darkSince ??= game.clock; else A.darkSince = null;
-  if (!A.open && A.darkSince !== null && game.clock - A.darkSince > 1.2) { A.open = true; Sound.clank(); Sound.bell?.(); Sound.doorOpen?.(); Telemetry.event('dark14a', {}); }
+  if (!A.open && A.darkSince !== null && game.clock - A.darkSince > 1.2) { A.open = true; progressAtt(); Sound.clank(); Sound.bell?.(); Sound.doorOpen?.(); Telemetry.event('dark14a', {}); }
   if (A.open) A.door = Math.min(1, A.door + dt / 1.4);
   const winding = Math.abs(A.w1 - A.t1) > 1e-3 || Math.abs(A.w2 - A.t2) > 1e-3;
   if (here && x > 248 && x < 263 && winding && Math.random() < dt * 6) Sound.tap();
@@ -6220,11 +6251,11 @@ function updateAtt3(dt) {
     const step = Math.min(dt, d.run); d.run -= step; d.tank = Math.max(0, d.run / ATT3.run);
     for (const i of open) d.beds[ATT3.feeds[i]] = Math.min(1, d.beds[ATT3.feeds[i]] + step * rate / Math.max(1, open.length) * 1.06);
     if (Math.random() < dt * 8) Sound.splash?.(0.15);
-    if (d.run <= 0) { d.run = 0; d.refillAt = game.clock; }
+    if (d.run <= 0) { d.run = 0; d.refillAt = game.clock; if (!d.latched) failAtt('17'); }
   } else if (d.tank < 1 && d.refillAt !== null) d.tank = Math.min(1, (game.clock - d.refillAt) / ATT3.refill);
   const fed = d.run > 0 ? d.sluice.map((v, i) => (v ? ATT3.feeds[i] : -1)) : [];
   d.beds = d.beds.map((v, b) => (fed.includes(b) ? v : Math.max(0, v - dt / ATT3.drain)));
-  if (d.beds[0] >= 0.95 && !d.latched) { d.latched = true; d.latchAt = game.clock; Sound.clank(); Sound.creak?.(0.6); Telemetry.event('float17', {}); }
+  if (d.beds[0] >= 0.95 && !d.latched) { d.latched = true; d.latchAt = game.clock; progressAtt(); Sound.clank(); Sound.creak?.(0.6); Telemetry.event('float17', {}); }
   if (d.latched) d.latch = Math.min(1, d.latch + dt / 0.8);
   // ---- Checkpoints.
   if (here) {
@@ -6232,6 +6263,7 @@ function updateAtt3(dt) {
     if (x > ATT3.door.x1 + 0.4 && A.open && !past(cp, 'corridor')) game.checkpoint = 'corridor';
     if (x > ATT3.wall15.x1 + 0.15 && game.y > 1.5 && !past(cp, 'sickbay')) game.checkpoint = 'sickbay';
     if (x > 310.4 && x < 314 && !past(cp, 'kitchen')) game.checkpoint = 'kitchen';
+    if (x > 310.2 && game.att.kitchenAt == null) game.att.kitchenAt = game.clock;
   }
   // ---- The art.
   if (!k) return;
@@ -6249,7 +6281,9 @@ function updateAtt3(dt) {
   [k.eyeSun, k.eyeW1, k.eyeW2].forEach((m, i) => { if (m) m.emissiveIntensity = leak[i] ? 4.5 * (A.open ? 0.4 : blink) : 0.04; });
   if (k.eyeDark) k.eyeDark.emissiveIntensity = dark || A.open ? 5 : 0.05;
   if (k.Att14aDoor) { R(k.Att14aDoor); k.Att14aDoor.rotateY(Math.PI / 2 * smooth(A.door)); }     // into the corridor (dl14a.py REPORT)
-  placeGown14a(g, k.Att14aGown, dt, A);
+  placeGown14a(g, k.Att14aGown, dt, A); placeBag14a(A.bag, k.Att14aBag, dt, A);
+  if (k.Att14aCordHook) { R(k.Att14aCordHook); k.Att14aCordHook.position.y += hook14a(A.w1) - ATT3.hookDown; }
+  if (k.Att14aCord) { const o = k.Att14aCord, top = o.userData.rest.p.y; o.scale.copy(o.userData.rest.s); o.scale.y = Math.max(0.05, (top - hook14a(A.w1)) / Math.max(0.1, top - ATT3.hookDown)); }
   placeTrolley14b(k);
   // DL-16a.
   if (k.Att16aCar) { R(k.Att16aCar); k.Att16aCar.position.y += F.h - C.floor; }
@@ -6276,7 +6310,9 @@ function updateAtt3(dt) {
     const st = k['Att17Stream' + (b + 1)]; if (st) st.visible = fed.includes(b);
   }
   if (k.Att17Float) { R(k.Att17Float); k.Att17Float.position.y += 0.12 * d.beds[0]; }
-  if (k.Att17Latch) { R(k.Att17Latch); k.Att17Latch.rotateZ(THREE.MathUtils.degToRad(70) * smooth(d.latch)); }
+  // The latch rises with bed 1's water (a shared run lifts it part-way and lets it fall), and stays up once it's full.
+  if (k.Att17Latch) { R(k.Att17Latch); k.Att17Latch.rotateZ(THREE.MathUtils.degToRad(70) * smooth(d.latched ? Math.max(d.latch, 0.85 * d.beds[0]) : 0.7 * d.beds[0])); }
+  ['Att17PipeFlowA', 'Att17PipeFlowB', 'Att17PipeFlowC'].forEach((n, i) => { if (k[n]) k[n].visible = d.run > 0 && !!d.sluice[i]; });
   // The service line's relays: a 7 s cycle each (a click and a blink, heard only nearby). The rig's pump relay runs
   // while the tank refills: the supply is kept now, by someone.
   const refilling = d.run === 0 && d.tank < 1 && d.refillAt !== null;
@@ -6292,11 +6328,25 @@ function placeGown14a(g, o, dt, A) {
   if (!o) return;
   o.quaternion.copy(o.userData.rest.q);
   if (g.state === 'chair') { o.position.copy(o.userData.rest.p); return; }
-  if (g.state === 'hem') { o.position.set(ATT3.hemX, hem14a(A.w1), ATT3.hemZ); return; }
+  if (g.state === 'hook') { o.position.set(ATT3.hookX, hook14a(A.w1), ATT3.hookZ); return; }
+  if (g.state === 'chair' || g.state === 'hem') { o.position.copy(o.userData.rest.p); return; }
   if (g.state === 'wallpeg') { o.position.copy(ATT3.wallPeg); return; }
   placeItem(g, o, dt);
   if (g.state === 'floor' && !g.drop) { o.position.y = g.base + 0.06; o.rotation.set(0, 0, -Math.PI / 2); }    // laid down along the lane
 }
+// The laundry bag: in its basket, on the cord's hook (it hangs from its loop), carried, or slumped on the floor.
+function placeBag14a(b, o, dt, A) {
+  if (!o) return;
+  o.quaternion.copy(o.userData.rest.q);
+  if (b.state === 'basket') { o.position.copy(o.userData.rest.p); return; }
+  if (b.state === 'hook') { o.position.set(ATT3.hookX, hook14a(A.w1), ATT3.hookZ); return; }
+  placeItem(b, o, dt);
+  if (b.state === 'floor' && !b.drop) o.position.y = b.base + 0.45;
+}
+// The school's hints wait for a stall: a failed attempt, then a while without progress (the research guide, 3).
+function failAtt(scene) { if (game.att) { game.att.failAt = game.clock; game.att.failScene = scene; } }
+function progressAtt() { if (game.att) game.att.progAt = game.clock; }
+const stalled = (scene) => !!game.att && game.att.failScene === scene && (game.att.failAt ?? -1) > (game.att.progAt ?? -1) && game.clock - game.att.failAt > 20;
 // The stairs he walks: DL-14b's up to the sick bay, DL-16a's down to the workshop.
 function onRamp(x) { return game.region === 6 && ((x >= ATT3.stair.x0 - 0.2 && x < ATT3.stair.x1 + 0.1) || (x >= ATT3.stair16a.x0 - 0.1 && x < ATT3.stair16a.x1 + 0.2)); }
 // The escort trolley (DL-14b). It patrols its rail and looks ahead with its lamp. Whatever pupil-sized thing it finds in
@@ -6334,7 +6384,7 @@ function updateTrolley14b(dt) {
       const to = ATT3.keepX;
       fig.x = Math.max(to, fig.x - ATT3.escortSpeed * dt); B.tx = fig.x + 0.65;
       if (Math.random() < dt * 3) Sound.squeak?.();
-      if (fig.x <= to + 1e-3) { fig.kept = true; B.mode = 'stop'; B.mt = 0; B.stopFor = ATT3.keepStop; Sound.bell?.(); Telemetry.event('figKept14b', {}); }
+      if (fig.x <= to + 1e-3) { fig.kept = true; progressAtt(); B.mode = 'stop'; B.mt = 0; B.stopFor = ATT3.keepStop; Sound.bell?.(); Telemetry.event('figKept14b', {}); }
     }
     return;
   } else if (B.mode === 'escortHim') return;
@@ -6343,7 +6393,7 @@ function updateTrolley14b(dt) {
   const him = seenHim(), it = seenFig();
   const dHim = Math.abs(game.x - B.tx), dFig = Math.abs(fig.x - B.tx);
   if (him && (!it || dHim < dFig)) {
-    B.mode = 'escortHim'; B.mt = 0; Sound.bell?.(); setTimeout(() => Sound.bell?.(), 260); Telemetry.event('caught14b', {});
+    B.mode = 'escortHim'; B.mt = 0; Sound.bell?.(); setTimeout(() => Sound.bell?.(), 260); Telemetry.event('caught14b', {}); failAtt('14b');
     if (game.hold === 'push') { game.hold = null; game.pushKey = null; }
     if (game.hold === 'item' && game.carry) { const c = game.carry; c.state = 'floor'; c.x = game.x; c.base = game.y; c.blend = 0; game.carry = null; game.hold = null; }
     game.act = { kind: 'att', what: 'escorted', att3: true, phase: 'act', t: 0 }; game.vx = 0;
@@ -6384,6 +6434,9 @@ function placeTrolley14b(k) {
 }
 // Where each of the expansion's things glints: on the thing itself, wherever it is in depth.
 const ANCHOR3 = {
+  bagBasket: () => V3(ATT3.bagX, 0.5, -0.2), hangHook: () => V3(ATT3.hookX, hook14a(game.att.f14a.w1), ATT3.hookZ),
+  reachHook: () => V3(ATT3.hookX, hook14a(game.att.f14a.w1), ATT3.hookZ), takeHook: () => V3(ATT3.hookX, hook14a(game.att.f14a.w1) - 0.2, ATT3.hookZ),
+  call16a: () => V3(312.42, 0.55, 0.2),
   pawl14a: () => V3(ATT3.pawlX, 0.62, -1.3), crank14a: () => V3(ATT3.crankX, 0.5, -0.32), gownChair: () => ATT3.chairHook.clone().setY(0.72),
   hangHem: () => V3(ATT3.hemX, hem14a(game.att.f14a.w1), ATT3.hemZ), reachHem: () => V3(ATT3.hemX, hem14a(game.att.f14a.w1), ATT3.hemZ),
   takeHem: () => V3(ATT3.hemX, ATT3.hemDown - 0.25, ATT3.hemZ), hangWall: () => ATT3.wallPeg.clone(), takeWall: () => ATT3.wallPeg.clone().setY(0.55),
@@ -7440,6 +7493,12 @@ function updateSparks(dt) {
 }
 
 const HINTS = [
+  // Chapter 1 (the research guide): only after a failed attempt and a while without progress, and at a thing.
+  { region: 6, when: () => stalled('14a') && game.x > 248 && game.x < 263 && !game.att.f14a.open && game.att.f14a.bag.state !== 'hook', at: () => (game.att.f14a.bag.state === 'basket' ? new THREE.Vector3(ATT3.bagX, 0.45, -0.2) : new THREE.Vector3(ATT3.hookX, hook14a(game.att.f14a.w1), ATT3.hookZ)), key: 'use' },
+  { region: 6, when: () => stalled('14a') && game.x > 248 && game.x < 263 && !game.att.f14a.open && game.att.f14a.bag.state === 'hook' && sun14a(game.att.f14a.t) > 0.05, at: new THREE.Vector3(ATT3.pawlX, 0.62, -1.3), key: 'use' },
+  { region: 6, when: () => stalled('14b') && game.x > 263 && game.x < 271 && game.att.f14b.fig.state === 'bay', at: new THREE.Vector3(ATT3.bayX, 0.75, ATT3.bayZ), key: 'use' },
+  { region: 6, when: () => game.x > 310.2 && game.x < 313.8 && game.y < 0.1 && game.att.f16a.mode === 'top' && game.clock - (game.att.kitchenAt ?? game.clock) > 15, at: new THREE.Vector3(312.42, 0.55, 0.2), key: 'use' },
+  { region: 6, when: () => stalled('17') && game.x > 333 && !game.att.f17.latched, at: new THREE.Vector3(337.8, 0.75, -0.3), key: 'move' },
   // DL-05
   { region: 5, when: () => !game.dl5.revealed && game.hold !== 'desk' && game.x > INNER5_X && game.x < game.desk5.x, at: () => new THREE.Vector3(game.desk5.x - 0.585, 0.62, DESK5.z), key: 'use' },
   { region: 5, when: () => game.hold === 'desk' && game.desk5.x > DESK5.clear, at: new THREE.Vector3(OFF5 + 112.5, 0.05, 0), key: 'move' },

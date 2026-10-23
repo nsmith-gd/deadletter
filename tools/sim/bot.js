@@ -582,16 +582,11 @@ window.__startBot = function (seed, opts = {}) {
     yield* walk(1, () => G.x > 258.3 && G.y < 0.05, 'over the bunks to the crank', { max: 60 });
     yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank'); yield* until(() => free() && A().w1 > 0.98, 10, 'W1 down'); note('W1 down, W2 up');
     if (mistakes) { yield* wait(think(4)); yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank again'); yield* until(() => free() && A().w2 > 0.98, 10, 'swap'); note('they just swap'); yield* wait(think(6)); yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank back'); yield* until(() => free() && A().w1 > 0.98, 10, 'W1 down again'); }
-    yield* useAt(['att:gownChair'], 260.6, actIs('att'), 'the gown'); yield* until(() => G.hold === 'item' && free(), 10, 'carry gown'); note('has the gown');
-    if (mistakes && chance(0.55)) {
-      yield* walk(-1, () => D.near() === 'att:hangWall', 'to the gown pegs', { max: 60 });
-      yield* useAt(['att:hangWall'], 251.5, actIs('att'), 'hang on a peg'); yield* settle(); note('hung on the wall pegs: nothing'); yield* wait(think(6));
-      yield* useAt(['att:takeWall'], 251.5, actIs('att'), 'take it back'); yield* until(() => G.hold === 'item' && free(), 10, 'carry gown again');
-    }
-    yield* walk(Math.sign(256.2 - G.x) || 1, () => D.near() === 'att:hangHem', 'up onto the bunks under W1', { max: 60 });
-    yield* until(() => !G.mantle && G.grounded, 5, 'on the bunks');
-    yield* useAt(['att:hangHem'], 256.2, actIs('att'), 'the gown on the hem', { hop: false }); yield* until(() => A().gown.state === 'hem', 10, 'hung'); yield* settle(); note('the gown holds W1 down');
-    yield* walk(1, () => G.x > 258.3 && G.y < 0.05, 'down to the crank', { max: 40 });
+    // (Redesign: W1's cord hook by the crank. The light gown on it rides up with W1; the laundry bag holds it down.)
+    if (mistakes && chance(0.5)) { yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank once more'); yield* until(() => free() && A().w1 < 0.02, 10, 'W1 up again'); note('the gown rides up with W1'); yield* wait(think(6)); yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank back'); yield* until(() => free() && A().w1 > 0.98, 10, 'W1 down'); }
+    yield* useAt(['att:bagBasket'], 260.3, actIs('att'), 'the laundry bag'); yield* until(() => G.hold === 'item' && free(), 10, 'carry bag'); note('has the laundry bag');
+    yield* walk(-1, () => D.near() === 'att:hangHook', 'to the hook', { max: 30, hop: false });
+    yield* useAt(['att:hangHook'], 259.4, actIs('att'), 'the bag on the hook', { hop: false }); yield* until(() => A().bag.state === 'hook' && free(), 12, 'hung'); note('the bag holds W1 down');
     yield* useAt(['att:crank14a'], 258.7, actIs('att'), 'crank with W1 held'); yield* until(() => free() && A().w2 > 0.98, 10, 'W2 down');
     yield* until(() => A().open, 10, 'dark'); note('dark: the door opens');
     yield* walk(1, () => G.x > 263.6, 'into the corridor', { max: 30 });
@@ -672,21 +667,10 @@ window.__startBot = function (seed, opts = {}) {
       yield* useAt(['att:bell16a'], 313.05, actIs('att'), label, { hop: false });
       yield* until(() => !G.act && (Fa().mode === 'bottom' || Fa().mode === 'top'), 15, label + ' over');
     };
-    const tin = function* (key, x) {
-      yield* useAt(['liftItem:' + key], x, () => G.hold === 'item' || actIs('liftItem')(), 'a tin', { max: 40 });
-      yield* until(() => G.hold === 'item' && free(), 10, 'carry tin'); yield* load('a tin');
-    };
     yield* wait(look(4));
     if (mistakes) { yield* goTo(313.55, 'to the gate', { max: 30 }); yield* wait(think(5)); note('the gate: pupils not permitted'); }
-    if (mistakes && chance(0.6)) { yield* goTo(312.4, 'back to the car', { max: 30 }); yield* ride('ring with nothing in it'); note('too light: up, the catch, down again'); yield* wait(think(6)); yield* goTo(312.2, 'out of the car', { max: 20 }); }
-    yield* tin('tin1', 311.2);
-    if (mistakes && chance(0.4)) {
-      yield* goTo(312.0, 'back for the other tin', { max: 30 }); yield* tin('tin2', 311.45);
-      yield* walk(1, () => D.near() === 'att:unload16a', 'into the car', { max: 20, hop: false }); note('the gauge reads OVER');
-      yield* wait(think(4)); yield* useAt(['att:unload16a'], 313.05, actIs('att'), 'take a tin out', { hop: false }); yield* until(() => G.hold === 'item' && free(), 10, 'tin out');
-      yield* goTo(312.0, 'out with it', { max: 20 }); yield* useAt(['setdownItem'], G.x, () => G.hold !== 'item' || actIs('setdownItem')(), 'set it down'); yield* settle();
-    }
-    yield* ride('ring, loaded to the line');
+    yield* useAt(['att:call16a'], 312.42, actIs('att'), 'the call push', { max: 30 }); yield* until(() => Fa().mode === 'bottom' && free(), 15, 'the car comes down'); note('called the car down');
+    yield* ride('ring, in the car');
     if (Fa().mode !== 'top') throw new Error('the car did not go up');
     note('up in the dumbwaiter');
     yield* walk(1, () => G.x > 323.8 && G.y < 0.05, 'along the passage and down the stair', { max: 60 });
