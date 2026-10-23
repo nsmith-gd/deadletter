@@ -1962,5 +1962,6 @@ S(0xffc890, 3.0, 5, [260.1, 2.6, -1.3], [260.1, 0.6, 0.4], 0.7)   W2's warm ligh
 P(0x8094c0, 0.4, 5, 253.5, 2.8, -4.2)        the back ward, dim and cool
 P(0xffd8b0, 0.6, 3.0, 261.8, 2.8, -0.3)      the eye and the door
 
-TRIANGLES: ~40k in 37 objects (Att14aSet ~22k; ward beds 16 x 780, linked); about 60 material slots.
+TRIANGLES: ~45k in 37 objects (Att14aSet 23.3k; the cape 3.1k; ward beds 16 x 888, linked duplicates of one mesh);
+63 material slots.
 """

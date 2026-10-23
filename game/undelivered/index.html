@@ -5880,8 +5880,8 @@ const ATT3 = {
   // DL-14a: the dormitory. Bunks are solid blocks; the lockers are the steps up to them.
   bunk1: { x0: 248.3, x1: 250.3, h: 1.15 }, locker1: { x0: 250.3, x1: 250.8, h: 0.55 },
   locker2: { x0: 254.3, x1: 254.8, h: 0.55 }, bunk2: { x0: 254.8, x1: 257.6, h: 1.15 }, locker3: { x0: 257.6, x1: 258.1, h: 0.55 },
-  pawlX: 252.3, crankX: 258.7, hemX: 256.2, hemZ: -1.0, roller: 3.25, hemDown: 1.93, w2Down: 1.95,
-  wallPeg: new THREE.Vector3(251.5, 0.8, -1.38), chairX: 260.6, chairHook: new THREE.Vector3(260.6, 0.95, -0.4),
+  pawlX: 252.3, crankX: 258.7, hemX: 256.2, hemZ: -1.0, roller: 3.21, hemDown: 1.93, w2Down: 1.95,   // (the hem travels 1.28)
+  wallPeg: new THREE.Vector3(251.5, 0.8, -1.345), chairX: 261.0, chairHook: new THREE.Vector3(261.0, 0.95, -0.4),   // the cape hangs on the chair's brass arm
   door: { x0: 262.85, x1: 263.0 }, eyeX: 261.9,
   cycle: { period: 10, dark: [4.5, 8.0] },
   // DL-14b: the night corridor and the escort trolley.
@@ -6241,7 +6241,7 @@ function updateAtt3(dt) {
   const blink = game.calm ? 1 : Math.sin(game.clock * 7) > 0 ? 1 : 0.2;
   [k.eyeSun, k.eyeW1, k.eyeW2].forEach((m, i) => { if (m) m.emissiveIntensity = leak[i] ? 4.5 * (A.open ? 0.4 : blink) : 0.04; });
   if (k.eyeDark) k.eyeDark.emissiveIntensity = dark || A.open ? 5 : 0.05;
-  if (k.Att14aDoor) { R(k.Att14aDoor); k.Att14aDoor.rotateY(-Math.PI / 2 * smooth(A.door)); }
+  if (k.Att14aDoor) { R(k.Att14aDoor); k.Att14aDoor.rotateY(Math.PI / 2 * smooth(A.door));     // into the corridor (dl14a.py REPORT) }
   placeGown14a(g, k.Att14aGown, dt, A);
   placeTrolley14b(k);
   // DL-16a.
