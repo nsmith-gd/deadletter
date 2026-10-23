@@ -28,10 +28,13 @@ What the game moves (origin = pivot, world coordinates; numbers in REPORT at the
                    about +z, away from the room, toward the stair.
 The expansion (docs/chapter1_expansion_build.md, DL-17 changes): Lisle's apprentice test rig between the sink and the
 stair door (build_rig), and its moving parts:
-    Att17Valve     the valve's wheel and spindle, on the tank's down-pipe; origin the wheel's centre; spins about y.
-    Att17ValveKey  the T-key on the valve's spindle (hidden until he has it); a child of Att17Valve.
-    Att17Key       the T-key in the drawer, on the papers; a child of Att17Drawer (it slides out with it).
+    Att17Valve     the valve's wheel, spindle and fixed T-handle, on the tank's down-pipe; origin the wheel's centre;
+                   spins about y. (Att17ValveKey and Att17Key are gone: the playtest cut the key errand.)
     Att17SluiceA/B/C  the levers, built OPEN (handle up); origin the pivot; +80 deg about x shuts (the grip comes forward).
+                   Each grip has an enamel band: A red, B blue, C yellow.
+    Att17PipeFlowA/B/C  the water seen in each pipe's glass section (pale, Att17FlowWater); origin the section's centre;
+                   shown only while water runs through that pipe.
+    Att17DrawingWall her rig drawing, big, pinned over the rig (own image material); origin the sheet's centre.
     Att17TankWater the water in the tank's sight glass, full; origin the glass's bottom; scales in z.
     Att17Water1/2/3  each bed's water, full (0.13); origin the middle of the tray's floor; scales in z.
     Att17Stream1/2/3 the water falling from the spout over each bed; origin the spout's mouth.
@@ -111,14 +114,15 @@ DOOR_LAMP = (295.25, 1.20, 2.25)
 BROOM = (295.52, 1.12)                          # the broom's head, in the corner by the stair door (it leant by the sink)
 
 # Lisle's apprentice test rig (docs/chapter1_expansion_build.md, DL-17 changes), between the sink and the stair door.
-# The tank on the wall feeds a down-pipe; the valve on it (turned with his T-key) lets the tank through to a manifold
-# under the bench; three sluices A, B, C on the bench front open three brass pipes that rise behind the bench and cross:
-# A feeds bed 3, B bed 1, C bed 2. A float in bed 1 hangs on a chain that runs up to a pulley, along under the ceiling
-# and down to the latch on the stair door.
+# The tank on the wall feeds a down-pipe; the valve on it (its T-handle fixed on) lets the tank through to a manifold
+# under the bench; three sluices A, B, C on the bench front open three brass pipes that rise IN FRONT of the bench and
+# cross in front of the beds (the director's playtest; docs/research/puzzle_design_2d.md 3, 5): A feeds bed 3, B bed 1,
+# C bed 2, each with a glass section and an enamel band matching its lever's. A float in bed 1 hangs on a chain that runs
+# up to a pulley over the bench, along the wall at 2.38 and down to the latch on the stair door, all in one frame.
 VALVE = (292.55, 0.50, 0.70)                    # Att17Valve: the wheel's centre (the wheel faces the camera, -y)
 VALVE_R = 0.085                                 # the wheel's radius
 DOWN_Y = 0.60                                   # the down-pipe's axis y (the valve's body on it; its spindle comes forward)
-SPINDLE_TIP = 0.47                              # the spindle's square end (y): Att17ValveKey's socket goes on it here
+SPINDLE_TIP = 0.47                              # the spindle's square end (y): the T-handle's socket is fixed on it
 TANK = (293.0, 294.2, 0.76, 1.24, 1.7, 2.3)     # x0, x1, y0, y1, z0, z1: on two wall brackets, centre y 1.0
 SIGHT = (293.95, 0.735, 1.78, 2.22)             # the sight glass on the tank's front: x, axis y, z0 (its bottom), z1
 RIG = (293.05, 295.3, 0.35, 0.95, 0.55)         # the test bench: x0, x1, y0, y1, top
@@ -135,25 +139,30 @@ SLUICE_PIVOT = (0.33, 0.45)                     # the levers' pivots: y (on the 
 LEVER_L = 0.15                                  # pivot to the top of the grip
 MANIFOLD = (0.60, 0.30)                         # the feed under the bench: y, z (from the down-pipe to the last cock)
 COCK_Z = 0.42                                   # the sluices' cocks on the manifold, behind the front panel
-RISE_Y = {'A': 1.02, 'C': 1.10, 'B': 1.18}      # the pipes' depth behind the bench (A in front, B at the back)
-RUN_Z = {'A': 0.95, 'C': 1.10, 'B': 1.25}       # the height each runs across at
+PIPE_Y = {'A': 0.25, 'C': 0.275, 'B': 0.30}    # the pipes' plane IN FRONT of the bench (A nearest the camera, B behind)
+RUN_Z = {'A': 0.95, 'C': 1.05, 'B': 1.15}       # the height each runs across at (in front of the beds: they cross here)
+RISER_DX = 0.07                                 # each pipe rises just right of its lever
+FLOW_Z = (0.70, 0.80)                           # the glass section in each riser (Att17PipeFlowA/B/C, centre 0.75)
+FLOW_R = 0.021                                  # the glass's radius (the pipe's is 0.013)
+BAND = {'A': 'sw_enred', 'B': 'sw_enblue', 'C': 'sw_enyellow'}   # the enamel band on each lever's grip and its pipe
 SPOUT_X = (293.25, 293.95, 294.98)              # each bed's spout (beds 1, 2, 3)
 MOUTH = (0.66, 0.86)                            # the spouts' mouths: y, z (Att17Stream1/2/3's origins)
 PIPE_R = 0.013                                  # the three sluice pipes, all the same brass
-BACKBOARD = (293.0, 295.35, 1.255, 1.27, 0.56, 1.40)   # a painted board behind the pipes: x0, x1, y0, y1, z0, z1
 FLOAT = (293.60, 0.64, WATER_Z + SOIL_T)        # Att17Float: its bottom, low (on bed 1's soil)
 FLOAT_R = 0.045
 FLOAT_RISE = 0.12
 CHAIN_Y = 0.64                                  # the chain's plane, from the float to the end wall
-PULLEY1 = (293.64, CHAIN_Y, 2.76, 0.04)         # x, y, z, r: hung from the beam at 293.6 (axle along y)
-PULLEY2 = (295.705, CHAIN_Y, 2.76, 0.04)        # on a bracket off the end wall (axle along y)
+PULLEY1 = (293.64, CHAIN_Y, 2.34, 0.04)         # x, y, z, r: over the bench, hung from the beam at 293.6 (axle along y)
+PULLEY2 = (295.705, CHAIN_Y, 2.34, 0.04)        # on a bracket off the end wall (axle along y); the run between at 2.38
 PULLEY3 = (295.745, 0.62, 2.15, 0.02)           # beside the door's architrave (axle along x): the chain turns toward -y
 PULLEY4 = (295.925, -0.45, 2.11, 0.02)          # under the door's head, over the latch's eye (axle along x)
 LATCH = (295.82, -0.47, 1.90)                   # Att17Latch's pivot: on a bracket on the free jamb, at the wall's face;
 LATCH_L = 0.127                                 # the bar runs +x from it across the reveal, its nib dropping into a
 LATCH_EYE = 295.925                             # keeper on the leaf. The chain's eye on the bar (x).
 LATCH_UP = 70.0                                 # degrees, lifted: about Blender -y (game +z), the bar's end rising
-KEY_AT = (285.60, 1.04, CONTENT_Z + 0.0025 + 0.012, 0.5)   # Att17Key in the drawer, shut: its socket's centre, its turn
+DRAWING_WALL = (294.70, 295.60, 1.16, 1.61, WALL_Y - 0.006)   # her rig drawing pinned on the wall: x0, x1, z0, z1, y
+DRAWING_WALL_PX = (1536, 768)
+PICTURE_LAMP = (295.15, 1.68)                   # its own light: a small brass picture lamp over it (x, z)
 RIGCARD = (293.10, 293.40, 1.92, 2.098)         # Lisle's card on the tank's front: x0, x1, z0, z1
 # The present-day service thread (the director's addition; the prologue's new cable, art/pass6/build_ending_secrets.py):
 # a new cable comes in through the left wall, runs along the top of the back wall to a small new pump-and-relay box by
@@ -201,11 +210,12 @@ REUSE_PLAIN = {'DirtyGlass': ((.03, .035, .035), .25, .2), 'TeaEnamel': ((.58, .
                'Cable': ((.014, .013, .012), .55, 0.0), 'Copper': ((.55, .3, .18), .35, 1.0),
                'Water': ((.01, .012, .012), .04, .3),     # the rig's water (the game's Water: dark, a little see-through)
                'NewCable': ((.016, .016, .018), .28, 0.0),   # the prologue's new cable: glossy black (and the fresh tape)
-               'NewSteel': ((.26, .27, .28), .4, .8)}        # galvanised: its clips, the new box, the new coupling
+               'NewSteel': ((.26, .27, .28), .4, .8),        # galvanised: its clips, the new box, the new coupling
+               'Att17FlowWater': ((.46, .56, .58), .08, 0.0)}  # NEW: pale running water in the pipes' glass sections
 NEW_EMIT = {'Att17GrowLamp': ((0.78, 0.84, 1.0), 3.0), 'Att17Bulb': ((1.0, 0.78, 0.5), 5.0), 'Att17StairLamp': ((1.0, 0.8, 0.55), 6.0),
             'Att17RelayLamp': ((0.35, 1.0, 0.45), 4.0)}
 REUSE_EMIT = {}
-IMAGES = {'Att17Atlas': ('dl17_atlas.png', 0.85)}
+IMAGES = {'Att17Atlas': ('dl17_atlas.png', 0.85), 'Att17DrawingWall': ('dl17_drawingwall.png', 0.92)}
 
 
 def mat(name):
@@ -286,7 +296,8 @@ SWATCH = {'sw_soil_dry': (72, 56, 42), 'sw_soil_dark': (30, 23, 17), 'sw_straw':
           'sw_steel': (140, 142, 140), 'sw_grille': (52, 44, 34), 'sw_tagwhite': (226, 222, 208), 'sw_lolly': (196, 168, 120),
           'sw_tray': (96, 68, 42), 'sw_green': (52, 78, 58), 'sw_seam': (22, 15, 9), 'sw_rubber': (20, 20, 19),
           'sw_cream': (200, 190, 160), 'sw_blue': (60, 80, 120), 'sw_tin': (110, 112, 104), 'sw_label': (200, 186, 150),
-          'sw_crust': (112, 92, 70), 'sw_shrivel': (96, 72, 44), 'sw_beandead': (64, 44, 32)}
+          'sw_crust': (112, 92, 70), 'sw_shrivel': (96, 72, 44), 'sw_beandead': (64, 44, 32),
+          'sw_enred': (150, 50, 40), 'sw_enblue': (48, 78, 128), 'sw_enyellow': (196, 156, 50)}   # faded enamel bands
 for _i, _k in enumerate(SWATCH):
     _x, _y = 1152 + (_i % 14) * 64, 1488 + (_i // 14) * 64
     CELLS[_k] = (_x, _y, _x + 64, _y + 64)
@@ -818,12 +829,11 @@ def make_drawing():
     # 5. Beside her working for the rig, the volunteer again, in red pencil this time: a margin note.
     rd = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
     RD = RED + (235,)
-    for (x, y), t_, size in (((476, 714), 'Good eye.', 28), ((476, 750), 'Most of them never', 24),
-                             ((476, 778), 'look behind the', 24), ((476, 806), 'bench.', 24), ((560, 838), '- E.L.', 22)):
+    for (x, y), t_, size in (((476, 730), 'Good eye.', 28), ((540, 766), '- E.L.', 22)):
         _hand(rd, (x * K, y * K), t_, _font(size * K, 'ink'), RD, rnd, jit=0.7 * K, rot=3.0)
     dr = ImageDraw.Draw(rd)
     dr.line(k(_wob([(468, 722), (432, 736), (396, 752)], rnd, 0.6, 7.0)), fill=RD, width=int(2.6 * K), joint='curve')
-    for s_ in (1, -1):                                          # his arrow, to her pipes behind the bench
+    for s_ in (1, -1):                                          # his arrow, to her pipes
         dr.line(k([(396, 752), (396 + 10 + s_ * 2, 752 - 2 + s_ * 6)]), fill=RD, width=int(2.4 * K))
     rd = _grain(rd.filter(ImageFilter.GaussianBlur(0.55 * K)), 1706, lo=0.55)
 
@@ -832,37 +842,40 @@ def make_drawing():
     return paper.convert('RGB').resize((W, H), Image.LANCZOS)
 
 
-def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET):
-    """Her working for Lisle's test rig, along the bottom of her irrigation sheet (the expansion): the rig drawn from
-    the front, as it stands, to scale: the bench, the three beds with their names, the levers A B C under them, and the
-    three pipes traced from each lever up behind the bench to the bed it really feeds, each broken where it passes
-    behind another, gone over twice; an arrow down from each spout. It depicts the rig; it doesn't spell out the
-    answer (no notes: the crossing is only drawn)."""
+def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET, org=(50, 834), sc=165.0, title=True):
+    """Her working for Lisle's test rig, along the bottom of her irrigation sheet (the expansion), and (org, sc: where
+    and how big) the copy pinned over the rig: the rig drawn from the front, as it stands, to scale: the bench, the
+    three beds with their names, the levers A B C under them, and the three pipes traced from beside each lever up in
+    front of the bench and across to the bed it really feeds, each broken where it passes behind another, gone over
+    twice; an arrow down from each spout. It depicts the rig; it doesn't spell out the answer (no notes: the crossing
+    is only drawn)."""
     XF[:] = SHEET
-    X = lambda x: 50 + (x - RIG[0]) * 165
-    Z = lambda z: 834 - (z - RIG[4]) * 165
+    f = sc / 165.0                                                    # her px sizes below are for the sheet's scale
+    X = lambda x: org[0] + (x - RIG[0]) * sc
+    Z = lambda z: org[1] - (z - RIG[4]) * sc
     top = Z(RIG[4])
     # The bench and its legs; the beds on it, their names.
-    ruled((X(RIG[0]), top), (X(RIG[1]), top), 2.4, 5)
-    ruled((X(RIG[0]), top + 5), (X(RIG[1]), top + 5), 1.6, 3)
+    ruled((X(RIG[0]), top), (X(RIG[1]), top), 2.4, 5 * f)
+    ruled((X(RIG[0]), top + 5 * f), (X(RIG[1]), top + 5 * f), 1.6, 3 * f)
     for x in (RIG[0] + 0.03, RIG[1] - 0.03):
-        pen([(X(x), top + 5), (X(x), 866)], 1.8, amp=0.4)
+        pen([(X(x), top + 5 * f), (X(x), top + 32 * f)], 1.8, amp=0.4)
     for i, (b0, b1) in enumerate(BEDS):
         for a, b in (((X(b0), Z(BED_TOP)), (X(b1), Z(BED_TOP))), ((X(b0), Z(BED_TOP)), (X(b0), top)),
                      ((X(b1), Z(BED_TOP)), (X(b1), top))):
-            ruled(a, b, 2.0, 2)
-        lbl(((X(b0) + X(b1)) / 2, (Z(BED_TOP) + top) / 2 + 1), '%d  %s' % (i + 1, BED_NAMES[i].replace(' ', '')), 14, 'm')
-    lv = Z(SLUICE_PIVOT[1]) + 3
+            ruled(a, b, 2.0, 2 * f)
+        lbl(((X(b0) + X(b1)) / 2, (Z(BED_TOP) + top) / 2 + 1 * f), '%d  %s' % (i + 1, BED_NAMES[i].replace(' ', '')), 14 * f, 'm')
+    lv = Z(SLUICE_PIVOT[1]) + 3 * f
     for name, x, bed in SLUICES:
-        circ((X(x), lv), 11, 1.8)
-        lbl((X(x), lv + 1), name, 15, 'm')
-    # The pipes: up behind the bench (riser; hidden by the beds below their rims), across (run), forward and down over
-    # the bed (drop: in front of them all).
+        circ((X(x), lv), 11 * f, 1.8)
+        lbl((X(x), lv + 1 * f), name, 15 * f, 'm')
+    # The pipes: up in front of the bench beside each lever (riser), across (run: they cross here), back over the bed
+    # and down (drop, behind them all).
     paths, depth = {}, {}
     for name, x, bed in SLUICES:
         sx = SPOUT_X[bed - 1]
-        paths[name] = [(X(x), Z(BED_TOP) - 1), (X(x), Z(RUN_Z[name])), (X(sx), Z(RUN_Z[name])), (X(sx), Z(MOUTH[1]))]
-        depth[name] = (RISE_Y[name], RISE_Y[name], MOUTH[0])
+        rx = X(x + RISER_DX)
+        paths[name] = [(rx, lv - 2 * f), (rx, Z(RUN_Z[name])), (X(sx), Z(RUN_Z[name])), (X(sx), Z(MOUTH[1]))]
+        depth[name] = (PIPE_Y[name], PIPE_Y[name], MOUTH[0])
 
     def cross(a, b, c, d):
         """Where segment ab crosses cd (both axis-aligned): the parameter along ab, or None."""
@@ -885,7 +898,7 @@ def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET):
                     t = cross(a, b, c, d_)
                     if t is not None and depth[m_][j] < depth[n_][i]:     # the other one is in front: a break in this
                         cuts.append(t)
-            g = 8.0 / L_
+            g = 8.0 * f / L_
             pieces, t0 = [], 0.0
             for t in sorted(cuts):
                 pieces.append((t0, t - g))
@@ -898,13 +911,70 @@ def rig_working(pen, ruled, arrow, circ, lbl, XF, SHEET):
                 pb = (a[0] + (b[0] - a[0]) * p1, a[1] + (b[1] - a[1]) * p1)
                 for k_ in range(2):                                       # traced: gone over
                     if i == 2 and p1 == 1.0 and k_ == 0:
-                        arrow(pa, (pb[0], pb[1] + 6), 8, w=2.4)
+                        arrow(pa, (pb[0], pb[1] + 6 * f), 8 * f, w=2.4)
                     else:
                         pen([pa, pb], 2.4 if k_ == 0 else 1.6, amp=0.6)
         mx, my = pts[-1]
         for dz in (16, 24):                                           # drops, falling
-            pen([(mx, my + dz), (mx, my + dz + 4)], 1.6, amp=0.2)
-    lbl((246, 704), 'TEST RIG (FROM THE FRONT)', 14)
+            pen([(mx, my + dz * f), (mx, my + (dz + 4) * f)], 1.6, amp=0.2)
+    if title:
+        lbl((246, 704), 'TEST RIG (FROM THE FRONT)', 14)
+
+
+def make_rig_wall(path):
+    """Att17DrawingWall's picture: her rig drawing again, big, on its own sheet (pinned over the rig): the bench, the
+    beds with their names, the levers A B C, the pipes crossing. No title, no notes, no instructions. Her pencil only,
+    the lines heavier than on the small sheet so they read across the room. 1536 x 768 for 0.9 x 0.45 m."""
+    from PIL import Image, ImageDraw, ImageFilter
+    K = 2
+    W, H = DRAWING_WALL_PX
+    rnd = random.Random(1709)
+    paper = _paper(W * K, H * K, (226, 218, 196), 1710, amp=0.08, edge=0.14, edge_px=70)
+    XF = [1.0, 0.0, 0.0]
+    LWK = 4.6                                                  # her pencil, pressed hard and gone over (px per unit)
+
+    def k(pts):
+        return [(x * K, y * K) for x, y in pts]
+    rl = Image.new('RGBA', (W * K, H * K), (0, 0, 0, 0))
+    d = ImageDraw.Draw(rl)
+    INK = GRAPHITE + (225,)
+
+    def pen(pts, w=2.2, amp=0.9, over=0.0, fill=INK, step=8.0):
+        d.line(k(_wob(pts, rnd, amp * 2.5, step * 3.0, over)), fill=fill, width=max(1, int(round(w * LWK * K))), joint='curve')
+
+    def ruled(a, b, w=2.2, over=5.0):
+        pen([a, b], w, amp=0.35, over=over + rnd.uniform(-2, 3), step=20)
+
+    def arrow(a, b, size=9, fill=INK, w=2.2, amp=0.5):
+        ax, ay = a
+        bx, by = b
+        L = math.hypot(bx - ax, by - ay) or 1
+        ux, uy = (bx - ax) / L, (by - ay) / L
+        pen([a, b], w, amp=amp, fill=fill)
+        for s_ in (1, -1):
+            pen([(bx, by), (bx - ux * size + s_ * uy * size * 0.5, by - uy * size - s_ * ux * size * 0.5)], w, amp=0.2, fill=fill)
+
+    def circ(c, r, w=2.2, fill=INK, wob=0.8):
+        a0 = rnd.uniform(0, 6.3)
+        n = max(16, int(r * 0.9))
+        pts = [(c[0] + (r + 2.5 * wob * math.sin(i * 0.7 + a0)) * math.cos(a0 + 2 * math.pi * i / n * 1.06),
+                c[1] + (r + 2.5 * wob * math.sin(i * 0.7 + a0)) * math.sin(a0 + 2 * math.pi * i / n * 1.06)) for i in range(n + 1)]
+        d.line(k(pts), fill=fill, width=max(1, int(round(w * LWK * K))), joint='curve')
+    lab = []
+
+    def lbl(xy, text, size, anc='l', kind='letter'):
+        lab.append((xy, text, size, anc))
+    sc = (W - 150) / (RIG[1] - RIG[0])
+    org = (75, H / 2 + 0.21 * sc)                              # her rig, centred on the sheet
+    rig_working(pen, ruled, arrow, circ, lbl, XF, [1.0, 0.0, 0.0], org=org, sc=sc, title=False)
+    for (x, y), t_, size, anc in lab:
+        _hand(rl, (x * K, y * K), t_, _font(int(size * 1.15) * K, 'letter-bold'), INK, rnd, jit=1.6 * K, rot=4.0, anchor=anc, track=1.07)
+    rl = _grain(rl.filter(ImageFilter.GaussianBlur(0.9 * K)), 1711, lo=0.7)
+    paper.alpha_composite(rl)
+    img = paper.convert('RGB').resize((W, H), Image.LANCZOS)
+    for cx_, cy_ in ((14, 14), (W - 15, 14), (14, H - 15), (W - 15, H - 15)):      # pin holes' shadows (pins are mesh)
+        ImageDraw.Draw(img).ellipse((cx_ - 9, cy_ - 7, cx_ + 11, cy_ + 11), fill=(170, 160, 136))
+    img.save(path, optimize=True)
 
 
 CARD_A = (('M. D.', '14', 'WORKS DEPT., RING A', 'WATER AND IRRIGATION', 'E. LISLE', 'BY THE PUPIL',
@@ -1221,6 +1291,7 @@ def make_rig_cells(img, rnd):
 def make_textures():
     os.makedirs(TEX, exist_ok=True)
     make_atlas(os.path.join(TEX, 'dl17_atlas.png'))
+    make_rig_wall(os.path.join(TEX, 'dl17_drawingwall.png'))
 
 
 # =====================================================================================================================
@@ -2344,21 +2415,36 @@ def build_rig(B, rnd):
         pipe(B, [(x, my, mz), (x, my, COCK_Z)], mt='Copper', r=0.014)
         B.sphere('HandledBrass', (x, my, COCK_Z), 0.03, seg=10)
         B.cyl('WornIron', (x, my - 0.03, COCK_Z), (x, y0 + 0.02, COCK_Z), 0.006, seg=6)
-    # The three pipes: from each cock back under the bench top, up behind it, across, forward over a bed, down; all the
-    # same brass. A feeds bed 3, B bed 1, C bed 2: A runs in front and lowest, B behind and highest; they cross.
+    # The three pipes, IN FRONT of the bench where the levers are (the playtest: the crossing must be seen from the
+    # levers): from each cock forward through the front panel just right of its lever, up (a glass section at 0.75:
+    # Att17PipeFlowA/B/C), across at its own height in front of the beds (they cross here, plainly, A nearest the
+    # camera), back over its bed and down to the spout. A feeds bed 3, B bed 1, C bed 2. An enamel band on each pipe
+    # (over the glass and again where it arrives over its bed) matches the band on its lever's grip.
     my_, mz_ = MOUTH
+    g0, g1 = FLOW_Z
     for name, x, bed in SLUICES:
         sx = SPOUT_X[bed - 1]
-        ry, rz = RISE_Y[name], RUN_Z[name]
-        pipe(B, [(x, my + 0.03, COCK_Z), (x, ry, COCK_Z), (x, ry, rz), (sx, ry, rz), (sx, my_, rz), (sx, my_, mz_ + 0.03)])
+        py_, rz = PIPE_Y[name], RUN_Z[name]
+        rx = x + RISER_DX
+        pipe(B, [(x + 0.025, my, COCK_Z), (rx, my, COCK_Z), (rx, py_, COCK_Z), (rx, py_, g0 - 0.012)])
+        B.box('WornIron', rx - 0.028, rx + 0.028, y0 - 0.004, y0, COCK_Z - 0.028, COCK_Z + 0.028)     # its flange on the panel
+        # the glass section: brass unions either end, the glass (Window), the water in it is Att17PipeFlow<name>
+        for za, zb in ((g0 - 0.016, g0), (g1, g1 + 0.016)):
+            B.cyl('HandledBrass', (rx, py_, za), (rx, py_, zb), FLOW_R + 0.006, seg=12)
+            B.cyl('HandledBrass', (rx, py_, za - 0.006 if za < g0 else zb), (rx, py_, za if za < g0 else zb + 0.006), FLOW_R - 0.002, seg=10)
+        B.cyl('Window', (rx, py_, g0), (rx, py_, g1), FLOW_R, seg=14)
+        for s_ in (-1, 1):                                                                  # two guard rods
+            B.cyl('HandledBrass', (rx + s_ * (FLOW_R + 0.003), py_ - 0.004, g0), (rx + s_ * (FLOW_R + 0.003), py_ - 0.004, g1), 0.0022, seg=4)
+        pipe(B, [(rx, py_, g1 + 0.012), (rx, py_, rz), (sx, py_, rz), (sx, my_, rz), (sx, my_, mz_ + 0.03)])
         B.cyl('HandledBrass', (sx, my_, mz_ + 0.03), (sx, my_, mz_), PIPE_R, PIPE_R * 1.35, seg=10)          # the spout
         B.torus('HandledBrass', (sx, my_, mz_ + 0.004), (0, 0, 1), PIPE_R * 1.3, 0.003, seg=10, rseg=4)
-        for cx_, cz_ in ((x, 0.80), ((x + sx) / 2 + (0.12 if name == 'C' else 0.0), rz)):         # clips to the board
-            B.cyl('WornIron', (cx_, ry + PIPE_R, cz_), (cx_, BACKBOARD[2], cz_), 0.004, seg=5)
-            B.torus('WornIron', (cx_, ry, cz_), (0, 0, 1) if cz_ == 0.80 else (1, 0, 0), PIPE_R + 0.003, 0.0025, seg=10, rseg=3)
-    bx0, bx1, bby0, bby1, bz0, bz1 = BACKBOARD                       # the board behind them, painted cream
-    B.box('TeaEnamel', bx0, bx1, bby0, bby1, bz0, bz1)
-    B.box('PigeonWood', bx0 - 0.015, bx1 + 0.015, bby0 - 0.01, bby1, bz1, bz1 + 0.02)
+        # its enamel bands: over the glass, and on the run just before it turns back over its bed
+        bx_ = sx - 0.07 if sx > rx else sx + 0.07
+        B.scyl(BAND[name], (rx, py_, g1 + 0.05), (rx, py_, g1 + 0.09), PIPE_R + 0.0035, seg=12)
+        B.scyl(BAND[name], (bx_ - 0.02, py_, rz), (bx_ + 0.02, py_, rz), PIPE_R + 0.0035, seg=12)
+        # stays: from the riser's foot back to the panel, from the run back to the bench's back rail (out of sight)
+        B.cyl('WornIron', (rx, py_ + PIPE_R, 0.62), (rx, BED_Y[0] - 0.002, 0.62), 0.004, seg=5)
+        B.torus('WornIron', (rx, py_, 0.62), (0, 0, 1), PIPE_R + 0.003, 0.0025, seg=10, rseg=3)
     # The tank's down-pipe to the valve, the valve's body (its spindle and wheel are Att17Valve), on down under the
     # bench to the manifold. (Its refill, from the new pump: build_service.)
     tx0, tx1, ty0, ty1, tz0, tz1 = TANK
@@ -2395,9 +2481,10 @@ def build_rig(B, rnd):
     for (a, b, c, d) in ((cx0 - 0.012, cx0 + 0.004, cz0 - 0.012, cz1), (cx1 - 0.004, cx1 + 0.012, cz0 - 0.012, cz1),
                          (cx0 - 0.012, cx1 + 0.012, cz0 - 0.012, cz0 + 0.004)):
         B.box('HandledBrass', a, b, ty0 - 0.009, ty0 - 0.004, c, d)
-    # The float's chain: up from bed 1 to a pulley on the beam, along under the ceiling to a pulley on the end wall,
-    # down beside the door's architrave, across under the door's head and down to the latch's eye. (The float carries
-    # the chain's lowest 0.12, so there is no gap as it rises.)
+    # The float's chain, all of it in one side-on frame: up from bed 1 to a pulley over the bench (hung from the beam),
+    # along the wall at 2.38 (in front of the tank, over its sight glass) to a pulley on the end wall, down beside the
+    # door's architrave, across under the door's head and down to the latch's eye. (The float carries the chain's
+    # lowest 0.12, so there is no gap as it rises.)
     fx, fy, fz = FLOAT
     f_top = fz + 2 * FLOAT_R + 0.016 + FLOAT_RISE
     p1, p2, p3, p4 = PULLEY1, PULLEY2, PULLEY3, PULLEY4
@@ -2408,6 +2495,9 @@ def build_rig(B, rnd):
     chain(B, [(p3[0], p3[1], p3[2] - p3[3]), (p4[0], p4[1], p4[2] + p4[3])])
     chain(B, [(p4[0], p4[1] - p4[3], p4[2]), (LATCH_EYE, p4[1] - p4[3], eye_z)])
     pulley(B, p1[:3], (0, 1, 0), p1[3])
+    for s_ in (-1, 1):                                                                    # its hanger, up to the beam
+        B.cyl('WornIron', (p1[0], CHAIN_Y + s_ * 0.016, p1[2] + p1[3] + 0.03), (p1[0], CHAIN_Y + s_ * 0.016, CEIL - 0.16), 0.005, seg=5)
+    B.box('WornIron', p1[0] - 0.02, p1[0] + 0.02, CHAIN_Y - 0.022, CHAIN_Y + 0.022, p1[2] + p1[3] + 0.025, p1[2] + p1[3] + 0.04)
     B.box('WornIron', p1[0] - 0.03, p1[0] + 0.03, CHAIN_Y - 0.03, CHAIN_Y + 0.03, CEIL - 0.165, CEIL - 0.16)   # its plate
     pulley(B, p2[:3], (0, 1, 0), p2[3], cheeks=False)
     B.box('WornIron', p2[0] - 0.01, END_X, CHAIN_Y - 0.02, CHAIN_Y + 0.02, p2[2] - 0.006, p2[2] + 0.006)       # its arm
@@ -2423,6 +2513,18 @@ def build_rig(B, rnd):
     B.box('WornIron', lx - 0.025, lx + 0.03, DOOR17[0], DOOR17[0] + 0.006, lz - 0.05, lz + 0.05)
     B.cyl('WornIron', (lx, DOOR17[0] + 0.006, lz), (lx, ly + 0.012, lz), 0.006, seg=6)
     B.cyl('HandledBrass', (lx, ly + 0.012, lz), (lx, ly + 0.018, lz), 0.009, seg=8)
+    # Her drawing pinned on the wall over the rig (the sheet is Att17DrawingWall): four drawing pins, and a small brass
+    # picture lamp over it on an arm (its tube is in Att17Bulbs), so it has its own clear light.
+    dx0, dx1, dz0, dz1, dy = DRAWING_WALL
+    for px_, pz_ in ((dx0 + 0.012, dz1 - 0.012), (dx1 - 0.012, dz1 - 0.012), (dx0 + 0.012, dz0 + 0.012), (dx1 - 0.012, dz0 + 0.012)):
+        B.cyl('HandledBrass', (px_, dy - 0.001, pz_), (px_, dy - 0.004, pz_), 0.008, seg=10)
+        B.sphere('HandledBrass', (px_, dy - 0.005, pz_), 0.005, seg=6, scale=(1, 0.6, 1))
+    lx_, lz_ = PICTURE_LAMP
+    B.box('HandledBrass', lx_ - 0.03, lx_ + 0.03, WALL_Y - 0.008, WALL_Y, lz_ - 0.02, lz_ + 0.04)          # its wall plate
+    B.cyl('HandledBrass', (lx_, WALL_Y - 0.008, lz_ + 0.01), (lx_, WALL_Y - 0.11, lz_ + 0.03), 0.006, seg=6)  # its arm
+    B.cyl('HandledBrass', (lx_ - 0.16, WALL_Y - 0.11, lz_ + 0.03), (lx_ + 0.16, WALL_Y - 0.11, lz_ + 0.03), 0.03, seg=14)   # its hood
+    for xx in (lx_ - 0.16, lx_ + 0.16):
+        B.cyl('HandledBrass', (xx, WALL_Y - 0.11, lz_ + 0.03), (xx + (0.004 if xx > lx_ else -0.004), WALL_Y - 0.11, lz_ + 0.03), 0.033, seg=14)
 
 
 def build_service(B):
@@ -2516,7 +2618,7 @@ def build_relay_lamp(coll):
 # The rig's moving parts (own objects, origins at their pivots)
 # =====================================================================================================================
 def t_key(B):
-    """Lisle's T-key, its socket's centre at the origin, its shaft toward -y, its bar along x."""
+    """The valve's T-handle, its socket's centre at the origin, its shaft toward -y, its bar along x."""
     B.box('WornIron', -0.012, 0.012, -0.026, 0.012, -0.012, 0.012)
     B.cyl('WornIron', (0, -0.026, 0), (0, -0.056, 0), 0.0065, seg=8)
     B.sphere('HandledBrass', (0, -0.058, 0), 0.011, seg=8)
@@ -2533,8 +2635,8 @@ def set_parent(child, parent):
 
 
 def build_valve(coll):
-    """Att17Valve: the valve's wheel (spokes, rim, hub), its spindle and the spindle's square end; origin the wheel's
-    centre. It spins about Blender y (game z) while the water runs."""
+    """Att17Valve: the valve's wheel (spokes, rim, hub), its spindle and, fixed on the spindle's square end, its
+    T-handle; origin the wheel's centre. It spins about Blender y (game z) while the water runs."""
     B = MB()
     vx, vy, vz = VALVE
     r = VALVE_R
@@ -2546,31 +2648,11 @@ def build_valve(coll):
     B.cyl('WornIron', (vx, 0.53, vz), (vx, SPINDLE_TIP + 0.01, vz), 0.006, seg=6)
     B.box('WornIron', vx - 0.007, vx + 0.007, SPINDLE_TIP, SPINDLE_TIP + 0.012, vz - 0.007, vz + 0.007)
     B.sphere('Att17Atlas', (vx + r * 0.7, vy - 0.006, vz + r * 0.7), 0.01, seg=6, cell='sw_red')   # a dab of red paint
-    return B.obj('Att17Valve', coll, origin=VALVE)
-
-
-def build_valve_key(coll, valve):
-    """Att17ValveKey: the T-key on the valve's spindle (hidden until he has it); origin on the spindle's end. A child of
-    Att17Valve, so it turns with the wheel."""
-    B = MB()
-    t_key(B)
-    ob = B.obj('Att17ValveKey', coll)
-    ob.location = (VALVE[0], SPINDLE_TIP, VALVE[2])
-    set_parent(ob, valve)
-    return ob
-
-
-def build_key(coll, drawer):
-    """Att17Key: the T-key in the drawer, lying on the papers (hidden once he has read: he takes it); origin its socket's
-    centre. A child of Att17Drawer, so it slides out with it."""
-    B = MB()
+    # Its T-handle, fixed on the spindle's square end for good (no key to fetch: the playtest cut that errand).
     n0 = B.mark()
     t_key(B)
-    B.xform(n0, Matrix.Rotation(KEY_AT[3], 4, 'Z'))
-    ob = B.obj('Att17Key', coll)
-    ob.location = KEY_AT[:3]
-    set_parent(ob, drawer)
-    return ob
+    B.xform(n0, Matrix.Translation((vx, SPINDLE_TIP, vz)))
+    return B.obj('Att17Valve', coll, origin=VALVE)
 
 
 def build_sluice(coll, name, x):
@@ -2582,7 +2664,30 @@ def build_sluice(coll, name, x):
     B.box('WornIron', x - 0.008, x + 0.008, py - 0.006, py + 0.006, pz - 0.012, pz + LEVER_L - 0.05)
     B.cyl('PupilWood', (x, py, pz + LEVER_L - 0.06), (x, py, pz + LEVER_L - 0.012), 0.013, 0.015, seg=10)
     B.sphere('PupilWood', (x, py, pz + LEVER_L - 0.012), 0.016, seg=10, scale=(1, 1, 0.75))
+    B.scyl(BAND[name], (x, py, pz + LEVER_L - 0.052), (x, py, pz + LEVER_L - 0.026), 0.0165, seg=12)   # its enamel band
     return B.obj('Att17Sluice' + name, coll, origin=(x, py, pz))
+
+
+def build_pipe_flow(coll, name, x):
+    """Att17PipeFlow<name>: the water seen running in the pipe's glass section (pale, its own material); origin the
+    section's centre. The game shows it only while water runs through that pipe."""
+    B = MB()
+    rx, py_ = x + RISER_DX, PIPE_Y[name]
+    g0, g1 = FLOW_Z
+    B.cyl('Att17FlowWater', (rx, py_, g0 + 0.002), (rx, py_, g1 - 0.002), FLOW_R - 0.004, seg=12)
+    for k in range(3):                                                  # a few bubbles carried up in it
+        B.sphere('Window', (rx + (-0.006, 0.005, -0.002)[k], py_ - FLOW_R + 0.006, g0 + 0.025 + 0.025 * k), 0.0035, seg=6)
+    return B.obj('Att17PipeFlow' + name, coll, origin=(rx, py_, (g0 + g1) / 2))
+
+
+def build_drawing_wall(coll):
+    """Att17DrawingWall: her rig drawing, big, pinned on the wall over the rig (0.9 x 0.45): its own image material
+    (textures/dl17_drawingwall.png); origin the sheet's centre. Its pins, and the picture lamp over it, are in Att17Set
+    and Att17Bulbs."""
+    B = MB()
+    x0, x1, z0, z1, y = DRAWING_WALL
+    B.face('Att17DrawingWall', [(x0, y, z0), (x1, y, z0), (x1, y, z1), (x0, y, z1)], [(0, 0), (1, 0), (1, 1), (0, 1)])
+    return B.obj('Att17DrawingWall', coll, origin=((x0 + x1) / 2, y, (z0 + z1) / 2))
 
 
 def build_tank_water(coll):
@@ -2835,6 +2940,8 @@ def build_bulbs(coll):
     B.sphere('Att17Bulb', LAMP_HEAD + aim * 0.07, 0.03, seg=10)
     lx, ly, lz = DOOR_LAMP
     B.sphere('Att17Bulb', (lx, ly - 0.01, lz), 0.04, seg=10, scale=(1, 0.7, 1))
+    px_, pz_ = PICTURE_LAMP                                             # the picture lamp's tube, under its hood
+    B.cyl('Att17Bulb', (px_ - 0.145, WALL_Y - 0.11, pz_ + 0.004), (px_ + 0.145, WALL_Y - 0.11, pz_ + 0.004), 0.011, seg=8)
     return B.obj('Att17Bulbs', coll)
 
 
@@ -2882,8 +2989,10 @@ def build_set(dl01, m, coll):
     objs.append(build_stairlamp(coll))
     # The test rig's moving parts (the expansion).
     valve = build_valve(coll)
-    objs += [valve, build_valve_key(coll, valve), build_key(coll, drawer), build_latch(coll)]
+    objs += [valve, build_latch(coll)]
     objs += [build_sluice(coll, name, x) for name, x, bed in SLUICES]
+    objs += [build_pipe_flow(coll, name, x) for name, x, bed in SLUICES]
+    objs.append(build_drawing_wall(coll))
     objs.append(build_tank_water(coll))
     objs += [build_bed_water(coll, i) for i in (1, 2, 3)]
     objs += [build_stream(coll, i) for i in (1, 2, 3)]
@@ -2944,26 +3053,38 @@ THE TEST RIG (the expansion, docs/chapter1_expansion_build.md "DL-17 changes"). 
 builder adds +44 (292.55 here is 336.55 in the game). Blender (x, y, z) -> game (x, z, -y).
 - Att17Valve: origin = the wheel's centre, Blender (292.55, 0.50, 0.70) = game (292.55, 0.70, -0.50). A spoked iron
   wheel r 0.085 facing the camera (rim y 0.491-0.509), its hub and spindle back to the valve's body on the down-pipe
-  (Blender y 0.60); the spindle's square end at y 0.47-0.482. Spins about Blender y = game z (three.js rotateZ).
-- Att17ValveKey: Lisle's T-key on the spindle, built visible. A CHILD of Att17Valve (it turns with the wheel): local
-  Blender (0, -0.03, 0) = glTF local (0, 0, +0.03); world origin (292.55, 0.47, 0.70) = game (292.55, 0.70, -0.47), the
-  socket over the spindle's end. Shaft toward the camera, the bar along x: x 292.47-292.63, Blender y 0.396-0.42 (its
-  nearest point to the lane, game z -0.396), z 0.69-0.71.
-- Att17Key: the same T-key in the drawer, lying on the papers (left of her card), turned 0.5 rad. A CHILD of
-  Att17Drawer (it slides out with it): local Blender (-0.40, 0.42, 0.1065) = glTF local (-0.40, 0.1065, -0.42). World
-  origin (its socket's centre) shut (285.60, 1.04, 0.4065), open (285.60, 0.59, 0.4065) = game (285.60, 0.4065, -0.59);
-  footprint x 285.56-285.70, y 0.94-1.06 shut (0.49-0.61 open, out of the carcass), z 0.395-0.419.
+  (Blender y 0.60), and now its T-HANDLE fixed for good on the spindle's square end (the bar along x, x 292.47-292.63,
+  Blender y 0.396-0.42, z 0.69-0.71: the old T-key, made part of the valve). Spins about Blender y = game z
+  (three.js rotateZ). REMOVED: Att17ValveKey and Att17Key (the playtest cut the key errand; nothing in the drawer now).
 - Att17SluiceA / B / C: built OPEN, handle up. Origins = the pivots, Blender (293.45 / 294.10 / 294.80, 0.33, 0.45) =
   game (x, 0.45, -0.33): a hub on a pin along x in an iron bracket on the bench's front panel, a flat iron arm, a
   turned wooden grip to z 0.60. SHUT = +80 deg about x (three.js rotateX(+80 deg)): the grip comes forward, toward the
   camera, to Blender y ~0.18 (game z -0.18), z 0.48. Enamel letters A, B, C under them on the panel (z 0.27-0.33).
-- The pipes, all the same brass (HandledBrass, r 0.013), plainly crossing on a cream board behind the bench
-  (x 293.0-295.35, z 0.56-1.40, face y 1.255): from each sluice's cock, back under the bench top, up behind it:
-    A: riser x 293.45 at y 1.02 (in front), runs RIGHT at z 0.95 to x 294.98, forward, spout over BED 3.
-    B: riser x 294.10 at y 1.18 (at the back), runs LEFT at z 1.25 to x 293.25, forward, spout over BED 1.
-    C: riser x 294.80 at y 1.10, runs LEFT at z 1.10 to x 293.95, forward, spout over BED 2.
-  A's run passes in front of B's and C's risers; C's run in front of B's; C's spout comes forward over A's run.
-  Spout mouths at Blender y 0.66, z 0.86.
+- The pipes (REDONE after the playtest: cause and effect in view), all brass (HandledBrass, r 0.013), now IN FRONT of
+  the bench in the play plane, so the crossing reads from the levers. From each sluice's cock (under the bench, y 0.60,
+  z 0.42) forward through the front panel 0.07 right of its lever (a flange on the panel), up, across in front of the
+  beds at its own height and depth, back over its bed and down to the spout:
+    A: riser x 293.52 at Blender y 0.25 (nearest the camera), runs RIGHT at z 0.95 to x 294.98, spout over BED 3.
+    B: riser x 294.17 at y 0.30 (behind), runs LEFT at z 1.15 to x 293.25, spout over BED 1.
+    C: riser x 294.87 at y 0.275, runs LEFT at z 1.05 to x 293.95, spout over BED 2.
+  A's run passes in front of B's and C's risers; C's run in front of B's riser. Spout mouths unchanged (y 0.66, z 0.86).
+  Enamel bands (faded; atlas swatches sw_enred / sw_enblue / sw_enyellow): A red, B blue, C yellow, on each lever's grip
+  (z 0.55-0.574) and on its pipe twice: on the riser just over the glass (z 0.85-0.89) and on the run 0.07 before it turns
+  back over its bed. A glass section in each riser, z 0.70-0.80 (brass unions, Window glass r 0.021, two guard rods).
+  The cream backboard and its clips are gone (nothing runs behind the bench now).
+- Att17PipeFlowA / B / C (NEW): the water in each glass section, pale (new PLAIN Att17FlowWater) with a few bubbles
+  (Window), r 0.017, z 0.702-0.798. Origins = the sections' centres: A Blender (293.52, 0.25, 0.75), B (294.17, 0.30,
+  0.75), C (294.87, 0.275, 0.75) = game (x, 0.75, -0.25 / -0.30 / -0.275); game x +44: 337.52 / 338.17 / 338.87. Built
+  visible; show each only while water runs through that pipe.
+- Att17DrawingWall (NEW): her rig drawing again, big, on its own sheet pinned to the back wall over the rig's right
+  end, in its own light: 0.9 x 0.45, x 294.70-295.60, z 1.16-1.61, face Blender y 1.294; origin its centre Blender
+  (295.15, 1.294, 1.385) = game (295.15, 1.385, -1.294), game x 339.15. One quad, its own image material
+  Att17DrawingWall (textures/dl17_drawingwall.png, 1536 x 768, passes through as a map). The picture: the bench, the
+  beds "1 M.D." "2 R.A." "3 T.O.", the levers A B C in circles, the three pipes traced from beside each lever, crossing
+  (broken where one passes behind another), down into their beds; her pencil only, heavy; no title, no notes, no
+  instructions. Four brass drawing pins (Att17Set) and a small brass picture lamp on an arm over it (hood in Att17Set
+  at z 1.71, its tube in Att17Bulbs, EMIT Att17Bulb). Clear of the pipes (all below 1.17), the pump (from 1.76) and
+  the broom (x > 295.64 above 1.12).
 - Att17Stream1 / 2 / 3 (EVERY one is "the water over bed N", not by lever): origins = the spout's mouth, Blender
   (293.25 / 293.95 / 294.98, 0.66, 0.86) = game (x, 0.86, -0.66); a falling thread (r 0.009 to 0.006) down to the
   tray's floor (0.569). Built visible; material Water.
@@ -2983,10 +3104,12 @@ builder adds +44 (292.55 here is 336.55 in the game). Blender (x, y, z) -> game 
   game (293.95, 1.78, -0.735); 0.44 tall, r 0.009. Scale y (game) 0..1.
 - Lisle's card in a brass holder on the tank's front: x 293.10-293.40, z 1.92-2.10 (face y 0.755): "APPRENTICE TEST:
   WATER BED 1 ONLY. ONE TANK. - E.L." (atlas cell rigcard).
-- The chain (static, in Att17Set): from the float up at (293.60, y 0.64) to a pulley hung from the beam at 293.6
-  (centre z 2.76, r 0.04), along under the ceiling at z 2.80 to a pulley on the end wall (295.705, z 2.76), down beside
-  the door's architrave (x 295.745, y 0.64) to a pulley at z 2.15, across under the door's head (z 2.13) to a pulley
-  over the latch (295.925, y -0.45, z 2.11), down to the latch's eye (z 1.924).
+- The chain (static, in Att17Set), now all in one side-on frame: from the float up at (293.60, y 0.64), in front of
+  the tank, to a pulley over the bench (centre z 2.34, r 0.04, hung on two rods from the beam at 293.6), along the wall
+  at z 2.38 (in front of the tank's top, over its sight glass and the pump box, under the blade sign) to a pulley on the
+  end wall (295.705, z 2.34), down beside the door's architrave (x 295.745, y 0.64) to a pulley at z 2.15, across under
+  the door's head (z 2.13) to a pulley over the latch (295.925, y -0.45, z 2.11), down to the latch's eye (z 1.924).
+  (Was: up to 2.76 and along under the ceiling at 2.80.)
 - Att17Latch: the stair door's drop latch, DOWN (locked), on the frame (NOT a child of the door: it stays put when the
   door swings). Origin = its pivot, Blender (295.82, -0.47, 1.90) = game (295.82, 1.90, 0.47), on a bracket on the
   free jamb's lining (Blender y -0.5) at the wall's face. A flat iron bar runs +x across the reveal to x 295.947; its
@@ -3010,7 +3133,8 @@ builder adds +44 (292.55 here is 336.55 in the game). Blender (x, y, z) -> game 
   galvanised bezel on the box's front: origin = its centre, Blender (294.70, 1.094, 2.27) = game (294.70, 2.27, -1.094).
   Lit as built; the game can leave it on (the pump works; somebody keeps it working).
 - Moved for the rig: the broom (now in the corner by the stair door, x 295.4-295.7, behind the lane).
-- Clear of the lane and the existing interactions: nothing new is in front of Blender y 0.30 except the shut sluices'
+- Clear of the lane and the existing interactions: in front of Blender y 0.35 (the bench's front) are now the pipes
+  (risers and runs at y 0.237-0.313, x 293.25-294.99, z 0.39-1.17, all over the bench's footprint), the shut sluices'
   grips (to y 0.18) and the latch in the doorway's reveal (x 295.8-295.95, z 1.83-1.93, above him). The tray (285.7),
   the drawer (286.0), the card player (288.0) and the stair door (295.8) are untouched.
 
@@ -3023,10 +3147,11 @@ DRAWER CONTENTS (Blender; open = shut y - 0.45)
   (top right); "The knot works! - E.L." and a tick over the loop (top middle); "E. L." and a tick at CHECKED.
   Expansion: her plan (all of the above but the right-hand column) is shrunk to 0.78 into the upper left; along the
   bottom, her working for the test rig: the rig from the front to scale (bench, beds "1 M.D.", "2 R.A.", "3 T.O.",
-  levers A B C), the three pipes traced from each lever up behind the bench to the bed it feeds, broken where one
+  levers A B C), the three pipes traced from beside each lever up in front of the bench to the bed it feeds, broken where one
   passes behind another (A to bed 3, B to bed 1, C to bed 2, as in the world: drawn, never written out; no notes of
-  hers on it). Beside it, his red pencil, an arrow to her pipes: "Good eye. Most of them never look behind the bench.
-  - E.L." The atlas cell is where it
+  hers on it); redrawn for the new routing (risers beside the levers, in front of the bench). Beside it, his red
+  pencil, an arrow to her pipes: "Good eye. - E.L." (the line "Most of them never look behind the bench" is gone: the
+  pipes are in front now). The atlas cell is where it
   was: drawing (0, 0, 1280, 896); her card (1280, 0, 2048, 480).
 - Card 0.20 x 0.125, turned -0.09 rad: shut (285.93, 0.82, 0.3957), open (285.93, 0.37, 0.396) = game (285.93, 0.396, -0.37).
   Typed: NAME M. D., AGE 14, PLACED WITH WORKS DEPT., RING A, TRADE WATER AND IRRIGATION, SPONSOR E. LISLE,
@@ -3083,8 +3208,11 @@ RECOMMENDED GAME LIGHTS (game x, y, z)
   (299.3, 3.5, -0.7), and a low warm fill on the landing and first treads, e.g. a point at (297.0, 1.6, -0.2),
   so he reads as he steps through. Through the door's glass while it is shut, a warm patch; when it opens, the pool.
 - Entry: warm point at (281.2, 2.6, -0.2), dim.
-- The test rig (expansion): a warm spot at (294.2, 2.7, 0.9) aimed at (294.2, 0.85, -0.9), about 70 deg, so the
-  brass pipes on the cream board, the beds and the levers read; a dim point near the valve, (292.6, 1.2, 0.3).
+- The test rig (expansion): a warm spot at (294.2, 2.7, 0.9) aimed at (294.2, 0.85, -0.5), about 70 deg, so the
+  pipes crossing in front of the beds, their glass and bands, and the levers read; a dim point near the valve,
+  (292.6, 1.2, 0.3). Her drawing's own clear light: a narrow spot from the picture lamp, at (295.15, 1.66, -1.18) aimed
+  at (295.15, 1.36, -1.29), colour (1, .92, .78), about 60 deg, a little brighter than the wall around it.
+  (Game x: add 44 to every x here.)
 
 NEW MATERIALS (index.html format)
 WORN (already in index.html; DampSoil is no longer used by DL-17):
@@ -3095,13 +3223,18 @@ EMIT:
   Att17StairLamp: [1, .8, .55, 6],   // NEW (rev 0.3): the lamp over the stair
   Att17RelayLamp: [.35, 1, .45, 4],   // NEW (expansion): the new pump-and-relay box's green pilot
 PLAIN (already in index.html): Water, NewCable, NewSteel.
+PLAIN NEW: Att17FlowWater: [.46, .56, .58] rough .08 metal 0 (pale running water in the glass sections; keep it a
+  little see-through or emissive-free, so it reads pale against the dark glass).
 Reused materials: WinDado, PigeonWood, CrateWood, PupilWood, WornIron, HandledBrass, DarkMetal, WornStrap,
 DepotGreen, ParcelBrown, DirtyGlass, TeaEnamel, Cable, Copper, Window (GLASSY: the bean jars, the door's light, the
 sight glass), Water (PLAIN, the game's see-through water: the rig's tank, beds and streams),
 plus the voice-prop materials (Brass, HandWorn, ParcelPaper). No longer used: AttShoot, DampSoil. Image material:
 Att17Atlas (textures/dl17_atlas.png, 2048 square; new cells: soilcrack, and the sign_works cell redrawn as the
-RESIDENTIAL ACCESS sign).
+RESIDENTIAL ACCESS sign; new swatches sw_enred, sw_enblue, sw_enyellow), and NEW Att17DrawingWall
+(textures/dl17_drawingwall.png, 1536 x 768).
 
-BUDGET: 56,152 triangles (set 50,618 with the rig and the service thread; drawer 428; tray 1,470; lamp 72; bulbs 320;
+BUDGET (after the playtest redo): 58,254 triangles, 66 material slots (set 52.2k; the rig's moving parts now the
+valve with its handle, three sluices, three flows, latch, float, waters, streams; the drawing's quad). Before the redo:
+56,152 triangles (set 50,618 with the rig and the service thread; drawer 428; tray 1,470; lamp 72; bulbs 320;
 door 656; stair lamp 120; the rig's moving parts 2,468); 59 material slots. (Before the expansion: 40,092 and 34.)
 """

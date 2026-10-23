@@ -456,7 +456,7 @@ const WORN = {
   CoatWool: { base: [.035, .034, .036], dirt: [.03, .026, .02], chip: [.07, .066, .06], rough: .95, chipRough: .95, metal: 0, grime: 8, chipScale: 30, chipAmt: .75, dust: [.06, .058, .052], dustAmt: .2 },
   ToyPatch: { base: [.42, .30, .08], dirt: [.20, .14, .05], chip: [.30, .32, .40], rough: .95, chipRough: .95, metal: 0, grime: 20, chipScale: 60, chipAmt: .8 },
 };
-const PLAIN = { NewCable: [[.016, .016, .018], .28, 0], NewSteel: [[.26, .27, .28], .4, .8],   // pass 6: the new line down the well
+const PLAIN = { Att17FlowWater: [[.46, .56, .58], .08, 0], NewCable: [[.016, .016, .018], .28, 0], NewSteel: [[.26, .27, .28], .4, .8],   // pass 6: the new line down the well
   TeaEnamel: [[.58, .55, .47], .35, 0], EyeDark: [[.003, .003, .003], .3, 0], Shaft: [[.004, .004, .004], .9, 0], Cable: [[.014, .013, .012], .55, 0], Rubber: [[.012, .012, .011], .7, 0],
   Water: [[.01, .012, .012], .04, .3],
   Copper: [[.55, .3, .18], .35, 1], ReflectTag: [[.8, .78, .7], .15, .6], BeltRubber: [[.02, .02, .019], .8, 0],
@@ -5874,7 +5874,7 @@ function frameAtt2(x, lead, cx, v, fog) {
   cx += (THREE.MathUtils.clamp(x + lead * 0.4, 314.6, 319.4) - cx) * ks; v = lerp3(v, fit([7.8, 2.5, 1.7], 11.5), ks);
   const k17 = smooth((x - 323.4) / 1.4);
   const open17 = a && a.f17 ? smooth(a.f17.door17 || 0) : 0;
-  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 328.2, 335.6 + 3.4 * open17) - cx) * k17; v = lerp3(v, fit([6.6, 1.6, 1.1], 9.4), k17);
+  cx += (THREE.MathUtils.clamp(x + lead * 0.4, 328.2, 336.8 + 2.2 * open17) - cx) * k17;   // (the rig and her drawing in frame) v = lerp3(v, fit([6.6, 1.6, 1.1], 9.4), k17);
   return { cx, v, fog };
 }
 
@@ -6283,7 +6283,7 @@ function updateAtt3(dt) {
   if (k.Att14aDoor) { R(k.Att14aDoor); k.Att14aDoor.rotateY(Math.PI / 2 * smooth(A.door)); }     // into the corridor (dl14a.py REPORT)
   placeGown14a(g, k.Att14aGown, dt, A); placeBag14a(A.bag, k.Att14aBag, dt, A);
   if (k.Att14aCordHook) { R(k.Att14aCordHook); k.Att14aCordHook.position.y += hook14a(A.w1) - ATT3.hookDown; }
-  if (k.Att14aCord) { const o = k.Att14aCord, top = o.userData.rest.p.y; o.scale.copy(o.userData.rest.s); o.scale.y = Math.max(0.05, (top - hook14a(A.w1)) / Math.max(0.1, top - ATT3.hookDown)); }
+  if (k.Att14aCord) { const o = k.Att14aCord, top = o.userData.rest.p.y; o.scale.copy(o.userData.rest.s); o.scale.y = Math.max(0.05, (top - (hook14a(A.w1) + 0.135)) / 2.215); }   // (dl14a.py REPORT)
   placeTrolley14b(k);
   // DL-16a.
   if (k.Att16aCar) { R(k.Att16aCar); k.Att16aCar.position.y += F.h - C.floor; }
@@ -6436,7 +6436,7 @@ function placeTrolley14b(k) {
 const ANCHOR3 = {
   bagBasket: () => V3(ATT3.bagX, 0.5, -0.2), hangHook: () => V3(ATT3.hookX, hook14a(game.att.f14a.w1), ATT3.hookZ),
   reachHook: () => V3(ATT3.hookX, hook14a(game.att.f14a.w1), ATT3.hookZ), takeHook: () => V3(ATT3.hookX, hook14a(game.att.f14a.w1) - 0.2, ATT3.hookZ),
-  call16a: () => V3(312.42, 0.55, 0.2),
+  call16a: () => V3(312.375, 0.55, 0.46),
   pawl14a: () => V3(ATT3.pawlX, 0.62, -1.3), crank14a: () => V3(ATT3.crankX, 0.5, -0.32), gownChair: () => ATT3.chairHook.clone().setY(0.72),
   hangHem: () => V3(ATT3.hemX, hem14a(game.att.f14a.w1), ATT3.hemZ), reachHem: () => V3(ATT3.hemX, hem14a(game.att.f14a.w1), ATT3.hemZ),
   takeHem: () => V3(ATT3.hemX, ATT3.hemDown - 0.25, ATT3.hemZ), hangWall: () => ATT3.wallPeg.clone(), takeWall: () => ATT3.wallPeg.clone().setY(0.55),
@@ -7497,7 +7497,7 @@ const HINTS = [
   { region: 6, when: () => stalled('14a') && game.x > 248 && game.x < 263 && !game.att.f14a.open && game.att.f14a.bag.state !== 'hook', at: () => (game.att.f14a.bag.state === 'basket' ? new THREE.Vector3(ATT3.bagX, 0.45, -0.2) : new THREE.Vector3(ATT3.hookX, hook14a(game.att.f14a.w1), ATT3.hookZ)), key: 'use' },
   { region: 6, when: () => stalled('14a') && game.x > 248 && game.x < 263 && !game.att.f14a.open && game.att.f14a.bag.state === 'hook' && sun14a(game.att.f14a.t) > 0.05, at: new THREE.Vector3(ATT3.pawlX, 0.62, -1.3), key: 'use' },
   { region: 6, when: () => stalled('14b') && game.x > 263 && game.x < 271 && game.att.f14b.fig.state === 'bay', at: new THREE.Vector3(ATT3.bayX, 0.75, ATT3.bayZ), key: 'use' },
-  { region: 6, when: () => game.x > 310.2 && game.x < 313.8 && game.y < 0.1 && game.att.f16a.mode === 'top' && game.clock - (game.att.kitchenAt ?? game.clock) > 15, at: new THREE.Vector3(312.42, 0.55, 0.2), key: 'use' },
+  { region: 6, when: () => game.x > 310.2 && game.x < 313.8 && game.y < 0.1 && game.att.f16a.mode === 'top' && game.clock - (game.att.kitchenAt ?? game.clock) > 15, at: new THREE.Vector3(312.375, 0.55, 0.46), key: 'use' },
   { region: 6, when: () => stalled('17') && game.x > 333 && !game.att.f17.latched, at: new THREE.Vector3(337.8, 0.75, -0.3), key: 'move' },
   // DL-05
   { region: 5, when: () => !game.dl5.revealed && game.hold !== 'desk' && game.x > INNER5_X && game.x < game.desk5.x, at: () => new THREE.Vector3(game.desk5.x - 0.585, 0.62, DESK5.z), key: 'use' },

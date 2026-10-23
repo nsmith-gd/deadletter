@@ -5,8 +5,10 @@ The kitchen corridor behind the dismissal corridor: a two-storey school servery.
 doorway, the kitchen: a dresser whose shelf runs out over the floor as a high pass shelf (a string-tied bundle of books
 on it), the servery's hot cupboard under a band of crazed cream tiles, two catering tins on the floor, then the
 dumbwaiter: an open iron shaft to the ceiling with a small tray car in it (open to the front), its counterweight hanging
-behind at the top, and over the car's opening a brass load gauge (one amber window, the line, a red OVER): he alone is
-too light; he and one tin reach the line; two tins is over. Then the barred gate, PUPILS NOT PERMITTED BEYOND THIS POINT, with the lower corridor going on behind it under
+behind at the top, and over the car's opening a brass load gauge (one amber window, the line, a red OVER; dressing now:
+the director's playtest and docs/research/puzzle_design_2d.md section 5 cut the ballast puzzle, so this is her way
+round, a ride). On the shaft's front-left post at child height, the call push: a round brass bell push under a small
+bell pictogram, which calls the car down; the same push and pictogram inside the car send it up. Then the barred gate, PUPILS NOT PERMITTED BEYOND THIS POINT, with the lower corridor going on behind it under
 an upper passage (floor 2.4) that runs from the top of the shaft over the gate to a stair down to the workshop's door.
 At child height, in chalk: a crooked tree on the dresser, another on the hot cupboard, a third, an arrow to the car.
 At the top, on the hatch frame where the car lets out onto the passage, a fourth tree and a small handprint.
@@ -19,10 +21,12 @@ What the game moves (origin = pivot, world coordinates; REPORT at the bottom has
                    moves in z (+2.4 to floor top 2.45). Its lamp (EMIT Att16aCarLamp), bell push, brass plate, rope
                    and crosshead are in its mesh; the empty Att16aBellPush is its child.
     Att16aCW       its counterweight; origin bottom centre (313.0, 0.655, 3.0); built at the top; moves -2.4.
-    Att16aTin1/2   catering tins; origin bottom centre (311.2, 0, 0) / (311.45, 0, 0); carried (one is the ballast).
-    Att16aLoad1, Att16aLoadOver   the gauge's two lamps (own objects, own EMIT materials, built off).
+    Att16aTin1/2   catering tins; origin bottom centre (311.2, 0, 0) / (311.45, 0, 0); dressing now (no ballast).
+    Att16aLoad1, Att16aLoadOver   the gauge's two lamps (own objects, own EMIT materials, built off); dressing now.
     Att16aBellPush (empty) at the bell push's face, parented to Att16aCar.
-Static: Att16aSet (the room; the present-day service cable, NewCable / NewSteel, and its relay box), Att16aBooks (set
+    Att16aCallPush the outside call push (brass rose and ivory button); origin the button's face (312.375, -0.46, 0.55).
+Static: Att16aSet (the room; the call push's block and pictogram plate; the present-day service cable, NewCable /
+NewSteel, and its relay box), Att16aBooks (set
 dressing on the shelf), Att16aChalk (image material Chalk16a with alpha), Att16aLamps (EMIT AttBulbGlow),
 Att16aRelayLamp (EMIT, the relay box's green pilot lamp, its own object).
 """
@@ -72,6 +76,8 @@ CAR_WALL = 0.03                             # its sides and back: outer x 312.57
 CAR_ROOF = 1.21                             # the roof's underside (clear inside 1.16 over the floor: D-17 is 1.12)
 CAR_ORIGIN = (313.0, 0.1, 0.05)
 BELL = (313.25, 0.6)                        # (*) the bell push: x, z (at the bottom), on the car's back wall
+CALL_PUSH = (312.375, -0.46, 0.55)          # (*) Att16aCallPush: the outside call push's face, on the front-left post
+CALL_N = (-0.6, -0.8, 0.0)                  # the way its face looks: to the camera, turned toward the lane's left
 SHAFT = (312.5, 313.5, -0.45, 0.7)          # (*) the shaft's clear inside: x0, x1, y0, y1; posts outside it
 POST = 0.08
 HEAD_Z = 3.74                               # the shaft's head frame under the ceiling
@@ -184,7 +190,8 @@ CELLS = {
     'gauge': (0, 640, 768, 832),         # TRAYS ONLY - LOAD TO THE LINE, 0.56 x 0.14
     'max3': (768, 640, 1280, 736),       # the car's plate (NO PASSENGERS), 0.32 x 0.06
     'tinlabel': (0, 832, 512, 960),      # the tins' paper label, wrapped
-    'ring': (512, 832, 640, 896),        # RING, over the bell push
+    'ring': (512, 832, 640, 896),        # RING (no longer used: the car's push has the bell pictogram too)
+    'bellpict': (1408, 896, 1536, 992),  # the call push's plate: a bell, no words, 0.064 x 0.048
     'cwsign': (640, 832, 1024, 960),     # the counterweight's hazard plate
     'stair': (1024, 296, 1280, 392),     # STAFF STAIR, a small enamel
     'workshop': (1024, 392, 1280, 488),  # WORKSHOP, with an arrow down
@@ -402,6 +409,30 @@ def make_atlas(path):
         if name == 'max3':
             _screws(d, w, h, 12, 5, col=(96, 72, 32))
         put(name, t, k=0.04, dust=0.08)
+
+    # --- the call push's plate: brass, a bell engraved and filled black, no words --------------------------------------
+    x0, y0, x1, y1 = CELLS['bellpict']
+    w, h = x1 - x0, y1 - y0
+    t = _brass(w, h, rnd)
+    d = ImageDraw.Draw(t)
+    d.rectangle((2, 2, w - 3, h - 3), outline=(84, 60, 26), width=4)
+    cx_, top_, bot_ = w // 2, 16, 70
+    bell = [(cx_ - 6, top_ + 4), (cx_ + 6, top_ + 4)]
+    for k in range(9):                                   # the bell's flank, flaring to its lip
+        f = k / 8
+        bell.append((cx_ + 9 + 18 * f ** 2.2, top_ + 6 + (bot_ - top_ - 6) * f))
+    bell += [(cx_ + 30, bot_ + 2), (cx_ - 30, bot_ + 2)]
+    for k in range(8, -1, -1):
+        f = k / 8
+        bell.append((cx_ - 9 - 18 * f ** 2.2, top_ + 6 + (bot_ - top_ - 6) * f))
+    d.polygon(bell, fill=ink)
+    d.ellipse((cx_ - 5, top_ - 4, cx_ + 5, top_ + 6), outline=ink, width=3)               # its crown loop
+    d.ellipse((cx_ - 6, bot_ + 2, cx_ + 6, bot_ + 13), fill=ink)                         # the clapper
+    for s_ in (-1, 1):                                                                   # it rings: two arcs each side
+        for r_ in (40, 50):
+            box = (cx_ - r_, top_ + 30 - r_ * 0.8, cx_ + r_, top_ + 30 + r_ * 0.8)
+            d.arc(box, 160 if s_ < 0 else -20, 200 if s_ < 0 else 20, fill=ink, width=3)
+    put('bellpict', t, k=0.04, dust=0.08)
 
     # --- the dinners board: slate, DINNERS signwritten, the chalk wiped to a haze --------------------------------------
     x0, y0, x1, y1 = CELLS['menu']
@@ -1270,8 +1301,8 @@ def build_car(coll):
     by = y1 - 0.03
     B.cyl('HandledBrass', (bx, by, bz), (bx, by - 0.01, bz), 0.035, seg=14)
     B.cyl('Att16aAtlas', (bx, by - 0.01, bz), (bx, by - 0.02, bz), 0.016, seg=10, cell='sw_black')
-    B.box('HandledBrass', bx - 0.04, bx + 0.04, by - 0.004, by, bz + 0.05, bz + 0.09)
-    B.decal('Att16aAtlas', bx - 0.036, bx + 0.036, bz + 0.054, bz + 0.086, by - 0.0045, cell='ring')
+    B.box('HandledBrass', bx - 0.036, bx + 0.036, by - 0.004, by, bz + 0.048, bz + 0.104)
+    B.decal('Att16aAtlas', bx - 0.032, bx + 0.032, bz + 0.052, bz + 0.1, by - 0.0045, cell='bellpict')   # as the call push's
     B.cyl('Att16aAtlas', (bx, by - 0.002, bz + 0.035), (bx, by - 0.002, rf), 0.004, seg=4, cell='sw_black')   # its flex
     car = B.obj('Att16aCar', coll, origin=CAR_ORIGIN)
     e = bpy.data.objects.new('Att16aBellPush', None)
@@ -1281,6 +1312,49 @@ def build_car(coll):
     e.parent = car
     e.location = Vector((bx, by - 0.02, bz)) - Vector(CAR_ORIGIN)                            # car-local
     return car, e
+
+
+def build_call_mount(B):
+    """The call push's mount on the shaft's left frame: an oak block on an iron backplate on the front-left post's
+    left face (flush with its front, so the post never hides it), its face turned to the camera and the lane's left;
+    the bell pictogram plate over the push; its flex in a thin conduit up the post into the landing's header."""
+    sx0 = SHAFT[0]
+    p = POST
+    fy0, fy1 = SHAFT[2] - p, SHAFT[2]                   # the front post's y
+    n = Vector(CALL_N).normalized()
+    t = Vector((-n.y, n.x, 0.0))                        # along the face, to the right as seen from in front
+    F = Vector(CALL_PUSH) - n * 0.014                   # the block's face
+    R = Matrix((t, -n, Vector((0, 0, 1)))).transposed().to_4x4()
+    add_box(B.bm, F - n * 0.025, (0.09, 0.05, 0.25), mat=B.m('PigeonWood'), rot=R)
+    B.box('WornIron', sx0 - p - 0.012, sx0 - p, fy0, fy1, 0.41, 0.69)                       # its backplate on the post
+    for z in (0.43, 0.67):
+        B.cyl('WornIron', (sx0 - p - 0.012, (fy0 + fy1) / 2, z), (sx0 - p - 0.018, (fy0 + fy1) / 2, z), 0.006, seg=6)
+    # (the push itself, its brass rose and button, is Att16aCallPush) the bell pictogram plate over it, on the block
+    pc = F + Vector((0, 0, 0.078))
+    add_box(B.bm, pc + n * 0.002, (0.078, 0.004, 0.06), mat=B.m('HandledBrass'), rot=R)
+    u0, v0, u1, v1 = cell_uv('bellpict')
+    B.face('Att16aAtlas', [pc + n * 0.0045 + t * sx * 0.036 + Vector((0, 0, sz * 0.027)) for sx, sz in ((-1, -1), (1, -1), (1, 1), (-1, 1))],
+           [(u0, v0), (u1, v0), (u1, v1), (u0, v1)])
+    # the flex, in a thin conduit from the block's top up the post's left face into the header
+    top = F - n * 0.03 + Vector((0, 0, 0.125))
+    cx = sx0 - p - 0.009
+    cy = (fy0 + fy1) / 2 + 0.02
+    B.cyl('WornIron', top, Vector((cx, cy, top.z + 0.04)), 0.007, seg=6)
+    B.cyl('WornIron', Vector((cx, cy, top.z + 0.04)), Vector((cx, cy, HDR[0])), 0.007, seg=6)
+    for z in (0.9, 1.15):
+        B.box('WornIron', cx - 0.004, cx + 0.009, cy - 0.012, cy + 0.012, z - 0.006, z + 0.006)   # its saddles
+
+
+def build_call_push(coll):
+    """Att16aCallPush: the outside call push, a round brass bell push (a brass rose, an ivory button), its own object;
+    origin at the button's face. Its block and the bell pictogram plate over it are in Att16aSet."""
+    B = MB()
+    n = Vector(CALL_N).normalized()
+    F = Vector(CALL_PUSH) - n * 0.014                   # the block's face, where the rose sits
+    B.cyl('HandledBrass', F - n * 0.001, F + n * 0.008, 0.032, seg=18)                     # a round brass rose
+    B.cyl('HandledBrass', F + n * 0.008, F + n * 0.010, 0.022, 0.018, seg=18)
+    B.cyl('Att16aAtlas', F + n * 0.006, F + n * 0.014, 0.0135, 0.0125, seg=14, cell='sw_ivory')   # its button
+    return B.obj('Att16aCallPush', coll, origin=CALL_PUSH)
 
 
 def build_cw(coll):
@@ -1400,7 +1474,8 @@ def build_set(dl01, m, coll):
     build_stair(B)
     build_lower_corridor(B, rnd)
     build_cable(B)
-    objs = [B.obj('Att16aSet', coll), build_chalk(coll), build_lamps(coll)]
+    build_call_mount(B)
+    objs = [B.obj('Att16aSet', coll), build_chalk(coll), build_lamps(coll), build_call_push(coll)]
     car, bell = build_car(coll)
     objs += [car, build_cw(coll), build_relay_lamp(coll)]
     for k, (x, y) in enumerate(TINS):
@@ -1431,20 +1506,32 @@ MOVED (origin = pivot, world; built pose = rotation 0, as listed):
   from either side (a 4 mm iron edge at the floor's sides, top 0.054). Top: +2.4 in z (floor top 2.45, roof 3.645).
   Carries in its mesh: the lamp (EMIT Att16aCarLamp, bulb at (312.72, 0.42, 1.175)), the brass plate NO PASSENGERS on its
   front fascia (z 1.18 .. 1.249), the bell push (brass rose on the back wall's lining, face y 0.55, at x 313.25 z 0.6) with
-  RING over it, and its rope (up into the ceiling; see ROPES).
+  the bell pictogram over it (was RING), and its rope (up into the ceiling; see ROPES).
 - Att16aBellPush: EMPTY, child of Att16aCar, local (0.25, 0.45, 0.55); world at build (313.25, 0.55, 0.6) = game
   (313.25, 0.6, -0.55). Moves with the car (use getWorldPosition).
 - Att16aCW: origin bottom centre (313.0, 0.655, 3.0) = game (313.0, 3.0, -0.655). Built at the TOP of the shaft, behind the car:
   x 312.72 .. 313.28 (shoes to 312.70 / 313.30), y 0.62 .. 0.69, z 3.0 .. 3.7. Moves opposite the car: -2.4 (bottom 0.6, top
   1.3, clear of its spring buffers at 0.27 and of the car, which passes in front of it).
+- Att16aCallPush (NEW, redesign after the director's playtest: no ballast puzzle): the outside call push, a round brass
+  bell push (brass rose r 0.032, ivory button r 0.0135) on an oak block on the shaft's front-left post's left face, at
+  child height, its face turned to the camera and toward the lane's left (normal Blender (-0.6, -0.8, 0)). Origin = the
+  button's face, Blender (312.375, -0.46, 0.55) = game (312.375, 0.55, 0.46); its own object (HandledBrass, Att16aAtlas).
+  Over it on the block (in Att16aSet), a brass plate 0.072 x 0.054 with a bell pictogram (atlas cell bellpict), no words;
+  a conduit from the block up the post into the landing's header. Reachable from the lane just left of the car (the
+  car's inside starts at 312.6). The car's own push (Att16aBellPush) now has the same bell pictogram plate over it
+  (was RING), so one sign means "call / send" both sides.
+  DEVIATION: asked for about (312.42, -0.2, 0.55). At y -0.2 the push sat behind the front-left post (y -0.53..-0.45),
+  which hid it whenever the camera was right of 312.4; and its block covered half of her third chalk tree (312.3). It
+  is on the post's own left face instead, flush with its front (y -0.47..-0.43), x 312.35..312.41.
 - Att16aTin1 (311.2, 0, 0), Att16aTin2 (311.45, 0, 0) = game (311.2 / 311.45, 0, 0): catering tins, r 0.075 (rims 0.078),
-  0.17 high, origin bottom centre. Same mesh shape, separate meshes. One of them is the ballast (D-17 + one tin = the line).
+  0.17 high, origin bottom centre. Same mesh shape, separate meshes. Dressing now (the ballast puzzle is cut).
 - Att16aBooks: set dressing now (not carried), still its own object at (310.55, 0.35, 1.25) on the shelf; four books tied
   with string, x 310.42 .. 310.69, y 0.26 .. 0.45, 0.14 high (bow to 1.39).
 - Att16aLoad1 (amber, LOAD) and Att16aLoadOver (red, OVER): the gauge's two lamps, own objects, own EMIT materials of the
   same names (built OFF, strength 0), origins at the lenses' centres: x 312.88 / 313.12, y -0.559, z 1.39
   = game (x, 1.39, 0.559); the red line engraved between them at x 313.0. Load2/Load3 are dropped (no objects).
-  Suggested lamp() colours: Load1 0xffa030, Over 0xff2a18. Rule: Load1 lit when the car holds D-17 + one tin; Over with more.
+  Suggested lamp() colours: Load1 0xffa030, Over 0xff2a18. Dressing now: no load rule (leave both off, or let Load1
+  glow while the car carries him).
 - Att16aRelayLamp: the relay box's green pilot lamp (EMIT Att16aRelayLamp, lit as built), own object, origin (314.2, 1.101, 3.455)
   = game (314.2, 3.455, -1.101). Static unless the game switches it (suggested lamp() colour 0x60ff78).
 
@@ -1474,7 +1561,8 @@ STORY: chalk (Att16aChalk, image material Chalk16a, alpha): trees at 0.4 .. 0.6 
 door, face y 0.62), 311.6 and 312.3 (on the hot cupboard's doors, face y 0.70), an arrow over the third (x 312.03 .. 312.41,
 z 0.61 .. 0.73) pointing at the car; on the hatch jamb's front (face y -0.45): the fourth tree x 313.52 .. 313.68,
 z 2.6 .. 2.76, and a small handprint x 313.555 .. 313.635, z 2.815 .. 2.9.
-Signs: the gate's enamel; the gauge TRAYS ONLY - LOAD TO THE LINE (one window LOAD, a red line, OVER); NO PASSENGERS on the
+Signs: the gate's enamel; the gauge TRAYS ONLY - LOAD TO THE LINE (one window LOAD, a red line, OVER; dressing); the
+bell pictogram over both pushes (outside the car and inside it); NO PASSENGERS on the
 car (was MAX 3 PORTIONS: no longer true of the puzzle); STAFF ONLY (lower corridor), STAFF STAIR (passage), WORKSHOP with an arrow (stair foot); a DINNERS board in the kitchen.
 
 ROPES: no rope objects to scale. Each rope is part of its mover's mesh and runs 2.85 up from its shackle, through the head frame
@@ -1504,7 +1592,7 @@ partition at (310.15, 1.17, 3.70), along the back wall at z 3.70 (under the beam
 down the stair's wall parallel to the pitch (1.3 over the nosings) to (322.5, 2.4), level to the corner, then along DL-17's
 wall face (x 323.97) to y 0.63, into the wall over its doorway (a gland). All behind the lane.
 
-DEVIATIONS: none from the build sheet's numbers. Interpretations: the bell push is at z 0.6 world with the car at the bottom
+DEVIATIONS: the call push's position (see Att16aCallPush). Otherwise none from the build sheet's numbers. Interpretations: the bell push is at z 0.6 world with the car at the bottom
 (0.55 above the car floor); the stair's 12th tread is the floor (tops 2.2 .. 0.0); the gauge's plate sits 12 mm proud of the
 header (lenses at y -0.559); the passage railing's posts stand on its front channel at y -0.29.
 """

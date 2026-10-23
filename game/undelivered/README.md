@@ -172,6 +172,13 @@ constants). The game's code is the `ATT3` section.
   a 7 s cycle of its own, whatever D-17 is doing: someone keeps this supplied now.
 - **Review trims.** DL-14a's drive plate says only "one cord, two blinds"; the gown is a weighted nurse's cape; the
   rest-hour tannoy no longer states the goal. DL-16's procession bows and latches sooner (the missable window stays).
+- **Redesign after the 23 October playtest** (`docs/research/puzzle_design_2d.md`):
+  - DL-14a: W1's cord hook by the crank, with a child's light gown on it that rides up with W1; the heavy laundry
+    bag holds W1 down.
+  - DL-16a: a short ride. A call push outside brings the car down; the push inside sends it up.
+  - DL-17: the pipes cross in front of the bench, with matching bands on levers and pipes; flow shows in each open
+    pipe; the latch rises with bed 1 and falls after a shared run; her drawing is pinned on the wall; no key.
+  - Chapter 1 hints wait for a failed attempt and 20 s without progress, and point at a thing.
 - **Sims:** `CHAPTER=dorm`, `corridor`, `sickbay`, `crossing`, `kitchen` or `workshop` start at that checkpoint.
 
 ## Chapter 1, part 2: DL-15 to DL-17 (pass 9)
