@@ -22,13 +22,22 @@ and an `L` citation per value. Inputs are `MechanismId` fields; the "solved" fla
 - `Reset(in Checkpoint cp)`: derive everything from `cp.Past(_p.XAfter)` and from sources (already reset); `Init(...)`,
   not `Enter`. Clear pending input.
 - Time: accumulate `ctx.Dt`; compare clip frames with `ClipClock.Reached/Crossed`, time thresholds with a 1e-9 slack.
-- Per tick: no allocation, no LINQ, no lookups, no `Math.random` (use SimRng when it lands), no UnityEngine.
+- Per tick: no allocation, no LINQ, no lookups, no UnityEngine. Randomness: a `SimRng` field (`Core/Simulation`),
+  `SimRng.Xorshift(_p.Seed)`; `Reseed` in `Reset`, `_rng.Write(w, "rng")` in the snapshot; `_rng.Chance(dt * rate)`
+  for the prototype's `Math.random() < dt · rate`.
 
-**Reading another mechanism.** Producers implement `ILoad`, `IPositionSource`, `IEngageable` (Signals.cs; document the
-unit). Consumers resolve once in `Link`: `_src = link.Read<IPositionSource>(_p.Source);`. The graph steps in `Add`
+**Reading another mechanism.** Producers implement a signal from Signals.cs (list below; document the unit). Consumers resolve once in `Link`: `_src = link.Read<IPositionSource>(_p.Source);`. The graph steps in `Add`
 order (the scene definition's order = the prototype's update order), and `Read` requires the source to be added
 first, so it sees this tick's value. Use `link.ReadAnyOrder<T>` for reads from an act callback (acts run before the
 graph) or to break a cycle with a one-tick lag (pawl ↔ platform: pawl first). `None` returns null (optional input).
+
+**Shared signals** (`Signals.cs`, namespace `DeadLetter.Core.Mechanisms`): `ILoad` (load shares), `IPositionSource`
+(per producer), `IEngageable`; `IPlateBody` + `BodySupport` (items and pushables a plate weighs); `ILiftRide` (floor y,
+its velocity, Carrying: what ride sync #9 reads); `ISweptVolume` + `SweptBox` (space a folding leaf sweeps).
+
+**D-17's pose** (`StepContext.Player`, built from the motor after #4): x, y, z, `Vx`, `Crouched`, `Busy` (in an act),
+`Grounded`, `Holding` (`Hold != None`), `Hiding` (hide act; not from the motor yet). Rules that need his footing or
+hands read it here, never through a side call. World state (alive, region, upper) stays in `Beings/BeingSenses`.
 
 **Snapshot.** `WriteFields`/`ReadFields`: every field that changes over time, including pending input and `_act`
 (`_act.Write(w)`). Short, stable keys; the graph prefixes `id/`. Not params, not links. Restore then step must equal
@@ -38,6 +47,25 @@ the original run bit for bit (test it).
 (name tests `What_Rule_L1234`); `Reset` for each relevant checkpoint (theory rows); restore mid-motion, then compare
 `Mech.Dump(g)` every tick; one scene test per scene that uses the family with the real motor (see `Dl01SceneTests`).
 `Mech.PlayAct(g, station)` plays a clip as the motor does (frames 0.4, 0.8, ... at 60 Hz).
+
+**Family index** (folder → classes → §4.13 → scenes with an ID in §5):
+
+| Folder | Classes | § | Scenes |
+|---|---|---|---|
+| `Plates/` | LoadPlate, PlateSensor, WeighScale, PlateDoor, PresenceStrip, SeatRow, PlateOutputs | a | DL-01/03/04/05/08/09/10/12/15/16a |
+| `Docks/` | Cradle, Rack, RailDetents | b | DL-04, 15, 16 |
+| `Catches/` | Latch, Pawl, CageCatch, CycleBrake | c | DL-01, 08, 09, 13, 16 |
+| `Actuators/` | Door, FollowerActuator, CrankActuator | d (a) | DL-01, 03, 10, 11, 12, 14a, 15, 17 |
+| `Drives/` | PulseSequencer, WindCrank, PairedBlindDrive | e, g | DL-01, 14, 14a, 17 |
+| `Lifts/` | Lift (base), CounterweightLift, SlippingCage, RelocationLift, PupilLift, CounterweightRack, Dumbwaiter | f | DL-08, 09, 10, 15, 16, 16a |
+| `Routes/` | CarrierLine (incl. the `dl06.dock`), PointsLever, ReturnsBelt, RoutePath | h | DL-06/07, 08 |
+| `Water/` | Flood, Sluice, SluiceValve, SluiceRig, FloatLatch (`dl17.latch`) | i (c) | DL-11, 17 |
+| `Bridges/` | TippingBridge | j | DL-01, 11 |
+| `Cycles/` | CycleClock, CycleTimeline | k | DL-13, 14a, 21, 23 |
+| `Folding/` | FoldingLeaf, LeafBox | (DL-18 spec) | DL-18 |
+| `../Beings/` | WhiteBrain, EscortTrolley, NoiseBus, BeingSenses | §4.15, §4.16 | DL-06/07, 11, 14b |
+
+Scene tests with the real motor: `Dl01`, `Dl03`, `Dl09`, `Dl11White`, `Dl14`, `Dl17`, `Dl18SceneTests`.
 
 **Citing index.html.** Never open it whole: `sed -n '3290,3324p' game/undelivered/index.html`. XML summary cites the
 ranges; ported lines carry `// L1874`. Deliberate deviations say so (see `CrankActuator.WheelDeg`).
@@ -67,4 +95,5 @@ public sealed class Bell : Mechanism
 **U-11 contract gaps** (worked around here): `IUsable.Profile` is read when Use starts, but the DL-08 pawl picks
 LeverPull/LeverStuck at the end of step-in (L3305); a station cannot chain a follow-up clip (latch Pull → Flinch 1.6 s,
 L1875); `IStation.Face` cannot face him toward the control from his side (DL-01 crank, L1835); reach is centred on
-`StandX` (the DL-13 brake stands 0.2 off its reach centre: `Station.ReachX` widens `Reach` and tests in `IsAvailable`).
+`StandX` (the DL-13 brake stands 0.2 off its reach centre: `Station.ReachX` widens `Reach` and tests in `IsAvailable`);
+the motor has no hide act (`PlayerPose.Hiding`, DL-14b, L5973) and no escorted walk (`EscortTrolley.HeroEscortX`).

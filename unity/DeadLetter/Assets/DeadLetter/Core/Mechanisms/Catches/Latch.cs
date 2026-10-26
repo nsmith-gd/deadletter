@@ -45,7 +45,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
     /// <summary>
     /// A one-way catch: Locked → Released (§4.13c, "Brakes and catches", full_game_plan §5). Released by the Pull act
     /// at <see cref="LatchParams.ReleaseFrame"/> (DL-01, L1870–L1876) or by a threshold on another mechanism
-    /// (<c>dl17.floatLatch</c> bed ≥ 0.95, L6258; <c>dl16.latch</c> 1.2 s after the rack is full, L5764).
+    /// (<c>dl17.latch</c> bed ≥ 0.95, L6258, now a <see cref="Water.FloatLatch"/>; <c>dl16.latch</c> 1.2 s after the rack is full, L5764).
     /// Signals: <see cref="Engaged"/> = released.
     /// </summary>
     public sealed class Latch : StationMechanism, IEngageable

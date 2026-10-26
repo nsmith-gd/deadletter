@@ -360,6 +360,16 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
+        public void Flood_NotWhileAirborne_GameGrounded_L4860()
+        {
+            var (g, _, _) = Dl11();
+            Mech.Run(g, 1, Mech.Pose(149.5, 0.01, grounded: false));          // a jump's first step off the floor
+            Assert.False(Mech.Emitted(g, "dl11.dip", FloodEvent.TurnBack));
+            Mech.Run(g, 1, Mech.Pose(149.5, 0.01));
+            Assert.True(Mech.Emitted(g, "dl11.dip", FloodEvent.TurnBack));
+        }
+
+        [Fact]
         public void Flood_Bridged_NoTurnBack_FloorIsTheDuctTop_L4139()
         {
             var (g, f, duct) = Dl11();

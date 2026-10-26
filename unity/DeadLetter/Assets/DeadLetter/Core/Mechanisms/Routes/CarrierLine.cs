@@ -2,6 +2,7 @@ using System;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Maths;
 using DeadLetter.Core.Save;
+using DeadLetter.Core.Simulation;
 
 namespace DeadLetter.Core.Mechanisms.Routes
 {
@@ -190,7 +191,9 @@ namespace DeadLetter.Core.Mechanisms.Routes
     /// D-17 boards, rides and alights through <see cref="BeginBoard"/>, <see cref="Mount"/>, <see cref="Alight"/>
     /// (his hop acts are the motor's); ride sync reads <see cref="Ride"/> after the graph has stepped (§3.1 step 9).
     /// Weights are set in through <see cref="Loader"/>. The dock, the chute and the route board are this mechanism's
-    /// outputs (<see cref="DockLit"/>, <see cref="CarrierLineEvent.Tip"/>, <see cref="Route"/>/<see cref="Running"/>).
+    /// outputs (<see cref="DockLit"/>, <see cref="CarrierLineEvent.Tip"/>, <see cref="Route"/>/<see cref="Running"/>):
+    /// §5's <c>dl06.dock</c> (§4.13 "carriers wait at the dock 3.4 s while the belt runs; held while he boards") is the
+    /// <see cref="CarrierState.Dock"/> phase here, not a mechanism of its own, as are <c>dl06.chute</c> and <c>dl06.routeBoard</c>.
     /// Signals: <see cref="Engaged"/> = the belt runs.
     /// </summary>
     public sealed class CarrierLine : Mechanism, IEngageable
@@ -489,14 +492,14 @@ namespace DeadLetter.Core.Mechanisms.Routes
             for (int i = 0; i < _all.Length; i++) if (!_all[i].Active) { slot = i; break; }
             if (slot < 0) throw new InvalidOperationException(Id + ": more than " + _all.Length + " carriers.");
             var c = _all[slot];
-            var rng = new RouteRng(_count * 7 + (long)Math.Floor(_clock * 13));
-            int n = rng.Next() < _p.EmptyChance ? 0 : 1 + (int)Math.Floor(rng.Next() * 2.2);
+            var rng = SimRng.Lcg(_count * 7 + (long)Math.Floor(_clock * 13));
+            int n = rng.NextDouble() < _p.EmptyChance ? 0 : 1 + (int)Math.Floor(rng.NextDouble() * 2.2);
             for (int k = 0; k < Carrier.MaxParcels; k++) c.ParcelSize[k] = c.ParcelZ[k] = c.ParcelYaw[k] = 0;
             for (int k = 0; k < n; k++)
             {
-                c.ParcelSize[k] = 0.12 + rng.Next() * 0.08;
-                c.ParcelZ[k] = -(rng.Next() - 0.5) * 0.15;                                                       // Unity z (negated)
-                c.ParcelYaw[k] = (rng.Next() - 0.5) * 0.6;
+                c.ParcelSize[k] = 0.12 + rng.NextDouble() * 0.08;
+                c.ParcelZ[k] = -(rng.NextDouble() - 0.5) * 0.15;                                                       // Unity z (negated)
+                c.ParcelYaw[k] = (rng.NextDouble() - 0.5) * 0.6;
             }
             c.Active = true;
             c.Seq = _seq++;

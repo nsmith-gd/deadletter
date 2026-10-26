@@ -64,7 +64,6 @@ namespace DeadLetter.Core.Tests
                 Steps++;
                 if (input.UsePressed && Cage.Riding) Cage.PullPawl();
                 Motor.Step(input, Dt);                                                    // #4
-                Cage.NoteRider(Motor.Grounded, Motor.Hold != HoldKind.None);
                 G.Step(Dt, Mech.Pose(Motor));                                             // #6–7
                 if (Cage.Carrying) Motor.Place(Motor.X, Cage.FloorY, Motor.Facing);       // #9 ride sync
                 foreach (var e in Mech.Events(G))
@@ -191,7 +190,6 @@ namespace DeadLetter.Core.Tests
                 bool use = k == 60;                                          // in the stall
                 if (use) b.Cage.PullPawl();
                 a.Step(use ? Sim.Use() : Sim.Move(0));
-                b.Cage.NoteRider(a.Motor.Grounded, false);
                 b.G.Step(Dt, Mech.Pose(a.Motor));
                 Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
                 Assert.Equal(Mech.Events(a.G).Count, Mech.Events(b.G).Count);

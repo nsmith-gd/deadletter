@@ -193,6 +193,28 @@ namespace DeadLetter.Core.Tests
             Assert.True(r.Until(() => r.Emitted(CarrierLineEvent.Removed)) > 0);
         }
 
+        [Fact]
+        public void Dock_Dl06Dock_IsTheLinesDockPhase_HeldOnlyWhileHisHopTargetsIt_L2693_L2704()
+        {
+            var r = new LineRig();
+            Mech.Run(r.G, 1);
+            var c = r.First;
+            r.Until(() => r.Emitted(CarrierLineEvent.Docked));
+            Assert.Equal(3.4, c.Wait, 12);                                       // DOCK_WAIT, L2461
+            Assert.True(r.Line.DockLit);
+            Mech.Run(r.G, 60);
+            double w = c.Wait;
+            Assert.Equal(3.4 - 1.0, w, 9);
+            r.Line.BeginBoard(c);                                                // the board act targets it: the wait holds
+            Mech.Run(r.G, 120);
+            Assert.Equal(w, c.Wait);
+            Assert.Equal(CarrierState.Dock, c.State);
+            r.Line.BeginBoard(null);                                             // the hop is over without mounting
+            int move = r.Until(() => c.State == CarrierState.Move);
+            Assert.InRange(move, 143, 145);                                      // the rest of the 3.4 s
+            Assert.False(r.Line.DockLit);
+        }
+
         // ---- Riding -----------------------------------------------------------------------------------------------------
 
         [Fact]

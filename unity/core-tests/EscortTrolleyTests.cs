@@ -38,6 +38,7 @@ namespace DeadLetter.Core.Tests
             public readonly EscortTrolley T;
             public readonly MechanismGraph G;
             public double X = 250, Y, Z;
+            public bool Hiding;
             public readonly List<MechanismEvent> Log = new List<MechanismEvent>();
 
             public Rig(string cp = "corridor", ulong seed = 0)
@@ -51,7 +52,7 @@ namespace DeadLetter.Core.Tests
             public void Step()
             {
                 S.BeginStep();
-                G.Step(Dt, new PlayerPose(X, Y, Z));
+                G.Step(Dt, new PlayerPose(X, Y, Z, hiding: Hiding));
                 Log.AddRange(Mech.Events(G));
             }
 
@@ -145,7 +146,7 @@ namespace DeadLetter.Core.Tests
         public void Sees_HimInTheBeam_NotHiddenNorHigh_L6364_L6368_L5973(double x, double y, double z, bool hiding, int region, bool seen)
         {
             var r = new Rig { X = x, Y = y, Z = z };
-            r.S.Hiding = hiding; r.S.Region = region;
+            r.Hiding = hiding; r.S.Region = region;
             r.Step();
             Assert.Equal(seen, r.T.State == EscortState.EscortHim);
         }

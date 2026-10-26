@@ -86,7 +86,8 @@ namespace DeadLetter.Core.Mechanisms.Lifts
     /// (death if he rides it) and is hauled back up.
     /// Signals: <see cref="Position"/> = the cage floor's y, metres (CageCatch's window is on it); <see cref="ILiftRide"/>
     /// carries him for the whole cage act (<c>game.y = c.y</c>, L5081), including the step it ends or kills him.
-    /// Inputs (from the cage act, step #4, before the graph): <see cref="PullPawl"/> on Use; <see cref="NoteRider"/>.
+    /// Inputs (from the cage act, step #4, before the graph): <see cref="PullPawl"/> on Use; the boarding rule reads
+    /// <see cref="PlayerPose.Grounded"/> and <see cref="PlayerPose.Holding"/> (<c>game.grounded &amp;&amp; !game.hold</c>, L5020/L5031).
     /// The view's lever, pawl, sheave, lamps and counterweight (L5052–L5076) read <see cref="Position"/>, State and the
     /// catch's <c>Thrown</c>.
     /// </summary>
@@ -99,7 +100,6 @@ namespace DeadLetter.Core.Mechanisms.Lifts
         private CageCatch _catch;
         private double _t, _v, _readyIn;
         private bool _needExit, _caughtOnce, _riding;
-        private bool _noted, _riderGrounded, _riderHolding;
 
         public SlippingCage(MechanismId id, SlippingCageParams p) : base(id) { _p = p; }
 
@@ -130,16 +130,6 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             if (PawlThrowable && _catch != null) _catch.Throw();
         }
 
-        /// <summary>
-        /// The motor's state for the boarding rule (<c>game.grounded &amp;&amp; !game.hold</c>, L5020/L5031), which
-        /// PlayerPose does not carry yet. Call before the graph steps; consumed each step. If not called, he counts as
-        /// grounded and empty-handed (the floor test already needs his feet within 0.05 of the floor).
-        /// </summary>
-        public void NoteRider(bool grounded, bool holding)
-        {
-            _noted = true; _riderGrounded = grounded; _riderHolding = holding;
-        }
-
         public override void Link(MechanismLinker link)
         {
             _tray = link.Read<ILoad>(_p.Tray) ?? throw new InvalidOperationException(Id + " needs a Tray.");
@@ -154,7 +144,6 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             _t = _v = 0;
             _readyIn = 0;                                                                         // readyAt: 0
             _needExit = _caughtOnce = _riding = false;
-            _noted = false; _riderGrounded = true; _riderHolding = false;
             InitFloor(Y);
         }
 
@@ -162,8 +151,7 @@ namespace DeadLetter.Core.Mechanisms.Lifts
         {
             double dt = ctx.Dt, y = Y;
             var pl = ctx.Player;
-            bool grounded = !_noted || _riderGrounded, holding = _noted && _riderHolding, wasRiding = _riding;
-            _noted = false;
+            bool grounded = pl.Grounded, holding = pl.Holding, wasRiding = _riding;
             _readyIn -= dt;                                                                       // game.clock += dt (#1)
 
             // The cage act (#4), before updateCage.
@@ -279,9 +267,6 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             w.WriteBool("needExit", _needExit);
             w.WriteBool("caughtOnce", _caughtOnce);
             w.WriteBool("riding", _riding);
-            w.WriteBool("noted", _noted);
-            w.WriteBool("grounded", _riderGrounded);
-            w.WriteBool("holding", _riderHolding);
         }
 
         protected override void ReadLift(ISnapshotReader r)
@@ -293,9 +278,6 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             _needExit = r.ReadBool("needExit");
             _caughtOnce = r.ReadBool("caughtOnce");
             _riding = r.ReadBool("riding");
-            _noted = r.ReadBool("noted");
-            _riderGrounded = r.ReadBool("grounded");
-            _riderHolding = r.ReadBool("holding");
         }
     }
 }

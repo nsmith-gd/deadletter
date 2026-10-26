@@ -1,6 +1,7 @@
 using System;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Save;
+using DeadLetter.Core.Simulation;
 
 namespace DeadLetter.Core.Beings
 {
@@ -105,14 +106,14 @@ namespace DeadLetter.Core.Beings
     /// <para>The escorted walk is modelled here (<see cref="HeroEscortX"/>): the motor has no escorted act (U-11 gap), so
     /// the driver places him there while <see cref="HeroHeld"/>. If he is no longer in play while held (a respawn cut the
     /// act), it stops 2 s (<c>updateEscortHim14b</c>, L6419–L6422).</para>
-    /// <para>Inputs: <see cref="StepContext.Player"/> (x, y, z), <see cref="BeingSenses"/> (alive, region, hiding), the
+    /// <para>Inputs: <see cref="StepContext.Player"/> (x, y, z, hiding), <see cref="BeingSenses"/> (alive, region), the
     /// optional <see cref="IDecoy"/>. Signals: <see cref="IPositionSource.Position"/> = its x; <see cref="IDecoyEscort"/>.</para>
     /// </summary>
     public sealed class EscortTrolley : Mechanism, IPositionSource, IDecoyEscort
     {
         private readonly EscortTrolleyParams _p;
         private readonly BeingSenses _sense;
-        private readonly BeingRng _rng;
+        private SimRng _rng;
         private IDecoy _decoy;
 
         private double _x, _mt, _stopFor;
@@ -126,7 +127,7 @@ namespace DeadLetter.Core.Beings
         {
             _p = p ?? throw new ArgumentNullException(nameof(p));
             _sense = senses ?? throw new ArgumentNullException(nameof(senses));
-            _rng = new BeingRng(_p.Seed);
+            _rng = SimRng.Xorshift(_p.Seed);
         }
 
         public EscortState State => (EscortState)StateCode;
@@ -175,7 +176,7 @@ namespace DeadLetter.Core.Beings
             _decoyHeld = false;
             _decoyX = _decoyKept ? _p.KeepX : 0;
             _heroHeld = false; _heroX = 0; _heroT = 0;
-            _rng.Seed(_p.Seed);
+            _rng.Reseed((long)_p.Seed);
         }
 
         public override void Step(in StepContext ctx)
@@ -259,7 +260,7 @@ namespace DeadLetter.Core.Beings
         private bool SeesHim(in PlayerPose hero)
         {
             if (_sense.Region != _p.Region || !_sense.Alive) return false;
-            if (_sense.Hiding && hero.Z > _p.HiddenDepth) return false;
+            if (hero.Hiding && hero.Z > _p.HiddenDepth) return false;
             double a = BeamLo, b = BeamHi;
             return hero.X > Math.Max(a, _p.WallX) && hero.X < b && hero.Y < _p.SeeBelowY;
         }
@@ -282,7 +283,7 @@ namespace DeadLetter.Core.Beings
             w.WriteDouble("x", _x); w.WriteLong("dir", _dir); w.WriteDouble("mt", _mt); w.WriteDouble("stopFor", _stopFor);
             w.WriteDouble("decoyX", _decoyX); w.WriteBool("decoyHeld", _decoyHeld); w.WriteBool("decoyKept", _decoyKept);
             w.WriteDouble("heroX", _heroX); w.WriteDouble("heroT", _heroT); w.WriteBool("heroHeld", _heroHeld);
-            w.WriteLong("rng", _rng.State);
+            _rng.Write(w, "rng");
         }
 
         protected override void ReadFields(ISnapshotReader r)
@@ -290,7 +291,7 @@ namespace DeadLetter.Core.Beings
             _x = r.ReadDouble("x"); _dir = (int)r.ReadLong("dir"); _mt = r.ReadDouble("mt"); _stopFor = r.ReadDouble("stopFor");
             _decoyX = r.ReadDouble("decoyX"); _decoyHeld = r.ReadBool("decoyHeld"); _decoyKept = r.ReadBool("decoyKept");
             _heroX = r.ReadDouble("heroX"); _heroT = r.ReadDouble("heroT"); _heroHeld = r.ReadBool("heroHeld");
-            _rng.State = r.ReadLong("rng");
+            _rng.Read(r, "rng");
         }
     }
 }

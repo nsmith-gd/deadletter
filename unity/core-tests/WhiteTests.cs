@@ -25,7 +25,8 @@ namespace DeadLetter.Core.Tests
             public readonly BeingSenses S = new BeingSenses { Region = 5 };
             public readonly WhiteBrain W;
             public readonly MechanismGraph G;
-            public double X = 140, Y;
+            public double X = 140, Y, Vx;
+            public bool Grounded = true;
             public readonly List<MechanismEvent> Log = new List<MechanismEvent>();
 
             public Rig(WhiteParams p = null, string cp = "ringc", int region = 5)
@@ -39,7 +40,7 @@ namespace DeadLetter.Core.Tests
             {
                 S.BeginStep();
                 foreach (var n in posts) S.Noises.Post(n);
-                G.Step(Dt, Mech.Pose(X, Y));
+                G.Step(Dt, Mech.Pose(X, Y, grounded: Grounded, vx: Vx));
                 Log.AddRange(Mech.Events(G));
             }
 
@@ -147,7 +148,7 @@ namespace DeadLetter.Core.Tests
         public void RunningNearTheWater_IsLoud_WalkingIsNot_L7119_L7120(double x, double vx, bool grounded, bool heard)
         {
             var r = new Rig(QuietLane()) { X = x };
-            r.S.Vx = vx; r.S.Grounded = grounded;
+            r.Vx = vx; r.Grounded = grounded;
             r.Step();
             Assert.Equal(heard, r.Emitted(WhiteEvent.Heard));
             Assert.Equal(heard ? WhiteState.Listen : WhiteState.Patrol, r.W.State);   // the patrol hears it at once (L7138)
@@ -157,7 +158,7 @@ namespace DeadLetter.Core.Tests
         public void RunningNoise_HasA035sCooldown_L7120()
         {
             var r = new Rig(QuietLane()) { X = 146 };
-            r.S.Vx = 1.6;
+            r.Vx = 1.6;
             var at = new List<int>();
             for (int i = 0; i < 120; i++) { r.Step(); if (r.Emitted(WhiteEvent.Heard)) at.Add(i); }
             Assert.True(at.Count >= 5);
@@ -168,7 +169,7 @@ namespace DeadLetter.Core.Tests
         public void NotInPlay_HeIsNeitherHeardNorExposed_L7117_L7149()
         {
             var r = new Rig(QuietLane()) { X = 147 };
-            r.S.Alive = false; r.S.Vx = 1.6;
+            r.S.Alive = false; r.Vx = 1.6;
             r.Run(60);
             Assert.Equal(0, r.Count(WhiteEvent.Heard));
             r.Step(NoiseEvent.Sound(147, 1, 5));
@@ -358,7 +359,7 @@ namespace DeadLetter.Core.Tests
             r.S.BeginStep(); Lane9Cues.RingBell(r.S.Noises);
             r.G.Step(Dt, Mech.Pose(r.X, r.Y));
             r.Until(() => r.W.Clip == WhiteClip.Nose, 600);
-            r.X = x; r.S.Vx = 1.6;
+            r.X = x; r.Vx = 1.6;
             r.Run(30);
             Assert.True(r.Count(WhiteEvent.Heard) >= 2);
             Assert.Equal(breaks, r.W.State != WhiteState.Lured);
@@ -375,7 +376,7 @@ namespace DeadLetter.Core.Tests
             Assert.True(r.Entered(WhiteState.Flee));
             Assert.True(r.W.Fleeing);
             double x = r.W.X;
-            r.S.Vx = 1.6;                                                      // he runs on the edge
+            r.Vx = 1.6;                                                      // he runs on the edge
             r.Step(NoiseEvent.Sound(147, 1.5, 5));
             Assert.Equal(0, r.Count(WhiteEvent.Heard));
             Assert.Equal(x, r.W.X);                                            // it holds where it is, going deep
@@ -465,9 +466,9 @@ namespace DeadLetter.Core.Tests
             a.W.Warned = true;
             a.Step();
             a.Run(400);                                                        // a retarget: the RNG has moved
-            a.S.Vx = 1.6;
+            a.Vx = 1.6;
             a.Until(() => a.W.State == WhiteState.Approach, 200);
-            a.S.Vx = 0;
+            a.Vx = 0;
             a.Run(5);
             Assert.Equal(WhiteState.Approach, a.W.State);
 
@@ -498,7 +499,7 @@ namespace DeadLetter.Core.Tests
                 for (int i = 0; i < 3000; i++)
                 {
                     r.X = 140 + 12 * (i / 3000.0);
-                    r.S.Vx = (i / 200) % 2 == 0 ? 1.6 : 0.9;
+                    r.Vx = (i / 200) % 2 == 0 ? 1.6 : 0.9;
                     if (i == 1500) { r.S.BeginStep(); Lane9Cues.RingBell(r.S.Noises); r.G.Step(Dt, Mech.Pose(r.X, r.Y)); }
                     else r.Step();
                     trace.Add(Mech.Dump(r.G) + string.Join(",", Mech.Events(r.G)));

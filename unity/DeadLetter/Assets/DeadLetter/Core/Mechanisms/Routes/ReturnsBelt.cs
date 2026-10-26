@@ -1,6 +1,7 @@
 using System;
 using DeadLetter.Core.Maths;
 using DeadLetter.Core.Save;
+using DeadLetter.Core.Simulation;
 
 namespace DeadLetter.Core.Mechanisms.Routes
 {
@@ -83,7 +84,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
     /// klaxon at 2.7 s; then crates slide down the chute (0.75 s) and ride the belt toward him at 0.32 m/s and leave
     /// through the turn flaps (L3128–L3169, L3218–L3229). He is carried back while on it (<see cref="CarryVelocity"/>,
     /// read by the motor, L3439, L1998); crates are solid while in the lane (<see cref="SurfaceAt"/>, L1733). The crate
-    /// choices use <see cref="RouteRng"/> for the prototype's <c>Math.random</c>.
+    /// choices use <see cref="SimRng"/> (seeded, snapshotted) for the prototype's <c>Math.random</c>.
     /// Signals: <see cref="Engaged"/> = running.
     /// </summary>
     public sealed class ReturnsBelt : Mechanism, IEngageable
@@ -93,7 +94,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         private readonly int[] _live;
         private int _count;
         private IEngageable _trigger;
-        private RouteRng _rng;
+        private SimRng _rng;
         private double _t, _next;
 
         public ReturnsBelt(MechanismId id, ReturnsBeltParams p) : base(id)
@@ -102,7 +103,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
             _all = new Crate[p.Capacity];
             for (int i = 0; i < _all.Length; i++) _all[i] = new Crate();
             _live = new int[p.Capacity];
-            _rng = new RouteRng(p.Seed);
+            _rng = SimRng.Lcg(p.Seed);
         }
 
         public ReturnsBeltState State => (ReturnsBeltState)StateCode;
@@ -133,6 +134,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         /// <summary><c>game.belt4 = { state: c.belt4 ? 'run' : 'idle', t: 0, next: 0.5 }</c>, crates cleared (L8045–L8046).</summary>
         public override void Reset(in Checkpoint cp)
         {
+            _rng = SimRng.Lcg(_p.Seed);   // the same checkpoint replays the same sounds and crates
             Init((int)(cp.Past(_p.RunningAfter) ? ReturnsBeltState.Run : ReturnsBeltState.Idle));
             _t = 0;
             _next = _p.FirstAfterReset;
@@ -166,7 +168,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
                 if (_next <= 0 && clear && (last == null || (last.State != CrateState.Chute && last.X < _p.ChuteX - _p.BehindLast)))
                 {
                     Spawn(ctx);
-                    _next = _p.SpawnMin + _rng.Next() * _p.SpawnSpread;
+                    _next = _p.SpawnMin + _rng.NextDouble() * _p.SpawnSpread;
                 }
             }
             double swing = 0;
@@ -217,7 +219,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
             int slot = -1;
             for (int i = 0; i < _all.Length; i++) if (!_all[i].Active) { slot = i; break; }
             if (slot < 0) throw new InvalidOperationException(Id + ": more than " + _all.Length + " crates.");
-            double r = _rng.Next();
+            double r = _rng.NextDouble();
             int type = r < _p.CrateOdds[0] ? 0 : r < _p.CrateOdds[1] ? 1 : 2;
             var c = _all[slot];
             c.Active = true;
@@ -226,7 +228,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
             c.Height = _p.CrateHeight[type];
             c.X = _p.ChuteX; c.Y = _p.ChuteTopY; c.Z = _p.ChuteTopZ;
             c.State = CrateState.Chute; c.T = 0;
-            c.Spin = (_rng.Next() - 0.5) * 0.4;
+            c.Spin = (_rng.NextDouble() - 0.5) * 0.4;
             _live[_count++] = slot;
             Emit(ctx, (int)ReturnsBeltEvent.CrateSpawned, type);
         }
@@ -235,7 +237,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         {
             w.WriteDouble("t", _t);
             w.WriteDouble("next", _next);
-            w.WriteLong("rng", _rng.Seed);
+            _rng.Write(w, "rng");
             w.WriteDouble("flaps", FlapSwing);
             w.WriteLong("n", _count);
             for (int i = 0; i < _count; i++)
@@ -252,7 +254,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         {
             _t = r.ReadDouble("t");
             _next = r.ReadDouble("next");
-            _rng.Seed = r.ReadLong("rng");
+            _rng.Read(r, "rng");
             FlapSwing = r.ReadDouble("flaps");
             for (int i = 0; i < _all.Length; i++) _all[i].Active = false;
             _count = (int)r.ReadLong("n");

@@ -28,9 +28,13 @@ namespace DeadLetter.Core.Tests
 
         public static MechanismGraph Graph(params IMechanism[] mechanisms) => Graph("start", mechanisms);
 
-        public static PlayerPose Pose(double x, double y = 0, bool crouched = false, bool busy = false) => new PlayerPose(x, y, 0, crouched, busy);
+        public static PlayerPose Pose(double x, double y = 0, bool crouched = false, bool busy = false,
+            bool grounded = true, bool holding = false, double vx = 0)
+            => new PlayerPose(x, y, 0, crouched, busy, vx, grounded, holding);
 
-        public static PlayerPose Pose(D17Motor m) => new PlayerPose(m.X, m.Y, m.Z, m.Crouched, m.IsActing);
+        /// <summary>The pose the step pipeline builds from the real motor (Hiding: the motor has no hide act yet).</summary>
+        public static PlayerPose Pose(D17Motor m)
+            => new PlayerPose(m.X, m.Y, m.Z, m.Crouched, m.IsActing, m.Vx, m.Grounded, m.Hold != HoldKind.None);
 
         public static void Run(MechanismGraph g, int steps, PlayerPose? pose = null)
         {

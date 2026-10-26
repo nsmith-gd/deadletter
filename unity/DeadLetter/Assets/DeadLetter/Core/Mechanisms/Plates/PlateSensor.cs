@@ -2,35 +2,6 @@ using System;
 
 namespace DeadLetter.Core.Mechanisms.Plates
 {
-    /// <summary>Where a loose thing rests, as the prototype's item and pushable <c>state</c> strings say.</summary>
-    public enum BodySupport
-    {
-        /// <summary>Not in the lane (stored on a hook, gone down a chute): weighs on nothing.</summary>
-        Away,
-        /// <summary>On the floor (<c>'floor'</c>, <c>'free'</c>).</summary>
-        Floor,
-        /// <summary>On the floor, in his hands (<c>game.hold === 'push'</c>): weighs as on the floor.</summary>
-        Pushed,
-        /// <summary>Riding something that moves (<c>'trolley'</c>): weighs where its carrier is (<see cref="IPlateBody.SupportX"/>).</summary>
-        Carrier,
-        /// <summary>Lifted by D-17 (<c>'carried'</c>): weighs with him.</summary>
-        Carried,
-        /// <summary>Set into its receiver (<c>'tray'</c>, <c>'car'</c>, <c>'peg'</c>).</summary>
-        Placed,
-    }
-
-    /// <summary>
-    /// A loose thing a plate can weigh: an item (U-12 Carry) or a pushable (Push). This is the Plates family's input
-    /// signal; it lives here until the Carry/Push families land and can move to Signals.cs.
-    /// </summary>
-    public interface IPlateBody
-    {
-        /// <summary>Lane x of its centre, metres.</summary>
-        double X { get; }
-        /// <summary>Lane x of what it rests on (its carrier's x when <see cref="Support"/> is Carrier; otherwise <see cref="X"/>).</summary>
-        double SupportX { get; }
-        BodySupport Support { get; }
-    }
 
     public enum PlateTermKind
     {

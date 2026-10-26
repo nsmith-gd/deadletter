@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using DeadLetter.Core.Mechanisms;
+using DeadLetter.Core.Mechanisms.Actuators;
 using DeadLetter.Core.Mechanisms.Catches;
 using DeadLetter.Core.Mechanisms.Lifts;
+using DeadLetter.Core.Mechanisms.Plates;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -257,14 +259,15 @@ namespace DeadLetter.Core.Tests
             public readonly CageCatch Catch = new CageCatch("dl09.cagePawl", CageCatchParams.Dl09CagePawl());
             public readonly SlippingCage Cage = new SlippingCage("dl09.cage", SlippingCageParams.Dl09Cage());
             public readonly MechanismGraph G;
-            public bool InCage = true;
+            public bool InCage = true, Grounded = true, Holding;
             public Dl09(int plates, string cp = "cage")
             {
                 Tray.Load = plates;
                 G = Mech.Graph(cp, Tray, Catch, Cage);
             }
             /// <summary>He stands in the cage on its floor (ride sync), in the cage act while it carries him.</summary>
-            public PlayerPose Pose() => InCage ? Mech.Pose(101.52, Cage.FloorY, busy: Cage.Riding) : Mech.Pose(100.5, 3.4);
+            public PlayerPose Pose() => InCage ? Mech.Pose(101.52, Cage.FloorY, busy: Cage.Riding, grounded: Grounded, holding: Holding)
+                : Mech.Pose(100.5, 3.4, grounded: Grounded, holding: Holding);
             public void Step() => G.Step(Dt, Pose());
         }
 
@@ -410,13 +413,13 @@ namespace DeadLetter.Core.Tests
             var s = new Dl09(2);
             for (int i = 0; i < 30; i++) s.G.Step(Dt, Mech.Pose(101.52, 3.4, busy: true));
             Assert.Equal(SlippingCageState.Top, s.Cage.State);
-            for (int i = 0; i < 30; i++) { s.Cage.NoteRider(grounded: true, holding: true); s.Step(); }
+            for (int i = 0; i < 30; i++) { s.Grounded = true; s.Holding = true; s.Step(); }
             Assert.Equal(SlippingCageState.Top, s.Cage.State);
-            for (int i = 0; i < 30; i++) { s.Cage.NoteRider(grounded: false, holding: false); s.Step(); }
+            for (int i = 0; i < 30; i++) { s.Grounded = false; s.Holding = false; s.Step(); }
             Assert.Equal(SlippingCageState.Top, s.Cage.State);
             s.G.Step(Dt, Mech.Pose(101.25, 3.4));                            // not 0.1 inside the shaft
             Assert.Equal(SlippingCageState.Top, s.Cage.State);
-            s.Cage.NoteRider(grounded: true, holding: false);
+            s.Grounded = true; s.Holding = false;
             s.Step();
             Assert.Equal(SlippingCageState.Settle, s.Cage.State);
         }
@@ -484,13 +487,34 @@ namespace DeadLetter.Core.Tests
         private sealed class Dl10
         {
             public readonly TestSource Plate = new TestSource("dl10.carPlate");
+            public readonly TestSource Gate = new TestSource("dl10.carGate");
             public readonly RelocationLift Lift = new RelocationLift("dl10.lift", RelocationLiftParams.Dl10Lift());
             public readonly MechanismGraph G;
             public Dl10(bool loaded = true, bool gateShut = true, string cp = "uponly")
             {
-                Plate.Load = loaded ? 1 : 0; Plate.Position = gateShut ? 1 : 0;
-                G = Mech.Graph(cp, Plate, Lift);
+                Plate.Load = loaded ? 1 : 0; Gate.Position = gateShut ? 1 : 0;
+                G = Mech.Graph(cp, Plate, Gate, Lift);
             }
+        }
+
+        [Fact]
+        public void Relocation_WiredToTheRealPlateAndGate_ReadyOnlyOnceTheGateHasShut_L4584_L4623()
+        {
+            var suitcase = new TestBody("dl10.case", 121.3, BodySupport.Floor);
+            var plate = new LoadPlate("dl10.carPlate", LoadPlateParams.Dl10CarPlate());
+            var gate = new Door("dl10.carGate", PlateOutputs.Dl10CarGate());
+            var lift = new RelocationLift("dl10.lift", RelocationLiftParams.Dl10Lift());
+            var g = Mech.Graph("uponly", suitcase, plate, gate, lift);
+            Mech.Run(g, 5);
+            Assert.False(lift.Loaded || lift.GateShut || lift.Ready);
+            suitcase.Support = BodySupport.Placed;                               // set into the car
+            int ready = Mech.RunUntil(g, () => lift.Ready);
+            Assert.InRange(ready, 131, 133);                                     // 0.8 s + 1.4 s = 132 steps: the gate is shut
+            Assert.Equal(DoorState.Open, gate.State);
+            Assert.True(lift.Loaded && lift.GateShut);
+            lift.PressUp(false);
+            g.Step(Dt, PlayerPose.Away);
+            Assert.True(Mech.Entered(g, "dl10.lift", RelocationLiftState.Up));
         }
 
         [Theory]
@@ -704,6 +728,70 @@ namespace DeadLetter.Core.Tests
             Mech.Run(a.G, 40, a.Pose());
             var b = new Dl15("class6");
             AssertRestoreContinues(a.G, b.G, 140, k => a.Pose());
+        }
+
+        [Fact]
+        public void PupilLift_DoesNotCarryHimWhileAirborne_GameGrounded_L5724()
+        {
+            var s = new Dl15();
+            s.G.Step(Dt, Mech.Pose(281.9, s.Lift.FloorY, grounded: false));
+            Assert.False(s.Lift.Carrying);
+            s.G.Step(Dt, s.Pose());
+            Assert.True(s.Lift.Carrying);
+        }
+
+        /// <summary>The steps (1-based) on which <paramref name="id"/> emitted <paramref name="evt"/>, and the states it was in.</summary>
+        private static List<int> EventSteps<T>(MechanismGraph g, MechanismId id, T evt, int steps, Func<PlayerPose> pose = null,
+            Action<int> after = null) where T : struct, Enum
+        {
+            var list = new List<int>();
+            for (int i = 1; i <= steps; i++)
+            {
+                g.Step(Dt, pose?.Invoke() ?? PlayerPose.Away);
+                if (Mech.Emitted(g, id, evt)) { list.Add(i); after?.Invoke(i); }
+            }
+            return list;
+        }
+
+        [Fact]
+        public void Relocation_SqueaksAtRandomOnlyWhileMoving_SeededAndReplayedOnReset_L4637()
+        {
+            List<int> Run(Dl10 s)
+            {
+                s.Lift.PressUp(false);
+                return EventSteps(s.G, "dl10.lift", RelocationLiftEvent.Squeak, 900, after: _ =>
+                    Assert.True(s.Lift.State == RelocationLiftState.Up || s.Lift.State == RelocationLiftState.Down));
+            }
+            var a = new Dl10();
+            var first = Run(a);
+            Assert.InRange(first.Count, 6, 40);                                 // 1.5 /s over 11 s of travel
+            Assert.Equal(first, Run(new Dl10()));                               // same seed, same squeaks
+            a.G.Reset(Mech.Cp("uponly"));
+            Assert.Equal(first, Run(a));                                        // a reload replays them
+        }
+
+        [Fact]
+        public void PupilLift_RatchetsAtRandomOnlyWhileMoving_L5722()
+        {
+            var s = new Dl15();
+            Assert.Empty(EventSteps(s.G, "dl15.lift", PupilLiftEvent.Ratchet, 120, s.Pose));   // still at the top
+            s.Pupil.Engaged = true;
+            var r = EventSteps(s.G, "dl15.lift", PupilLiftEvent.Ratchet, 200, s.Pose,
+                _ => Assert.Equal(PupilLiftState.Descending, s.Lift.State));
+            Assert.InRange(r.Count, 3, 30);                                     // 5 /s over 2.46 s
+        }
+
+        [Fact]
+        public void RackCw_RatchetsAtRandomOnlyWhileLifting_L5766()
+        {
+            var latch = new TestSource("dl16.latch");
+            var cw = new CounterweightRack("dl16.rackCW", CounterweightRackParams.Dl16RackCw());
+            var g = Mech.Graph("crossing", latch, cw);
+            Assert.Empty(EventSteps(g, "dl16.rackCW", CounterweightRackEvent.Ratchet, 60));
+            latch.Engaged = true;
+            var r = EventSteps(g, "dl16.rackCW", CounterweightRackEvent.Ratchet, 300);
+            Assert.InRange(r.Count, 3, 30);                                     // 6 /s over 1.8 s
+            Assert.All(r, i => Assert.True(i <= 108));
         }
 
         // ---- CounterweightRack (dl16.rackCW) ----------------------------------------------------------------------------

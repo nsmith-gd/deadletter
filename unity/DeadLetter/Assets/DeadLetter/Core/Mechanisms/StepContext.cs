@@ -7,13 +7,23 @@ namespace DeadLetter.Core.Mechanisms
     public readonly struct PlayerPose
     {
         public readonly double X, Y, Z;
+        /// <summary>Lane speed, m/s (the prototype's <c>game.vx</c>; the motor's <c>Vx</c>).</summary>
+        public readonly double Vx;
         public readonly bool Crouched;
         /// <summary>In an act (the prototype's <c>game.act</c>): quirks such as Startle do not interrupt one.</summary>
         public readonly bool Busy;
+        /// <summary>On a support (<c>game.grounded</c>; the motor's <c>Grounded</c>). Defaults to true.</summary>
+        public readonly bool Grounded;
+        /// <summary>His hands are full (<c>game.hold</c>; the motor's <c>Hold != HoldKind.None</c>).</summary>
+        public readonly bool Holding;
+        /// <summary>In DL-14b's hide act (<c>game.act.what === 'hide'</c>, L5973). The motor has no hide act yet (U-11).</summary>
+        public readonly bool Hiding;
 
-        public PlayerPose(double x, double y, double z = 0, bool crouched = false, bool busy = false)
+        public PlayerPose(double x, double y, double z = 0, bool crouched = false, bool busy = false,
+            double vx = 0, bool grounded = true, bool holding = false, bool hiding = false)
         {
             X = x; Y = y; Z = z; Crouched = crouched; Busy = busy;
+            Vx = vx; Grounded = grounded; Holding = holding; Hiding = hiding;
         }
 
         /// <summary>Nobody in the lane (tests of a mechanism on its own).</summary>

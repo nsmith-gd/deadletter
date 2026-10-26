@@ -47,8 +47,6 @@ namespace DeadLetter.Core.Mechanisms.Water
     /// Standing water across the lane (§4.13i "Water, floods and floats"; DL-11's dip, L3902, L4139, L4860–L4862). D-17
     /// never wades: at its edge he flinches back (<see cref="FloodEvent.TurnBack"/>) unless something bridges it. The lane
     /// collision asks <see cref="FloorAt"/> for the floor over it. Signals: <see cref="Engaged"/> = bridged.
-    /// <para>The prototype also requires <c>game.grounded</c>; <see cref="PlayerPose"/> has no grounded flag, so the
-    /// y &lt; 0.02 test stands for it (a jump's first step from the floor can still trip it).</para>
     /// </summary>
     public sealed class Flood : Mechanism, IEngageable
     {
@@ -78,7 +76,7 @@ namespace DeadLetter.Core.Mechanisms.Water
         {
             Enter(ctx, (int)(Bridged() ? FloodState.Bridged : FloodState.Wet));
             var pl = ctx.Player;
-            if (State == FloodState.Wet && !pl.Busy && pl.X + _p.Lead > _p.X0 && pl.X < _p.X1 && pl.Y < _p.FloorTolerance)   // L4860
+            if (State == FloodState.Wet && !pl.Busy && pl.Grounded && pl.X + _p.Lead > _p.X0 && pl.X < _p.X1 && pl.Y < _p.FloorTolerance)   // L4860
                 Emit(ctx, (int)FloodEvent.TurnBack, 0, _p.X0 - _p.BackOffset);                                                 // L4861
         }
 

@@ -1,6 +1,7 @@
 using System;
 using DeadLetter.Core.Maths;
 using DeadLetter.Core.Save;
+using DeadLetter.Core.Simulation;
 
 namespace DeadLetter.Core.Mechanisms.Lifts
 {
@@ -24,13 +25,16 @@ namespace DeadLetter.Core.Mechanisms.Lifts
         Buzz,
         /// <summary>It stopped at the end of a run (clunk; L4631, L4635). Value = shake: 0.35 when it landed with him, 0.12 otherwise, 0 at the bottom.</summary>
         Arrive,
+        /// <summary>A random squeak while it moves up or down (<c>Math.random() &lt; dt · 1.5</c>, L4637).</summary>
+        Squeak,
     }
 
     public sealed class RelocationLiftParams
     {
         /// <summary>The car's floor plate (an <see cref="ILoad"/>): it has a passenger while Load &gt; 0 (<c>uo.loaded</c>, L4549).</summary>
         public MechanismId CarPlate;
-        /// <summary>Optional: the car's gate (an <see cref="IPositionSource"/>, 0 open … 1 shut; <c>uo.gate</c>, L4620–L4624). None: always shut.</summary>
+        /// <summary>Optional: the car's gate (an <see cref="IPositionSource"/>, 0 open … 1 shut; <c>uo.gate</c>, L4620–L4624): the
+        /// <c>dl10.carGate</c> <see cref="Actuators.Door"/> (<see cref="Plates.PlateOutputs.Dl10CarGate"/>). None: always shut.</summary>
         public MechanismId CarGate;
         /// <summary>The deck: the counterweight's top at rest; he rides it down to Deck − Travel (L4600).</summary>
         public double Deck = 1.6;
@@ -38,12 +42,15 @@ namespace DeadLetter.Core.Mechanisms.Lifts
         public double Travel = 1.6, RideTime = 5.5, TopHold = 3;
         /// <summary>Gone (car up, counterweight down) past this checkpoint (resetCh1, L4101).</summary>
         public string GoneAfter;
+        /// <summary>Squeaks per second while moving (L4637), drawn from a <see cref="SimRng"/> seeded with <see cref="Seed"/> on Reset.</summary>
+        public double SqueakRate = 1.5;
+        public ulong Seed = 0x0D11_0A10_4637UL;
 
         /// <summary>DL-10: the relocation lift and its counterweight (<c>UO</c>, L3455–L3461; L4526–L4675).</summary>
         public static RelocationLiftParams Dl10Lift() => new RelocationLiftParams
         {
             CarPlate = "dl10.carPlate",
-            CarGate = "dl10.carPlate",                         // the plate's gate draws shut 0.8 s after the case (§4.13a)
+            CarGate = "dl10.carGate",                          // the Door the plate triggers: shut 0.8 s + 1.4 s after the case (§4.13a)
             GoneAfter = "ringc",
         };
     }
@@ -57,8 +64,7 @@ namespace DeadLetter.Core.Mechanisms.Lifts
     /// FloorY = Deck − d, carrying him while it moves with him on it (<c>game.y = DECK − uo.d</c>, L4600).
     /// Inputs: <see cref="PressUp"/> from the button acts at PressButtonHigh f16 (L4582); <see cref="FollowCue"/> from the
     /// cue clock while he rides (the car's climb is the <c>ringc</c> cue's, L4616–L4617).
-    /// Not ported: the random squeak (<c>Math.random() &lt; dt · 1.5</c>, L4637) waits for SimRng; the gauges, lamps
-    /// and ropes (L4638–L4665) are view.
+    /// The random squeak (L4637) draws from its own <see cref="SimRng"/>. The gauges, lamps and ropes (L4638–L4665) are view.
     /// </summary>
     public sealed class RelocationLift : Lift
     {
@@ -70,8 +76,9 @@ namespace DeadLetter.Core.Mechanisms.Lifts
         private double _t, _cue;
         private bool _riding, _hasCue;
         private int _press;
+        private SimRng _rng;
 
-        public RelocationLift(MechanismId id, RelocationLiftParams p) : base(id) { _p = p; }
+        public RelocationLift(MechanismId id, RelocationLiftParams p) : base(id) { _p = p; _rng = SimRng.Xorshift(p.Seed); }
 
         public RelocationLiftState State => (RelocationLiftState)StateCode;
         /// <summary>The car's rise, metres (<c>uo.d</c>).</summary>
@@ -102,6 +109,7 @@ namespace DeadLetter.Core.Mechanisms.Lifts
 
         public override void Reset(in Checkpoint cp)
         {
+            _rng = SimRng.Xorshift(_p.Seed);   // the same checkpoint replays the same sounds and crates
             bool gone = cp.Past(_p.GoneAfter);                                                     // L4101
             D = gone ? _p.Travel : 0;
             Init((int)(gone ? RelocationLiftState.Gone : RelocationLiftState.Idle));
@@ -109,6 +117,7 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             _riding = false;
             _press = PressNone;
             _cue = 0; _hasCue = false;
+            _rng.Reseed((long)_p.Seed);
             InitFloor(CounterweightY);
         }
 
@@ -151,6 +160,8 @@ namespace DeadLetter.Core.Mechanisms.Lifts
                     if (Reached(_t, T)) { Enter(ctx, (int)RelocationLiftState.Idle); D = 0; Emit(ctx, (int)RelocationLiftEvent.Arrive); }   // L4635
                     break;
             }
+            if ((State == RelocationLiftState.Up || State == RelocationLiftState.Down) && _rng.Chance(dt * _p.SqueakRate))
+                Emit(ctx, (int)RelocationLiftEvent.Squeak);                                      // L4637
             MoveFloor(ctx, CounterweightY);
             Carrying = _riding && State == RelocationLiftState.Up;
         }
@@ -163,6 +174,7 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             w.WriteBool("hasCue", _hasCue);
             w.WriteBool("riding", _riding);
             w.WriteLong("press", _press);
+            _rng.Write(w, "rng");
         }
 
         protected override void ReadLift(ISnapshotReader r)
@@ -173,6 +185,7 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             _hasCue = r.ReadBool("hasCue");
             _riding = r.ReadBool("riding");
             _press = (int)r.ReadLong("press");
+            _rng.Read(r, "rng");
         }
     }
 }

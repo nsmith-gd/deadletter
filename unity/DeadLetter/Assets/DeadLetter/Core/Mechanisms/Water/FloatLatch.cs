@@ -28,7 +28,7 @@ namespace DeadLetter.Core.Mechanisms.Water
         /// </summary>
         public string LatchedAfter;
 
-        /// <summary>DL-17: bed 1's float lifts the latch that holds the stair door (§4.13c <c>dl17.floatLatch</c>; L6258–L6259, L6314).</summary>
+        /// <summary>DL-17: bed 1's float lifts the latch that holds the stair door (§5 <c>dl17.latch</c>; L6258–L6259, L6314).</summary>
         public static FloatLatchParams Dl17Latch() => new FloatLatchParams { Source = "dl17.rig" };
     }
 

@@ -2,6 +2,7 @@ using System;
 using DeadLetter.Core.Maths;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Save;
+using DeadLetter.Core.Simulation;
 
 namespace DeadLetter.Core.Beings
 {
@@ -77,7 +78,7 @@ namespace DeadLetter.Core.Beings
     /// water that hunts by sound and never leaves the water. A port of <c>makeNoise</c>, <c>lureWhite</c>,
     /// <c>scareWhite</c> and <c>updateWhite</c>; the ripples, the Animator and the JawTip follow are Runtime
     /// (<c>WhiteView</c>, <c>RipplePool</c>), fed by <see cref="Clip"/> and the events.
-    /// <para>Inputs: <see cref="StepContext.Player"/> (x, y), <see cref="BeingSenses"/> (speed, footing, alive, region,
+    /// <para>Inputs: <see cref="StepContext.Player"/> (x, y, speed, footing), <see cref="BeingSenses"/> (alive, region,
     /// upper) and its <see cref="NoiseBus"/> (sounds, lures, scares, sighting cues), read at the start of Step in the
     /// order posted. Add it to the graph after every mechanism that posts noise (the prototype's <c>updateWhite</c> is
     /// step #8); a noise posted after it steps is dropped when the bus clears.</para>
@@ -95,7 +96,7 @@ namespace DeadLetter.Core.Beings
     {
         private readonly WhiteParams _p;
         private readonly BeingSenses _sense;
-        private readonly BeingRng _rng;
+        private SimRng _rng;
 
         private int _water = -1;
         private double _x, _y = -1, _tx;
@@ -118,7 +119,7 @@ namespace DeadLetter.Core.Beings
             _p = p ?? throw new ArgumentNullException(nameof(p));
             _sense = senses ?? throw new ArgumentNullException(nameof(senses));
             if (_p.Waters.Length > 63) throw new ArgumentException("At most 63 waters per White.", nameof(p));
-            _rng = new BeingRng(_p.Seed);
+            _rng = SimRng.Xorshift(_p.Seed);
         }
 
         public WhiteState State => (WhiteState)StateCode;
@@ -174,7 +175,7 @@ namespace DeadLetter.Core.Beings
             _hit = false; _heldT = -1;
             _shown = 0;                                      // sumpShown/heapShown/whiteShown live in game.ch1 (L4110)
             _clip = WhiteClip.None; _clipFade = 0;
-            _rng.Seed(_p.Seed);
+            _rng.Reseed((long)_p.Seed);
         }
 
         public override void Step(in StepContext ctx)
@@ -217,7 +218,7 @@ namespace DeadLetter.Core.Beings
             if (_sense.Alive)
             {
                 bool near = hero.X > w.X0 - _p.RunNear && hero.X < w.X1 + _p.RunNear;
-                if (near && _sense.Grounded && Math.Abs(_sense.Vx) > _p.RunSpeed && _clock - _lastNoise > _p.RunCooldown)
+                if (near && hero.Grounded && Math.Abs(hero.Vx) > _p.RunSpeed && _clock - _lastNoise > _p.RunCooldown)
                     MakeNoise(ctx, hero.X, _p.RunLoud, _sense.Region, true);
             }
 
@@ -423,7 +424,7 @@ namespace DeadLetter.Core.Beings
             w.WriteBool("hit", _hit); w.WriteDouble("heldT", _heldT);
             w.WriteLong("shown", _shown); w.WriteBool("warned", Warned);
             w.WriteLong("clip", (long)_clip); w.WriteDouble("clipFade", _clipFade);
-            w.WriteLong("rng", _rng.State);
+            _rng.Write(w, "rng");
         }
 
         protected override void ReadFields(ISnapshotReader r)
@@ -439,7 +440,7 @@ namespace DeadLetter.Core.Beings
             _hit = r.ReadBool("hit"); _heldT = r.ReadDouble("heldT");
             _shown = r.ReadLong("shown"); Warned = r.ReadBool("warned");
             _clip = (WhiteClip)r.ReadLong("clip"); _clipFade = r.ReadDouble("clipFade");
-            _rng.State = r.ReadLong("rng");
+            _rng.Read(r, "rng");
         }
     }
 }

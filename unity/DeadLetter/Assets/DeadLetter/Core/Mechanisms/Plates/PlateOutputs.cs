@@ -17,6 +17,7 @@ namespace DeadLetter.Core.Mechanisms.Plates
         /// <summary>
         /// DL-10: the car gate draws shut 0.8 s after the suitcase is loaded, over 1.4 s; Opening = creak, Open = slam and
         /// 0.12 shake; each leaf slides <c>UO.gate</c> 0.56 (L3461, L4623–L4627). ID proposed: <c>dl10.carGate</c> (§5 lists none).
+        /// Position 0 … 1 (Travel 1) = <c>uo.gate</c>: the relocation lift reads it as its CarGate (shut at 1).
         /// </summary>
         public static DoorParams Dl10CarGate() => new DoorParams { Trigger = "dl10.carPlate", Delay = 0.8, Duration = 1.4 };
     }

@@ -54,24 +54,4 @@ namespace DeadLetter.Core.Mechanisms.Routes
             return Math.Sqrt(dx * dx + dy * dy);
         }
     }
-
-    /// <summary>
-    /// The prototype's seeded generator (the carrier payload LCG, L2666–L2667: <c>seed = (seed · 16807 + 11) mod
-    /// 2147483647</c>). Also stands in for <c>Math.random</c> where the prototype used it for gameplay (the DL-08 crates,
-    /// L3130, L3139) until Core's SimRng lands; its state is snapshotted.
-    /// </summary>
-    public struct RouteRng
-    {
-        private const long M = 2147483647;
-        public long Seed;
-
-        public RouteRng(long seed) { Seed = seed; }
-
-        /// <summary>Next value in [0, 1).</summary>
-        public double Next()
-        {
-            Seed = ((Seed * 16807 + 11) % M + M) % M;
-            return Seed / (double)M;
-        }
-    }
 }
