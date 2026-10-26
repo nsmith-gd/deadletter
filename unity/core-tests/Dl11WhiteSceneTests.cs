@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DeadLetter.Core.Beings;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Motor;
+using DeadLetter.Core.Save;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -159,5 +160,40 @@ namespace DeadLetter.Core.Tests
             }
             Assert.Equal(dumps[0], dumps[1]);
         }
-    }
+    
+        /// <summary>
+        /// U-14: save at <c>ringc</c>; running along the lane, the White warns him (<c>persist.warned</c>). Respawn at
+        /// ringc puts the White back exactly as it was at the checkpoint but keeps the warning; so does quitting and
+        /// continuing in a fresh scene, where running now gets him taken.
+        /// </summary>
+        [Fact]
+        public void SaveAndContinue_AtRingc_RestoresTheWhite_AndTheWarningSurvives_L7150()
+        {
+            var s = new Scene(135.25);
+            var fs = new MemoryFileSystem();
+            var svc = SaveKit.Service(s.G, fs, "DL-11");
+            svc.BindFlag(StoryFlags.WhiteWarned, () => s.White.Warned, v => s.White.Warned = v);
+            Assert.True(svc.Reach("ringc"));
+            string atRingc = SaveKit.Dump(s.G);
+            string warnedAtRingc = atRingc.Replace(Id + "/warned=false", Id + "/warned=true");
+            Assert.NotEqual(atRingc, warnedAtRingc);
+
+            s.Motor.AutoRun = false;
+            Assert.True(s.CrossLane(Run) > 0);
+            Assert.True(s.White.Warned);
+            Assert.False(s.Dead);
+
+            svc.Reload();                                                      // respawn at ringc
+            s.Motor.Place(135.25, 0); s.Senses.Alive = true;
+            Assert.Equal(warnedAtRingc, SaveKit.Dump(s.G));
+
+            var b = new Scene(135.25);
+            SaveKit.Continue(b.G, fs, "DL-11", "ringc", warnedAtRingc,
+                c => c.BindFlag(StoryFlags.WhiteWarned, () => b.White.Warned, v => b.White.Warned = v));
+            Assert.True(b.White.Warned);
+            b.Motor.AutoRun = false;
+            Assert.True(b.CrossLane(Run) > 0);
+            Assert.True(b.Dead);                                               // warned once: now it strikes
+        }
+}
 }

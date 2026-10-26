@@ -37,6 +37,11 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         /// starts from t = 0 on that step (DL-01's shutter: <c>t = clock − releaseTime</c>, L1692).
         /// </summary>
         public bool CountTriggerStep = true;
+        /// <summary>
+        /// Timed mode: a persist flag (<c>StoryFlags</c>) that must also be set before it opens; null = none. The delay
+        /// runs from the trigger alone, so a trigger held long enough opens it on the step the flag is set.
+        /// </summary>
+        public string RequiresFlag;
         /// <summary>Seconds into the opening at which to emit <see cref="DoorEvent.Cue"/>; &lt; 0 = none.</summary>
         public double CueAt = -1;
 
@@ -62,8 +67,14 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         /// <summary>DL-15: the classroom door opens over 1.6 s on dismissal (L5737).</summary>
         public static DoorParams Dl15ClassDoor() => new DoorParams { Trigger = "dl15.seats", Duration = 1.6 };
 
-        /// <summary>DL-17: the stair door opens 0.8 s after the float latch, over 1.8 s (L5789, L5794).</summary>
-        public static DoorParams Dl17StairDoor() => new DoorParams { Trigger = "dl17.latch", Delay = 0.8, Duration = 1.8 };
+        /// <summary>
+        /// DL-17: the stair door opens 0.8 s after the float latch, over 1.8 s, once Lisle's drawing has been read
+        /// (the door rule sits inside <c>if (d.read)</c>, L5776, L5789, L5794).
+        /// </summary>
+        public static DoorParams Dl17StairDoor() => new DoorParams
+        {
+            Trigger = "dl17.latch", Delay = 0.8, Duration = 1.8, RequiresFlag = StoryFlags.Dl17DrawerRead,
+        };
     }
 
     /// <summary>
@@ -76,6 +87,8 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         private readonly DoorParams _p;
         private IPositionSource _follow;
         private IEngageable _trigger;
+        private IPersistFlagReader _flags;
+        private int _flag = -1;
         private double _held = -1, _t;
         private bool _cued;
 
@@ -92,6 +105,12 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             _follow = link.Read<IPositionSource>(_p.Follow);
             _trigger = link.Read<IEngageable>(_p.Trigger);
             if ((_follow == null) == (_trigger == null)) throw new InvalidOperationException(Id + " needs exactly one of Follow or Trigger.");
+            if (_p.RequiresFlag != null)
+            {
+                if (_trigger == null) throw new InvalidOperationException(Id + ": RequiresFlag needs a Trigger.");
+                _flags = link.Flags;
+                _flag = _flags.Resolve(_p.RequiresFlag);
+            }
         }
 
         /// <summary>Derived from its source, which is already reset: open if the trigger is engaged (no replay of the swing).</summary>
@@ -99,7 +118,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         {
             _held = -1;
             if (_follow != null) { Position = _follow.Position * _p.Travel; Init((int)FollowState(_follow.Position)); return; }
-            bool open = _trigger.Engaged;
+            bool open = _trigger.Engaged && Allowed;
             Init((int)(open ? DoorState.Open : DoorState.Closed));
             _t = open ? _p.Duration : 0;
             _cued = open;
@@ -115,6 +134,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
                 if (!_trigger.Engaged) { _held = -1; return; }
                 _held = _held < 0 ? 0 : _held + ctx.Dt;
                 if (!(_p.Delay <= 0 || _held > _p.Delay)) return;
+                if (!Allowed) return;
                 Enter(ctx, (int)DoorState.Opening);
                 _t = _p.CountTriggerStep ? ctx.Dt : 0;
             }
@@ -126,6 +146,8 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             if (_p.CueAt >= 0 && !_cued && _t >= _p.CueAt - 1e-9) { _cued = true; Emit(ctx, (int)DoorEvent.Cue); }
             if (p >= 1) Enter(ctx, (int)DoorState.Open);
         }
+
+        private bool Allowed => _flag < 0 || _flags.Get(_flag);
 
         private static DoorState FollowState(double p) => p >= 1 ? DoorState.Open : p > 0 ? DoorState.Opening : DoorState.Closed;
 

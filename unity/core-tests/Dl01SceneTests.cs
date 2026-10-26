@@ -6,6 +6,7 @@ using DeadLetter.Core.Mechanisms.Actuators;
 using DeadLetter.Core.Mechanisms.Catches;
 using DeadLetter.Core.Mechanisms.Drives;
 using DeadLetter.Core.Motor;
+using DeadLetter.Core.Save;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -196,5 +197,100 @@ namespace DeadLetter.Core.Tests
             }
             Assert.Equal(runs[0], runs[1]);
         }
-    }
+    
+        /// <summary>
+        /// U-14 (DL-01 §8 test 2, §9 Recovery): play the scene with the real motor, saving at each checkpoint as the
+        /// prototype sets it (start at the handover; shutter on the release, L1677; hall past the pit, L2065; door on
+        /// the crank's last stroke, L1890). At each one, quit and continue in a fresh scene: every mechanism comes back
+        /// exactly (bar the tick), then steps on bit-identically with the original.
+        /// </summary>
+        [Fact]
+        public void SaveAndContinue_AtEveryCheckpoint_RestoresTheExactState()
+        {
+            var s = new Scene("start", 2.7);
+            var fs = new MemoryFileSystem();
+            var svc = SaveKit.Service(s.G, fs, "DL-01");
+            svc.NewGame();                                                    // control handover: start
+            var saved = new List<(string cp, string dump, byte[] bytes)> { ("start", SaveKit.Dump(s.G), (byte[])fs.Files["slot0.dls"].Clone()) };
+
+            void Check(string cp)
+            {
+                Assert.True(svc.Reach(cp));
+                saved.Add((cp, SaveKit.Dump(s.G), (byte[])fs.Files["slot0.dls"].Clone()));
+            }
+
+            s.Step(Sim.Use());
+            for (int i = 0; i < 600 && s.Latch.State == LatchState.Locked; i++) s.Step(Sim.Move(0));
+            Check("shutter");
+            Assert.Equal(DoorState.Opening, s.Shutter.State);                 // mid-swing: kept exactly
+            for (int i = 0; i < 1200 && s.Motor.X < 8.35; i++) s.Step(s.Motor.IsActing ? Sim.Move(0) : Sim.Move(1));
+            Assert.True(s.Motor.X >= 8.35);
+            Check("hall");
+            for (int i = 0; i < 600 && Math.Abs(s.Motor.X - 9.4) > 0.04; i++) s.Step(Sim.Move(Math.Sign(9.4 - s.Motor.X) * 0.4));
+            for (int i = 0; i < 60; i++) s.Step(Sim.Move(0));
+            s.Step(Sim.Use());
+            for (int i = 0; i < 900 && s.Crank.State != CrankState.Done; i++) s.Step(Sim.Move(0));
+            Check("door");
+            Assert.Equal(DoorState.Open, s.Door.State);
+            Assert.Equal(new[] { "start", "shutter", "hall", "door" }, saved.ConvertAll(x => x.cp));
+
+            foreach (var (cp, dump, bytes) in saved)
+            {
+                var copy = new MemoryFileSystem();
+                copy.Files["slot0.dls"] = bytes;
+                var b = new Scene("room", 5.0);                               // any state: the save overwrites it
+                SaveKit.Continue(b.G, copy, "DL-01", cp, dump);
+                Assert.Equal(cp == "start" ? LatchState.Locked : LatchState.Released, b.Latch.State);
+                Assert.Equal(cp == "door" ? CrankState.Done : CrankState.Idle, b.Crank.State);
+
+                var a = new Scene("start", 2.7);                              // the original, reloaded in-session
+                var svcA = SaveKit.Service(a.G, copy, "DL-01");
+                Assert.True(svcA.TryContinue());
+                for (int k = 0; k < 120; k++)
+                {
+                    a.G.Step(Dt, Mech.Pose(a.Motor));
+                    b.G.Step(Dt, Mech.Pose(a.Motor));
+                    Assert.Equal(SaveKit.Dump(a.G), SaveKit.Dump(b.G));
+                }
+            }
+        }
+
+        [Fact]
+        public void Respawn_AfterTheHall_RestoresTheHallSnapshot_NotTheLaterState()
+        {
+            var s = new Scene("start", 2.7);
+            var svc = SaveKit.Service(s.G, new MemoryFileSystem(), "DL-01");
+            svc.NewGame();
+            s.Step(Sim.Use());
+            for (int i = 0; i < 600 && s.Latch.State == LatchState.Locked; i++) s.Step(Sim.Move(0));
+            svc.Reach("shutter");
+            for (int i = 0; i < 120; i++) s.Step(Sim.Move(0));
+            string atHall = null;
+            for (int i = 0; i < 1200 && s.Motor.X < 8.35; i++) s.Step(Sim.Move(1));
+            Assert.True(svc.Reach("hall"));
+            atHall = SaveKit.Dump(s.G);
+            for (int i = 0; i < 300; i++) s.Step(Sim.Move(0));
+            Assert.NotEqual(atHall, SaveKit.Dump(s.G));                     // the relay has moved on
+            svc.Reload();
+            Assert.Equal(atHall, SaveKit.Dump(s.G));
+            Assert.Equal(DoorState.Open, s.Shutter.State);                    // the solved shutter stays solved
+        }
+
+        [Theory]
+        [InlineData("shutter", LatchState.Released, DoorState.Open, CrankState.Idle)]
+        [InlineData("hall", LatchState.Released, DoorState.Open, CrankState.Idle)]
+        [InlineData("door", LatchState.Released, DoorState.Open, CrankState.Done)]
+        public void Continue_WithoutASnapshot_DerivesTheSolvedStates_L8022_L8023(string cp, LatchState latch, DoorState shutter, CrankState crank)
+        {
+            var fs = new MemoryFileSystem();
+            new AtomicFileStore(fs).Save(0, new SaveModel { Checkpoint = cp, Scene = "DL-01" });   // e.g. migrated from v1
+            var b = new Scene("start", 2.7);
+            var svc = SaveKit.Service(b.G, fs, "DL-01");
+            Assert.True(svc.TryContinue());
+            Assert.False(svc.RestoredSnapshot);
+            Assert.Equal(latch, b.Latch.State);
+            Assert.Equal(shutter, b.Shutter.State);
+            Assert.Equal(crank, b.Crank.State);
+        }
+}
 }

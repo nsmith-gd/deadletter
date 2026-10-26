@@ -26,6 +26,12 @@ namespace DeadLetter.Core.Mechanisms
         /// <summary>Steps taken since Build (restored by snapshots).</summary>
         public long Tick { get; private set; }
 
+        /// <summary>
+        /// The persist flags (§4.28): story state that outlives a reload (the DL-17 drawer read, ...). Mechanisms read
+        /// them through <see cref="MechanismLinker.Flags"/>; <c>CheckpointService</c> owns their saving.
+        /// </summary>
+        public PersistFlags Flags { get; } = new PersistFlags();
+
         /// <summary>The calm accessibility option, passed to every step.</summary>
         public bool Calm { get; set; }
 
@@ -146,6 +152,9 @@ namespace DeadLetter.Core.Mechanisms
         internal MechanismLinker(MechanismGraph graph) { _graph = graph; }
 
         internal int Reader;
+
+        /// <summary>The graph's persist flags: resolve a name here, read the handle in Reset and Step.</summary>
+        public IPersistFlagReader Flags => _graph.Flags;
 
         /// <summary>
         /// The source's signal as of this tick: the source must step before the reader (be added earlier).

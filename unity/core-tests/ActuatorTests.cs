@@ -4,6 +4,7 @@ using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Maths;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Actuators;
+using DeadLetter.Core.Save;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -259,10 +260,42 @@ namespace DeadLetter.Core.Tests
             var latch = new TestSource("dl17.latch");
             var door = new Door("dl17.stairDoor", DoorParams.Dl17StairDoor());
             var g = Mech.Graph("workshop", latch, door);
+            g.Flags.Set(StoryFlags.Dl17DrawerRead);               // the drawing read first (L5776)
             latch.Engaged = true;
             int n = Mech.RunUntil(g, () => door.State == DoorState.Opening);
             Assert.InRange(n, 49, 50);                            // clock − latchAt > 0.8
             Assert.Equal(Dt / 1.8, door.Position, 12);
+        }
+
+        [Fact]
+        public void Door_Dl17_WaitsForTheDrawerRead_ThenOpensAtOnceIfTheLatchHeldLongEnough_L5776_L5789()
+        {
+            var latch = new TestSource("dl17.latch");
+            var door = new Door("dl17.stairDoor", DoorParams.Dl17StairDoor());
+            var g = Mech.Graph("workshop", latch, door);
+            latch.Engaged = true;
+            Mech.Run(g, 300);                                     // latched 5 s, drawing unread: the door waits
+            Assert.Equal(DoorState.Closed, door.State);
+            g.Reset(Mech.Cp("workshop"));
+            Assert.Equal(DoorState.Closed, door.State);           // nor does a reload open it
+            Mech.Run(g, 60);
+            g.Flags.Set(StoryFlags.Dl17DrawerRead);
+            Mech.Run(g, 1);
+            Assert.Equal(DoorState.Opening, door.State);          // clock − latchAt > 0.8 long since
+            g.Reset(Mech.Cp("workshop"));
+            Assert.Equal(DoorState.Open, door.State);             // read and latched: derived open
+        }
+
+        [Fact]
+        public void Door_ReadBeforeTheLatch_KeepsTheDelay_L5789()
+        {
+            var latch = new TestSource("dl17.latch");
+            var door = new Door("dl17.stairDoor", DoorParams.Dl17StairDoor());
+            var g = Mech.Graph("workshop", latch, door);
+            g.Flags.Set(StoryFlags.Dl17DrawerRead);
+            Mech.Run(g, 30);
+            latch.Engaged = true;
+            Assert.InRange(Mech.RunUntil(g, () => door.State == DoorState.Opening), 49, 50);
         }
 
         [Fact]

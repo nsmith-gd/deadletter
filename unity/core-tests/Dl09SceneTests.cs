@@ -5,6 +5,7 @@ using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Catches;
 using DeadLetter.Core.Mechanisms.Lifts;
 using DeadLetter.Core.Motor;
+using DeadLetter.Core.Save;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -217,5 +218,43 @@ namespace DeadLetter.Core.Tests
             }
             Assert.Equal(runs[0], runs[1]);
         }
-    }
+    
+        /// <summary>
+        /// U-14: save at <c>cage</c> (L4949) and at <c>landing8</c> once the pawl has caught it and he stands on the
+        /// landing (L4950); quit and continue each in a fresh scene: the cage, its pawl and the tray come back exactly.
+        /// </summary>
+        [Fact]
+        public void SaveAndContinue_AtCageAndLanding8_RestoresTheExactState_L4949_L4950()
+        {
+            var s = new Scene("cage", 100.4, 3.4, plates: 2);
+            var fs = new MemoryFileSystem();
+            var svc = SaveKit.Service(s.G, fs, "DL-09");
+            var saved = new List<(string cp, string dump, byte[] bytes)>();
+            void Check(string cp)
+            {
+                Assert.True(svc.Reach(cp));
+                saved.Add((cp, SaveKit.Dump(s.G), (byte[])fs.Files["slot0.dls"].Clone()));
+            }
+            Check("cage");
+            Assert.True(s.WalkIn() > 0);
+            s.StepUntil(Sim.Move(0), () => s.Cage.State == SlippingCageState.Stall);
+            for (int i = 0; i < 10; i++) s.Step(Sim.Move(0));
+            s.Step(Sim.Use());
+            s.StepUntil(Sim.Move(0), () => !s.Cage.Riding);
+            s.StepUntil(Sim.Move(1), () => s.Motor.X > ShaftX1 + 0.3, 200);
+            Assert.True(Math.Abs(s.Motor.Y - 1.6) < 0.1 && s.Cage.State == SlippingCageState.Caught);
+            Check("landing8");
+
+            foreach (var (cp, dump, bytes) in saved)
+            {
+                var fresh = new MemoryFileSystem();
+                fresh.Files["slot0.dls"] = bytes;
+                var b = new Scene("start", 100.0, 3.4, plates: 0);
+                SaveKit.Continue(b.G, fresh, "DL-09", cp, dump);
+                Assert.Equal(cp == "landing8" ? SlippingCageState.Caught : SlippingCageState.Top, b.Cage.State);
+                Assert.Equal(cp == "landing8", b.Catch.Engaged);
+                Assert.Equal(2, b.Tray.Load);
+            }
+        }
+}
 }

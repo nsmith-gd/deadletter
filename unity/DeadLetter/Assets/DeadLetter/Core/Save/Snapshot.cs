@@ -48,6 +48,23 @@ namespace DeadLetter.Core.Save
         public long ReadLong(string key) => Get(key, Kind.Long);
         public bool ReadBool(string key) => Get(key, Kind.Bool) != 0;
 
+        /// <summary>Writes every field to <paramref name="w"/> with its own type, in ordinal key order (deterministic).</summary>
+        public void CopyTo(ISnapshotWriter w)
+        {
+            var keys = new List<string>(_fields.Keys);
+            keys.Sort(StringComparer.Ordinal);
+            foreach (var k in keys)
+            {
+                var f = _fields[k];
+                switch (f.kind)
+                {
+                    case Kind.Double: w.WriteDouble(k, BitConverter.Int64BitsToDouble(f.bits)); break;
+                    case Kind.Long: w.WriteLong(k, f.bits); break;
+                    default: w.WriteBool(k, f.bits != 0); break;
+                }
+            }
+        }
+
         /// <summary>Every field as <c>key=value</c> lines, sorted by key; doubles printed round-trip exact.</summary>
         public string Dump()
         {

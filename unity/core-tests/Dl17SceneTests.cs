@@ -5,6 +5,7 @@ using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Actuators;
 using DeadLetter.Core.Mechanisms.Water;
 using DeadLetter.Core.Motor;
+using DeadLetter.Core.Save;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -30,8 +31,10 @@ namespace DeadLetter.Core.Tests
             public readonly List<string> Trace = new List<string>();
             public readonly List<MechanismEvent> Log = new List<MechanismEvent>();
 
-            public Scene(double x = 336.3)
+            /// <param name="drawerRead">Lisle's drawing read (<see cref="StoryFlags.Dl17DrawerRead"/>): the door's precondition (L5776).</param>
+            public Scene(double x = 336.3, bool drawerRead = true)
             {
+                G.Flags.Set(StoryFlags.Dl17DrawerRead, drawerRead);
                 Valve = G.Add(new SluiceValve("dl17.valve", SluiceValveParams.Dl17Valve()));
                 for (int i = 0; i < 3; i++) Sluices[i] = G.Add(new Sluice("dl17.sluice" + "ABC"[i], SluiceParams.Dl17Sluice(i)));
                 Rig = G.Add(new SluiceRig("dl17.rig", SluiceRigParams.Dl17Rig()));
@@ -76,9 +79,9 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>The whole scene: a shared run fails, then B alone lifts the latch and the door opens.</summary>
-        private static Scene Play(Action<Scene, string> at = null)
+        private static Scene Play(Action<Scene, string> at = null, bool drawerRead = true)
         {
-            var s = new Scene();
+            var s = new Scene(drawerRead: drawerRead);
             s.Use(s.Valve);                                                                     // all three open: shared
             at?.Invoke(s, "shared");
             for (int i = 0; i < 600 && s.Rig.Engaged; i++) s.Step(Sim.Move(0));
@@ -180,5 +183,44 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(a.Trace, b.Trace);
             Assert.Equal(DoorState.Open, b.Door.State);
         }
-    }
+    
+        [Fact]
+        public void TheDrawingUnread_TheLatchLifts_ButTheStairDoorWaits_ThenOpensOnTheRead_L5776_L5789()
+        {
+            var s = Play(drawerRead: false);
+            Assert.Equal(FloatLatchState.Latched, s.Latch.State);
+            Assert.Equal(DoorState.Closed, s.Door.State);
+            s.G.Flags.Set(StoryFlags.Dl17DrawerRead);
+            s.Step(Sim.Move(0));
+            Assert.Equal(DoorState.Opening, s.Door.State);
+        }
+
+        /// <summary>
+        /// U-14: save at <c>workshop</c> (L5805), then read the drawer (a persist flag, saved without a checkpoint).
+        /// Quit and continue in a fresh scene, or respawn: the rig comes back exactly as at the checkpoint, and the
+        /// drawing stays read.
+        /// </summary>
+        [Fact]
+        public void SaveAndContinue_AtWorkshop_RestoresTheRig_AndTheDrawerReadSurvives()
+        {
+            var s = new Scene(drawerRead: false);
+            var fs = new MemoryFileSystem();
+            var svc = SaveKit.Service(s.G, fs, "DL-17");
+            Assert.True(svc.Reach("workshop"));
+            string atWorkshop = SaveKit.Dump(s.G);
+            svc.SetFlag(StoryFlags.Dl17DrawerRead);
+            s.Use(s.Valve);
+            s.Idle(90);
+            Assert.NotEqual(atWorkshop, SaveKit.Dump(s.G));
+
+            var b = new Scene(330, drawerRead: false);
+            var svcB = SaveKit.Continue(b.G, fs, "DL-17", "workshop", atWorkshop);
+            Assert.True(svcB.Flags.Has(StoryFlags.Dl17DrawerRead));
+            Assert.True(b.G.Flags.Has(StoryFlags.Dl17DrawerRead));
+
+            svc.Reload();                                                       // and in-session: the same
+            Assert.Equal(atWorkshop, SaveKit.Dump(s.G));
+            Assert.True(svc.Flags.Has(StoryFlags.Dl17DrawerRead));
+        }
+}
 }

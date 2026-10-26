@@ -35,6 +35,11 @@ graph) or to break a cycle with a one-tick lag (pawl ↔ platform: pawl first). 
 (per producer), `IEngageable`; `IPlateBody` + `BodySupport` (items and pushables a plate weighs); `ILiftRide` (floor y,
 its velocity, Carrying: what ride sync #9 reads); `ISweptVolume` + `SweptBox` (space a folding leaf sweeps).
 
+**Persist flags** (U-14, §4.28): story state that outlives a reload (`StoryFlags`: the DL-17 drawer read, letters,
+curios...) lives in `MechanismGraph.Flags`. A mechanism that depends on one resolves it once in `Link`
+(`_h = link.Flags.Resolve(_p.RequiresFlag)`) and reads `link.Flags.Get(_h)` in Reset/Step (see `Door.RequiresFlag`).
+State a mechanism keeps itself (`WhiteBrain.Warned`) is joined by `CheckpointService.BindFlag`, not read from here.
+
 **D-17's pose** (`StepContext.Player`, built from the motor after #4): x, y, z, `Vx`, `Crouched`, `Busy` (in an act),
 `Grounded`, `Holding` (`Hold != None`), `Hiding` (hide act; not from the motor yet). Rules that need his footing or
 hands read it here, never through a side call. World state (alive, region, upper) stays in `Beings/BeingSenses`.
