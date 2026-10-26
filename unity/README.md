@@ -140,3 +140,19 @@ event frames, the resolver's in-front rule, and that the same inputs give the sa
 Put D-17's own colliders on a layer outside the probe masks. Set `groundMask` (floors, crates, walls),
 `ceilingMask` (undersides) and `rampMask`. Every Animator state needs its Speed Multiplier bound to `ClipSpeed`.
 Core runs at 60 Hz whatever `Time.fixedDeltaTime` is. Setting Fixed Timestep to 1/60 gives one step per FixedUpdate.
+
+**D-17 asset and Animator (U-11 slice 2).** `Assets/Art/D17/d17.glb` is the shipped `game/undelivered/assets/d17.glb`
+copied unchanged (skinned rig, 26 joints, 76 clips). glTFast imports it; `Editor/Import/D17ImportSettings` pins the
+import to **Animation = Mecanim** (generic clips, an `Animator` on the imported root) and original-unique node names.
+`D17AssetTests` (core-tests) checks every `ClipTimings` clip is in that GLB with the same frame count.
+
+First open, after the import finishes:
+
+1. Run **Dead Letter → Build → D17 Animator**. It writes `Assets/Art/D17/D17.controller`: one state per clip, named as
+   the clip, Speed Multiplier bound to `ClipSpeed`; each one-shot clip also gets a `Name (hold)` state that freezes its
+   last frame (glTFast marks every clip as looping). Re-run it after any re-export of `d17.glb`; it rebuilds in place
+   and keeps the GUID. Check the Console for clip/length warnings.
+2. Drag `d17.glb` into the scene (or a prefab). Assign `D17.controller` to the `Animator` glTFast put on the root
+   (the clips' curve paths are relative to that object; do not move the Animator to a child). Add `D17Controller`
+   to the same root or a parent and assign that Animator.
+3. Commit `D17.controller` and the `.meta` files.
