@@ -388,5 +388,218 @@ namespace DeadLetter.Core.Tests
             g.Add(new Door("t.door", new DoorParams()));
             Assert.Throws<InvalidOperationException>(() => g.Build());
         }
-    }
+    
+        // ---- DL-07: the gallery gate and its bucket (L3892–L3893, L4825–L4837, L4991–L5003) -------------------------------
+
+        private static (MechanismGraph g, GateBucket bucket, BucketGate gate) Dl07(string cp = "landing")
+        {
+            var bucket = new GateBucket("dl07.bucket", GateBucketParams.Dl07Bucket());
+            var gate = new BucketGate("dl07.gate", BucketGateParams.Dl07Gate());
+            return (Mech.Graph(cp, bucket, gate), bucket, gate);
+        }
+
+        private static int Count(MechanismGraph g, MechanismId id, BucketGateEvent e)
+            => Mech.Events(g).FindAll(ev => ev.Id == id && ev.Kind == MechanismEventKind.Event && ev.Code == (int)e).Count;
+
+        [Fact]
+        public void BucketGate_NoWeights_StaysShut_AndBlocks()
+        {
+            var (g, bucket, gate) = Dl07();
+            Mech.Run(g, 300);
+            Assert.Equal(0, bucket.Weights);
+            Assert.Equal(0, gate.Position);
+            Assert.Equal(BucketGateState.Shut, gate.State);
+            Assert.True(gate.Blocks);
+            Assert.False(gate.Engaged);
+            Assert.Equal(0, g.Log.Count);
+        }
+
+        [Fact]
+        public void BucketGate_OneWeight_TumblesInFor0_7s_RisesTo0_38_AndStallsWithAStrain_L4831_L4959()
+        {
+            var (g, bucket, gate) = Dl07();
+            bucket.Drop();
+            Mech.Run(g, 1);
+            Assert.True(Mech.Emitted(g, "dl07.bucket", GateBucketEvent.Tumbling));
+            Assert.Equal(1, bucket.Tumbling);
+            int land = Mech.RunUntil(g, () => Mech.Emitted(g, "dl07.bucket", GateBucketEvent.Landed), 100);
+            Assert.Equal(41, land);                                     // 42 steps of 1/60 s = 0.7 s
+            Assert.Equal(1, bucket.Weights);
+            Assert.Equal(1.0, bucket.Load);
+            int strainAt = -1, strains = 0;
+            for (int i = 1; i <= 200; i++)
+            {
+                Mech.Run(g, 1);
+                if (Mech.Emitted(g, "dl07.gate", BucketGateEvent.Strain)) { strains++; if (strainAt < 0) strainAt = i; }
+            }
+            Assert.InRange(strainAt, 50, 52);                           // 0.38 m at 0.45 m/s ≈ 0.84 s
+            Assert.Equal(1, strains);                                   // once, when it stalls
+            Assert.Equal(0.38, gate.Position, 12);
+            Assert.Equal(BucketGateState.Stalled, gate.State);
+            Assert.True(gate.Position < 0.58);                          // never a crouch gap (L4826)
+            Assert.True(gate.Blocks);
+        }
+
+        [Fact]
+        public void BucketGate_TwoWeights_RiseTo1_4_At0_45PerSecond_AndOpen_L3892()
+        {
+            var (g, bucket, gate) = Dl07();
+            bucket.Drop();
+            Mech.Run(g, 11);                                            // the second follows 0.18 s later (L4992)
+            bucket.Drop();
+            int strains = 0;
+            Mech.RunUntil(g, () => { strains += Count(g, "dl07.gate", BucketGateEvent.Strain); return bucket.Weights == 2; }, 100);
+            int open = Mech.RunUntil(g, () => { strains += Count(g, "dl07.gate", BucketGateEvent.Strain); return gate.Engaged; }, 400);
+            Assert.Equal(0, strains);                                   // the second lands before the first stalls
+            Assert.InRange(open * Dt, 1.4 / 0.45 - 0.35, 1.4 / 0.45);    // most of the rise happens after the second lands
+            Assert.Equal(1.4, gate.Position, 12);
+            Assert.Equal(BucketGateState.Open, gate.State);
+            Assert.True(Mech.Emitted(g, "dl07.gate", BucketGateEvent.Opened));
+            Assert.False(gate.Blocks);
+            Mech.Run(g, 60);
+            Assert.Equal(1.4, gate.Position, 12);
+        }
+
+        [Fact]
+        public void BucketGate_Transitions_Shut_Rising_Stalled_Rising_Open()
+        {
+            var (g, bucket, gate) = Dl07();
+            var seen = new List<BucketGateState> { gate.State };
+            void Watch(int steps)
+            {
+                for (int i = 0; i < steps; i++)
+                {
+                    Mech.Run(g, 1);
+                    foreach (var e in Mech.Events(g))
+                        if (e.Id == "dl07.gate" && e.Kind == MechanismEventKind.State) seen.Add((BucketGateState)e.Code);
+                }
+            }
+            bucket.Drop();
+            Watch(200);
+            Assert.Equal(BucketGateState.Stalled, gate.State);
+            bucket.Drop();
+            Watch(400);
+            Assert.Equal(new[] { BucketGateState.Shut, BucketGateState.Rising, BucketGateState.Stalled, BucketGateState.Rising, BucketGateState.Open }, seen);
+            Assert.Equal(2, bucket.Weights);
+        }
+
+        [Fact]
+        public void BucketGate_NeverACrouchGap_APartialOpeningAtCrouchHeightIsRefused()
+        {
+            Assert.Throws<ArgumentException>(() => new BucketGate("t.gate", new BucketGateParams { Bucket = "t.b", PerWeight = 0.55 }));
+            Assert.Throws<ArgumentException>(() => new BucketGate("t.gate", new BucketGateParams { Bucket = "t.b", WeightsToOpen = 3 }));   // 0.76 with 2
+            var gate = new BucketGate("t.gate", BucketGateParams.Dl07Gate());
+            Assert.Equal(0, gate.TargetFor(0));
+            Assert.Equal(0.38, gate.TargetFor(1), 12);
+            Assert.Equal(1.4, gate.TargetFor(2));
+            Assert.Equal(1.4, gate.TargetFor(3));
+        }
+
+        [Fact]
+        public void BucketGate_SnapshotMidTumbleAndMidRise_ContinuesBitIdentically()
+        {
+            var (ga, ba, _) = Dl07();
+            ba.Drop();
+            Mech.Run(ga, 50);                                           // landed, rising
+            ba.Drop();
+            Mech.Run(ga, 5);                                            // the second in the air
+            Assert.Equal(1, ba.Tumbling);
+            var (gb, bb, gtb) = Dl07();
+            gb.Restore(Mech.Snapshot(ga));
+            Assert.Equal(1, bb.Tumbling);
+            Assert.Equal(Mech.Dump(ga), Mech.Dump(gb));
+            for (int i = 0; i < 300; i++)
+            {
+                ga.Step(Dt, PlayerPose.Away);
+                gb.Step(Dt, PlayerPose.Away);
+                Assert.Equal(Mech.Dump(ga), Mech.Dump(gb));
+                Assert.Equal(Mech.Events(ga).Count, Mech.Events(gb).Count);
+            }
+            Assert.Equal(BucketGateState.Open, gtb.State);
+        }
+
+        [Fact]
+        public void BucketGate_ASnapshotWithTooManyTumblingWeights_IsRefused()
+        {
+            var (ga, _, _) = Dl07();
+            var s = Mech.Snapshot(ga);
+            s.WriteLong("dl07.bucket/n", GateBucket.MaxTumbling + 1);
+            var (gb, _, _) = Dl07();
+            Assert.Throws<InvalidOperationException>(() => gb.Restore(s));
+        }
+
+        [Theory]
+        [InlineData("landing", 0, 0.0, BucketGateState.Shut)]
+        [InlineData("gallery", 2, 1.4, BucketGateState.Open)]
+        [InlineData("goods", 2, 1.4, BucketGateState.Open)]
+        public void BucketGate_ResetFromCheckpoint_L4099(string cp, int weights, double y, BucketGateState state)
+        {
+            var (g, bucket, gate) = Dl07(cp);
+            Assert.Equal(weights, bucket.Weights);
+            Assert.Equal(0, bucket.Tumbling);
+            Assert.Equal(y, gate.Position);
+            Assert.Equal(state, gate.State);
+            Mech.Run(g, 60);
+            Assert.Equal(y, gate.Position);
+            Assert.Equal(0, Count(g, "dl07.gate", BucketGateEvent.Strain));
+        }
+
+        // ---- DL-10: the service door (L3459, L4565–L4577, L4654) --------------------------------------------------------------
+
+        private static (MechanismGraph g, CrankActuator crank, Door door) Dl10()
+        {
+            var crank = new CrankActuator("dl10.serviceCrank", CrankParams.Dl10ServiceCrank());
+            var door = new Door("dl10.serviceDoor", DoorParams.Dl10ServiceDoor());
+            return (Mech.Graph("uponly", crank, door), crank, door);
+        }
+
+        [Fact]
+        public void ServiceDoor_FourStrokesLiftIt1_45m_L4567_L4570()
+        {
+            var (g, crank, door) = Dl10();
+            Assert.Equal(54 + 72.45, crank.StandX, 12);                 // UO.crankStand
+            Assert.Equal(1, crank.Face);
+            var strokes = new List<double>();
+            int steps = Mech.PlayAct(g, crank, onStep: (k, f) => { if (Mech.Emitted(g, "dl10.serviceCrank", CrankEvent.Stroke)) strokes.Add(door.Position); });
+            Assert.Equal(240, steps);                                   // 4 × 24 frames at 0.4 frames a step
+            Assert.Equal(4, strokes.Count);
+            Assert.Equal(CrankState.Done, crank.State);
+            Assert.Equal(1.45, door.Position, 12);
+            Assert.Equal(DoorState.Open, door.State);
+            Assert.False(crank.IsAvailable(new InteractionQuery(54 + 72.45, 0, 0, 1, true, false, HoldKind.None, null, null)));
+        }
+
+        [Fact]
+        public void ServiceDoor_ACancelMidWayHoldsItWhereLeft_AndTheNextActResumes_L4318_L4575()
+        {
+            var (g, crank, door) = Dl10();
+            int first = Mech.PlayAct(g, crank, move: k => k > 132 ? 1.0 : 0);   // two strokes and a bit, then walks off
+            Assert.Equal(133, first);
+            double held = door.Position;
+            Assert.InRange(held, 1.45 * 0.5, 1.45 * 0.75);
+            Assert.Equal(DoorState.Opening, door.State);
+            Mech.Run(g, 120);
+            Assert.Equal(held, door.Position);                          // holds where left
+            Assert.True(crank.IsAvailable(new InteractionQuery(54 + 72.45, 0, 0, 1, true, false, HoldKind.None, null, null)));
+            int resumed = (int)Math.Floor(held / 1.45 * 4 + 0.5);      // Math.round(uo.door · UO.strokes)
+            int second = Mech.PlayAct(g, crank);
+            Assert.Equal((4 - resumed) * 60, second);                   // only the strokes left
+            Assert.Equal(1.45, door.Position, 12);
+            Assert.Equal(CrankState.Done, crank.State);
+        }
+
+        [Fact]
+        public void ServiceDoor_SnapshotMidAct_ContinuesBitIdentically()
+        {
+            var (ga, ca, _) = Dl10();
+            Mech.PlayAct(ga, ca, max: 100);
+            var (gb, cb, db) = Dl10();
+            gb.Restore(Mech.Snapshot(ga));
+            Assert.Equal(Mech.Dump(ga), Mech.Dump(gb));
+            int a = Mech.PlayAct(ga, ca, startStep: 101), b = Mech.PlayAct(gb, cb, startStep: 101);
+            Assert.Equal(a, b);
+            Assert.Equal(Mech.Dump(ga), Mech.Dump(gb));
+            Assert.Equal(1.45, db.Position, 12);
+        }
+}
 }

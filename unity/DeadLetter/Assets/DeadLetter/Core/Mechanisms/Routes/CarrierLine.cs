@@ -567,13 +567,16 @@ namespace DeadLetter.Core.Mechanisms.Routes
 
         protected override void ReadFields(ISnapshotReader r)
         {
+            long n = r.ReadLong("n");
+            if (n < 0 || n > _all.Length)
+                throw new InvalidOperationException("Snapshot has " + n + " carriers; '" + Id + "' holds " + _all.Length + ".");
             _clock = r.ReadDouble("clock");
             _lastSpawn = r.ReadDouble("lastSpawn");
             _seq = (int)r.ReadLong("seq");
             _boarding = (int)r.ReadLong("boarding"); _mount = (int)r.ReadLong("mount"); _alight = r.ReadBool("alight");
             _placeSeq = (int)r.ReadLong("placeSeq"); _placeCode = (int)r.ReadLong("placeCode");
             for (int i = 0; i < _all.Length; i++) _all[i].Active = false;
-            _count = (int)r.ReadLong("n");
+            _count = (int)n;
             for (int i = 0; i < _count; i++) { _all[i].Read(r, "c" + i + "."); _live[i] = i; }
         }
     }

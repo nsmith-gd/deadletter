@@ -32,7 +32,8 @@ namespace DeadLetter.Core.Save
     /// Crash-safe slots over an <see cref="IFileSystem"/>: <c>slotN.dls</c> plus one backup <c>slotN.dls.bak</c>.
     /// Save: write <c>.tmp</c> (durable), move the current file (if it reads back valid) over <c>.bak</c>, move
     /// <c>.tmp</c> over the current. A crash at any point leaves a valid current file or a valid backup. Load: the
-    /// current file, else the backup (bad checksum, torn or missing).
+    /// current file; if it is missing, a <c>.tmp</c> that reads back valid (a crash between the two moves; promoted to
+    /// the current file); else the backup (bad checksum, torn or missing).
     /// </summary>
     public sealed class AtomicFileStore : ISaveStore
     {
@@ -49,6 +50,8 @@ namespace DeadLetter.Core.Save
         public string LastError { get; private set; }
         /// <summary>True when the last successful load came from the backup.</summary>
         public bool LoadedBackup { get; private set; }
+        /// <summary>True when the last load recovered a complete <c>.tmp</c> left by a crash between the two moves (and promoted it).</summary>
+        public bool LoadedTemp { get; private set; }
 
         public string PathOf(int slot) => _prefix + slot + ".dls";
         public string BackupOf(int slot) => PathOf(slot) + ".bak";
@@ -57,10 +60,25 @@ namespace DeadLetter.Core.Save
         public bool TryLoad(int slot, out SaveModel model)
         {
             LoadedBackup = false;
+            LoadedTemp = false;
             LastError = null;
-            if (TryRead(PathOf(slot), out model, out string err)) return true;
+            string path = PathOf(slot), tmp = TempOf(slot);
+            if (TryRead(path, out model, out string err)) return true;
             LastError = err;
-            if (TryRead(BackupOf(slot), out model, out string bakErr)) { LoadedBackup = true; return true; }
+            // A crash between Save's two moves leaves no current file, the previous save in .bak and the newest,
+            // complete save in .tmp (WriteAll is durable before the first move). Prefer it, and promote it.
+            if (!_fs.Exists(path) && _fs.Exists(tmp))
+            {
+                if (TryRead(tmp, out model, out string tmpErr))
+                {
+                    LoadedTemp = true;
+                    try { _fs.Replace(tmp, path); }
+                    catch (Exception e) { LastError = err + "; promoting " + tmp + ": " + e.Message; }
+                    return true;
+                }
+                err += "; temp: " + tmpErr;
+            }
+            if (TryRead(BackupOf(slot), out model, out string bakErr)) { LoadedBackup = true; LastError = err; return true; }
             LastError = err + "; backup: " + bakErr;
             return false;
         }

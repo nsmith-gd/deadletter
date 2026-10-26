@@ -26,6 +26,11 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         public double RiseFrames = 12;
         /// <summary>DL-10: moving the stick past <see cref="CancelMove"/> after CancelAfter seconds stops cranking; it holds where left. &lt; 0 = never.</summary>
         public double CancelAfter = -1, CancelMove = 0.3;
+        /// <summary>
+        /// DL-10: a new act carries on from the opening it was left at (<c>strokes: Math.round(uo.door · UO.strokes)</c>,
+        /// L4318), so only the remaining strokes are needed. False (DL-01, which cannot be cancelled): each act counts from 0.
+        /// </summary>
+        public bool ResumeFromOpening;
         public string DoneAfter;
 
         /// <summary>DL-01: the exit door's crank, 5 strokes (L299, L1877–L1897).</summary>
@@ -36,6 +41,19 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             Station = new Station(standX: 9.62, reach: 0.36, face: 0),
             Strokes = 5,
             DoneAfter = "door",                       // CHECKPOINTS.door.door = 1, L7979
+        };
+
+        /// <summary>
+        /// DL-10: the service door's crank, 4 strokes (<c>UO.strokes</c>, L3459, L4565–L4577). He stands at
+        /// <c>UO.crankStand</c> = OFF5 + 72.45 (reach 0.25 on the deck, L4235) facing +x (L4318). Moving the stick after
+        /// 0.5 s lets go; the door holds where left and the next act resumes from it.
+        /// </summary>
+        public static CrankParams Dl10ServiceCrank() => new CrankParams
+        {
+            Station = new Station(standX: 54 + 72.45, reach: 0.25, face: 1),   // OFF5 = 54, L274
+            Strokes = 4,
+            CancelAfter = 0.5, CancelMove = 0.3,                                // a.t > 0.5 && |move| > 0.3, L4575
+            ResumeFromOpening = true,
         };
     }
 
@@ -49,7 +67,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
     {
         private readonly CrankParams _p;
         private ActInput _act;
-        private int _actStrokes;
+        private int _actStrokes, _base;
 
         public CrankActuator(MechanismId id, CrankParams p) : base(id, p.Station) { _p = p; }
 
@@ -67,7 +85,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             Init((int)(done ? CrankState.Done : CrankState.Idle));
             Position = done ? 1 : 0;
             WheelDeg = done ? _p.Strokes * _p.StrokeDeg : 0;                      // L8024
-            _actStrokes = 0;
+            _actStrokes = _base = 0;
             _act.Clear();
         }
 
@@ -75,6 +93,8 @@ namespace DeadLetter.Core.Mechanisms.Actuators
 
         public override bool OnActFrame(in ActFrame f)
         {
+            if (!_act.Active || f.Frame < _act.Frame)                            // the first frame of an act (as ActInput.Take)
+                _base = _p.ResumeFromOpening ? Math.Min(_p.Strokes - 1, (int)Math.Floor(Position * _p.Strokes + 0.5)) : 0;   // L4318
             _act.Receive(f);
             if (StrokesAt(f.Frame) >= _p.Strokes) return true;                   // L1889
             return _p.CancelAfter >= 0 && f.Time > _p.CancelAfter && Math.Abs(f.Input.Move) > _p.CancelMove;   // L4575
@@ -88,10 +108,10 @@ namespace DeadLetter.Core.Mechanisms.Actuators
                 if (State == CrankState.Cranking) Enter(ctx, (int)CrankState.Idle);
                 return;
             }
-            if (_act.Started) { _actStrokes = 0; Enter(ctx, (int)CrankState.Cranking); }
+            if (_act.Started) { _actStrokes = _base; Enter(ctx, (int)CrankState.Cranking); }
 
             int strokes = StrokesAt(_act.Frame);
-            double local = Math.Max(0, _act.Frame - strokes * _p.LoopFrames);    // actions.Crank.time · FPS (it loops)
+            double local = Math.Max(0, _act.Frame - (strokes - _base) * _p.LoopFrames);   // actions.Crank.time · FPS (it loops)
             double s = local <= _p.RiseFrames ? Smooth.Step(local / _p.RiseFrames) : 1;
             // The opening uses the act's stroke count before this step's wrap, as the prototype did (L1885–L1886).
             Position = Math.Max(Position, Math.Min(1, (_actStrokes + s) / _p.Strokes));
@@ -106,13 +126,15 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             }
         }
 
-        private int StrokesAt(double frame) => (int)Math.Floor((frame + ClipClock.Epsilon) / _p.LoopFrames);
+        /// <summary>Strokes counted by the act at <paramref name="frame"/>, including those it resumed from.</summary>
+        private int StrokesAt(double frame) => _base + (int)Math.Floor((frame + ClipClock.Epsilon) / _p.LoopFrames);
 
         protected override void WriteFields(ISnapshotWriter w)
         {
             w.WriteDouble("open", Position);
             w.WriteDouble("wheel", WheelDeg);
             w.WriteLong("actStrokes", _actStrokes);
+            w.WriteLong("base", _base);
             _act.Write(w);
         }
 
@@ -121,6 +143,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             Position = r.ReadDouble("open");
             WheelDeg = r.ReadDouble("wheel");
             _actStrokes = (int)r.ReadLong("actStrokes");
+            _base = (int)r.ReadLong("base");
             _act.Read(r);
         }
     }

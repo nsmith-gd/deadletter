@@ -48,6 +48,9 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         /// <summary>DL-01: the exit door rises with the crank to DOOR.h − 0.05 (L300, L7957).</summary>
         public static DoorParams Dl01Door() => new DoorParams { Follow = "dl01.crank", Travel = 1.05 - 0.05 };
 
+        /// <summary>DL-10: the striped service door lifts <c>UO.doorLift</c> = 1.45 m with the crank's 4 strokes and holds where left (L3459, L4565–L4577, L4654).</summary>
+        public static DoorParams Dl10ServiceDoor() => new DoorParams { Follow = "dl10.serviceCrank", Travel = 1.45 };
+
         /// <summary>DL-01: the shutter swings to 15° when the latch releases (L277, L1681–L1696).</summary>
         public static DoorParams Dl01Shutter() => new DoorParams
         {

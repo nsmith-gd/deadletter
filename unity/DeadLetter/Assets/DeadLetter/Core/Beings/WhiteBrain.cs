@@ -429,7 +429,10 @@ namespace DeadLetter.Core.Beings
 
         protected override void ReadFields(ISnapshotReader r)
         {
-            _water = (int)r.ReadLong("water");
+            long water = r.ReadLong("water");
+            if (water < -1 || water >= _p.Waters.Length)
+                throw new InvalidOperationException("Snapshot water " + water + " for '" + Id + "' (this build has " + _p.Waters.Length + ").");
+            _water = (int)water;
             _x = r.ReadDouble("x"); _y = r.ReadDouble("y"); _tx = r.ReadDouble("tx");
             _facing = (int)r.ReadLong("facing"); _bodyFacing = (int)r.ReadLong("bodyFacing");
             _t = r.ReadDouble("t"); _clock = r.ReadDouble("clock");

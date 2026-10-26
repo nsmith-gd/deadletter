@@ -136,15 +136,21 @@ namespace DeadLetter.Core.Save
             RestoredSnapshot = false;
             if (_snapshot != null)
             {
+                var derived = Capture();                      // the world _graph.Reset(Current) just derived, exactly
                 try
                 {
                     _graph.Restore(new KeepTick(_snapshot, _graph.Tick));
                     RestoredSnapshot = true;
                 }
-                catch (Exception e) when (e is KeyNotFoundException || e is InvalidOperationException)
+                catch (Exception e) when (!SaveCodec.IsFatal(e))
                 {
-                    _snapshot = null;                     // the scene changed since the save: derived state only
-                    _graph.Reset(Current);
+                    // The scene changed since the save (a renamed mechanism, a smaller pool, fewer crate types) or the
+                    // snapshot is otherwise stale. Never leave the graph half-restored: put back the derived world,
+                    // including the fields Reset carries on (clocks, sequences) that a partial restore may have
+                    // overwritten, and drop the snapshot so a later respawn does not try it again.
+                    _snapshot = null;
+                    RestoredSnapshot = false;
+                    _graph.Restore(derived);
                 }
             }
             PushBindings();                                   // a snapshot holds old copies of bound flags

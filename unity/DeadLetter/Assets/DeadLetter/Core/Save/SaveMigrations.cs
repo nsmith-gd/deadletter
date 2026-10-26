@@ -30,9 +30,11 @@ namespace DeadLetter.Core.Save
         }
 
         /// <summary>
-        /// Version 1 mirrored the prototype's <c>dl01-resume</c> record (L8336–L8342): <c>cp</c>, <c>scene</c>, <c>at</c>
-        /// (ms since 1970), <c>found/curio|secret|voice/&lt;id&gt;</c>, <c>read/&lt;letter&gt;</c> and
-        /// <c>persist/&lt;name&gt;</c>, with no snapshot, play time or options. Version 2 keeps every collection as a
+        /// Version 1 is a synthetic pre-release fixture format, never shipped: its keys were modelled on the fields of the
+        /// prototype's <c>dl01-resume</c> record (L8336–L8342), but that record is localStorage JSON and is never
+        /// imported. v1 holds <c>cp</c>, <c>scene</c>, <c>at</c> (ms since 1970),
+        /// <c>found/curio|secret|voice/&lt;id&gt;</c>, <c>read/&lt;letter&gt;</c> and <c>persist/&lt;name&gt;</c>, with
+        /// no snapshot, play time or options. It exists so the migration path is exercised by a fixture. Version 2 keeps every collection as a
         /// named persist flag (<see cref="StoryFlags"/>) and adds play time; options read as their defaults.
         /// </summary>
         private static void V1ToV2(SaveDocument d)

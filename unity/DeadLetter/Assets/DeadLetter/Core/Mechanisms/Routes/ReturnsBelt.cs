@@ -252,18 +252,25 @@ namespace DeadLetter.Core.Mechanisms.Routes
 
         protected override void ReadFields(ISnapshotReader r)
         {
+            long n = r.ReadLong("n");
+            if (n < 0 || n > _all.Length)
+                throw new InvalidOperationException("Snapshot has " + n + " crates; '" + Id + "' holds " + _all.Length + ".");
             _t = r.ReadDouble("t");
             _next = r.ReadDouble("next");
             _rng.Read(r, "rng");
             FlapSwing = r.ReadDouble("flaps");
             for (int i = 0; i < _all.Length; i++) _all[i].Active = false;
-            _count = (int)r.ReadLong("n");
+            _count = (int)n;
+            int types = Math.Min(_p.CrateHalf.Length, _p.CrateHeight.Length);
             for (int i = 0; i < _count; i++)
             {
                 var c = _all[i];
                 string k = "c" + i + ".";
+                long type = r.ReadLong(k + "type");
+                if (type < 0 || type >= types)
+                    throw new InvalidOperationException("Snapshot crate type " + type + " at '" + Id + "/" + k + "' (this build has " + types + ").");
                 c.Active = true;
-                c.Type = (int)r.ReadLong(k + "type"); c.State = (CrateState)r.ReadLong(k + "state");
+                c.Type = (int)type; c.State = (CrateState)r.ReadLong(k + "state");
                 c.Half = _p.CrateHalf[c.Type]; c.Height = _p.CrateHeight[c.Type];
                 c.X = r.ReadDouble(k + "x"); c.Y = r.ReadDouble(k + "y"); c.Z = r.ReadDouble(k + "z");
                 c.T = r.ReadDouble(k + "t"); c.Spin = r.ReadDouble(k + "spin");

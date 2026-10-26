@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DeadLetter.Core.Beings;
 using DeadLetter.Core.Mechanisms;
+using DeadLetter.Core.Mechanisms.Routes;
 using DeadLetter.Core.Save;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace DeadLetter.Core.Tests
     public class SaveTests
     {
         /// <summary>
-        /// A version 1 save (the prototype's <c>dl01-resume</c> record as a file), written by an independent encoder
+        /// A version 1 save (the synthetic pre-release v1 fixture format, keyed after the prototype's <c>dl01-resume</c> fields; that localStorage record is never imported), written by an independent encoder
         /// (Python, zlib's CRC-32): cp "hall", scene "DL-01 The Wake", at, found/curio/scale, found/secret/den,
         /// found/voice/card_wake, persist/warned, read/tube.
         /// </summary>
@@ -236,7 +237,7 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
-        public void Store_CrashBetweenTheTwoRenames_LoadsTheBackup()
+        public void Store_CrashBetweenTheTwoRenames_LoadsTheNewerTemp_AndPromotesIt()
         {
             var fs = new MemoryFileSystem();
             var st = new AtomicFileStore(fs);
@@ -246,6 +247,36 @@ namespace DeadLetter.Core.Tests
             Assert.Throws<System.IO.IOException>(() => st.Save(0, At("door")));
             Assert.False(fs.Files.ContainsKey("slot0.dls"));
             Assert.True(st.TryLoad(0, out var m));
+            Assert.True(st.LoadedTemp);
+            Assert.False(st.LoadedBackup);
+            Assert.Equal("door", m.Checkpoint);                         // the newest save, not the backup's "hall"
+            Assert.True(fs.Files.ContainsKey("slot0.dls"));            // promoted
+            Assert.False(fs.Files.ContainsKey("slot0.dls.tmp"));
+            Assert.True(st.TryLoad(0, out m));
+            Assert.False(st.LoadedTemp);
+            Assert.Equal("door", m.Checkpoint);
+        }
+
+        [Fact]
+        public void Store_CrashBetweenTheTwoRenames_WithATornOrInvalidTemp_StillLoadsTheBackup()
+        {
+            var fs = new MemoryFileSystem();
+            var st = new AtomicFileStore(fs);
+            st.Save(0, At("shutter"));
+            st.Save(0, At("hall"));
+            fs.CrashAtReplace = 1;
+            Assert.Throws<System.IO.IOException>(() => st.Save(0, At("door")));
+            var good = fs.Files["slot0.dls.tmp"];
+            fs.Files["slot0.dls.tmp"] = good[..(good.Length / 2)];     // torn
+            Assert.True(st.TryLoad(0, out var m));
+            Assert.True(st.LoadedBackup);
+            Assert.False(st.LoadedTemp);
+            Assert.Equal("hall", m.Checkpoint);
+            Assert.Contains("temp", st.LastError);
+            var flipped = (byte[])good.Clone();
+            flipped[9] ^= 1;                                            // bad checksum
+            fs.Files["slot0.dls.tmp"] = flipped;
+            Assert.True(st.TryLoad(0, out m));
             Assert.True(st.LoadedBackup);
             Assert.Equal("hall", m.Checkpoint);
         }
@@ -415,6 +446,114 @@ namespace DeadLetter.Core.Tests
             Assert.True(svc.TryContinue());
             Assert.False(svc.RestoredSnapshot);
             Assert.Equal("hall", svc.Current.Name);
+        }
+
+        // ---- Stale snapshots: a later build under the same scene name ----
+
+        /// <summary>
+        /// Saves <paramref name="played"/>'s snapshot at <paramref name="cp"/> (edited by <paramref name="edit"/>), then
+        /// continues into <paramref name="fresh"/>: it must not throw, must not restore, and must equal a derived reset.
+        /// </summary>
+        private static void ContinuesIntoTheDerivedWorld(MechanismGraph played, MechanismGraph fresh, MechanismGraph derived, string cp,
+            Action<MemorySnapshot> edit = null)
+        {
+            var snap = new MemorySnapshot();
+            played.Snapshot(snap);
+            edit?.Invoke(snap);
+            var store = new MemorySaveStore();
+            store.Save(0, new SaveModel { Checkpoint = cp, Scene = "S", Mechanisms = snap });
+            var svc = new CheckpointService(fresh, Checkpoint.PrototypeOrder, store, 0, "S");
+            Assert.True(svc.TryContinue());
+            Assert.False(svc.RestoredSnapshot);
+            Assert.Null(svc.CheckpointSnapshot);
+            Assert.Equal(cp, svc.Current.Name);
+            Assert.Equal(SaveKit.Dump(derived), SaveKit.Dump(fresh));  // wholly derived, never half-restored
+            svc.Reload();                                              // and a respawn stays derived
+            Assert.False(svc.RestoredSnapshot);
+        }
+
+        private static MechanismGraph Line(int capacity = -1)
+        {
+            var p = CarrierLineParams.Dl06Line();
+            if (capacity > 0) p.Capacity = capacity;
+            return Mech.Graph("scanned", new TestSource("dl06.stopLever") { Engaged = true }, new TestSource("dl06.points"), new CarrierLine("dl06.line", p));
+        }
+
+        private static MechanismGraph Belt(int capacity = -1)
+        {
+            var p = ReturnsBeltParams.Dl08Belt();
+            if (capacity > 0) p.Capacity = capacity;
+            return Mech.Graph("cage", new TestSource("dl08.pawl") { Engaged = true }, new ReturnsBelt("dl08.belt", p));
+        }
+
+        private static int Count(MechanismGraph g, string id)
+            => g.TryGet<CarrierLine>(id, out var l) ? l.Count : g.Get<ReturnsBelt>(id).Count;
+
+        [Fact]
+        public void Continue_CarrierLineSnapshot_WithMoreCarriersThanThisBuildHolds_ContinuesDerived()
+        {
+            var played = Line();
+            Assert.True(Mech.RunUntil(played, () => Count(played, "dl06.line") >= 2, 20000) > 0);
+            ContinuesIntoTheDerivedWorld(played, Line(capacity: 1), Line(capacity: 1), "scanned");
+        }
+
+        [Fact]
+        public void Continue_CarrierLineSnapshot_WithANegativeOrHugeCount_ContinuesDerived()
+        {
+            ContinuesIntoTheDerivedWorld(Line(), Line(), Line(), "scanned", s => s.WriteLong("dl06.line/n", 1L << 40));
+            ContinuesIntoTheDerivedWorld(Line(), Line(), Line(), "scanned", s => s.WriteLong("dl06.line/n", -1));
+        }
+
+        [Fact]
+        public void Continue_ReturnsBeltSnapshot_WithMoreCratesThanThisBuildHolds_ContinuesDerived()
+        {
+            var played = Belt();
+            Assert.True(Mech.RunUntil(played, () => Count(played, "dl08.belt") >= 2, 5000, new PlayerPose(89.5, 1.6)) > 0);
+            ContinuesIntoTheDerivedWorld(played, Belt(capacity: 1), Belt(capacity: 1), "cage");
+        }
+
+        [Fact]
+        public void Continue_ReturnsBeltSnapshot_WithACrateTypeThisBuildLacks_ContinuesDerived()
+        {
+            var played = Belt();
+            Assert.True(Mech.RunUntil(played, () => Count(played, "dl08.belt") >= 1, 5000, new PlayerPose(89.5, 1.6)) > 0);
+            ContinuesIntoTheDerivedWorld(played, Belt(), Belt(), "cage", s => s.WriteLong("dl08.belt/c0.type", 7));
+            ContinuesIntoTheDerivedWorld(played, Belt(), Belt(), "cage", s => s.WriteLong("dl08.belt/c0.type", -1));
+        }
+
+        [Fact]
+        public void Continue_WhiteSnapshot_InAWaterThisBuildLacks_ContinuesDerived()
+        {
+            static MechanismGraph White(WhiteParams p) => Mech.Graph("ringc", new WhiteBrain("dl11.white", p, new BeingSenses { Region = 5 }));
+            var played = White(WhiteParams.Chapter1());                // three waters
+            ContinuesIntoTheDerivedWorld(played, White(WhiteParams.Dl11()), White(WhiteParams.Dl11()), "ringc",
+                s => s.WriteLong("dl11.white/water", 2));               // a later build has one
+        }
+
+        [Fact]
+        public void Codec_ACrcValidFileWithABareMechKey_IsUnreadable_NotAThrow()
+        {
+            var d = Sample().ToDocument();
+            d.SetLong("mech/", 1);                                     // maps to an empty snapshot key
+            byte[] bytes = SaveCodec.Encode(d);
+            Assert.True(SaveCodec.TryDecode(bytes, out _, out _));     // the CRC and framing are fine
+            Assert.False(SaveCodec.TryLoad(bytes, out var m, out string err));
+            Assert.Null(m);
+            Assert.False(string.IsNullOrEmpty(err));
+
+            var store = new MemorySaveStore();
+            store.Slots[0] = bytes;
+            var svc = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store, 0, "S");
+            Assert.False(svc.TryContinue());
+
+            var fs = new MemoryFileSystem();
+            var st = new AtomicFileStore(fs);
+            st.Save(0, At("hall"));
+            st.Save(0, At("door"));
+            fs.Files["slot0.dls"] = bytes;                             // the current file is malformed: the backup loads
+            Assert.True(st.TryLoad(0, out m));
+            Assert.True(st.LoadedBackup);
+            Assert.Equal("hall", m.Checkpoint);
         }
 
         [Fact]

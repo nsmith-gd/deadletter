@@ -108,10 +108,22 @@ namespace DeadLetter.Core.Save
         {
             model = null;
             if (!TryDecode(bytes, out var doc, out error)) return false;
-            if (!SaveMigrations.TryMigrate(doc, out error)) return false;
-            try { model = SaveModel.FromDocument(doc); return true; }
-            catch (FormatException e) { error = e.Message; return false; }
+            try
+            {
+                if (!SaveMigrations.TryMigrate(doc, out error)) return false;
+                model = SaveModel.FromDocument(doc);
+                return true;
+            }
+            catch (Exception e) when (!IsFatal(e))                  // CRC-valid but malformed content (e.g. a bare "mech/" key)
+            {
+                model = null;
+                error = e.GetType().Name + ": " + e.Message;
+                return false;
+            }
         }
+
+        /// <summary>Exceptions a load must never swallow; anything else from bad save content means "unreadable".</summary>
+        internal static bool IsFatal(Exception e) => e is OutOfMemoryException || e is StackOverflowException || e is System.Threading.ThreadAbortException;
 
         private static void Need(int p, int n, int end)
         {
