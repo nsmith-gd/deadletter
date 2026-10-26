@@ -205,6 +205,69 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
+        public void End_MidHold_LetsRawInputThroughOnTheNextStep()
+        {
+            var h = new Harness();
+            h.Start(PrologueMoments.Kin);
+            double? t;
+            do
+            {
+                t = h.Step(Right, out MotorInput gated);
+                Assert.Equal(0.0, gated.Move);
+            } while (t < 5.0);   // well before lock: input is held
+            Assert.True(h.Director.Holding);
+
+            h.Director.End();   // checkpoint reset mid-hold
+            Assert.Null(h.Step(Right, out MotorInput after));
+            Assert.Equal(1.0, after.Move);
+            Assert.False(h.Director.Holding);
+            Assert.False(h.Director.ControlReturned);
+            Assert.Equal(MomentControl.Player, h.Director.ControlAt(h.Director.Time(h.Sim)));
+            Assert.False(h.Director.VoicesHeld(h.Sim));
+        }
+
+        [Fact]
+        public void MusicClock_SeekingBackwards_HoldsTheTimeUntilItCatchesUp()
+        {
+            var h = new Harness();
+            h.Start(PrologueMoments.Kin);
+            for (int n = 0; n < 300; n++) h.Step(MotorInput.None, out _);
+            double held = h.Director.Time(h.Sim).Value;
+            h.Music.Now -= 0.5;   // the audio clock jumps back half a second (Math.max in momentTime, L926)
+            int heldSteps = 0;
+            double? t;
+            while ((t = h.Step(MotorInput.None, out _)).Value == held) heldSteps++;
+            // It sat on the old time while the clock re-covered the 0.5 s, then carried on from the clock, never backwards.
+            Assert.InRange(heldSteps, 29, 30);
+            Assert.True(t.Value > held && t.Value - held <= Dt + 1e-9, "resumed at " + t);
+            Assert.False(h.Director.Clock.Fallback);
+        }
+
+        [Fact]
+        public void LongPause_WithTheSimFrozen_DoesNotAdvanceTheMoment()
+        {
+            var h = new Harness();
+            h.Start(PrologueMoments.Kin);
+            for (int n = 0; n < 300; n++) h.Step(MotorInput.None, out _);
+            double frozen = h.Director.Time(h.Sim).Value;
+            double music = h.Music.Now;
+            // Pause card open for 5 s of wall time: the sim does not step and the paused music clock stands still.
+            h.Music.Running = false;
+            for (int n = 0; n < 300; n++)
+            {
+                Assert.Equal(frozen, h.Director.Time(h.Sim).Value);
+                Assert.Equal(0.0, h.Director.GateInput(Right, h.Sim).Move);
+            }
+            Assert.False(h.Director.Clock.Fallback);   // the 2.0 s stall limit is on the sim clock, which did not move
+            // Unpause: the clock comes back where it stopped (the paused span removed) and the moment carries on.
+            h.Music.Running = true;
+            Assert.Equal(music, h.Music.Now);
+            Assert.Equal(frozen + Dt, h.Step(MotorInput.None, out _).Value, 9);
+            Assert.False(h.Director.Clock.Fallback);
+            Assert.True(h.Director.Holding);
+        }
+
+        [Fact]
         public void Fallbacks_RunOnTheSimClock()
         {
             // Suspended audio before the cue starts, for more than 0.6 s: the sim clock takes over from where it stood (L918).

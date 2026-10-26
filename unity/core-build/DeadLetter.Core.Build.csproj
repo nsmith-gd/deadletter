@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Builds the engine-free DeadLetter.Core sources the way Unity 6 does: .NET Standard 2.1, C# 9.
+    Anything that only exists in net5+ (Random.Shared, ArgumentNullException.ThrowIfNull, init/records
+    without IsExternalInit, newer span/Math overloads) fails here instead of in the Unity editor.
+    core-tests references this project, so `dotnet test unity/core-tests` builds it first.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>DeadLetter.Core</AssemblyName>
+    <RootNamespace>DeadLetter.Core</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../DeadLetter/Assets/DeadLetter/Core/**/*.cs" LinkBase="Core" />
+  </ItemGroup>
+
+</Project>
