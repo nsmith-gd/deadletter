@@ -25,7 +25,7 @@
 
 | Beat | Time (approx.) | What happens |
 |---|---|---|
-| **The work corner** | 0:00 | He walks on from DL-23's balcony into Mara's work corner: a shadow board of tools on painted outlines, one outline empty; a vice; a rack of pipe offcuts graded by size. Lisle's bench sign hangs ahead. The arm's 12 s rattle and *tink* sound faintly through the wall ahead. |
+| **The work corner** | 0:00 | He walks on from DL-23's balcony into Mara's work corner: a shadow board of tools on painted outlines, one outline empty; a vice; a rack of pipe offcuts graded by size. Lisle's bench sign hangs ahead. Overhead, the serving arm, going home from DL-23's hatch, overtakes him along its ceiling rail and passes through the slot over the door ahead. After that, its 12 s rattle and *tink* come back along the rail from the kitchen. |
 | **The bench** | 0:15 | The bench fills the balcony from 441.2 to the door. If he tries to climb it, he gets his claws over the edge and slides back. Under it, dark shapes hang down to 0.25: no way under. The fold handle sits in a small warm pool. |
 | **The fold** | 0:30 | Use at the handle: he pushes up, the leaf rises past his reach on its counterweight, and a wall hook takes it with a clack (1.6 s). The bench lamp, angled at the bench for years, now lights the jig. |
 | **The jig** | 0:35 | The jig faces the camera above his head: two stations, the near one's grips worn bright in a pair; the far one's lever dull, with a rubber foot strap, a sprung catch and a clamp, all worn bright. He looks up at it on his way past. |
@@ -43,6 +43,10 @@ x: 436.0 balcony (from DL-23)   437.0-440.4 work corner: shadow board, vice, pip
    445.3 network slips (spike on a desk, 0.7)   446.6 the debate (noticeboard, 0.5-1.3)   448.0 kitchen door (DL-25)
 ```
 
+- **The serving rail** (continuity, as DL-23 and DL-25): along the back of the ceiling at 2.45, from DL-23's hatch,
+  through slots over the door at 444.0 and the kitchen door at 448.0, to the arm's column in the kitchen. The arm
+  passes along it once, homeward, as he comes up from the dining room (folded, lowest point 1.25, clear of him and of
+  the bench); nothing here acts on it.
 - **The bench:** 2.8 m long, 0.75 deep, filling the balcony's depth. Hinged along its back edge at 0.8 on two strap
   hinges. Its counterweight runs in a slotted box on the end wall beside the door, on a visible chain over a pulley,
   the same frame language as DL-18's fold bed.
@@ -135,8 +139,8 @@ handle at his feet. **Reset:** none needed; the leaf stays up.
 - **The work corner:** close air, the bench lamp's faint tick, the counterweight chain's run and the hook's clack.
 - **The hall:** a long reverb on every footstep, slow air movement, bunting stirring, one far drip. The absent crowd
   is the sound: no voices, no machines.
-- **The arm:** every 12 s, a rattle along a rail and a small *tink*, through the kitchen wall. It grows from 443 to 448
-  and leads him on.
+- **The arm:** first its run home along the rail overhead; then every 12 s a rattle carried along the rail and a small
+  *tink* from the kitchen. It grows from 443 to 448 and leads him on.
 
 ## 9. Checkpoints
 
@@ -167,6 +171,7 @@ Positions in game x; heights above the floor (6.4). Pivots at each object's orig
 | workbench leaf | Paired outputs (shared space): folding-furniture leaf, new type (§7) | Hinge line at its back edge, 441.2–444.0, height 0.8, on the back wall. Down: extends 0.75 forward across the lane. | **Down** (start). Collider: a solid block 0.0–0.8 over 441.2–444.0, including the jig's volume beneath. **Rising:** Use at the fold handle (range 442.2–443.0), 1.6 s, ease-out; the counterweight drops 0.75 in its box. **Up:** 90°, latched on the wall hook; collider flat on the back wall. No transition back (the latch is out of reach). |
 | fold handle | Use point | 442.6, height 0.62, on the leaf's apron | Warm pool, radius 0.5; the pool moves to the jig face when the leaf latches. |
 | exit door | not an element | End wall at 444.0, opening 0.0–1.9 | Swings open on contact (0.5 s) once the leaf is up. |
+| serving rail | continuity (DL-23, DL-25) | Back of the ceiling, 436.0–448.0, height 2.45; slots over both doors | No collider for D-17. The arm passes along it once, homeward, starting when D-17 reaches DL-23's balcony; home 6.8 s later, before he can reach the kitchen door. |
 | gallery rail | — | 444.0–448.0, height 1.0 | Solid. The `TraceUp` idle volume is 445.5–447.5. |
 | network slips | curiosity (inspect) | 445.3, on the desk at 0.7 | Use range 445.0–445.6; close look, any input returns. |
 | the debate | curiosity (inspect) | 446.6, noticeboard 0.5–1.3 | Use range 446.3–446.9. |

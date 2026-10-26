@@ -12,8 +12,8 @@
 | A household clock replaces DL-13's dial | No dial and no red sector. **The evening routine** is the clock: a chime, a table that rises, a shutter that lowers, two bowls set in turn. The moment the second bowl lands is the moment the table and the ledge both serve. |
 | Two conditions, brake timing, paired outputs | Two **place contacts** start it; the **table brake** holds it; the table and the **hatch shutter** run on one drive, out of phase, so no single early moment serves both. |
 | A safe full cycle shows the answer before it is needed | Seating Rowan's stool runs the whole 14 s cycle in view, with D-17 standing at the brake. Nothing in it can hurt him. |
-| A generous window, cued by sight as well as sound | 2.5 s (5.0 to 7.5). Bowl 2 lands with the tick of its staple, and the arm folds away: both readable with the sound off. |
-| Domestic, not an abstract apparatus | The apron on its hook, the stapled bowl, the cups riding out on the ledge, the rule chalked by the door. The brake pedal is worn bright because they used it every night: to keep the table up after dinner and sit on. |
+| A generous window, cued by sight as well as sound | 2.5 s (5.0 to 7.5). Bowl 2, his painted bowl, lands with a bright enamel ring, and the arm folds away: both readable with the sound off. |
+| Domestic, not an abstract apparatus | The apron on its hook, his painted bowl, the cups riding out on the ledge, the rule chalked by the door. The brake pedal is worn bright because they used it every night: to keep the table up after dinner and sit on. |
 | Hold a moment on both settings; never announce a death | The braked tableau plays in the side view with no music: the motor stops, the stove clock ticks, two bowls, two cups. It reads as an evening made to last, which is what the brake was for. |
 | The chapter's one secret | **Rowan's seed cupboard**, a low door by the stove, ajar in a light pool. Inside, his unsent card to Mara, which D-17 carries to the post box in DL-22. |
 
@@ -27,8 +27,8 @@
 | **The room** | 0:35 | The framing widens: the stowed table on its painted column, the empty place under the hatch, the bright pedal on the skirting, the hatch with the kitchen's light spilling down, the stove nook beyond, a low door ajar. |
 | **Rowan's seed cupboard** | 1:00 | Optional. Inside: seed packets with his jokes, his potting bench, a card in his glyph addressed to M. D-17 takes it (scanned). |
 | **The cook sits** | 1:45 | He hops over Rowan's stool and pushes it to the table. Its feet drop into the worn rings; Rowan's striker cocks. At once: both notes. |
-| **The evening** | 1:50 | The full cycle, watched from the pedal (`Follow` on the bowls): table up; bowl 1 at her place; shutter down, ledge out with two cups; bowl 2, Rowan's stapled bowl, at his place with a tick; then the shutter up, the arm clears, the table down. It goes round again. |
-| **Trying** | 2:05 | Brakes too early or too late, or sitting in the place himself. Each is shown wrong within seconds and undone by Use. |
+| **The evening** | 1:50 | The full cycle, watched from the pedal (`Follow` on the bowls): table up; bowl 1 at her place; shutter down, ledge out with two cups; bowl 2, Rowan's painted bowl, at his place with a ring; then the shutter up, the arm clears, the table down. It goes round again. |
+| **Trying** | 2:05 | Brakes too early or too late, riding the table up, or sitting in the place himself. Each is shown wrong within seconds and undone by Use. |
 | **Held** | 2:55 | He brakes as bowl 2 lands. The motor stops. Two bowls, two cups, the apron on its hook, the stove clock ticking. He looks up at the table; then climbs. |
 | **The hatch** | 3:05 | Rowan's stool (0.45), the table (0.75, stepping past bowl 2), the ledge (1.3, past the cups), the hatch sill (1.85). Checkpoint in the kitchen; the back door to the shared landing. |
 
@@ -69,10 +69,10 @@ x: 389.6 checkpoint   390.2-390.8 the rule board   391.1 guest hook   392.4-393.
 - **The kitchen-diner:** walls, a ceiling lamp over the table with a shade Rowan painted with leaves; the rule board;
   the guest hook; a window onto the terrace; the raised kitchen floor and its hatch; the stove nook.
 - **The evening routine:** the lifting table and its column (painted with a root climbing it, and "331" in his hand);
-  the chain case; the hatch shutter with its ledge; the two place plates with their rods; the two chime pipes and
+  the chain case; the hatch shutter with its ledge; the two place contacts with their rods; the two chime pipes and
   their strikers; the serving arm (jointed, two long links, painted with leaves) on its column in the kitchen; the bowl
   rack inside the hatch.
-- **Props:** her plain bowl; Rowan's chipped bowl, mended with one metal staple; two cups; Mara's stool (plain, one
+- **Props:** two old enamel bowls, hers plain and his painted by him; two cups; Mara's stool (plain, one
   leg mended with a pipe clamp); Rowan's stool (painted, with a cushion); his apron on a hook by the stove; a small iron
   stove with a clock on its shelf.
 - **Rowan's seed cupboard:** a low door; inside, shelves of seed tins and packets, a potting bench with a dibber and
@@ -86,11 +86,11 @@ x: 389.6 checkpoint   390.2-390.8 the rule board   391.1 guest hook   392.4-393.
 | Guest hook | A filter mask | Someone came to dinner who had to breathe through a filter. Orme's (unexplained here; the wards explain it). |
 | The routine | Her mechanism, his paint: a root up the column, leaves on the arm, "331" | Mara built it and Rowan painted it, the year they moved in. |
 | The two pipes | One note per place; her tree scratched on one, his glyph on the other | Dinner is called when both places are set. |
-| The bowls | Hers plain; his chipped and stapled | She mended what he broke. The bowls are set again in DL-23. |
+| The bowls | Two enamel bowls: hers plain; his painted, in his hand | The pair they left behind when they moved up in 352. The upper flat has its own (DL-23). |
 | The pedal | Worn bright | The table was kept up after dinner, night after night. |
 | The apron | On its hook by the stove, next to his stool | He cooked. |
 | The seed packets | "RADISH: FASTER THAN PIPES". "BROAD BEANS (NARROWER THAN ADVERTISED)". "PARSNIP. PATIENCE." "SUNFLOWER: FOR LATER" | His jokes; and a sunflower kept for a sky nobody here has seen. |
-| The card | Addressed in his glyph to M., tucked in a seed tray. Draft text: "For the new place. Same table, more sky. I'll paint the arm again." | A moving-house card, hidden in 352 and forgotten in the move. Unsent, not unfinished. Voice card if the director agrees (chapter plan, open question 11). |
+| The card | Addressed in his glyph to M., tucked in a seed tray. Draft text: "For the new place. Same table, more sky. I'll paint the arm again." | A moving-house card, hidden in 352 and forgotten in the move. Unsent, not unfinished. Voice card if the director agrees (chapter plan, open question 8). |
 
 ## 6. Camera
 
@@ -106,7 +106,7 @@ the arm whenever it is in the hatch, so its moves read against the dark ceiling.
 ## 7. Music
 
 No cue. The Commons bed fades out at the doorway, and the room is scored by its own sounds: the motor's hum, the
-table's screw, the shutter's rattle, the two-note chime, the clack of bowl 1 and the tick of bowl 2's staple, the
+table's screw, the shutter's rattle, the two-note chime, the clack of bowl 1 and the ring of bowl 2, the
 stove clock, and the new cable's relay clicking every 7 s through the outer wall. At the brake the motor stops and
 only the clock and the relay go on. Nothing swells.
 
@@ -134,6 +134,11 @@ only the clock and the relay go on. Nothing swells.
     load, so his hammer cocks, both notes chime and the cycle runs. The moment he gets up for the pedal, his hammer drops with a dull tick, the ledge snaps up
     on its spring, the arm takes the bowls back, and the table and shutter go home. Then the ask begins again. The
     load can't hold while he works.
+  - **Ride the table up and climb while the ledge is out,** skipping the brake. The moment he stands on the table
+    top while the routine runs, it reverses to rest: the arm takes back any bowl it has set, the ledge folds, the
+    shutter rises and the table lowers with him on it, all at their normal speeds. It starts again from 0 once the
+    table top has been clear for 1 s. The house never serves onto a person; nothing says so, the table just goes
+    home. Braked, the table is a fixed step and this never happens.
 - **Elements (3):** Rowan's stool (push); the table brake (Use: set and release); the routine's outputs (table, hatch
   shutter and its ledge), which the player reads rather than operates.
 - **Solution:**
@@ -142,8 +147,7 @@ only the clock and the relay go on. Nothing swells.
   3. Climb Rowan's stool, the table, the ledge and the hatch sill.
 - **Cheap reset:** releasing the brake resumes the cycle where it stopped; nothing has to be rebuilt. Every drop is safe.
 - **Also valid:** braking between 4.5 and 5.0 (the ledge is out; the arm finishes setting bowl 2 anyway). Riding the
-  table up without braking and climbing the ledge and sill inside the 3 s it is out is valid too: it obeys the same
-  rules, and the brake makes it calm.
+  table up without braking is not: see the last wrong assumption. The brake is the only way to the ledge.
 - **Against DL-13:** no dial, no red sector, no steps. The cue is a domestic event, and the two outputs are out of
   phase, so the early brake that DL-13 taught is the trap. Starting it needs a second person, not a key, and being that
   person yourself is a new wrong path. Chapter 2's two places also seed the Partner rule.
@@ -159,9 +163,12 @@ only the clock and the relay go on. Nothing swells.
 - A player who brakes before 4.5 sees, within 1 s of climbing onto the table, D-17 reach for the sill and drop back,
   with the shutter visibly still up. Releasing resumes within 0.3 s.
 - A player who sits in Rowan's place and gets up mid-cycle sees the ledge snap up within 0.3 s.
+- A player who steps onto the table while the cycle runs unbraked sees it reverse within 0.3 s (ledge folding, shutter
+  rising, table lowering with him on it) and never reaches the ledge from it. In 100% of simulated runs, no route
+  reaches the hatch sill without the brake set. Braked, the table holds him at any height.
 - Braked in the window, the four surfaces are each one mantle apart and the climb takes under 6 s. The arm is at rest
   in the kitchen and never in the way.
-- With the sound off, bowl 2's landing is still readable: the stapled bowl set at the empty place, the arm drawing
+- With the sound off, bowl 2's landing is still readable: the painted bowl set at the empty place, the arm drawing
   back, the cups already out. The cue never depends on colour.
 - At 720p on a handheld screen, the chain case from the column to the shutter, the pedal's rod, both hammers, and the
   ledge's edge are all readable in the room framing.
@@ -176,12 +183,12 @@ floor (add 3.25 for the datum). No script or prefab names until U-01 lands.
 |---|---|---|---|---|
 | **place contact** (hers, his) | Plates and docks | Plate centre | 395.8–396.35 and 397.6–398.1, floor | `loaded` (any load: stool or D-17) ↔ `empty`. Drives its striker's cock and holds the ledge's catch. |
 | Mara's stool / Rowan's stool | Movable access | Base centre | Hers on her place; his starts at 399.0–399.45 | Push or pull. Seats on a place only when wholly within the plate (its feet drop into the rings, 0.2 s). |
-| **the table** | Paired outputs (one drive with the shutter) | Column head (397.5, top) | Top 396.4–397.6; 0.3 ↔ 0.75 | Translates on the drive. Carries D-17 up or down; nothing crushes. |
+| **the table** | Paired outputs (one drive with the shutter) | Column head (397.5, top) | Top 396.4–397.6; 0.3 ↔ 0.75 | Translates on the drive; nothing crushes. Braked, a fixed step. Unbraked, anything standing on its top (D-17 or a stool; never the bowls or cups) sends the routine to `reverse`. |
 | **the hatch shutter / ledge** | Paired outputs | Roller axis (398.2, 1.9); ledge hinge on the bottom rail | 397.6–398.8; shutter 1.85 ↔ 1.3; ledge lane-deep at 1.3 | Shutter on the drive. Ledge `folded` ↔ `out`; held out by a catch that needs both places loaded; snaps up (0.3 s) if either empties; with D-17 on it, it waits and the drive waits with it. |
 | **the table brake** | Brakes and catches | Pedal fulcrum at the column foot (397.5, 0.05) | Tread 398.15–398.5 | `off` ↔ `set` on Use. Set stops the drive and the cycle clock at the current t. |
 | **the serving arm** | Cycle output (sprung strokes) | Shoulder at (399.4, 2.9), z −0.6 | Rests folded on the kitchen's back wall | `rest`, `stroke`, `hover`. A stroke in progress always finishes, even when braked. If it meets D-17 its clutch slips and it returns without setting; the cycle runs on. |
 | **the two-note chime** | Cycle output | Striker hinges | Pipes at 396.5 and 396.9, 2.1–2.6 | A loaded place cocks its striker at 12 s (or at once, on loading); the drive trips cocked strikers at 0. |
-| **the evening routine** | Cycle driver (proposed, chapter plan §7) | — | In the column base | `rest` (no places), `ask` (one), `cycle` (both), `stand-down`, `braked` (below). |
+| **the evening routine** | Cycle driver (proposed, chapter plan §7) | — | In the column base | `rest` (no places), `ask` (one), `cycle` (both), `stand-down`, `reverse`, `braked` (below). |
 | Bowls ×2, cups ×2 | Props, no collision | — | Bowls set at 396.65 and 397.35; cups on the ledge's back edge | D-17 steps past them with authored foot placement. |
 | Seed cupboard door | Secret | Hinge | 400.4–401.0; room 400.0–401.4, z −1.2 to −3.0 | Use to enter. Rowan's card: Use to take; scanned; carried to DL-22's post box. |
 | `evening` / `hatch` | Checkpoint markers | — | (389.6, 0) / (402.8, 1.85) | |
@@ -193,7 +200,7 @@ floor (add 3.25 for the datum). No script or prefab names until U-01 lands.
 | 0 | Stowed, 0.3 | Up, ledge folded | Rest | Both hammers fall: the two-note chime. |
 | 0.5–2.5 | Rises to 0.75 | Up | 1.8 lifts bowl 1 from the rack | Motor and screw. |
 | 2.5–4.5 | Holds 0.75 | Lowers to 1.3 | 2.2–3.0 sets bowl 1 at her place (**3.0**, a clack); rest by 3.5 | Shutter rattle. |
-| 3.8–5.5 | 0.75 | Down; **ledge out at 4.5**, cups riding on it | 3.8 lifts bowl 2; sets it at his place at **5.0** (the staple's tick); rest by 5.5 | |
+| 3.8–5.5 | 0.75 | Down; **ledge out at 4.5**, cups riding on it | 3.8 lifts bowl 2; sets it at his place at **5.0** (a bright ring); rest by 5.5 | |
 | **5.0–7.5** | **0.75** | **Down, ledge out** | Rest | **The useful window.** |
 | 7.5–9.5 | 0.75 | Ledge folds (0.3 s); shutter rises to 1.85 | 7.6–9.5 takes bowl 2, then bowl 1, back to the rack; **clear at 9.5** | |
 | 10–12 | Lowers to 0.3 | Up | Rest | |
@@ -203,11 +210,14 @@ floor (add 3.25 for the datum). No script or prefab names until U-01 lands.
 - **ask** (one place loaded): at 0 one hammer falls (one note); 1.8 the arm lifts bowl 1 and holds it in the hatch's
   top (`hover`) until 9.5, then returns it. Table and shutter stay home. It repeats every 14 s.
 - **ask → cycle:** loading the second place starts the full cycle at 0 at once; a bowl already hovering is carried on
-  and set at 3.0.
+  and set at 3.0. If anything stands on the table top, the cycle waits at 0 until it has been clear for 1 s.
+- **reverse:** anything stands on the table top during `cycle`, unbraked. As `stand-down` (the ledge folds, the arm
+  finishes any stroke and takes the bowls back, the shutter rises and the table lowers, all home within 4.5 s), but with
+  both places still loaded; then it waits until the table top has been clear for 1 s and starts the cycle from 0.
 - **stand-down:** a place empties mid-cycle. The ledge snaps up; the arm finishes any stroke, then clears any bowls;
   the shutter rises and the table lowers at their normal speeds (all home within 4.5 s); then `ask` or `rest`.
 - **braked:** the drive and clock stop at t. Release resumes from t. A place emptied while braked snaps the ledge up
-  at once and stands down on release.
+  at once and stands down on release. Released with anything on the table top: `reverse`.
 
 **Placeholder light pools:** on Rowan's stool by the stove; on the brake's tread; on the hatch (the kitchen's light
 falling through it); on the seed cupboard's ajar door. The table lamp keeps both places and the bowls lit.

@@ -28,7 +28,7 @@
 | **Her room** | 0:40 | Inside: dark, close air, the clock ticking. The bed is down, quilt heaped at the foot. The bench is folded on the same frame above it. The landing door is high in the back wall at the far end, 1.2 up, out of reach. Two light pools: the bed's foot rail and the bench's strap. |
 | **Try** | 0:55 | Typical first try: climb the bed (0.45) and reach for the sill (0.75 above him). The jump falls short and he lands back on the mattress. |
 | **More furniture** | 1:15 | The plausible wrong move: pull the bench down too. It swings onto the heaped quilt with a soft thump and rests tilted, its free edge raised. He mantles onto it and slides back off onto the bed. |
-| **Fold** | 1:45 | Use at the foot rail: the bed folds up into its recess. Use at the strap: the bench swings down to its stop at 0.6. With the bench out of the way, a band of painted sky shows on the recess wall where the bench was folded, with the crooked tree in it. |
+| **Fold** | 1:45 | Use at the foot rail: the bed folds up into its recess. Use at the strap: the bench swings down to its stop at 0.6. With the bench out of the way, a band of painted sky shows on the back wall where the bench was folded, with the crooked tree in it. |
 | **Up and out** | 2:15 | Bench (0.6), sill (1.2), through the doorway onto the terrace landing. Checkpoint `terrace` at 355.8. |
 | **On** | 2:30 | The terrace landing runs on to the right into DL-19, the shaft open behind its rail. |
 
@@ -54,7 +54,7 @@ x: 347.0 stair head   347.4-348.6 Works door (sealed)   347.6 ring_a   348.6-351
 | Foot rail | 353.9 | 0.55 | Worn bright; in a light pool. Use from the floor at 353.6–354.15 |
 | Fold bench | 353.4–354.2 | seat 0.6 (stop) | Folded up at start: a vertical leaf on the frame, 0.6–1.05. Hinged along its back edge at 0.6 |
 | Strap | 353.45 | loop at 0.75 | On the bench's free edge; worn leather; in a light pool. Use from the floor or the bed |
-| Painted sky | 353.4–354.2 | 0.62–1.02 | On the recess wall behind the folded bench |
+| Painted sky | 353.4–354.2 | 0.62–1.02 | On the back wall behind the folded bench, above the bed's recess |
 | Sketch | 353.5–354.0 | 1.1–1.45 | Pinned to the frame's top rail, over the bench |
 | Landing doorway | 354.2–355.0 | sill 1.2 | A deep doorway through the back wall's end; its sill lip at 354.2 |
 | Terrace landing | 355.0–361.0 | 1.2 | Continues into DL-19 |
@@ -125,7 +125,7 @@ Everything here is read from the world.
 | The boots | Work boots resoled with cut tyre rubber | She mends what she has. |
 | The overalls | One sleeve let down, then turned up again | Growing, or making do with someone else's length. Both are hers now. |
 | The sketch | Her irrigation sketch of the crooked tree (the knot in one branch). Orme's caret: "^ needs a drain. Unless it's a pond tree." Abel's creature rides a pipe | Her school friends still drew on her work. |
-| The painted sky | A band of sky with the crooked tree, on the recess wall behind the folded bench | She made a window where there wasn't one. |
+| The painted sky | A band of sky with the crooked tree, on the back wall behind the folded bench | She made a window where there wasn't one. |
 | The alarm clock | Wind-up, a pipe clamp for a leg; it rings when touched | Early starts, and a fix that worked. |
 
 **Curiosities:** the alarm clock (Use or bump: it rings 2 s, he `Startle`s, then stills it with a pat); the sketch

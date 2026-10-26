@@ -39,12 +39,12 @@
 ## 3. Layout (metres along the lane; walkway 5.1, courtyard floor 1.5)
 
 ```
-x: 404.0 kitchen back door   404.2-404.9 compressor   404.5-406.5 trolley bay (z -1.0)   405.0 courtyard stair top
-   406.0 SELECTOR   406.6 bay stop   407.0 post box   408.0 SHUTTER 1   410.5 SHUTTER 2   413.0 SHUTTER 3
+x: 404.0 kitchen back door   404.2-404.9 compressor   404.5-407.1 trolley bay (z -1.0)   405.0 courtyard stair top
+   406.0 SELECTOR   407.0 post box   407.2 bay stop   408.0 SHUTTER 1   411.0 SHUTTER 2   414.0 SHUTTER 3
    415.0 parapet ends   415.5 track swings into the lane   416.2 POST: gap catch, recall push
-   416.5-418.1 GAP (bare rail bridge; catch jaw at 417.3)   418.1 far landing   419.0 checkpoint `courtyard`
-   420.0-421.6 GOODS LIFT bay (buffer 421.6)   424.0 upper flat door (DL-23)
-courtyard (1.5): drop lands about 417.3; rota board 407.6; stair foot 409.0, eight 0.45 risers up to 405.0
+   416.5-418.8 GAP (bare rail bridge; catch jaw at 417.65)   418.8 far landing   419.6 checkpoint `courtyard`
+   420.2-422.8 GOODS LIFT bay (buffer 422.8)   424.0 upper flat door (DL-23)
+courtyard (1.5): drop lands about 417.6; rota board 407.6; stair foot 409.0, eight 0.45 risers up to 405.0
 ```
 
 - **Heights** below are above the walkway (5.1) unless marked absolute. The walkway is steel chequer plate with an
@@ -52,18 +52,21 @@ courtyard (1.5): drop lands about 417.3; rota board 407.6; stair foot 409.0, eig
 - **The track:** rails are sunk 0.3 in a channel, so the trolley's deck top is level with the walkway. Behind the
   walkway it runs past a parapet rail (0.9, mesh infill): not mantleable, and nothing reaches over it. From 415.5
   it runs in the back half of the lane. D-17 walks the front half, so the trolley never collides with him on the walkway.
-- **The gap** (1.6) is beyond D-17's jump. The bare rail bridge is a girder with two rails 0.3 below the walkway,
-  still showing the bolt holes of the boards that were taken up. It is not walkable.
+- **The gap** (2.3) is beyond D-17's reach. From the prototype's numbers (run 1.6 m/s, jump apex 0.4, so 0.57 s of
+  airtime; 0.1 s coyote; feet supported 0.08 past an edge), a running jump lands at most about 1.25 m out, and
+  catching the far edge in the air (up to 0.72 above his feet, within 0.32 of his centre) reaches about 1.77 m. The
+  old 1.6 m was inside that. 2.3 leaves half a metre spare. The bare rail bridge is a girder with two rails 0.3
+  below the walkway, still showing the bolt holes of the boards that were taken up. It is not walkable.
 
-**The trolley's stopping places** (its centre; the trolley is 2.0 long):
+**The trolley's stopping places** (its centre; the trolley is 2.6 long, so its held deck rests 0.15 on each edge):
 
 | Where | Centre | Why it stops |
 |---|---|---|
-| Bay | 405.5 | Against the bay stop, while the selector isn't at 1 |
-| Between 1 and 2 | 409.4 (outward) / 409.1 (homeward) | Against shutter 2 / shutter 1 |
-| Between 2 and 3 | 411.9 (outward) / 411.6 (homeward, "shutter 2's buffer") | Against shutter 3 / shutter 2 |
-| Over the gap | 417.3 | Held by the catch jaw. Its deck spans 416.3–418.3 |
-| Lift bay | 420.6 | Against the lift buffer |
+| Bay | 405.8 | Against the bay stop, while the selector isn't at 1 |
+| Between 1 and 2 | 409.6 (outward) / 409.4 (homeward) | Against shutter 2 / shutter 1 |
+| Between 2 and 3 | 412.6 (outward) / 412.4 (homeward, "shutter 2's buffer") | Against shutter 3 / shutter 2 |
+| Over the gap | 417.65 | Held by the catch jaw. Its deck spans 416.35–418.95 |
+| Lift bay | 421.5 | Against the lift buffer |
 
 ## 4. The puzzle
 
@@ -93,7 +96,7 @@ declutches the haul, so the trolley waits at the lift.
 
 **Solution:**
 1. Turn the selector (3 → 1). The trolley runs through shutter 1 to shutter 2. Wait for flag 1 to drop (2.4 s).
-2. Turn to 2 (wait 2.1 s), then to 3. The trolley runs out, passes him at the curve (`StepAside`), crosses the
+2. Turn to 2 (wait 2.4 s), then to 3. The trolley runs out, passes him at the curve (`StepAside`), crosses the
    bridge and strikes the lift buffer. (Turned the moment each flag drops, it never stops on the way.)
 3. The forks lift the trays away (`courtyard` plays) and come down empty: 12 s at the lift in all.
 4. While the trolley is at the lift, set the gap catch. The empty trolley comes back and the jaw takes it, deck
@@ -123,7 +126,7 @@ in one frame. Rule 12: the wide shot shows nothing the side view doesn't.
   face, with three flag wires on pulleys coming into it.
 - **Fire shutters 1–3:** steel roller shutters in frames 1.7 high, with rams, sprung bottom edges and treadles.
   Their tail-clear markers are white flag plates (0.35 × 0.25) on hinged arms, each under its own small caged lamp.
-- **The service trolley:** a flat deck (2.0 × 1.0) on four wheels, with sprung bumpers at both ends, the grip
+- **The service trolley:** a flat deck (2.6 × 1.0) on four wheels, with sprung bumpers at both ends, the grip
   underneath and a centre lug for the jaw. The deck boards are worn pale down the middle by feet. **The last
   consignment:** twelve trays in two stacks of six, in a cage 1.1 high with fork lugs at the top.
 - **The bay stop**, a buffer arm on shutter 1's air line, and the haul chain in its trough.
@@ -158,7 +161,7 @@ in one frame. Rule 12: the wide shot shows nothing the side view doesn't.
 | `gap` | D-17 past 413.0 | Blends over 2 s to 411.0–424.0: the post, the jaw, the bridge, the lift bay and the far landing in one frame, with the courtyard below. |
 | `courtyard` | The forks begin to lift, the first time only | The chapter's one wide shot, below. |
 | `well` | In the courtyard after a drop | Lower and closer (36 mm), the stair and the rota board in frame, the bridge overhead. |
-| The far landing | Past 419.0 | Eases up so the lit window sits in the upper right. |
+| The far landing | Past 419.6 | Eases up so the lit window sits in the upper right. |
 
 **`courtyard`** (24 to 28 mm, 6 s, `Awe`). Times are from the forks starting to lift, which is also the start of
 cue `consignment`. Control returns at 6.0; the trolley sets off at 10.0.
@@ -183,18 +186,18 @@ cue `consignment`. Control returns at 6.0; the trolley sets off at 10.0.
 
 - **service**: at 404.8, outside the kitchen door.
 - **dispatched**: marker at 414.6, armed when the loaded trolley first strikes the lift buffer (the trays are gone).
-- **courtyard**: on the far landing at 419.0, with the trolley held over the gap.
+- **courtyard**: on the far landing at 419.6, with the trolley held over the gap.
 
 ## 10. Acceptance checks
 
 - A first-time player who turns the selector twice in a row sees the handle stop and spring back within 0.3 s, with
   flag 1 up beside the moving trolley. The same input succeeds once the flag drops, at most 2.5 s after the first turn.
-- Each wait from a turn to its flag dropping is under 2.5 s (2.4 s for shutter 1, 2.1 s for 2 and 3). Only one
+- Each wait from a turn to its flag dropping is under 2.5 s (2.4 s for each shutter). Only one
   shutter is ever up, in every state, including the start.
 - A player who sets the catch before dispatch sees the loaded trolley stop over the gap within 4 s of turning to 3,
   with a 1.1 m cage at the walkway's edge, and hears the grip chatter. Released, the trolley reaches the lift within 3 s.
 - From turning to 3, the empty trolley reaches the jaw after about 19 s, 13 of them under the player's control.
-  Walking from the selector to the post takes under 8 s. After a miss, the recall brings it over the jaw in 8 s.
+  Walking from the selector to the post takes under 8 s. After a miss, the recall brings it over the jaw in about 8 s.
 - `courtyard` never plays before the forks lift, never repeats, and ends 4 s before the trolley sets off.
 - A player who drops into the gap is in control on landing (no fade) and back at the post in about 20 s.
 - At 720p handheld: the flags are at least 30 px, D-17 at least 60 px tall, and the jaw and the post in one frame.
@@ -209,19 +212,19 @@ solved states persist; light pools on the selector handle, the flags, the lift's
 |---|---|---|---|---|---|
 | the selector | Routes | Drum axle | 406.0 | Axle 0.8; handle grip 0.55 | P1, P2, P3 (start P3); Turning 0.3 s; Blocked (10°, spring back, 0.3 s) |
 | interlock | Routes | Bolt on the drum | 406.0 | 0.8 | Locked while the flag of the selected shutter is up; else Free |
-| fire shutters 1–3 | Routes | Bottom centre of door, z −1.0 | 408.0 / 410.5 / 413.0 | Opening 1.7 | Down; Rising 0.4 s; Up; Falling 0.5 s (stops on contact) |
-| tail-clear markers 1–3 | Routes | Arm hinge, walkway side | 408.1 / 410.6 / 413.1 | Hinge 1.0; flag up at 1.3 | Up from when its shutter opens until the trolley's tail leaves the clear treadle (shutter line + 0.1), and whenever the trolley is over the shutter line; else Down |
-| bay stop | Brakes and catches | Hinge | 406.6 | 0.3 | Down iff the selector is at P1 |
-| haul | Routes | Trough, z −1.0 to the lift | 404.5–421.6 | −0.3 | Running at 1.8 m/s; Declutched while the forks run |
-| service trolley | Routes; Movable access | Deck centre, deck top | Start 405.5 | 0.0 | Held, Running (out or home), AtLift. Grip: Outward if loaded or recall-latched, else Homeward. Deck is a floor where it lies over the gap or far rails (x ≥ 416.5) |
+| fire shutters 1–3 | Routes | Bottom centre of door, z −1.0 | 408.0 / 411.0 / 414.0 | Opening 1.7 | Down; Rising 0.4 s; Up; Falling 0.5 s (stops on contact) |
+| tail-clear markers 1–3 | Routes | Arm hinge, walkway side | 408.1 / 411.1 / 414.1 | Hinge 1.0; flag up at 1.3 | Up from when its shutter opens until the trolley's tail leaves the clear treadle (shutter line + 0.1), and whenever the trolley is over the shutter line; else Down |
+| bay stop | Brakes and catches | Hinge | 407.2 | 0.3 | Down iff the selector is at P1 |
+| haul | Routes | Trough, z −1.0 to the lift | 404.5–422.8 | −0.3 | Running at 1.8 m/s; Declutched while the forks run |
+| service trolley | Routes; Movable access | Deck centre, deck top | Start 405.8 | 0.0 | Held, Running (out or home), AtLift. Grip: Outward if loaded or recall-latched, else Homeward. Deck is a floor where it lies over the gap or far rails (x ≥ 416.5) |
 | the last consignment | (load) | Cage base | On the trolley | 0.0–1.1 | OnTrolley, Lifting, Gone. Its cage is a 1.1 wall to D-17 |
-| gap catch | Brakes and catches | Lever on the post; jaw on the bridge | Lever 416.2; jaw 417.3 | Lever 0.5; jaw −0.15 | Clear, Set (jaw up), Holding (lug in the jaw; trolley centre 417.3). Use toggles. Worked only from the landing side (x ≤ 416.4) |
+| gap catch | Brakes and catches | Lever on the post; jaw on the bridge | Lever 416.2; jaw 417.65 | Lever 0.5; jaw −0.15 | Clear, Set (jaw up), Holding (lug in the jaw; trolley centre 417.65). Use toggles. Worked only from the landing side (x ≤ 416.4) |
 | recall push | Routes | Push face | 416.2 | 0.45 | Press: latches the grip outward until the trolley next strikes the lift buffer. Does nothing to a loaded or held trolley |
-| goods lift | Routes | Bay floor centre | 420.8 (buffer 421.6) | 0.0 | Idle, ForksIn, Lifting, CageOff, ForksDown. Forks run only for a loaded deck |
-| rail bridge / gap | (none) | Girder | 416.5–418.1 | Rails −0.3 | No floor for D-17. A drop lands on the courtyard floor (absolute 1.5) |
+| goods lift | Routes | Bay floor centre | 421.5 (buffer 422.8) | 0.0 | Idle, ForksIn, Lifting, CageOff, ForksDown. Forks run only for a loaded deck |
+| rail bridge / gap | (none) | Girder | 416.5–418.8 | Rails −0.3 | No floor for D-17. A drop lands on the courtyard floor (absolute 1.5) |
 | courtyard stair | (traversal) | Foot | 409.0 → top 405.0 | Abs. 1.5 → 5.1 | Eight 0.45 risers |
 | post box | (secret) | Slot | 407.0 | 0.55 | Slot lamp lit while he carries a letter; Use: Posted |
-| checkpoint markers | — | Marker | `service` 404.8; `dispatched` 414.6; `courtyard` 419.0 | 0.0 | `dispatched` arms on the first loaded buffer strike |
+| checkpoint markers | — | Marker | `service` 404.8; `dispatched` 414.6; `courtyard` 419.6 | 0.0 | `dispatched` arms on the first loaded buffer strike |
 
 **Sequence with timings** (from the Use; trolley speed 1.8 m/s, 0.3 s ramps):
 
@@ -229,12 +232,12 @@ solved states persist; light pools on the selector handle, the flags, the lift's
 |---|---|---|---|---|---|
 | Start | — | P3 | 3 | none | At the bay against the bay stop, grip chattering |
 | Turn to 1 | 0–0.3 | P1 | 1 (3 falls) | 1 | Bay stop drops; runs from 0.3 |
-| | 2.4 | P1 | 1 | none | Tail clears 408.1; selector free. Stops at 409.4 |
+| | 2.4 | P1 | 1 | none | Tail clears 408.1; selector free. Stops at 409.6 |
 | Turn to 2 | 0–0.7 | P2 | 2 (1 falls) | 2 | Starts once shutter 2 is up (0.7) |
-| | 2.1 | P2 | 2 | none | Tail clears 410.6. Stops at 411.9 |
-| Turn to 3 | 2.1 | P3 | 3 | none | Tail clears 413.1 |
-| | 5.8 | P3 | 3 | none | Strikes the lift buffer (centre 420.6). Haul declutches; `dispatched` |
+| | 2.4 | P2 | 2 | none | Tail clears 411.1. Stops at 412.6 |
+| Turn to 3 | 2.4 | P3 | 3 | none | Tail clears 414.1 |
+| | 5.9 | P3 | 3 | none | Strikes the lift buffer (centre 421.5). Haul declutches; `dispatched` |
 | Unload | +1.0–7.0 | | | | Forks lift the cage (`courtyard` 1.0–7.0); the deck rises and the grip goes Homeward |
 | | +7.0–11.0 | | | | Cage off at the top; forks descend empty; haul re-engages at 11.0 |
-| Return | +11.0–12.8 | | | | Lug reaches the jaw at 417.3: Holding if Set; else on through shutter 3, stopping at 411.6 |
-| Recall | 0–7.6 | | | | Out 5.3 s, lift buffer 0.5 s (no forks), back to the jaw 1.8 s; to 411.6 at about 12 s if not caught |
+| Return | +11.0–13.3 | | | | Lug reaches the jaw at 417.65: Holding if Set; else on through shutter 3, stopping at 412.4 |
+| Recall | 0–8.2 | | | | Out 5.4 s, lift buffer 0.5 s (no forks), back to the jaw 2.3 s; to 412.4 at about 12 s if not caught |

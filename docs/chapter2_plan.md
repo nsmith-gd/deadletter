@@ -26,7 +26,7 @@ Then Rowan dies, the rota thins, and she is alone. Loneliness, not extinction, i
 
 | Movement | Scenes | What carries it |
 |---|---|---|
-| Warmth | DL-18, DL-20 | A room that is cramped but hers; two coats, two bowls, a marble run with a score |
+| Warmth | DL-18, DL-20 | A room that is cramped but hers; two coats, two quilts, a marble run with a score |
 | Ingenuity | DL-19, DL-21, DL-22 | Her repair method; a dinner routine built from irrigation parts; a ration track turned to seed trays |
 | Grief | DL-23 | Reconnecting the chair she disconnected; the second bowl at the empty place |
 | Generosity | DL-24, DL-25 | The community's surplus given to growing things; D-17 stops the routine and leaves the light on |
@@ -98,7 +98,7 @@ further along the ring can be seen across the shaft.
 | Scene | x | Floor in | Floor out | Writer |
 |---|---|---|---|---|
 | DL-18 | 347.0–361.0 | 0.0 (stair head) | 1.2 (terrace landing) | A |
-| DL-19 | 361.0–377.0 | 1.2 | 2.3 (upper terrace landing) | A |
+| DL-19 | 361.0–377.0 | 1.2 | 2.3 (upper terrace) | A |
 | DL-20 | 377.0–389.0 | 2.3 (lower flat) | 3.25 (doorway sill) | B |
 | DL-21 | 389.0–404.0 | 3.25 | 5.1 (hatch sill, kitchen) | B |
 | DL-22 | 404.0–424.0 | 5.1 (courtyard floor 1.5) | 5.1 | C |
@@ -107,26 +107,38 @@ further along the ring can be seen across the shaft.
 | DL-25 | 448.0–464.0 | 6.4 | the service lift at 461.5 rises out of the chapter | D |
 
 **D-17's body (as chapter 1):** 0.71 m tall, half-width 0.17; reaches a hook 0.76 above his feet; mantles 0.24 to
-0.62; every drop is safe. Every climb below is built on 0.45 to 0.55 steps.
+0.62, and from a jump catches ledges up to about 0.72; every drop is safe. Every climb below is built on 0.45 to 0.6
+steps, never above the 0.62 mantle, and none relies on a jump-catch.
 
-**Dates (proposed; open question 4):** apprenticed P.A. 316; the box room 316–331; the lower flat with Rowan 331–352;
+**Dates (proposed; open question 27):** apprenticed P.A. 316; the box room 316–331; the lower flat with Rowan 331–352;
 the upper flat 352–379. Rowan dies 366, the last other resident 378. Mara moves to the Works workshop in 379, and the
 keepsake lamp has burned since. The last consignment's tag reads P.A. 377.
 
 **The evening routine.** One household machine that Mara built and Rowan painted. It runs in both flats and must
 read as the same thing in DL-21, DL-23 and DL-25.
 - **Parts:** the table on a lifting column (stowed 0.3, dining height 0.75); the **serving arm**, which sets bowls
-  through the hatch; in the lower flat only, the **hatch shutter** and its ledge. Her bowl is plain; Rowan's is
-  chipped and mended with one metal staple.
+  through the hatch; in the lower flat only, the **hatch shutter** and its ledge; in the upper flat only, the
+  **serving rail**.
+- **The bowls:** in the upper flat, hers is plain and Rowan's is chipped and mended with one metal staple; that bowl
+  exists only there. The lower flat keeps an older pair of enamel bowls they left behind when they moved up in 352:
+  Mara's plain one and Rowan's, which he painted.
 - **The two-note chime:** two tuned offcuts of pipe, one note per place; both places set, both notes. It is the
   chapter's sound motif.
 - **Lower flat (DL-21):** mechanical, a 14 s cycle that runs while both stools are on their contacts. 0 s chime;
   0.5–2.5 table rises; 2.5–4.5 hatch shutter lowers, ledge out at 1.3 at 4.5; bowl 1 at 3.0; **bowl 2 at 5.0, the
   useful moment, lasting to 7.5**; 7.5–9.5 shutter rises; 9.5 arm clears; 10–12 table lowers; 12–14 rest.
-- **Upper flat (DL-23, DL-25):** powered, rebuilt with keyed docks and couplings. Both docks lit: chime, table up in
-  2 s, bowl 1, bowl 2, then the table **holds** at 0.75 while both stay lit. The arm then runs its **warming sweep**
-  in the kitchen above, for ever: every 12 s from its park outline across the kitchen to the warming shelf and back,
-  pausing 1.5 s at park.
+- **Never serve onto a person.** In both flats, if anything stands on the table top while the routine moves it or
+  serves, the routine goes back to rest (the table lowers; in the lower flat the shutter rises) and starts again once
+  the table is clear. Shown, never told. Braked (DL-21) or held (DL-23), the table is a fixed step.
+- **Upper flat (DL-23 to DL-25):** powered, rebuilt with keyed docks and couplings. The flat wraps the light-well on
+  two levels: the dining room (DL-23) at 5.1; the balcony and work corner (DL-24) and the kitchen (DL-25) at 6.4. The
+  arm hangs from the **serving rail**, a ceiling rail that runs from its drive column in the kitchen (450.0) back
+  along the balcony ceiling to the **serving hatch** over the dining room table. Its standing behaviour is the
+  **warming sweep** in the kitchen: every 12 s from its park outline down the kitchen's sloping section of the rail,
+  across the lift door to the warming shelf and back, pausing 1.5 s at park. Serving interrupts it. Both docks lit:
+  chime, table up in 2 s, while the arm runs along the rail to the hatch (7.2 s); bowl 1, bowl 2 (14.4 s); then the
+  table **holds** at 0.75 while both stay lit. The arm waits behind the hatch until D-17 climbs to the balcony, then
+  runs home along the rail over his head (DL-24, continuity) and resumes the sweep.
 
 **The new cable** (glossy black, galvanised clips, taped joints, relay boxes with green pilot lamps on their own 7 s
 cycle). In DL-18 to DL-21 it runs along the terrace ceilings as continuity only. It is featured twice:
@@ -156,8 +168,9 @@ Nowhere else, and it never changes because D-17 arrived.
 - **Reset:** everything moves on input and is counterbalanced. A leaf that meets D-17 stops and waits; nothing
   crushes. Any order works, and either leaf goes back.
 - **Story link:** choosing a useful configuration instead of adding things is how a young adult makes a cramped life
-  fit. Folding the bed reveals the recess wall: she painted it as a sky with a crooked tree, so lying in bed she looked
-  at an outside she made herself.
+  fit. Pulling the bench down uncovers the wall behind it, above the bed's recess: she painted it as a sky with a
+  crooked tree, an outside she made herself, there by day while she worked. (A folded bed would cover its own recess,
+  so the sky is behind the bench.)
 - **Set and props:**
   - one hook, and an institutional mug with its grade number scratched out and "M" scratched in;
   - work boots resoled with cut tyre rubber;
@@ -214,17 +227,20 @@ Nowhere else, and it never changes because D-17 arrived.
     patches, seed packets in the pocket.
   - **The bed:** the same Commons **fold bed** as DL-18, with her same patched quilt. A **second bed section**, in a
     different timber with a second, different quilt, is folded against its side.
-  - **The shelf** on castors stands where the section would unfold. Worn floor scuffs mark its **recess**.
-  - **The connecting doorway** is 0.95 above the floor, over where the second section lands.
+  - **The connecting doorway** is set high in the back wall (sill 0.95), as the box room's landing door was, over
+    where the second section lands. The lane steps back through it.
+  - **The shelf** on castors stands under the doorway, in front of the folded section. Worn ruts curve from it along
+    the floor into its **alcove** in the back wall.
 - **Central inference:** none new. This is a short application (§5 allows short payoffs without a trick); the player
   who solved DL-18 clears the space with confidence.
-- **Plausible wrong assumption:** none designed. Pushing the shelf to the doorway and climbing it fails honestly: it
-  is 1.1 tall, too high to mantle.
-- **Elements (2):** the shelf (push), the second bed section (Use to unfold).
-- **Solution:** push the shelf into its recess, unfold the second section, then climb bed (0.45) and doorway (0.95).
+- **Plausible wrong assumption:** none designed. Climbing the shelf where it stands fails honestly: it is 1.1 tall,
+  too high to mantle.
+- **Elements (2):** the shelf (push or pull along its ruts), the second bed section (Use to unfold).
+- **Solution:** pull the shelf along its ruts until it rolls home into its alcove, unfold the second section, then
+  climb the section (0.45) and the doorway sill (0.95).
 - **Reset:** motion on input; the shelf comes back out.
 - **Story link:** the same furniture now makes room for two, but the belongings carry the proof, not the bed:
-  - Rowan's chipped bowl on the shelf;
+  - a seed tin on the shelf with one of Rowan's joke labels;
   - his root sketches and her pipe sketches pinned together, each annotated in the other's margin ("Roots don't read
     diagrams." beside his glyph; "Pipes don't wander off. M.").
   These are preferences and humour, before any loss.
@@ -249,6 +265,10 @@ Nowhere else, and it never changes because D-17 arrived.
     the hatch is 1.1 above the table.
   - **D-17 sits in the second place** (DL-15's lesson): the routine runs, but the moment he gets up for the brake it
     waits again. That load can't hold while he works.
+  - **Ride the table up** and climb while the ledge is out, skipping the brake: the moment anything stands on the table
+    top while the routine runs, it reverses to rest (the table lowers, the shutter rises), and starts again once the
+    table is clear. Never serve onto a person: shown, not told. Braked, the table is a fixed step, so the brake is the
+    only way up.
 - **Elements (3):** Rowan's stool (push), the table brake, and the routine's outputs (table, shutter, ledge).
 - **Solution:**
   1. Push Rowan's stool onto its contact. The full cycle runs once, safely, while he watches.
@@ -264,7 +284,7 @@ Nowhere else, and it never changes because D-17 arrived.
 - **Secret: Rowan's seed cupboard.**
   - A low door by the stove (400.4–401.0) stands ajar in a light pool. Inside are seed packets labelled with his jokes
     and his potting bench. This is the chapter's one secret.
-  - **Rowan's unsent card to Mara** is a voice card if the director agrees (open question 11). It is scanned on
+  - **Rowan's unsent card to Mara** is a voice card if the director agrees (open question 8). It is scanned on
     discovery.
   - D-17 carries it to the Commons **post box** in DL-22 and posts it there.
 - **Light and sound:** lamplight over the table; the routine's motor and chime; the stove clock; the relay's click
@@ -276,9 +296,10 @@ Nowhere else, and it never changes because D-17 arrived.
 
 - **Beat:** from the kitchen's back door onto the **shared landing**, a service gallery over the **courtyard**.
   - **The service track:** the former ration track runs behind the walkway (z −1.0) through **fire shutters 1, 2 and
-    3** (408.0, 410.5, 413.0). At 415.5 it swings into the lane and crosses a 1.6 m gap (416.5–418.1) on a bare **rail
-    bridge** to the **goods lift** (420.0–421.6).
-  - **The service trolley** waits at its bay (404.5–406.5) with **the last consignment**: twelve trays of dry seed
+    3** (408.0, 411.0, 414.0). At 415.5 it swings into the lane and crosses a 2.3 m gap (416.5–418.8) on a bare **rail
+    bridge** to the **goods lift** (420.2–422.8). The gap is half a metre beyond D-17's reach (a running jump with a
+    mid-air edge catch reaches about 1.77 m).
+  - **The service trolley** (2.6 m long) waits at its bay (404.5–407.1) with **the last consignment**: twelve trays of dry seed
     heads, tagged P.A. 377 in two hands.
   - **The controls:** the **selector** (406.0) has one air line, three positions and the pictograms "ONE SHUTTER". The
     **gap catch** and its **recall push** stand on a post at the near edge (416.2).
@@ -310,11 +331,12 @@ Nowhere else, and it never changes because D-17 arrived.
   - **What:** the mosaic, the terraces wrapping the shaft, the lit window across, and the trays rising toward a faint
     green above.
 - **Checkpoints:** `service` at 404.8; `dispatched` when the trolley reaches the lift; `courtyard` on the far landing
-  at 419.0.
+  at 419.6.
 
 ### DL-23 The Second Place: `docs/scenes/DL-23_the_second_place.md` (x 424.0–436.0)
 
-- **Beat:** the **upper flat's** dining room, the balcony overhead at 1.3 with the serving hatch above it.
+- **Beat:** the **upper flat's** dining room, the balcony overhead at 1.3 (6.4). The **serving hatch** is high in the
+  back wall over the table, at the end of the serving rail from the kitchen.
   - **Her place:** **Mara's chair** is docked and her **dock lamp** is lit. The table is stowed at 0.3, with one bowl
     and one cup on it: she ate at the low table.
   - **The second place:** the **second dock** is dark, with a **coupling** coiled neatly on a hook beside its socket.
@@ -335,7 +357,8 @@ Nowhere else, and it never changes because D-17 arrived.
   1. Take the chair off its peg and set it at the dock. Its brass foot keys into the dock.
   2. Plug the coupling between chair and dock. The second lamp lights.
   3. The two-note chime sounds for the first time in twenty years, and the table rises.
-  4. The arm descends, sets bowl 1, then sets Rowan's stapled bowl at the empty place. The table holds.
+  4. The arm comes back along its rail from the kitchen and down through the hatch, sets bowl 1, then sets Rowan's
+     stapled bowl at the empty place. The table holds.
   5. Climb Mara's chair, the table (stepping between the bowls) and the balcony.
 - **Reset:** none needed. Unplugging stows the table; re-plugging restores it at once.
 - **Story link:** something deliberately disconnected can be restored mechanically, not emotionally. No word says
@@ -345,14 +368,16 @@ Nowhere else, and it never changes because D-17 arrived.
   - **Framing:** low and close (50 mm) at table height as bowl 2 lands.
   - **D-17:** `StepAside` from the empty place (the courier's habit becoming care), then `Realise`, then `SadWalk`.
   - **The turn:** hold several seconds, then he checks the parcel label.
-- **Light and sound:** one lamp on a long flex. The house is quiet but for the arm's sweep passing above every 12 s,
-  heard through the hatch.
+- **Light and sound:** one lamp on a long flex. The house is quiet but for the arm's sweep in the kitchen, a far
+  rattle carried along the rail to the hatch every 12 s.
 - **Checkpoints:** `second_place` at 424.6; `balcony` at 434.0.
 
 ### DL-24 What She Kept: `docs/scenes/DL-24_what_she_kept.md` (x 436.0–448.0)
 
 - **Beat:** the balcony is Mara's work corner. Her **workbench** is folded down across it: top 0.8, too high to
   mantle, and covering the exit door at 444.0. Over it hangs **Lisle's bench sign**: "BREAK IT HERE, NOT OUT THERE".
+  Overhead runs the serving rail; the arm passes along it, going home from DL-23's hatch, as he comes up. Continuity
+  only.
 - **Central inference:** none. No wrong answer is needed (§7); folding furniture is now confident vocabulary.
 - **Elements (1):** the workbench (Use at its fold handle, counterbalanced like the fold bed).
 - **Solution:** fold the bench up against the wall and go through the door.
@@ -380,8 +405,9 @@ Nowhere else, and it never changes because D-17 arrived.
 ### DL-25 Leaving a Light: `docs/scenes/DL-25_leaving_a_light.md` (x 448.0–464.0)
 
 - **Beat:** the upper flat's kitchen.
-  - **The serving arm** stands on its column at 450.0 by the floor hatch. It runs its warming sweep across the kitchen
-    and in front of the **service lift** door (460.6–462.6).
+  - **The serving arm** hangs from the serving rail; its drive column is at 450.0. Its warming sweep runs down the
+    kitchen's sloping section of the rail, across the **service lift** door (460.6–462.6) to the warming shelf. From
+    park the rail runs on level, over the kitchen door and back along the balcony to DL-23's hatch.
   - **Its park outline**, its own folded silhouette, is painted on the wall at 449.4, with the **park catch** beneath.
   - **The supply socket** (458.0) takes one plug. The arm's coupling runs to it along the wall. The lift's **coupling**
     hangs coiled on a hook by the lift, as the chair's did.
@@ -390,8 +416,8 @@ Nowhere else, and it never changes because D-17 arrived.
   - **The floor grating** is at 456.0–458.0.
 - **Central inference:** stop the routine safely before you take its power. Park it, then unplug.
 - **Plausible wrong assumptions:**
-  - **Unplugging the arm at once:** it stops mid-sweep, held by its holding brake across the lift door. Re-plug and it
-    resumes.
+  - **Unplugging the arm at once:** its drive lets go and it runs down the sloping rail until its holding brake drops
+    into the far notch, with the arm across the lift door. Re-plug and it resumes.
   - **Taking the lamp's supply:** its thin plug is keyed smaller than a coupling and fits no collar, so the lamp cannot
     be put out.
 - **Elements (4):** the serving arm (cycle), the park catch, the arm's coupling, the lift's coupling.
@@ -420,6 +446,7 @@ Nowhere else, and it never changes because D-17 arrived.
 | ring A | The upper ring. The Commons terraces wrap its shaft. |
 | the terrace landing | The walkway outside the box room (DL-18 exit, DL-19). Not "shared landing". |
 | the half landing | DL-19's cantilevered stair platform on bracket and stop pin. |
+| the upper terrace | DL-19's walk above the half landing, to the lower flat's front door. Not a landing. |
 | the shared landing | DL-22's service gallery over the courtyard. |
 | the courtyard | The light-well below the shared landing: mosaic, rota board. |
 | the box room | Mara's single room, P.A. 316–331 (DL-18). |
@@ -435,7 +462,7 @@ Nowhere else, and it never changes because D-17 arrived.
 | the last other resident | Initials "A. K." provisionally (from DL-08's tags); appears only on rotas and slips. |
 | fold bed / fold bench | DL-18's two hinged leaves on one visible frame. The bed is the standard Commons fold bed. |
 | second bed section | DL-20's hand-made extension, a different timber, that unfolds beside the fold bed. |
-| the shelf | DL-20's dresser on castors, with its marked recess. |
+| the shelf | DL-20's dresser on castors; its worn ruts lead to its alcove in the back wall. |
 | the jack | A wheeled ratchet jack with a crank. Holds any height it is cranked to. |
 | bent pin / spare pin | DL-19's stop pins. The spare sits in a spring clip on the bracket post. |
 | safety stops | The visible blocks the half landing drops onto. |
@@ -445,7 +472,11 @@ Nowhere else, and it never changes because D-17 arrived.
 | place contact | DL-21's load contact under each stool's place. |
 | the table brake | DL-21's foot lever on the table column. |
 | the hatch shutter / ledge | DL-21's roll-down shutter under the hatch. Its ledge swings out at 1.3 when it is down. |
-| the serving arm | The routine's jointed arm that sets bowls through the hatch; runs the warming sweep in DL-25. |
+| the serving arm | The routine's jointed arm that sets bowls through the hatch. In the upper flat it hangs from the serving rail. |
+| the serving rail | The upper flat's ceiling rail, from the arm's drive column in the kitchen (450.0) level along the balcony to the serving hatch; its kitchen section slopes from park (449.4) to the reach notch (460.3). |
+| the serving hatch | The upper flat's opening high in the dining room's back wall over the table, at the serving rail's end. |
+| warming sweep | The arm's standing behaviour in the upper flat's kitchen: park → warming shelf → park every 12 s, 1.5 s at park. |
+| the bowls | Lower flat: an older enamel pair left behind in 352, hers plain, his painted by him. Upper flat: hers plain; his chipped and mended with one metal staple (only there). |
 | the two-note chime | The routine's sound: one tuned pipe note per place. |
 | keyed dock / dock lamp | DL-23's floor dock with a keyed slot and socket; its lamp lights only when a coupling connects. |
 | coupling | A flexible lead with a keyed brass plug at each end (DL-23, DL-25). Same standard everywhere. |
@@ -503,6 +534,22 @@ markers, and placeholder light pools on what matters. Measure every scene twice 
 
 Water, Reactive beings and Partner are not used.
 
+**D-17's quirks in this chapter** (open question 32):
+
+| Quirk | Introduced | What it is |
+|---|---|---|
+| `Settle` | DL-19, new | A 0.3 s knee dip with a small servo whine after `Teeter`. Never changes jump distance. |
+| `Follow` | DL-20, new | His head tracks a moving thing: the marble; DL-21's bowls; DL-23's arm. |
+| `Proud` | DL-20 (from DL-08) | On the marble's bell. |
+| `StepAside` | DL-22, new | Steps back to let something pass: the trolley; in DL-23, the empty place. |
+| `TraceUp` | DL-24, new | Idle at the gallery rail, his head follows the allocation board's arrows up to the Works. |
+| `Tug` | DL-25 (from DL-01) | Tugs the keepsake lamp's taped plug; the tape holds. |
+| `Pat` | DL-25 (from DL-05) | Pats the parked arm's elbow. |
+| `LookBack` | DL-25 (from DL-08) | In `light`, turns to the lamp in the window. |
+| `LookUp` | DL-25, new | In `light`, faces forward and looks up the shaft. |
+
+Chapter 1's `Teeter`, `Startle`, `Awe`, `Realise`, `SadWalk` and `CheckLabel` are reused unchanged.
+
 ## 8. Puzzle checklist pass
 
 | Scene | Against `docs/puzzle_principles.md` 1–14 |
@@ -518,34 +565,77 @@ Water, Reactive beings and Partner are not used.
 
 ## 9. Open questions for the director
 
-1. **Puzzle notes.** The puzzle sheets for DL-18 to DL-25 (`docs/puzzle_notes.html`) match §7 and this plan. Your
-   live notes live in the notebook artifact's database, which the writing account couldn't read. Please paste any notes on
-   DL-18 to DL-25 or the chapter into #6, especially on DL-21 and DL-22.
-2. **The lit window.** Is the keepsake lamp the one lit ring A window in DL-09's vista? This plan assumes yes, and
-   makes it visible across the shaft from DL-18 and DL-22.
-3. **Two flats.** Is it right to have two flats, with the same table, bowls and routine moved up and rebuilt with
-   docks? Or do you want one flat?
-4. **Dates.** Box room 316–331, lower flat 331–352, upper flat 352–379, Rowan dies 366, Mara to the workshop 379, the
-   consignment tag 377. Approve or correct.
-5. **Rowan's surname and prop signature.** "R." collides with R. Abel; this plan uses a root glyph.
-6. **The last other resident's initials.** Provisionally A. K., from DL-08's repair tags. Approve?
+Grouped by scene, then chapter-wide. Settled and dropped: the sky behind the bench, the two 0.6 steps, DL-20's fold
+bed, the DL-21 bypass and DL-22's gap (lead's rulings, 26 October).
+
+**DL-18 and DL-19**
+1. **Arrival lengths.** DL-18's 40 s arrival has 4.4 m of lane (347.0–351.4) and DL-19's 30 s walk 9.6 m
+   (367.4–377.0): about 3 s and 6 s at run speed. Are they mostly looking time, or should they get more lane?
+
+**DL-19**
+2. **The tin cup** wired under the fork that catches the pulled pin: welcome, or one prop too many?
+3. **Barnaby's drip tube.** Does keeping Rowan's plant alive say too much too soon? Should Mara's naming of pumps (the
+   addendum) be shown as the habit she took from Rowan's naming of plants?
+4. **The knee.** Is the knee `Settle` in DL-19 too early, or the right seed for DL-40?
+
+**DL-20**
+5. **The missing bulb** is on Mara's place-lamp, not Rowan's, so it doesn't foreshadow. Approve?
+6. **The shelf's path** leaves the lane into its back-wall alcove. Can a pushable's guided path leave the lane? (For
+   U-01.)
+
+**DL-21**
 7. **DL-21 and DL-13.** Keep the table brake, or try a variant where the routine pauses while a diner is off their
    stool, so pulling a stool at the right moment is the brake?
-8. **DL-22.** Keep three fire shutters as §7 says, or cut to two to avoid repeating a solved thought?
-9. **Folding furniture.** Should it be added to §5 as a permanent rule? Should the cycle driver be named there?
-10. **The last consignment.** Should the dry seed delivered ten years late arrive somewhere in chapter 3, and sprout?
-11. **The secret.** Is Rowan's card to Mara a voice card (the only time we hear him) or written? Does posting it change
-    the epilogue, so that she receives it?
-12. **Orme's filter mask.** Is it too early a seed of the survey?
-13. **Barnaby's drip tube.** Does keeping Rowan's plant alive say too much too soon? Should Mara's naming of pumps (the
-    addendum) be shown as the habit she took from Rowan's naming of plants?
-14. **The knee.** Is the knee `Settle` in DL-19 too early, or the right seed for DL-40?
-15. **DL-23's music.** A full swell (direction.md), or a held near-silence and the music box (§9: "need not swell at
-    every reveal")?
-16. **Lisle's sign.** If it already hangs in DL-17, does DL-24 show Mara's own painted copy?
-17. **The jig and the bracket.** Will the jig return for the joint repair in chapter 6? Who owns matching DL-19's
+8. **The secret.** Is Rowan's card to Mara a voice card (the only time we hear him) or written? Does posting it change
+   the epilogue, so that she receives it? Approve the draft text: "For the new place. Same table, more sky." (DL-21
+   adds "I'll paint the arm again.")
+9. **Orme's filter mask.** Is it too early a seed of the survey?
+
+**DL-22**
+10. **Three fire shutters** as §7 says, or cut to two to avoid repeating a solved thought?
+11. **Riding the trolley.** Is riding the empty trolley across on a recall an acceptable solution?
+12. **The walkway boards** taken up to make the seed trays: keep?
+13. **The last consignment.** Should the dry seed delivered ten years late arrive somewhere in chapter 3, and sprout?
+
+**DL-23**
+14. **Her plug** is taped with the new cable's tape. Too strong a hint that she keeps the cable?
+15. **The empty ladder hooks.** Did she take her ladder to the workshop?
+16. **Rowan's coat.** It is absent from the upper flat. Proposal: Mara wears it in the workshop. Confirm for chapter 6.
+16a. **The serve's length.** With the serving rail (about 7 s each way over 20 m), bowl 2 lands at 14.4 s and control
+    returns about 37.5 s after the coupling is plugged. Is that hold right for the chapter's peak, or should the arm
+    wait at the hatch already (a shorter serve), with D-17 free to move while it runs?
+
+**DL-24**
+17. **Lisle's sign.** If it already hangs in DL-17, does DL-24 show Mara's own painted copy?
+18. **Rowan at the jig.** His glyph marks the far station. Did he bend pipe with her?
+19. **Orme's caret** on the allocation board: welcome?
+20. **The jig and the bracket.** Will the jig return for the joint repair in chapter 6? Who owns matching DL-19's
     bracket silhouette to D-17's knee bracket?
-18. **Rowan's coat.** It is absent from the upper flat. Proposal: Mara wears it in the workshop. Confirm for chapter 6.
-19. **Length.** Is a first-play target of about 25 minutes for this chapter right against the game's 150?
-20. **Live questions.** The review's live-question table (its §5.2) wasn't among my sources. Confirm the in and out
+
+**DL-25**
+21. **How Mara left in 379.** The lift's car is in the kitchen and unplugged, and the arm is still plugged in, so she
+    did not ride it up last. Which way did she go?
+22. **`Pat`** plays when the arm hooks only if D-17 is within 1.5 m; otherwise on his first pass within 1 m. Keep both?
+
+**Chapter-wide**
+23. **Music.** DL-22's `courtyard` moderate, DL-23's `second_place` the chapter's one full swell, DL-25's `light` a
+    moderate rise. Approve, or should DL-23 be a held near-silence and the music box (§9: "need not swell at every
+    reveal"), or `light` a full swell?
+24. **Puzzle notes.** The puzzle sheets for DL-18 to DL-25 (`docs/puzzle_notes.html`) match §7 and this plan. Your
+    live notes live in the notebook artifact's database, which the writing account couldn't read. Please paste any
+    notes on DL-18 to DL-25 or the chapter into #6, especially on DL-21 and DL-22.
+25. **The lit window.** Is the keepsake lamp the one lit ring A window in DL-09's vista? This plan assumes yes, and
+    makes it visible across the shaft from DL-18 and DL-22.
+26. **Two flats.** Is it right to have two flats, with the same table and routine moved up and rebuilt with docks? Or
+    do you want one flat?
+27. **Dates.** Box room 316–331, lower flat 331–352, upper flat 352–379, Rowan dies 366, Mara to the workshop 379, the
+    consignment tag 377. Approve or correct.
+28. **Rowan's surname and prop signature.** "R." collides with R. Abel; this plan uses a root glyph.
+29. **The last other resident's initials.** Provisionally A. K., from DL-08's repair tags. Approve?
+30. **Folding furniture.** Should it be added to §5 as a permanent rule? Should the cycle driver be named there?
+31. **Back-wall doorways.** How far does the lane step back through DL-18's landing door, DL-20's connecting doorway
+    and DL-25's lift door? (For U-01.)
+32. **New quirks.** Approve `Settle`, `Follow`, `StepAside`, `TraceUp` and `LookUp` (table in §7).
+33. **Length.** Is a first-play target of about 25 minutes for this chapter right against the game's 150?
+34. **Live questions.** The review's live-question table (its §5.2) wasn't among my sources. Confirm the in and out
     questions in section 1.

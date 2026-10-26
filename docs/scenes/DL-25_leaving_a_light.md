@@ -15,7 +15,7 @@
 | Stop the routine safely before taking its power | The arm runs its warming sweep every 12 s. Set the park catch, let the arm come home and hook, then unplug it. The park catch takes the arm before its drive is removed (support transfer). |
 | Wrong: unplug the arm at once | Its drive lets go and the trolley runs down its sloping rail until the holding brake drops into the far notch. The arm swings across the lift door and stays there, dark. Re-plug and it resumes. |
 | Wrong: take the lamp's supply | The lamp's thin plug is taped into a small keyed socket on the new cable. It is half the size of a coupling's brass plug, fits no collar, and the lamp cannot be put out. |
-| Stopping can be a completion | D-17 stops the two-person evening he restarted in DL-23. The arm's work lamp and the glow through the floor hatch go out; the keepsake lamp, the window lit across the shaft since DL-18, stays lit. He pats the parked arm (`Pat`). |
+| Stopping can be a completion | D-17 stops the two-person evening he restarted in DL-23. The arm's work lamp and the rail pilot go out; the keepsake lamp, the window lit across the shaft since DL-18, stays lit. He pats the parked arm (`Pat`). |
 | The way on, and the new cable's meaning | Through the floor grating, the surplus-service trunk runs on toward the Works with the new cable clipped along it. The lamp's circuit is spliced into it with the newest taped joint on the line: someone still tends this light. |
 | Hand off to chapter 3 | `light`: he rides the lift up, looks back at the lamp, and the music turns to the theme in a major key as water sounds rise from above. |
 
@@ -25,34 +25,40 @@
 |---|---|---|
 | **The kitchen** | 0:00 | Through the door at 448.0 the whole kitchen is in frame. The arm folds out of its painted outline and dashes down its rail past the lit window. It swings across the lift door to the warming shelf, lifts the dish lid with a *tink*, sets it back, and rattles home. |
 | **The lift** | 0:20 | The lift at the far end: bars down, pilot dark, a coiled coupling on a hook beside it. The supply socket at 458.0 holds the arm's plug. |
-| **The window** | 0:40 | Optional: the lamp under its tray-lid shade, and across the shaft the terrace gallery's amber lamps, where he first saw this window. Use at the splice box: he tugs the thin plug and the tape holds (`Tug`, new). |
+| **The window** | 0:40 | Optional: the lamp under its tray-lid shade, and across the shaft the terrace gallery's amber lamps, where he first saw this window. Use at the splice box: he tugs the thin plug and the tape holds (`Tug`, as chapter 1's cord lamp). |
 | **Unplug at once** | 1:00 | Typical first try: unplug the arm. The rattle stops, a scrape runs down the rail, *clack*: the arm swings across the lift door, its work lamp out. Plug the lift: its pilot lights and its bars rise behind the arm. He walks into the arm and stops. |
 | **Put it back** | 1:40 | Re-plug the arm. It finishes its visit to the shelf and rattles home, and the doorway clears. |
 | **Home** | 2:00 | The painted outline at the door shows the arm folded against the wall, edged with Rowan's leaves, with the catch's worn lever beneath it. Set the catch. On its next return the arm folds into its outline and hooks; the drive tries to send it out again and the clutch whirrs, restrained. If he is near, he pats its folded elbow (`Pat`). |
-| **Unplug** | 2:40 | The whirr winds down. The arm's work lamp goes out and the glow through the floor hatch fades. The keepsake lamp stays lit. Silence but for the relay click under the grating and water far below. |
+| **Unplug** | 2:40 | The whirr winds down. The arm's work lamp goes out and the rail pilot fades. The keepsake lamp stays lit. Silence but for the relay click under the grating and water far below. |
 | **Power the lift** | 2:55 | He carries the lift's coupling to the socket and plugs it in. The pilot lamp turns green and the bars rise. |
 | **`light`** | 3:15 | He steps in. The bars drop, the car rises, he looks back at the lamp, and the camera holds the window, then follows him up. Into chapter 3. |
 
 ## 3. Layout (metres along the lane; floor 6.4)
 
 ```
-x: 448.0 kitchen door   448.6 `kitchen`   448.9-450.0 PARK OUTLINE (0.5-2.3); park catch 449.4 (lever 0.5)
-   450.0 column (motor, slipping clutch, chain sprocket)   450.3-451.1 floor hatch   451.8 calendar (1.4)
+x: 448.0 kitchen door, rail slot over it (2.45) with the rail pilot   448.6 `kitchen`
+   448.9-450.0 PARK OUTLINE (0.5-2.3); park catch 449.4 (lever 0.5)
+   450.0 column (motor, slipping clutch, chain sprocket)   451.8 calendar (1.4)
    452.6-454.4 WINDOW (sill 1.0); keepsake lamp 453.5   454.6 new cable down the wall; splice box (1.1)
    456.0-458.0 FLOOR GRATING   458.0 SUPPLY SOCKET (0.45)   460.2 lift coupling hook (0.6)
    460.3 lift inlet collar (0.35), call box and pilot lamp (1.2)   460.6-462.6 SERVICE LIFT door; car centre 461.5
    462.8-463.8 warming shelf (top 0.85)   464.0 end wall
-rail: along the back wall's head, 449.4 at 2.45 sloping to 460.3 at 1.95; park notch 449.4, reach notch 460.3
+rail: along the back wall's head, 449.4 at 2.45 sloping to 460.3 at 1.95; park notch 449.4, reach notch 460.3;
+      from park the serving rail runs on level at 2.45 through the rail slot, back along the balcony to DL-23's hatch
 ```
 
-- **The serving arm** hangs from a trolley on the wall rail at the back of the lane, so in travel D-17 walks under it.
-  Folded, it stands on its column. Upper arm 1.0 m; forearm a 2.4 m truss, 0.6 deep, ending in the cradle.
+- **The serving arm** hangs from a trolley on the serving rail at the back of the lane, so in travel D-17 walks under
+  it. Folded, it stands on its column. Upper arm 1.0 m; forearm a 2.4 m truss, 0.6 deep, ending in the cradle.
   - **At park:** cams at the rail's head fold it flat into its outline, the cradle's eye at 0.55, over the catch.
   - **In travel:** folded up, lowest point 1.25 or higher. It crosses the window, and the lamp's light flickers.
   - **At reach:** cams at the rail's foot swing the forearm across the whole lift doorway at 0.3–0.9, its cradle on the
     warming shelf. Too high to mantle, too low to pass under: the doorway is shut to D-17.
 - **The sloping rail** falls 0.5 m over 10.9 m, plainly (Mara's irrigation habit: everything runs downhill). A chain
-  loop from the column's sprocket drives the trolley both ways.
+  loop from the column's sprocket drives the trolley both ways. This is the kitchen's section of the serving rail.
+  From park the rail runs on level through the rail slot over the door and back along the balcony ceiling to the
+  serving hatch over the dining room (DL-23); serving takes the arm that way and back, and nothing in this scene does.
+  The arm is always home before D-17 can reach the kitchen: it leaves DL-23's hatch when he reaches the balcony and
+  is at park 6.8 s later.
 - **The holding brake** is a sprung dog on the trolley, lifted by power. It drops into a brass notch plate at park or at
   reach (the visible engagement positions). Unpowered away from a notch, it drags while the trolley rolls downhill.
 - **The lift door** is in the back wall; D-17 steps back from the lane into the car, as through DL-18's door.
@@ -72,7 +78,7 @@ into the reach notch; 3.5–4.1 swings across the lift door; 4.1–6.2 lifts the
 
 **Plausible wrong assumptions, and how the world corrects each:**
 - **"Unplug the arm, plug the lift."** The obvious read of one socket and two plugs (DL-23's lesson).
-  - The hum stops, its work lamp and the hatch glow go out, and the trolley runs down the rail, its dog scraping
+  - The hum stops, its work lamp and the rail pilot go out, and the trolley runs down the rail, its dog scraping
     louder, into the reach notch: *clack*. The forearm swings across the doorway. At most 3.6 s from any phase; on the
     return trip the trolley visibly stops and rolls back down.
   - If he then plugs the lift, its pilot turns green and its bars rise behind the arm. Walking in, he stops against
@@ -107,7 +113,8 @@ into the reach notch; 3.5–4.1 swings across the lift door; 4.1–6.2 lifts the
     the cradle, a small hanging tray with an eye underneath.
 - **The park outline:** the folded arm's silhouette painted on the wall, edged with Rowan's leaves, with his root
   glyph in one corner. **The park catch:** a sprung hook on a short worn brass lever.
-- **The floor hatch:** a slotted iron hatch beside the column, the arm's way down to the dining room.
+- **The rail slot:** where the serving rail leaves the kitchen over the door, the arm's way back along the balcony to
+  the dining room's hatch. Over it, the **rail pilot**, a small amber lamp lit while the arm has power.
 - **The supply socket:** a cast-iron box with one brass collar, worn bright, fed by an old armoured conduit.
 - **Two couplings** (the DL-23 standard): the arm's, along the skirting from the column; the lift's, coiled on its hook.
 - **The service lift:** a small car with two gate bars across its front, a call box with a pilot lamp, an inlet collar,
@@ -185,7 +192,7 @@ the clutch whirrs, telling it to rest. Otherwise it plays the first time he pass
 - **Goal in frame:** from 448.6, at 720p, the frame shows the moving arm, the outline and catch, the socket and its
   plug, the dark pilot and closed bars, the coiled coupling, and the lamp.
 - **Wrong 1:** a first-time player who unplugs the arm at any phase except park sees it reach the far notch, across
-  the doorway, within 3.6 s. The work lamp and the hatch glow go out within 0.3 s of the unplug.
+  the doorway, within 3.6 s. The work lamp and the rail pilot go out within 0.3 s of the unplug.
 - **Wrong 1, then the lift:** with the arm across, plugging the lift turns the pilot green and raises the bars within
   1.0 s; walking in is stopped at the forearm in 100% of tries. Re-plugging the arm restarts it within 0.5 s.
 - **The catch:** set while the arm is away, the arm hooks on its next return (at most 12 s), and the whirr starts within
@@ -222,7 +229,7 @@ Positions in game x; heights above the floor (6.4). Pivots at each object's orig
 |---|---|---|---|---|
 | Cycling | on | plugged, catch clear | The 12 s cycle (section 4). Dog lifted while moving, in a notch at park and at reach. | Caught; Running out; Parked |
 | Caught | on | catch set and the arm at park | The drive pulls against the hook. The clutch slips and whirrs; the trolley shivers 2 cm every 0.5 s. | Cycling (catch lifted, from 0.0); Parked (unplugged) |
-| Parked | off | unplugged at park (Caught, or 10.1–0.4) | Held by the dog in the park notch, and by the hook if set. Work lamp and hatch glow off. | Caught or Cycling on re-plug |
+| Parked | off | unplugged at park (Caught, or 10.1–0.4) | Held by the dog in the park notch, and by the hook if set. Work lamp and rail pilot off. | Caught or Cycling on re-plug |
 | Running out | off | unplugged anywhere else | The dog drags; the trolley rolls down at up to 4.5 m/s, at most 3.0 s, then *clack* in the reach notch and the 0.6 s swing across the door. | Held at reach (or Cycling, if re-plugged first) |
 | Held at reach | off | Running out ends, or unplugged during 3.5–6.8 | The forearm is across the doorway at 0.3–0.9, solid. | Cycling on re-plug (it finishes the shelf visit, then returns) |
 
@@ -234,7 +241,7 @@ Positions in game x; heights above the floor (6.4). Pivots at each object's orig
 | park catch | Clear / Set | Use toggles (0.5 s). Set at park: hooks at once. Set away: hooks when the arm folds in (10.1–10.5). Lifting it while Caught releases the arm into its cycle. |
 | service lift | Unpowered / Powered / Boarded / Rising | Powered: pilot green in 0.2 s, bars rise in 0.8 s (behind the forearm, if it is there). Boarded: D-17 on the floor contact for 0.6 s with the doorway clear, then the bars drop (0.6 s, the `light` trigger) and the car rises at 0.3 m/s. Unplugging before boarding: bars down, pilot dark. |
 | keepsake lamp | On | No transition exists. |
-| floor hatch glow | On / Off | On while the arm's coupling is in; 0.3 s fade either way. |
+| rail pilot | On / Off | On while the arm's coupling is in; 0.3 s fade either way. |
 
 **Light pools:** the outline and catch, the socket's collar, the lift's coil and call box. The lamp is one shadowed
 spot onto the reveal; the arm's work lamp is a small point that travels with the trolley.

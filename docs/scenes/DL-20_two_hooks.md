@@ -11,7 +11,7 @@
 |---|---|
 | A quiet relationship reveal before any loss | The lower flat's front room: two hooks with two coats, two pairs of boots, two sketches pinned into one picture, two quilts, two place-lamps. Preferences and humour, nothing missing. |
 | A short application, not a new trick (§7: "not a stretched search") | DL-18's thought again, now for two: the **shelf** stands where the **second bed section** unfolds. Clear the space, unfold the section, climb it. No designed wrong assumption. |
-| Belongings carry the proof, not the bed | The bed only says "two" with its second quilt. The coats, the bowl, the sketches and the score make the two people specific. DL-23's single coat on two hooks pays this off. |
+| Belongings carry the proof, not the bed | The bed only says "two" with its second quilt. The coats, the seed tin, the sketches and the score make the two people specific. DL-23's single coat on two hooks pays this off. |
 | Safe motion | Nothing can hurt D-17. The section stops and waits for him; the shelf rolls on its own worn ruts. |
 | One moment of play that no puzzle needs | **The marble run** (chapter plan §6): a jar on the doorway sill, two lanes down the wall, a bell, and Rowan's chalked score: the pipes win every race, and never the score. |
 | Seed the next scene | Through the doorway, every 14 s, one pipe note: DL-21's evening routine asking for its second place. |
@@ -44,7 +44,7 @@ x: 377.2-377.6 front door   378.0 her hook   378.5 his hook   379.2-380.4 the sk
 |---|---|---|
 | Fold bed; second bed section when down | 0.45 | One mantle. |
 | Connecting doorway sill | 0.95 (datum 3.25) | 0.5 above the section. The only way on. |
-| The shelf | 1.1, with a fiddle rail to 1.16 | Too high from the floor, and (if left beside the lowered section) 0.71 above it. Never a step. |
+| The shelf | 1.1, with a fiddle rail to 1.16 | Too high from the floor. Beside the lowered section its top is 0.65 up, but the fiddle rail is not a mantle edge, so it is never a step. |
 | The folded section's top edge | 1.55 | 1.1 above the bed: it walls the bed off from the doorway until it comes down. |
 | Funnels at the doorway's two jambs | 1.55 | In reach from the sill (0.95 + 0.76). |
 | Bell cup, on the wall under the sill | 0.7 | |
@@ -62,12 +62,14 @@ x: 377.2-377.6 front door   378.0 her hook   378.5 his hook   379.2-380.4 the sk
 - **The front room:** the doorway from the terrace, two hooks on a board, two coats, two pairs of boots; the window
   onto the shaft, its sill lined with empty pots, each labelled with Rowan's root glyph.
 - **The sketches:** two sheets pinned edge to edge, her pipes and his roots, one tree between them.
-- **The fold bed:** DL-18's model and her same patched quilt, here in the lower flat's bed recess.
+- **The fold bed:** DL-18's model (0.55 deep, folding toward the wall into its recess) and her same patched quilt, here in
+  the lower flat's bed recess.
 - **The second bed section:** a hand-made leaf in a paler, different timber, joined with visible dovetails. It hangs
   on two hinges made from pipe clamps (her hand) and is painted with a root along its rail (his). It has folding legs,
   a worn leather strap and a second quilt of bright mismatched patches, from the same cloth as his coat's patches.
 - **The shelf:** a dresser on castors, 0.8 wide, 1.1 tall, with a fiddle rail. A worn steel grip on each side. On it:
-  Rowan's chipped bowl, a jar of seed, a tin of pins, and her pliers.
+  a seed tin with one of Rowan's joke labels ("CRESS: GROWS ON YOU", under his glyph), a jar of seed, a tin of pins,
+  and her pliers.
 - **The alcove:** a niche in the back wall, the wallpaper inside unfaded where the shelf has always stood at night.
 - **The place-lamps:** two small wall lamps over the pillows, one (over hers) with no bulb.
 - **The marble run:** her lane in copper pipe offcuts with neat soldered bends; his in carved wooden roots that
@@ -84,7 +86,7 @@ Everything here is read from the world.
 | Windowsill pots | Empty, each labelled with the root glyph | He grew things everywhere. The glyph is his signature; we meet it on Barnaby's tag in DL-19. |
 | The bed | Her quilt from the box room, and a second quilt; a section in a different timber on pipe-clamp hinges, painted with a root | The room she made fit for one, she rebuilt for two. Her joinery, his paint. |
 | The place-lamps | Two lamps; hers has no bulb | The mechanic's own lamp is the one that never got fixed. |
-| The shelf | Rowan's chipped bowl; her pliers beside it | A mended household. The bowl returns in DL-21 and DL-23. |
+| The shelf | His seed tin, "CRESS: GROWS ON YOU"; her pliers beside it | Their things share a shelf. His jokes are on everything he labels. |
 | The marble run | Copper lane, root lane, one bell. In chalk, in his hand: "ROOTS 41 · PIPES 39" | They played for no reason. The pipes always win the race, and the score says otherwise. |
 
 ## 6. Camera
@@ -116,7 +118,7 @@ a minute of play, because it repeats DL-18's thought (chapter plan §8).
   confidence. The worn ruts say where the shelf lives, and the strap behind it says what it is in the way of.
 - **Plausible wrong assumptions:** none designed. Two honest failures:
   - **Climb the shelf.** It already stands under the doorway and looks like a step. D-17 reaches up the shelf's face,
-    gets no grip, and drops back within 1 s: 1.1 is out of his reach. The fiddle rail and the bowl on top say "not
+    gets no grip, and drops back within 1 s: 1.1 is out of his reach. The fiddle rail and the seed tin on top say "not
     a step" before he tries.
   - **Push it the other way.** It moves 0.15 and knocks against the folded section's legs. The ruts run the other way.
 - **Elements (2):** the shelf (grab: push or pull along its ruts); the second bed section (Use at its strap).
@@ -158,7 +160,7 @@ flat's floor (add 2.3 for the datum). No script or prefab names until U-01 lands
 |---|---|---|---|---|
 | **the shelf** | Movable access (a pushable on a guided path) | Base centre | Start 386.0–386.8, h 0–1.1, in the lane; home in the alcove at 384.4–385.2, z −0.75 | `out` (anywhere on its ruts) ↔ `home`. Grab moves it along the rut path at push speed. With its centre past 385.3 it rolls the rest of the way home on its own (0.8 s) and D-17 lets go. Grab in the alcove pulls it back out. It can't go right of 386.95 (the section's legs). |
 | **second bed section** | Folding furniture (proposed type, chapter plan §7) | Hinge axis at (387.0, 0.45), lane-deep | `up`: vertical, top 1.55; `down`: flat over 385.9–387.0, top 0.45 | Use at the strap: `up` → `down` in 1.2 s, D-17 backing with it. Use again: back up in 1.2 s. If the shelf is in the sweep it stops on the shelf's rail at about 40° (`resting`, slides D-17 off); when the shelf leaves, it settles to `down`. Meeting D-17 anywhere else, it stops and waits. |
-| **fold bed** | Folding furniture | Hinge at the recess wall | 387.0–389.0, top 0.45 | Stays down in this scene. |
+| **fold bed** | Folding furniture | Hinge at the recess wall | 387.0–389.0, top 0.45, 0.55 deep | DL-18's spec: folds toward the wall. Stays down in this scene. |
 | **connecting doorway** | Way on | Sill centre | 386.0–386.8, sill 0.95, opening to 1.9 | Mantle from the section; the lane steps back into the passage (U-01 sets the offset). |
 | **the marble run** | Animation, not physics (chapter plan §6) | Funnels at (386.0, 1.55) and (386.8, 1.55); bell at (386.4, 0.7) | Copper lane 385.2–386.0, root lane 386.8–388.8, on the back wall | Use at the jar facing left or right spawns an authored marble in that lane; at most one marble per lane at a time; the bell rings on arrival. |
 | **place-lamps** | Light | Lamp centre | (386.85, 1.05) and (387.2, 1.05) | His lit; hers without a bulb. |
