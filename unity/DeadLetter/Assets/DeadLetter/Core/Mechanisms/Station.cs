@@ -72,6 +72,7 @@ namespace DeadLetter.Core.Mechanisms
         /// <summary>Clip frame (24 fps, unwrapped for loops), previous frame, seconds since the clip started, stick.</summary>
         public double Frame, PrevFrame, Time, Move;
         private bool _fed;
+        private double _lastTaken;
 
         public void Receive(in ActFrame f)
         {
@@ -80,8 +81,9 @@ namespace DeadLetter.Core.Mechanisms
 
         public void Take()
         {
-            Started = _fed && !Active;
+            Started = _fed && (!Active || Frame < _lastTaken);   // a new act, or a new clip straight after the last
             Active = _fed;
+            if (_fed) _lastTaken = Frame;
             _fed = false;
         }
 
@@ -91,14 +93,14 @@ namespace DeadLetter.Core.Mechanisms
         {
             w.WriteBool("act.fed", _fed); w.WriteBool("act.active", Active);
             w.WriteDouble("act.frame", Frame); w.WriteDouble("act.prev", PrevFrame);
-            w.WriteDouble("act.time", Time); w.WriteDouble("act.move", Move);
+            w.WriteDouble("act.time", Time); w.WriteDouble("act.move", Move); w.WriteDouble("act.last", _lastTaken);
         }
 
         public void Read(ISnapshotReader r)
         {
             _fed = r.ReadBool("act.fed"); Active = r.ReadBool("act.active");
             Frame = r.ReadDouble("act.frame"); PrevFrame = r.ReadDouble("act.prev");
-            Time = r.ReadDouble("act.time"); Move = r.ReadDouble("act.move");
+            Time = r.ReadDouble("act.time"); Move = r.ReadDouble("act.move"); _lastTaken = r.ReadDouble("act.last");
             Started = false;
         }
     }
