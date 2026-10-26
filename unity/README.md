@@ -237,3 +237,14 @@ the fallbacks, the ring C light and determinism.
 - Whether `PlayableDirector` in `Manual` mode needs `Play()` before `Evaluate()`.
 - Whether `AudioSettings.dspTime` keeps running while `AudioListener.pause` is set.
 - Whether `GetDSPBufferSize` × buffers overstates latency on some platforms.
+
+## CI
+
+`.github/workflows/core-tests.yml` runs on pushes and PRs touching `unity/**`:
+
+- **core-tests**: `dotnet test unity/core-tests` (.NET 8) on ubuntu; the `core.trx` result is uploaded as an artifact.
+- **unity-tests**: GameCI EditMode + PlayMode tests for `unity/DeadLetter`. Skipped until a Unity license is configured.
+
+To enable the Unity job, the director adds `UNITY_LICENSE` as a repository secret
+(plus `UNITY_EMAIL` and `UNITY_PASSWORD` for Personal licenses).
+See https://game.ci/docs/github/activation.
