@@ -238,6 +238,43 @@ the fallbacks, the ring C light and determinism.
 - Whether `AudioSettings.dspTime` keeps running while `AudioListener.pause` is set.
 - Whether `GetDSPBufferSize` × buffers overstates latency on some platforms.
 
+## Audio (U-16)
+
+The music, SFX, emitters and voices are ported from `Sound`, `Music`, `Ambience` and `Voice` in `index.html`
+(L556–L1211). See `docs/unity/port_architecture.md` §4.23–4.25 for the design. **`docs/unity/audio_map.md`** maps
+every cue to a clip and a call, records the decisions, and has the first-open checklist, including the manual
+AudioMixer steps (there is no public API to create a mixer by script).
+
+```
+Assets/DeadLetter/Core/Audio/
+  MusicDirectorModel  cue / queue / handover bars / ambience / fades / bus (paused 0.45, duck 0.4) on the music clock
+  MusicCatalog        FILES, LEVEL, HAND, LOOPS; MusicCues (triggers, finish, checkpoint start)
+  AmbienceRules       sceneAmbience / updateAmbience
+  SfxCatalog, SfxKeys render file names → bank keys and takes (PreferWet); Sound.x() → key; SfxPicker (seeded, no repeat)
+  SfxLoops            the 9 continuous layers + the White's own hiss (§9 #16); distant machinery; steam hiss
+  EmitterRules        EMITTERS + Ambience.update (level·k², glides, blips, free after 3 s)
+  VoiceCatalog/Rules  VOICE_LINES (generated), TREAT, VOICES; one voice at a time, chime lead, subtitles, tannoys
+  AudioMaths          GainEnvelope, OnePole, PanLaw (±0.4 at the frame edges), AudioMix, StableGuid
+Assets/DeadLetter/Runtime/Audio/
+  SfxBank (ScriptableObject), SfxPlayer, MusicDirector, AmbientEmitter, VoicePlayer, AudioWorld
+Assets/DeadLetter/Editor/Audio/
+  AudioImporter       Dead Letter → Audio → Import Audio: copy + stable-GUID metas + trim loops + build SfxBank
+  AudioImportSettings Vorbis (music, loops, voice) / ADPCM (short SFX); Switch overrides by platform name
+```
+
+The audio files are not committed twice. The importer copies `art/sfx/out/*.wav` and the 19 music files the game
+uses into `Assets/Audio/`, which `Assets/Audio/.gitignore` ignores. Their `.meta` files are ignored too: the importer writes
+them with GUIDs from the MD5 of the asset path, identical on every machine. `DirectedMomentPlayer` now takes an optional `MusicDirector` (`score`) and `VoicePlayer`
+(`voices`). With them set, a moment's cue goes through the score, and voices stop at the trigger. Tests:
+`MusicDirectorTests` and `AudioRulesTests`.
+
+**Unverified (no editor here).**
+- Whether `AudioClip.GetData` works in the editor on a Decompress On Load clip (the loop trimming needs it).
+- Whether `AudioImporter.SetOverrideSampleSettings` / `ClearSampleSettingOverride` still take a platform string in Unity 6,
+  and whether `"Switch"` is the right name.
+- Whether Unity accepts a minimal `.meta` (`fileFormatVersion` and `guid` only) and keeps its GUID.
+- Whether `PlayScheduled` with a time already past starts at once.
+
 ## CI
 
 `.github/workflows/core-tests.yml` runs on pushes and PRs touching `unity/**`:

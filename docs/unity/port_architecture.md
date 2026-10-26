@@ -1221,6 +1221,7 @@ on baked worn masks if option (b) of §4.3 is chosen. No lightmaps: lights flick
 | 13 | L2182 | courier slots are matched as `CourierSlot[ABC]…` after three.js strips `.` from `CourierSlot.A.0`; glTFast keeps raw names | normalise names in `NameConventions` |
 | 14 | L1467 | the relay lamp's shadow is off on touch devices (look differs by device) | tie to quality tier |
 | 15 | L5466–5467 | jam light pulse and pole glow were disabled by the 23 Oct playtest but the code paths remain | port only what is live |
+| 16 | L7152, L7965 | the White's warning `Sound.hiss(1)` shares one gain node with the DL-01 steam, which `updateAtmosphere` sets every frame, so the warning is overwritten on the next frame and never heard | **decided (#20, #13):** make it audible; Unity gives it its own layer (`SfxLoop.WhiteHiss`, 1 for 0.9 s) |
 
 ---
 
