@@ -79,15 +79,16 @@ CHECKPOINTS = [
 # index.html makes certain are listed (the refs it groups and moves together); the rest of the objects the game looks
 # up by name are listed per region as "driven" in docs/unity/name_map.csv, still under their source names.
 # Types are provisional names for U-10's mechanism classes (§4.13); change them here, not in the generators.
+# <Type> is U-10's Core class name (#9 review), so the importer binds MECH_<Type>_... with no lookup table.
 MECHANISMS = [
     # DL-01 (L1383-L1402, L3990-L4013)
-    ('Shutter', 'dl01.shutter', 'Shutter', ['ShutterRail', 'Pulley', 'Counterweight', 'CounterweightStripes']),
+    ('Door', 'dl01.shutter', 'Shutter', ['ShutterRail', 'Pulley', 'Counterweight', 'CounterweightStripes']),
     ('Latch', 'dl01.latch', 'LatchLever', ['LatchTag']),
-    ('Relay', 'dl01.relay', None, ['RelayLamp0', 'RelayLamp1', 'RelayLamp2']),
-    ('Crank', 'dl01.crank', 'CrankWheel', []),
+    ('PulseSequencer', 'dl01.relay', None, ['RelayLamp0', 'RelayLamp1', 'RelayLamp2']),
+    ('CrankActuator', 'dl01.crank', 'CrankWheel', []),
     ('Door', 'dl01.door', 'ExitDoor', []),
-    ('Pushable', 'dl01.cart', 'DepotCart', []),
-    ('Scale', 'dl01.scale', None, ['ScaleNeedle']),
+    ('TippingBridge', 'dl01.cart', 'DepotCart', []),
+    ('LoadPlate', 'dl01.scale', None, ['ScaleNeedle']),
     # DL-02
     ('Press', 'dl02.press', 'PressRam', ['PressFlywheel']),
     ('Carryable', 'dl02.box', 'CarryBox', []),
@@ -95,33 +96,32 @@ MECHANISMS = [
     ('Carryable', 'dl03.weight', 'SortWeight', ['SortWeightBand']),
     ('Pushable', 'dl03.trolley', 'Trolley', ['TrolleyGrip', 'TrolleyWheel0', 'TrolleyWheel1', 'TrolleyWheel2', 'TrolleyWheel3']),
     ('LoadPlate', 'dl03.plate', 'FloorPlate', []),
-    ('Gate', 'dl03.gate', 'Gate', ['GateNeedle']),
+    ('FollowerActuator', 'dl03.gate', 'Gate', ['GateNeedle']),
     # DL-04
     ('Pushable', 'dl04.courier', 'FallenCourier', []),
     ('LoadPlate', 'dl04.bayPlate', 'BayPlate', []),
     ('Cradle', 'dl04.cradle', None, ['CradleArmL', 'CradleArmR']),
-    ('Door', 'dl04.bayDoor', 'BayDoor', []),
+    ('PlateDoor', 'dl04.bayDoor', 'BayDoor', []),
     # DL-05 (L4011-L4012, L4921: the shutter is the hatch the crawl passes under)
     ('Pushable', 'dl05.drum', 'RationDrum', []),
     ('Draggable', 'dl05.body', 'RationBody', []),
     ('WeighScale', 'dl05.weighIn', 'RationScalePlate', ['RationScaleNeedle']),
-    ('Hatch', 'dl05.hatch', 'RationShutter', []),
-    ('Flag', 'dl05.servedFlag', 'RationServedFlag', []),
+    ('Door', 'dl05.hatch', 'RationShutter', []),
+    ('Door', 'dl05.servedFlag', 'RationServedFlag', []),
     # DL-06 / DL-07 (L2553-L2554, L3996-L3997)
     ('Scanner', 'dl06.scanner', 'ScanBar', []),
-    ('Lever', 'dl06.stopLever', 'StopLever', []),
-    ('Lever', 'dl06.points', 'PointsLever', ['PointsBlade']),
+    ('PointsLever', 'dl06.stopLever', 'StopLever', []),
+    ('PointsLever', 'dl06.points', 'PointsLever', ['PointsBlade']),
     ('CarrierLine', 'dl06.line', None, ['CarrierTub', 'CarrierChassis', 'CarrierLamp', 'CarrierPlate',
                                         'ChainBelt0', 'ChainBelt1', 'ChainBelt2']),
     ('Carryable', 'dl07.weight0', 'HeapWeight0', []),
     ('Carryable', 'dl07.weight1', 'HeapWeight1', []),
-    ('Bucket', 'dl07.bucket', 'GateBucket', []),
-    ('Gate', 'dl07.gate', 'GalleryGate', ['GatePulley', 'GateSheave']),
+    ('BucketGate', 'dl07.gate', 'GalleryGate', ['GatePulley', 'GateSheave', 'GateBucket']),  # the bucket is its input (U-10)
     ('Collapse', 'dl07.collapse', 'GalleryCollapse', ['GalleryCollapseEdges']),
     # DL-08 (L3040-L3042)
     ('Pushable', 'dl08.trolley', 'GoodsTrolley', ['GoodsTrolleyGrip', 'GoodsBallast', 'GoodsStraps',
                                                   'GoodsWheel0', 'GoodsWheel1', 'GoodsWheel2', 'GoodsWheel3']),
-    ('Pan', 'dl08.pan', 'GoodsPan', ['HeadDrum', 'PanPulley']),
+    ('LoadPlate', 'dl08.pan', 'GoodsPan', ['HeadDrum', 'PanPulley']),
     ('CounterweightLift', 'dl08.platform', 'GoodsPlatform', ['GoodsPlatformFrame', 'GoodsPlatformRail']),
     ('Pawl', 'dl08.pawl', 'Pawl', ['PawlLever', 'PawlLamp']),
     ('ReturnsBelt', 'dl08.belt', 'ReturnsBelt', ['ReturnCrate0', 'ReturnCrate1', 'ReturnCrate2']),
@@ -129,20 +129,20 @@ MECHANISMS = [
     ('LoadPlate', 'dl09.plate0', 'CwPlate0', []),
     ('LoadPlate', 'dl09.plate1', 'CwPlate1', []),
     ('SlippingCage', 'dl09.cage', 'Cage', ['CageCounterweight', 'CageSheave']),
-    ('Pawl', 'dl09.cagePawl', 'CagePawl', ['CagePawlLever']),
+    ('CageCatch', 'dl09.cagePawl', 'CagePawl', ['CagePawlLever']),
     # DL-10 (L4007-L4010)
     ('Carryable', 'dl10.case', 'Suitcase114', ['Suitcase114Tag']),
-    ('CounterweightLift', 'dl10.lift', 'LiftCar', ['LiftDoorL', 'LiftDoorR', 'LiftRopeCar']),
+    ('RelocationLift', 'dl10.lift', 'LiftCar', ['LiftDoorL', 'LiftDoorR', 'LiftRopeCar']),
     ('LoadPlate', 'dl10.carPlate', 'LiftFloorPlate', ['LiftLoadNeedle']),
     ('Button', 'dl10.upButton', 'LiftUpButton', []),
-    ('Crank', 'dl10.serviceCrank', 'ServiceCrank', ['ServiceChain']),
+    ('CrankActuator', 'dl10.serviceCrank', 'ServiceCrank', ['ServiceChain']),
     ('Door', 'dl10.serviceDoor', 'ServiceDoor', []),
     ('Button', 'dl10.serviceUp', 'ServiceUpButton', []),
     ('Counterweight', 'dl10.counterweight', 'LiftCounterweight', ['LiftSheave', 'LiftSheaveIdler', 'LiftRopeCW']),
     # DL-11 (L4002-L4005, L3475; DUCT9 = OFF5 + 94.0, L3903)
     ('Bell', 'dl11.bell', 'C108Bell', ['C108Gong']),
     ('Lever', 'dl11.junction', 'JunctionLever', []),
-    ('Pushable', 'dl11.duct', 'PushDuct', []),
+    ('TippingBridge', 'dl11.duct', 'PushDuct', []),
     ('Door', 'dl11.c114Door', 'C114FrontDoor', ['C114DoorHandle', 'C114DoorCord']),
     ('Facade', 'dl11.facade', 'C114Facade', []),
     ('Draggable', 'dl11.desk', 'ChildDesk', []),

@@ -31,7 +31,7 @@
  },
  "markers": [
   {
-   "name": "MECH_Hatch_dl05_hatch",
+   "name": "MECH_Door_dl05_hatch",
    "prefix": "MECH",
    "source": "RationShutter",
    "position": [
@@ -56,7 +56,7 @@
     },
     {
      "key": "type",
-     "value": "Hatch"
+     "value": "Door"
     }
    ]
   },
@@ -155,7 +155,7 @@
    ]
   },
   {
-   "name": "MECH_Flag_dl05_servedFlag",
+   "name": "MECH_Door_dl05_servedFlag",
    "prefix": "MECH",
    "source": "RationServedFlag",
    "position": [
@@ -180,7 +180,7 @@
     },
     {
      "key": "type",
-     "value": "Flag"
+     "value": "Door"
     }
    ]
   },

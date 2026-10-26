@@ -46,7 +46,7 @@ namespace DeadLetter.Core.Art
     /// <item><c>MECH_&lt;Type&gt;_&lt;scene&gt;_&lt;name&gt;[__&lt;part&gt;]</c>: <c>Type</c> is PascalCase with no underscore, the
     /// mechanism ID is <c>&lt;scene&gt;.&lt;name&gt;</c> (the §5 IDs, e.g. <c>dl01.shutter</c>; Blender/glTF names avoid the dot
     /// because three.js strips it). A part keeps its source object's name, e.g.
-    /// <c>MECH_Shutter_dl01_shutter__ShutterRail</c>.</item>
+    /// <c>MECH_Door_dl01_shutter__ShutterRail</c>.</item>
     /// </list>
     /// Prefixes are case-sensitive. Pure string code: no UnityEngine.
     /// </summary>
@@ -114,7 +114,7 @@ namespace DeadLetter.Core.Art
         public static bool IsMarker(string name) => Parse(name).IsMarker;
 
         /// <summary>
-        /// <c>MECH_Shutter_dl01_shutter</c> from ("Shutter", "dl01.shutter"), with <c>__part</c> when a part is given.
+        /// <c>MECH_Door_dl01_shutter</c> from ("Door", "dl01.shutter"), with <c>__part</c> when a part is given.
         /// The ID must be <c>scene.name</c> with neither half empty, no underscore in the scene, and no second dot.
         /// </summary>
         public static string Mechanism(string type, string id, string part = null)

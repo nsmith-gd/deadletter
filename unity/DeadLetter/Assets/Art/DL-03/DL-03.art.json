@@ -325,7 +325,7 @@
    ]
   },
   {
-   "name": "MECH_Gate_dl03_gate",
+   "name": "MECH_FollowerActuator_dl03_gate",
    "prefix": "MECH",
    "source": "Gate",
    "position": [
@@ -350,12 +350,12 @@
     },
     {
      "key": "type",
-     "value": "Gate"
+     "value": "FollowerActuator"
     }
    ]
   },
   {
-   "name": "MECH_Gate_dl03_gate__GateNeedle",
+   "name": "MECH_FollowerActuator_dl03_gate__GateNeedle",
    "prefix": "MECH",
    "source": "GateNeedle",
    "position": [
@@ -384,7 +384,7 @@
     },
     {
      "key": "type",
-     "value": "Gate"
+     "value": "FollowerActuator"
     }
    ]
   },

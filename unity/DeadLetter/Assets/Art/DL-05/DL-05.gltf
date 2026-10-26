@@ -118,10 +118,10 @@
 			"extras":{
 				"dl_name":"RationServedFlag",
 				"dl_mech":"dl05.servedFlag",
-				"dl_type":"Flag"
+				"dl_type":"Door"
 			},
 			"mesh":1,
-			"name":"MECH_Flag_dl05_servedFlag",
+			"name":"MECH_Door_dl05_servedFlag",
 			"translation":[
 				53.68000030517578,
 				1.6399999856948853,
@@ -132,10 +132,10 @@
 			"extras":{
 				"dl_name":"RationShutter",
 				"dl_mech":"dl05.hatch",
-				"dl_type":"Hatch"
+				"dl_type":"Door"
 			},
 			"mesh":2,
-			"name":"MECH_Hatch_dl05_hatch",
+			"name":"MECH_Door_dl05_hatch",
 			"translation":[
 				56.47999954223633,
 				0,

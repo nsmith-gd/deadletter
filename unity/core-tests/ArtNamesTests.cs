@@ -8,8 +8,8 @@ namespace DeadLetter.Core.Tests
     public class ArtNamesTests
     {
         [Theory]
-        [InlineData("MECH_Shutter_dl01_shutter", "Shutter", "dl01.shutter", null)]
-        [InlineData("MECH_Shutter_dl01_shutter__ShutterRail", "Shutter", "dl01.shutter", "ShutterRail")]
+        [InlineData("MECH_Door_dl01_shutter", "Door", "dl01.shutter", null)]
+        [InlineData("MECH_Door_dl01_shutter__ShutterRail", "Door", "dl01.shutter", "ShutterRail")]
         [InlineData("MECH_CounterweightLift_dl08_platform__GoodsPlatformFrame", "CounterweightLift", "dl08.platform", "GoodsPlatformFrame")]
         [InlineData("MECH_Door_dl11_c114Door", "Door", "dl11.c114Door", null)]
         [InlineData("MECH_Relay_dl14a_relay.001", "Relay", "dl14a.relay", null)]
@@ -25,7 +25,7 @@ namespace DeadLetter.Core.Tests
         }
 
         [Theory]
-        [InlineData("Shutter", "dl01.shutter", null, "MECH_Shutter_dl01_shutter")]
+        [InlineData("Door", "dl01.shutter", null, "MECH_Door_dl01_shutter")]
         [InlineData("Pawl", "dl08.pawl", "PawlLever", "MECH_Pawl_dl08_pawl__PawlLever")]
         public void Mechanism_names_round_trip(string type, string id, string part, string expected)
         {

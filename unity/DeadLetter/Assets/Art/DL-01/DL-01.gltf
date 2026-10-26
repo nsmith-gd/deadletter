@@ -310,10 +310,10 @@
 			"extras":{
 				"dl_name":"CrankWheel",
 				"dl_mech":"dl01.crank",
-				"dl_type":"Crank"
+				"dl_type":"CrankActuator"
 			},
 			"mesh":37,
-			"name":"MECH_Crank_dl01_crank"
+			"name":"MECH_CrankActuator_dl01_crank"
 		},
 		{
 			"extras":{
@@ -394,10 +394,10 @@
 			"extras":{
 				"dl_name":"DepotCart",
 				"dl_mech":"dl01.cart",
-				"dl_type":"Pushable"
+				"dl_type":"TippingBridge"
 			},
 			"mesh":46,
-			"name":"MECH_Pushable_dl01_cart",
+			"name":"MECH_TippingBridge_dl01_cart",
 			"translation":[
 				5.900000095367432,
 				0,
@@ -407,9 +407,9 @@
 		{
 			"extras":{
 				"dl_mech":"dl01.relay",
-				"dl_type":"Relay"
+				"dl_type":"PulseSequencer"
 			},
-			"name":"MECH_Relay_dl01_relay",
+			"name":"MECH_PulseSequencer_dl01_relay",
 			"translation":[
 				2,
 				1.465000033378601,
@@ -420,38 +420,38 @@
 			"extras":{
 				"dl_name":"RelayLamp0",
 				"dl_mech":"dl01.relay",
-				"dl_type":"Relay",
+				"dl_type":"PulseSequencer",
 				"dl_part":"RelayLamp0"
 			},
 			"mesh":47,
-			"name":"MECH_Relay_dl01_relay__RelayLamp0"
+			"name":"MECH_PulseSequencer_dl01_relay__RelayLamp0"
 		},
 		{
 			"extras":{
 				"dl_name":"RelayLamp1",
 				"dl_mech":"dl01.relay",
-				"dl_type":"Relay",
+				"dl_type":"PulseSequencer",
 				"dl_part":"RelayLamp1"
 			},
 			"mesh":48,
-			"name":"MECH_Relay_dl01_relay__RelayLamp1"
+			"name":"MECH_PulseSequencer_dl01_relay__RelayLamp1"
 		},
 		{
 			"extras":{
 				"dl_name":"RelayLamp2",
 				"dl_mech":"dl01.relay",
-				"dl_type":"Relay",
+				"dl_type":"PulseSequencer",
 				"dl_part":"RelayLamp2"
 			},
 			"mesh":49,
-			"name":"MECH_Relay_dl01_relay__RelayLamp2"
+			"name":"MECH_PulseSequencer_dl01_relay__RelayLamp2"
 		},
 		{
 			"extras":{
 				"dl_mech":"dl01.scale",
-				"dl_type":"Scale"
+				"dl_type":"LoadPlate"
 			},
-			"name":"MECH_Scale_dl01_scale",
+			"name":"MECH_LoadPlate_dl01_scale",
 			"translation":[
 				1.6190862655639648,
 				0.5097499489784241,
@@ -462,11 +462,11 @@
 			"extras":{
 				"dl_name":"ScaleNeedle",
 				"dl_mech":"dl01.scale",
-				"dl_type":"Scale",
+				"dl_type":"LoadPlate",
 				"dl_part":"ScaleNeedle"
 			},
 			"mesh":50,
-			"name":"MECH_Scale_dl01_scale__ScaleNeedle",
+			"name":"MECH_LoadPlate_dl01_scale__ScaleNeedle",
 			"translation":[
 				1.6400001049041748,
 				0.5199999809265137,
@@ -477,50 +477,50 @@
 			"extras":{
 				"dl_name":"Shutter",
 				"dl_mech":"dl01.shutter",
-				"dl_type":"Shutter"
+				"dl_type":"Door"
 			},
 			"mesh":51,
-			"name":"MECH_Shutter_dl01_shutter"
+			"name":"MECH_Door_dl01_shutter"
 		},
 		{
 			"extras":{
 				"dl_name":"Counterweight",
 				"dl_mech":"dl01.shutter",
-				"dl_type":"Shutter",
+				"dl_type":"Door",
 				"dl_part":"Counterweight"
 			},
 			"mesh":52,
-			"name":"MECH_Shutter_dl01_shutter__Counterweight"
+			"name":"MECH_Door_dl01_shutter__Counterweight"
 		},
 		{
 			"extras":{
 				"dl_name":"CounterweightStripes",
 				"dl_mech":"dl01.shutter",
-				"dl_type":"Shutter",
+				"dl_type":"Door",
 				"dl_part":"CounterweightStripes"
 			},
 			"mesh":53,
-			"name":"MECH_Shutter_dl01_shutter__CounterweightStripes"
+			"name":"MECH_Door_dl01_shutter__CounterweightStripes"
 		},
 		{
 			"extras":{
 				"dl_name":"Pulley",
 				"dl_mech":"dl01.shutter",
-				"dl_type":"Shutter",
+				"dl_type":"Door",
 				"dl_part":"Pulley"
 			},
 			"mesh":54,
-			"name":"MECH_Shutter_dl01_shutter__Pulley"
+			"name":"MECH_Door_dl01_shutter__Pulley"
 		},
 		{
 			"extras":{
 				"dl_name":"ShutterRail",
 				"dl_mech":"dl01.shutter",
-				"dl_type":"Shutter",
+				"dl_type":"Door",
 				"dl_part":"ShutterRail"
 			},
 			"mesh":55,
-			"name":"MECH_Shutter_dl01_shutter__ShutterRail"
+			"name":"MECH_Door_dl01_shutter__ShutterRail"
 		},
 		{
 			"mesh":56,

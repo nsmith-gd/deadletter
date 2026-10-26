@@ -240,10 +240,10 @@
 			"extras":{
 				"dl_name":"BayDoor",
 				"dl_mech":"dl04.bayDoor",
-				"dl_type":"Door"
+				"dl_type":"PlateDoor"
 			},
 			"mesh":22,
-			"name":"MECH_Door_dl04_bayDoor",
+			"name":"MECH_PlateDoor_dl04_bayDoor",
 			"translation":[
 				46.5,
 				0,

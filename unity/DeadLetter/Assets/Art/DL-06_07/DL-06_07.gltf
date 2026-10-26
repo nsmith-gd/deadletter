@@ -553,11 +553,12 @@
 			],
 			"extras":{
 				"dl_name":"GateBucket",
-				"dl_mech":"dl07.bucket",
-				"dl_type":"Bucket"
+				"dl_mech":"dl07.gate",
+				"dl_type":"BucketGate",
+				"dl_part":"GateBucket"
 			},
 			"mesh":41,
-			"name":"MECH_Bucket_dl07_bucket",
+			"name":"MECH_BucketGate_dl07_gate__GateBucket",
 			"translation":[
 				72,
 				1.5499999523162842,
@@ -775,10 +776,10 @@
 			"extras":{
 				"dl_name":"GalleryGate",
 				"dl_mech":"dl07.gate",
-				"dl_type":"Gate"
+				"dl_type":"BucketGate"
 			},
 			"mesh":56,
-			"name":"MECH_Gate_dl07_gate",
+			"name":"MECH_BucketGate_dl07_gate",
 			"translation":[
 				74.9000015258789,
 				1.600000023841858,
@@ -789,11 +790,11 @@
 			"extras":{
 				"dl_name":"GatePulley",
 				"dl_mech":"dl07.gate",
-				"dl_type":"Gate",
+				"dl_type":"BucketGate",
 				"dl_part":"GatePulley"
 			},
 			"mesh":57,
-			"name":"MECH_Gate_dl07_gate__GatePulley",
+			"name":"MECH_BucketGate_dl07_gate__GatePulley",
 			"translation":[
 				74.69999694824219,
 				5,
@@ -804,11 +805,11 @@
 			"extras":{
 				"dl_name":"GateSheave",
 				"dl_mech":"dl07.gate",
-				"dl_type":"Gate",
+				"dl_type":"BucketGate",
 				"dl_part":"GateSheave"
 			},
 			"mesh":58,
-			"name":"MECH_Gate_dl07_gate__GateSheave",
+			"name":"MECH_BucketGate_dl07_gate__GateSheave",
 			"translation":[
 				72.08000183105469,
 				4.977142810821533,
@@ -819,10 +820,10 @@
 			"extras":{
 				"dl_name":"PointsLever",
 				"dl_mech":"dl06.points",
-				"dl_type":"Lever"
+				"dl_type":"PointsLever"
 			},
 			"mesh":59,
-			"name":"MECH_Lever_dl06_points",
+			"name":"MECH_PointsLever_dl06_points",
 			"translation":[
 				63.29999923706055,
 				0.20000000298023224,
@@ -833,11 +834,11 @@
 			"extras":{
 				"dl_name":"PointsBlade",
 				"dl_mech":"dl06.points",
-				"dl_type":"Lever",
+				"dl_type":"PointsLever",
 				"dl_part":"PointsBlade"
 			},
 			"mesh":60,
-			"name":"MECH_Lever_dl06_points__PointsBlade",
+			"name":"MECH_PointsLever_dl06_points__PointsBlade",
 			"translation":[
 				67.5999984741211,
 				0,
@@ -848,10 +849,10 @@
 			"extras":{
 				"dl_name":"StopLever",
 				"dl_mech":"dl06.stopLever",
-				"dl_type":"Lever"
+				"dl_type":"PointsLever"
 			},
 			"mesh":61,
-			"name":"MECH_Lever_dl06_stopLever",
+			"name":"MECH_PointsLever_dl06_stopLever",
 			"translation":[
 				62.5,
 				0.20000000298023224,

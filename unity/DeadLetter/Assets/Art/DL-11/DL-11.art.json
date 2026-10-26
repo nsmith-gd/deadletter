@@ -125,7 +125,7 @@
    ]
   },
   {
-   "name": "MECH_Pushable_dl11_duct",
+   "name": "MECH_TippingBridge_dl11_duct",
    "prefix": "MECH",
    "source": "PushDuct",
    "position": [
@@ -150,7 +150,7 @@
     },
     {
      "key": "type",
-     "value": "Pushable"
+     "value": "TippingBridge"
     }
    ]
   },

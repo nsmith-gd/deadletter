@@ -92,7 +92,7 @@ the glTF as extras and the sidecar as `source`.
 |---|---|---|---|
 | `COL_` | `COL_<name>` | `COL_shelf_dl02` | `BoxCollider` fitted to the mesh; renderer and filter removed |
 | `LGT_` | `LGT_<zone>_<name>` | `LGT_ration_strip` | empty + `ArtMarker` (LightBuilder, U-15) |
-| `MECH_` | `MECH_<Type>_<scene>_<name>[__<part>]` | `MECH_Shutter_dl01_shutter__ShutterRail` | renderers kept + `ArtMarker` (type, id `dl01.shutter`, part) |
+| `MECH_` | `MECH_<Type>_<scene>_<name>[__<part>]` | `MECH_Door_dl01_shutter__ShutterRail` | renderers kept + `ArtMarker` (type, id `dl01.shutter`, part) |
 | `CAM_` | `CAM_<zone>` | `CAM_dl01.hall` | empty + `ArtMarker` (U-13) |
 | `CHK_` | `CHK_<name>` | `CHK_landing8` | empty at (x, floor height, 0) + `ArtMarker` (`order`, `game_region`, `height`) |
 
@@ -100,8 +100,12 @@ the glTF as extras and the sidecar as `source`.
   strips dots from names (§9 #13). A part keeps its source object's name.
 - **MECH roots:** a mechanism made only of parts (relay lamps, cradle arms, the carrier line, the DL-01 scale needle)
   gets an empty anchor named `MECH_<Type>_<id>` at the centre of its parts. The parts are not re-parented.
-- **Mapping table:** `tools/unity_export/conventions.py` `MECHANISMS` holds 55 mechanisms over 113 objects, taken from the
-  groups index.html moves together. The types are provisional names for U-10's classes; change them there.
+- **Mapping table:** `tools/unity_export/conventions.py` `MECHANISMS` holds 54 mechanisms over 113 objects, taken from the
+  groups index.html moves together. Where U-10 builds a Core class for the mechanism, `<Type>` is that class's name
+  exactly (agreed on #9), so the importer binds `MECH_<Type>_…` to it with no lookup table. The DL-07 bucket is a part
+  of `BucketGate` (`MECH_BucketGate_dl07_gate__GateBucket`): the Runtime calls `BucketGate.Drop()`. The remaining
+  types (Carryable, Pushable, Draggable, Press, Collapse, Scanner, Button, …) are U-11 contracts, hazards or
+  scene rules; the scene ports (#16–#18) name them.
 - **Name map:** `docs/unity/name_map.csv` is generated. It lists old → new for every renamed object, plus 64 "driven"
   objects. Those are names index.html quotes that match an object and are not yet renamed, such as `CableSpark`,
   `WorkLampBulb`, `SeatedLamps` and `AtriumFanLow`.

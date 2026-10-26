@@ -129,7 +129,7 @@
    ]
   },
   {
-   "name": "MECH_Door_dl04_bayDoor",
+   "name": "MECH_PlateDoor_dl04_bayDoor",
    "prefix": "MECH",
    "source": "BayDoor",
    "position": [
@@ -154,7 +154,7 @@
     },
     {
      "key": "type",
-     "value": "Door"
+     "value": "PlateDoor"
     }
    ]
   },

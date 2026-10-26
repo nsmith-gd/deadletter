@@ -164,7 +164,7 @@
    ]
   },
   {
-   "name": "MECH_Lever_dl06_points__PointsBlade",
+   "name": "MECH_PointsLever_dl06_points__PointsBlade",
    "prefix": "MECH",
    "source": "PointsBlade",
    "position": [
@@ -193,12 +193,12 @@
     },
     {
      "key": "type",
-     "value": "Lever"
+     "value": "PointsLever"
     }
    ]
   },
   {
-   "name": "MECH_Lever_dl06_stopLever",
+   "name": "MECH_PointsLever_dl06_stopLever",
    "prefix": "MECH",
    "source": "StopLever",
    "position": [
@@ -223,12 +223,12 @@
     },
     {
      "key": "type",
-     "value": "Lever"
+     "value": "PointsLever"
     }
    ]
   },
   {
-   "name": "MECH_Lever_dl06_points",
+   "name": "MECH_PointsLever_dl06_points",
    "prefix": "MECH",
    "source": "PointsLever",
    "position": [
@@ -253,12 +253,12 @@
     },
     {
      "key": "type",
-     "value": "Lever"
+     "value": "PointsLever"
     }
    ]
   },
   {
-   "name": "MECH_Gate_dl07_gate",
+   "name": "MECH_BucketGate_dl07_gate",
    "prefix": "MECH",
    "source": "GalleryGate",
    "position": [
@@ -283,12 +283,12 @@
     },
     {
      "key": "type",
-     "value": "Gate"
+     "value": "BucketGate"
     }
    ]
   },
   {
-   "name": "MECH_Gate_dl07_gate__GatePulley",
+   "name": "MECH_BucketGate_dl07_gate__GatePulley",
    "prefix": "MECH",
    "source": "GatePulley",
    "position": [
@@ -317,12 +317,12 @@
     },
     {
      "key": "type",
-     "value": "Gate"
+     "value": "BucketGate"
     }
    ]
   },
   {
-   "name": "MECH_Gate_dl07_gate__GateSheave",
+   "name": "MECH_BucketGate_dl07_gate__GateSheave",
    "prefix": "MECH",
    "source": "GateSheave",
    "position": [
@@ -351,12 +351,12 @@
     },
     {
      "key": "type",
-     "value": "Gate"
+     "value": "BucketGate"
     }
    ]
   },
   {
-   "name": "MECH_Bucket_dl07_bucket",
+   "name": "MECH_BucketGate_dl07_gate__GateBucket",
    "prefix": "MECH",
    "source": "GateBucket",
    "position": [
@@ -373,15 +373,19 @@
    "props": [
     {
      "key": "mech",
-     "value": "dl07.bucket"
+     "value": "dl07.gate"
     },
     {
      "key": "name",
      "value": "GateBucket"
     },
     {
+     "key": "part",
+     "value": "GateBucket"
+    },
+    {
      "key": "type",
-     "value": "Bucket"
+     "value": "BucketGate"
     }
    ]
   },

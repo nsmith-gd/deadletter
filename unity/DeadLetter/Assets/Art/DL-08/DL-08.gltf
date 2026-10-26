@@ -717,10 +717,10 @@
 			"extras":{
 				"dl_name":"GoodsPan",
 				"dl_mech":"dl08.pan",
-				"dl_type":"Pan"
+				"dl_type":"LoadPlate"
 			},
 			"mesh":65,
-			"name":"MECH_Pan_dl08_pan",
+			"name":"MECH_LoadPlate_dl08_pan",
 			"translation":[
 				84.19999694824219,
 				1.6039999723434448,
@@ -731,11 +731,11 @@
 			"extras":{
 				"dl_name":"HeadDrum",
 				"dl_mech":"dl08.pan",
-				"dl_type":"Pan",
+				"dl_type":"LoadPlate",
 				"dl_part":"HeadDrum"
 			},
 			"mesh":66,
-			"name":"MECH_Pan_dl08_pan__HeadDrum",
+			"name":"MECH_LoadPlate_dl08_pan__HeadDrum",
 			"translation":[
 				87.05000305175781,
 				5.199999809265137,
@@ -746,11 +746,11 @@
 			"extras":{
 				"dl_name":"PanPulley",
 				"dl_mech":"dl08.pan",
-				"dl_type":"Pan",
+				"dl_type":"LoadPlate",
 				"dl_part":"PanPulley"
 			},
 			"mesh":67,
-			"name":"MECH_Pan_dl08_pan__PanPulley",
+			"name":"MECH_LoadPlate_dl08_pan__PanPulley",
 			"translation":[
 				84.19999694824219,
 				5.199999809265137,

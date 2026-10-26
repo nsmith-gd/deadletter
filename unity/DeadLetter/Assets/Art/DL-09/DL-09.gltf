@@ -655,10 +655,10 @@
 			"extras":{
 				"dl_name":"CagePawl",
 				"dl_mech":"dl09.cagePawl",
-				"dl_type":"Pawl"
+				"dl_type":"CageCatch"
 			},
 			"mesh":61,
-			"name":"MECH_Pawl_dl09_cagePawl",
+			"name":"MECH_CageCatch_dl09_cagePawl",
 			"translation":[
 				0.1999969482421875,
 				0.24000000953674316,
@@ -669,11 +669,11 @@
 			"extras":{
 				"dl_name":"CagePawlLever",
 				"dl_mech":"dl09.cagePawl",
-				"dl_type":"Pawl",
+				"dl_type":"CageCatch",
 				"dl_part":"CagePawlLever"
 			},
 			"mesh":62,
-			"name":"MECH_Pawl_dl09_cagePawl__CagePawlLever",
+			"name":"MECH_CageCatch_dl09_cagePawl__CagePawlLever",
 			"translation":[
 				-0.5999984741210938,
 				0,

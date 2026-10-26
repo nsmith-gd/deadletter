@@ -906,10 +906,10 @@
 			"extras":{
 				"dl_name":"PushDuct",
 				"dl_mech":"dl11.duct",
-				"dl_type":"Pushable"
+				"dl_type":"TippingBridge"
 			},
 			"mesh":77,
-			"name":"MECH_Pushable_dl11_duct",
+			"name":"MECH_TippingBridge_dl11_duct",
 			"translation":[
 				148,
 				0,

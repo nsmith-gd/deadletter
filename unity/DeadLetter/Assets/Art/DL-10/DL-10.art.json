@@ -31,7 +31,7 @@
  },
  "markers": [
   {
-   "name": "MECH_CounterweightLift_dl10_lift__LiftDoorL",
+   "name": "MECH_RelocationLift_dl10_lift__LiftDoorL",
    "prefix": "MECH",
    "source": "LiftDoorL",
    "position": [
@@ -60,12 +60,12 @@
     },
     {
      "key": "type",
-     "value": "CounterweightLift"
+     "value": "RelocationLift"
     }
    ]
   },
   {
-   "name": "MECH_CounterweightLift_dl10_lift__LiftDoorR",
+   "name": "MECH_RelocationLift_dl10_lift__LiftDoorR",
    "prefix": "MECH",
    "source": "LiftDoorR",
    "position": [
@@ -94,7 +94,7 @@
     },
     {
      "key": "type",
-     "value": "CounterweightLift"
+     "value": "RelocationLift"
     }
    ]
   },
@@ -129,7 +129,7 @@
    ]
   },
   {
-   "name": "MECH_CounterweightLift_dl10_lift",
+   "name": "MECH_RelocationLift_dl10_lift",
    "prefix": "MECH",
    "source": "LiftCar",
    "position": [
@@ -154,7 +154,7 @@
     },
     {
      "key": "type",
-     "value": "CounterweightLift"
+     "value": "RelocationLift"
     }
    ]
   },
@@ -223,7 +223,7 @@
    ]
   },
   {
-   "name": "MECH_CounterweightLift_dl10_lift__LiftRopeCar",
+   "name": "MECH_RelocationLift_dl10_lift__LiftRopeCar",
    "prefix": "MECH",
    "source": "LiftRopeCar",
    "position": [
@@ -252,7 +252,7 @@
     },
     {
      "key": "type",
-     "value": "CounterweightLift"
+     "value": "RelocationLift"
     }
    ]
   },
@@ -359,7 +359,7 @@
    ]
   },
   {
-   "name": "MECH_Crank_dl10_serviceCrank",
+   "name": "MECH_CrankActuator_dl10_serviceCrank",
    "prefix": "MECH",
    "source": "ServiceCrank",
    "position": [
@@ -384,12 +384,12 @@
     },
     {
      "key": "type",
-     "value": "Crank"
+     "value": "CrankActuator"
     }
    ]
   },
   {
-   "name": "MECH_Crank_dl10_serviceCrank__ServiceChain",
+   "name": "MECH_CrankActuator_dl10_serviceCrank__ServiceChain",
    "prefix": "MECH",
    "source": "ServiceChain",
    "position": [
@@ -418,7 +418,7 @@
     },
     {
      "key": "type",
-     "value": "Crank"
+     "value": "CrankActuator"
     }
    ]
   },

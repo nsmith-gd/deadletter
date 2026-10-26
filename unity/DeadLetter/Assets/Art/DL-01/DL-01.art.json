@@ -31,7 +31,7 @@
  },
  "markers": [
   {
-   "name": "MECH_Shutter_dl01_shutter",
+   "name": "MECH_Door_dl01_shutter",
    "prefix": "MECH",
    "source": "Shutter",
    "position": [
@@ -56,12 +56,12 @@
     },
     {
      "key": "type",
-     "value": "Shutter"
+     "value": "Door"
     }
    ]
   },
   {
-   "name": "MECH_Shutter_dl01_shutter__ShutterRail",
+   "name": "MECH_Door_dl01_shutter__ShutterRail",
    "prefix": "MECH",
    "source": "ShutterRail",
    "position": [
@@ -90,7 +90,7 @@
     },
     {
      "key": "type",
-     "value": "Shutter"
+     "value": "Door"
     }
    ]
   },
@@ -159,7 +159,7 @@
    ]
   },
   {
-   "name": "MECH_Shutter_dl01_shutter__Pulley",
+   "name": "MECH_Door_dl01_shutter__Pulley",
    "prefix": "MECH",
    "source": "Pulley",
    "position": [
@@ -188,12 +188,12 @@
     },
     {
      "key": "type",
-     "value": "Shutter"
+     "value": "Door"
     }
    ]
   },
   {
-   "name": "MECH_Shutter_dl01_shutter__Counterweight",
+   "name": "MECH_Door_dl01_shutter__Counterweight",
    "prefix": "MECH",
    "source": "Counterweight",
    "position": [
@@ -222,12 +222,12 @@
     },
     {
      "key": "type",
-     "value": "Shutter"
+     "value": "Door"
     }
    ]
   },
   {
-   "name": "MECH_Shutter_dl01_shutter__CounterweightStripes",
+   "name": "MECH_Door_dl01_shutter__CounterweightStripes",
    "prefix": "MECH",
    "source": "CounterweightStripes",
    "position": [
@@ -256,7 +256,7 @@
     },
     {
      "key": "type",
-     "value": "Shutter"
+     "value": "Door"
     }
    ]
   },
@@ -291,7 +291,7 @@
    ]
   },
   {
-   "name": "MECH_Crank_dl01_crank",
+   "name": "MECH_CrankActuator_dl01_crank",
    "prefix": "MECH",
    "source": "CrankWheel",
    "position": [
@@ -316,12 +316,12 @@
     },
     {
      "key": "type",
-     "value": "Crank"
+     "value": "CrankActuator"
     }
    ]
   },
   {
-   "name": "MECH_Relay_dl01_relay__RelayLamp0",
+   "name": "MECH_PulseSequencer_dl01_relay__RelayLamp0",
    "prefix": "MECH",
    "source": "RelayLamp0",
    "position": [
@@ -350,12 +350,12 @@
     },
     {
      "key": "type",
-     "value": "Relay"
+     "value": "PulseSequencer"
     }
    ]
   },
   {
-   "name": "MECH_Relay_dl01_relay__RelayLamp1",
+   "name": "MECH_PulseSequencer_dl01_relay__RelayLamp1",
    "prefix": "MECH",
    "source": "RelayLamp1",
    "position": [
@@ -384,12 +384,12 @@
     },
     {
      "key": "type",
-     "value": "Relay"
+     "value": "PulseSequencer"
     }
    ]
   },
   {
-   "name": "MECH_Relay_dl01_relay__RelayLamp2",
+   "name": "MECH_PulseSequencer_dl01_relay__RelayLamp2",
    "prefix": "MECH",
    "source": "RelayLamp2",
    "position": [
@@ -418,12 +418,12 @@
     },
     {
      "key": "type",
-     "value": "Relay"
+     "value": "PulseSequencer"
     }
    ]
   },
   {
-   "name": "MECH_Pushable_dl01_cart",
+   "name": "MECH_TippingBridge_dl01_cart",
    "prefix": "MECH",
    "source": "DepotCart",
    "position": [
@@ -448,12 +448,12 @@
     },
     {
      "key": "type",
-     "value": "Pushable"
+     "value": "TippingBridge"
     }
    ]
   },
   {
-   "name": "MECH_Scale_dl01_scale__ScaleNeedle",
+   "name": "MECH_LoadPlate_dl01_scale__ScaleNeedle",
    "prefix": "MECH",
    "source": "ScaleNeedle",
    "position": [
@@ -482,12 +482,12 @@
     },
     {
      "key": "type",
-     "value": "Scale"
+     "value": "LoadPlate"
     }
    ]
   },
   {
-   "name": "MECH_Relay_dl01_relay",
+   "name": "MECH_PulseSequencer_dl01_relay",
    "prefix": "MECH",
    "source": "",
    "position": [
@@ -508,12 +508,12 @@
     },
     {
      "key": "type",
-     "value": "Relay"
+     "value": "PulseSequencer"
     }
    ]
   },
   {
-   "name": "MECH_Scale_dl01_scale",
+   "name": "MECH_LoadPlate_dl01_scale",
    "prefix": "MECH",
    "source": "",
    "position": [
@@ -534,7 +534,7 @@
     },
     {
      "key": "type",
-     "value": "Scale"
+     "value": "LoadPlate"
     }
    ]
   },

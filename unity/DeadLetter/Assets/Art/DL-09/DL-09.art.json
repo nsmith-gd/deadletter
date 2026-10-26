@@ -95,7 +95,7 @@
    ]
   },
   {
-   "name": "MECH_Pawl_dl09_cagePawl__CagePawlLever",
+   "name": "MECH_CageCatch_dl09_cagePawl__CagePawlLever",
    "prefix": "MECH",
    "source": "CagePawlLever",
    "position": [
@@ -124,12 +124,12 @@
     },
     {
      "key": "type",
-     "value": "Pawl"
+     "value": "CageCatch"
     }
    ]
   },
   {
-   "name": "MECH_Pawl_dl09_cagePawl",
+   "name": "MECH_CageCatch_dl09_cagePawl",
    "prefix": "MECH",
    "source": "CagePawl",
    "position": [
@@ -154,7 +154,7 @@
     },
     {
      "key": "type",
-     "value": "Pawl"
+     "value": "CageCatch"
     }
    ]
   },

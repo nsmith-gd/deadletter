@@ -299,10 +299,10 @@
 			"extras":{
 				"dl_name":"LiftCar",
 				"dl_mech":"dl10.lift",
-				"dl_type":"CounterweightLift"
+				"dl_type":"RelocationLift"
 			},
 			"mesh":20,
-			"name":"MECH_CounterweightLift_dl10_lift",
+			"name":"MECH_RelocationLift_dl10_lift",
 			"translation":[
 				124.94999694824219,
 				1.600000023841858,
@@ -313,11 +313,11 @@
 			"extras":{
 				"dl_name":"LiftDoorL",
 				"dl_mech":"dl10.lift",
-				"dl_type":"CounterweightLift",
+				"dl_type":"RelocationLift",
 				"dl_part":"LiftDoorL"
 			},
 			"mesh":21,
-			"name":"MECH_CounterweightLift_dl10_lift__LiftDoorL",
+			"name":"MECH_RelocationLift_dl10_lift__LiftDoorL",
 			"translation":[
 				124.12000274658203,
 				1.600000023841858,
@@ -328,11 +328,11 @@
 			"extras":{
 				"dl_name":"LiftDoorR",
 				"dl_mech":"dl10.lift",
-				"dl_type":"CounterweightLift",
+				"dl_type":"RelocationLift",
 				"dl_part":"LiftDoorR"
 			},
 			"mesh":22,
-			"name":"MECH_CounterweightLift_dl10_lift__LiftDoorR",
+			"name":"MECH_RelocationLift_dl10_lift__LiftDoorR",
 			"translation":[
 				125.77999877929688,
 				1.600000023841858,
@@ -343,11 +343,11 @@
 			"extras":{
 				"dl_name":"LiftRopeCar",
 				"dl_mech":"dl10.lift",
-				"dl_type":"CounterweightLift",
+				"dl_type":"RelocationLift",
 				"dl_part":"LiftRopeCar"
 			},
 			"mesh":23,
-			"name":"MECH_CounterweightLift_dl10_lift__LiftRopeCar",
+			"name":"MECH_RelocationLift_dl10_lift__LiftRopeCar",
 			"translation":[
 				124.94999694824219,
 				5.949999809265137,
@@ -358,10 +358,10 @@
 			"extras":{
 				"dl_name":"ServiceCrank",
 				"dl_mech":"dl10.serviceCrank",
-				"dl_type":"Crank"
+				"dl_type":"CrankActuator"
 			},
 			"mesh":24,
-			"name":"MECH_Crank_dl10_serviceCrank",
+			"name":"MECH_CrankActuator_dl10_serviceCrank",
 			"translation":[
 				126.44999694824219,
 				2.049999952316284,
@@ -372,11 +372,11 @@
 			"extras":{
 				"dl_name":"ServiceChain",
 				"dl_mech":"dl10.serviceCrank",
-				"dl_type":"Crank",
+				"dl_type":"CrankActuator",
 				"dl_part":"ServiceChain"
 			},
 			"mesh":25,
-			"name":"MECH_Crank_dl10_serviceCrank__ServiceChain"
+			"name":"MECH_CrankActuator_dl10_serviceCrank__ServiceChain"
 		},
 		{
 			"extras":{

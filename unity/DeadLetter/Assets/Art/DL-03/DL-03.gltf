@@ -158,10 +158,10 @@
 			"extras":{
 				"dl_name":"Gate",
 				"dl_mech":"dl03.gate",
-				"dl_type":"Gate"
+				"dl_type":"FollowerActuator"
 			},
 			"mesh":11,
-			"name":"MECH_Gate_dl03_gate",
+			"name":"MECH_FollowerActuator_dl03_gate",
 			"translation":[
 				30.600000381469727,
 				0,
@@ -172,11 +172,11 @@
 			"extras":{
 				"dl_name":"GateNeedle",
 				"dl_mech":"dl03.gate",
-				"dl_type":"Gate",
+				"dl_type":"FollowerActuator",
 				"dl_part":"GateNeedle"
 			},
 			"mesh":12,
-			"name":"MECH_Gate_dl03_gate__GateNeedle",
+			"name":"MECH_FollowerActuator_dl03_gate__GateNeedle",
 			"translation":[
 				30.600000381469727,
 				1.0119999647140503,
