@@ -26,6 +26,9 @@ The first import takes a while (it builds `Library/`, which is ignored).
 3. **Input System prompt.** When Unity asks whether to enable the new input backends,
    choose **Yes** (the editor restarts). Then check Project Settings → Player → Other
    Settings → *Active Input Handling* = **Input System Package (New)**.
+   Input System 1.14 may apply default stick deadzone processing to `<Gamepad>/leftStick/x` before the motor's
+   own 0.22 deadzone and 0.65 run threshold — check the action's processors and remove the default deadzone if it
+   double-applies.
 4. **Player settings** (Project Settings → Player). These were left out on purpose: a
    hand-written `ProjectSettings.asset` with the wrong serialized schema is worse than none.
    - Company Name: `DeadLetter` (no company name is defined in `docs/`)
@@ -126,7 +129,7 @@ Assets/DeadLetter/Core/
   Interaction/  Contracts      ICarryable, IPlaceTarget, IPushable, IPresentTarget, ISeat, IUsable (U-10 implements)
                 InteractionResolver, PlaceSearch
 Assets/DeadLetter/Runtime/
-  Player/       D17Controller  MonoBehaviour: input → FixedTick → D17Motor; physics probes; transform + Animator
+  Player/       D17Controller  MonoBehaviour: input → FixedTick (Update) → D17Motor; physics probes; transform + Animator
                 D17AnimatorParams  Animator parameter names (states are named after the clips)
   Input/        DeadLetter.inputactions  Gameplay map: Move, Jump, Crouch, Use, Run, Pause, Checkpoint
 ```
@@ -139,7 +142,9 @@ event frames, the resolver's in-front rule, and that the same inputs give the sa
 **To use it in a scene:** add `D17Controller` to D-17's root, assign `DeadLetter.inputactions` and the Animator.
 Put D-17's own colliders on a layer outside the probe masks. Set `groundMask` (floors, crates, walls),
 `ceilingMask` (undersides) and `rampMask`. Every Animator state needs its Speed Multiplier bound to `ClipSpeed`.
-Core runs at 60 Hz whatever `Time.fixedDeltaTime` is. Setting Fixed Timestep to 1/60 gives one step per FixedUpdate.
+Core runs at 60 Hz from `Update` (`Time.deltaTime` through `FixedTick`), whatever `Time.fixedDeltaTime` is, and the
+transform is interpolated with `FixedTick.Alpha`. The lane probes are raycasts against static colliders; if moving
+colliders are added to the probe masks, sync transforms (`Physics.SyncTransforms`) before the Core tick.
 
 **D-17 asset and Animator (U-11 slice 2).** `Assets/Art/D17/d17.glb` is the shipped `game/undelivered/assets/d17.glb`
 copied unchanged (skinned rig, 26 joints, 76 clips). glTFast imports it; `Editor/Import/D17ImportSettings` pins the

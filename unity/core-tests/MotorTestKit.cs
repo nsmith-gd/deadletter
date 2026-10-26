@@ -11,9 +11,10 @@ namespace DeadLetter.Core.Tests
     {
         public const double Dt = 1.0 / 60.0;
 
-        public static D17Motor Make(BoxWorld world, double x = 0, double y = 0, InteractionResolver resolver = null, int facing = 1)
+        public static D17Motor Make(BoxWorld world, double x = 0, double y = 0, InteractionResolver resolver = null, int facing = 1,
+            MotorConfig config = null)
         {
-            var m = new D17Motor(MotorConfig.Prototype(), world, resolver);
+            var m = new D17Motor(config ?? MotorConfig.Prototype(), world, resolver);
             m.Place(x, y, facing);
             return m;
         }
