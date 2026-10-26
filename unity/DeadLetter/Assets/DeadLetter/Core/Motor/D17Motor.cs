@@ -17,7 +17,8 @@ namespace DeadLetter.Core.Motor
     /// frames (<see cref="ClipTimings"/>), never from the Animator (port_architecture §3.3).
     ///
     /// Deliberate differences from the prototype (port_architecture §3.1, §9 #10: dt-approximate integration is not
-    /// ported): gravity is integrated exactly (the jump apex is JUMP_APEX at any step), and release friction is an exact
+    /// ported): gravity is integrated exactly (the apex is the same at any step; by default the launch speed
+    /// is lowered so it matches the 60 Hz prototype's 0.377 m, see <see cref="MotorConfig.JumpMode"/>), and release friction is an exact
     /// decay equal to the prototype's at 60 Hz. Scene-specific branches (regions, transits, rides, belts, triggers) are
     /// not here; they belong to the scene/mechanism systems that drive this motor.
     /// </summary>
