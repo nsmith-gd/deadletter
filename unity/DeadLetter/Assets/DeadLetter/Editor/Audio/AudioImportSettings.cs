@@ -77,7 +77,7 @@ namespace DeadLetter.Editor.Audio
             if (!importer.SetOverrideSampleSettings(SwitchPlatform, sw) && !_warned)
             {
                 _warned = true;
-                Debug.Log("[Audio] The '" + SwitchPlatform + "' audio overrides were not set (platform not known to this editor).");
+                Debug.LogWarning("[Audio] The '" + SwitchPlatform + "' audio overrides were not set (Switch module not installed): install it before Import Audio for Switch builds.");
             }
         }
     }

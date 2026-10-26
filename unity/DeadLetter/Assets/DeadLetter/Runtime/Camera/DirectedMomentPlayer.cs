@@ -128,6 +128,7 @@ namespace DeadLetter.Runtime.Camera
         {
             StopTimeline();
             _director.End();
+            if (score != null) score.EndMoment();
             _active = null;
         }
 
@@ -152,6 +153,7 @@ namespace DeadLetter.Runtime.Camera
             if (paused == _paused) return;
             _paused = paused;
             if (musicClock != null) musicClock.SetPaused(paused);
+            if (score != null) score.SetPaused(paused);
             AudioSource cue = _active?.cue;
             if (cue != null)
             {

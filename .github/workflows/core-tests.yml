@@ -15,7 +15,8 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Only superseded PR runs are cancelled; runs on merged branches always finish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   core-tests:
@@ -23,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          lfs: false
+          lfs: false  # LFS is off in .gitattributes; switch to true if the director enables it, or Unity imports pointer files
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
@@ -51,10 +52,13 @@ jobs:
     needs: check-unity-license
     if: needs.check-unity-license.outputs.has_license == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write  # unity-test-runner posts its results as a check run via githubToken
     steps:
       - uses: actions/checkout@v4
         with:
-          lfs: false
+          lfs: false  # LFS is off in .gitattributes; switch to true if the director enables it, or Unity imports pointer files
       - uses: actions/cache@v4
         with:
           path: unity/DeadLetter/Library

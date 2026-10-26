@@ -93,6 +93,9 @@ namespace DeadLetter.Runtime.Audio
             return start;
         }
 
+        /// <summary><c>Music.endMoment()</c>: checkpoint reload; the cue plays on, but pausing no longer freezes it.</summary>
+        public void EndMoment() => _model.EndMoment();
+
         /// <summary>The moment's cue could not play: the ambience comes back (pair with <see cref="CueClock.MusicFailed"/>).</summary>
         public void MomentFailed(string momentCue) => _model.CueFailed(momentCue, Now);
 

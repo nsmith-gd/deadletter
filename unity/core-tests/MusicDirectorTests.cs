@@ -27,6 +27,19 @@ namespace DeadLetter.Core.Tests
     {
         private const double Eps = 1e-9;
 
+        [Fact]
+        public void EndMoment_LeavesTheCuePlayingButNoLongerInAMoment()
+        {
+            var m = new MusicDirectorModel();
+            m.Moment("refuge", 2);
+            Assert.True(m.InMoment);
+            m.EndMoment();                                   // checkpoint reload, L8016
+            Assert.False(m.InMoment);
+            Assert.Equal("refuge", m.CurrentCue.Key);
+            m.Moment("kin", 10);
+            Assert.True(m.InMoment);
+        }
+
         private static MusicLayer Cue(MusicDirectorModel m) => m.CurrentCue;
         private static MusicLayer Amb(MusicDirectorModel m) => m.CurrentAmbience;
 

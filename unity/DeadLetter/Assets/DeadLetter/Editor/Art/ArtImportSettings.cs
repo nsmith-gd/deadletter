@@ -84,7 +84,7 @@ namespace DeadLetter.Editor.Art
             if ((check == null || !check.overridden) && !_warnedSwitch)
             {
                 _warnedSwitch = true;
-                Debug.Log("[Art] The '" + SwitchPlatform + "' texture overrides did not stick (platform not known to this editor).");
+                Debug.LogWarning("[Art] The '" + SwitchPlatform + "' texture overrides did not stick (Switch module not installed): install it before importing art for Switch builds.");
             }
         }
 

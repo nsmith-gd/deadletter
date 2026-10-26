@@ -91,6 +91,7 @@ namespace DeadLetter.Core.Audio
         private string _want;
         private double _scale = 1, _fadeIn = AmbienceCrossfade, _fadeOut = AmbienceCrossfade;
         private bool _enabled = true, _paused, _ducked;
+        private bool _mom;   // the prototype's `mom`: a directed moment is running (cleared by EndMoment)
 
         private struct Pending
         {
@@ -110,7 +111,7 @@ namespace DeadLetter.Core.Audio
         public string AmbienceWant => _want;
         public double AmbienceScale => _scale;
         public bool Paused => _paused;
-        public bool InMoment => _cue != null && _cue.Moment;
+        public bool InMoment => _mom && _cue != null && _cue.Moment;
         /// <summary>Layers dropped because both of their kind's sources were busy (a third overlapping fade).</summary>
         public int Evicted { get; private set; }
 
@@ -144,8 +145,15 @@ namespace DeadLetter.Core.Audio
         public double Moment(string name, double now)
         {
             if (_cue != null) _cue.Next = null;
+            _mom = true;
             return PlayCue(name, now, 0, true).StartAt;
         }
+
+        /// <summary>
+        /// <c>Music.endMoment()</c>, L929, called on checkpoint reload (L8016): the moment is over for pause purposes, but
+        /// its cue keeps playing out as ordinary music.
+        /// </summary>
+        public void EndMoment() => _mom = false;
 
         /// <summary>
         /// The cue could not start (no clip): <c>if (cue === c) { cue = null; updateBed(); }</c>, L871. For a moment, call
