@@ -70,6 +70,22 @@ namespace DeadLetter.Runtime
         /// <summary>Pause pressed (U-17 owns the pause card).</summary>
         public event Action PauseRequested;
 
+        /// <summary>
+        /// Gates each step's input before the motor sees it (U-13: a directed moment withholds control,
+        /// <c>DirectedMomentPlayer</c>). Null = pass through.
+        /// </summary>
+        public Func<MotorInput, MotorInput> InputFilter { get; set; }
+
+        /// <summary>Raised after each Core step with the step length (camera rig, cue-driven systems).</summary>
+        public event Action<double> Stepped;
+
+        /// <summary>Simulation time: Core steps × step length.</summary>
+        public double SimTime => _motor != null ? _motor.StepCount * StepSeconds : 0;
+
+        /// <summary>Render interpolation factor between the last two Core steps (as used for the transform).</summary>
+        public float RenderAlpha => _tick == null ? 1f
+            : Mathf.Clamp01((float)((_tick.Alpha * _tick.StepSeconds + (Time.time - Time.fixedTime)) / _tick.StepSeconds));
+
         private void Awake()
         {
             var config = MotorConfig.Prototype();
@@ -125,6 +141,7 @@ namespace DeadLetter.Runtime
             for (int i = 0; i < steps; i++)
             {
                 MotorInput input = ReadInput();
+                if (InputFilter != null) input = InputFilter(input);
                 _jumpLatched = _useLatched = false;
                 _prevPos = _currPos;
                 _prevYaw = _currYaw;
@@ -134,6 +151,7 @@ namespace DeadLetter.Runtime
                 var events = _motor.Events;
                 if (MotorEventRaised != null)
                     for (int e = 0; e < events.Count; e++) MotorEventRaised(events[e]);
+                Stepped?.Invoke(_tick.StepSeconds);
             }
         }
 
