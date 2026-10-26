@@ -15,6 +15,8 @@ namespace DeadLetter.Runtime.Camera
     /// itself stays in Core (<see cref="MomentShots"/>) so it is replay-testable.
     /// Scene rules (U-20–22) call <see cref="Trigger"/> at the prototype's triggers and set <see cref="ActReady"/>
     /// (kin: realise act idle; refuge: awe clip done; ringc: car gone) and <see cref="CarRise"/>.
+    /// The pause card (U-17) must call <see cref="SetPaused"/> on open and close, or a moment keeps playing under it;
+    /// checkpoint reload must call <see cref="ResetForReload"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class DirectedMomentPlayer : MonoBehaviour
@@ -32,10 +34,13 @@ namespace DeadLetter.Runtime.Camera
 
         [SerializeField] private D17Controller player;
         [SerializeField] private AudioDspMusicClock musicClock;
+        [Tooltip("Snapped on checkpoint reload (ResetForReload).")]
+        [SerializeField] private LaneCameraDriver cameraDriver;
         [SerializeField] private Binding[] moments = new Binding[0];
 
         private MomentDirector _director;
         private Binding _active;
+        private bool _paused;
 
         public MomentDirector Director => _director;
 
@@ -105,6 +110,41 @@ namespace DeadLetter.Runtime.Camera
             StopTimeline();
             _director.End();
             _active = null;
+        }
+
+        /// <summary>
+        /// Checkpoint reload: no moment, no cut, and the camera jumps to the respawn frame instead of easing out of the
+        /// moment's shot (L8017, L8115). Subscribe this to <c>CheckpointService.Reloaded</c> (Core/Save, U-14) once that
+        /// lands.
+        /// </summary>
+        public void ResetForReload()
+        {
+            ResetMoment();
+            if (cameraDriver != null) cameraDriver.Snap();
+        }
+
+        /// <summary>
+        /// Game pause (L932–L936): freezes the music clock (so the cue clock, shot and act hold), pauses the cue's
+        /// AudioSource and the moment's Timeline; unpausing resumes all three in step. The pause card (U-17) must call
+        /// this when it opens and closes. Safe to call with no moment playing.
+        /// </summary>
+        public void SetPaused(bool paused)
+        {
+            if (paused == _paused) return;
+            _paused = paused;
+            if (musicClock != null) musicClock.SetPaused(paused);
+            AudioSource cue = _active?.cue;
+            if (cue != null)
+            {
+                if (paused) cue.Pause();
+                else cue.UnPause();
+            }
+            PlayableDirector timeline = _active?.timeline;
+            if (timeline != null && _director.Current != null)
+            {
+                if (paused) timeline.Pause();
+                else timeline.Resume();
+            }
         }
 
         /// <summary>The moment's camera shot for D-17 at (x, y), or null (currentShot's moment branches, L3702–L3793).</summary>

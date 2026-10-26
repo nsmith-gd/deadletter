@@ -50,24 +50,45 @@ namespace DeadLetter.Runtime.Camera
         {
             get
             {
-                double now = _paused ? _pausedAtDsp - _pausedTotal : SmoothedDsp() - _pausedTotal;
+                double now = Frozen ? _pausedAtDsp - _pausedTotal : SmoothedDsp() - _pausedTotal;
                 if (now < _lastNow) now = _lastNow;
                 _lastNow = now;
                 return now;
             }
         }
 
-        public bool Running => !_paused && !_focusLost && AudioSettings.outputSampleRate > 0;
+        public bool Running => !Frozen && AudioSettings.outputSampleRate > 0;
+
+        /// <summary>Paused by the game, or the app is in the background: the clock holds still either way.</summary>
+        private bool Frozen => _paused || _focusLost;
 
         public double OutputLatency => _latency;
 
-        /// <summary>Pause in a moment: the score stops where it is (pause the cue's AudioSource alongside).</summary>
+        /// <summary>Pause in a moment: the score stops where it is. Call through
+        /// <see cref="DirectedMomentPlayer.SetPaused"/>, which also pauses the cue's AudioSource and the Timeline.</summary>
         public void SetPaused(bool paused)
         {
             if (paused == _paused) return;
-            if (paused) _pausedAtDsp = SmoothedDsp();
-            else _pausedTotal += Math.Max(0, SmoothedDsp() - _pausedAtDsp);
+            bool wasFrozen = Frozen;
             _paused = paused;
+            OnFrozenChanged(wasFrozen);
+        }
+
+        // Game pause and backgrounding share one frozen span: entering it marks the DSP time, leaving it removes the
+        // span from Now, so a cue paused or suspended mid-moment resumes in step with the shot (L932–L936, L939).
+        private void SetFocusLost(bool lost)
+        {
+            if (lost == _focusLost) return;
+            bool wasFrozen = Frozen;
+            _focusLost = lost;
+            OnFrozenChanged(wasFrozen);
+        }
+
+        private void OnFrozenChanged(bool wasFrozen)
+        {
+            if (Frozen == wasFrozen) return;
+            if (Frozen) _pausedAtDsp = SmoothedDsp();
+            else _pausedTotal += Math.Max(0, SmoothedDsp() - _pausedAtDsp);
         }
 
         /// <summary>
@@ -86,8 +107,9 @@ namespace DeadLetter.Runtime.Camera
         private void OnDisable() => AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigChanged;
         private void OnAudioConfigChanged(bool deviceWasChanged) => RefreshLatency();
 
-        // A hidden / backgrounded app stops the frames; report the clock as not running so the cue clock freezes (L939).
-        private void OnApplicationPause(bool pause) => _focusLost = pause;
+        // A hidden / backgrounded app stops the frames; report the clock as not running so the cue clock freezes, and
+        // drop the time spent in the background from Now, as SetPaused does (L939).
+        private void OnApplicationPause(bool pause) => SetFocusLost(pause);
 
         public void RefreshLatency()
         {
