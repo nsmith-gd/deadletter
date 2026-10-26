@@ -1,0 +1,352 @@
+{
+ "format": 1,
+ "regions": [
+  {
+   "name": "DL-01",
+   "kind": "set",
+   "folder": "DL-01",
+   "file": "DL-01.gltf",
+   "scenes": [
+    "DL-01"
+   ],
+   "gameRegion": 1,
+   "laneRange": [
+    -20.0,
+    12.0
+   ],
+   "boundsMin": [
+    -3.0,
+    -0.837,
+    -3.975
+   ],
+   "boundsMax": [
+    17.0,
+    8.5,
+    12.55
+   ],
+   "sidecar": "DL-01.art.json"
+  },
+  {
+   "name": "DL-02",
+   "kind": "set",
+   "folder": "DL-02",
+   "file": "DL-02.gltf",
+   "scenes": [
+    "DL-02"
+   ],
+   "gameRegion": 2,
+   "laneRange": [
+    12.0,
+    25.0
+   ],
+   "boundsMin": [
+    11.82,
+    -0.5015,
+    -2.2
+   ],
+   "boundsMax": [
+    25.05,
+    4.66,
+    1.87
+   ],
+   "sidecar": "DL-02.art.json"
+  },
+  {
+   "name": "DL-03",
+   "kind": "set",
+   "folder": "DL-03",
+   "file": "DL-03.gltf",
+   "scenes": [
+    "DL-03"
+   ],
+   "gameRegion": 2,
+   "laneRange": [
+    25.0,
+    30.6
+   ],
+   "boundsMin": [
+    24.97,
+    -0.026,
+    -1.6678
+   ],
+   "boundsMax": [
+    30.7564,
+    4.65,
+    1.25
+   ],
+   "sidecar": "DL-03.art.json"
+  },
+  {
+   "name": "DL-04",
+   "kind": "set",
+   "folder": "DL-04",
+   "file": "DL-04.gltf",
+   "scenes": [
+    "DL-04"
+   ],
+   "gameRegion": 2,
+   "laneRange": [
+    30.6,
+    47.9
+   ],
+   "boundsMin": [
+    25.0,
+    -0.1,
+    -4.0
+   ],
+   "boundsMax": [
+    51.0,
+    6.4,
+    12.0
+   ],
+   "sidecar": "DL-04.art.json"
+  },
+  {
+   "name": "DL-05",
+   "kind": "set",
+   "folder": "DL-05",
+   "file": "DL-05.gltf",
+   "scenes": [
+    "DL-05"
+   ],
+   "gameRegion": 2,
+   "laneRange": [
+    47.9,
+    59.8
+   ],
+   "boundsMin": [
+    47.9,
+    -0.1,
+    -4.0
+   ],
+   "boundsMax": [
+    63.0,
+    4.6,
+    3.8
+   ],
+   "sidecar": "DL-05.art.json"
+  },
+  {
+   "name": "DL-06_07",
+   "kind": "set",
+   "folder": "DL-06_07",
+   "file": "DL-06_07.gltf",
+   "scenes": [
+    "DL-06",
+    "DL-07"
+   ],
+   "gameRegion": 3,
+   "laneRange": [
+    59.8,
+    80.75
+   ],
+   "boundsMin": [
+    59.9,
+    -6.1,
+    -6.243
+   ],
+   "boundsMax": [
+    85.1,
+    7.0,
+    12.0
+   ],
+   "sidecar": "DL-06_07.art.json"
+  },
+  {
+   "name": "DL-08",
+   "kind": "set",
+   "folder": "DL-08",
+   "file": "DL-08.gltf",
+   "scenes": [
+    "DL-08"
+   ],
+   "gameRegion": 4,
+   "laneRange": [
+    80.75,
+    97.6
+   ],
+   "boundsMin": [
+    80.3,
+    -6.0087,
+    -8.208
+   ],
+   "boundsMax": [
+    98.7958,
+    7.4,
+    14.593
+   ],
+   "sidecar": "DL-08.art.json"
+  },
+  {
+   "name": "DL-09",
+   "kind": "set",
+   "folder": "DL-09",
+   "file": "DL-09.gltf",
+   "scenes": [
+    "DL-09"
+   ],
+   "gameRegion": 4,
+   "laneRange": [
+    97.6,
+    118.8
+   ],
+   "boundsMin": [
+    94.7659,
+    -15.2449,
+    -1.608
+   ],
+   "boundsMax": [
+    120.1995,
+    31.5027,
+    204.2969
+   ],
+   "sidecar": "DL-09.art.json"
+  },
+  {
+   "name": "DL-10",
+   "kind": "set",
+   "folder": "DL-10",
+   "file": "DL-10.gltf",
+   "scenes": [
+    "DL-10"
+   ],
+   "gameRegion": 4,
+   "laneRange": [
+    118.8,
+    127.9
+   ],
+   "boundsMin": [
+    116.3084,
+    -15.053,
+    -1.1
+   ],
+   "boundsMax": [
+    137.6832,
+    68.2115,
+    82.5644
+   ],
+   "sidecar": "DL-10.art.json"
+  },
+  {
+   "name": "DL-11",
+   "kind": "set",
+   "folder": "DL-11",
+   "file": "DL-11.gltf",
+   "scenes": [
+    "DL-11"
+   ],
+   "gameRegion": 5,
+   "laneRange": [
+    127.9,
+    199.0
+   ],
+   "boundsMin": [
+    127.4864,
+    -5.8,
+    -4.0529
+   ],
+   "boundsMax": [
+    180.4,
+    116.9292,
+    254.75
+   ],
+   "sidecar": "DL-11.art.json"
+  },
+  {
+   "name": "DL-09_Atrium",
+   "kind": "set",
+   "folder": "DL-09_Atrium",
+   "file": "DL-09_Atrium.gltf",
+   "scenes": [
+    "DL-09",
+    "DL-10",
+    "DL-11"
+   ],
+   "gameRegion": 4,
+   "laneRange": [
+    -5.0,
+    262.0
+   ],
+   "boundsMin": [
+    -5.0,
+    -48.0,
+    -12.0
+   ],
+   "boundsMax": [
+    262.0,
+    152.4917,
+    372.0
+   ],
+   "sidecar": "DL-09_Atrium.art.json"
+  },
+  {
+   "name": "White",
+   "kind": "character",
+   "folder": "White",
+   "file": "white.glb",
+   "scenes": [],
+   "gameRegion": 0,
+   "laneRange": [
+    0,
+    0
+   ],
+   "boundsMin": [
+    0,
+    0,
+    0
+   ],
+   "boundsMax": [
+    0,
+    0,
+    0
+   ],
+   "sidecar": ""
+  },
+  {
+   "name": "Couriers",
+   "kind": "character",
+   "folder": "Couriers",
+   "file": "couriers.glb",
+   "scenes": [],
+   "gameRegion": 0,
+   "laneRange": [
+    0,
+    0
+   ],
+   "boundsMin": [
+    0,
+    0,
+    0
+   ],
+   "boundsMax": [
+    0,
+    0,
+    0
+   ],
+   "sidecar": ""
+  },
+  {
+   "name": "D17",
+   "kind": "character",
+   "folder": "D17",
+   "file": "d17.glb",
+   "scenes": [],
+   "gameRegion": 0,
+   "laneRange": [
+    0,
+    0
+   ],
+   "boundsMin": [
+    0,
+    0,
+    0
+   ],
+   "boundsMax": [
+    0,
+    0,
+    0
+   ],
+   "sidecar": ""
+  }
+ ]
+}

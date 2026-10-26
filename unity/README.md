@@ -275,6 +275,26 @@ them with GUIDs from the MD5 of the asset path, identical on every machine. `Dir
 - Whether Unity accepts a minimal `.meta` (`fileFormatVersion` and `guid` only) and keeps its GUID.
 - Whether `PlayScheduled` with a time already past starts at once.
 
+## Art (U-12)
+
+The prologue's sets come from the Blender generators as one glTF per region (`Assets/Art/DL-01/` … `DL-11/`, plus
+`DL-09_Atrium/`), sharing `Assets/Art/Textures/`. The White and the couriers come as GLBs. The export is
+`python3 tools/unity_export/export_regions.py` (bpy 5.2, about 3 min), and it never touches the web build's assets.
+**`docs/unity/asset_conventions.md`** covers the files, the `COL_`/`LGT_`/`MECH_`/`CAM_`/`CHK_` names, the per-region
+marker TODO list and the importer.
+
+```
+Assets/DeadLetter/Core/Art/      ArtNames (convention parser), TextureBudget (§8.2 caps and estimates)
+Assets/DeadLetter/Runtime/Art/   ArtMarker (marker data on the prefab)
+Assets/DeadLetter/Editor/Art/    ArtImportSettings (texture caps per platform, glTFast settings), ArtPrefabBuilder,
+                                 ArtMaterials (glTF PBR → URP Lit), ArtSidecar (JSON DTOs)
+```
+
+First open: once glTFast has imported the glTFs, each region's prefab builds itself (`Assets/Art/<region>/<region>.prefab`,
+URP materials in `Assets/Art/Materials/`). **Dead Letter → Art → Build Region Prefabs** rebuilds them all. Check the
+Console for the axis-turn warning (§0.2) and for unmatched materials, then commit the prefabs, the materials and the
+`.meta` files. Tests: `ArtNamesTests`, `ArtExportTests`.
+
 ## CI
 
 `.github/workflows/core-tests.yml` runs on pushes and PRs touching `unity/**`:
