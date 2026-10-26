@@ -1,6 +1,6 @@
 {
     "name": "DeadLetter.Runtime",
-    "rootNamespace": "DeadLetter",
+    "rootNamespace": "DeadLetter.Runtime",
     "references": [
         "DeadLetter.Core",
         "Unity.InputSystem",
