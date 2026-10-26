@@ -1,0 +1,37 @@
+# Unity-generated folders (project at unity/DeadLetter/)
+/DeadLetter/[Ll]ibrary/
+/DeadLetter/[Tt]emp/
+/DeadLetter/[Oo]bj/
+/DeadLetter/[Bb]uild/
+/DeadLetter/[Bb]uilds/
+/DeadLetter/[Ll]ogs/
+/DeadLetter/[Uu]ser[Ss]ettings/
+/DeadLetter/[Mm]emoryCaptures/
+/DeadLetter/[Rr]ecordings/
+
+# IDE project files Unity regenerates at the project root
+/DeadLetter/*.csproj
+/DeadLetter/*.sln
+/DeadLetter/*.slnx
+/DeadLetter/*.unityproj
+/DeadLetter/*.pidb
+/DeadLetter/*.userprefs
+/DeadLetter/*.suo
+/DeadLetter/*.user
+
+# IDE state
+.vs/
+.vscode/
+.idea/
+*.DotSettings.user
+
+# Crash / build artefacts
+/DeadLetter/sysinfo.txt
+/DeadLetter/crashlytics-build.properties
+*.apk
+*.aab
+
+# dotnet Core test harness
+/core-tests/bin/
+/core-tests/obj/
+/core-tests/TestResults/
