@@ -54,6 +54,11 @@ namespace DeadLetter.Core.Save
         public int Writes { get; private set; }
         /// <summary>The last load restored the snapshot (false: derived from the checkpoint alone).</summary>
         public bool RestoredSnapshot { get; private set; }
+        /// <summary>
+        /// The world was rebuilt at <see cref="Current"/> (respawn, reload, continue or a new game). Systems outside the
+        /// graph that hold time or control (directed moments, the camera, hints) reset themselves here.
+        /// </summary>
+        public event Action<Checkpoint> Reloaded;
 
         /// <summary>The order index of <paramref name="name"/>; throws for an unknown name.</summary>
         public int IndexOf(string name)
@@ -81,6 +86,7 @@ namespace DeadLetter.Core.Save
             _graph.Reset(Current);
             _snapshot = Capture();
             Save();
+            Reloaded?.Invoke(Current);
         }
 
         /// <summary>
@@ -143,6 +149,7 @@ namespace DeadLetter.Core.Save
             }
             PushBindings();                                   // a snapshot holds old copies of bound flags
             if (Flags.Version != _savedFlags) Save();         // e.g. warned on the run that ended in this respawn
+            Reloaded?.Invoke(Current);
         }
 
         /// <summary>

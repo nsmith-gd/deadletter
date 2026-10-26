@@ -157,6 +157,24 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(1.2, m.Settings.Brightness);
         }
 
+        [Fact]
+        public void Reloaded_FiresOnNewGame_Respawn_AndContinue_NotOnReachingACheckpoint()
+        {
+            var g = Mech.Graph("start", new TestSource("t.a"));
+            var store = new MemorySaveStore();
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store);
+            var seen = new List<string>();
+            svc.Reloaded += cp => seen.Add(cp.Name);
+
+            svc.NewGame();
+            string next = Checkpoint.PrototypeOrder[1];
+            svc.Reach(next);
+            svc.Reload();
+            Assert.True(svc.TryContinue());
+
+            Assert.Equal(new List<string> { Checkpoint.PrototypeOrder[0], next, next }, seen);
+        }
+
         // ---- AtomicFileStore ----
 
         private static SaveModel At(string cp) { var m = Sample(); m.Checkpoint = cp; return m; }
