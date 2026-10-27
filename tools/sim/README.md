@@ -143,6 +143,8 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
   - **`unity/core-tests/Traces/attendance_mech_seed1.jsonl.gz`:** the whole of Chapter 1, mechanical, seed 1: 20,842
     steps (DL-13 from #1313, DL-14 from #3042, the duct at #7886, DL-14a from #8265; the end at 347 s).
   - Its fields, only while `r` is 6 (so no prologue line changes), named with the scene's number:
+    - The whole chapter: `aw` (`game.act.what` of an `att` act, as `beginAtt` names it: `coat`, `hang`, `pawl`, `crank`,
+      `duct`, …; null otherwise).
     - DL-12: `c12x`/`c12b`/`c12s` (the coat's x, base, state), `f12x`/`f12v` (the stand-in figure), `g12y`/`g12v`
       (the gate's height and fall speed), `p12` (someone on the strip), `pc12` (`presentCount`).
     - DL-13: `f13x`/`f13v` (the second figure), `l13` (the lesson on), `t13` (its clock), `k13` (braked), `s13` (the

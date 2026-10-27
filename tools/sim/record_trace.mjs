@@ -138,11 +138,12 @@ const RECORDER = `window.__record = (rngSeed, startCp) => {
   }
   // Chapter 1 (U-22): game.att, only in region 6 (so no prologue line changes). Names end in the scene's number.
   // DL-12: the coat (x, base, state), the stand-in figure (x, v), the gate (y, fall speed), someone on the strip and
-  // how many times (index.html L5228-L5243, L5381-L5408).
+  // how many times (index.html L5228-L5243, L5381-L5408); and, for the whole chapter, what an 'att' act is about (aw:
+  // game.act.what, as beginAtt names it: coat, hang, pawl, crank, duct ...).
   const A6 = () => (G.region === 6 && G.att ? G.att : null);
   function dl12() {
     const s = A6(); if (!s) return {};
-    return { c12x: r6(s.coat.x), c12b: r6(s.coat.base), c12s: s.coat.state, f12x: r6(s.fig.x), f12v: r6(s.fig.v), g12y: r6(s.gateY), g12v: r6(s.gateV), p12: b(s.present), pc12: s.presentCount };
+    return { aw: G.act && G.act.kind === 'att' ? G.act.what : null, c12x: r6(s.coat.x), c12b: r6(s.coat.base), c12s: s.coat.state, f12x: r6(s.fig.x), f12v: r6(s.fig.v), g12y: r6(s.gateY), g12v: r6(s.gateV), p12: b(s.present), pc12: s.presentCount };
   }
   // DL-13: the second figure (x, v), the lesson (on, its clock, braked, the three steps, the tree) (L5409-L5436).
   function dl13() {

@@ -6,6 +6,7 @@ using DeadLetter.Core.Scenes.Dl03;
 using DeadLetter.Core.Scenes.Dl04;
 using DeadLetter.Core.Scenes.Dl05;
 using DeadLetter.Core.Scenes.Dl06;
+using DeadLetter.Core.Scenes.Dl12;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -57,5 +58,38 @@ namespace DeadLetter.Core.Scenes
         /// </summary>
         public static ChapterDef Prologue() => new ChapterDef(PrologueId, PrologueCheckpoints,
             Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def());
+
+        // ---- Chapter 1 Attendance (#18) --------------------------------------------------------------------------------
+        /// <summary>Chapter 1's ID (the save's scene key).</summary>
+        public const string AttendanceId = "attendance";
+
+        /// <summary>
+        /// Chapter 1's checkpoints (<c>CHECKPOINTS</c>, L7999–L8013), all in region 6, in the save's order: where each puts
+        /// D-17 (x, feet y, facing +1) and the scene that owns it (<c>sceneName</c> at its spot, L8136). <c>hatch14</c> is
+        /// reached going into the duct, but its row is the window's spot, as the prototype has it.
+        /// </summary>
+        public static CheckpointTable AttendanceCheckpoints { get; } = new CheckpointTable(Checkpoint.PrototypeOrder,
+            new CheckpointDef("school", 200.8, region: 6, scene: "DL-12"),
+            new CheckpointDef("register", 210.0, region: 6, scene: "DL-12"),
+            new CheckpointDef("lesson", 216.8, region: 6, scene: "DL-13"),
+            new CheckpointDef("gallery13", 228.4, 2.05, region: 6, scene: "DL-13"),
+            new CheckpointDef("window", 234.8, region: 6, scene: "DL-14"),
+            new CheckpointDef("hatch14", 234.8, region: 6, scene: "DL-14"),
+            new CheckpointDef("dorm", 249.4, 1.15, region: 6, scene: "DL-14a"),
+            new CheckpointDef("corridor", 263.6, region: 6, scene: "DL-14b"),
+            new CheckpointDef("sickbay", 279.0, 1.6, region: 6, scene: "DL-15"),
+            new CheckpointDef("class6", 282.7, region: 6, scene: "DL-15"),
+            new CheckpointDef("dismissed", 292.6, region: 6, scene: "DL-15"),
+            new CheckpointDef("crossing", 294.6, region: 6, scene: "DL-16"),
+            new CheckpointDef("store", 300.6, region: 6, scene: "DL-16"),
+            new CheckpointDef("kitchen", 310.6, region: 6, scene: "DL-16a"),
+            new CheckpointDef("workshop", 325.0, region: 6, scene: "DL-17"));
+
+        /// <summary>
+        /// Chapter 1 Attendance as far as it is ported (region 6, the school): one world from the arrival door at
+        /// <c>school</c> on. Its continue and respawn take only rows whose scene it has.
+        /// </summary>
+        public static ChapterDef Attendance() => new ChapterDef(AttendanceId, AttendanceCheckpoints,
+            Dl12Scene.Def());
     }
 }
