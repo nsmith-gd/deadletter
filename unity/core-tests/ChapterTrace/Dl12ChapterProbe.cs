@@ -116,6 +116,9 @@ namespace DeadLetter.Core.Tests
                 case "reachpeg": return "dl12.reachPeg:Present";
                 case "pawl": case "pawlIdle": return "dl13.brake:" + (phase == "approach" ? "Approach" : "Clip");
                 case "crank": return "dl14.crank:" + (phase == "approach" ? "Approach" : "Clip");
+                case "unjam": return "dl14.pole:" + (phase == "approach" ? "Approach" : "Lift");
+                case "jam": return "dl14.wheel:" + (phase == "approach" ? "Approach" : "SetDown");
+                case "duct": return "dl14.hatch:" + (phase == "in" ? "In" : phase == "along" ? "Along" : "Out");
                 default: return "att." + p.Aw + ":" + phase;
             }
         }

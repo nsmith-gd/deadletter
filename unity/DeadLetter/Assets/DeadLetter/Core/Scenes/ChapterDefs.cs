@@ -8,6 +8,7 @@ using DeadLetter.Core.Scenes.Dl05;
 using DeadLetter.Core.Scenes.Dl06;
 using DeadLetter.Core.Scenes.Dl12;
 using DeadLetter.Core.Scenes.Dl13;
+using DeadLetter.Core.Scenes.Dl14;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -91,6 +92,6 @@ namespace DeadLetter.Core.Scenes
         /// <c>school</c> on. Its continue and respawn take only rows whose scene it has.
         /// </summary>
         public static ChapterDef Attendance() => new ChapterDef(AttendanceId, AttendanceCheckpoints,
-            Dl12Scene.Def(), Dl13Scene.Def());
+            Dl12Scene.Def(), Dl13Scene.Def(), Dl14Scene.Def());
     }
 }
