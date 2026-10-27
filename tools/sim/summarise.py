@@ -15,7 +15,8 @@ for r in bad: print('  FAIL', r['seed'], r['error'])
 sp = [split(r['marks']) for r in ok]
 print('%-13s %7s %7s %7s %7s %7s' % ('', 'mean', 'median', 'min', 'max', 'sd'))
 for c in cols:
-    v = [d[c] for d in sp]
+    v = [d[c] for d in sp if d[c] == d[c]]       # scenes a batch doesn't cover are NaN: skip them (Python 3.13's pstdev rejects NaN)
+    if not v: continue
     print('%-13s %7s %7s %7s %7s %6.0fs' % (c, f(st.mean(v)), f(st.median(v)), f(min(v)), f(max(v)), st.pstdev(v)))
 if any('deaths' in r for r in ok): print('deaths per run: mean %.1f, max %d' % (sum(r.get('deaths', 0) for r in ok) / len(ok), max(r.get('deaths', 0) for r in ok)))
 if any('found' in r for r in ok): print('curiosities found per run: mean %.1f' % (sum(r.get('found', 0) for r in ok) / len(ok)))
