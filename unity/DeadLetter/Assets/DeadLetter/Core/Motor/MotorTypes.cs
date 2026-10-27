@@ -23,9 +23,10 @@ namespace DeadLetter.Core.Motor
 
     /// <summary>
     /// D-17's free-movement state (<see cref="D17Motor.Capture"/>, <see cref="D17Motor.SetState"/>): the prototype's
-    /// <c>game.x, y, z, vx, vy, yaw, facing, grounded, crouched</c> and the jump timers, for a hand-over of a moving D-17
-    /// (a scene he walks or runs into, a replay that starts mid-run) and for a rule that sets one field
-    /// (<c>game.vx = 0</c>). Not the act, the mantle, the ride or the holds: those are set by playing them.
+    /// <c>game.x, y, z, vx, vy, yaw, facing, grounded, crouched</c>, the jump timers and the clip, for a hand-over of a
+    /// moving D-17 (a scene he walks or runs into, a replay that starts mid-run) and for a rule that sets one field
+    /// (<c>game.vx = 0</c>). Not the act, the mantle, the ride or the holds: those are set by playing them, and
+    /// <see cref="D17Motor.Capture"/> refuses while one is on (<see cref="D17Motor.CanCapture"/>).
     /// <para><see cref="Vy"/> is the motor's (<see cref="D17Motor.Vy"/>: the prototype's less
     /// <see cref="MotorConfig.ParityVelocityOffset"/> while airborne in parity mode, 0 on the ground).</para>
     /// </summary>
@@ -40,6 +41,19 @@ namespace DeadLetter.Core.Motor
         public double Coyote, JumpBuffer, LandTimer;
         /// <summary>The top of the current fall's arc (for the landing's drop); NaN = <see cref="Y"/>. Ignored on the ground (his y).</summary>
         public double PeakY;
+        /// <summary>
+        /// The clip he plays (<see cref="D17Motor.Clip"/>), its seconds (<see cref="D17Motor.ClipTime"/>, so a walk or run
+        /// keeps its phase and footsteps) and speed (<see cref="D17Motor.ClipTimeScale"/>). Null = none given: Idle on
+        /// the ground, JumpAir in the air (ClipTime and ClipTimeScale are then ignored).
+        /// </summary>
+        public string Clip;
+        public double ClipTime, ClipTimeScale;
+        /// <summary>
+        /// Where the walk cycle was at his last footstep check, 0..1 (footsteps fire as it crosses 0.5 and 0, L2069–L2075):
+        /// what <see cref="D17Motor.Capture"/> read, so a restored walk or run steps on the same frames. 0 for a clip
+        /// that has just started. Ignored when <see cref="Clip"/> is null.
+        /// </summary>
+        public double StepPhase;
 
         /// <summary>At rest on the lane at (x, y), facing <paramref name="facing"/>, its yaw along the lane.</summary>
         public static MotorSnapshot AtRest(double x, double y, int facing = 1)
