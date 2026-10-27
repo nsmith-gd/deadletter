@@ -10,8 +10,9 @@ namespace DeadLetter.Core.Tests
 {
     /// <summary>
     /// Guards the committed Unity export of the sets (<c>unity/DeadLetter/Assets/Art/</c>, written by
-    /// <c>tools/unity_export/export_regions.py</c>): every prologue region of <c>set.glb</c> is there, the textures fit
-    /// the §8.2 budget, and the markers follow the naming conventions and sit in their region. Reads JSON only.
+    /// <c>tools/unity_export/export_regions.py</c>): every prologue region of <c>set.glb</c> and every chapter 1 region is
+    /// there, the textures fit the §8.2 budget, the markers follow the naming conventions and sit in their region, and
+    /// chapter 1's mechanism markers name the Core mechanisms that drive them. Reads JSON only.
     /// </summary>
     public class ArtExportTests
     {
@@ -20,6 +21,10 @@ namespace DeadLetter.Core.Tests
         /// <summary>The regions set.glb splits into (tools/unity_export/conventions.py PROLOGUE + the backdrop).</summary>
         private static readonly string[] PrologueRegions =
             { "DL-01", "DL-02", "DL-03", "DL-04", "DL-05", "DL-06_07", "DL-08", "DL-09", "DL-10", "DL-11", "DL-09_Atrium" };
+
+        /// <summary>Chapter 1's regions (conventions.py CHAPTER1, <c>--chapter1</c>).</summary>
+        private static readonly string[] Chapter1Regions =
+            { "DL-12", "DL-13", "DL-14", "DL-14a", "DL-14b", "DL-15", "DL-16", "DL-16a", "DL-17" };
 
         private static JsonElement Load(string relative) => JsonDocument.Parse(File.ReadAllText(RepoFiles.Find(relative))).RootElement;
 
@@ -30,10 +35,10 @@ namespace DeadLetter.Core.Tests
             Load(Art + r.GetProperty("folder").GetString() + "/" + r.GetProperty("sidecar").GetString());
 
         [Fact]
-        public void Every_prologue_region_is_exported_with_its_files()
+        public void Every_region_is_exported_with_its_files()
         {
             var names = Regions.Select(r => r.GetProperty("name").GetString()).ToList();
-            foreach (string region in PrologueRegions)
+            foreach (string region in PrologueRegions.Concat(Chapter1Regions))
             {
                 Assert.Contains(region, names);
                 string folder = Art + region + "/";
@@ -113,6 +118,34 @@ namespace DeadLetter.Core.Tests
             // Every mechanism has exactly one root (its main object or an anchor empty).
             Assert.NotEmpty(roots);
             Assert.All(roots, kv => Assert.Equal(1, kv.Value));
+        }
+
+        [Fact]
+        public void Chapter1_mechanism_markers_name_their_Core_mechanisms()
+        {
+            // Each mechanism of the Attendance chapter, by ID, with the class Core builds for it.
+            var types = new Dictionary<string, string>();
+            foreach (var scene in Scenes.ChapterDefs.Attendance().Scenes)
+                foreach (var def in scene.Mechanisms)
+                    types[def.Id.ToString()] = def.Create().GetType().Name;
+            var seen = new HashSet<string>();
+            foreach (string region in Chapter1Regions)
+            {
+                JsonElement sc = Load(Art + region + "/" + region + ".art.json");
+                int mechs = 0;
+                foreach (JsonElement m in sc.GetProperty("markers").EnumerateArray())
+                {
+                    ArtName n = ArtNames.Parse(m.GetProperty("name").GetString());
+                    if (n.Prefix != ArtPrefix.Mechanism) continue;
+                    mechs++;
+                    Assert.True(types.TryGetValue(n.Id, out string type), region + ": " + n.Id + " is not an Attendance mechanism");
+                    Assert.Equal(type, n.Type);
+                    seen.Add(n.Id);
+                }
+                Assert.True(mechs > 0, region + " has no mechanism markers");
+            }
+            // conventions.py maps 41 of the chapter's mechanisms to art (the rest have no object of their own).
+            Assert.Equal(41, seen.Count);
         }
     }
 }

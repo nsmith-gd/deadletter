@@ -31,6 +31,126 @@
  },
  "markers": [
   {
+   "name": "MECH_Dl16Lever_dl16_lever",
+   "prefix": "MECH",
+   "source": "Att16Lever",
+   "position": [
+    296.0,
+    0.0,
+    0.35
+   ],
+   "center": [
+    296.008,
+    0.3175,
+    0.35
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl16.lever"
+    },
+    {
+     "key": "name",
+     "value": "Att16Lever"
+    },
+    {
+     "key": "type",
+     "value": "Dl16Lever"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Dl16Bridge_dl16_bridge",
+   "prefix": "MECH",
+   "source": "Att16Bridge",
+   "position": [
+    299.9,
+    0.0,
+    0.3
+   ],
+   "center": [
+    299.235,
+    -0.2718,
+    0.285
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl16.bridge"
+    },
+    {
+     "key": "name",
+     "value": "Att16Bridge"
+    },
+    {
+     "key": "type",
+     "value": "Dl16Bridge"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Latch_dl16_latch",
+   "prefix": "MECH",
+   "source": "Att16Latch",
+   "position": [
+    300.06,
+    0.12,
+    0.8
+   ],
+   "center": [
+    300.0183,
+    0.366,
+    0.795
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl16.latch"
+    },
+    {
+     "key": "name",
+     "value": "Att16Latch"
+    },
+    {
+     "key": "type",
+     "value": "Latch"
+    }
+   ]
+  },
+  {
+   "name": "MECH_CounterweightRack_dl16_rackCW",
+   "prefix": "MECH",
+   "source": "Att16CW",
+   "position": [
+    308.5,
+    0.0,
+    0.0
+   ],
+   "center": [
+    308.4922,
+    1.3775,
+    0.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl16.rackCW"
+    },
+    {
+     "key": "name",
+     "value": "Att16CW"
+    },
+    {
+     "key": "type",
+     "value": "CounterweightRack"
+    }
+   ]
+  },
+  {
    "name": "CHK_crossing",
    "prefix": "CHK",
    "source": "",
@@ -174,87 +294,6 @@
    "occlusionTexture": ""
   },
   {
-   "name": "CastIron",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0.5,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "PigeonWood",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "Att16Mural",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 0.8500000238418579,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "dl16_mural.png",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
    "name": "AttGlobeLamp",
    "baseColor": [
     1,
@@ -282,21 +321,21 @@
    "occlusionTexture": ""
   },
   {
-   "name": "SafetyYellow",
+   "name": "Att16PitGlow",
    "baseColor": [
     1,
-    1,
-    1,
+    0.41999998688697815,
+    0.14000000059604645,
     1
    ],
    "metallic": 0,
-   "roughness": 1.0,
+   "roughness": 0.5,
    "emissive": [
-    0,
-    0,
-    0
+    1,
+    0.41999998688697815,
+    0.14000000059604645
    ],
-   "emissiveStrength": 1.0,
+   "emissiveStrength": 2.200000047683716,
    "transmission": 0.0,
    "alphaMode": "OPAQUE",
    "alphaCutoff": 0.5,
@@ -309,14 +348,14 @@
    "occlusionTexture": ""
   },
   {
-   "name": "LeverRed",
+   "name": "PigeonWood",
    "baseColor": [
     1,
     1,
     1,
     1
    ],
-   "metallic": 0.10000000149011612,
+   "metallic": 0,
    "roughness": 1.0,
    "emissive": [
     0,
@@ -363,21 +402,48 @@
    "occlusionTexture": ""
   },
   {
-   "name": "Att16PitGlow",
+   "name": "Att16Mural",
    "baseColor": [
     1,
-    0.41999998688697815,
-    0.14000000059604645,
+    1,
+    1,
     1
    ],
    "metallic": 0,
-   "roughness": 0.5,
+   "roughness": 0.8500000238418579,
    "emissive": [
-    1,
-    0.41999998688697815,
-    0.14000000059604645
+    0,
+    0,
+    0
    ],
-   "emissiveStrength": 2.200000047683716,
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "dl16_mural.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "CastIron",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.5,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
    "transmission": 0.0,
    "alphaMode": "OPAQUE",
    "alphaCutoff": 0.5,
@@ -498,6 +564,33 @@
    "occlusionTexture": ""
   },
   {
+   "name": "SafetyYellow",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
    "name": "DustyCream",
    "baseColor": [
     1,
@@ -534,6 +627,33 @@
    ],
    "metallic": 1.0,
    "roughness": 0.3499999940395355,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "LeverRed",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.10000000149011612,
+   "roughness": 1.0,
    "emissive": [
     0,
     0,

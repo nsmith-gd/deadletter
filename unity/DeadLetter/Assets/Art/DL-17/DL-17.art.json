@@ -22,7 +22,7 @@
  "axes": "unity = (blender.x, blender.z, blender.y), port_architecture 0.2",
  "gltf": "DL-17.gltf",
  "counts": {
-  "nodes": 26,
+  "nodes": 27,
   "meshes": 25,
   "primitives": 66,
   "triangles": 58254,
@@ -30,6 +30,646 @@
   "textures": 2
  },
  "markers": [
+  {
+   "name": "MECH_Dl17Drawer_dl17_drawer",
+   "prefix": "MECH",
+   "source": "Att17Drawer",
+   "position": [
+    330.0,
+    0.3,
+    0.62
+   ],
+   "center": [
+    330.0,
+    0.3,
+    0.9022
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.drawer"
+    },
+    {
+     "key": "name",
+     "value": "Att17Drawer"
+    },
+    {
+     "key": "type",
+     "value": "Dl17Drawer"
+    }
+   ]
+  },
+  {
+   "name": "MECH_CarriedItem_dl17_tray",
+   "prefix": "MECH",
+   "source": "Att17Tray",
+   "position": [
+    329.7,
+    0.026,
+    0.05
+   ],
+   "center": [
+    329.7012,
+    0.0944,
+    0.0372
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.tray"
+    },
+    {
+     "key": "name",
+     "value": "Att17Tray"
+    },
+    {
+     "key": "type",
+     "value": "CarriedItem"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Door_dl17_stairDoor",
+   "prefix": "MECH",
+   "source": "Att17Door",
+   "position": [
+    340.0,
+    0.0,
+    0.5
+   ],
+   "center": [
+    339.9775,
+    1.076,
+    0.006
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.stairDoor"
+    },
+    {
+     "key": "name",
+     "value": "Att17Door"
+    },
+    {
+     "key": "type",
+     "value": "Door"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceValve_dl17_valve",
+   "prefix": "MECH",
+   "source": "Att17Valve",
+   "position": [
+    336.55,
+    0.7,
+    0.5
+   ],
+   "center": [
+    336.55,
+    0.7,
+    0.463
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.valve"
+    },
+    {
+     "key": "name",
+     "value": "Att17Valve"
+    },
+    {
+     "key": "type",
+     "value": "SluiceValve"
+    }
+   ]
+  },
+  {
+   "name": "MECH_FloatLatch_dl17_latch",
+   "prefix": "MECH",
+   "source": "Att17Latch",
+   "position": [
+    339.82,
+    1.9,
+    -0.47
+   ],
+   "center": [
+    339.8745,
+    1.8932,
+    -0.47
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.latch"
+    },
+    {
+     "key": "name",
+     "value": "Att17Latch"
+    },
+    {
+     "key": "type",
+     "value": "FloatLatch"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Sluice_dl17_sluiceA",
+   "prefix": "MECH",
+   "source": "Att17SluiceA",
+   "position": [
+    337.45,
+    0.45,
+    0.33
+   ],
+   "center": [
+    337.45,
+    0.5174,
+    0.33
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.sluiceA"
+    },
+    {
+     "key": "name",
+     "value": "Att17SluiceA"
+    },
+    {
+     "key": "type",
+     "value": "Sluice"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Sluice_dl17_sluiceB",
+   "prefix": "MECH",
+   "source": "Att17SluiceB",
+   "position": [
+    338.1,
+    0.45,
+    0.33
+   ],
+   "center": [
+    338.1,
+    0.5174,
+    0.33
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.sluiceB"
+    },
+    {
+     "key": "name",
+     "value": "Att17SluiceB"
+    },
+    {
+     "key": "type",
+     "value": "Sluice"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Sluice_dl17_sluiceC",
+   "prefix": "MECH",
+   "source": "Att17SluiceC",
+   "position": [
+    338.8,
+    0.45,
+    0.33
+   ],
+   "center": [
+    338.8,
+    0.5174,
+    0.33
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.sluiceC"
+    },
+    {
+     "key": "name",
+     "value": "Att17SluiceC"
+    },
+    {
+     "key": "type",
+     "value": "Sluice"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17PipeFlowA",
+   "prefix": "MECH",
+   "source": "Att17PipeFlowA",
+   "position": [
+    337.52,
+    0.75,
+    0.25
+   ],
+   "center": [
+    337.52,
+    0.75,
+    0.2492
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17PipeFlowA"
+    },
+    {
+     "key": "part",
+     "value": "Att17PipeFlowA"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17PipeFlowB",
+   "prefix": "MECH",
+   "source": "Att17PipeFlowB",
+   "position": [
+    338.17,
+    0.75,
+    0.3
+   ],
+   "center": [
+    338.17,
+    0.75,
+    0.2992
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17PipeFlowB"
+    },
+    {
+     "key": "part",
+     "value": "Att17PipeFlowB"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17PipeFlowC",
+   "prefix": "MECH",
+   "source": "Att17PipeFlowC",
+   "position": [
+    338.87,
+    0.75,
+    0.275
+   ],
+   "center": [
+    338.87,
+    0.75,
+    0.2742
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17PipeFlowC"
+    },
+    {
+     "key": "part",
+     "value": "Att17PipeFlowC"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17TankWater",
+   "prefix": "MECH",
+   "source": "Att17TankWater",
+   "position": [
+    337.95,
+    1.78,
+    0.735
+   ],
+   "center": [
+    337.95,
+    2.0,
+    0.735
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17TankWater"
+    },
+    {
+     "key": "part",
+     "value": "Att17TankWater"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17Water1",
+   "prefix": "MECH",
+   "source": "Att17Water1",
+   "position": [
+    337.425,
+    0.565,
+    0.65
+   ],
+   "center": [
+    337.425,
+    0.63,
+    0.65
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17Water1"
+    },
+    {
+     "key": "part",
+     "value": "Att17Water1"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17Water2",
+   "prefix": "MECH",
+   "source": "Att17Water2",
+   "position": [
+    338.125,
+    0.565,
+    0.65
+   ],
+   "center": [
+    338.125,
+    0.63,
+    0.65
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17Water2"
+    },
+    {
+     "key": "part",
+     "value": "Att17Water2"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17Water3",
+   "prefix": "MECH",
+   "source": "Att17Water3",
+   "position": [
+    338.825,
+    0.565,
+    0.65
+   ],
+   "center": [
+    338.825,
+    0.63,
+    0.65
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17Water3"
+    },
+    {
+     "key": "part",
+     "value": "Att17Water3"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17Stream1",
+   "prefix": "MECH",
+   "source": "Att17Stream1",
+   "position": [
+    337.25,
+    0.86,
+    0.66
+   ],
+   "center": [
+    337.25,
+    0.7144,
+    0.66
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17Stream1"
+    },
+    {
+     "key": "part",
+     "value": "Att17Stream1"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17Stream2",
+   "prefix": "MECH",
+   "source": "Att17Stream2",
+   "position": [
+    337.95,
+    0.86,
+    0.66
+   ],
+   "center": [
+    337.95,
+    0.7144,
+    0.66
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17Stream2"
+    },
+    {
+     "key": "part",
+     "value": "Att17Stream2"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17Stream3",
+   "prefix": "MECH",
+   "source": "Att17Stream3",
+   "position": [
+    338.98,
+    0.86,
+    0.66
+   ],
+   "center": [
+    338.98,
+    0.7144,
+    0.66
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17Stream3"
+    },
+    {
+     "key": "part",
+     "value": "Att17Stream3"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig__Att17Float",
+   "prefix": "MECH",
+   "source": "Att17Float",
+   "position": [
+    337.6,
+    0.58,
+    0.64
+   ],
+   "center": [
+    337.6,
+    0.6944,
+    0.64
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "name",
+     "value": "Att17Float"
+    },
+    {
+     "key": "part",
+     "value": "Att17Float"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SluiceRig_dl17_rig",
+   "prefix": "MECH",
+   "source": "",
+   "position": [
+    338.125,
+    1.3925,
+    0.5328
+   ],
+   "center": [
+    338.125,
+    1.3925,
+    0.5328
+   ],
+   "hasMesh": false,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl17.rig"
+    },
+    {
+     "key": "type",
+     "value": "SluiceRig"
+    }
+   ]
+  },
   {
    "name": "CHK_workshop",
    "prefix": "CHK",
@@ -90,195 +730,6 @@
    "occlusionTexture": ""
   },
   {
-   "name": "DepotGreen",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0.20000000298023224,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "Window",
-   "baseColor": [
-    0.800000011920929,
-    0.8199999928474426,
-    0.800000011920929,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 0.11999999731779099,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.949999988079071,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "WornIron",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0.6000000238418579,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "HandledBrass",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0.8500000238418579,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "PupilWood",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "Att17Atlas",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 0.8500000238418579,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "dl17_atlas.png",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "PigeonWood",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
    "name": "Att17DrawingWall",
    "baseColor": [
     1,
@@ -306,33 +757,6 @@
    "occlusionTexture": ""
   },
   {
-   "name": "Copper",
-   "baseColor": [
-    0.550000011920929,
-    0.30000001192092896,
-    0.18000000715255737,
-    1
-   ],
-   "metallic": 1.0,
-   "roughness": 0.3499999940395355,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
    "name": "Att17GrowLamp",
    "baseColor": [
     0.7799999713897705,
@@ -348,33 +772,6 @@
     1
    ],
    "emissiveStrength": 3,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "Att17FlowWater",
-   "baseColor": [
-    0.46000000834465027,
-    0.5600000023841858,
-    0.5799999833106995,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 0.07999999821186066,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
    "transmission": 0.0,
    "alphaMode": "OPAQUE",
    "alphaCutoff": 0.5,
@@ -495,6 +892,87 @@
    "occlusionTexture": ""
   },
   {
+   "name": "Att17Atlas",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.8500000238418579,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "dl17_atlas.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "PigeonWood",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WornIron",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
    "name": "WornStrap",
    "baseColor": [
     1,
@@ -530,6 +1008,60 @@
     1
    ],
    "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "PupilWood",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "DepotGreen",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.20000000298023224,
    "roughness": 1.0,
    "emissive": [
     0,
@@ -585,6 +1117,87 @@
    ],
    "metallic": 0.25,
    "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "HandledBrass",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.8500000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Window",
+   "baseColor": [
+    0.800000011920929,
+    0.8199999928474426,
+    0.800000011920929,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.11999999731779099,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.949999988079071,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Copper",
+   "baseColor": [
+    0.550000011920929,
+    0.30000001192092896,
+    0.18000000715255737,
+    1
+   ],
+   "metallic": 1.0,
+   "roughness": 0.3499999940395355,
    "emissive": [
     0,
     0,
@@ -846,6 +1459,33 @@
    "occlusionTexture": ""
   },
   {
+   "name": "Att17FlowWater",
+   "baseColor": [
+    0.46000000834465027,
+    0.5600000023841858,
+    0.5799999833106995,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.07999999821186066,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
    "name": "Water",
    "baseColor": [
     0.009999999776482582,
@@ -875,15 +1515,15 @@
  ],
  "textures": [
   {
-   "file": "dl17_atlas.png",
-   "width": 2048,
-   "height": 2048,
-   "use": "color"
-  },
-  {
    "file": "dl17_drawingwall.png",
    "width": 1536,
    "height": 768,
+   "use": "color"
+  },
+  {
+   "file": "dl17_atlas.png",
+   "width": 2048,
+   "height": 2048,
    "use": "color"
   }
  ],

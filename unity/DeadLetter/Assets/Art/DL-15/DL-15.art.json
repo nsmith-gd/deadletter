@@ -22,7 +22,7 @@
  "axes": "unity = (blender.x, blender.z, blender.y), port_architecture 0.2",
  "gltf": "DL-15.gltf",
  "counts": {
-  "nodes": 23,
+  "nodes": 24,
   "meshes": 19,
   "primitives": 52,
   "triangles": 26262,
@@ -30,6 +30,390 @@
   "textures": 2
  },
  "markers": [
+  {
+   "name": "MECH_PupilLift_dl15_lift",
+   "prefix": "MECH",
+   "source": "Att15Lift",
+   "position": [
+    281.9,
+    1.6,
+    0.3
+   ],
+   "center": [
+    281.9,
+    3.25,
+    0.34
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.lift"
+    },
+    {
+     "key": "name",
+     "value": "Att15Lift"
+    },
+    {
+     "key": "type",
+     "value": "PupilLift"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PupilLift_dl15_lift__Att15LiftGate",
+   "prefix": "MECH",
+   "source": "Att15LiftGate",
+   "position": [
+    282.4,
+    1.6,
+    0.9
+   ],
+   "center": [
+    282.4,
+    2.025,
+    0.307
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.lift"
+    },
+    {
+     "key": "name",
+     "value": "Att15LiftGate"
+    },
+    {
+     "key": "part",
+     "value": "Att15LiftGate"
+    },
+    {
+     "key": "type",
+     "value": "PupilLift"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PupilLift_dl15_lift__Att15LiftCW",
+   "prefix": "MECH",
+   "source": "Att15LiftCW",
+   "position": [
+    281.57,
+    0.475,
+    1.2
+   ],
+   "center": [
+    281.57,
+    1.69,
+    1.2
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.lift"
+    },
+    {
+     "key": "name",
+     "value": "Att15LiftCW"
+    },
+    {
+     "key": "part",
+     "value": "Att15LiftCW"
+    },
+    {
+     "key": "type",
+     "value": "PupilLift"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PupilLift_dl15_lift__Att15LampPupil",
+   "prefix": "MECH",
+   "source": "Att15LampPupil",
+   "position": [
+    282.11,
+    2.2,
+    0.85
+   ],
+   "center": [
+    282.11,
+    2.2,
+    0.85
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.lift"
+    },
+    {
+     "key": "name",
+     "value": "Att15LampPupil"
+    },
+    {
+     "key": "part",
+     "value": "Att15LampPupil"
+    },
+    {
+     "key": "type",
+     "value": "PupilLift"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PupilLift_dl15_lift__Att15LampEscort",
+   "prefix": "MECH",
+   "source": "Att15LampEscort",
+   "position": [
+    282.25,
+    2.2,
+    0.85
+   ],
+   "center": [
+    282.25,
+    2.2,
+    0.85
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.lift"
+    },
+    {
+     "key": "name",
+     "value": "Att15LampEscort"
+    },
+    {
+     "key": "part",
+     "value": "Att15LampEscort"
+    },
+    {
+     "key": "type",
+     "value": "PupilLift"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SeatRow_dl15_seats__Att15Lamp1",
+   "prefix": "MECH",
+   "source": "Att15Lamp1",
+   "position": [
+    287.64,
+    2.17,
+    1.36
+   ],
+   "center": [
+    287.64,
+    2.17,
+    1.36
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.seats"
+    },
+    {
+     "key": "name",
+     "value": "Att15Lamp1"
+    },
+    {
+     "key": "part",
+     "value": "Att15Lamp1"
+    },
+    {
+     "key": "type",
+     "value": "SeatRow"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SeatRow_dl15_seats__Att15Lamp2",
+   "prefix": "MECH",
+   "source": "Att15Lamp2",
+   "position": [
+    288.1,
+    2.17,
+    1.36
+   ],
+   "center": [
+    288.1,
+    2.17,
+    1.36
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.seats"
+    },
+    {
+     "key": "name",
+     "value": "Att15Lamp2"
+    },
+    {
+     "key": "part",
+     "value": "Att15Lamp2"
+    },
+    {
+     "key": "type",
+     "value": "SeatRow"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SeatRow_dl15_seats__Att15Lamp3",
+   "prefix": "MECH",
+   "source": "Att15Lamp3",
+   "position": [
+    288.56,
+    2.17,
+    1.36
+   ],
+   "center": [
+    288.56,
+    2.17,
+    1.36
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.seats"
+    },
+    {
+     "key": "name",
+     "value": "Att15Lamp3"
+    },
+    {
+     "key": "part",
+     "value": "Att15Lamp3"
+    },
+    {
+     "key": "type",
+     "value": "SeatRow"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Door_dl15_classDoor",
+   "prefix": "MECH",
+   "source": "Att15Door",
+   "position": [
+    293.9,
+    0.0,
+    0.38
+   ],
+   "center": [
+    293.878,
+    1.0,
+    0.046
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.classDoor"
+    },
+    {
+     "key": "name",
+     "value": "Att15Door"
+    },
+    {
+     "key": "type",
+     "value": "Door"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Dl15Figure_dl15_figA",
+   "prefix": "MECH",
+   "source": "Att15FigA",
+   "position": [
+    289.2,
+    0.03,
+    0.55
+   ],
+   "center": [
+    289.2,
+    0.5005,
+    0.55
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.figA"
+    },
+    {
+     "key": "name",
+     "value": "Att15FigA"
+    },
+    {
+     "key": "type",
+     "value": "Dl15Figure"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Dl15Figure_dl15_figB",
+   "prefix": "MECH",
+   "source": "Att15FigB",
+   "position": [
+    279.9,
+    1.63,
+    0.55
+   ],
+   "center": [
+    279.9,
+    2.1005,
+    0.55
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.figB"
+    },
+    {
+     "key": "name",
+     "value": "Att15FigB"
+    },
+    {
+     "key": "type",
+     "value": "Dl15Figure"
+    }
+   ]
+  },
+  {
+   "name": "MECH_SeatRow_dl15_seats",
+   "prefix": "MECH",
+   "source": "",
+   "position": [
+    288.1,
+    2.17,
+    1.36
+   ],
+   "center": [
+    288.1,
+    2.17,
+    1.36
+   ],
+   "hasMesh": false,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl15.seats"
+    },
+    {
+     "key": "type",
+     "value": "SeatRow"
+    }
+   ]
+  },
   {
    "name": "CHK_sickbay",
    "prefix": "CHK",
@@ -312,33 +696,6 @@
    "occlusionTexture": ""
   },
   {
-   "name": "PupilWood",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
    "name": "Copper",
    "baseColor": [
     0.550000011920929,
@@ -474,15 +831,42 @@
    "occlusionTexture": ""
   },
   {
-   "name": "Att15Lamp1",
+   "name": "AttBulbGlow",
    "baseColor": [
     1,
-    0.8600000143051147,
-    0.6200000047683716,
+    0.8199999928474426,
+    0.5799999833106995,
     1
    ],
    "metallic": 0,
    "roughness": 0.5,
+   "emissive": [
+    1,
+    0.8199999928474426,
+    0.5799999833106995
+   ],
+   "emissiveStrength": 4,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "LessonDado",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
    "emissive": [
     0,
     0,
@@ -501,15 +885,15 @@
    "occlusionTexture": ""
   },
   {
-   "name": "Att15Lamp2",
+   "name": "LessonPlaster",
    "baseColor": [
     1,
-    0.8600000143051147,
-    0.6200000047683716,
+    1,
+    1,
     1
    ],
    "metallic": 0,
-   "roughness": 0.5,
+   "roughness": 1.0,
    "emissive": [
     0,
     0,
@@ -528,15 +912,15 @@
    "occlusionTexture": ""
   },
   {
-   "name": "Att15Lamp3",
+   "name": "PupilWood",
    "baseColor": [
     1,
-    0.8600000143051147,
-    0.6200000047683716,
+    1,
+    1,
     1
    ],
    "metallic": 0,
-   "roughness": 0.5,
+   "roughness": 1.0,
    "emissive": [
     0,
     0,
@@ -609,42 +993,15 @@
    "occlusionTexture": ""
   },
   {
-   "name": "AttBulbGlow",
+   "name": "Att15Lamp1",
    "baseColor": [
     1,
-    0.8199999928474426,
-    0.5799999833106995,
+    0.8600000143051147,
+    0.6200000047683716,
     1
    ],
    "metallic": 0,
    "roughness": 0.5,
-   "emissive": [
-    1,
-    0.8199999928474426,
-    0.5799999833106995
-   ],
-   "emissiveStrength": 4,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "LessonDado",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 1.0,
    "emissive": [
     0,
     0,
@@ -663,15 +1020,42 @@
    "occlusionTexture": ""
   },
   {
-   "name": "LessonPlaster",
+   "name": "Att15Lamp2",
    "baseColor": [
     1,
-    1,
-    1,
+    0.8600000143051147,
+    0.6200000047683716,
     1
    ],
    "metallic": 0,
-   "roughness": 1.0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Att15Lamp3",
+   "baseColor": [
+    1,
+    0.8600000143051147,
+    0.6200000047683716,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
    "emissive": [
     0,
     0,
