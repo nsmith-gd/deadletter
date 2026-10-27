@@ -38,6 +38,9 @@ namespace DeadLetter.Core.Scenes
         private SceneAct _act;
         private IInteractable _endedTarget;
         private bool _pendingOpening;
+        private readonly ISaveStore _store;
+        /// <summary>The service holds a game (begun, continued, carried or new); until then Begin takes the slot's.</summary>
+        private bool _hasGame;
 
         public SceneSim(SceneDef def, MotorConfig config = null, ISaveStore store = null)
         {
@@ -65,7 +68,8 @@ namespace DeadLetter.Core.Scenes
 
             Motor = new D17Motor(Config, Lane, Resolver);
             Sync = new MotorSync(Graph);
-            Checkpoints = new CheckpointService(Graph, def.CheckpointOrder, store ?? new NoStore(), 0, def.Id);
+            _store = store ?? new NoStore();
+            Checkpoints = new CheckpointService(Graph, def.CheckpointOrder, _store, 0, def.Id);
             Rules = def.Rules?.Invoke() ?? new SceneRules();
             Tick = new FixedTick(StepSeconds);
             Region = def.Region;
@@ -85,7 +89,7 @@ namespace DeadLetter.Core.Scenes
 
         /// <summary>The game clock, seconds (<c>game.clock</c>): +1/60 a step. Settable so a replay can start from a recorded clock.</summary>
         public double Clock { get; set; }
-        /// <summary>Steps since <see cref="Begin"/>.</summary>
+        /// <summary>Steps since <see cref="Begin"/> (or <see cref="NewGame"/>, <see cref="Continue"/>, <see cref="Handover"/>).</summary>
         public long Steps { get; private set; }
         /// <summary>The prototype's <c>game.region</c>. The lane follows it while it has that region.</summary>
         public int Region { get; private set; }
@@ -146,33 +150,66 @@ namespace DeadLetter.Core.Scenes
             : PlayerPose.Of(Motor);
 
         // ---- Lifecycle -------------------------------------------------------------------------------------------------
+        // The save is the CheckpointService's: NewGame is the only way to reset the slot; Continue reads it; Begin and
+        // Handover keep the game the service holds (or the slot's, the first time), and write nothing themselves.
+
         /// <summary>
-        /// Builds the world at <paramref name="checkpoint"/> (<c>startPlay</c> → <c>resetWorld</c>, L8083, L8015) and puts
-        /// D-17 there. <paramref name="fromOpening"/>: play starts on the opening's last step (L8507), so the first
-        /// <see cref="Step"/> is that step (the rules start the label beat there).
+        /// A new game (Start over, <c>clearLetters</c> L4133; <c>startOpening</c> L8058): flags, seen moments and play time
+        /// cleared, the slot written at the first checkpoint, and D-17 there. The only path that resets the slot. Only the
+        /// scene that owns the first checkpoint (DL-01) starts one. <paramref name="fromOpening"/>: as <see cref="Begin"/>.
+        /// </summary>
+        public void NewGame(bool fromOpening = false)
+        {
+            string first = Def.CheckpointOrder[0];
+            if (!Def.TryGetCheckpoint(first, out var cp)) throw new InvalidOperationException(Def.Id + " cannot start a new game: '" + first + "' is not its checkpoint.");
+            Checkpoints.NewGame();
+            _hasGame = true;
+            Start(cp, fromOpening);
+        }
+
+        /// <summary>
+        /// Continue from the slot (the title card's Continue; <see cref="CheckpointService.TryContinue"/>): its checkpoint,
+        /// flags, seen moments, play time and options, the world rebuilt there (with the slot's snapshot when it was saved
+        /// in this scene), and D-17 placed at the checkpoint (any of <see cref="PrologueCheckpoints"/>). False when the slot
+        /// is empty or unreadable; nothing changes then. Throws when the slot's checkpoint has no place to put him.
+        /// </summary>
+        public bool Continue()
+        {
+            if (!_store.TryLoad(Checkpoints.Slot, out var m)) return false;
+            if (!TryGetPlace(m.Checkpoint, out var cp)) throw new InvalidOperationException(Def.Id + " cannot continue at '" + m.Checkpoint + "'.");
+            Checkpoints.Load(m);
+            _hasGame = true;
+            Start(cp, false);
+            return true;
+        }
+
+        /// <summary>
+        /// Builds the world at <paramref name="checkpoint"/>, one of this scene's (<c>startPlay</c> → <c>resetWorld</c>, L8083,
+        /// L8015), and puts D-17 there. The game is kept: the flags, seen moments, play time and options the service holds,
+        /// or, the first time, the slot's (so a scene begun over a save keeps its calm mode). Nothing is written.
+        /// <paramref name="fromOpening"/>: play starts on the opening's last step (L8507), so the first <see cref="Step"/>
+        /// is that step (the rules start the label beat there).
         /// </summary>
         public void Begin(string checkpoint, bool fromOpening = false)
         {
             if (!Def.TryGetCheckpoint(checkpoint, out var cp)) throw new ArgumentException(Def.Id + " has no checkpoint '" + checkpoint + "'.");
-            if (checkpoint == Def.CheckpointOrder[0]) Checkpoints.NewGame();
-            else Checkpoints.Load(new SaveModel { Checkpoint = checkpoint, Scene = Def.Id });
-            Steps = 0;
-            Exited = false;
-            _pendingOpening = fromOpening;
-            Place(cp);
-            Rules.OnBegin(this, checkpoint, fromOpening);
+            KeepGame(null);
+            Checkpoints.Restart(checkpoint);
+            Start(cp, fromOpening);
         }
 
         /// <summary>
         /// He walks in from the previous scene (no cut, §2 of the scene docs): the world is built at
         /// <paramref name="checkpoint"/>, which may still be the previous scene's (DL-03 starts under DL-02's <c>room</c>),
-        /// and he stands at rest at (<paramref name="x"/>, <paramref name="y"/>). The hand-over of a moving D-17 is the
-        /// runtime's (the motor cannot be given a velocity, #22). A respawn needs a checkpoint of this scene.
+        /// and he stands at rest at (<paramref name="x"/>, <paramref name="y"/>). <paramref name="carry"/>: the previous
+        /// scene's service, whose game (flags, seen moments, play time, options) goes on here; it is flushed first. Without
+        /// it the game is kept as <see cref="Begin"/> keeps it. Nothing is written. The hand-over of a moving D-17 is the
+        /// runtime's (the motor cannot be given a velocity, #28).
         /// </summary>
-        public void Handover(string checkpoint, double x, double y, int facing = 1)
+        public void Handover(string checkpoint, double x, double y, int facing = 1, CheckpointService carry = null)
         {
-            if (checkpoint == Def.CheckpointOrder[0]) Checkpoints.NewGame();
-            else Checkpoints.Load(new SaveModel { Checkpoint = checkpoint, Scene = Def.Id });
+            KeepGame(carry);
+            Checkpoints.Restart(checkpoint);
             Steps = 0;
             Exited = false;
             _pendingOpening = false;
@@ -184,13 +221,39 @@ namespace DeadLetter.Core.Scenes
             Rules.OnBegin(this, checkpoint, false);
         }
 
-        /// <summary>Respawn at the current checkpoint (<c>startPlay(game.checkpoint)</c> when <c>respawnAt</c> passes, L8494).</summary>
+        /// <summary>
+        /// Respawn at the current checkpoint (<c>startPlay(game.checkpoint)</c> when <c>respawnAt</c> passes, L8494): any
+        /// checkpoint of <see cref="PrologueCheckpoints"/>, including the previous scene's he walked in under.
+        /// </summary>
         public void Respawn()
         {
+            if (!TryGetPlace(Checkpoints.Current.Name, out var cp)) throw new InvalidOperationException(Def.Id + " cannot respawn at " + Checkpoints.Current.Name + ".");
             Checkpoints.Reload();
-            if (!Def.TryGetCheckpoint(Checkpoints.Current.Name, out var cp)) throw new InvalidOperationException(Def.Id + " cannot respawn at " + Checkpoints.Current.Name + ".");
             Place(cp);
             Rules.OnBegin(this, cp.Name, false);
+        }
+
+        /// <summary>Where <paramref name="name"/> puts him: this scene's checkpoint, else the chapter's table.</summary>
+        public bool TryGetPlace(string name, out CheckpointDef cp) => Def.TryGetCheckpoint(name, out cp) || PrologueCheckpoints.TryGet(name, out cp);
+
+        private void KeepGame(CheckpointService carry)
+        {
+            if (carry != null && !ReferenceEquals(carry, Checkpoints))
+            {
+                carry.Flush();
+                Checkpoints.Adopt(carry.ToModel());
+            }
+            else if (!_hasGame) Checkpoints.TryAdoptSlot();
+            _hasGame = true;
+        }
+
+        private void Start(in CheckpointDef cp, bool fromOpening)
+        {
+            Steps = 0;
+            Exited = false;
+            _pendingOpening = fromOpening;
+            Place(cp);
+            Rules.OnBegin(this, cp.Name, fromOpening);
         }
 
         private void Place(in CheckpointDef cp)
@@ -199,7 +262,7 @@ namespace DeadLetter.Core.Scenes
             _endedTarget = null;
             RespawnAt = 0;
             SetRegion(cp.Region != 0 ? cp.Region : Def.Region);
-            Motor.Place(cp.X, cp.Y, 1);
+            Motor.Place(cp.X, cp.Y, cp.Facing);
         }
 
         /// <summary>Starts a scene act (it replaces any running one). Its first <see cref="SceneAct.Step"/> is the next step's #4.</summary>

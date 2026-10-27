@@ -147,6 +147,55 @@ namespace DeadLetter.Core.Save
         /// </summary>
         public void Reload()
         {
+            Rebuild();
+            if (Flags.Version != _savedFlags || Seen.Version != _savedSeen) Save();   // e.g. warned on the run that ended in this respawn
+            Reloaded?.Invoke(Current);
+        }
+
+        /// <summary>
+        /// Rebuilds the world at <paramref name="name"/> (a scene begun or walked into at a checkpoint), keeping the flags,
+        /// the seen moments, play time and options. The world is derived from the checkpoint (no snapshot: one is captured
+        /// when a later checkpoint is reached). Nothing is written: the slot changes at the next checkpoint reached or flag
+        /// set, so beginning a scene never overwrites a save. Throws for a name outside the order.
+        /// </summary>
+        public void Restart(string name)
+        {
+            IndexOf(name);
+            Current = new Checkpoint(_order, name);
+            _snapshot = null;
+            Rebuild();
+            Reloaded?.Invoke(Current);
+        }
+
+        /// <summary>
+        /// Takes a game's flags, seen moments, play time and options from <paramref name="m"/> (the slot, or the previous
+        /// scene's service at a hand-over: <see cref="ToModel"/>) without moving the checkpoint or rebuilding the world; the
+        /// world follows with <see cref="Restart"/>. They are taken as already saved: <paramref name="m"/> is what the slot holds.
+        /// </summary>
+        public void Adopt(SaveModel m)
+        {
+            if (m == null) throw new ArgumentNullException(nameof(m));
+            Flags.Load(m.Flags ?? new List<string>());
+            Seen.Load(m.Seen ?? new List<string>());
+            PushBindings();
+            PlayTime = m.PlayTime;
+            Settings = (m.Settings ?? new Settings()).Clone();
+            _graph.Calm = Settings.Calm;
+            _savedFlags = Flags.Version;
+            _savedSeen = Seen.Version;
+        }
+
+        /// <summary><see cref="Adopt"/> the slot's game, if it has one. False when the slot is empty or unreadable (nothing changes).</summary>
+        public bool TryAdoptSlot()
+        {
+            if (!_store.TryLoad(Slot, out var m)) return false;
+            Adopt(m);
+            return true;
+        }
+
+        /// <summary>The graph rebuilt at <see cref="Current"/>, then the snapshot if there is one (see <see cref="Reload"/>).</summary>
+        private void Rebuild()
+        {
             PullBindings();
             _graph.Reset(Current);
             RestoredSnapshot = false;
@@ -170,8 +219,6 @@ namespace DeadLetter.Core.Save
                 }
             }
             PushBindings();                                   // a snapshot holds old copies of bound flags
-            if (Flags.Version != _savedFlags || Seen.Version != _savedSeen) Save();   // e.g. warned on the run that ended in this respawn
-            Reloaded?.Invoke(Current);
         }
 
         /// <summary>

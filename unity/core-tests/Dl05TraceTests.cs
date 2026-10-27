@@ -25,7 +25,7 @@ namespace DeadLetter.Core.Tests
     /// flag), the pat, the crawl under the hatch, <c>hatch</c>, and out into region 3, DL-06.</para>
     /// <para><b>Tolerance 1e-6</b> on every continuous value (the trace rounds to 1e-6; the hand-over pose too). Discrete
     /// signals (acts and phases, holds, grounded, the drum's and the body's states, the reading, served, checkpoints, the
-    /// region and the exit) fall on the same step. No compensation: none of the known motor issues (M1–M6, #22) shows here.</para>
+    /// region and the exit) fall on the same step. One compensation, M9 (#28): the hand-over's yaw (below).</para>
     /// </summary>
     public class Dl05TraceTests
     {
@@ -96,7 +96,7 @@ namespace DeadLetter.Core.Tests
                 }, (k, sim) =>
                 {
                     // The hand-over's yaw: he is still turning back to the lane from the bay touch (#9748 yaw −1.437); the
-                    // motor can only be placed facing ±π/2 (D17Motor.Place, #22 M8), so the test hands it the recorded yaw.
+                    // motor can only be placed facing ±π/2 (D17Motor.Place, #28 M9), so the test hands it the recorded yaw.
                     if (k == from) SetMotorYaw(sim.Motor, t.Steps[from - 1].Yaw);
                     return t.Steps[k].Input;
                 }, handover: true);

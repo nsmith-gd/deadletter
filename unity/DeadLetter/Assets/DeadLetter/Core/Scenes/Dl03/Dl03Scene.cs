@@ -38,11 +38,7 @@ namespace DeadLetter.Core.Scenes.Dl03
             Title = "The Weight of the Job",
             X0 = X0, X1 = GateX,
             Region = Dl03Lane.Region,
-            Checkpoints = new[]
-            {
-                new CheckpointDef("weighroom", 13 + 12.9, region: 2),                     // CHECKPOINTS, L7981
-                new CheckpointDef("solved", 13 + 16.95, region: 2),                       // L7982
-            },
+            Checkpoints = PrologueCheckpoints.Of(Id),                                     // weighroom, solved (L7981–L7982); he walks in under DL-02's room
             // Step order = the prototype's: updatePlayer moves the trolley and the weight (#4), then updateDL02 weighs the
             // plate and moves the gate (#6, L2364–L2392).
             Mechanisms = new[]
@@ -52,23 +48,11 @@ namespace DeadLetter.Core.Scenes.Dl03
                 new MechanismDef("dl03.plate", () => new LoadPlate("dl03.plate", LoadPlateParams.Dl03Plate())),
                 new MechanismDef("dl03.gate", () => new FollowerActuator("dl03.gate", FollowerParams.Dl03Gate())),
             },
-            Motor = Motor,
             Interactables = g => new IInteractable[] { new PushTwin(g.Get<Pushable>("dl03.trolley")) },   // grabR, L2256
             Lane = Dl03Lane.Table,
             LaneContributors = Dl03Lane.Contributors,
             Rules = () => new Dl03Rules(),
         };
-
-        /// <summary>
-        /// The motor for DL-03: the prototype's, with the old holds' push acceleration (3, L2332) in place of chapter 1's
-        /// 1.4 (L4690); the trolley is the only pushable here. U-11 gap (#22): <see cref="IPushable"/> carries no acceleration.
-        /// </summary>
-        public static MotorConfig Motor()
-        {
-            var c = MotorConfig.Prototype();
-            c.AccelPush = PushableParams.Dl03Trolley().Accel;
-            return c;
-        }
     }
 
     /// <summary>
@@ -130,7 +114,7 @@ namespace DeadLetter.Core.Scenes.Dl03
                 && Math.Abs(tx - Dl03Scene.GateX) > 0.2 && tx < Dl03Scene.Exit2X;
             if (!onDeck && !floorOk)
             {
-                // Refused: no act. The prototype also stops him dead (game.vx = 0, L1821); the motor has no way to (#22).
+                // Refused: no act. The prototype also stops him dead (game.vx = 0, L1821); the motor has no way to (#28).
                 input.UsePressed = false;
                 sim.Cue("sound:worried");
                 return;
@@ -148,7 +132,7 @@ namespace DeadLetter.Core.Scenes.Dl03
                 var m = sim.Motor;
                 if (!m.IsActing && !m.IsMantling && m.Hold == HoldKind.None && m.Grounded)
                 {
-                    // U-11 gap (#22): no way to stop him but Place (which also settles his yaw on his facing: the slam comes
+                    // #28 (M9): no way to stop him but Place (which also settles his yaw on his facing: the slam comes
                     // after he has walked out from under the gate, turned along the lane).
                     m.Place(m.X, m.Y, m.Facing);
                     sim.StartAct(new QuirkAct("Startle", QuirkAct.ClipSeconds("Startle"), cancel: true, startClock: sim.Clock));

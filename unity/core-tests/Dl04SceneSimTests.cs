@@ -5,6 +5,7 @@ using DeadLetter.Core.Mechanisms.Docks;
 using DeadLetter.Core.Mechanisms.Plates;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Push;
+using DeadLetter.Core.Save;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Scenes.Dl04;
 using Xunit;
@@ -114,6 +115,38 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(1, Door(s).Open01);
             Until(s, Right, x => x.Exited);
             Assert.True(s.X >= Dl04Scene.X1);
+        }
+
+        /// <summary>
+        /// <c>once('realise')</c> (L1958) is the save's seen moment: realised in one run, a continue at <c>bay</c> rebuilds
+        /// DL-04 with a fresh rule, which sets <c>game.realised</c> (L1957) but never plays the beat again. A run with no
+        /// such save (a new rule over an empty game) does play it there: that is what the save's seen set prevents.
+        /// </summary>
+        [Fact]
+        public void ContinueAtBay_DoesNotReplayTheRealisation_L1958()
+        {
+            var store = new MemorySaveStore();
+            var a = new SceneSim(Dl04Scene.Def(), store: store);
+            a.Handover("solved", 31.4, 0);
+            a.Step(default);
+            Assert.Equal("realise", a.ActKind);
+            Assert.True(a.Checkpoints.HasSeen(Dl04Rules.SeenRealise));
+            Assert.True(a.Checkpoints.Reach("bay"));                                   // the rules reach it past the door (L4947); saved
+
+            var b = new SceneSim(Dl04Scene.Def(), store: store);
+            Assert.True(b.Continue());
+            Assert.Equal("bay", b.Checkpoints.Current.Name);
+            Assert.Equal(Dl04Scene.BayX, b.X, 12);
+            Assert.True(b.Checkpoints.HasSeen(Dl04Rules.SeenRealise));
+            for (int i = 0; i < 120; i++) { b.Step(default); Assert.NotEqual("realise", b.ActKind); }
+            var rules = (Dl04Rules)b.Rules;
+            Assert.True(rules.Realised);
+            Assert.False(rules.KinSlow);
+
+            var fresh = new SceneSim(Dl04Scene.Def());
+            fresh.Begin("bay");
+            fresh.Step(default);
+            Assert.Equal("realise", fresh.ActKind);
         }
     }
 }

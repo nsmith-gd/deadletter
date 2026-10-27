@@ -31,7 +31,7 @@ namespace DeadLetter.Core.Tests
     /// Discrete signals (acts, holds, grounded, the weight's state, checkpoints, the exit) fall on the same step.</para>
     /// <para>M2 and M3 (#22) are fixed in U-11b (#25): the climb over the trolley takes the prototype's 141 steps and every
     /// walk-off fall, the entry's 1.35 m drop off the sill included, follows the prototype's arc and lands on its step.
-    /// <b>One known motor issue remains, M5</b>: Use lets go of a pushable with his speed zeroed (D17Motor.BeginUse's
+    /// <b>One known motor issue remains, M5 (#28)</b>: Use lets go of a pushable with his speed zeroed (D17Motor.BeginUse's
     /// <c>Vx = 0</c>, ported from beginCh1's release branch, L4307–L4313), but the prototype's Use-release
     /// (<c>beginUse('release')</c>, L1820) returns before <c>game.vx = 0</c> (L1821), so he keeps his push speed and
     /// drifts on as it decays (#5977: 0.42 m/s, 7.3 mm over four steps). The compensated replay gives the motor back the
@@ -310,7 +310,7 @@ namespace DeadLetter.Core.Tests
 
         // ---- Strict -----------------------------------------------------------------------------------------------------
         /// <summary>The room window with nothing compensated: every signal at 1e-6 on every step.</summary>
-        [Fact(Skip = "U-11 motor issue M5 (#22, still in #25): Use lets go of the trolley with vx zeroed (D17Motor.BeginUse); the prototype's "
+        [Fact(Skip = "Motor parity M5 (#28): Use lets go of the trolley with vx zeroed (D17Motor.BeginUse); the prototype's "
             + "beginUse('release') returns before game.vx = 0 (L1820-L1821), so he drifts on 7.3 mm (#5977 vx 0.42; #5978-#5980) and every "
             + "later x is 7.3 mm short. Nothing else differs: M2 and M3 are fixed.")]
         public void Strict_EverySignalMatchesEveryStep()

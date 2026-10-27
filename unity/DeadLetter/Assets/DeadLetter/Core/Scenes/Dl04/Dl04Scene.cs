@@ -35,7 +35,7 @@ namespace DeadLetter.Core.Scenes.Dl04
         /// <summary>The <c>bayTouch</c> act: he stands at <c>RK.bayX</c> + 0.42 facing −1 (L4806) and lets go at TouchHead f51 (L4493).</summary>
         public const double TouchStandX = Dl04Lane.BayX + 0.42, TouchEndFrame = 51;
         public const int TouchFace = -1;
-        /// <summary>The <c>bay</c> checkpoint once past <c>RK.door.x1</c> + 0.2 (L4947); it places him at x1 + 0.4 (L7983).</summary>
+        /// <summary>The <c>bay</c> checkpoint once past <c>RK.door.x1</c> + 0.2 (L4947); it places him at x1 + 0.4 (L7983; <see cref="PrologueCheckpoints"/>).</summary>
         public const double BayReachX = Dl04Lane.DoorX1 + 0.2, BayX = Dl04Lane.DoorX1 + 0.4;
 
         /// <summary>
@@ -49,10 +49,7 @@ namespace DeadLetter.Core.Scenes.Dl04
             Title = "The Racks",
             X0 = X0, X1 = X1,
             Region = Dl04Lane.Region,
-            Checkpoints = new[]
-            {
-                new CheckpointDef("bay", BayX, region: 2),                                      // CHECKPOINTS, L7983
-            },
+            Checkpoints = PrologueCheckpoints.Of(Id),                                           // bay (L7983); he walks in under DL-03's solved
             // Step order = the prototype's: updatePlayer drags the courier (#4, updateHoldCh1 L4683–L4735), then updateCh1's
             // bay (#7, L4783–L4816): the plate reads him, the cradle, then the door.
             Mechanisms = new[]
@@ -78,8 +75,15 @@ namespace DeadLetter.Core.Scenes.Dl04
     /// </summary>
     public sealed class Dl04Rules : SceneRules
     {
+        /// <summary>
+        /// The once-only beats (<c>once('realise')</c> L1958, <c>once('bayTouch')</c> L4806): the prototype's <c>seen</c> set,
+        /// which outlives respawns (cleared only by a new game, L8058), so they are the save's seen moments: a respawn, a
+        /// continue or a fresh scene at <c>bay</c> never plays them again.
+        /// </summary>
+        public const string SeenRealise = "realise", SeenBayTouch = "bayTouch";
+
         private readonly bool _handedPending;
-        private bool _begun, _revealed, _revealPending, _realised, _kinSlow, _seenRealise, _seenTouch;
+        private bool _begun, _revealed, _revealPending, _realised, _kinSlow;              // per life: resetWorld, L8027–L8034
         private double _revealTime;
         private Pushable _courier;
         private Cradle _cradle;
@@ -126,11 +130,11 @@ namespace DeadLetter.Core.Scenes.Dl04
                 && !_realised && sim.X > Dl04Scene.RealiseX && m.Grounded && m.Hold == HoldKind.None)
             {
                 _realised = true;
-                if (!_seenRealise)                                          // once('realise')
+                if (!sim.Checkpoints.HasSeen(SeenRealise))                  // once('realise')
                 {
-                    _seenRealise = true;
+                    sim.Checkpoints.MarkSeen(SeenRealise);
                     _kinSlow = true;
-                    m.Place(m.X, m.Y, m.Facing);                            // game.vx = 0 (U-11 gap, #22: Place is the only way)
+                    m.Place(m.X, m.Y, m.Facing);                            // game.vx = 0 (#28: Place is the only way)
                     Moment.Start(PrologueMoments.Kin, sim.Clock, musicAvailable: false);
                     sim.Cue("moment:kin");
                     sim.StartAct(new RealiseAct(Moment, sim.Config.Fps));
@@ -151,9 +155,9 @@ namespace DeadLetter.Core.Scenes.Dl04
                 sim.Cue("music:racks");
             }
             // updateCh1 (#7): the cradle has seated the courier: he goes to it, once (L4806).
-            if (sim.Graph.Log.Has("dl04.cradle", MechanismEventKind.Event, (int)CradleEvent.Seat) && !_seenTouch)
+            if (sim.Graph.Log.Has("dl04.cradle", MechanismEventKind.Event, (int)CradleEvent.Seat) && !sim.Checkpoints.HasSeen(SeenBayTouch))
             {
-                _seenTouch = true;
+                sim.Checkpoints.MarkSeen(SeenBayTouch);
                 sim.StartAct(new BayTouchAct(sim.X, sim.Y, sim.Z, sim.Yaw, Dl04Scene.TouchStandX, Dl04Scene.TouchFace, sim.Config));
             }
             // The bay checkpoint, through the door (L4947).
@@ -202,7 +206,7 @@ namespace DeadLetter.Core.Scenes.Dl04
     /// such act, #22); his yaw turns as <c>updateCharacter</c> turns it (8 rad/s, L7579–L7583).
     /// <para>At the end the motor is put back at rest where he stands (<see cref="D17Motor.Place"/>) facing the courier, and
     /// stepped once with a vanishing stick (<see cref="double.Epsilon"/>): that faces him +1 and starts his yaw's turn on
-    /// the prototype's step without moving him (U-11 gap, #22: the motor cannot be turned in place).</para>
+    /// the prototype's step without moving him (#28, M9: the motor cannot be turned in place).</para>
     /// </summary>
     public sealed class BayTouchAct : SceneAct
     {

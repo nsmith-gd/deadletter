@@ -7,18 +7,26 @@ using DeadLetter.Core.Motor;
 
 namespace DeadLetter.Core.Scenes
 {
-    /// <summary>Where a checkpoint puts D-17 (<c>CHECKPOINTS</c>, L7975–L8014): lane x, feet y, facing +x.</summary>
+    /// <summary>
+    /// Where a checkpoint puts D-17 (<c>CHECKPOINTS</c>, L7975–L8014): lane x, feet y, facing, the lane region, and the
+    /// scene that owns it. The prologue's are in one table, <see cref="PrologueCheckpoints"/>.
+    /// </summary>
     public readonly struct CheckpointDef
     {
         public readonly string Name;
         public readonly double X, Y;
-        /// <summary>The lane region he is in there (<c>c.region || 1</c>, L8026).</summary>
+        /// <summary>The lane region he is in there (<c>c.region || 1</c>, L8026); 0 = the scene's own.</summary>
         public readonly int Region;
+        /// <summary>+1 or −1: <c>resetWorld</c> always faces him +x (L8019).</summary>
+        public readonly int Facing;
+        /// <summary>The scene the checkpoint is in ("DL-03"; <c>sceneName</c> at its spot, L8135); null if unowned.</summary>
+        public readonly string Scene;
 
-        public CheckpointDef(string name, double x, double y = 0, int region = 0)
+        public CheckpointDef(string name, double x, double y = 0, int region = 0, int facing = 1, string scene = null)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            X = x; Y = y; Region = region;
+            if (facing != 1 && facing != -1) throw new ArgumentOutOfRangeException(nameof(facing), "Facing is +1 or -1.");
+            X = x; Y = y; Region = region; Facing = facing; Scene = scene;
         }
     }
 
@@ -52,7 +60,10 @@ namespace DeadLetter.Core.Scenes
         public int Region = 1;
         /// <summary>The checkpoint order the save uses (<c>CP_ORDER</c>, L3976).</summary>
         public IReadOnlyList<string> CheckpointOrder = Checkpoint.PrototypeOrder;
-        /// <summary>The checkpoints that place D-17 in this scene.</summary>
+        /// <summary>
+        /// The checkpoints this scene owns (<see cref="PrologueCheckpoints.Of"/>): where <see cref="SceneSim.Begin"/> may
+        /// start it. A respawn or a continue places him at any checkpoint of the chapter's table.
+        /// </summary>
         public CheckpointDef[] Checkpoints = Array.Empty<CheckpointDef>();
         /// <summary>The mechanisms, in step order.</summary>
         public MechanismDef[] Mechanisms = Array.Empty<MechanismDef>();
@@ -62,7 +73,7 @@ namespace DeadLetter.Core.Scenes
         public Func<MechanismGraph, ILaneContributor[]> LaneContributors;
         /// <summary>Bespoke rules (triggers, follow-up acts, transits); null = none.</summary>
         public Func<SceneRules> Rules;
-        /// <summary>The motor's tuning in this scene (null = <see cref="MotorConfig.Prototype"/>), e.g. DL-03's old-hold push acceleration.</summary>
+        /// <summary>The motor's tuning in this scene (null = <see cref="MotorConfig.Prototype"/>), e.g. DL-06's lever step-in speed (M10).</summary>
         public Func<MotorConfig> Motor;
         /// <summary>Things he can use that are not mechanisms (a pushable's <c>PushTwin</c> face), registered after the graph's; null = none.</summary>
         public Func<MechanismGraph, IInteractable[]> Interactables;

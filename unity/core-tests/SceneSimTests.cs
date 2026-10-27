@@ -3,8 +3,14 @@ using DeadLetter.Core.Mechanisms.Actuators;
 using DeadLetter.Core.Mechanisms.Bridges;
 using DeadLetter.Core.Mechanisms.Catches;
 using DeadLetter.Core.Motor;
+using DeadLetter.Core.Save;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Scenes.Dl01;
+using DeadLetter.Core.Scenes.Dl02;
+using DeadLetter.Core.Scenes.Dl03;
+using DeadLetter.Core.Scenes.Dl04;
+using DeadLetter.Core.Scenes.Dl05;
+using DeadLetter.Core.Scenes.Dl06;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -145,6 +151,163 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(0, s.Advance(0.005, () => default));
             Assert.Equal(1, s.Advance(0.012, () => default));
             Assert.Equal(4, s.Steps);
+        }
+
+        // ---- The save across scenes (NewGame, Continue, Begin, Handover) --------------------------------------------------
+        private static SaveModel Slot(MemorySaveStore store)
+        {
+            Assert.True(store.TryLoad(0, out var m));
+            return m;
+        }
+
+        /// <summary>A game in the slot at <c>hall</c>: calm mode on, a curiosity found, the label beat seen, 12.5 s played.</summary>
+        private static MemorySaveStore SavedAtHall()
+        {
+            var store = new MemorySaveStore();
+            var a = new SceneSim(Dl01Scene.Def(), store: store);
+            a.NewGame(fromOpening: true);
+            a.Step(default);                                                            // the label beat: labelWake seen
+            a.Checkpoints.ApplySettings(new Settings { Calm = true });
+            a.Checkpoints.SetFlag(StoryFlags.Curio("cot"));
+            a.Checkpoints.Update(12.5, playing: true);
+            Assert.True(a.Checkpoints.Reach("hall"));
+            return store;
+        }
+
+        [Fact]
+        public void Begin_KeepsTheSlotsGame_AndWritesNothing_OnlyNewGameResetsIt()
+        {
+            var store = SavedAtHall();
+            var bytes = (byte[])store.Slots[0].Clone();
+            int writes = store.Writes;
+
+            var b = new SceneSim(Dl01Scene.Def(), store: store);
+            b.Begin("start", fromOpening: true);                                         // it used to be a new game, over the slot
+            Assert.Equal(writes, store.Writes);
+            Assert.Equal(bytes, store.Slots[0]);
+            Assert.Equal("start", b.Checkpoints.Current.Name);
+            Assert.Equal(1.0, b.X);
+            Assert.True(b.Checkpoints.Settings.Calm);
+            Assert.True(b.Graph.Calm);
+            Assert.True(b.Checkpoints.Flags.Has(StoryFlags.Curio("cot")));
+            Assert.Equal(12.5, b.Checkpoints.PlayTime);
+            b.Step(default);
+            Assert.Null(b.ActKind);                                                     // labelWake is seen: no label beat
+            Assert.Equal(writes, store.Writes);
+
+            b.Begin("door");                                                            // again: the game it holds goes on
+            Assert.True(b.Checkpoints.Settings.Calm);
+            Assert.True(b.Checkpoints.Reach("room"));                                   // the next save carries the game
+            var m = Slot(store);
+            Assert.Equal("room", m.Checkpoint);
+            Assert.True(m.Settings.Calm);
+            Assert.Contains(StoryFlags.Curio("cot"), m.Flags);
+            Assert.Contains(Dl01Rules.LabelWake, m.Seen);
+
+            b.NewGame();                                                                // Start over: the only reset
+            m = Slot(store);
+            Assert.Equal("start", m.Checkpoint);
+            Assert.Empty(m.Flags);
+            Assert.Empty(m.Seen);
+            Assert.Equal(0, m.PlayTime);
+            Assert.Throws<InvalidOperationException>(() => new SceneSim(Dl02Scene.Def()).NewGame());   // only DL-01 starts one
+        }
+
+        [Fact]
+        public void Continue_PlacesHimAtTheSlotsCheckpoint_WithItsGame()
+        {
+            Assert.False(new SceneSim(Dl01Scene.Def(), store: new MemorySaveStore()).Continue());   // an empty slot
+            var store = SavedAtHall();
+            int writes = store.Writes;
+            var s = new SceneSim(Dl01Scene.Def(), store: store);
+            Assert.True(s.Continue());
+            Assert.Equal(writes, store.Writes);
+            Assert.Equal("hall", s.Checkpoints.Current.Name);
+            Assert.Equal(8.35, s.X);
+            Assert.Equal(1, s.Region);
+            Assert.True(s.Checkpoints.RestoredSnapshot);                                // saved in DL-01: its snapshot
+            Assert.True(s.Checkpoints.Settings.Calm);
+            Assert.True(s.Checkpoints.HasSeen(Dl01Rules.LabelWake));
+            Assert.Equal(12.5, s.Checkpoints.PlayTime);
+        }
+
+        /// <summary>
+        /// DL-01's passage ends at <c>room</c> and DL-02 takes him on: the previous scene's service carries the game (calm
+        /// mode, flags, seen moments, play time) into the next one; the hand-over writes nothing, and a respawn keeps it.
+        /// </summary>
+        [Fact]
+        public void Handover_CarriesTheGame_CalmModeIncluded_IntoTheNextScene()
+        {
+            var store = SavedAtHall();
+            var a = new SceneSim(Dl01Scene.Def(), store: store);
+            Assert.True(a.Continue());
+            a.Checkpoints.MinSecondsBetweenWrites = 2;
+            Assert.True(a.Checkpoints.Reach("room"));                                   // the passage's end (L2145); written
+            a.Checkpoints.SetFlag(StoryFlags.Curio("scale"));
+            Assert.True(a.Checkpoints.Pending);                                         // held by the rate limit
+            int writes = store.Writes;
+
+            var b = new SceneSim(Dl02Scene.Def(), store: store);
+            b.Handover("room", 13.2, 0, 1, a.Checkpoints);
+            Assert.False(a.Checkpoints.Pending);
+            int after = store.Writes;
+            Assert.Equal(writes + 1, after);                                            // the held write, flushed; nothing else
+            Assert.Equal("room", b.Checkpoints.Current.Name);
+            Assert.True(b.Checkpoints.Settings.Calm);
+            Assert.True(b.Graph.Calm);
+            Assert.True(b.Checkpoints.Flags.Has(StoryFlags.Curio("cot")));
+            Assert.True(b.Checkpoints.Flags.Has(StoryFlags.Curio("scale")));
+            Assert.True(b.Checkpoints.HasSeen(Dl01Rules.LabelWake));
+            Assert.Equal(12.5, b.Checkpoints.PlayTime);
+            b.Respawn();
+            Assert.Equal(after, store.Writes);
+            Assert.True(b.Checkpoints.Settings.Calm);
+            Assert.True(b.Checkpoints.Flags.Has(StoryFlags.Curio("scale")));
+            var m = Slot(store);
+            Assert.True(m.Settings.Calm);
+            Assert.Contains(StoryFlags.Curio("scale"), m.Flags);
+        }
+
+        // ---- The chapter's checkpoint table (PrologueCheckpoints) ----------------------------------------------------
+        [Fact]
+        public void TheTable_IsThePrologueInPlayOrder_AndEachSceneTakesItsOwnFromIt_L7975()
+        {
+            var all = PrologueCheckpoints.All;
+            Assert.Equal(22, all.Count);
+            for (int i = 0; i < all.Count; i++)
+            {
+                Assert.Equal(Mechanisms.Checkpoint.PrototypeOrder[i], all[i].Name);
+                Assert.Equal(1, all[i].Facing);
+                Assert.InRange(all[i].Region, 1, 5);
+                Assert.StartsWith("DL-", all[i].Scene);
+            }
+            Assert.Equal("forwarded", all[all.Count - 1].Name);
+            Assert.False(PrologueCheckpoints.TryGet("school", out _));                 // chapter 1's
+            Assert.Equal(3.4, PrologueCheckpoints.Get("cage").Y);
+            foreach (var def in new[] { Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def() })
+            {
+                Assert.Equal(PrologueCheckpoints.Of(def.Id), def.Checkpoints);
+                Assert.NotEmpty(def.Checkpoints);
+            }
+            Assert.Equal(new[] { "ration", "hatch" }, Array.ConvertAll(Dl05Scene.Def().Checkpoints, c => c.Name));   // bay is DL-04's
+            Assert.Equal(Dl04Scene.BayX, PrologueCheckpoints.Get("bay").X);
+            Assert.Equal(Dl06Scene.ScannedX, PrologueCheckpoints.Get("scanned").X);
+        }
+
+        /// <summary>Each scene respawns at the checkpoint it was walked into under, the previous scene's (L8494).</summary>
+        [Theory]
+        [InlineData("DL-03", "room", 25.45, 13.2)]
+        [InlineData("DL-04", "solved", 30.0, 29.95)]
+        [InlineData("DL-05", "bay", 47.95, 47.1)]
+        public void Respawn_WorksAtThePreviousScenesCheckpoint(string scene, string cp, double x, double respawnX)
+        {
+            var def = scene == "DL-03" ? Dl03Scene.Def() : scene == "DL-04" ? Dl04Scene.Def() : Dl05Scene.Def();
+            var s = new SceneSim(def);
+            s.Handover(cp, x, 0);
+            s.Respawn();
+            Assert.Equal(cp, s.Checkpoints.Current.Name);
+            Assert.Equal(respawnX, s.X, 12);
+            Assert.Equal(2, s.Region);
         }
     }
 }

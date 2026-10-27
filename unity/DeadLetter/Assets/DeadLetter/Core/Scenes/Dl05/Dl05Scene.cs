@@ -7,6 +7,7 @@ using DeadLetter.Core.Mechanisms.Actuators;
 using DeadLetter.Core.Mechanisms.Plates;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Push;
+using DeadLetter.Core.Save;
 
 namespace DeadLetter.Core.Scenes.Dl05
 {
@@ -32,8 +33,6 @@ namespace DeadLetter.Core.Scenes.Dl05
         /// <summary><c>RH5</c> (L3452): the body's start and its place on the plate; its half-length and grip gap.</summary>
         public const double Body0 = 13 + 39.30, BodyPlate = 13 + 41.80, BodyHalf = 0.83, BodyGap = 1.05;
 
-        /// <summary>Checkpoints (<c>CHECKPOINTS</c>, L7983–L7985): <c>RK.door.x1 + 0.4</c>, <c>RATION5.x0 + 0.7</c>, <c>RH5.crawl[1] + 0.35</c>.</summary>
-        public const double BayX = 46.7 + 0.4, RationX = X0 + 0.7, HatchX = Dl05Lane.CrawlX1 + 0.35;
         /// <summary>Reached on the lane past these (<c>updateCh1</c>, L4935, L4936, L4947): <c>RATION5.x0 + 0.6</c>, <c>RH5.crawl[1] + 0.25</c>, <c>RK.door.x1 + 0.2</c>.</summary>
         public const double RationAt = X0 + 0.6, HatchAt = Dl05Lane.CrawlX1 + 0.25, BayAt = 46.7 + 0.2;
         /// <summary>The label check by the child's drawing: <c>RATION5.x0 + 4.0 &lt; x &lt; RATION5.x0 + 6</c> (L4941).</summary>
@@ -46,12 +45,7 @@ namespace DeadLetter.Core.Scenes.Dl05
             Title = "The Ration Hall",
             X0 = X0, X1 = X1,
             Region = Dl05Lane.Region,
-            Checkpoints = new[]
-            {
-                new CheckpointDef("bay", BayX, region: 2),                               // DL-04's, just through the bay door (L7983)
-                new CheckpointDef("ration", RationX, region: 2),                         // L7984
-                new CheckpointDef("hatch", HatchX, region: 2),                           // L7985
-            },
+            Checkpoints = PrologueCheckpoints.Of(Id),                                    // ration, hatch (L7984–L7985); he walks in under DL-04's bay
             // Step order = the prototype's: updatePlayer moves the drum and the body (#4, updateHoldCh1 L4684–L4735), then
             // updateCh1 weighs the plate, winds the hatch and drops the flag (#7, L4878–L4921).
             Mechanisms = new[]
@@ -126,23 +120,33 @@ namespace DeadLetter.Core.Scenes.Dl05
         /// </summary>
         public const double PatDelay = 1.6;
 
+        /// <summary>
+        /// The once-only beats (<c>seen.add('bodyGrab')</c> L4463, <c>seen.add('label5')</c> L4944): the prototype's
+        /// <c>seen</c> set, which outlives respawns (cleared only by a new game, L8058), so they are the save's seen moments.
+        /// </summary>
+        public const string SeenBodyGrab = "bodyGrab", SeenLabel = "label5";
+
         private Pushable _drum, _body;
         private IPushable[] _faces = Array.Empty<IPushable>();
-        private bool _bodyGrabbed, _labelSeen;
+        private CheckpointService _save;
+        private int _bodyGrabSeen, _labelSeen;                                         // handles in _save.Seen
         private ActPhase _lastPhase;
         private double _patAt = double.NaN;
 
         public Pushable Drum => _drum;
         public Pushable Body => _body;
         /// <summary>He has taken hold of the body once (<c>seen.has('bodyGrab')</c>): no more hesitation.</summary>
-        public bool BodyGrabbed => _bodyGrabbed;
+        public bool BodyGrabbed => _save != null && _save.Seen.Get(_bodyGrabSeen);
         /// <summary>The label check has played (<c>seen.has('label5')</c>).</summary>
-        public bool LabelSeen => _labelSeen;
+        public bool LabelSeen => _save != null && _save.Seen.Get(_labelSeen);
         /// <summary>Game-clock time the pat is due (NaN: none pending).</summary>
         public double PatAt => _patAt;
 
         public override void OnBegin(SceneSim sim, string checkpoint, bool fromOpening)
         {
+            _save = sim.Checkpoints;
+            _bodyGrabSeen = _save.Seen.Resolve(SeenBodyGrab);
+            _labelSeen = _save.Seen.Resolve(SeenLabel);
             _drum = sim.Graph.Get<Pushable>("dl05.drum");
             _body = sim.Graph.Get<Pushable>("dl05.body");
             // The faces in the prototype's PUSHABLES order (drum, body, then the twins, L4273–L4295).
@@ -162,9 +166,10 @@ namespace DeadLetter.Core.Scenes.Dl05
         {
             var m = sim.Motor;
             var phase = m.IsActing ? m.ActPhase : ActPhase.None;
-            if (!_bodyGrabbed && m.IsActing && m.ActVerb == Verb.Grab && phase == ActPhase.Clip && _lastPhase == ActPhase.Approach && IsBody(sim.MotorActTarget))
+            if (m.IsActing && m.ActVerb == Verb.Grab && phase == ActPhase.Clip && _lastPhase == ActPhase.Approach && IsBody(sim.MotorActTarget)
+                && !BodyGrabbed)
             {
-                _bodyGrabbed = true;
+                _save.MarkSeen(SeenBodyGrab);
                 sim.StartAct(new Dl05HesitateAct(_body.Id.Value, HesitateSeconds, m.X, m.Y, m.Z, m.Yaw, m.Facing, sim.Config.YawRate));
             }
             _lastPhase = phase;
@@ -183,10 +188,10 @@ namespace DeadLetter.Core.Scenes.Dl05
                 double x = sim.X;
                 if (x > Dl05Scene.RationAt) sim.Checkpoints.Reach("ration");
                 if (x > Dl05Scene.HatchAt) sim.Checkpoints.Reach("hatch");
-                if (!_labelSeen && !sim.Busy && sim.Motor.Hold == HoldKind.None && sim.Grounded && x > Dl05Scene.LabelX0 && x < Dl05Scene.LabelX1
+                if (!LabelSeen && !sim.Busy && sim.Motor.Hold == HoldKind.None && sim.Grounded && x > Dl05Scene.LabelX0 && x < Dl05Scene.LabelX1
                     && CanQuirk(sim))
                 {
-                    _labelSeen = true;
+                    _save.MarkSeen(SeenLabel);
                     StartQuirk(sim, "CheckLabel");
                 }
                 if (x > Dl05Scene.BayAt) sim.Checkpoints.Reach("bay");
@@ -204,7 +209,7 @@ namespace DeadLetter.Core.Scenes.Dl05
 
         /// <summary>
         /// The prototype's push branch takes the nearest grip in reach, whichever way he faces (<c>nearUse</c>, L4251–L4255:
-        /// <c>d &lt; best.d</c> in <c>PUSHABLES</c> order). U-11's resolver ranks targets in front of him first (#22, M7): at
+        /// <c>d &lt; best.d</c> in <c>PUSHABLES</c> order). U-11's resolver ranks targets in front of him first (#28, M7): at
         /// #10227, facing left between the body's grip 0.30 ahead and the drum's 0.15 behind, it takes the body. So each face
         /// here is available only while it is the nearest grip (<see cref="Pushable.CanStandAt"/> gets the asking face's
         /// stand point). Reads state only; never asks a face's <c>IsAvailable</c> (which calls this).
@@ -243,7 +248,7 @@ namespace DeadLetter.Core.Scenes.Dl05
             => !sim.Busy && sim.Motor.Hold == HoldKind.None && !sim.Motor.IsMantling && sim.Motor.Grounded;
 
         /// <summary>
-        /// <c>playQuirk(clip)</c> (L3841–L3845): cancellable, and he stops (<c>game.vx = 0</c>). U-11 gap (#22): the motor
+        /// <c>playQuirk(clip)</c> (L3841–L3845): cancellable, and he stops (<c>game.vx = 0</c>). #28 (M9): the motor
         /// can only be stopped by <see cref="D17Motor.Place"/>, which also settles his yaw on his facing and stands him up;
         /// under the hatch the motor crouches him again on its next step (the clearance, L1975).
         /// </summary>

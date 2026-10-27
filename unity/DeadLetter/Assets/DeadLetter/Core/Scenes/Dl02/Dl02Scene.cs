@@ -24,10 +24,7 @@ namespace DeadLetter.Core.Scenes.Dl02
             Title = "The Sorting Hall",
             X0 = Dl02Lane.X0, X1 = Dl02Lane.X1,                                                    // sceneName, L8139
             Region = Dl02Lane.Region,
-            Checkpoints = new[]
-            {
-                new CheckpointDef("room", 13.2, region: Dl02Lane.Region),                         // EMERGE_X L319; CHECKPOINTS L7980
-            },
+            Checkpoints = PrologueCheckpoints.Of(Id),                                             // room (L7980)
             // Step order = the prototype's: the box changes in updatePlayer (#4) and is drawn in updateCh1 (#7, L4782),
             // the tube's letter falls in updateCh1 (L4770–L4779), the press stamps in updateHazards, last (#7, L7343–L7351).
             Mechanisms = new[]

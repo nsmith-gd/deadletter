@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using DeadLetter.Core.Lane.Tables;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Actuators;
@@ -36,13 +35,7 @@ namespace DeadLetter.Core.Scenes.Dl01
             Title = "The Wake",
             X0 = Dl01Lane.Left, X1 = Dl01Lane.Right,                                   // region 1 (§0.3)
             Region = Dl01Lane.Region,
-            Checkpoints = new[]
-            {
-                new CheckpointDef("start", 1.0),                                        // START_X, L302; CHECKPOINTS L7976
-                new CheckpointDef("shutter", 2.9),                                      // L7977
-                new CheckpointDef("hall", 8.35),                                        // L7978
-                new CheckpointDef("door", 9.62),                                        // L7979
-            },
+            Checkpoints = PrologueCheckpoints.Of(Id),                                   // start, shutter, hall, door (L7976–L7979)
             // Step order = the prototype's: the relay (#5, L8511), updateMechanisms (#6: the shutter; the latch releases
             // and the crank turns inside updatePlayer, L1870–L1890), then updateCh1 (#7: the cart falls, L4756).
             Mechanisms = new[]
@@ -81,13 +74,12 @@ namespace DeadLetter.Core.Scenes.Dl01
         /// <summary>CheckLabel at the handover: cancellable by a move after 2.5 s, held 3.2 s after the clip (L8108).</summary>
         public const double LabelCancelAfter = 2.5, LabelHold = 3.2;
 
-        private readonly HashSet<string> _seen = new HashSet<string>();
+        /// <summary>The label beat's seen moment (<c>seen.has('labelWake')</c>, L8107): saved, so no replay or continue plays it again.</summary>
+        public const string LabelWake = "labelWake";
+
         private CrankActuator _crank;
         private PulseSequencer _relay;
-        private bool _heardHall;
-
-        /// <summary>Moments already played (<c>seen</c>, L1309): a checkpoint replay skips them.</summary>
-        public ICollection<string> Seen => _seen;
+        private bool _heardHall;                                                                   // per life: resetWorld, L8090
 
         public override void OnBegin(SceneSim sim, string checkpoint, bool fromOpening)
         {
@@ -101,8 +93,9 @@ namespace DeadLetter.Core.Scenes.Dl01
             // The step that ends the opening is the first of play (f >= OPENING_FRAMES → startPlay, then updatePlayer and
             // the relay in the same step, L8506–L8516): the relay's clock reaches 480 on it.
             _relay.SetClock(Dl01Scene.OpeningFrames - 24 * SceneSim.StepSeconds);
-            if (sim.Checkpoints.Current.Name == "start" && _seen.Add("labelWake"))                   // L8107
+            if (sim.Checkpoints.Current.Name == "start" && !sim.Checkpoints.HasSeen(LabelWake))      // L8107
             {
+                sim.Checkpoints.MarkSeen(LabelWake);                                                  // L8108
                 sim.StartAct(new QuirkAct("CheckLabel", QuirkAct.ClipSeconds("CheckLabel"), cancel: false, startClock: sim.Clock,
                     cancelAfter: LabelCancelAfter, holdFor: LabelHold, startsThisStep: true));
                 sim.Cue("voice:dispatch_item");                                                       // L8109

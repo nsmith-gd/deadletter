@@ -41,7 +41,7 @@ namespace DeadLetter.Core.Scenes.Dl06
         /// <summary>He peers over the rail when he gets there (<c>REVEAL_STOP_X − 0.05</c>, L3868).</summary>
         public const double PeekX = RevealStopX - 0.05;
 
-        /// <summary>The checkpoint after the label check (<c>CHECKPOINTS.scanned</c>: <c>OFF3 + 30.3</c>, L7986).</summary>
+        /// <summary>The checkpoint after the label check (<c>CHECKPOINTS.scanned</c>: <c>OFF3 + 30.3</c>, L7986; <see cref="PrologueCheckpoints"/>).</summary>
         public const string ScannedCheckpoint = "scanned";
         public const double ScannedX = Dl06Lane.Off3 + 30.3;
 
@@ -77,7 +77,7 @@ namespace DeadLetter.Core.Scenes.Dl06
             Title = title,
             X0 = X0, X1 = X1,
             Region = Dl06Lane.Region,
-            Checkpoints = new[] { new CheckpointDef(ScannedCheckpoint, ScannedX, region: Dl06Lane.Region) },   // L7986
+            Checkpoints = PrologueCheckpoints.Of(id),                                                       // DL-06: scanned (L7986); DL-07: landing, gallery
             Mechanisms = FloorMechanisms(),
             Interactables = FloorInteractables,
             Lane = Dl06Lane.Table,
@@ -275,8 +275,8 @@ namespace DeadLetter.Core.Scenes.Dl06
         }
 
         /// <summary>
-        /// <c>game.vx = 0</c>. The motor can be stopped only by <see cref="D17Motor.Place"/> (#22), which also settles his yaw on
-        /// his facing (M8), so it is placed only when he is moving; standing, nothing changes.
+        /// <c>game.vx = 0</c>. The motor can be stopped only by <see cref="D17Motor.Place"/> (#28), which also settles his yaw on
+        /// his facing (M9), so it is placed only when he is moving; standing, nothing changes.
         /// </summary>
         protected static void StopMotor(SceneSim sim)
         {

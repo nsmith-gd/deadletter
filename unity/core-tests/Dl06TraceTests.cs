@@ -26,7 +26,7 @@ namespace DeadLetter.Core.Tests
     /// grounded, the scanner's phase, the belt, the route, the carriers' states and routes, checkpoints, the region and the
     /// exit) fall on the same step.</para>
     /// <para><b>Compensations</b>, each where it shows: the hand-over is of a running D-17 (vx 1.6 at #12072; the motor cannot
-    /// be handed a velocity, #22, <see cref="SceneSim.Handover"/>), so the test gives the motor the recorded speed. <b>M10,
+    /// be handed a velocity, #28, <see cref="SceneSim.Handover"/>), so the test gives the motor the recorded speed. <b>M10,
     /// new</b>: the levers step in and out at 0.4 m/s (L2902, L2916), the motor's stations at its one
     /// <see cref="MotorConfig.StepInSpeed"/> 0.45; the scene sets 0.4 for its floor (<see cref="Dl06Scene.MotorTuning"/>), and
     /// <see cref="M10_TheLeversStepInAt0_4_NotTheMotors0_45"/> shows the difference.</para>
@@ -86,7 +86,7 @@ namespace DeadLetter.Core.Tests
                     });
                 }, (k, sim) =>
                 {
-                    // The hand-over is of a running D-17 (#12072: vx 1.6); the motor cannot be handed a velocity (#22).
+                    // The hand-over is of a running D-17 (#12072: vx 1.6); the motor cannot be handed a velocity (#28).
                     if (k == from) SetMotorVx(sim.Motor, t.Steps[from - 1].Vx);
                     return t.Steps[k].Input;
                 }, handover: true);
