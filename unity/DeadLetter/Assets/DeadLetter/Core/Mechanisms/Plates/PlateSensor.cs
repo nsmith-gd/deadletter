@@ -43,6 +43,8 @@ namespace DeadLetter.Core.Mechanisms.Plates
         public double X0, X1, Margin;
         /// <summary>He is on when PlayerX0 &lt; x &lt; PlayerX1 and y &lt; PlayerMaxY. PlayerShare 0 = he is not weighed.</summary>
         public double PlayerX0, PlayerX1, PlayerMaxY, PlayerShare;
+        /// <summary>Standing (grounded) he also counts below this height (DL-03: <c>y &lt; 0.45 &amp;&amp; (grounded || y &lt; 0.25)</c>, L2232); −∞ = never.</summary>
+        public double PlayerGroundedMaxY = double.NegativeInfinity;
         public PlateTerm[] Terms = Array.Empty<PlateTerm>();
     }
 
@@ -68,7 +70,8 @@ namespace DeadLetter.Core.Mechanisms.Plates
         }
 
         /// <summary>D-17 stands on it this step.</summary>
-        public bool PlayerOn(in PlayerPose pl) => _p.PlayerShare > 0 && pl.X > _p.PlayerX0 && pl.X < _p.PlayerX1 && pl.Y < _p.PlayerMaxY;
+        public bool PlayerOn(in PlayerPose pl) => _p.PlayerShare > 0 && pl.X > _p.PlayerX0 && pl.X < _p.PlayerX1
+            && (pl.Y < _p.PlayerMaxY || (pl.Grounded && pl.Y < _p.PlayerGroundedMaxY));
 
         /// <summary>The sum of the shares on it. <paramref name="playerOn"/>: weigh him (and what he carries).</summary>
         public double Load(bool playerOn)

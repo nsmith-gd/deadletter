@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Lane;
 using DeadLetter.Core.Mechanisms;
+using DeadLetter.Core.Motor;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -60,6 +62,10 @@ namespace DeadLetter.Core.Scenes
         public Func<MechanismGraph, ILaneContributor[]> LaneContributors;
         /// <summary>Bespoke rules (triggers, follow-up acts, transits); null = none.</summary>
         public Func<SceneRules> Rules;
+        /// <summary>The motor's tuning in this scene (null = <see cref="MotorConfig.Prototype"/>), e.g. DL-03's old-hold push acceleration.</summary>
+        public Func<MotorConfig> Motor;
+        /// <summary>Things he can use that are not mechanisms (a pushable's <c>PushTwin</c> face), registered after the graph's; null = none.</summary>
+        public Func<MechanismGraph, IInteractable[]> Interactables;
 
         public bool TryGetCheckpoint(string name, out CheckpointDef cp)
         {
@@ -84,6 +90,13 @@ namespace DeadLetter.Core.Scenes
         /// where the prototype's <c>startPlay</c> runs before <c>updatePlayer</c> (L8507).
         /// </summary>
         public virtual void OnOpeningEnd(SceneSim sim) { }
+
+        /// <summary>
+        /// #4's head, when no scene act runs: before the motor reads <paramref name="input"/>. A rule may take the input
+        /// (clear an edge it handles itself) or start a <see cref="SceneAct"/>, which then runs this step in the motor's
+        /// place (DL-03's set-down, which the motor cannot do).
+        /// </summary>
+        public virtual void BeforeMotor(SceneSim sim, ref MotorInput input) { }
 
         /// <summary>
         /// #4's tail, after the motor's step (<c>updatePlayer</c>'s last lines). <paramref name="freeStep"/>: the motor

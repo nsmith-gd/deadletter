@@ -37,9 +37,8 @@ namespace DeadLetter.Core.Mechanisms.Plates
 
         /// <summary>
         /// DL-03: D-17 1.0, trolley 0.3, weight 0.42 (on the floor, on the trolley or carried) on the plate 28.8–29.55
-        /// (± 0.02); needle at dt·5 (L323–L324, L2229–L2238, L2372–L2374). He counts below y 0.25: the prototype also
-        /// counts him grounded below 0.45 (L2232), which <see cref="PlayerPose"/> cannot tell yet (nothing to stand on
-        /// there between 0.25 and 0.45).
+        /// (± 0.02); needle at dt·5 (L323–L324, L2229–L2238, L2372–L2374). He counts below y 0.25, or standing below 0.45
+        /// (<c>game.y &lt; 0.45 &amp;&amp; (game.grounded || game.y &lt; 0.25)</c>, L2232): on the weight on the trolley (y 0.38).
         /// </summary>
         public static LoadPlateParams Dl03Plate() => new LoadPlateParams
         {
@@ -47,6 +46,7 @@ namespace DeadLetter.Core.Mechanisms.Plates
             {
                 X0 = 13 + 15.8, X1 = 13 + 16.55, Margin = 0.02,                      // PLATE, L323; onPlate L2230
                 PlayerX0 = 13 + 15.8 - 0.02, PlayerX1 = 13 + 16.55 + 0.02, PlayerMaxY = 0.25, PlayerShare = 1.0,   // LOAD.d17
+                PlayerGroundedMaxY = 0.45,                                                                        // L2232
                 Terms = new[] { PlateTerm.Inside("dl03.trolley", 0.3), PlateTerm.Inside("dl03.weight", 0.42) },  // LOAD, L324
             },
             PassLoad = 0.68, NeedleRate = 5,                                         // PASS_LOAD L324; L2374

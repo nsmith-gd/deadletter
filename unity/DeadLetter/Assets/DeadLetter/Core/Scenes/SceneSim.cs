@@ -40,7 +40,7 @@ namespace DeadLetter.Core.Scenes
         public SceneSim(SceneDef def, MotorConfig config = null, ISaveStore store = null)
         {
             Def = def ?? throw new ArgumentNullException(nameof(def));
-            Config = config ?? MotorConfig.Prototype();
+            Config = config ?? def.Motor?.Invoke() ?? MotorConfig.Prototype();
 
             Graph = new MechanismGraph();
             for (int i = 0; i < def.Mechanisms.Length; i++)
@@ -58,6 +58,8 @@ namespace DeadLetter.Core.Scenes
 
             Resolver = new InteractionResolver(Config);
             for (int i = 0; i < Graph.Count; i++) if (Graph[i] is IInteractable it) Resolver.Register(it);
+            var extra = def.Interactables?.Invoke(Graph);
+            if (extra != null) foreach (var it in extra) Resolver.Register(it);
 
             Motor = new D17Motor(Config, Lane, Resolver);
             Checkpoints = new CheckpointService(Graph, def.CheckpointOrder, store ?? new NoStore(), 0, def.Id);
@@ -146,6 +148,27 @@ namespace DeadLetter.Core.Scenes
             Rules.OnBegin(this, checkpoint, fromOpening);
         }
 
+        /// <summary>
+        /// He walks in from the previous scene (no cut, §2 of the scene docs): the world is built at
+        /// <paramref name="checkpoint"/>, which may still be the previous scene's (DL-03 starts under DL-02's <c>room</c>),
+        /// and he stands at rest at (<paramref name="x"/>, <paramref name="y"/>). The hand-over of a moving D-17 is the
+        /// runtime's (the motor cannot be given a velocity, #22). A respawn needs a checkpoint of this scene.
+        /// </summary>
+        public void Handover(string checkpoint, double x, double y, int facing = 1)
+        {
+            if (checkpoint == Def.CheckpointOrder[0]) Checkpoints.NewGame();
+            else Checkpoints.Load(new SaveModel { Checkpoint = checkpoint, Scene = Def.Id });
+            Steps = 0;
+            Exited = false;
+            _pendingOpening = false;
+            _act = null;
+            _motorTarget = _endedTarget = null;
+            RespawnAt = 0;
+            SetRegion(Def.Region);
+            Motor.Place(x, y, facing);
+            Rules.OnBegin(this, checkpoint, false);
+        }
+
         /// <summary>Respawn at the current checkpoint (<c>startPlay(game.checkpoint)</c> when <c>respawnAt</c> passes, L8494).</summary>
         public void Respawn()
         {
@@ -205,8 +228,9 @@ namespace DeadLetter.Core.Scenes
             Rules.AfterGraph(this);
         }
 
-        private void StepPlayer(in MotorInput input, double dt)
+        private void StepPlayer(MotorInput input, double dt)
         {
+            if (_act == null) Rules.BeforeMotor(this, ref input);
             if (_act != null)
             {
                 var act = _act;

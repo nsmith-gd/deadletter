@@ -86,7 +86,7 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
   title screen never reaches the trace. Two recordings of the same seed are byte-identical. (DL-01's own state draws
   no random numbers; later scenes do: crates, carrier payloads, the White.)
 - **`unity/core-tests/Traces/prologue_mech_seed1.jsonl.gz`:** the whole prologue, mechanical, seed 1: 33,207 steps
-  (play from step 1768, `room` at 4082, the end card at 553 s), 390 KB.
+  (play from step 1768, `room` at 4082, DL-03 from 5228 to 6278, the end card at 553 s), 392 KB.
 - **Format** (`deadletter-trace/1`): gzip, one JSON object per line. Line 1 is a header (`format`, `seed`, `mode`,
   `rngSeed`, `rng`, `step`, `round`, `delta: true`); the last line is `{"end": true, steps, error, marks, events}`.
   Every other line is step `i` (0-based, from Begin) and holds **only the fields that changed** since the line before;
@@ -100,4 +100,8 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     (checkpoint), `fr` (`game.frame`), `clip` (the clip playing), `sc` (`sceneName()`).
   - DL-01: `rel` (released), `sh` (shutter angle), `lv` (latch lever angle), `wy` (counterweight y), `door`
     (`doorOpen`), `wh` (wheel angle), `cx`/`cs`/`cd`/`cl` (the cart's x, state, drop, lip), `nr` (`nextRelay`).
+  - DL-03 (`unity/core-tests/Dl03TraceTests.cs`): `tx` (the trolley's x), `ws`/`wx`/`wo` (the sort weight's state,
+    `x` and deck offset), `ld` (`game.load`, the plate with him), `nd` (the gauge's needle), `gy`/`gv` (the gate's
+    height and fall speed). Added after DL-01's: every DL-01 field is unchanged at every step (only step 0's line gains
+    the new keys, at their reset values).
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).

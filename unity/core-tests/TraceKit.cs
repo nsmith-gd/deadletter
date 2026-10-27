@@ -32,6 +32,9 @@ namespace DeadLetter.Core.Tests
         public string Cs;
         public bool Cl;
         public double Nr;
+        // DL-03: the trolley's x, the weight's state, x (game.weight.x) and deck offset, game.load, the needle, the gate's y and fall speed.
+        public double Tx, Wx, Wo, Ld, Nd, Gy, Gv;
+        public string Ws;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -145,6 +148,14 @@ namespace DeadLetter.Core.Tests
                 case "cd": s.Cd = N(v); break;
                 case "cl": s.Cl = v.ValueKind == JsonValueKind.Number && v.GetInt32() != 0; break;
                 case "nr": s.Nr = v.GetDouble(); break;
+                case "tx": s.Tx = v.GetDouble(); break;
+                case "ws": s.Ws = S(v); break;
+                case "wx": s.Wx = v.GetDouble(); break;
+                case "wo": s.Wo = v.GetDouble(); break;
+                case "ld": s.Ld = v.GetDouble(); break;
+                case "nd": s.Nd = v.GetDouble(); break;
+                case "gy": s.Gy = v.GetDouble(); break;
+                case "gv": s.Gv = v.GetDouble(); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }
@@ -172,12 +183,18 @@ namespace DeadLetter.Core.Tests
         /// <param name="from">Index of the window's first step (the first step of play, or the step after a checkpoint).</param>
         /// <param name="to">Index of its last step, inclusive.</param>
         /// <param name="input">Optional: the input to give Core at step k (a documented compensation); default the record's own.</param>
+        /// <param name="handover">
+        /// Optional: start from the record of the step before the window instead of a checkpoint's spot, for a scene he
+        /// walks into (<see cref="SceneSim.Handover"/> at <paramref name="checkpoint"/>, at rest at that step's x, y and facing).
+        /// </param>
         public static SceneSim Run(Trace t, SceneDef def, string checkpoint, bool fromOpening, int from, int to,
-            Action<TraceStep, SceneSim> onStep, Func<int, SceneSim, MotorInput> input = null)
+            Action<TraceStep, SceneSim> onStep, Func<int, SceneSim, MotorInput> input = null, bool handover = false)
         {
             var sim = new SceneSim(def);
             sim.Clock = t.Steps[from - 1].Clk;
-            sim.Begin(checkpoint, fromOpening);
+            var before = t.Steps[from - 1];
+            if (handover) sim.Handover(checkpoint, before.X, before.Y, before.F);
+            else sim.Begin(checkpoint, fromOpening);
             for (int k = from; k <= to; k++)
             {
                 sim.Step(input != null ? input(k, sim) : t.Steps[k].Input);

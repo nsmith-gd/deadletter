@@ -1,6 +1,7 @@
 // Golden trace recorder (U-20): runs the simulated player (bot.js) through the prototype and writes one JSON line per
-// 60 Hz game step: the inputs the game consumed that step and D-17's and DL-01's state after it. The Core parity tests
-// (unity/core-tests/Dl01TraceTests.cs) replay the inputs through Core and compare. Format: tools/sim/README.md.
+// 60 Hz game step: the inputs the game consumed that step and D-17's, DL-01's and DL-03's state after it. The Core
+// parity tests (unity/core-tests/Dl01TraceTests.cs, Dl03TraceTests.cs) replay the inputs through Core and compare.
+// Format: tools/sim/README.md.
 //
 //   node record_trace.mjs <seed> <out.jsonl.gz> [mechanical]
 //
@@ -73,6 +74,9 @@ const RECORDER = `window.__record = (rngSeed) => {
       fr: r6(G.frame), clip: D.clip(), sc: D.scene(),
       rel: b(G.released), sh: r6(G.shutterAngle), lv: r6(G.leverAngle), wy: r6(G.weightY), door: r6(G.doorOpen), wh: r6(G.wheelAngle),
       cx: c ? r6(c.x) : null, cs: c ? c.state : null, cd: c ? r6(c.drop) : null, cl: c ? b(c.lip) : null, nr: G.nextRelay,
+      // DL-03: the trolley, the sort weight, the plate's load and needle, the gate.
+      tx: r6(G.trolley.x), ws: G.weight.state, wx: r6(G.weight.x), wo: r6(G.weight.off), ld: r6(G.load), nd: r6(G.needle),
+      gy: r6(G.gate.y), gv: r6(G.gate.v),
     };
   }
   function flush() {
