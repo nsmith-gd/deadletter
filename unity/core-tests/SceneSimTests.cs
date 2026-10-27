@@ -15,7 +15,7 @@ using Xunit;
 
 namespace DeadLetter.Core.Tests
 {
-    /// <summary>Core/Scenes: <see cref="SceneSim"/> with DL-01's definition and rules, on its real lane.</summary>
+    /// <summary>Core/Scenes: DL-01 simulated on its own (the <see cref="SceneSim"/> shim over a one-scene chapter), on its real lane.</summary>
     public class SceneSimTests
     {
         private static SceneSim Sim(string cp, bool fromOpening = false)
@@ -95,7 +95,7 @@ namespace DeadLetter.Core.Tests
         public void TheTrench_WithoutTheCart_StrandsHim_AndHeRespawnsAtTheCheckpoint_L4764_L4519_L2997()
         {
             var s = Sim("shutter");
-            int n = WalkRight(s, x => x.ActKind == "dl01.trench");
+            int n = WalkRight(s, x => x.ActKind == "stuck");
             Assert.True(n > 0, "never stranded; x=" + s.X);
             Assert.InRange(s.X, 6.6 + 0.1, 8.0 - 0.1);
             Assert.Equal(-0.8, s.Y, 9);
@@ -105,7 +105,7 @@ namespace DeadLetter.Core.Tests
             {
                 s.Step(new MotorInput { Move = 1 });
                 if (flinchAt < 0 && s.ActPhase == "Flinch") flinchAt = i;
-                if (s.ActKind == "dl01.trench") Assert.Equal(x0, s.X);                // he does not move meanwhile
+                if (s.ActKind == "stuck") Assert.Equal(x0, s.X);                      // he does not move meanwhile (the motor's stuck act)
                 if (s.ActKind == null) respawnAt = i;
             }
             Assert.Equal(13, flinchAt);                                                 // t > 0.2 s: twelve sixtieths sum to 0.19999999999999998
@@ -153,7 +153,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(4, s.Steps);
         }
 
-        // ---- The save across scenes (NewGame, Continue, Begin, Handover) --------------------------------------------------
+        // ---- The save (NewGame, Continue, Begin) -------------------------------------------------------------------------
         private static SaveModel Slot(MemorySaveStore store)
         {
             Assert.True(store.TryLoad(0, out var m));
@@ -231,49 +231,14 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(12.5, s.Checkpoints.PlayTime);
         }
 
-        /// <summary>
-        /// DL-01's passage ends at <c>room</c> and DL-02 takes him on: the previous scene's service carries the game (calm
-        /// mode, flags, seen moments, play time) into the next one; the hand-over writes nothing, and a respawn keeps it.
-        /// </summary>
+        // ---- The chapter's checkpoint table (ChapterDefs.PrologueCheckpoints) -------------------------------------------
         [Fact]
-        public void Handover_CarriesTheGame_CalmModeIncluded_IntoTheNextScene()
+        public void TheTable_IsThePrologueInPlayOrder_AndEachSceneOwnsItsOwn_L7975()
         {
-            var store = SavedAtHall();
-            var a = new SceneSim(Dl01Scene.Def(), store: store);
-            Assert.True(a.Continue());
-            a.Checkpoints.MinSecondsBetweenWrites = 2;
-            Assert.True(a.Checkpoints.Reach("room"));                                   // the passage's end (L2145); written
-            a.Checkpoints.SetFlag(StoryFlags.Curio("scale"));
-            Assert.True(a.Checkpoints.Pending);                                         // held by the rate limit
-            int writes = store.Writes;
-
-            var b = new SceneSim(Dl02Scene.Def(), store: store);
-            b.Handover("room", 13.2, 0, 1, a.Checkpoints);
-            Assert.False(a.Checkpoints.Pending);
-            int after = store.Writes;
-            Assert.Equal(writes + 1, after);                                            // the held write, flushed; nothing else
-            Assert.Equal("room", b.Checkpoints.Current.Name);
-            Assert.True(b.Checkpoints.Settings.Calm);
-            Assert.True(b.Graph.Calm);
-            Assert.True(b.Checkpoints.Flags.Has(StoryFlags.Curio("cot")));
-            Assert.True(b.Checkpoints.Flags.Has(StoryFlags.Curio("scale")));
-            Assert.True(b.Checkpoints.HasSeen(Dl01Rules.LabelWake));
-            Assert.Equal(12.5, b.Checkpoints.PlayTime);
-            b.Respawn();
-            Assert.Equal(after, store.Writes);
-            Assert.True(b.Checkpoints.Settings.Calm);
-            Assert.True(b.Checkpoints.Flags.Has(StoryFlags.Curio("scale")));
-            var m = Slot(store);
-            Assert.True(m.Settings.Calm);
-            Assert.Contains(StoryFlags.Curio("scale"), m.Flags);
-        }
-
-        // ---- The chapter's checkpoint table (PrologueCheckpoints) ----------------------------------------------------
-        [Fact]
-        public void TheTable_IsThePrologueInPlayOrder_AndEachSceneTakesItsOwnFromIt_L7975()
-        {
-            var all = PrologueCheckpoints.All;
+            var table = ChapterDefs.PrologueCheckpoints;
+            var all = table.All;
             Assert.Equal(22, all.Count);
+            Assert.Equal(Mechanisms.Checkpoint.PrototypeOrder, table.Order);
             for (int i = 0; i < all.Count; i++)
             {
                 Assert.Equal(Mechanisms.Checkpoint.PrototypeOrder[i], all[i].Name);
@@ -282,16 +247,17 @@ namespace DeadLetter.Core.Tests
                 Assert.StartsWith("DL-", all[i].Scene);
             }
             Assert.Equal("forwarded", all[all.Count - 1].Name);
-            Assert.False(PrologueCheckpoints.TryGet("school", out _));                 // chapter 1's
-            Assert.Equal(3.4, PrologueCheckpoints.Get("cage").Y);
-            foreach (var def in new[] { Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def() })
+            Assert.False(table.TryGet("school", out _));                               // chapter 1's
+            Assert.Equal(3.4, table.Get("cage").Y);
+            foreach (var def in ChapterDefs.Prologue().Scenes)
             {
-                Assert.Equal(PrologueCheckpoints.Of(def.Id), def.Checkpoints);
-                Assert.NotEmpty(def.Checkpoints);
+                Assert.NotEmpty(table.Of(def.Id));
+                foreach (var cp in table.Of(def.Id)) Assert.Equal(def.Region, cp.Region);
             }
-            Assert.Equal(new[] { "ration", "hatch" }, Array.ConvertAll(Dl05Scene.Def().Checkpoints, c => c.Name));   // bay is DL-04's
-            Assert.Equal(Dl04Scene.BayX, PrologueCheckpoints.Get("bay").X);
-            Assert.Equal(Dl06Scene.ScannedX, PrologueCheckpoints.Get("scanned").X);
+            Assert.Equal(new[] { "ration", "hatch" }, Array.ConvertAll(table.Of(Dl05Scene.Id), c => c.Name));   // bay is DL-04's
+            Assert.Equal(Dl04Scene.BayX, table.Get("bay").X);
+            Assert.Equal(Dl06Scene.ScannedX, table.Get("scanned").X);
+            Assert.Throws<ArgumentException>(() => new CheckpointTable(table.Order, table.Get("hall"), table.Get("start")));   // out of play order
         }
 
         /// <summary>Each scene respawns at the checkpoint it was walked into under, the previous scene's (L8494).</summary>

@@ -22,9 +22,8 @@ namespace DeadLetter.Core.Scenes.Dl02
         {
             Id = Id,
             Title = "The Sorting Hall",
-            X0 = Dl02Lane.X0, X1 = Dl02Lane.X1,                                                    // sceneName, L8139
+            X0 = Dl02Lane.X0, X1 = Dl02Lane.X1,                                                    // sceneName, L8139; its checkpoint: room (L7980)
             Region = Dl02Lane.Region,
-            Checkpoints = PrologueCheckpoints.Of(Id),                                             // room (L7980)
             // Step order = the prototype's: the box changes in updatePlayer (#4) and is drawn in updateCh1 (#7, L4782),
             // the tube's letter falls in updateCh1 (L4770–L4779), the press stamps in updateHazards, last (#7, L7343–L7351).
             Mechanisms = new[]
@@ -40,28 +39,23 @@ namespace DeadLetter.Core.Scenes.Dl02
     }
 
     /// <summary>
-    /// DL-02's rules: the press keeps the game clock's time (<c>game.clock % period</c>, L7345) and kills (<c>die('crush')</c>,
-    /// L7351; the respawn at <c>room</c> through <see cref="DeathRule"/>); he leaves DL-02 when he reaches the sill's far
-    /// side (<c>sceneName</c>: x ≥ <c>SH.x1</c>, L8139), where DL-03's simulation takes him on.
+    /// DL-02's rules: the press keeps the game clock's time (<c>game.clock % period</c>, L7345) and kills
+    /// (<c>die('crush')</c>, L7351: the motor's death, whose cut asks for the respawn at the checkpoint).
     /// </summary>
     public sealed class Dl02Rules : SceneRules
     {
         private PeriodicCrusher _press;
 
-        /// <summary>Deaths and the death act (one per simulation: the count outlives respawns).</summary>
-        public DeathRule Death { get; } = new DeathRule();
-
-        public override void OnBegin(SceneSim sim, string checkpoint, bool fromOpening)
+        public override void OnBegin(ChapterSim sim, string checkpoint, bool fromOpening)
         {
             if (_press != null) return;
             _press = sim.Graph.Get<PeriodicCrusher>("dl02.press");
             _press.BindClock(() => sim.Clock);                                                   // game.clock, L7345; each step reads it
         }
 
-        public override void AfterGraph(SceneSim sim)
+        public override void AfterGraph(ChapterSim sim)
         {
-            Death.Watch(sim, _press);                                                            // L7351
-            if (!sim.Exited && sim.X >= Dl02Lane.X1) sim.Exit();                                 // DL-03 from SH.x1, L8139
+            if (sim.Graph.Log.Has(_press.Id, MechanismEventKind.Event, (int)CrusherEvent.Crushed)) sim.Die(_press.Params.Kills);   // L7351
         }
     }
 }

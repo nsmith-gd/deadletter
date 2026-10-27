@@ -94,7 +94,7 @@ namespace DeadLetter.Core.Tests
                 Cradle cradle = null;
                 LoadPlate plate = null;
                 PlateDoor door = null;
-                r.Sim = TraceReplay.Run(t, Dl04Scene.Def(pending), r.Checkpoint, false, from, to, (p, sim) =>
+                r.Sim = TraceReplay.Run(t, Dl04Scene.Def().WithRules(() => new Dl04Rules { RacksDarkAtBegin = pending }), r.Checkpoint, false, from, to, (p, sim) =>
                 {
                     if (courier == null)
                     {

@@ -28,8 +28,8 @@ namespace DeadLetter.Core.Scenes
     {
         private readonly TransitLeg[] _legs;
         private readonly double _speed, _yawRate;
-        private readonly Action<SceneSim, int> _onLeg;
-        private readonly Action<SceneSim> _onEnd;
+        private readonly Action<ChapterSim, int> _onLeg;
+        private readonly Action<ChapterSim> _onEnd;
         private int _stage;
         private int _returnFrom = int.MaxValue;
         private double _returnSpeed;
@@ -37,7 +37,7 @@ namespace DeadLetter.Core.Scenes
         /// <param name="onLeg">Called when a leg's point is reached, with the new stage (DL-01: stage 2 is region 2, L2152).</param>
         /// <param name="onEnd">Called on the step the last leg's turn is done (DL-01: checkpoint <c>room</c>, L2145).</param>
         public TransitAct(string kind, TransitLeg[] legs, double speed, double x, double y, double z, double yaw, double yawRate,
-            Action<SceneSim, int> onLeg = null, Action<SceneSim> onEnd = null) : base(kind, "0")
+            Action<ChapterSim, int> onLeg = null, Action<ChapterSim> onEnd = null) : base(kind, "0")
         {
             if (legs == null || legs.Length == 0 || !legs[legs.Length - 1].Final) throw new ArgumentException("Legs must end with TurnTo.");
             _legs = legs; _speed = speed; _yawRate = yawRate; _onLeg = onLeg; _onEnd = onEnd;
@@ -62,7 +62,7 @@ namespace DeadLetter.Core.Scenes
         /// </summary>
         public static double FirstTurn(double yaw, TransitLeg first, double yawRate, double dt) => Smooth.MoveTowards(yaw, first.Yaw, yawRate * dt);
 
-        public override bool Step(SceneSim sim, in MotorInput input, double dt)
+        public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
             T += dt;
             bool keep = Leg(sim, dt);
@@ -71,7 +71,7 @@ namespace DeadLetter.Core.Scenes
             return keep;
         }
 
-        private bool Leg(SceneSim sim, double dt)
+        private bool Leg(ChapterSim sim, double dt)
         {
             var leg = _legs[_stage];
             TargetYaw = leg.Yaw;

@@ -155,7 +155,7 @@ namespace DeadLetter.Core.Tests
         /// </summary>
         /// <summary>
         /// He walks in over the sill under DL-02's <c>room</c> (he has not reached <c>weighroom</c>, x &gt; 25.6, L4946) and
-        /// dies: the respawn is at <c>room</c> (13.2, region 2), from the chapter's table (<see cref="PrologueCheckpoints"/>),
+        /// dies: the respawn is at <c>room</c> (13.2, region 2), from the chapter's table (<see cref="ChapterDefs.PrologueCheckpoints"/>),
         /// not DL-03's own checkpoints. The world is derived at <c>room</c>: the weight at its stand, the trolley in the room.
         /// </summary>
         [Fact]
@@ -164,13 +164,13 @@ namespace DeadLetter.Core.Tests
             var s = new SceneSim(Dl03Scene.Def());
             s.Handover("room", 25.45, 0, 1);
             Assert.Equal("room", s.Checkpoints.Current.Name);
-            Assert.True(new Hazards.DeathRule().Die(s, Hazards.DeathKind.Crush));
+            Assert.True(s.Chapter.Die(Hazards.DeathKind.Crush));
             Until(s, default, x => x.ActKind != "death", 600);
             Assert.Equal("room", s.Checkpoints.Current.Name);
             Assert.Equal(13.2, s.X, 12);
             Assert.Equal(0, s.Y);
             Assert.Equal(2, s.Region);
-            Assert.Equal("DL-02", PrologueCheckpoints.SceneOf("room"));                  // the chapter's to hand him back to DL-02
+            Assert.Equal("DL-02", ChapterDefs.PrologueCheckpoints.SceneOf("room"));                  // the chapter's to hand him back to DL-02
             Assert.Equal(Dl03WeightState.Floor, Weight(s).State);
             Assert.Equal(13 + 14.55, Trolley(s).X, 12);                                 // TROLLEY_X
         }

@@ -8,6 +8,7 @@ using DeadLetter.Core.Mechanisms.Docks;
 using DeadLetter.Core.Mechanisms.Plates;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Push;
+using DeadLetter.Core.Scenes.Dl03;
 
 namespace DeadLetter.Core.Scenes.Dl04
 {
@@ -35,21 +36,16 @@ namespace DeadLetter.Core.Scenes.Dl04
         /// <summary>The <c>bayTouch</c> act: he stands at <c>RK.bayX</c> + 0.42 facing −1 (L4806) and lets go at TouchHead f51 (L4493).</summary>
         public const double TouchStandX = Dl04Lane.BayX + 0.42, TouchEndFrame = 51;
         public const int TouchFace = -1;
-        /// <summary>The <c>bay</c> checkpoint once past <c>RK.door.x1</c> + 0.2 (L4947); it places him at x1 + 0.4 (L7983; <see cref="PrologueCheckpoints"/>).</summary>
+        /// <summary>The <c>bay</c> checkpoint once past <c>RK.door.x1</c> + 0.2 (L4947); it places him at x1 + 0.4 (L7983; <see cref="ChapterDefs.PrologueCheckpoints"/>).</summary>
         public const double BayReachX = Dl04Lane.DoorX1 + 0.2, BayX = Dl04Lane.DoorX1 + 0.4;
 
-        /// <summary>
-        /// The scene definition. <paramref name="revealPending"/>: what DL-03 hands on when he walks through
-        /// (<see cref="Dl03.Dl03Rules.RevealPending"/>: solved, the racks still dark until he passes the gate), which the
-        /// <c>solved</c> checkpoint alone does not say (a reload there has them lit, L8029).
-        /// </summary>
-        public static SceneDef Def(bool revealPending = false) => new SceneDef
+        /// <summary>The scene definition. The reveal it shares with DL-03 is the chapter's (<see cref="RacksReveal"/>).</summary>
+        public static SceneDef Def() => new SceneDef
         {
             Id = Id,
             Title = "The Racks",
             X0 = X0, X1 = X1,
-            Region = Dl04Lane.Region,
-            Checkpoints = PrologueCheckpoints.Of(Id),                                           // bay (L7983); he walks in under DL-03's solved
+            Region = Dl04Lane.Region,                                                           // its checkpoint: bay (L7983)
             // Step order = the prototype's: updatePlayer drags the courier (#4, updateHoldCh1 L4683–L4735), then updateCh1's
             // bay (#7, L4783–L4816): the plate reads him, the cradle, then the door.
             Mechanisms = new[]
@@ -62,16 +58,16 @@ namespace DeadLetter.Core.Scenes.Dl04
             Interactables = g => new IInteractable[] { new PushTwin(g.Get<Pushable>("dl04.courier")) },   // courierAlt, L4291–L4294
             Lane = Dl04Lane.Table,
             LaneContributors = Dl04Lane.Contributors,
-            Rules = () => new Dl04Rules(revealPending),
+            Rules = () => new Dl04Rules(),
         };
     }
 
     /// <summary>
-    /// DL-04's bespoke rules: the reveal once he is through the gate (<c>updateDL02</c> L2401–L2403); the realisation
-    /// among the couriers, the <c>kin</c> moment (<c>updatePlayer</c> L1956–L1958, the act L2310–L2314) and the slow walk
-    /// after it (<c>paceSlow</c> L2079); the courier not grabbable once the cradle has it (<c>pushHere</c>: state 'free',
-    /// L4300); the touch once the cradle seats it (L4806); the <c>bay</c> checkpoint (L4947); and the way on into DL-05
-    /// (<c>sceneName</c>, L8139).
+    /// DL-04's bespoke rules: the reveal once he is through the gate (<c>updateDL02</c> L2401–L2403, on the chapter's
+    /// <see cref="RacksReveal"/>, which DL-03's solve leaves pending); the realisation among the couriers, the <c>kin</c>
+    /// moment (<c>updatePlayer</c> L1956–L1958, the act L2310–L2314) and the slow walk after it (<c>paceSlow</c> L2079); the
+    /// courier not grabbable once the cradle has it (<c>pushHere</c>: state 'free', L4300); the touch once the cradle seats
+    /// it (L4806); and the <c>bay</c> checkpoint (L4947).
     /// </summary>
     public sealed class Dl04Rules : SceneRules
     {
@@ -82,39 +78,43 @@ namespace DeadLetter.Core.Scenes.Dl04
         /// </summary>
         public const string SeenRealise = "realise", SeenBayTouch = "bayTouch";
 
-        private readonly bool _handedPending;
-        private bool _begun, _revealed, _revealPending, _realised, _kinSlow;              // per life: resetWorld, L8027–L8034
-        private double _revealTime;
+        public static readonly CueId MusicRacks = CueId.Of("music:racks"), MomentKin = CueId.Of("moment:kin");
+
+        private bool _begun, _realised, _kinSlow;                           // per life: resetWorld, L8027–L8034
+        private RacksReveal _reveal;
         private Pushable _courier;
         private Cradle _cradle;
 
-        public Dl04Rules(bool revealPending = false) { _handedPending = revealPending; }
+        /// <summary>
+        /// DL-04 simulated without DL-03 (a replay of DL-04 alone) and begun at <c>solved</c>: the racks wait in the dark as
+        /// if he had just solved the plate (<c>game.revealPending</c>, L2398), as he finds them walking in from DL-03. A
+        /// chapter with DL-03 never sets it: its <see cref="RacksReveal"/> sees the solve.
+        /// </summary>
+        public bool RacksDarkAtBegin { get; set; }
 
         /// <summary>The directed moment's clock and state (<c>startMoment('kin')</c>; the runtime schedules its cue).</summary>
         public MomentDirector Moment { get; } = new MomentDirector(null);
-        /// <summary><c>game.revealed</c>, <c>game.revealPending</c>, <c>game.revealTime</c> (L2398–L2403, L8029).</summary>
-        public bool Revealed => _revealed;
-        public bool RevealPending => _revealPending;
-        public double RevealTime => _revealTime;
+        /// <summary><c>game.revealed</c>, <c>game.revealPending</c>, <c>game.revealTime</c> (L2398–L2403, L8029): the chapter's <see cref="RacksReveal"/>.</summary>
+        public bool Revealed => _reveal != null && _reveal.Revealed;
+        public bool RevealPending => _reveal != null && _reveal.Pending;
+        public double RevealTime => _reveal != null ? _reveal.Time : RacksReveal.NotYet;
         /// <summary><c>game.realised</c>, <c>game.kinSlow</c> (L1957–L1958, L8034).</summary>
         public bool Realised => _realised;
         public bool KinSlow => _kinSlow;
 
-        public override void OnBegin(SceneSim sim, string checkpoint, bool fromOpening)
+        public override void OnBegin(ChapterSim sim, string checkpoint, bool fromOpening)
         {
             _courier = sim.Graph.Get<Pushable>("dl04.courier");
             _cradle = sim.Graph.Get<Cradle>("dl04.cradle");
             var cradle = _cradle;
             _courier.CanStandAt = _ => !cradle.Taken;                       // pushHere: only while 'free' (L4300)
             var cp = sim.Checkpoints.Current;
-            _revealed = cp.Past("solved");                                   // resetWorld, L8029
-            _revealTime = -100;
-            _revealPending = false;
-            if (!_begun && _handedPending && _revealed) { _revealPending = true; _revealTime = 1e9; }   // as DL-03 left it, L2398
+            _reveal = sim.Shared<RacksReveal>();
+            _reveal.Reset(cp);                                               // resetWorld, L8029
+            if (!_begun && RacksDarkAtBegin && _reveal.Revealed) _reveal.Solve();
             _realised = cp.Past("scanned");                                  // L8034
             _kinSlow = false;
             _begun = true;
-            sim.Motor.SlowWalkLimit = 0;
         }
 
         /// <summary>
@@ -122,11 +122,11 @@ namespace DeadLetter.Core.Scenes.Dl04
         /// couriers a second after the reveal, standing and empty-handed. It stops him (vx = 0) and holds him in the
         /// <see cref="RealiseAct"/> on the moment's clock; and <c>paceSlow</c> (L1978, L2079) sets his pace for this step.
         /// </summary>
-        public override void BeforeMotor(SceneSim sim, ref MotorInput input)
+        public override void BeforeMotor(ChapterSim sim, ref MotorInput input)
         {
             var m = sim.Motor;
             if (m.IsActing || m.IsMantling) return;
-            if (sim.Region == Dl04Lane.Region && _revealed && !_revealPending && sim.Clock - _revealTime > Dl04Scene.RealiseAfter
+            if (sim.Region == Dl04Lane.Region && _reveal.Revealed && !_reveal.Pending && sim.Clock - _reveal.Time > Dl04Scene.RealiseAfter
                 && !_realised && sim.X > Dl04Scene.RealiseX && m.Grounded && m.Hold == HoldKind.None)
             {
                 _realised = true;
@@ -136,7 +136,7 @@ namespace DeadLetter.Core.Scenes.Dl04
                     _kinSlow = true;
                     m.Place(m.X, m.Y, m.Facing);                            // game.vx = 0 (#28: Place is the only way)
                     Moment.Start(PrologueMoments.Kin, sim.Clock, musicAvailable: false);
-                    sim.Cue("moment:kin");
+                    sim.Cue(MomentKin);
                     sim.StartAct(new RealiseAct(Moment, sim.Config.Fps));
                     return;
                 }
@@ -145,14 +145,14 @@ namespace DeadLetter.Core.Scenes.Dl04
             m.SlowWalkLimit = slow ? Dl04Scene.SlowWalk : 0;
         }
 
-        public override void AfterGraph(SceneSim sim)
+        public override void AfterGraph(ChapterSim sim)
         {
             // updateDL02 (#6): the reveal plays the moment he is through the gate, however it was opened (L2401–L2403).
-            if ((_revealPending || !_revealed) && sim.Region == Dl04Lane.Region && sim.X > Dl04Scene.RevealX)
+            if ((_reveal.Pending || !_reveal.Revealed) && sim.Region == Dl04Lane.Region && sim.X > Dl04Scene.RevealX)
             {
-                _revealed = true; _revealPending = false; _revealTime = sim.Clock;
+                _reveal.Reveal(sim.Clock);
                 sim.Checkpoints.Reach("solved");
-                sim.Cue("music:racks");
+                sim.Cue(MusicRacks);
             }
             // updateCh1 (#7): the cradle has seated the courier: he goes to it, once (L4806).
             if (sim.Graph.Log.Has("dl04.cradle", MechanismEventKind.Event, (int)CradleEvent.Seat) && !sim.Checkpoints.HasSeen(SeenBayTouch))
@@ -162,8 +162,6 @@ namespace DeadLetter.Core.Scenes.Dl04
             }
             // The bay checkpoint, through the door (L4947).
             if (sim.Region == Dl04Lane.Region && sim.X > Dl04Scene.BayReachX) sim.Checkpoints.Reach("bay");
-            // sceneName (L8139): from RATION5.x0 it is DL-05.
-            if (!sim.Exited && sim.X >= Dl04Scene.X1) sim.Exit();
         }
     }
 
@@ -189,7 +187,7 @@ namespace DeadLetter.Core.Scenes.Dl04
         /// <summary><c>a.idle</c>: the hand off his chest, standing while the camera pulls away (L2313).</summary>
         public bool Idle { get; private set; }
 
-        public override bool Step(SceneSim sim, in MotorInput input, double dt)
+        public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
             if (_fresh) { _fresh = false; return true; }                    // started this step (L1958 returns)
             T += dt;                                                        // the Realise clip's time (the mixer ran after the step it started)
@@ -222,7 +220,7 @@ namespace DeadLetter.Core.Scenes.Dl04
 
         public override bool OwnsPose => true;
 
-        public override bool Step(SceneSim sim, in MotorInput input, double dt)
+        public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
             if (Phase == "approach")
             {

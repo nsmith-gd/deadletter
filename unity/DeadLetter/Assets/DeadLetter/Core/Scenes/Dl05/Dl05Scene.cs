@@ -44,8 +44,7 @@ namespace DeadLetter.Core.Scenes.Dl05
             Id = Id,
             Title = "The Ration Hall",
             X0 = X0, X1 = X1,
-            Region = Dl05Lane.Region,
-            Checkpoints = PrologueCheckpoints.Of(Id),                                    // ration, hatch (L7984–L7985); he walks in under DL-04's bay
+            Region = Dl05Lane.Region,                                                    // its checkpoints: ration, hatch (L7984–L7985)
             // Step order = the prototype's: updatePlayer moves the drum and the body (#4, updateHoldCh1 L4684–L4735), then
             // updateCh1 weighs the plate, winds the hatch and drops the flag (#7, L4878–L4921).
             Mechanisms = new[]
@@ -108,7 +107,7 @@ namespace DeadLetter.Core.Scenes.Dl05
     /// mechanisms): the first time he takes hold of the body he stands over it a moment (<c>grabPush</c>'s
     /// <c>'hesitate'</c>, L4463–L4466); laid on the plate, 1.6 s later he pats the sheet (L4729–L4731); the checkpoints
     /// <c>bay</c>, <c>ration</c> and <c>hatch</c> (L4935–L4936, L4947); the label check by the child's drawing
-    /// (<c>label5</c>, L4940–L4944); and the way on into region 3, DL-06 (L2042, L8139).
+    /// (<c>label5</c>, L4940–L4944); and the switch to region 3, which is DL-06 (L2042, L8139).
     /// </summary>
     public sealed class WeighIn05 : SceneRules
     {
@@ -142,7 +141,7 @@ namespace DeadLetter.Core.Scenes.Dl05
         /// <summary>Game-clock time the pat is due (NaN: none pending).</summary>
         public double PatAt => _patAt;
 
-        public override void OnBegin(SceneSim sim, string checkpoint, bool fromOpening)
+        public override void OnBegin(ChapterSim sim, string checkpoint, bool fromOpening)
         {
             _save = sim.Checkpoints;
             _bodyGrabSeen = _save.Seen.Resolve(SeenBodyGrab);
@@ -162,7 +161,7 @@ namespace DeadLetter.Core.Scenes.Dl05
         /// Grab clip. The motor goes straight into the clip on arrival and has no pause (U-11 gap, #22), so the scene holds the
         /// motor still meanwhile (<see cref="Dl05HesitateAct"/>) and lets it go on into the clip from where it was.
         /// </summary>
-        public override void AfterMotor(SceneSim sim, bool freeStep)
+        public override void AfterMotor(ChapterSim sim, bool freeStep)
         {
             var m = sim.Motor;
             var phase = m.IsActing ? m.ActPhase : ActPhase.None;
@@ -177,22 +176,20 @@ namespace DeadLetter.Core.Scenes.Dl05
             if (freeStep && sim.Region == Dl05Lane.Region && sim.X > Dl05Lane.Region3X) sim.SetRegion(Dl05Lane.Region + 1);
         }
 
-        public override void AfterGraph(SceneSim sim)
+        public override void AfterGraph(ChapterSim sim)
         {
             // Laid on the plate: he pats the sheet 1.6 s later (L4729–L4731).
             if (sim.Graph.Log.Has("dl05.body", MechanismEventKind.Event, (int)PushableEvent.Dock)) _patAt = sim.Clock + PatDelay;
-            if (sim.Exited) return;
             // updateCh1 (#7), after the weigh-in: the checkpoints (L4935–L4936), the label (L4940–L4944), bay (L4947).
             if (sim.Region == Dl05Lane.Region)
             {
                 double x = sim.X;
                 if (x > Dl05Scene.RationAt) sim.Checkpoints.Reach("ration");
                 if (x > Dl05Scene.HatchAt) sim.Checkpoints.Reach("hatch");
-                if (!LabelSeen && !sim.Busy && sim.Motor.Hold == HoldKind.None && sim.Grounded && x > Dl05Scene.LabelX0 && x < Dl05Scene.LabelX1
-                    && CanQuirk(sim))
+                if (!LabelSeen && x > Dl05Scene.LabelX0 && x < Dl05Scene.LabelX1 && SceneQuirk.CanStart(sim))
                 {
                     _save.MarkSeen(SeenLabel);
-                    StartQuirk(sim, "CheckLabel");
+                    SceneQuirk.Start(sim, ClipNames.CheckLabel, cancel: true);
                 }
                 if (x > Dl05Scene.BayAt) sim.Checkpoints.Reach("bay");
             }
@@ -201,10 +198,8 @@ namespace DeadLetter.Core.Scenes.Dl05
             if (PatDue(sim))
             {
                 _patAt = double.NaN;
-                if (sim.Region == Dl05Lane.Region && CanQuirk(sim)) StartQuirk(sim, "Pat");
+                if (sim.Region == Dl05Lane.Region && SceneQuirk.CanStart(sim)) SceneQuirk.Start(sim, "Pat", cancel: true);
             }
-            // sceneName (L8139): region 3 is DL-06.
-            if (sim.Region != Dl05Lane.Region) sim.Exit();
         }
 
         /// <summary>
@@ -214,7 +209,7 @@ namespace DeadLetter.Core.Scenes.Dl05
         /// here is available only while it is the nearest grip (<see cref="Pushable.CanStandAt"/> gets the asking face's
         /// stand point). Reads state only; never asks a face's <c>IsAvailable</c> (which calls this).
         /// </summary>
-        private bool GripWins(SceneSim sim, Pushable asking, double stand)
+        private bool GripWins(ChapterSim sim, Pushable asking, double stand)
         {
             double x = sim.Motor.X, y = sim.Motor.Y, bestD = double.PositiveInfinity;
             IPushable best = null;
@@ -233,7 +228,7 @@ namespace DeadLetter.Core.Scenes.Dl05
 
         private static Pushable Base(IPushable f) => f is PushTwin tw ? tw.Base : (Pushable)f;
 
-        private static IPushable TwinOf(SceneSim sim, Pushable p)
+        private static IPushable TwinOf(ChapterSim sim, Pushable p)
         {
             foreach (var it in sim.Resolver.Registered) if (it is PushTwin tw && ReferenceEquals(tw.Base, p)) return tw;
             throw new InvalidOperationException(p.Id + " has no twin registered.");
@@ -241,23 +236,8 @@ namespace DeadLetter.Core.Scenes.Dl05
 
         private bool IsBody(IInteractable t) => ReferenceEquals(t, _body) || (t is PushTwin tw && ReferenceEquals(tw.Base, _body));
 
-        private bool PatDue(SceneSim sim) => !double.IsNaN(_patAt) && sim.Clock >= _patAt - 1e-9;
+        private bool PatDue(ChapterSim sim) => !double.IsNaN(_patAt) && sim.Clock >= _patAt - 1e-9;
 
-        /// <summary><c>playQuirk</c>'s own conditions (L3842): no act, no hold, not mantling, on the ground.</summary>
-        private static bool CanQuirk(SceneSim sim)
-            => !sim.Busy && sim.Motor.Hold == HoldKind.None && !sim.Motor.IsMantling && sim.Motor.Grounded;
-
-        /// <summary>
-        /// <c>playQuirk(clip)</c> (L3841–L3845): cancellable, and he stops (<c>game.vx = 0</c>). #28 (M9): the motor
-        /// can only be stopped by <see cref="D17Motor.Place"/>, which also settles his yaw on his facing and stands him up;
-        /// under the hatch the motor crouches him again on its next step (the clearance, L1975).
-        /// </summary>
-        private static void StartQuirk(SceneSim sim, string clip)
-        {
-            var m = sim.Motor;
-            m.Place(m.X, m.Y, m.Facing);
-            sim.StartAct(new QuirkAct(clip, QuirkAct.ClipSeconds(clip), cancel: true, startClock: sim.Clock));
-        }
     }
 
     /// <summary>
@@ -280,7 +260,7 @@ namespace DeadLetter.Core.Scenes.Dl05
 
         public override bool OwnsPose => true;
 
-        public override bool Step(SceneSim sim, in MotorInput input, double dt)
+        public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
             T += dt;                                                          // a.t += dt (L4390)
             Yaw = Smooth.MoveTowards(Yaw, _facing * Math.PI / 2, _yawRate * dt);

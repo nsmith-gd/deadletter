@@ -79,7 +79,7 @@ namespace DeadLetter.Core.Tests
                         Kind = sim.ActKind, Phase = sim.ActPhase, Cp = sim.Checkpoints.Current.Name, Region = sim.Region, Exited = sim.Exited,
                         Holding = sim.Motor.Hold == HoldKind.Item,
                         Press = press.Face, BoxX = box.X, BoxBase = box.BaseY, BoxState = box.State.ToString(), Letter = letter.State.ToString(),
-                        Deaths = ((Dl02Rules)sim.Rules).Death.Deaths, RespawnAt = sim.RespawnAt,
+                        Deaths = sim.Deaths, RespawnAt = sim.RespawnAt,
                     });
                 });
                 return Cache[key] = r;

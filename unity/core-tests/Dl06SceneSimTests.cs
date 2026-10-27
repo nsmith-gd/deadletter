@@ -140,7 +140,7 @@ namespace DeadLetter.Core.Tests
             Until(s, Right, x => x.X > 68.0);
             Until(s, None, x => x.Graph.Log.Has("dl06.line", MechanismEventKind.Event, (int)CarrierLineEvent.Startle));
             Assert.Equal("quirk:Startle", s.ActKind + ":" + s.ActPhase);
-            Assert.Contains("shake:0.25", s.Cues);
+            Assert.Contains("shake:25", s.Cues);                                         // shake(0.25): its amount in hundredths
         }
 
         // ---- The chute ride ---------------------------------------------------------------------------------------------
