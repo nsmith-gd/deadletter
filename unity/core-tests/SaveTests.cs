@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DeadLetter.Core.Beings;
 using DeadLetter.Core.Mechanisms;
+using DeadLetter.Core.Mechanisms.Catches;
 using DeadLetter.Core.Mechanisms.Routes;
 using DeadLetter.Core.Save;
 using Xunit;
@@ -135,6 +136,58 @@ namespace DeadLetter.Core.Tests
             Assert.True(SaveCodec.TryLoad(Convert.FromBase64String(V1Fixture), out var m1, out _));
             Assert.Empty(m1.Seen);
         }
+
+        /// <summary>
+        /// A v2 slot saved mid-act: the station snapshot lacks the fields v3 added (<c>act.part</c>, <c>act.lastPart</c>,
+        /// the latch's <c>pullF</c>, a lever's <c>clipStuck</c>). The migration fills them as a v2 station implies, so the
+        /// snapshot restores (no fallback to the derived world) exactly as v3 would have saved it, and the act plays on.
+        /// </summary>
+        [Fact]
+        public void Migration_V2MidActStationSnapshot_RestoresWithoutFallingBack()
+        {
+            MechanismGraph Build() => Mech.Graph("start", new Latch("dl01.latch", LatchParams.Dl01Latch()),
+                new Pawl("dl08.pawl", PawlParams.Dl08Pawl()), new TestSource("dl08.platform") { Position = 0.5 });
+            var played = Build();
+            var latch = played.Get<Latch>("dl01.latch");
+            var pawl = played.Get<Pawl>("dl08.pawl");
+            Assert.Equal(-1, Mech.PlayAct(played, pawl, max: 40));           // a LeverStuck cut short (below the landing)
+            Assert.Equal(-1, Mech.PlayAct(played, latch, max: 50));          // mid-Pull, f20
+            var snap = Mech.Snapshot(played);
+
+            var v2 = new SaveDocument(2);
+            v2.SetString("cp", "start"); v2.SetString("scene", "S"); v2.SetDouble("playTime", 3);
+            var keep = new HashSet<string> { "act.part", "act.lastPart", "pullF", "clipStuck" };
+            foreach (var k in snap.Keys)
+                if (!keep.Contains(k.Substring(k.IndexOf('/') + 1))) Copy(snap, k, v2);   // the v3-only fields are left out
+            Assert.False(v2.Contains("mech/dl01.latch/pullF"));
+            Assert.True(v2.Contains("mech/dl01.latch/act.fed"));
+
+            var store = new MemorySaveStore();
+            store.Slots[0] = SaveCodec.Encode(v2);
+            var fresh = Build();
+            var svc = new CheckpointService(fresh, Checkpoint.PrototypeOrder, store, 0, "S");
+            Assert.True(svc.TryContinue());
+            Assert.True(svc.RestoredSnapshot);                                // not the derived-world fallback
+            Assert.NotNull(svc.CheckpointSnapshot);
+            Assert.Equal(WithoutTick(snap.Dump()), WithoutTick(SaveKit.Dump(fresh)));   // as v3 would have saved it
+
+            // The act plays on from the restored frames: the latch releases at f31, the pawl rattles and never bites.
+            var l2 = fresh.Get<Latch>("dl01.latch");
+            Assert.Equal(LatchState.Locked, l2.State);
+            Assert.True(Mech.PlayAct(fresh, l2, startStep: 51) > 0);
+            Assert.Equal(LatchState.Released, l2.State);
+            Assert.Equal(72, l2.LeverDeg, 9);
+        }
+
+        private static void Copy(MemorySnapshot from, string key, SaveDocument to)
+        {
+            try { to.SetDouble("mech/" + key, from.ReadDouble(key)); return; } catch (InvalidOperationException) { }
+            try { to.SetLong("mech/" + key, from.ReadLong(key)); return; } catch (InvalidOperationException) { }
+            to.SetBool("mech/" + key, from.ReadBool(key));
+        }
+
+        private static string WithoutTick(string dump)
+            => string.Join("\n", Array.FindAll(dump.Split('\n'), l => !l.StartsWith("graph/tick=", StringComparison.Ordinal)));
 
         [Fact]
         public void Seen_IsSavedWithTheSlot_SurvivesARespawn_AndStartOverClearsIt_L1309_L4133()
