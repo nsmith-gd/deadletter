@@ -77,6 +77,35 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(0.55, Cradle.SeatedLamp(cradle.SeatedFor));
         }
 
+        /// <summary>
+        /// Dragged to the end of its travel (the courier pushable docks there, <c>|x − max| &lt; 0.005</c>), it is not drawn
+        /// in: the arms close on it where it lies, from that very step (<c>s.state = 'cradle'; s.t = 0</c> in updateHoldCh1,
+        /// then updateCh1's closing, L4724–L4727, L4799–L4808). Before the fix the cradle drew it in for 1.2 s first.
+        /// </summary>
+        [Fact]
+        public void Cradle_ClosesAtOnce_OnACourierDraggedToTheEndOfItsTravel_L4727()
+        {
+            var courier = new DeadLetter.Core.Push.Pushable("dl04.courier", DeadLetter.Core.Push.PushableParams.Dl04Courier());
+            var cradle = new Cradle("dl04.cradle", CradleParams.Dl04Cradle());
+            var g = Mech.Graph("solved", courier, cradle);
+            courier.MoveTo(44.4955, 0.22);                                    // in his hands, within 0.005 of 44.5
+            g.Step(Mech.Dt, PlayerPose.Away);
+            Assert.Equal(CradleState.Free, cradle.State);                    // still dragging
+            courier.OnReleased(false);
+            courier.OnTravelEnd();                                            // the motor let go at the end of travel
+            g.Step(Mech.Dt, PlayerPose.Away);
+            Assert.Equal(DeadLetter.Core.Push.PushableState.Docked, courier.State);
+            Assert.True(Mech.Entered(g, "dl04.cradle", CradleState.Closing));
+            Assert.False(Mech.Entered(g, "dl04.cradle", CradleState.Drawing));
+            var take = PlateKit.Find(g, "dl04.cradle", (int)CradleEvent.Take).Value;
+            Assert.Equal(1, take.Index);                                      // no servo whine on this path
+            Assert.Equal(44.4955, cradle.Position);                           // it stays where he let go
+            Assert.Equal(0, cradle.ArmRad);                                   // −0.558 · smooth((dt − 0.3) / 0.8)
+            int seated = Mech.RunUntil(g, () => cradle.Engaged);
+            Assert.Equal(65, seated);                                         // t > 1.1 from t = dt on the closing step
+            Assert.Equal(44.4955, cradle.Position);
+        }
+
         [Theory]
         [InlineData(0.0, 0.05 * 0.4)] [InlineData(2.2, 0.55)] [InlineData(-1, 0.0)]
         public void Cradle_SeatedLampsFlicker22sThenHold_L4818(double t, double v)

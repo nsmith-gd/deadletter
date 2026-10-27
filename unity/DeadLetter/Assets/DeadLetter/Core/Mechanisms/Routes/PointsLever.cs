@@ -22,7 +22,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         Clunk,
         /// <summary>The points went to the exit: the route shot (<c>routeShotAt</c>, L2933).</summary>
         RouteShot,
-        /// <summary>The act ended with the points on the exit, not stuck: the Proud quirk (L2907).</summary>
+        /// <summary>LeverPull f33 with the points on the exit (not stuck): Proud follows once he has stepped back out (L2907; DL-06's rules play it).</summary>
         Proud,
         /// <summary>The <see cref="PointsLeverParams.StartWith"/> signal came on: it switched On by itself (<c>startBelt</c>: klaxon, L2822).</summary>
         AutoStart,
@@ -77,7 +77,10 @@ namespace DeadLetter.Core.Mechanisms.Routes
         private IEngageable _lock, _start;
         private ActInput _act;
         private bool _stuck, _clipStuck, _thrown, _ended, _startWas;
-        private double _from;
+        private double _from, _viewPrev;
+
+        /// <summary>The rate the lever eases toward its angle (<c>ease(cur, want) = cur + (want − cur) · min(1, dt · 8)</c>, L2832).</summary>
+        public const double EaseRate = 8;
 
         public PointsLever(MechanismId id, PointsLeverParams p) : base(id, p.Station) { _p = p; }
 
@@ -85,6 +88,11 @@ namespace DeadLetter.Core.Mechanisms.Routes
         public bool Engaged => State == PointsLeverState.On;
         /// <summary>The lever's angle, degrees (<c>game.leverHold.angle</c> in an act, else the rest angle).</summary>
         public double LeverDeg { get; private set; }
+        /// <summary>
+        /// The lever as it stands, easing toward <see cref="LeverDeg"/> at rate 8 each step (<c>game.stopLever</c>,
+        /// <c>game.pointsLever</c>, L2832–L2834): the view's angle, and where an act's swing starts (<c>a.from</c>, L2910).
+        /// </summary>
+        public double ViewDeg { get; private set; }
         public bool Locked => _lock != null && _lock.Engaged;
 
         /// <summary>Asked when Use starts and again at the end of step-in, which decides the clip (<c>stuck = points && belt running</c>, L2910).</summary>
@@ -100,7 +108,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         {
             bool on = cp.Past(_p.OnAfter) && !cp.Past(_p.OnUntil);
             Init((int)(on ? PointsLeverState.On : PointsLeverState.Off));
-            LeverDeg = RestDeg;
+            LeverDeg = ViewDeg = _viewPrev = RestDeg;                    // game.stopLever = running ? AWAY : NEAR, L8033
             _stuck = _clipStuck = _thrown = _ended = false;
             _from = LeverDeg;
             _startWas = _start != null && _start.Engaged;
@@ -128,9 +136,23 @@ namespace DeadLetter.Core.Mechanisms.Routes
                 _startWas = now;
             }
 
+            double viewBefore = _viewPrev;
             _act.Take();
+            StepAct(ctx, viewBefore);
+            // updateDL03 (#6, after updateScan and updateCarriers): the lever eases toward its angle (L2833–L2834).
+            _viewPrev = ViewDeg;
+            ViewDeg += (LeverDeg - ViewDeg) * Math.Min(1, ctx.Dt * EaseRate);
+        }
+
+        /// <param name="viewAtClip">
+        /// <see cref="ViewDeg"/> as the step that started the clip read it: the act's first frame comes the step after (the
+        /// motor starts a station's clip at #4 and reports frames from the next step), and the prototype took <c>a.from</c>
+        /// at #4 of the clip's step, before that step's ease (L2910).
+        /// </param>
+        private void StepAct(in StepContext ctx, double viewAtClip)
+        {
             if (!_act.Active) { LeverDeg = RestDeg; return; }
-            if (_act.Started) { _stuck = _clipStuck; _thrown = _ended = false; _from = RestDeg; }    // L2910–L2911
+            if (_act.Started) { _stuck = _clipStuck; _thrown = _ended = false; _from = viewAtClip; }   // a.from = game.stopLever, L2910–L2911
             double f = _act.Frame, prev = _act.PrevFrame;
             if (_stuck)
             {
@@ -138,6 +160,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
                 LeverDeg = _from + 2.5 * jig;                                                      // L2916–L2917
                 if (prev <= 12 && f > 12) Emit(ctx, (int)PointsLeverEvent.Clunk, 0);              // L2918
                 if (prev <= 21 && f > 21) Emit(ctx, (int)PointsLeverEvent.Clunk, 1);              // L2919
+                if (ClipClock.Reached(f, _p.StuckOutFrame)) LeverDeg = RestDeg;                    // leverHold = null at f45, L2926
                 return;
             }
             double to = _from > (_p.OnDeg + _p.OffDeg) / 2 ? Math.Min(_p.OnDeg, _p.OffDeg) : Math.Max(_p.OnDeg, _p.OffDeg);   // L2911
@@ -155,12 +178,14 @@ namespace DeadLetter.Core.Mechanisms.Routes
                 _ended = true;
                 if (_p.IsPoints && Engaged) Emit(ctx, (int)PointsLeverEvent.Proud);               // L2907
             }
+            if (ClipClock.Reached(f, _p.OutFrame)) LeverDeg = RestDeg;                             // leverHold = null at f33, L2935
         }
 
         protected override void WriteFields(ISnapshotWriter w)
         {
             w.WriteDouble("lever", LeverDeg);
             w.WriteDouble("from", _from);
+            w.WriteDouble("view", ViewDeg); w.WriteDouble("viewPrev", _viewPrev);
             w.WriteBool("stuck", _stuck); w.WriteBool("clipStuck", _clipStuck); w.WriteBool("thrown", _thrown); w.WriteBool("ended", _ended);
             w.WriteBool("startWas", _startWas);
             _act.Write(w);
@@ -170,6 +195,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         {
             LeverDeg = r.ReadDouble("lever");
             _from = r.ReadDouble("from");
+            ViewDeg = r.ReadDouble("view"); _viewPrev = r.ReadDouble("viewPrev");
             _stuck = r.ReadBool("stuck"); _clipStuck = r.ReadBool("clipStuck"); _thrown = r.ReadBool("thrown"); _ended = r.ReadBool("ended");
             _startWas = r.ReadBool("startWas");
             _act.Read(r);

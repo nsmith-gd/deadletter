@@ -55,6 +55,38 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(6.15, r.Line.SReturn, 12);
         }
 
+        /// <summary>
+        /// The payload is seeded from the game clock (<c>seed = carriers · 7 + floor(game.clock · 13)</c>, L2666–L2673), so a
+        /// line built after game time 0 is told the clock (U-20 DL-06: it counted from the graph's build). At 2500 s the
+        /// seed is 32500 and the carrier comes with three parcels (the prototype's LCG, worked by hand from L2667–L2672; the
+        /// first draw is under 0.2, so empty, for every seed below 25 555, i.e. for the first 33 minutes of a game).
+        /// </summary>
+        [Fact]
+        public void Line_PayloadIsSeededFromTheGameClock_L2666()
+        {
+            var r = new LineRig();
+            r.Line.Clock = 2500;
+            Mech.Run(r.G, 1);
+            var c = r.First;
+            Assert.Equal(2500 + 1.0 / 60, r.Line.Clock);
+            Assert.Equal(3, c.Parcels);
+            double[,] want =
+            {
+                { 0.1695978482671072, 0.05819217315092318, 0.1434165933371599 },
+                { 0.18702456276259596, -0.07157559119936804, 0.11615485195822772 },
+                { 0.1352795820009334, -0.06762245606753158, 0.07752349506016987 },
+            };
+            for (int k = 0; k < 3; k++)
+            {
+                Assert.Equal(want[k, 0], c.ParcelSizeOf(k), 15);
+                Assert.Equal(-want[k, 1], c.ParcelZOf(k), 15);                     // Unity z (three's negated)
+                Assert.Equal(want[k, 2], c.ParcelYawOf(k), 15);
+            }
+            var fresh = new LineRig();                                           // a line left at clock 0 draws seed 0: empty
+            Mech.Run(fresh.G, 1);
+            Assert.Equal(0, fresh.First.Parcels);
+        }
+
         [Fact]
         public void Line_SpawnsAtOnceWhenRunning_RisesAt0_6_DocksAndWaits3_4s_L2696_L2703()
         {
@@ -251,7 +283,7 @@ namespace DeadLetter.Core.Tests
             Mech.Run(r.G, 1);
             Assert.Null(r.Line.Ride);
             int on = r.Until(() => c.State == CarrierState.Move);
-            Assert.InRange(on, 60, 61);                                          // 1.0 s after he is off, L2719
+            Assert.Equal(59, on);                                                // c.t > 1.0 on the 60th step he is off (incl. the one above): 60 × 1/60 sums to 1.0000000000000013, L2719
         }
 
         [Fact]
@@ -541,6 +573,32 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(113, steps);                                            // f45
             Assert.Equal(PointsLeverState.Off, r.Points.State);
             Assert.False(Mech.Emitted(r.G, "dl06.points", PointsLeverEvent.Thrown));
+        }
+
+        /// <summary>
+        /// The lever stands where it has eased to (<c>game.stopLever</c>: rate 8 toward its angle, L2833), and a pull swings
+        /// from there (<c>a.from = game.stopLever</c>, taken on the step the clip starts, before that step's ease; L2911), not
+        /// from its rest angle: just after the belt started, the stop lever still stands near 6° on its way to −18°.
+        /// </summary>
+        [Fact]
+        public void Levers_EaseTowardTheirAngle_AndAPullSwingsFromWhereItStands_L2833_L2911()
+        {
+            var r = new LeverRig("hatch", false);
+            Assert.Equal(6, r.Stop.ViewDeg);
+            r.Scanner.Engaged = true;
+            Mech.Run(r.G, 1);                                                    // startBelt: On, the lever starts toward −18
+            double k = 8.0 / 60, v1 = 6 + (-18 - 6) * k;
+            Assert.Equal(-18, r.Stop.LeverDeg);
+            Assert.Equal(v1, r.Stop.ViewDeg, 12);
+            Mech.Run(r.G, 1);                                                    // the clip's step: #4 reads v1, #6 eases on
+            Assert.Equal(v1 + (-18 - v1) * k, r.Stop.ViewDeg, 12);
+            double first = double.NaN;
+            Mech.PlayAct(r.G, r.Stop, onStep: (s, f) => { if (s == 1) first = r.Stop.LeverDeg; });
+            Assert.Equal(v1, first, 12);                                         // from + (to − from) · smooth((0.4 − 10) / 12) = from
+            Assert.Equal(PointsLeverState.Off, r.Stop.State);                    // from 2.8° > −6° it swings to −18° (L2911); the throw stops the belt
+            Assert.Equal(6, r.Stop.LeverDeg);                                    // leverHold = null at f33: the rest angle
+            for (int i = 0; i < 600; i++) Mech.Run(r.G, 1);
+            Assert.Equal(6, r.Stop.ViewDeg, 9);
         }
 
         [Fact]

@@ -78,6 +78,27 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(1, creaks);
         }
 
+        /// <summary>
+        /// Pull f39 chains the Flinch (#22), and the prototype keeps setting the lever from the Pull clip's time under it
+        /// (L1871–L1872), so it reaches its last key, 72° at f40, two steps into the Flinch (found by Dl01TraceTests,
+        /// #2470), and holds it after the act and through a snapshot.
+        /// </summary>
+        [Fact]
+        public void Latch_LeverRunsOnToItsLastKey_UnderTheFlinch_L1872()
+        {
+            var latch = new Latch("dl01.latch", LatchParams.Dl01Latch());
+            var g = Mech.Graph(latch);
+            int steps = Mech.PlayAct(g, latch);
+            Assert.Equal(98 + 97, steps);                             // Pull to f39.2, then Flinch.time >= 1.6
+            Assert.Equal(72, latch.LeverDeg, 9);
+            Mech.Run(g, 30);
+            Assert.Equal(72, latch.LeverDeg, 9);
+            var copy = new Latch("dl01.latch", LatchParams.Dl01Latch());
+            var g2 = Mech.Graph(copy);
+            g2.Restore(Mech.Snapshot(g));
+            Assert.Equal(Mech.Dump(g), Mech.Dump(g2));
+        }
+
         [Fact]
         public void Latch_AnswersCrouchedFloorOnly_UntilReleased_L1810_L1812()
         {
