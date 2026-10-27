@@ -70,7 +70,7 @@ namespace DeadLetter.Core.Tests
 
         private SimResult PlayDl01(uint seed, bool mechanical)
         {
-            var r = SimRun.Play(Prologue(), new Dl01WakeScript(new PlayerModel(seed, mechanical)));
+            var r = SimRun.Play(Prologue(), new PrologueScript(new PlayerModel(seed, mechanical), "DL-01"));
             _out.WriteLine(r.ToJson());
             return r;
         }
@@ -120,6 +120,43 @@ namespace DeadLetter.Core.Tests
                 r.MarkOr("DL-02") - r.MarkOr("DL-01"), PrototypeMechanicalDl01));
         }
 
+        /// <summary>
+        /// The prologue's mechanical solve (DL-01 to DL-06) on one <see cref="ChapterSim"/>, from the prototype's clock at
+        /// play (the DL-02 press runs on the game clock): each scene starts on the step it starts in the recorded run
+        /// (its <c>sceneName</c> changes in prologue_mech_seed1), to the 0.01 s the marks keep.
+        /// </summary>
+        [Fact]
+        public void Prologue_MechanicalSolve_EntersEachSceneWhenThePrototypeDid()
+        {
+            var t = Trace.Load(Dl01TraceTests.TraceFile);
+            int play = t.FirstIndex(p => p.Mode == "play");
+            var r = SimRun.Play(Prologue(t.Steps[play - 1].Clk), new PrologueScript(new PlayerModel(1, mechanical: true)));
+            _out.WriteLine(r.ToJson());
+            Assert.Null(r.Error);
+            Assert.True(r.Done);
+            double play0 = r.MarkOr("play");
+            foreach (var scene in new[] { "DL-02", "DL-03", "DL-04", "DL-05", "DL-06" })
+            {
+                int k = t.FirstIndex(p => p.Scene != null && p.Scene.StartsWith(scene + " ", StringComparison.Ordinal));
+                double proto = t.Steps[k].Clk - t.Steps[play].Clk, core = r.MarkOr(scene) - play0;
+                _out.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} from play: core {1,7:0.00} s  prototype {2,7:0.000} s", scene, core, proto));
+                Assert.InRange(core - proto, -0.011, 0.011);
+            }
+            Assert.Equal(0, r.Deaths);
+        }
+
+        /// <summary>First-playthrough players through the whole ported prologue: their mistakes and hesitations still finish it.</summary>
+        [Theory]
+        [InlineData(201u)] [InlineData(202u)] [InlineData(203u)] [InlineData(204u)] [InlineData(205u)]
+        [InlineData(206u)] [InlineData(207u)] [InlineData(208u)] [InlineData(209u)] [InlineData(210u)] [InlineData(216u)]
+        public void Prologue_FirstPlaythroughs_Finish(uint seed)
+        {
+            var r = SimRun.Play(Prologue(), new PrologueScript(new PlayerModel(seed, mechanical: false)));
+            _out.WriteLine(r.ToJson());
+            Assert.Null(r.Error);
+            Assert.True(r.Done);
+        }
+
         [Fact]
         public void Dl01_MechanicalSolve_IsDeterministic()
         {
@@ -134,27 +171,40 @@ namespace DeadLetter.Core.Tests
         /// Its choices read the scene's state, so this checks the port of bot.js and Core's responses together.
         /// </summary>
         [Fact]
-        public void Dl01_TheLiveBot_GivesTheRecordedBotsInput_AtEveryStep()
+        public void Dl01_TheLiveBot_GivesTheRecordedBotsInput_AtEveryStep() => LiveBotParity("DL-01");
+
+        /// <summary>
+        /// The same, on through DL-06: the prologue as far as Core has ported it, in one <see cref="ChapterSim"/>, until the
+        /// bot's DL-06 script ends (the belt runs to the exit).
+        /// </summary>
+        [Fact]
+        public void Prologue_TheLiveBot_GivesTheRecordedBotsInput_AtEveryStep() => LiveBotParity("DL-06");
+
+        private void LiveBotParity(string lastScene)
         {
             var t = Trace.Load(Dl01TraceTests.TraceFile);
             int play = t.FirstIndex(p => p.Mode == "play");
-            int room = t.FirstIndex(p => p.Cp == "room");
             var target = Prologue(t.Steps[play - 1].Clk);
-            var bot = new Dl01WakeScript(new PlayerModel(1, mechanical: true));
+            var bot = new PrologueScript(new PlayerModel(1, mechanical: true), lastScene);
             bot.Begin(target);
             var diffs = new List<string>();
-            for (int k = play; k <= room && !bot.Done; k++)
+            int k = play;
+            for (; k < t.Steps.Count && !bot.Done; k++)
             {
                 var mine = bot.Tick();
+                if (bot.Done) break;
                 var theirs = t.Steps[k].Input;
                 if (!SameInput(mine, theirs) && diffs.Count < 10)
-                    diffs.Add(string.Format(CultureInfo.InvariantCulture, "step {0} (+{1}): core {2} vs prototype {3}  [{4}; core x={5:0.000} act={6}]",
-                        t.Steps[k].I, k - play, Show(mine), Show(theirs), t.Steps[k], target.X, target.Act));
+                    diffs.Add(string.Format(CultureInfo.InvariantCulture, "step {0} (+{1}): core {2} vs prototype {3}  [{4}; core x={5:0.000} act={6} hold={7}]",
+                        t.Steps[k].I, k - play, Show(mine), Show(theirs), t.Steps[k], target.X, target.Act, target.Hold));
                 target.Step(mine);
             }
             foreach (var d in diffs) _out.WriteLine(d);
+            _out.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} steps compared ({1:0.00} s of play); bot error: {2}; events: {3}",
+                k - play, (k - play) / 60.0, bot.Out.Error ?? "none", string.Join(" | ", bot.Out.Events)));
             Assert.Empty(diffs);
-            Assert.True(bot.Done, "the bot finished DL-01 inside the recorded window");
+            Assert.Null(bot.Out.Error);
+            Assert.True(bot.Done, "the bot finished " + lastScene + " inside the recorded run");
         }
 
         private static bool SameInput(MotorInput a, MotorInput b) =>
@@ -177,18 +227,19 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// With <c>DL_SIM_OUT=&lt;dir&gt;</c> set (and optionally <c>DL_SIM_SEEDS=2,3,6</c>), writes the mechanical run and
-        /// the first playthroughs (default seeds 201–220, the prototype's batch) as <c>results_core_dl01_mechanical.jsonl</c>
-        /// and <c>results_core_dl01_first_playthrough.jsonl</c> for <c>tools/sim/summarise.py</c>. Without it, it only
-        /// checks the batch completes.
+        /// With <c>DL_SIM_OUT=&lt;dir&gt;</c> set (and optionally <c>DL_SIM_SEEDS=2,3,6</c>), writes the prologue's mechanical
+        /// run (from the recorded run's clock at play, as the prototype's) and first playthroughs (default seeds 201–220, the
+        /// prototype's batch) as <c>results_core_prologue_mechanical.jsonl</c> and <c>results_core_prologue_first_playthrough.jsonl</c>
+        /// for <c>tools/sim/summarise.py</c>. Without it, it only checks the batch completes.
         /// </summary>
         [Fact]
-        public void Dl01_Batch_WritesJsonlForSummarisePy()
+        public void Prologue_Batch_WritesJsonlForSummarisePy()
         {
             string dir = Environment.GetEnvironmentVariable("DL_SIM_OUT");
+            var t = Trace.Load(Dl01TraceTests.TraceFile);
             var mech = new StringBuilder();
             var first = new StringBuilder();
-            var m = SimRun.Play(Prologue(), new Dl01WakeScript(new PlayerModel(1, true)));
+            var m = SimRun.Play(Prologue(t.Steps[t.FirstIndex(p => p.Mode == "play") - 1].Clk), new PrologueScript(new PlayerModel(1, true)));
             Assert.Null(m.Error);
             mech.Append(m.ToJson()).Append('\n');
             string seeds = Environment.GetEnvironmentVariable("DL_SIM_SEEDS");
@@ -197,13 +248,13 @@ namespace DeadLetter.Core.Tests
             else foreach (var part in seeds.Split(',')) list.Add(uint.Parse(part.Trim(), CultureInfo.InvariantCulture));
             foreach (uint seed in list)
             {
-                var r = SimRun.Play(Prologue(), new Dl01WakeScript(new PlayerModel(seed, false)));
+                var r = SimRun.Play(Prologue(), new PrologueScript(new PlayerModel(seed, false)));
                 Assert.Null(r.Error);
                 first.Append(r.ToJson()).Append('\n');
             }
             if (string.IsNullOrEmpty(dir)) return;
-            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "results_core_dl01_mechanical.jsonl"), mech.ToString());
-            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "results_core_dl01_first_playthrough.jsonl"), first.ToString());
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "results_core_prologue_mechanical.jsonl"), mech.ToString());
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "results_core_prologue_first_playthrough.jsonl"), first.ToString());
         }
     }
 }

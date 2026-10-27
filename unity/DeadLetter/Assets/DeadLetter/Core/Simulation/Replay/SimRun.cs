@@ -9,8 +9,8 @@ namespace DeadLetter.Core.Simulation.Replay
     /// </summary>
     public static class SimRun
     {
-        /// <summary>Ten minutes of game time: longer than any one scene's slowest first playthrough.</summary>
-        public const int DefaultMaxSteps = 60 * 600;
+        /// <summary>Thirty minutes of game time: past the slowest first playthrough of a chapter (seed 216 needs ~11 for DL-01–06).</summary>
+        public const int DefaultMaxSteps = 60 * 1800;
 
         public static SimResult Play(ISimTarget target, ScriptedPlayer player, int maxSteps = DefaultMaxSteps)
         {

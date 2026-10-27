@@ -62,15 +62,18 @@ namespace DeadLetter.Core.Simulation.Replay
 
         /// <summary>
         /// A quirk a move cancels (<c>G.act.kind === 'quirk' &amp;&amp; G.act.cancel</c>, bot.js L33). Core keeps the flag
-        /// private (asked on #16); the prototype starts only CheckLabel (L8107, L5778) and the flinch (L1875) uncancellable.
+        /// private (asked on #16), so it is inferred: in the prologue only the wake's label (DL-01's scene <see cref="QuirkAct"/>,
+        /// L8107) and the flinch (<c>Motor.Flinch</c>, L1875) are uncancellable; every other quirk is <c>playQuirk(clip)</c>'s
+        /// default (DL-05's label, L4941; Proud). Chapter 1's L5778 label is another uncancellable one: revisit with #18.
         /// </summary>
         public bool ActCancellable
         {
             get
             {
-                if (Sim.Act != null) return Sim.SceneActKind == ActIds.Quirk && Sim.SceneActPhase.Name != ClipNames.CheckLabel;
+                if (Sim.Act != null)
+                    return Sim.SceneActKind == ActIds.Quirk && !(Sim.SceneActPhase.Name == ClipNames.CheckLabel && Sim.Current != null && Sim.Current.Id == "DL-01");
                 var m = Sim.Motor;
-                return m.IsActing && m.ActVerb == Verb.Quirk && m.Clip != ClipNames.CheckLabel && m.Clip != ClipNames.Flinch;
+                return m.IsActing && m.ActVerb == Verb.Quirk && m.Clip != ClipNames.Flinch;
             }
         }
 
@@ -105,6 +108,7 @@ namespace DeadLetter.Core.Simulation.Replay
         public int Found => 0;
         public MechanismGraph Mechanisms => Sim.Graph;
         public IReadOnlyList<Cue> Cues => Sim.Cues;
+        public T Shared<T>() where T : class, new() => Sim.Shared<T>();
 
         public void Step(in MotorInput input)
         {

@@ -136,17 +136,23 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
 
 ## The bot in Unity's Core (`ReplayTests`, U-18)
 
-`unity/DeadLetter/Assets/DeadLetter/Core/Simulation/Replay` is a C# port of `bot.js` that plays a scene live on Core's
-`SceneSim`, through the `ISimTarget` adapter `SceneSimTarget`. The golden traces above replay the prototype's own
-inputs; the C# bot picks its own, so it can play scenes with no prototype trace (DL-18 onwards) and give
+`unity/DeadLetter/Assets/DeadLetter/Core/Simulation/Replay` is a C# port of `bot.js` that plays the prologue live on
+Core's `ChapterSim`, through the `ISimTarget` adapter `ChapterSimTarget`. The golden traces above replay the
+prototype's own inputs; the C# bot picks its own, so it can play scenes with no prototype trace (DL-18 onwards) and give
 first-playthrough distributions.
 
 - **Same players:** `PlayerModel` is `bot.js`'s mulberry32, so a seed draws the same skill and curiosity as here.
-- **Same choices:** on DL-01 the C# bot presses what `bot.js` pressed in `prologue_mech_seed1` at every step of play.
-  First playthroughs drift from the prototype's seed by seed after the first curiosity: curiosities aren't in Core yet,
-  so the random draws they spend here are skipped there. Compare them as distributions.
-- **Results:** `DL_SIM_OUT=<dir> dotnet test unity/core-tests --filter Dl01_Batch` writes
-  `results_core_dl01_mechanical.jsonl` and `results_core_dl01_first_playthrough.jsonl` (seeds 201 to 220, or
-  `DL_SIM_SEEDS=2,3,6`) in this format, with `"engine": "core"`. `summarise.py` reads both kinds.
-- **A new scene:** port its `bot.js` function as a `ScriptedPlayer` under `Replay/Scripts/`, and play it with
-  `SimRun.Play(new SceneSimTarget(new SceneSim(def)).Begin(checkpoint, fromOpening), script)`.
+- **Same choices:** `Scripts/PrologueScript` ports `opening()` to `returnToSender()` (DL-01 to DL-06, as far as Core
+  has ported the prologue). Playing live, it presses what `bot.js` pressed in `prologue_mech_seed1` at every one of the
+  12,250 steps from play to the belt running for the exit, and each scene starts on the prototype's step.
+- **First playthroughs** drift from the prototype's seed by seed after the first curiosity: curiosities, the cord and
+  the letters aren't in Core yet, so the random draws they spend here are skipped there (the script still draws each
+  chance and notes the skipped beat). The ride into the pile (DL-06) is skipped likewise. Compare them as distributions.
+- **Results:** `DL_SIM_OUT=<dir> dotnet test unity/core-tests --filter Prologue_Batch` writes
+  `results_core_prologue_mechanical.jsonl` and `results_core_prologue_first_playthrough.jsonl` (seeds 201 to 220, or
+  `DL_SIM_SEEDS=2,3,6`) in this format, with `"engine": "core"` and the chapter's cues under `"cues"`.
+  `summarise.py` reads both kinds. The run ends where the ported prologue does, so DL-06 has no column of its own
+  (no DL-07 mark); it is in `total`.
+- **A new scene:** port its `bot.js` function into the script (or a new `ScriptedPlayer` under `Replay/Scripts/` for
+  another chapter), extend the parity test's window, and play it with
+  `SimRun.Play(new ChapterSimTarget(new ChapterSim(def)).NewGame(fromOpening: true), script)`.

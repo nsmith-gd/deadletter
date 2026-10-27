@@ -39,6 +39,8 @@ namespace DeadLetter.Core.Simulation.Replay
         int Found { get; }
         /// <summary>The scene's mechanisms, for script conditions (the cart's state, the door's height, …).</summary>
         MechanismGraph Mechanisms { get; }
+        /// <summary>State the scenes share outside the graph (DL-03/04's <c>RacksReveal</c>: <c>G.revealed</c>).</summary>
+        T Shared<T>() where T : class, new();
     }
 
     /// <summary>A target that raises presentation cues (music, voices, shots) each step; <see cref="SimRun"/> logs them.</summary>
