@@ -27,6 +27,8 @@ namespace DeadLetter.Core.Tests
             new Dl14ChapterProbe(),
             new Dl14aChapterProbe(),
             new Dl14bChapterProbe(),
+            new Dl15ChapterProbe(),
+            new Dl16ChapterProbe(),
         };
     }
 }

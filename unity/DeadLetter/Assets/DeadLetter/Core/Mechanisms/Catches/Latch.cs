@@ -60,7 +60,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
         private readonly LatchParams _p;
         private IPositionSource _trigger;
         private ActInput _act;
-        private double _armedFor = -1;
+        private double _armedFor = -1, _armedAt = double.NaN;
         /// <summary>The Pull frame the act last read before Flinch was chained (−1: none yet).</summary>
         private double _pullFrame = -1;
 
@@ -80,7 +80,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
             bool released = cp.Past(_p.ReleasedAfter);
             Init((int)(released ? LatchState.Released : LatchState.Locked));
             LeverDeg = released ? _p.ReleasedLeverDeg : 0;
-            _armedFor = -1;
+            _armedFor = -1; _armedAt = double.NaN;
             _pullFrame = -1;
             _act.Clear();
         }
@@ -120,9 +120,11 @@ namespace DeadLetter.Core.Mechanisms.Catches
 
             if (_trigger != null && State == LatchState.Locked)
             {
-                if (_armedFor < 0) { if (_trigger.Position >= _p.Threshold) _armedFor = 0; }
+                if (_armedFor < 0) { if (_trigger.Position >= _p.Threshold) { _armedFor = 0; _armedAt = ctx.Clock; } }
                 else _armedFor += ctx.Dt;
-                if (_armedFor >= 0 && (_p.Delay <= 0 || _armedFor > _p.Delay)) Enter(ctx, (int)LatchState.Released);
+                // The delay is a clock difference in the prototype (game.clock − b.fullAt, L5764): with the game clock, time it so.
+                double armed = double.IsNaN(ctx.Clock) || double.IsNaN(_armedAt) ? _armedFor : ctx.Clock - _armedAt;
+                if (_armedFor >= 0 && (_p.Delay <= 0 || armed > _p.Delay)) Enter(ctx, (int)LatchState.Released);
             }
         }
 
@@ -140,6 +142,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
         {
             w.WriteDouble("lever", LeverDeg);
             w.WriteDouble("armedFor", _armedFor);
+            w.WriteDouble("armedAt", _armedAt);
             w.WriteDouble("pullF", _pullFrame);
             _act.Write(w);
         }
@@ -148,6 +151,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
         {
             LeverDeg = r.ReadDouble("lever");
             _armedFor = r.ReadDouble("armedFor");
+            _armedAt = r.ReadDouble("armedAt");
             _pullFrame = r.ReadDouble("pullF");
             _act.Read(r);
         }

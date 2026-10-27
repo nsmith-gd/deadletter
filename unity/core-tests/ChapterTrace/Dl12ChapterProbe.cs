@@ -99,7 +99,8 @@ namespace DeadLetter.Core.Tests
                 {
                     // The face he takes: its own (left of it) or the twin's (right of it, a verb).
                     var (id, at) = PushedNear(p);
-                    return (p.X < at ? id : "Grab") + ":" + (phase == "approach" ? "Approach" : "Clip");
+                    if (id.StartsWith("dl15.") || id.StartsWith("dl14b.") && p.X > at) id = "Grab";   // their faces are not mechanisms
+                    return (p.X < at || id == "Grab" ? id : "Grab") + ":" + (phase == "approach" ? "Approach" : "Clip");
                 }
                 case "liftItem": return ItemAt(p) + ":" + (phase == "approach" ? "Approach" : "Clip");
                 case "setdownItem": return ItemAt(p) + ":Clip";
@@ -130,6 +131,8 @@ namespace DeadLetter.Core.Tests
                 case "nudge14b": return "dl14b.figure:" + (phase == "approach" ? "Approach" : "Nudge");
                 case "hide": return (p.X < 266 ? "dl14b.nicheA:" : "dl14b.bay:") + (phase == "approach" ? "Approach" : phase == "in" ? "StepIn" : phase == "act" ? "Clip" : "StepOut");
                 case "escorted": return "Escorted:Clip";
+                case "sit": return "dl15.chair:" + (phase == "approach" ? "Approach" : phase == "up" ? "SitUp" : "Clip");
+                case "lever16": return "dl16.lever:" + (phase == "approach" ? "Approach" : "Clip");
                 default: return "att." + p.Aw + ":" + phase;
             }
         }
@@ -141,6 +144,13 @@ namespace DeadLetter.Core.Tests
         /// <summary>The pushable he is taking hold of: the one whose stand points are nearest.</summary>
         private static (string id, double at) PushedNear(TraceStep p)
         {
+            if (p.Ax15.HasValue && p.X > 278)
+            {
+                // The DL-15 figure whose stand point he is nearest (gap 0.6 either side).
+                double a = System.Math.Min(System.Math.Abs(p.X - (p.Ax15.Value - 0.6)), System.Math.Abs(p.X - (p.Ax15.Value + 0.6)));
+                double b = System.Math.Min(System.Math.Abs(p.X - (p.Bx15.Value - 0.6)), System.Math.Abs(p.X - (p.Bx15.Value + 0.6)));
+                return a <= b ? ("dl15.figA", p.Ax15.Value) : ("dl15.figB", p.Bx15.Value);
+            }
             if (p.Fx14b.HasValue && p.X > 262) return ("dl14b.figure", p.Fx14b.Value);
             if (p.F13x.HasValue && p.X > 212) return ("dl13.figure", p.F13x.Value);
             return ("dl12.figure", p.F12x.Value);

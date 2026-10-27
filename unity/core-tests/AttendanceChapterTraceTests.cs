@@ -238,6 +238,7 @@ namespace DeadLetter.Core.Tests
             if (m.Hold == HoldKind.Item) return "item";
             if (m.Pushed is Scenes.Dl14b.Dl14bFigure) return "push:fig14b";
             if (m.Pushed is Scenes.Dl14b.Dl14bFigureFace) return "push:fig14br";
+            if (m.Pushed is Scenes.Dl15.Dl15FigureFace f15) return "push:f15" + (f15.Base.Id.Value == "dl15.figA" ? "A" : "B") + (f15.Side < 0 ? "r" : "");
             var b = Base(m.Pushed);
             return "push:" + PushKey(b.Id.Value) + (m.Pushed is Push.PushTwin ? "Alt" : "");
         }
