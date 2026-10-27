@@ -201,6 +201,30 @@ const RECORDER = `window.__record = (rngSeed, until) => {
       cr8: JSON.stringify(crates.map((c) => [c.type, c.state, r6(c.x), r6(c.y ?? null), r6(c.z), r6(c.t), r6(c.spin)])), rs8: rs,
     };
   }
+  // DL-09 (U-21): the cage (c.phase, c.y, its slip speed c.v, its clock c.t, the pawl thrown, caught once, needs a step
+  // out, readyAt; L5011-L5095), the balance gauge's needle (c.needle, L5054), the two plates (state, x, base, seat;
+  // L4109, L4398-L4402), the counterweight's and the cage's persist flags (persist.cw, cageDanger), the cable (shocks
+  // this life, the first-touch flag, the arcs' clock game.clock % ARC_PERIOD; L7398-L7414), the tunnel's triggers
+  // (dl4.hopped, dl4.awed, L3426-L3436), the refuge moment's clock and cut (L915, L953), the act's clock (game.act.t),
+  // deaths and a pending respawn. Only while sceneName() is DL-09 and on the step he leaves it; names end in 9 so no
+  // other scene's fields collide.
+  let in09 = false;
+  function dl09() {
+    const now = /^DL-09/.test(D.scene()), emit = now || in09;
+    in09 = now;
+    const s = G.ch1;
+    if (!emit || !s || !s.cage || !s.plates) return {};
+    const c = s.cage, P = D.persist, d4 = G.dl4 || {}, p = (k) => s.plates[k] || {}, mt = D.Music.momentTime('refuge');
+    const n = (v) => (v === undefined ? null : r6(v));
+    return {
+      cp9: c.phase, cy9: r6(c.y), cv9: r6(c.v), ct9: r6(c.t), th9: b(c.thrown), co9: b(c.caughtOnce), ne9: b(c.needExit), ry9: r6(c.readyAt), nd9: r6(c.needle ?? 0),
+      p0s9: p(0).state ?? null, p0x9: n(p(0).x), p0b9: n(p(0).base), p0q9: p(0).seat ?? null,
+      p1s9: p(1).state ?? null, p1x9: n(p(1).x), p1b9: n(p(1).base), p1q9: p(1).seat ?? null,
+      cw9: P.cw ?? 0, dg9: b(P.cageDanger), so9: b(P.shockedOnce), sk9: s.shocked || 0, ta9: r6(D.arcT()),
+      hp9: b(d4.hopped), aw9: b(d4.awed), mt9: mt == null ? null : r6(mt), mc9: b(G.momentCut), at9: G.act && typeof G.act.t === 'number' ? r6(G.act.t) : null,
+      dn9: G.deaths, ra9: r6(G.respawnAt || 0),
+    };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -218,6 +242,7 @@ const RECORDER = `window.__record = (rngSeed, until) => {
       ...dl06(),
       ...dl07(),
       ...dl08(),
+      ...dl09(),
     };
   }
   window.__stopped = false;

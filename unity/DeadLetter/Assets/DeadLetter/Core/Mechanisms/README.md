@@ -29,6 +29,9 @@ and an `L` citation per value. Inputs are `MechanismId` fields; the "solved" fla
 - `Reset(in Checkpoint cp)`: derive everything from `cp.Past(_p.XAfter)` and from sources (already reset); `Init(...)`,
   not `Enter`. Clear pending input.
 - Time: accumulate `ctx.Dt`; compare clip frames with `ClipClock.Reached/Crossed`, time thresholds with a 1e-9 slack.
+  Exception: a clock the prototype itself sums from 0 a step at a time (`c.t += dt`) and compares raw (`c.t > 1.0`) is
+  the same double here: compare it raw too. Sixty steps of 1/60 sum to 1.0000000000000013, so with the slack the
+  threshold passes a step late (`SlippingCage`, found by the DL-09 trace at #22003; U-21).
 - Per tick: no allocation, no LINQ, no lookups, no UnityEngine. Randomness: a `SimRng` field (`Core/Simulation`),
   `SimRng.Xorshift(_p.Seed)`; `Reseed` in `Reset`, `_rng.Write(w, "rng")` in the snapshot; `_rng.Chance(dt * rate)`
   for the prototype's `Math.random() < dt · rate`.

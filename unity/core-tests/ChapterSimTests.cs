@@ -176,8 +176,8 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// Continue at every checkpoint the prologue places (#31 review): each of DL-01 to DL-08's lands him in its own scene,
-        /// region and lane; each of DL-09 to DL-11's (placed in the table, owned by scenes this chapter lacks) is refused,
+        /// Continue at every checkpoint the prologue places (#31 review): each of DL-01 to DL-09's lands him in its own scene,
+        /// region and lane; each of DL-10 and DL-11's (placed in the table, owned by scenes this chapter lacks) is refused,
         /// with nothing changed here or in the slot, where it used to return true with him exited and the lane on region 1.
         /// </summary>
         [Fact]
@@ -231,8 +231,8 @@ namespace DeadLetter.Core.Tests
                 Assert.Equal(slot, store.Slots[0]);
                 refused++;
             }
-            Assert.Equal(15, continued);                                                        // start … latched
-            Assert.Equal(7, refused);                                                           // cage … forwarded
+            Assert.Equal(18, continued);                                                        // start … tunnel
+            Assert.Equal(4, refused);                                                           // uponly … forwarded
         }
 
         /// <summary>A respawn due at a checkpoint none of the chapter's scenes owns is refused before anything reloads (#31 review).</summary>
@@ -472,7 +472,7 @@ namespace DeadLetter.Core.Tests
             Assert.Throws<ArgumentException>(() => new ChapterDef("x", cps, Dl02Scene.Def(), Dl02Scene.Def()));            // twice
             Assert.Throws<ArgumentException>(() => new ChapterDef("x", cps, Dl06Scene.Def(), Dl05Scene.Def()));            // regions go back
             var prologue = ChapterDefs.Prologue();
-            Assert.Equal(new[] { "DL-01", "DL-02", "DL-03", "DL-04", "DL-05", "DL-06", "DL-07", "DL-08" }, Array.ConvertAll(ToArray(prologue.Scenes), d => d.Id));
+            Assert.Equal(new[] { "DL-01", "DL-02", "DL-03", "DL-04", "DL-05", "DL-06", "DL-07", "DL-08", "DL-09" }, Array.ConvertAll(ToArray(prologue.Scenes), d => d.Id));
             Assert.NotNull(new ChapterDef("x", cps, Dl01Scene.Def(), Dl02Scene.Def()));                                    // a region seam: DL-01 → DL-02
         }
 

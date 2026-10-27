@@ -117,6 +117,26 @@ namespace DeadLetter.Core.Mechanisms.Lifts
         public double CatchY => _p.Landing + _p.CatchAbove;
         /// <summary>The phases in which Use throws the pawl (L5085).</summary>
         public bool PawlThrowable => _riding && IsThrowable(State);
+        /// <summary>
+        /// The cage act is over: caught at the landing more than <see cref="SlippingCageParams.ProudAfter"/> ago
+        /// (<c>c.phase === 'caught' &amp;&amp; c.t &gt; 0.4</c>, L5094). The act asks this at #4, before the cage steps; the cage
+        /// then ends the ride (<see cref="SlippingCageEvent.RideEnd"/>, Proud) at the head of its own step.
+        /// </summary>
+        public bool RideDone => State == SlippingCageState.Caught && _riding && Past(_t, _p.ProudAfter);
+        /// <summary>Seconds until he may board again (<c>c.readyAt − game.clock</c>); ready once below zero.</summary>
+        public double ReadyIn => _readyIn;
+        /// <summary>He must step out of the shaft before it will take him again (<c>c.needExit</c>, after a dip, L5029).</summary>
+        public bool NeedExit => _needExit;
+        /// <summary>It has caught once on this ride (<c>c.caughtOnce</c>, L5041).</summary>
+        public bool CaughtOnce => _caughtOnce;
+        public SlippingCageParams Params => _p;
+
+        /// <summary>
+        /// The prototype's <c>c.t &gt; s</c>, as it is: <c>c.t</c> is summed from 0 a step at a time exactly as <see cref="_t"/> is, so
+        /// the two agree to the bit and no slack is wanted. Sixty steps of 1/60 sum to 1.0000000000000013, past 1.0: the settle
+        /// ends on its 60th step, not its 61st (U-21, the prologue trace at #22003).
+        /// </summary>
+        private static bool Past(double t, double s) => t > s;
 
         private static bool IsThrowable(SlippingCageState s)
             => s == SlippingCageState.Lower || s == SlippingCageState.Shudder || s == SlippingCageState.Slip || s == SlippingCageState.Stall;
@@ -156,7 +176,7 @@ namespace DeadLetter.Core.Mechanisms.Lifts
 
             // The cage act (#4), before updateCage.
             if (_catch != null && _catch.Engaged && IsThrowable(State)) { Enter(ctx, (int)SlippingCageState.Bite); _t = 0; }   // L5089
-            if (State == SlippingCageState.Caught && _riding && After(_t, _p.ProudAfter))                                       // L5094
+            if (State == SlippingCageState.Caught && _riding && Past(_t, _p.ProudAfter))                                       // L5094
                 EndRide(ctx, QuirkProud);
 
             // updateCage (#7).
@@ -173,8 +193,8 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             if (State == SlippingCageState.Dip)
             {
                 y = _p.Top - (loaded > 0 ? _p.DipOne : _p.DipEmpty) * Smooth.Step(_t / _p.DipTime);        // L5024
-                if (After(_t, _p.DipTime) && !After(_t - dt, _p.DipTime)) Emit(ctx, (int)SlippingCageEvent.DipBang);   // L5025
-                if (After(_t, _p.DipHold)) { Enter(ctx, (int)SlippingCageState.HaulDip); _t = 0; }  // L5026
+                if (Past(_t, _p.DipTime) && !Past(_t - dt, _p.DipTime)) Emit(ctx, (int)SlippingCageEvent.DipBang);   // L5025
+                if (Past(_t, _p.DipHold)) { Enter(ctx, (int)SlippingCageState.HaulDip); _t = 0; }  // L5026
             }
             else if (State == SlippingCageState.HaulDip)
             {
@@ -198,14 +218,14 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             {
                 case SlippingCageState.Settle:
                     y = _p.Top - _p.SettleDrop * Smooth.Step(_t / _p.SettleTime);                  // L5036
-                    if (After(_t, _p.SettleHold)) { Enter(ctx, (int)SlippingCageState.Lower); _t = 0; }
+                    if (Past(_t, _p.SettleHold)) { Enter(ctx, (int)SlippingCageState.Lower); _t = 0; }
                     break;
                 case SlippingCageState.Lower:
                     y -= _p.LowerSpeed * dt;                                                       // L5037
                     if (y < _p.Top - _p.LowerBy) { Enter(ctx, (int)SlippingCageState.Shudder); _t = 0; }
                     break;
                 case SlippingCageState.Shudder:
-                    if (After(_t, _p.ShudderTime)) { Enter(ctx, (int)SlippingCageState.Slip); _t = 0; _v = 0; }   // L5038
+                    if (Past(_t, _p.ShudderTime)) { Enter(ctx, (int)SlippingCageState.Slip); _t = 0; _v = 0; }   // L5038
                     break;
                 case SlippingCageState.Slip:
                     _v = Math.Min(_p.SlipMax, _v + _p.SlipAccel * dt); y -= _v * dt;               // L5040
@@ -222,14 +242,14 @@ namespace DeadLetter.Core.Mechanisms.Lifts
                     }
                     break;
                 case SlippingCageState.Stall:
-                    if (After(_t, _p.StallTime)) { Enter(ctx, (int)SlippingCageState.Slip); _t = 0; _v = _p.StallSlip; }   // L5045
+                    if (Past(_t, _p.StallTime)) { Enter(ctx, (int)SlippingCageState.Slip); _t = 0; _v = _p.StallSlip; }   // L5045
                     break;
                 case SlippingCageState.Bite:
                     y += (landing - y) * (1 - Smooth.DecayFactor(_p.BiteRate, dt));               // L5046, exact at 60 Hz (§3.1)
-                    if (After(_t, _p.BiteTime)) { y = landing; Enter(ctx, (int)SlippingCageState.Caught); _t = 0; }
+                    if (Past(_t, _p.BiteTime)) { y = landing; Enter(ctx, (int)SlippingCageState.Caught); _t = 0; }
                     break;
                 case SlippingCageState.Crash:
-                    if (After(_t, _p.CrashHold)) { Enter(ctx, (int)SlippingCageState.Haul); _t = 0; }   // L5047
+                    if (Past(_t, _p.CrashHold)) { Enter(ctx, (int)SlippingCageState.Haul); _t = 0; }   // L5047
                     break;
                 case SlippingCageState.Haul:
                     y = Math.Min(_p.Top, y + _p.HaulSpeed * dt);                                   // L5048

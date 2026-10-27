@@ -90,7 +90,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(new[] { "Settle", "RideStart#1" }, s.Trace);
             Assert.InRange(s.Motor.X, ShaftX0 + 0.1, ShaftX1 - 0.1);
             int stall = s.StepUntil(Sim.Move(0), () => s.Cage.State == SlippingCageState.Stall);
-            Assert.Equal(253 - 1, stall);                                    // 253 steps from boarding (LiftTests)
+            Assert.Equal(251 - 1, stall);                                    // 251 steps from boarding (LiftTests)
             Assert.Equal(1.95, s.Motor.Y, 12);                               // ride sync: on the cage floor
             for (int i = 0; i < 10; i++) s.Step(Sim.Move(0));
             s.Step(Sim.Use());
@@ -118,7 +118,7 @@ namespace DeadLetter.Core.Tests
                 minY = Math.Min(minY, s.Motor.Y);
                 return s.Trace.Contains("Death#0");
             });
-            Assert.Equal(388 - 1, death);
+            Assert.Equal(385 - 1, death);
             Assert.Equal(-0.1, s.Cage.Y);
             Assert.True(minY < 0.1);
             // Respawn (§4.14): the world is rebuilt for the checkpoint and he is back at the top.

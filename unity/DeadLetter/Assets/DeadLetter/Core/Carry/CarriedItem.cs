@@ -51,6 +51,13 @@ namespace DeadLetter.Core.Carry
         public ItemState MovedState = ItemState.Placed;
         public double MovedX, MovedBaseY;
         public int MovedSlot = -1;
+        /// <summary>
+        /// It also starts moved past <see cref="MovedWithFlagAfter"/> while this persist flag is set (§4.28): DL-09's plates
+        /// stay in the counterweight's tray through a respawn at <c>cage</c> once both are in (<c>persist.cw &gt;= 2</c>,
+        /// <c>resetCh1</c> L4109). Null = no flag.
+        /// </summary>
+        public string MovedWithFlag;
+        public string MovedWithFlagAfter;
 
         /// <summary>DL-02's parcel box: 0.40 × 0.20 at x 17.4 on the floor (<c>SH.boxX</c> L3888; <c>itemsHere</c> L4261 h 0.2, r 0.2, BAIL_BELOW_WRIST; surface L4150).</summary>
         public static CarriedItemParams Dl02Box() => new CarriedItemParams
@@ -75,6 +82,8 @@ namespace DeadLetter.Core.Carry
         public const double DropSeconds = 0.2;
 
         private readonly CarriedItemParams _p;
+        private IPersistFlagReader _flags;
+        private int _flag = -1;
         private bool _lift, _down, _move;
         private double _downX, _downY, _moveX, _moveY;
         private ItemState _moveState;
@@ -167,9 +176,16 @@ namespace DeadLetter.Core.Carry
         public double TopAt(double x)
             => _p.Solid && State == ItemState.Floor && Math.Abs(x - X) <= _p.Half ? BaseY + _p.Height : double.NaN;
 
+        public override void Link(MechanismLinker link)
+        {
+            if (_p.MovedWithFlag == null) return;
+            _flags = link.Flags;
+            _flag = _flags.Resolve(_p.MovedWithFlag);
+        }
+
         public override void Reset(in Checkpoint cp)
         {
-            bool moved = cp.Past(_p.MovedAfter);
+            bool moved = cp.Past(_p.MovedAfter) || (_flag >= 0 && _flags.Get(_flag) && cp.Past(_p.MovedWithFlagAfter));   // L4109
             Init((int)(moved ? _p.MovedState : ItemState.Floor));
             X = moved ? _p.MovedX : _p.HomeX;
             BaseY = moved ? _p.MovedBaseY : _p.HomeBaseY;

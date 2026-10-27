@@ -339,11 +339,12 @@ namespace DeadLetter.Core.Tests
         public void Cage_FullRide_WithoutThePawl_SlipsCatchesOnceStallsAndCrashes_Death_L5031_L5048()
         {
             var s = new Dl09(2);
-            var trace = RunCage(s, 865);  // ready again 1.6 s after the top: 773 + 97 > 865
+            var trace = RunCage(s, 865);  // ready again 1.6 s after the top: 770 + 97 > 865
             // Settle > 1.0 s, lower 0.55 m at 0.32 m/s, shudder > 0.7 s, slip to 1.95, stall > 0.75 s, slip to −0.1, crash
-            // > 1.4 s, haul 3.5 m at 0.7 m/s. (At exactly 60 Hz the prototype's summed dt passes "t > 1.0" one step early
-            // by rounding (1.0000000000000007); with the README slack an exact threshold is not yet passed.)
-            Assert.Equal("1 Settle|1 RideStart#1|62 Lower|158 Shudder|201 Slip|253 Stall|299 Slip|388 Crash|388 Death#0|473 Haul|773 Top",
+            // > 1.4 s, haul 3.5 m at 0.7 m/s. The cage's clock is summed from 0 as the prototype's c.t is, and compared as it
+            // is, without slack: 60 steps of 1/60 sum to 1.0000000000000013, past "t > 1.0", so the settle ends on its 60th step;
+            // the prologue trace has the same intervals (settle #21943, lower #22003, shudder #22099, slip #22141, stall #22193).
+            Assert.Equal("1 Settle|1 RideStart#1|61 Lower|157 Shudder|199 Slip|251 Stall|296 Slip|385 Crash|385 Death#0|470 Haul|770 Top",
                 string.Join("|", trace));
             Assert.Equal(3.4, s.Cage.Y);
             Assert.False(s.Cage.Riding);                                     // he died at the crash: no RideEnd
@@ -420,7 +421,7 @@ namespace DeadLetter.Core.Tests
             var s = new Dl09(2);
             var trace = RunCage(s, 400, pull: i => s.Cage.State == SlippingCageState.Slip && s.Cage.Y < 1.54 - 0.05);
             Assert.Contains(trace, t => t.EndsWith(" Death#0"));
-            Assert.Equal(CageCatchState.Rattling, s.Catch.State);
+            Assert.NotEqual(CageCatchState.Bitten, s.Catch.State);                // it rattled (and re-armed), never bit
             Assert.DoesNotContain(trace, t => t.EndsWith(" Bite"));
         }
 
