@@ -88,7 +88,7 @@ namespace DeadLetter.Core.Mechanisms.Bridges
     }
 
     /// <summary>
-    /// A bridge made by tipping (§4.13j): a pushable that stops teetering at a pit's lip; let go there, or shoved on for
+    /// A bridge made by tipping (§4.13j): a pushable that stops teetering at a pit's lip; let go there with Jump, or shoved on for
     /// 0.45 s (the motor's rule), it tips nose-first over 0.9 s and settles in the pit as a bridge (<c>tipInto</c>,
     /// L4738–L4750; the cart L4756–L4766, the duct L4854–L4862). Implements U-11's <see cref="IPushable"/>: the motor
     /// moves it while held; <see cref="OnReleased"/>/<see cref="OnShoved"/> only record the tip, which Step applies.
@@ -137,7 +137,8 @@ namespace DeadLetter.Core.Mechanisms.Bridges
         /// <summary>The motor owns its x while held (<c>s.x = tx</c>, L4697).</summary>
         public void MoveTo(double x, double velocity) { X = x; Velocity = velocity; }
         public void SetAtLip(bool atLip) => _lip = atLip;
-        public void OnReleased(bool atLip) { if (atLip) _tip = true; else _lip = false; }
+        /// <summary>Jump at the lip (<paramref name="atLip"/>, L4688) tips it in; any other let-go (Use, L1820) leaves it teetering if it was.</summary>
+        public void OnReleased(bool atLip) { if (atLip) _tip = true; }
         public void OnShoved() => _tip = true;
         public void OnTravelEnd() { }
 

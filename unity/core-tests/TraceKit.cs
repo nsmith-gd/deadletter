@@ -251,7 +251,7 @@ namespace DeadLetter.Core.Tests
             if (handover)
             {
                 sim.Handover(checkpoint, before.X, before.Y, before.F);
-                sim.Motor.SetState(StateOf(before, sim.Config));
+                sim.Motor.SetState(StateOf(t, from - 1, sim.Config));
             }
             else sim.Begin(checkpoint, fromOpening);
             for (int k = from; k <= to; k++)
@@ -262,11 +262,34 @@ namespace DeadLetter.Core.Tests
             return sim;
         }
 
-        /// <summary>The motor state a record shows (Unity z = −three z, §0.2; the motor's vy is the prototype's less the parity offset).</summary>
-        public static MotorSnapshot StateOf(TraceStep p, MotorConfig c) => new MotorSnapshot
+        /// <summary>
+        /// The motor state record <paramref name="i"/> shows (Unity z = −three z, §0.2; the motor's vy is the prototype's
+        /// less the parity offset) and its clip (at its start: the records do not carry the clip's time; the step sets its
+        /// speed before the mixer advances). In the air, PeakY is the prototype's <c>game.peakY</c>: the highest y since
+        /// he last stood (the take-off record's and every airborne one's, L2030, L2034, L2036), not this record's y.
+        /// </summary>
+        public static MotorSnapshot StateOf(Trace t, int i, MotorConfig c)
         {
-            X = p.X, Y = p.Y, Z = -p.Z, Vx = p.Vx, Vy = p.G ? 0 : p.Vy - c.ParityVelocityOffset,
-            Facing = p.F, Yaw = p.Yaw, Grounded = p.G, Crouched = p.C, PeakY = p.Y,
-        };
+            var p = t.Steps[i];
+            return new MotorSnapshot
+            {
+                X = p.X, Y = p.Y, Z = -p.Z, Vx = p.Vx, Vy = p.G ? 0 : p.Vy - c.ParityVelocityOffset,
+                Facing = p.F, Yaw = p.Yaw, Grounded = p.G, Crouched = p.C, PeakY = PeakYOf(t, i),
+                Clip = p.Clip, ClipTime = 0, ClipTimeScale = 1,
+            };
+        }
+
+        /// <summary><c>game.peakY</c> at record <paramref name="i"/>: his y on the ground, else the top of the fall so far.</summary>
+        public static double PeakYOf(Trace t, int i)
+        {
+            double peak = t.Steps[i].Y;
+            for (int j = i; j >= 0; j--)
+            {
+                var s = t.Steps[j];
+                peak = Math.Max(peak, s.Y);
+                if (s.G) break;                                         // the take-off (or walk-off) record: peakY = y there
+            }
+            return peak;
+        }
     }
 }

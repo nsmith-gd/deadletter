@@ -248,11 +248,14 @@ namespace DeadLetter.Core.Push
 
         public void SetAtLip(bool atLip) => _lip = atLip;
 
-        /// <summary>He let go (Jump or Use). At the lip it tips in (L4688).</summary>
+        /// <summary>
+        /// He let go. <paramref name="atLip"/> (Jump at the lip, L4688): it tips in. Otherwise (Use, L1820; an escort or a
+        /// death, L7428) it stays where it is, teetering if it was (<c>s.lip</c> is left as it was).
+        /// </summary>
         public void OnReleased(bool atLip)
         {
             _held = false;
-            if (atLip && _tip != null) _tipNow = true; else _lip = false;
+            if (atLip && _tip != null) _tipNow = true;
         }
 
         /// <summary>Held into the lip for 0.45 s: a last shove (L4708–L4715).</summary>

@@ -282,7 +282,11 @@ namespace DeadLetter.Core.Interaction
         void MoveTo(double x, double velocity);
         /// <summary>Teetering at the lip (true) or not (false); called each held step when TipsIntoPit.</summary>
         void SetAtLip(bool atLip);
-        /// <summary>He let go (Jump, Use, an escort or a death). <paramref name="atLip"/>: it should tip in (L4688, L4312).</summary>
+        /// <summary>
+        /// He let go (Jump, Use, an escort or a death). <paramref name="atLip"/>: it should tip in, true only for Jump at the
+        /// lip (L4688). Use never tips (beginUse's 'release', L1820, returns before beginCh1's L4309–L4313 could): a
+        /// teetering pushable stays at the lip, teetering, and keeps its lip state.
+        /// </summary>
         void OnReleased(bool atLip);
         /// <summary>Held into the lip for 0.45 s: a last shove, it tips in (L4708–L4715).</summary>
         void OnShoved();

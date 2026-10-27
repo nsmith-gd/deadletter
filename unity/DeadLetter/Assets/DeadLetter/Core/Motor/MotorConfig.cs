@@ -200,6 +200,31 @@ namespace DeadLetter.Core.Motor
         public double ShoveActTime = 0.8;         // 'shove' act length, L4518
         public double DetentMove = 0.02;          // L4718
 
+        // ---- Back to the lane (updateDL05 L3569–L3570, updateCh1 L4876, updateAtt2 L5796) -----------------------------
+        /// <summary>
+        /// Where he steps back out to the lane (<see cref="StepInSpeed"/>, toward Z = 0) once nothing holds him off it: a
+        /// rule of the prototype's scenes, not of <c>updatePlayer</c>, so only where those scenes have one. Asked with
+        /// the motor's world and his x after his update, on a step with Z &gt; 0 (into the set: the prototype's z &lt; 0),
+        /// no act, no push hold and no ride. Default <see cref="PrototypeReturnsToLane"/>; a test lane without regions
+        /// (<see cref="BoxWorld"/>) sets its own. Not serialized (a rule, not a tuning value).
+        /// </summary>
+        public Func<IMotorWorld, double, bool> ReturnsToLane = PrototypeReturnsToLane;
+
+        /// <summary>
+        /// The prototype's three step-backs, by the lane's region (<c>game.region</c>, <see cref="Lane.LaneGeometry.Region"/>):
+        /// region 2 anywhere (letting go of the courier or the drum, L4876), region 5 anywhere (the DL-11 desk, L3569:
+        /// its own test is <c>game.hold !== 'desk'</c>; the port's desk is a push hold, so the motor's no-push test stands
+        /// in), region 6 past lane x 248 (letting go of a figure, L5796). None of them checks the mantle, so a mantle
+        /// does not stop it; none checks the ride either, but <c>syncRide</c> (L8519) puts him back on the rail after it.
+        /// A world that is not a <see cref="Lane.LaneGeometry"/> has no region: no step-back.
+        /// </summary>
+        public static bool PrototypeReturnsToLane(IMotorWorld world, double x)
+        {
+            if (!(world is Lane.LaneGeometry lane)) return false;
+            int r = lane.Region;
+            return r == 2 || r == 5 || (r == 6 && x > 248);
+        }
+
         // ---- Sit (L5673–L5684) ------------------------------------------------------------------------------------
         public double SitSeatedAfter = 0.4;
         public double SitIdleAfter = 0.66;
