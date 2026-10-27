@@ -456,6 +456,8 @@ not referenced by `DeadLetter.Runtime.asmdef`.
    ```
    "com.rlabrecque.steamworks.net": "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#<tag>",
    ```
+   Install it this way (through the Package Manager, by git URL or a registry), **not** as a `.unitypackage`: the build
+   scripts find it with `PackageInfo.FindForPackageName`, which only sees Package Manager packages.
 2. Add `"com.rlabrecque.steamworks.net"` to the `references` of `Assets/DeadLetter/Runtime/DeadLetter.Runtime.asmdef`
    (after `"DeadLetter.Core"`). It is safe without `DL_STEAM`: nothing outside `#if DL_STEAM && UNITY_STANDALONE` uses it.
    (Optional, to keep the Itch build free of `steam_api` libraries: install the package only on the Steam build

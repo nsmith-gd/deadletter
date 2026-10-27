@@ -41,6 +41,8 @@ namespace DeadLetter.Core.Save
             Slot = slot;
             Scene = scene ?? "";
             Current = new Checkpoint(_order, _order[0]);
+            _savedFlags = Flags.Version;                        // nothing to write until something changes
+            _savedSeen = Seen.Version;
             TryLoadSettings();
         }
 
@@ -195,6 +197,7 @@ namespace DeadLetter.Core.Save
         public void Restart(string name)
         {
             IndexOf(name);
+            Started = true;                                     // a game is running: saves carry progress, not only options
             Current = new Checkpoint(_order, name);
             _snapshot = null;
             Rebuild();
@@ -209,11 +212,12 @@ namespace DeadLetter.Core.Save
         public void Adopt(SaveModel m)
         {
             if (m == null) throw new ArgumentNullException(nameof(m));
+            bool keepOptions = !Started && Pending;             // options applied before the game started, not yet written
             Flags.Load(m.Flags ?? new List<string>());
             Seen.Load(m.Seen ?? new List<string>());
             PushBindings();
             PlayTime = m.PlayTime;
-            Settings = (m.Settings ?? new Settings()).Clone();
+            if (!keepOptions) Settings = (m.Settings ?? new Settings()).Clone();
             _graph.Calm = Settings.Calm;
             _savedFlags = Flags.Version;
             _savedSeen = Seen.Version;

@@ -439,6 +439,48 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
+        public void SceneStart_AdoptThenRestart_SavesProgress_NotOnlyOptions()
+        {
+            // #26's Begin/Handover path (TryAdoptSlot/Adopt, then Restart): a moment seen before the next checkpoint must
+            // reach the slot (nathaniel3's probe on #24).
+            var store = new MemorySaveStore();
+            var first = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            first.NewGame();
+            var svc = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            Assert.True(svc.TryAdoptSlot());
+            svc.Restart(Checkpoint.PrototypeOrder[0]);
+            svc.MarkSeen("kin");
+            svc.Flush();
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.Contains("kin", m.Seen);
+            Assert.False(m.OptionsOnly);
+        }
+
+        [Fact]
+        public void Adopt_KeepsOptionsAppliedBeforeTheGameStarted_StillWaitingToBeWritten()
+        {
+            var store = new MemorySaveStore();
+            var first = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            first.NewGame();                                    // the slot holds default options
+            var svc = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store) { MinSecondsBetweenWrites = 2 };
+            svc.ApplySettings(new Settings());                  // a write now, so the next one is held
+            svc.ApplySettings(new Settings { Calm = true });
+            Assert.True(svc.Pending);
+            Assert.True(svc.TryAdoptSlot());
+            Assert.True(svc.Settings.Calm);
+        }
+
+        [Fact]
+        public void Boot_WritesNothingUntilSomethingChanges()
+        {
+            var store = new MemorySaveStore();
+            var svc = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            svc.Update(10, false);
+            Assert.Equal(0, store.Writes);
+            Assert.False(store.TryLoad(0, out _));
+        }
+
+        [Fact]
         public void Reloaded_FiresOnNewGame_Respawn_AndContinue_NotOnReachingACheckpoint()
         {
             var g = Mech.Graph("start", new TestSource("t.a"));
