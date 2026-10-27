@@ -175,8 +175,9 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// Continue at every checkpoint the prologue places (#31 review): each of DL-01 to DL-07's lands him in its own scene,
-        /// region and lane; each of DL-08 to DL-11's (placed in the table, owned by scenes this chapter lacks) is refused,
+        /// Continue at every checkpoint the prologue places (#31 review): each of DL-01 to DL-07's and DL-09's lands him in its
+        /// own scene, region and lane; each of DL-08's, DL-10's and DL-11's (placed in the table, owned by scenes this chapter
+        /// lacks) is refused,
         /// with nothing changed here or in the slot, where it used to return true with him exited and the lane on region 1.
         /// </summary>
         [Fact]
@@ -230,8 +231,8 @@ namespace DeadLetter.Core.Tests
                 Assert.Equal(slot, store.Slots[0]);
                 refused++;
             }
-            Assert.Equal(13, continued);                                                        // start … gallery
-            Assert.Equal(9, refused);                                                           // goods … forwarded
+            Assert.Equal(16, continued);                                                        // start … gallery, cage, landing8, tunnel
+            Assert.Equal(6, refused);                                                           // goods, latched (DL-08), uponly … forwarded
         }
 
         /// <summary>A respawn due at a checkpoint none of the chapter's scenes owns is refused before anything reloads (#31 review).</summary>
@@ -383,7 +384,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(0, s.DistanceToSeam(ExitDir.Right));
             s.Begin("gallery");
             Assert.Equal("DL-06", s.Next(ExitDir.Left).Id);
-            Assert.Null(s.Next(ExitDir.Right));                                                 // DL-08 is not ported yet
+            Assert.Equal("DL-09", s.Next(ExitDir.Right).Id);                                    // the next in lane order (DL-08 goes between once merged)
             Assert.Equal(Dl06Scene.X1 - (33 + 42.3), s.DistanceToSeam(ExitDir.Right), 12);
             Assert.Equal(double.PositiveInfinity, new ChapterSim(ChapterDefs.Prologue()).DistanceToSeam(ExitDir.Right));   // not placed
 
@@ -466,7 +467,7 @@ namespace DeadLetter.Core.Tests
             Assert.Throws<ArgumentException>(() => new ChapterDef("x", cps, Dl02Scene.Def(), Dl02Scene.Def()));            // twice
             Assert.Throws<ArgumentException>(() => new ChapterDef("x", cps, Dl06Scene.Def(), Dl05Scene.Def()));            // regions go back
             var prologue = ChapterDefs.Prologue();
-            Assert.Equal(new[] { "DL-01", "DL-02", "DL-03", "DL-04", "DL-05", "DL-06", "DL-07" }, Array.ConvertAll(ToArray(prologue.Scenes), d => d.Id));
+            Assert.Equal(new[] { "DL-01", "DL-02", "DL-03", "DL-04", "DL-05", "DL-06", "DL-07", "DL-09" }, Array.ConvertAll(ToArray(prologue.Scenes), d => d.Id));
             Assert.NotNull(new ChapterDef("x", cps, Dl01Scene.Def(), Dl02Scene.Def()));                                    // a region seam: DL-01 → DL-02
         }
 

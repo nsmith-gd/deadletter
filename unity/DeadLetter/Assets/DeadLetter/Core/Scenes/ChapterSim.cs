@@ -143,7 +143,8 @@ namespace DeadLetter.Core.Scenes
         // ---- Where he is ----------------------------------------------------------------------------------------------
         /// <summary>
         /// The scene that holds him (<c>sceneName</c>, L8135–L8144), as of the last step's end: the scene of his region whose
-        /// [X0, X1) holds his x (the region's first scene also everything left of it, its last everything right of it), then
+        /// [X0, X1) holds his x (the region's first scene also everything left of it if it starts the region,
+        /// <see cref="SceneDef.RegionStart"/>; its last everything right of it), then
         /// on past any that <see cref="SceneRules.HasLeft"/>. Null before he is placed and once he is past the chapter's last
         /// scene (<see cref="Exited"/>).
         /// </summary>
@@ -487,7 +488,11 @@ namespace DeadLetter.Core.Scenes
                 if (x >= s.X0 && (pick < 0 || s.X0 > _scenes[pick].X0)) pick = i;      // the last stretch that starts at or before x
             }
             if (first < 0) return region < _scenes[0].Region ? 0 : -1;               // before the chapter's first region, or past its last
-            if (pick < 0) pick = first;                                               // left of the region's first scene
+            if (pick < 0)                                                             // left of the region's first scene
+            {
+                if (!_scenes[first].RegionStart) return -1;                           // in the stretch of one the chapter lacks
+                pick = first;
+            }
             if (x >= _scenes[pick].X1 && IsChapterEnd(pick)) return -1;              // right of its last: the chapter's end
             while (_rules[pick].HasLeft(this))
             {

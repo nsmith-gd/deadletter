@@ -143,4 +143,13 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     followed by its loads, the weight's index + 1 or 0, and whether its parcels are hidden). Re-recorded with these
     (U-21): every earlier field of every step is unchanged in both traces (checked step by step on the expanded
     records), and two recordings of each are byte-identical.
+  - DL-09 (`unity/core-tests/Dl09TraceTests.cs`, `ChapterTrace/Dl09ChapterProbe.cs`), only while `sceneName()` is DL-09
+    and on the step he leaves it (so steps 20840–25182 here, DL-10's first): `cp9`/`cy9`/`cv9`/`ct9` (the cage's
+    `c.phase`, `c.y`, `c.v`, `c.t`), `th9`/`co9`/`ne9`/`ry9` (`c.thrown`, `c.caughtOnce`, `c.needExit`, `c.readyAt`),
+    `nd9` (the balance gauge's `c.needle`), `p0s9`/`p0x9`/`p0b9`/`p0q9` and `p1s9`/… (each plate's state, x, base and
+    seat), `cw9`/`dg9`/`so9` (`persist.cw`, `cageDanger`, `shockedOnce`), `sk9` (`ch1.shocked`), `ta9` (the arcs' clock,
+    `game.clock % ARC_PERIOD`), `hp9`/`aw9` (`dl4.hopped`, `dl4.awed`), `mt9`/`mc9` (the `refuge` moment's time, null
+    outside it, and `game.momentCut`), `at9` (`game.act.t`, null outside an act), `dn9`/`ra9` (deaths, a pending
+    respawn). Re-recorded with these (U-21): every earlier field of all 33,207 steps is unchanged (checked step by step
+    on the expanded records), and two recordings are byte-identical.
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).

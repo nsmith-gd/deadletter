@@ -10,7 +10,8 @@ respawn or continue anywhere rebuilds the whole world there. `Current` is the sc
 **Mechanism update order:** each scene's own order, scenes in lane order. The prototype updates by system (§3.1,
 L8511–L8518), which interleaves scenes, but a mechanism reads another scene's only when that scene comes first (DL-07's
 bucket and loading read DL-06's line and weights, from this step's log), so the two agree:
-`PrologueChapterTraceTests` replays DL-01 to DL-07 (#1768–#17677) in one sim at 1e-6.
+`PrologueChapterTraceTests` replays DL-01 to DL-07 (#1768–#17677) in one sim at 1e-6 (DL-09 is in the chapter too, but
+the replay reaches it only through DL-08).
 
 ## Adding a scene to the prologue (DL-08 next)
 
@@ -53,6 +54,25 @@ The steps as DL-07 took them (U-21); DL-07's specifics are kept where they show 
    to the first step past the scene and derives the window, the seams and the checkpoint order (with the next scene's
    checkpoint if its first step reaches one, as DL-08's `goods`) from the probes. The chapter replay is the proof; a
    per-scene window only localises a failure. Nothing is compensated: every replay is strict (#30).
+
+## DL-09 as ported (U-21, alongside DL-08)
+
+- DL-09 (`Dl09/`, `Lane/Tables/Dl09Lane.cs`) is region 4 from `CG.x0` 97.6 to `UPONLY.x0` 118.8, listed in `Prologue()`
+  after DL-07; **DL-08 goes between them**. DL-09 does not start its region (`SceneDef.RegionStart = false`): until DL-08
+  is in, region 4 left of 97.6 is past the chapter (the chapter replay still ends at the doorway, #17677), and once it is,
+  `SceneAt` finds DL-08 there and DL-09's flag no longer matters. DL-09 reads nothing of DL-08's (the deck is 1.6
+  throughout region 4: `game.upper` holds from `landing` to `school`; the left wall is DL-08's, outside DL-09's stretch).
+  Its checkpoint rows are `cage`, `landing8` and `tunnel` (`tunnel` now stands on the deck, y 1.6); it reaches `tunnel`
+  from DL-08's `goods` and `latched` too (L3421).
+- Mechanisms, in order: `dl09.plate0/1` (`CarriedItem`; in the tray past `landing8`, or past `cage` with
+  `persist.cw`: `CarriedItemParams.MovedWithFlag`), `dl09.tray` (`LoadPlate`), `dl09.cagePawl`, `dl09.cage`,
+  `dl09.arc1/2` (`Hazards/LiveArc`, on the game clock). The tray's set-down is `Dl09TrayLoader` (an `IPlaceTarget`).
+- Scene acts (motor gaps, #32): the cage act (`Dl09CageAct`: the prototype has him on the cage floor *as it was at the
+  step's start*, `game.y = c.y` at #4, with no ride sync; `MotorSync`'s #9 snap would put him a step ahead), the long
+  hopscotch (root motion), the city (`Dl09AweAct`: a yaw of its own, held on the `refuge` moment), the arcs' knock-back.
+- Proven in its own window from a recorded rest (`Dl09TraceTests`, #20880–#25182, strict); `Dl09ChapterProbe` is
+  written but not registered: register it after DL-08's probe once DL-08 is in the chapter.
+- Not ported: the den (a secret), the coin viewer and the hopscotch as curios, the tannoy, the camera.
 
 ## DL-07 as ported, and notes for DL-08
 

@@ -62,6 +62,14 @@ namespace DeadLetter.Core.Tests
         public double? W0x7, W0b7, W0t7, W1x7, W1b7, W1t7, G7, Ct7, Ht7, Sl7, Pl7, Rd7;
         public int? Bk7, Co7;
         public bool? Up7, Bl7;
+        // DL-09 (U-21): the cage (phase, y, slip speed, clock, pawl thrown, caught once, needs a step out, readyAt), the balance
+        // gauge's needle, the plates (state, x, base, seat), persist.cw and cageDanger, the cable (shocks this life, the
+        // first-touch flag, the arcs' clock), the tunnel's triggers (hopped, awed), the refuge moment's clock and cut, the act's
+        // clock, deaths and a pending respawn (tools/sim/record_trace.mjs).
+        public string Cp9, P0s9, P1s9;
+        public double? Cy9, Cv9, Ct9, Ry9, Nd9, P0x9, P0b9, P1x9, P1b9, Ta9, Mt9, At9, Ra9;
+        public int? P0q9, P1q9, Cw9, Sk9, Dn9;
+        public bool? Th9, Co9, Ne9, Dg9, So9, Hp9, Aw9, Mc9;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -236,6 +244,35 @@ namespace DeadLetter.Core.Tests
                 case "pl7": s.Pl7 = N(v); break;
                 case "rd7": s.Rd7 = N(v); break;
                 case "cr7": s.Cr7 = S(v); break;
+                case "cp9": s.Cp9 = S(v); break;
+                case "p0s9": s.P0s9 = S(v); break;
+                case "p1s9": s.P1s9 = S(v); break;
+                case "cy9": s.Cy9 = N(v); break;
+                case "cv9": s.Cv9 = N(v); break;
+                case "ct9": s.Ct9 = N(v); break;
+                case "ry9": s.Ry9 = N(v); break;
+                case "nd9": s.Nd9 = N(v); break;
+                case "p0x9": s.P0x9 = N(v); break;
+                case "p0b9": s.P0b9 = N(v); break;
+                case "p1x9": s.P1x9 = N(v); break;
+                case "p1b9": s.P1b9 = N(v); break;
+                case "ta9": s.Ta9 = N(v); break;
+                case "mt9": s.Mt9 = N(v); break;
+                case "at9": s.At9 = N(v); break;
+                case "ra9": s.Ra9 = N(v); break;
+                case "p0q9": s.P0q9 = I(v); break;
+                case "p1q9": s.P1q9 = I(v); break;
+                case "cw9": s.Cw9 = I(v); break;
+                case "sk9": s.Sk9 = I(v); break;
+                case "dn9": s.Dn9 = I(v); break;
+                case "th9": s.Th9 = B(v); break;
+                case "co9": s.Co9 = B(v); break;
+                case "ne9": s.Ne9 = B(v); break;
+                case "dg9": s.Dg9 = B(v); break;
+                case "so9": s.So9 = B(v); break;
+                case "hp9": s.Hp9 = B(v); break;
+                case "aw9": s.Aw9 = B(v); break;
+                case "mc9": s.Mc9 = B(v); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }

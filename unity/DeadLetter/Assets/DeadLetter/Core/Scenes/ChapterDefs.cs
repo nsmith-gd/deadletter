@@ -7,6 +7,7 @@ using DeadLetter.Core.Scenes.Dl04;
 using DeadLetter.Core.Scenes.Dl05;
 using DeadLetter.Core.Scenes.Dl06;
 using DeadLetter.Core.Scenes.Dl07;
+using DeadLetter.Core.Scenes.Dl09;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -46,7 +47,7 @@ namespace DeadLetter.Core.Scenes
             new CheckpointDef("latched", Off3 + 56.2, region: 4, scene: "DL-08"),
             new CheckpointDef("cage", Off3 + 67.8, CageTop, region: 4, scene: "DL-09"),                     // x ≥ CG.x0
             new CheckpointDef("landing8", Off3 + 70.3, Deck, region: 4, scene: "DL-09"),                    // CG.landing = DECK
-            new CheckpointDef("tunnel", Off4 + 65.7, region: 4, scene: "DL-09"),
+            new CheckpointDef("tunnel", Off4 + 65.7, Deck, region: 4, scene: "DL-09"),                       // c.upper: on the deck (GALLERY.h, L8039)
             new CheckpointDef("uponly", Off4 + 76.8 + 0.6, Deck, region: 4, scene: "DL-10"),                // UPONLY.x0 + 0.6
             new CheckpointDef("ringc", Off5 + 81.25, region: 5, scene: "DL-11"),
             new CheckpointDef("bedroom", Off5 + 110.1, region: 5, scene: "DL-11"),
@@ -54,9 +55,12 @@ namespace DeadLetter.Core.Scenes
 
         /// <summary>
         /// The prologue as far as it is ported: DL-01 to DL-07 (regions 1–3), one world from the wake to the residential
-        /// doorway at the gallery's end, where DL-08 begins (region 4, <c>goods</c>). DL-07 shares DL-06's floor.
+        /// doorway at the gallery's end, where DL-08 begins (region 4, <c>goods</c>), and DL-09 (region 4, from <c>CG.x0</c>).
+        /// DL-07 shares DL-06's floor. DL-08 goes between DL-07 and DL-09; until it does, region 4 left of DL-09 is past the
+        /// chapter (DL-09 does not start its region, <see cref="SceneDef.RegionStart"/>).
         /// </summary>
         public static ChapterDef Prologue() => new ChapterDef(PrologueId, PrologueCheckpoints,
-            Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def(), Dl07Scene.Def());
+            Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def(), Dl07Scene.Def(),
+            Dl09Scene.Def());
     }
 }
