@@ -54,6 +54,10 @@ namespace DeadLetter.Core.Save
         /// Version 3 keeps the seen moments in their own set (<c>seen/&lt;moment&gt;</c>, <see cref="SaveModel.Seen"/>) instead
         /// of as persist flags named <c>seen.&lt;moment&gt;</c> (the v2 home, <c>StoryFlags.Seen</c>, now gone): a seen moment
         /// is not story state a mechanism reads, and the runner asks the set every step.
+        /// <para>Version 3 also added station snapshot fields (#22) that a v2 snapshot lacks; a restore reads them, so they
+        /// are filled with what a v2 station implies: an act has one part (<c>act.part</c> = <c>act.lastPart</c> = 0, no
+        /// chained clip); a latch's <c>pullF</c> is the Pull frame last taken while its act runs (−1 otherwise); a lever's
+        /// <c>clipStuck</c> is the stuck it judged when its act started (v2 judged the clip there too).</para>
         /// </summary>
         private static void V2ToV3(SaveDocument d)
         {
@@ -62,6 +66,19 @@ namespace DeadLetter.Core.Save
                 bool on = d.GetBool("flag/seen." + name, false);
                 d.Remove("flag/seen." + name);
                 if (on) d.SetBool("seen/" + name, true);
+            }
+
+            const string Mech = "mech/", ActFed = "act.fed";
+            foreach (var rest in d.KeysUnder(Mech))
+            {
+                if (!rest.EndsWith("/" + ActFed, StringComparison.Ordinal)) continue;
+                string m = Mech + rest.Substring(0, rest.Length - ActFed.Length);    // "mech/<id>/"
+                if (!d.Contains(m + "act.part")) d.SetLong(m + "act.part", 0);
+                if (!d.Contains(m + "act.lastPart")) d.SetLong(m + "act.lastPart", 0);
+                if (d.Contains(m + "armedFor") && !d.Contains(m + "pullF"))             // Latch
+                    d.SetDouble(m + "pullF", d.GetBool(m + "act.active", false) ? d.GetDouble(m + "act.last", -1) : -1);
+                if (d.Contains(m + "stuck") && !d.Contains(m + "clipStuck"))            // Pawl, PointsLever
+                    d.SetBool(m + "clipStuck", d.GetBool(m + "stuck", false));
             }
         }
     }
