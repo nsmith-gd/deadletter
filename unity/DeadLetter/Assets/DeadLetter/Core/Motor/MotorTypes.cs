@@ -62,8 +62,8 @@ namespace DeadLetter.Core.Motor
         Death,
         /// <summary>
         /// The act wants the checkpoint reloaded in Value seconds: the stuck act at 2.0 s (<c>respawn()</c>'s 1.3 s fade,
-        /// L4521, L2997–L2999), the death act at its cut (0.6 s, L7451). Name = "stuck" or "death". The scene runner
-        /// schedules the reload (<c>SceneRunner.RequestRespawn</c>).
+        /// L4521, L2997–L2999), the death act at its cut (0.6 s, L7451). Name = "stuck" or "death". The scene simulator
+        /// schedules the reload (<c>respawnAt = clock + Value</c>; <see cref="MotorEvents.RespawnDue"/>).
         /// </summary>
         RespawnDue,
         /// <summary>Board hop f23: he is on (Name = null, Value = token).</summary>
@@ -85,6 +85,45 @@ namespace DeadLetter.Core.Motor
         }
 
         public override string ToString() => Kind + (Name != null ? ":" + Name : "") + "=" + Value.ToString("R");
+    }
+
+    /// <summary>Queries over a motor's <see cref="D17Motor.Events"/> for a scene simulator (Core/Motor/README.md).</summary>
+    public static class MotorEvents
+    {
+        /// <summary>
+        /// The stuck or death act asked for the checkpoint reload this step (<see cref="MotorEventKind.RespawnDue"/>):
+        /// <paramref name="delay"/> = seconds from now (1.3 the stuck fade, 0.6 the death cut). The simulator sets its
+        /// <c>respawnAt</c> to clock + delay unless one is pending, and withholds input until then.
+        /// </summary>
+        public static bool RespawnDue(this D17Motor m, out double delay)
+        {
+            var e = m.Events;
+            for (int i = 0; i < e.Count; i++)
+                if (e[i].Kind == MotorEventKind.RespawnDue) { delay = e[i].Value; return true; }
+            delay = 0;
+            return false;
+        }
+
+        /// <summary>
+        /// The largest camera shake the motor asked for this step (a hard landing, a death); 0 = none. The rig keeps the
+        /// largest pending shake (<c>CameraRig.Shake</c>), so the max is what one call per event would leave.
+        /// </summary>
+        public static double Shake(this D17Motor m)
+        {
+            var e = m.Events;
+            double s = 0;
+            for (int i = 0; i < e.Count; i++) if (e[i].Kind == MotorEventKind.Shake && e[i].Value > s) s = e[i].Value;
+            return s;
+        }
+
+        /// <summary>True if an event of <paramref name="kind"/> (and <paramref name="name"/>, if given) is in this step's events.</summary>
+        public static bool Has(this D17Motor m, MotorEventKind kind, string name = null)
+        {
+            var e = m.Events;
+            for (int i = 0; i < e.Count; i++)
+                if (e[i].Kind == kind && (name == null || e[i].Name == name)) return true;
+            return false;
+        }
     }
 
     /// <summary>Clip-frame comparisons with a tolerance, so accumulated step time never misses a threshold by 1e-15.</summary>

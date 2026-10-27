@@ -6,18 +6,74 @@ using DeadLetter.Core.Mechanisms.Folding;
 using DeadLetter.Core.Mechanisms.Routes;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Save;
-using DeadLetter.Core.Scenes;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
 {
     /// <summary>
-    /// U-11b (#22): riding (board / ride / alight on DL-06's carriers; ride sync at step #9 for carriers and lifts), the
-    /// belt's carry, and the lane probes that read mechanisms (crates on the belt, DL-18's swept volumes), with the real motor.
+    /// U-11b (#22): riding (board / ride / alight on DL-06's carriers; ride sync at step #9 for carriers and lifts,
+    /// <see cref="MotorSync"/>), the belt's carry (<see cref="ILaneConveyor"/>), and the probes mechanisms answer for the
+    /// lane (crates on the belt, DL-18's swept volumes, <see cref="SweptVolumeProbe"/>), with the real motor.
     /// </summary>
     public class RideAndLaneTests
     {
         private const double Dt = Mech.Dt;
+
+        /// <summary>
+        /// A box lane plus the probes of mechanisms, as a scene's lane geometry folds its contributors in: each surface and
+        /// ceiling probe sees the boxes' answer and may raise (lower) it; the conveyors add up.
+        /// </summary>
+        private sealed class TestLane : IMotorWorld, ILaneConveyor
+        {
+            private readonly BoxWorld _boxes;
+            private readonly List<Func<double, double, double, double>> _surface = new List<Func<double, double, double, double>>();
+            private readonly List<Func<double, double, double, double>> _ceiling = new List<Func<double, double, double, double>>();
+            private readonly List<Func<double, double, double>> _carry = new List<Func<double, double, double>>();
+
+            public TestLane(BoxWorld boxes) { _boxes = boxes; }
+
+            public TestLane Surface(Func<double, double, double, double> f) { _surface.Add(f); return this; }
+            public TestLane Ceiling(Func<double, double, double, double> f) { _ceiling.Add(f); return this; }
+            public TestLane Carry(Func<double, double, double> f) { _carry.Add(f); return this; }
+
+            /// <summary>A swept volume (a folding leaf), standable while <paramref name="standable"/> is engaged.</summary>
+            public TestLane Swept(ISweptVolume v, IEngageable standable)
+                => Surface((x, y, h) => SweptVolumeProbe.Surface(v, standable.Engaged, x, h))
+                  .Ceiling((x, y, h) => SweptVolumeProbe.Ceiling(v, standable.Engaged, x, y, h));
+
+            public double SurfaceAt(double x, double refY)
+            {
+                double h = _boxes.SurfaceAt(x, refY);
+                foreach (var f in _surface) h = f(x, refY, h);
+                return h;
+            }
+
+            public double CeilingAt(double x, double refY)
+            {
+                double h = _boxes.CeilingAt(x, refY);
+                foreach (var f in _ceiling) h = f(x, refY, h);
+                return h;
+            }
+
+            public void Limits(double x, double y, out double left, out double right) => _boxes.Limits(x, y, out left, out right);
+            public bool IsRamp(double x) => _boxes.IsRamp(x);
+            public bool LedgeAhead(double x, double y, int dir, double range, double stepUp, out Ledge ledge)
+                => LaneProbe.ScanLedge(this, x, y, dir, range, stepUp, out ledge);
+
+            public double CarryAt(double x, double y)
+            {
+                double v = 0;
+                foreach (var f in _carry) v += f(x, y);
+                return v;
+            }
+        }
+
+        private static BoxWorld Floor(double x0, double x1, double top)
+        {
+            var w = new BoxWorld { LeftLimit = x0, RightLimit = x1 };
+            w.AddSolid(x0 - 1, x1 + 1, top);
+            return w;
+        }
 
         // ---- Carriers: board, ride, alight (L2854–L2994) --------------------------------------------------------------
 
@@ -144,7 +200,8 @@ namespace DeadLetter.Core.Tests
             var trigger = new TestSource("dl08.pawl") { Engaged = true };
             var belt = new ReturnsBelt("dl08.belt", ReturnsBeltParams.Dl08Belt());
             var g = Mech.Graph("cage", trigger, belt);                             // running from the cage checkpoint
-            var lane = new LaneGeometry(80, 100).Solid(79, 101, 1.6).Add(new ReturnsBeltLane(belt));
+            var lane = new TestLane(Floor(80, 100, 1.6))
+                .Surface((x, y, h) => belt.SurfaceAt(x, h)).Carry((x, y) => belt.CarryVelocity(x));
             var m = new D17Motor(MotorConfig.Prototype(), lane);
             m.Place(94.0, 1.6);
             void Step(MotorInput i) { m.Step(i, Dt); g.Step(Dt, PlayerPose.Of(m)); }
@@ -172,8 +229,7 @@ namespace DeadLetter.Core.Tests
             g.Reset(new Checkpoint(FoldingTests.Ch2, "ring_a"));
             Mech.PlayAct(g, bed);                                                 // fold the bed away first
             Mech.RunUntil(g, () => bed.State == FoldingLeafState.Folded, 300);
-            var lane = new LaneGeometry(350, 356).Solid(349, 357, 0)
-                .Add(new SweptVolumeLane(bed, bed)).Add(new SweptVolumeLane(bench, bench));
+            var lane = new TestLane(Floor(350, 356, 0)).Swept(bed, bed).Swept(bench, bench);
             var r = new InteractionResolver();
             r.Register(bench);
             var m = new D17Motor(MotorConfig.Prototype(), lane, r);
@@ -210,7 +266,7 @@ namespace DeadLetter.Core.Tests
             var g = new MechanismGraph();
             g.Add(bed); g.Add(bench); g.Build();
             g.Reset(new Checkpoint(FoldingTests.Ch2, "ring_a"));
-            var lane = new LaneGeometry(350, 356).Solid(349, 357, 0).Add(new SweptVolumeLane(bed, bed)).Add(new SweptVolumeLane(bench, bench));
+            var lane = new TestLane(Floor(350, 356, 0)).Swept(bed, bed).Swept(bench, bench);
             Assert.Equal(0.7, lane.SurfaceAt(353.5, 0), 9);                       // the bed down: the quilt heaped to 0.7
             Assert.Equal(0.45, lane.SurfaceAt(352.5, 0), 9);
             Mech.PlayAct(g, bench);                                               // the bench comes down onto the quilt: propped
@@ -222,7 +278,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(LaneProbe.NoCeiling, lane.CeilingAt(354.3, 0));
         }
 
-        // ---- The pipeline: #9 ride sync for lifts and carriers, the escort hook (SceneRunner) ---------------------------
+        // ---- After the mechanisms: the escort hook and #9 ride sync for lifts and carriers (MotorSync) ------------------
 
         private sealed class TestLift : Mechanism, ILiftRide
         {
@@ -249,59 +305,88 @@ namespace DeadLetter.Core.Tests
             protected override void ReadFields(ISnapshotReader r) { }
         }
 
-        private sealed class PipelineScene : SceneDefinition
+        /// <summary>A scene simulator's step reduced to the motor's part: #4 motor, #6 mechanisms, then <see cref="MotorSync"/>.</summary>
+        private sealed class Pipeline
         {
             public readonly TestLift Lift = new TestLift();
             public readonly TestEscort Escort = new TestEscort();
-            private readonly SpawnPoint[] _spawns = { new SpawnPoint("start", 3.0) };
-            public override string Id => "T-01";
-            public override string ArtRegion => "T-01";
-            public override double LaneX0 => 0;
-            public override double LaneX1 => 10;
-            public override string FirstCheckpoint => "start";
-            public override void AddMechanisms(MechanismGraph graph) { graph.Add(Lift); graph.Add(Escort); }
-            public override void RegisterInteractables(MechanismGraph graph, InteractionResolver resolver) { }
-            public override LaneGeometry BuildLane(MechanismGraph graph) => new LaneGeometry(0, 10).Solid(-1, 11, 0);
-            public override IReadOnlyList<SpawnPoint> Spawns => _spawns;
-            public override IReadOnlyList<CheckpointRule> CheckpointRules => Array.Empty<CheckpointRule>();
-            public override SceneExit Exit => null;
-            public override IReadOnlyList<MechanismViewDef> Views => Array.Empty<MechanismViewDef>();
+            public readonly MechanismGraph G = new MechanismGraph();
+            public readonly D17Motor M;
+            public readonly MotorSync Sync;
+
+            public Pipeline()
+            {
+                G.Add(Lift); G.Add(Escort); G.Build();
+                G.Reset(new Checkpoint(Checkpoint.PrototypeOrder, "start"));
+                Sync = new MotorSync(G);
+                M = Sim.Make(Floor(0, 10, 0), 3.0);
+            }
+
+            public void Step(MotorInput i)
+            {
+                M.Step(i, Dt);
+                G.Step(Dt, PlayerPose.Of(M));
+                Sync.AfterMechanisms(M);
+            }
         }
 
         [Fact]
-        public void Runner_RideSync_PlacesHimOnACarryingLiftsFloorAfterTheMechanisms_Step9_L2959()
+        public void MotorSync_CollectsTheGraphsEscortsAndLifts()
         {
-            var def = new PipelineScene();
-            var r = new SceneRunner(def, new AtomicFileStore(new MemoryFileSystem()));
-            r.NewGame(false);
-            def.Lift.FloorY = 0.5;
-            r.Step(Sim.Move(0));
-            Assert.Equal(0, r.Motor.Y);                                           // not carrying: the lane's floor
-            def.Lift.Carrying = true;
-            r.Step(Sim.Move(0));
-            Assert.Equal(def.Lift.FloorY, r.Motor.Y, 12);                         // this tick's floor (it moved at #6)
-            Assert.Equal(0.52, r.Motor.Y, 12);
-            Assert.True(r.Motor.Grounded);
+            var p = new Pipeline();
+            Assert.Same(p.Lift, Assert.Single(p.Sync.Lifts));
+            Assert.Same(p.Escort, Assert.Single(p.Sync.Escorts));
         }
 
         [Fact]
-        public void Runner_AnEscortThatWantsHim_StartsTheMotorsEscortedAct_AfterTheMechanisms_L6399()
+        public void MotorSync_RideSync_PlacesHimOnACarryingLiftsFloorAfterTheMechanisms_Step9_L2959()
         {
-            var def = new PipelineScene();
-            var r = new SceneRunner(def, new AtomicFileStore(new MemoryFileSystem()));
-            r.NewGame(false);
-            def.Escort.Want = true;
-            r.Step(Sim.Move(1));
-            Assert.True(r.Motor.IsEscorted);                                      // started after #6, this step
-            Assert.Equal(0, def.Escort.SawEscorted);
-            r.Step(Sim.Move(1));
-            Assert.Equal(1, def.Escort.SawEscorted);                             // the pose says so from the next step
-            Assert.True(r.Pose().Escorted);
-            def.Escort.Want = false;
+            var p = new Pipeline();
+            p.Lift.FloorY = 0.5;
+            p.Step(Sim.Move(0));
+            Assert.Equal(0, p.M.Y);                                               // not carrying: the lane's floor
+            p.Lift.Carrying = true;
+            p.Step(Sim.Move(0));
+            Assert.Equal(p.Lift.FloorY, p.M.Y, 12);                               // this tick's floor (it moved at #6)
+            Assert.Equal(0.52, p.M.Y, 12);
+            Assert.True(p.M.Grounded);
+        }
+
+        [Fact]
+        public void MotorSync_AnEscortThatWantsHim_StartsTheMotorsEscortedAct_AfterTheMechanisms_L6399()
+        {
+            var p = new Pipeline();
+            p.Escort.Want = true;
+            p.Step(Sim.Move(1));
+            Assert.True(p.M.IsEscorted);                                          // started after #6, this step
+            Assert.Equal(0, p.Escort.SawEscorted);
+            p.Step(Sim.Move(1));
+            Assert.Equal(1, p.Escort.SawEscorted);                               // the pose says so from the next step
+            Assert.True(PlayerPose.Of(p.M).Escorted);
+            p.Escort.Want = false;
             int home = 0;
-            while (r.Motor.IsEscorted && home++ < 600) r.Step(Sim.Move(1));
-            Assert.InRange(r.Motor.X, 1.0, 1.01);
-            Assert.Equal(+1, r.Motor.Facing);
+            while (p.M.IsEscorted && home++ < 600) p.Step(Sim.Move(1));
+            Assert.InRange(p.M.X, 1.0, 1.01);
+            Assert.Equal(+1, p.M.Facing);
+        }
+
+        [Fact]
+        public void MotorEvents_TheStuckActAsksForTheRespawnAt2s_TheDeathActAtItsCut()
+        {
+            var m = Sim.Make(Floor(0, 10, 0), 3.0);
+            m.BeginStuck();
+            double delay = double.NaN;
+            int due = -1;
+            for (int k = 1; k <= 200 && due < 0; k++) { m.Step(Sim.Move(1), Dt); if (m.RespawnDue(out delay)) due = k; }
+            Assert.Equal(121, due);                                                // T > 2.0 s (L4521)
+            Assert.Equal(1.3, delay, 12);                                          // the fade (L2997–L2999)
+            m.Place(3.0, 0);
+            m.Die(DeathKind.Crush);
+            Assert.True(m.Shake() > 0);                                            // the death's shake, reported with the next step too
+            m.Step(Sim.Move(0), Dt);
+            Assert.True(m.Has(MotorEventKind.Death, "Crush"));
+            for (int k = 0; k < 600 && !m.RespawnDue(out delay); k++) m.Step(Sim.Move(0), Dt);
+            Assert.Equal(m.Config.DeathCut, delay, 12);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace DeadLetter.Runtime.Camera
     /// (kin: realise act idle; refuge: awe clip done; ringc: car gone) and <see cref="CarRise"/>.
     /// The pause card (U-17) must call <see cref="SetPaused"/> on open and close, or a moment keeps playing under it;
     /// checkpoint reload must call <see cref="ResetForReload"/>.
-    /// <para><b>Hosted mode</b> (U-20): a scene's <c>SceneRunner</c> owns the <see cref="MomentDirector"/>, starts moments
+    /// <para><b>Hosted mode</b> (U-20): a scene host's Core scene simulator owns the <see cref="MomentDirector"/>, starts moments
     /// from its rules and gates input itself (§3.1 #3). <see cref="UseDirector"/> hands this component that director; the
     /// host then calls <see cref="Present"/> for each moment Core started (cue on the DSP clock, Timeline), and this
     /// component never installs the input filter or starts moments on its own.</para>
@@ -74,7 +74,7 @@ namespace DeadLetter.Runtime.Camera
             if (_director == null) _director = new MomentDirector(musicClock);
         }
 
-        /// <summary>Hosted mode: use the scene runner's director (Core starts moments and gates input).</summary>
+        /// <summary>Hosted mode: use the scene simulator's director (Core starts moments and gates input).</summary>
         public void UseDirector(MomentDirector director)
         {
             _director = director ?? throw new ArgumentNullException(nameof(director));
@@ -82,7 +82,7 @@ namespace DeadLetter.Runtime.Camera
             if (player != null && player.InputFilter == (Func<MotorInput, MotorInput>)Gate) player.InputFilter = null;
         }
 
-        /// <summary>The music clock this player schedules cues on (the host passes it to Core's runner).</summary>
+        /// <summary>The music clock this player schedules cues on (the host passes it to the Core scene simulator).</summary>
         public AudioDspMusicClock MusicClock => musicClock;
 
         /// <summary>

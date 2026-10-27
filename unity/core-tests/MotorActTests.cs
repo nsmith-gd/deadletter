@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DeadLetter.Core.Beings;
+using DeadLetter.Core.Camera;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Actuators;
@@ -332,6 +333,41 @@ namespace DeadLetter.Core.Tests
             Assert.InRange(outAt * Dt, 0.62 / 0.7 - 2 * Dt, 0.62 / 0.7 + 2 * Dt);
             Assert.Equal(0, m.Z);
             Assert.False(m.Crouched);
+        }
+    
+        [Fact]
+        public void ActTarget_IsTheStationWhileTheActRuns_NullAfter_AndForQuirks()
+        {
+            var lever = new TestLever { StandX = 1.0, Profile = new ActProfile("Pull") };
+            var m = WithResolver(BoxWorld.Flat(), 0.9, 0, out _, lever);
+            Assert.Null(m.ActTarget);
+            m.Step(Sim.Use(), Dt);
+            Assert.Same(lever, m.ActTarget);
+            Sim.RunUntil(m, Sim.Move(0), mm => !mm.IsActing, 600);
+            Assert.Null(m.ActTarget);
+            Assert.True(m.PlayQuirk(ClipNames.CheckLabel));
+            Assert.Null(m.ActTarget);
+        }
+
+        // ---- The camera's view of the motor (D17Framing: the label shot L3735–L3741, the push L7788) --------------------
+
+        [Fact]
+        public void Framing_LabelShot_FromCheckLabelF2_HeldCheckEases1_1_OtherwiseNone_L3735_L3741()
+        {
+            var m = Sim.Make(BoxWorld.Flat(), 1.0);
+            Assert.Null(D17Framing.LabelShot(m));
+            Assert.True(m.PlayQuirk(ClipNames.CheckLabel, cancel: false, holdFor: 3.2, cancelAfter: 2.5));
+            m.Step(Sim.Move(0), Mech.Dt);
+            Assert.Null(D17Framing.LabelShot(m));                                    // f0.4: not yet
+            for (int i = 0; i < 6; i++) m.Step(Sim.Move(0), Mech.Dt);
+            var shot = D17Framing.LabelShot(m);
+            Assert.NotNull(shot);
+            Assert.Equal("label", shot.Value.Name);
+            Assert.Equal(50, shot.Value.Focal);
+            Assert.Equal(1.1, shot.Value.Ease);
+            var l = D17Framing.EstimatedLabel(m);
+            Assert.Equal(l.Y + 0.15, shot.Value.Position.Y, 12);
+            Assert.Equal(CameraPush.None, D17Framing.Push(m));                       // quirks do not push in
         }
     }
 }

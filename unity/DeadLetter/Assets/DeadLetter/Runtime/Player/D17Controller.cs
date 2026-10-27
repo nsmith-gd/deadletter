@@ -19,12 +19,12 @@ namespace DeadLetter.Runtime
     /// Scene setup: D-17's own colliders must be on a layer outside <see cref="groundMask"/> and <see cref="ceilingMask"/>.
     /// Standable geometry and walls go in groundMask; undersides he can bump or crouch under go in ceilingMask; ramp
     /// colliders also go in rampMask (step-up 0.45 there).
-    /// <para><b>Hosted mode</b> (U-20, <c>SceneHost</c>): a scene's <c>SceneRunner</c> owns the motor, the lane (Core
-    /// <c>LaneGeometry</c>, not physics) and the 60 Hz tick (§3.1). After <see cref="AttachToHost"/> this component only
+    /// <para><b>Hosted mode</b> (U-20): a scene host's Core scene simulator owns the motor, the lane (Core lane geometry,
+    /// not physics) and the 60 Hz tick (§3.1). After <see cref="AttachToHost"/> this component only
     /// reads input (<see cref="TakeInput"/>), places the transform and drives the Animator; the host calls
     /// <see cref="OnHostStepped"/> after each Core step. Standalone mode (no host) is unchanged: it ticks its own motor
     /// against physics probes, for test rigs and scenes not yet ported; give it a <see cref="Graph"/> and it steps the
-    /// mechanisms after the motor with <see cref="Pose"/> (§3.1 #4 then #6), as the scene runner does.</para>
+    /// mechanisms after the motor with <see cref="Pose"/> (§3.1 #4 then #6), as the scene simulator does.</para>
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class D17Controller : MonoBehaviour, IMotorWorld
@@ -84,7 +84,7 @@ namespace DeadLetter.Runtime
 
         /// <summary>
         /// Standalone mode only: mechanisms stepped after each motor step with <see cref="Pose"/> (a test rig's graph,
-        /// built and reset by its owner). Hosted, the scene runner steps its own graph. Null = none.
+        /// built and reset by its owner). Hosted, the scene simulator steps its own graph. Null = none.
         /// </summary>
         public MechanismGraph Graph { get; set; }
 
@@ -126,7 +126,7 @@ namespace DeadLetter.Runtime
 
         /// <summary>
         /// Hand the motor and the tick to a scene host (U-20). The host's motor answers its own lane (Core
-        /// <c>LaneGeometry</c>); <paramref name="renderAlpha"/> is the host tick's interpolation factor.
+        /// lane geometry); <paramref name="renderAlpha"/> is the host tick's interpolation factor.
         /// </summary>
         public void AttachToHost(D17Motor motor, InteractionResolver resolver, Func<float> renderAlpha)
         {

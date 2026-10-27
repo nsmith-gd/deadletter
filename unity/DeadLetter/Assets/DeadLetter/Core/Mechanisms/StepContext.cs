@@ -32,7 +32,7 @@ namespace DeadLetter.Core.Mechanisms
         }
 
         /// <summary>
-        /// The pose the step pipeline builds from the motor after #4: the one way to fill it (SceneRunner, the Runtime
+        /// The pose the step pipeline builds from the motor after #4: the one way to fill it (a scene simulator, the Runtime
         /// D17Controller in standalone mode, the tests' <c>Mech.Pose(motor)</c>).
         /// </summary>
         public static PlayerPose Of(D17Motor m)

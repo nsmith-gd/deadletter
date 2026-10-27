@@ -144,6 +144,8 @@ namespace DeadLetter.Core.Motor
         public long StepCount { get; private set; }
         public Verb ActVerb => _act.Shove ? Verb.None : _act.Verb;
         public ActPhase ActPhase => _act.Phase;
+        /// <summary>What the current act is on (the station, item, pushable, seat, ride, hide spot), or null (no act, a quirk, stuck, death, escorted, the shove).</summary>
+        public IInteractable ActTarget => _act.Active ? _act.Target : null;
         /// <summary>0 for the act's first clip, +1 per follow-up clip or hop a station chained (<see cref="ActStep"/>).</summary>
         public int ActPart => _act.Part;
         public bool IsMantling => _mantling;

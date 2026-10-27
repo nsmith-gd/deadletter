@@ -17,7 +17,7 @@ namespace DeadLetter.Runtime.Camera
     /// framing and shot blending (1.4 in / 0.8 out, cue-clock dt) for parity. With no CinemachineCamera assigned the
     /// Unity <c>Camera</c> transform and FOV are written directly (same result; use that for tests and tools).</para>
     /// Positions convert at this edge only: Unity = (x, y, −z) (§0.2).
-    /// <para><b>Bound mode</b> (U-20): with a scene host, Core's <c>SceneRunner</c> steps the rig as step #10 of its pipeline
+    /// <para><b>Bound mode</b> (U-20): with a scene host, Core's scene simulator steps the rig as step #10 of its pipeline
     /// (opening move included); <see cref="BindRig"/> makes this component only read <see cref="CameraRig.Pose"/> after each
     /// step and render it, interpolated.</para>
     /// </summary>
@@ -60,7 +60,7 @@ namespace DeadLetter.Runtime.Camera
             _hasPose = false;
         }
 
-        /// <summary>Render a rig that Core steps (the scene runner's); this component no longer steps it.</summary>
+        /// <summary>Render a rig that Core steps (the scene simulator's); this component no longer steps it.</summary>
         public void BindRig(CameraRig rig)
         {
             _rig = rig ?? throw new System.ArgumentNullException(nameof(rig));

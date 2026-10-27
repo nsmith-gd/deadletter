@@ -15,7 +15,7 @@ namespace DeadLetter.Core.Tests
     /// and the cage, driven by the real motor in the pipeline order (motor #4, graph #6–7, ride sync #9; §3.1), with the
     /// prototype's timings (§4.13c, §4.13f, L5011–L5095). The cage act's own parts (bracing at <c>CG.braceX</c>, the
     /// CageRideLever/CagePullPawl clips) are not ported yet; here Use during the ride calls <see cref="SlippingCage.PullPawl"/>
-    /// and ride sync (<see cref="D17Motor.SnapToFloor"/>, as <c>SceneRunner</c>'s #9 does for every <see cref="ILiftRide"/>)
+    /// and ride sync (<see cref="D17Motor.SnapToFloor"/>, as <see cref="MotorSync"/>'s #9 does for every <see cref="ILiftRide"/>)
     /// places him on the cage floor.
     /// </summary>
     public class Dl09SceneTests

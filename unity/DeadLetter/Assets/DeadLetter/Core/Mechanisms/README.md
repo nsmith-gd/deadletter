@@ -39,11 +39,11 @@ first, so it sees this tick's value. Use `link.ReadAnyOrder<T>` for reads from a
 graph) or to break a cycle with a one-tick lag (pawl ↔ platform: pawl first). `None` returns null (optional input).
 
 **Shared signals** (`Signals.cs`, namespace `DeadLetter.Core.Mechanisms`): `ILoad` (load shares), `IPositionSource`
-(per producer), `IEngageable`; `IPlateBody` + `BodySupport` (items and pushables a plate weighs: `Loose/Carryable`,
-`Loose/Pushable`); `ILiftRide` (floor y, its velocity, Carrying: the scene runner's ride sync #9 snaps him to every
-carrying lift in the graph); `ISweptVolume` + `SweptBox` (space a folding leaf sweeps; `Scenes.SweptVolumeLane` puts
-it in the lane). Contracts with the motor are in `Interaction/Contracts.cs`: `IRide` (carriers: `CarrierLine.Rider`),
-`IEscort` (the escort trolley), `IHideSpot` (`Beings/HideSpot`), `IPlaceTarget` (`CarrierLine.Loader`, `Pushable.DeckTarget`).
+(per producer), `IEngageable`; `IPlateBody` + `BodySupport` (items and pushables a plate weighs); `ILiftRide` (floor y,
+its velocity, Carrying: ride sync #9, `MotorSync`, snaps him to every carrying lift in the graph); `ISweptVolume` +
+`SweptBox` (space a folding leaf sweeps; `Folding/SweptVolumeProbe` answers the lane's surface and ceiling probes for
+it). Contracts with the motor are in `Interaction/Contracts.cs`: `IRide` (carriers: `CarrierLine.Rider`), `IEscort`
+(the escort trolley), `IHideSpot` (`Beings/HideSpot`), `IPlaceTarget` (`CarrierLine.Loader`).
 
 **Persist flags** (U-14, §4.28): story state that outlives a reload (`StoryFlags`: the DL-17 drawer read, letters,
 curios...) lives in `MechanismGraph.Flags`. A mechanism that depends on one resolves it once in `Link`
@@ -51,7 +51,7 @@ curios...) lives in `MechanismGraph.Flags`. A mechanism that depends on one reso
 State a mechanism keeps itself (`WhiteBrain.Warned`) is joined by `CheckpointService.BindFlag`, not read from here.
 
 **D-17's pose** (`StepContext.Player`, built from the motor after #4 by `PlayerPose.Of(motor)`, the one way to fill
-it: the runner, Runtime's `D17Controller`, tests' `Mech.Pose(motor)`): x, y, z, `Vx`, `Crouched`, `Busy` (in an act),
+it: a scene simulator, Runtime's `D17Controller`, tests' `Mech.Pose(motor)`): x, y, z, `Vx`, `Crouched`, `Busy` (in an act),
 `Grounded`, `Holding` (`Hold != None`), `Hiding` (the hide act), `Escorted` (the escorted act). Rules that need his
 footing or hands read it here, never through a side call. World state (alive, region, upper) stays in
 `Beings/BeingSenses`.
@@ -79,12 +79,12 @@ the original run bit for bit (test it).
 | `Water/` | Flood, Sluice, SluiceValve, SluiceRig, FloatLatch (`dl17.latch`) | i (c) | DL-11, 17 |
 | `Bridges/` | TippingBridge | j | DL-01, 11 |
 | `Cycles/` | CycleClock, CycleTimeline | k | DL-13, 14a, 21, 23 |
-| `Folding/` | FoldingLeaf, LeafBox | (DL-18 spec) | DL-18 |
-| `Loose/` | Carryable (ICarryable), Pushable (IPushable + twin + deck), PushableDeck | §4.10, §4.11 | DL-02, 03, 08 (and every carried or pushed thing without a special rule) |
+| `Folding/` | FoldingLeaf, LeafBox, SweptVolumeProbe | (DL-18 spec) | DL-18 |
 | `../Beings/` | WhiteBrain, EscortTrolley, HideSpot, NoiseBus, BeingSenses | §4.15, §4.16 | DL-06/07, 11, 14b |
 
 Scene tests with the real motor: `Dl01`, `Dl03`, `Dl09`, `Dl11White`, `Dl14`, `Dl17`, `Dl18SceneTests`; the acts and
-contracts above: `MotorActTests`, `RideAndLaneTests`, `LooseTests`.
+contracts above: `MotorActTests`, `RideAndLaneTests`. Loose items and pushables are the scene layer's (`Core/Carry`,
+`Core/Push`), not a family here.
 
 **Citing index.html.** Never open it whole: `sed -n '3290,3324p' game/undelivered/index.html`. XML summary cites the
 ranges; ported lines carry `// L1874`. Deliberate deviations say so (see `CrankActuator.WheelDeg`).
@@ -112,8 +112,9 @@ public sealed class Bell : Mechanism
 ```
 
 **Acts and holds the motor owns** (#22, U-11b): the latch's Flinch is a chained clip (`Then`), DL-18's strap a chained
-hop (`HopBy`); boarding/riding/alighting a carrier is `IRide` (ride sync is the motor's `SyncRide`, called by the
-runner at #9); the escorted walk is the motor's act (`IEscort.WantsEscort` → `D17Motor.BeginEscort`; the trolley
+hop (`HopBy`); boarding/riding/alighting a carrier is `IRide` (ride sync is the motor's `SyncRide`, called at #9 by
+`MotorSync`); the escorted walk is the motor's act (`IEscort.WantsEscort` → `D17Motor.BeginEscort`; the trolley
 follows `PlayerPose.X` and stops when `Escorted` ends); the hide act is `IHideSpot`; a pushable's push acceleration is
 its own (`IPushable.Accel`) and whether he lets go at Max (`LetGoAtMax`). A mechanism that strands or kills him emits
-an event and the scene rule calls `SceneRunner.Stuck()`/`Die(kind)`; the motor's act asks for the respawn.
+an event and the scene rule calls `D17Motor.BeginStuck()`/`Die(kind)`; the motor's act asks for the respawn
+(`MotorEvents.RespawnDue`). The call order for a scene simulator is in `Core/Motor/README.md`.
