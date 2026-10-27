@@ -17,8 +17,8 @@ namespace DeadLetter.Core.Simulation.Replay.Scripts
     public sealed class Dl01WakeScript : ScriptedPlayer
     {
         public const string LatchId = "dl01.latch", CartId = "dl01.cart", CrankId = "dl01.crank", DoorId = "dl01.door";
-        /// <summary>The scene act the trench fail starts (<c>trenchStuck</c>, L4764–L4766).</summary>
-        public const string TrenchStuck = "trenchStuck";
+        /// <summary>The scene act the trench fail starts (<c>trenchStuck</c>, L4764–L4766; <c>Dl01Rules</c>' TrenchStuckAct).</summary>
+        public const string TrenchStuck = "dl01.trench";
 
         private readonly TippingBridgeParams _cart;
 

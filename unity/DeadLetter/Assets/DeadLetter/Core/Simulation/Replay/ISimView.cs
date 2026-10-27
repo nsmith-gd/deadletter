@@ -17,8 +17,10 @@ namespace DeadLetter.Core.Simulation.Replay
         double Y { get; }
         bool Grounded { get; }
         bool Mantling { get; }
-        /// <summary>The act he is in, or null: a motor verb ("Use", "Grab", …) or a scene act ("trenchStuck", "death").</summary>
+        /// <summary>The act he is in, or null: the target mechanism's id for a motor act ("dl01.latch"), else a scene act's kind ("dl01.trench", "quirk", "transit").</summary>
         string Act { get; }
+        /// <summary>The act is a quirk a move cancels (<c>G.act.kind === 'quirk' &amp;&amp; G.act.cancel</c>): the bot walks on through it.</summary>
+        bool ActCancellable { get; }
         HoldKind Hold { get; }
         bool Riding { get; }
         /// <summary>The player has control (<c>G.mode === 'play'</c>), i.e. the opening is over.</summary>

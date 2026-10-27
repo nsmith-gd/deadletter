@@ -162,7 +162,7 @@ namespace DeadLetter.Core.Simulation.Replay
                 while (!pred())
                 {
                     if (G.Clock - t0 > max) throw new SimStuckException("stuck walking: " + label + " x=" + Fx(G.X));
-                    Move(G.Act != null && !o.KeepHolding ? 0 : dir);
+                    Move(G.Act != null && !o.KeepHolding && !G.ActCancellable ? 0 : dir);   // a player's move cancels a quirk
                     bool moved = Math.Abs(G.X - last) > 0.0008;
                     last = G.X;
                     if (!moved && G.Grounded && !G.Mantling && G.Act == null && !G.Riding) still += 1.0 / 60; else still = 0;

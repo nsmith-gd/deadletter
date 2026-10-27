@@ -1,5 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
+using DeadLetter.Core.Motor;
+using DeadLetter.Core.Scenes;
+using DeadLetter.Core.Scenes.Dl01;
 using DeadLetter.Core.Simulation.Replay;
 using DeadLetter.Core.Simulation.Replay.Scripts;
 using Xunit;
@@ -7,7 +12,11 @@ using Xunit.Abstractions;
 
 namespace DeadLetter.Core.Tests
 {
-    /// <summary>U-18 (#15): the bot.js port, its JSONL, and DL-01 played headless start to finish.</summary>
+    /// <summary>
+    /// U-18 (#15): bot.js ported to Core, playing DL-01 live on U-20's <see cref="SceneSim"/>. Where the golden trace
+    /// (<see cref="Dl01TraceTests"/>) replays the prototype's recorded inputs, these tests let the C# bot choose its own,
+    /// which is what scenes without a prototype trace (DL-18+) and first-playthrough distributions need.
+    /// </summary>
     public class ReplayTests
     {
         private readonly ITestOutputHelper _out;
@@ -53,29 +62,28 @@ namespace DeadLetter.Core.Tests
             Assert.DoesNotContain("\n", j);
         }
 
+        internal static SceneSimTarget Dl01(double clock = 0)
+        {
+            var sim = new SceneSim(Dl01Scene.Def()) { Clock = clock };
+            return new SceneSimTarget(sim, "DL-02 The Sorting Hall").Begin("start", fromOpening: true);
+        }
+
         private SimResult PlayDl01(uint seed, bool mechanical)
         {
-            var rig = new Dl01SimRig();
-            var r = SimRun.Play(rig, new Dl01WakeScript(new PlayerModel(seed, mechanical)));
+            var r = SimRun.Play(Dl01(), new Dl01WakeScript(new PlayerModel(seed, mechanical)));
             _out.WriteLine(r.ToJson());
             return r;
         }
 
         /// <summary>
-        /// Two differences between the Core port and the web build that the replay found, each a locked-input beat the
-        /// prototype has and Core doesn't yet. The bot waits both out (it waits for <c>!G.act</c>):
-        /// the latch's Flinch, 1.6 s after Pull f39 (L1875–L1876; Core ends the act at f39, <c>Latch.cs</c> EndFrame), and the
-        /// <c>Proud</c> quirk after the crank, 40 f less the 0.05 s end test (L1894–L1895, L3852), plus turning back to
-        /// face +x first at 8 rad/s (π/2 rad, L1893). Raised on #16 for U-10/U-11.
+        /// Known differences between Core and the web build, each a locked-input beat the bot waits out, in seconds
+        /// (drop each when its fix lands). None left on DL-01: U-20's rules play the latch's Flinch and the Proud quirk.
         /// </summary>
-        public const double LatchFlinch = 1.6, ProudQuirk = 40 / 24.0 - 0.05 + Math.PI / 2 / 8;
-
-        /// <summary>The prototype's mechanical DL-01 beats (results_moments_mechanical.jsonl events, from play; DL-02 from the marks).</summary>
         private static readonly (string beat, double proto, double known)[] Beats =
         {
-            ("shutter up", 13.3, LatchFlinch),
+            ("shutter up", 13.3, 0),
             ("cart in the trench", 17.6, 0),
-            ("door open", 31.0, ProudQuirk),
+            ("door open", 31.0, 0),
             ("DL-02", PrototypeMechanicalDl01, 0),
         };
 
@@ -88,9 +96,8 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// #15's acceptance: DL-01's mechanical solve, headless, compared with the prototype's beat by beat. Each stretch
-        /// between beats matches the web build to 0.25 s once the known differences above are taken off; anything else
-        /// is a new divergence and fails here.
+        /// #15's acceptance: DL-01's mechanical solve, headless on <see cref="SceneSim"/>, compared with the prototype's
+        /// (results_moments_mechanical.jsonl) beat by beat, each stretch to 0.1 s (events are logged to 0.1 s).
         /// </summary>
         [Fact]
         public void Dl01_MechanicalSolve_PassesHeadless_AndMatchesThePrototypeBeatByBeat()
@@ -100,20 +107,17 @@ namespace DeadLetter.Core.Tests
             Assert.True(r.Done);
             Assert.Equal(0, r.Deaths);
             Assert.True(r.HasMark("cp shutter") && r.HasMark("cp hall") && r.HasMark("cp door"));
-            double prevCore = 0, prevProto = 0, known = 0;
+            double prevCore = 0, prevProto = 0;
             foreach (var (beat, proto, k) in Beats)
             {
                 double core = EventTime(r, beat);
                 Assert.False(double.IsNaN(core), beat);
-                known += k;
-                _out.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0,-20} core {1,6:0.00}  prototype {2,6:0.00}  known {3,5:0.00}",
-                    beat, core, proto, known));
-                Assert.InRange((core - prevCore) - (proto - prevProto - k), -0.25, 0.25);
+                _out.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0,-20} core {1,6:0.00}  prototype {2,6:0.00}", beat, core, proto));
+                Assert.InRange((core - prevCore) - (proto - prevProto - k), -0.11, 0.11);
                 prevCore = core; prevProto = proto;
             }
-            double t = r.MarkOr("DL-02") - r.MarkOr("DL-01");
-            _out.WriteLine(string.Format(CultureInfo.InvariantCulture, "DL-01 mechanical: core {0:0.00} s, prototype {1:0.00} s, known differences {2:0.00} s",
-                t, PrototypeMechanicalDl01, known));
+            _out.WriteLine(string.Format(CultureInfo.InvariantCulture, "DL-01 mechanical: core {0:0.00} s, prototype {1:0.00} s",
+                r.MarkOr("DL-02") - r.MarkOr("DL-01"), PrototypeMechanicalDl01));
         }
 
         [Fact]
@@ -122,36 +126,50 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(StripWall(PlayDl01(1, true).ToJson()), StripWall(PlayDl01(1, true).ToJson()));
         }
 
+        private static string StripWall(string j) => System.Text.RegularExpressions.Regex.Replace(j, "\"wall\":[^,]*,", "");
+
         /// <summary>
-        /// With <c>DL_SIM_OUT=&lt;dir&gt;</c> set (and optionally <c>DL_SIM_SEEDS=2,3,6</c>), writes the mechanical run and 20 first playthroughs (seeds 201–220, the
-        /// prototype's batch) as <c>results_core_dl01_mechanical.jsonl</c> and <c>results_core_dl01_first_playthrough.jsonl</c>
-        /// for <c>tools/sim/summarise.py</c>. Without it, it only checks the batch completes.
+        /// The port, step for step: the C# bot, playing DL-01 live, presses what bot.js pressed in the prototype's recorded
+        /// run (Traces/prologue_mech_seed1.jsonl.gz) at every step from the first of play to the end of the passage.
+        /// Its choices read the scene's state, so this checks the port of bot.js and Core's responses together.
         /// </summary>
         [Fact]
-        public void Dl01_Batch_WritesJsonlForSummarisePy()
+        public void Dl01_TheLiveBot_GivesTheRecordedBotsInput_AtEveryStep()
         {
-            string dir = Environment.GetEnvironmentVariable("DL_SIM_OUT");
-            var mech = new System.Text.StringBuilder();
-            var first = new System.Text.StringBuilder();
-            var m = SimRun.Play(new Dl01SimRig(), new Dl01WakeScript(new PlayerModel(1, true)));
-            Assert.Null(m.Error);
-            mech.Append(m.ToJson()).Append('\n');
-            string seeds = Environment.GetEnvironmentVariable("DL_SIM_SEEDS");   // e.g. "2,3,6"; default 201–220
-            var list = new System.Collections.Generic.List<uint>();
-            if (string.IsNullOrEmpty(seeds)) for (uint k = 201; k <= 220; k++) list.Add(k);
-            else foreach (var part in seeds.Split(',')) list.Add(uint.Parse(part.Trim(), CultureInfo.InvariantCulture));
-            foreach (uint seed in list)
+            var t = Trace.Load(Dl01TraceTests.TraceFile);
+            int play = t.FirstIndex(p => p.Mode == "play");
+            int room = t.FirstIndex(p => p.Cp == "room");
+            var target = Dl01(t.Steps[play - 1].Clk);
+            var bot = new Dl01WakeScript(new PlayerModel(1, mechanical: true));
+            bot.Begin(target);
+            var diffs = new List<string>();
+            int compensated = 0;
+            for (int k = play; k <= room && !bot.Done; k++)
             {
-                var r = SimRun.Play(new Dl01SimRig(), new Dl01WakeScript(new PlayerModel(seed, false)));
-                Assert.Null(r.Error);
-                first.Append(r.ToJson()).Append('\n');
+                var mine = bot.Tick();
+                var theirs = t.Steps[k].Input;
+                if (!SameInput(mine, theirs) && diffs.Count < 10)
+                    diffs.Add(string.Format(CultureInfo.InvariantCulture, "step {0} (+{1}): core {2} vs prototype {3}  [{4}; core x={5:0.000} act={6}]",
+                        t.Steps[k].I, k - play, Show(mine), Show(theirs), t.Steps[k], target.X, target.Act));
+                // #22 M2: Core's mantle ends one step before the prototype's, whose last mantle step ignores input. Feed
+                // Core nothing there, as Dl01TraceTests does, so M2 doesn't shift every later step by one.
+                bool m2 = t.Steps[k - 1].Mt && !target.Sim.Motor.IsMantling && target.Sim.Act == null;
+                if (m2) compensated++;
+                target.Step(m2 ? default : mine);
             }
-            if (string.IsNullOrEmpty(dir)) return;
-            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "results_core_dl01_mechanical.jsonl"), mech.ToString());
-            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "results_core_dl01_first_playthrough.jsonl"), first.ToString());
+            foreach (var d in diffs) _out.WriteLine(d);
+            _out.WriteLine("M2 steps compensated: " + compensated);
+            Assert.Empty(diffs);
+            Assert.True(bot.Done, "the bot finished DL-01 inside the recorded window");
         }
 
-        private static string StripWall(string j) => System.Text.RegularExpressions.Regex.Replace(j, "\"wall\":[^,]*,", "");
+        private static bool SameInput(MotorInput a, MotorInput b) =>
+            a.Move == b.Move && a.JumpPressed == b.JumpPressed && a.JumpHeld == b.JumpHeld && a.UsePressed == b.UsePressed
+            && a.RunModifierHeld == b.RunModifierHeld;
+
+        private static string Show(MotorInput m) =>
+            "move " + m.Move.ToString(CultureInfo.InvariantCulture) + (m.JumpPressed ? " J" : "") + (m.JumpHeld ? " j" : "")
+            + (m.UsePressed ? " U" : "") + (m.RunModifierHeld ? " R" : "");
 
         /// <summary>First-playthrough players (seeded hesitation and mistakes, incl. the trench fail) all finish DL-01.</summary>
         [Theory]
@@ -161,69 +179,37 @@ namespace DeadLetter.Core.Tests
         {
             var r = PlayDl01(seed, mechanical: false);
             Assert.Null(r.Error);
-            Assert.True(r.MarkOr("DL-02") - r.MarkOr("DL-01") >= PrototypeMechanicalDl01 * 0.9);
-        }
-    }
-}
-
-namespace DeadLetter.Core.Tests
-{
-    using DeadLetter.Core.Motor;
-    using DeadLetter.Core.Simulation.Replay;
-    using DeadLetter.Core.Simulation.Replay.Scripts;
-    using Xunit;
-
-    /// <summary>U-18 (#15): recorded input, replayed without the bot, reproduces the run bit for bit.</summary>
-    public class InputRecordingTests
-    {
-        private static string State(Dl01SimRig r) => Sim.Snapshot(r.Motor) + "#" + Mech.Dump(r.Graph) + "#" + r.Checkpoint + "#" + r.Region + "#" + r.Deaths;
-
-        [Theory]
-        [InlineData(1u, true)]       // the mechanical solve
-        [InlineData(201u, false)]    // a first playthrough with the trench fail and a respawn
-        public void ARecordedRun_ReplaysBitIdentically_ThroughItsText(uint seed, bool mechanical)
-        {
-            var a = new Dl01SimRig();
-            var rec = new InputRecording("DL-01", "start");
-            var trace = new System.Collections.Generic.List<string>();
-            var player = new Dl01WakeScript(new PlayerModel(seed, mechanical));
-            player.Begin(a);
-            while (!player.Done)
-            {
-                var input = player.Tick();
-                if (player.Done) break;
-                rec.Add(input);
-                a.Step(input);
-                trace.Add(State(a));
-            }
-            Assert.Null(player.Out.Error);
-            Assert.Equal(2, a.Region);
-
-            string text = rec.ToText();
-            var back = InputRecording.Parse(text);
-            Assert.Equal(rec.Steps, back.Steps);
-            Assert.Equal(text, back.ToText());
-            Assert.True(rec.Runs < rec.Steps / 4, "run-length encoding: " + rec.Runs + " runs for " + rec.Steps + " steps");
-
-            var b = new Dl01SimRig();
-            SimRun.Replay(b, back, i => Assert.Equal(trace[i], State(b)));
-            Assert.Equal(2, b.Region);
-            Assert.Equal(a.Deaths, b.Deaths);
+            Assert.True(r.MarkOr("DL-02") - r.MarkOr("DL-01") >= PrototypeMechanicalDl01 - 0.5);
         }
 
+        /// <summary>
+        /// With <c>DL_SIM_OUT=&lt;dir&gt;</c> set (and optionally <c>DL_SIM_SEEDS=2,3,6</c>), writes the mechanical run and
+        /// the first playthroughs (default seeds 201–220, the prototype's batch) as <c>results_core_dl01_mechanical.jsonl</c>
+        /// and <c>results_core_dl01_first_playthrough.jsonl</c> for <c>tools/sim/summarise.py</c>. Without it, it only
+        /// checks the batch completes.
+        /// </summary>
         [Fact]
-        public void Parse_RejectsBadInput()
+        public void Dl01_Batch_WritesJsonlForSummarisePy()
         {
-            Assert.Throws<System.FormatException>(() => InputRecording.Parse("nope 1 DL-01 start 1\n1 0\n"));
-            Assert.Throws<System.FormatException>(() => InputRecording.Parse("dlrec 2 DL-01 start 1\n1 0\n"));
-            Assert.Throws<System.FormatException>(() => InputRecording.Parse("dlrec 1 DL-01 start 2\n1 0\n"));
-            Assert.Throws<System.FormatException>(() => InputRecording.Parse("dlrec 1 DL-01 start 1\n1 0 X\n"));
-            var r = InputRecording.Parse("# a comment\ndlrec 1 DL-01 hall 3\n2 1 R\n1 -0.5 JjA\n");
-            Assert.Equal("hall", r.Checkpoint);
-            var all = new System.Collections.Generic.List<MotorInput>(r.Inputs());
-            Assert.Equal(3, all.Count);
-            Assert.True(all[0].RunModifierHeld && all[0].Move == 1);
-            Assert.True(all[2].JumpPressed && all[2].JumpHeld && all[2].MoveIsAnalog && all[2].Move == -0.5);
+            string dir = Environment.GetEnvironmentVariable("DL_SIM_OUT");
+            var mech = new StringBuilder();
+            var first = new StringBuilder();
+            var m = SimRun.Play(Dl01(), new Dl01WakeScript(new PlayerModel(1, true)));
+            Assert.Null(m.Error);
+            mech.Append(m.ToJson()).Append('\n');
+            string seeds = Environment.GetEnvironmentVariable("DL_SIM_SEEDS");
+            var list = new List<uint>();
+            if (string.IsNullOrEmpty(seeds)) for (uint k = 201; k <= 220; k++) list.Add(k);
+            else foreach (var part in seeds.Split(',')) list.Add(uint.Parse(part.Trim(), CultureInfo.InvariantCulture));
+            foreach (uint seed in list)
+            {
+                var r = SimRun.Play(Dl01(), new Dl01WakeScript(new PlayerModel(seed, false)));
+                Assert.Null(r.Error);
+                first.Append(r.ToJson()).Append('\n');
+            }
+            if (string.IsNullOrEmpty(dir)) return;
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "results_core_dl01_mechanical.jsonl"), mech.ToString());
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "results_core_dl01_first_playthrough.jsonl"), first.ToString());
         }
     }
 }
