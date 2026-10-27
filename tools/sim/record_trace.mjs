@@ -1,5 +1,5 @@
 // Golden trace recorder (U-20): runs the simulated player (bot.js) through the prototype and writes one JSON line per
-// 60 Hz game step: the inputs the game consumed that step and D-17's and DL-01's state after it. The Core parity tests
+// 60 Hz game step: the inputs the game consumed that step and the state of D-17 and the scene after it. The Core parity tests
 // (unity/core-tests/Dl01TraceTests.cs) replay the inputs through Core and compare. Format: tools/sim/README.md.
 //
 //   node record_trace.mjs <seed> <out.jsonl.gz> [mechanical]
@@ -7,6 +7,8 @@
 // Run it from a folder that has playwright-core and a local three in node_modules/ (like sim.mjs), with the game served
 // at http://127.0.0.1:8765 (or GAME). CHROME = the Chromium executable; BOT = bot.js (default: next to this file);
 // RNG_SEED = the seed of the page's Math.random (default 1); PROGRESS=1 prints the clock now and then.
+// BOT_OPTS = JSON merged into the bot's options (e.g. '{"pressMistake":true}': a death under DL-02's press);
+// UNTIL = game-clock seconds after which the recording stops (the end line then says "stopped").
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,6 +20,7 @@ const { chromium } = require('playwright-core');
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const [seedArg = '1', OUT = 'trace.jsonl.gz', mode = ''] = process.argv.slice(2);
 const seed = +seedArg, rngSeed = +(process.env.RNG_SEED || 1);
+const BOT_OPTS = process.env.BOT_OPTS ? JSON.parse(process.env.BOT_OPTS) : null, UNTIL = +(process.env.UNTIL || 0);
 const BOT = fs.readFileSync(process.env.BOT || path.join(HERE, 'bot.js'), 'utf8');
 const CHROME = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
@@ -58,13 +61,24 @@ const INIT = `(() => {
 // call starts the game: Math.random reseeded, timers on game time, game.clock = 0, then Begin. Nothing before it
 // (the title screen's real-time frames) reaches the trace, so two runs of the same seed are identical.
 const RECORDER = `window.__record = (rngSeed) => {
-  const D = window.__dl01, G = D.game, I = D.input, sim = window.__sim, bot = sim.bot;
+  const D = window.__dl01, G = D.game, I = D.input, sim = window.__sim, bot = sim.bot, SH = D.k.SH, PR = D.k2.PRESS2;
   const r6 = (v) => (typeof v === 'number' ? Math.round(v * 1e6) / 1e6 : v);
   const b = (v) => (v ? 1 : 0);
   let i = 0, inp = null, prev = {};
   window.__trace = [];
   const act = () => { const a = G.act; if (!a) return null; return a.kind + ':' + (a.kind === 'quirk' ? a.clip : a.phase); };
   const hold = () => (G.hold ? G.hold + (G.pushKey ? ':' + G.pushKey : '') : null);
+  // DL-02 (U-20): the press's face (from its model: rest + (face - PRESS2.rest)), the box, the tube's letter, deaths and a
+  // pending respawn. Only while in DL-02 (region 2, x < SH.x1 + 1, so its exit step too); absent fields are not written,
+  // so the lines of every other step are unchanged.
+  function dl02() {
+    if (G.region !== 2 || !(G.x < SH.x1 + 1)) return {};
+    const k = D.refs.ch1, pr = k && k.press, bx = G.ch1 && G.ch1.box;
+    return {
+      pf: pr ? r6(pr.position.y - pr.userData.rest.p.y + PR.rest) : null,
+      bx: bx ? r6(bx.x) : null, bb: bx ? r6(bx.base) : null, bs: bx ? bx.state : null, tl: D.letters.tube ?? null, dn: G.deaths, ra: r6(G.respawnAt || 0),
+    };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -73,6 +87,7 @@ const RECORDER = `window.__record = (rngSeed) => {
       fr: r6(G.frame), clip: D.clip(), sc: D.scene(),
       rel: b(G.released), sh: r6(G.shutterAngle), lv: r6(G.leverAngle), wy: r6(G.weightY), door: r6(G.doorOpen), wh: r6(G.wheelAngle),
       cx: c ? r6(c.x) : null, cs: c ? c.state : null, cd: c ? r6(c.drop) : null, cl: c ? b(c.lip) : null, nr: G.nextRelay,
+      ...dl02(),
     };
   }
   function flush() {
@@ -105,13 +120,13 @@ await page.waitForFunction(() => !document.getElementById('begin').disabled, nul
 await page.addScriptTag({ content: BOT });
 await page.addScriptTag({ content: RECORDER });
 // One task: no frame runs between starting the bot and wrapping it; the wrapper's first call presses Begin.
-await page.evaluate(([s, m, r]) => { window.__startBot(s, { mechanical: m === 'mechanical', steps: 10 }); window.__record(r); }, [seed, mode, rngSeed]);
+await page.evaluate(([s, m, r, o]) => { window.__startBot(s, { mechanical: m === 'mechanical', steps: 10, ...(o || {}) }); window.__record(r); }, [seed, mode, rngSeed, BOT_OPTS]);
 
 const gz = zlib.createGzip({ level: 9 });
 const file = fs.createWriteStream(OUT);
 gz.pipe(file);
 const header = { format: 'deadletter-trace/1', game: 'game/undelivered/index.html', bot: 'tools/sim/bot.js', seed, mode: mode || 'first_playthrough',
-  rngSeed, rng: 'lcg16807', step: 1 / 60, round: 1e-6, delta: true };
+  rngSeed, rng: 'lcg16807', step: 1 / 60, round: 1e-6, delta: true, ...(BOT_OPTS ? { botOpts: BOT_OPTS } : {}), ...(UNTIL ? { until: UNTIL } : {}) };
 gz.write(JSON.stringify(header) + '\n');
 const t0 = Date.now();
 let out, lines = 0;
@@ -123,13 +138,14 @@ while (Date.now() - t0 < 40 * 60000) {
   out = await page.evaluate(() => ({ ...window.__sim.out, x: window.__dl01.game.x, clock: window.__dl01.game.clock }));
   if (process.env.PROGRESS) console.log('  ..', Math.round(out.clock), 'x=' + out.x.toFixed(2), lines + ' steps');
   if (out.done) break;
+  if (UNTIL && out.clock >= UNTIL) { out.stopped = true; break; }
   if (errs.length) { out.error = 'page error: ' + errs[0]; break; }
 }
 const rest = await page.evaluate(() => window.__trace.splice(0));
 for (const l of rest) gz.write(l + '\n');
 lines += rest.length;
-if (!out.done && !out.error) out.error = 'wall timeout';
-gz.write(JSON.stringify({ end: true, steps: lines, error: out.error, marks: out.marks, events: out.events, pageErrors: errs.slice(0, 5) }) + '\n');
+if (!out.done && !out.error && !out.stopped) out.error = 'wall timeout';
+gz.write(JSON.stringify({ end: true, steps: lines, error: out.error, ...(out.stopped ? { stopped: true } : {}), marks: out.marks, events: out.events, pageErrors: errs.slice(0, 5) }) + '\n');
 gz.end();
 await new Promise((r) => file.on('finish', r));
 console.log(seed, out.error || 'ok', lines + ' steps', JSON.stringify(out.marks), Math.round((Date.now() - t0) / 1000) + 's wall');

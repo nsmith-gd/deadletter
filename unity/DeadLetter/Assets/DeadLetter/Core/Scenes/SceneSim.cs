@@ -99,7 +99,7 @@ namespace DeadLetter.Core.Scenes
         public double Yaw => _act != null && _act.OwnsPose ? _act.Yaw : Motor.Yaw;
         public double Vx => _act != null && _act.OwnsPose ? 0 : Motor.Vx;
         public double Vy => _act != null && _act.OwnsPose ? 0 : Motor.Vy;
-        public bool Grounded => _act != null && _act.OwnsPose || Motor.Grounded;
+        public bool Grounded => _act != null && _act.OwnsPose ? _act.PoseGrounded : Motor.Grounded;
         public bool Busy => _act != null || Motor.IsActing;
 
         /// <summary>
