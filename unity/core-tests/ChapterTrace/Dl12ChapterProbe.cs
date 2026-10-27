@@ -127,6 +127,9 @@ namespace DeadLetter.Core.Tests
                 case "hangWall": return "dl14a.wallPeg:" + Stepped(phase, "SetDownHigh");
                 case "takeWall": return "dl14a.wallPeg:" + Stepped(phase, "Lift");
                 case "reachHook": return "dl14a.reachHook:Present";
+                case "nudge14b": return "dl14b.figure:" + (phase == "approach" ? "Approach" : "Nudge");
+                case "hide": return (p.X < 266 ? "dl14b.nicheA:" : "dl14b.bay:") + (phase == "approach" ? "Approach" : phase == "in" ? "StepIn" : phase == "act" ? "Clip" : "StepOut");
+                case "escorted": return "Escorted:Clip";
                 default: return "att." + p.Aw + ":" + phase;
             }
         }
@@ -138,6 +141,7 @@ namespace DeadLetter.Core.Tests
         /// <summary>The pushable he is taking hold of: the one whose stand points are nearest.</summary>
         private static (string id, double at) PushedNear(TraceStep p)
         {
+            if (p.Fx14b.HasValue && p.X > 262) return ("dl14b.figure", p.Fx14b.Value);
             if (p.F13x.HasValue && p.X > 212) return ("dl13.figure", p.F13x.Value);
             return ("dl12.figure", p.F12x.Value);
         }
