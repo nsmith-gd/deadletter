@@ -18,8 +18,8 @@ namespace DeadLetter.Runtime.Platform
         {
             // TODO(Switch, NDA): Account / user selection. Open the user selected at launch (or show the system user
             //   picker per the startup-user guidelines) and keep that user handle for the session; save data is per user.
-            // TODO(Switch, NDA): Save data mount. Mount the user's save data before SettingsStore and the save system
-            //   read anything, and point their file paths at the mount. Unity's persistentDataPath is not the save area.
+            // TODO(Switch, NDA): Save data mount. Mount the user's save data before the save system (which also holds
+            //   the options) reads anything, and point its file paths at the mount. Unity's persistentDataPath is not the save area.
             // TODO(Switch, NDA): Applet / focus handling. Subscribe to the system's focus / in-focus state and HOME-menu
             //   notifications and raise OverlayActiveChanged(true/false) so PauseGate pauses (lotcheck requires the game
             //   to pause and mute while not in focus). Also handle controller-applet (Joy-Con layout) and the

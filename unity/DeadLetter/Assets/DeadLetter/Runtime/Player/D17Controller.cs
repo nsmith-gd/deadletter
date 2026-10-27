@@ -1,12 +1,13 @@
 using System;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Motor;
-using DeadLetter.Core.Options;
 using DeadLetter.Core.Simulation;
 using DeadLetter.Runtime.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+// Inside DeadLetter.Runtime, a bare "Settings" names the Runtime.Settings namespace.
+using Options = DeadLetter.Core.Save.Settings;
 
 namespace DeadLetter.Runtime
 {
@@ -176,7 +177,7 @@ namespace DeadLetter.Runtime
         }
 
         /// <summary>U-17: the options' auto-run toggle ("Auto-run (hold Shift or B to walk)", L170) → D17Motor.AutoRun.</summary>
-        private void OnSettingsApplied(GameSettings s)
+        private void OnSettingsApplied(Options s)
         {
             if (_motor != null) _motor.AutoRun = s.AutoRun;
         }

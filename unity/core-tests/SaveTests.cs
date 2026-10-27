@@ -34,7 +34,7 @@ namespace DeadLetter.Core.Tests
                 PlayTime = 81.25,
                 Flags = new List<string> { StoryFlags.Curio("scale"), StoryFlags.WhiteWarned },
                 Mechanisms = snap,
-                Settings = new Settings { AutoRun = false, Calm = true, Brightness = 1.35, Music = false, SubtitleSize = 2 },
+                Settings = new Settings { AutoRun = false, Calm = true, Brightness = 1.35, Music = false, SubtitleSize = TextSize.Large },
             };
         }
 
@@ -123,7 +123,7 @@ namespace DeadLetter.Core.Tests
             var s = new Settings
             {
                 AutoRun = false, Sound = false, Music = false, Prompts = false, StuckAssist = true, Calm = true,
-                Telemetry = false, Brightness = 1.8, Subtitles = false, SubtitleSize = 0, SubtitleBackground = true, HoldToToggle = true,
+                Telemetry = true, Brightness = 1.8, Subtitles = false, SubtitleSize = TextSize.Small, SubtitleBackground = true, HoldToToggle = true,
             };
             Assert.True(SaveCodec.TryLoad(SaveCodec.Encode(new SaveModel { Settings = s }), out var m, out _));
             var r = m.Settings;
@@ -137,7 +137,8 @@ namespace DeadLetter.Core.Tests
         public void Settings_PrototypeDefaults_AndBrightnessIsClamped_L8283_L8307()
         {
             var d = new Settings();
-            Assert.True(d.Sound && d.Music && d.Prompts && !d.StuckAssist && !d.Calm && d.AutoRun && d.Telemetry);
+            Assert.True(d.Sound && d.Music && d.Prompts && !d.StuckAssist && !d.Calm && d.AutoRun);
+            Assert.False(d.Telemetry);   // §4.30: the shipped uploader is opt-in (the prototype defaulted it on)
             var doc = new SaveDocument(2);
             doc.SetDouble("opt/bright", 5);
             Assert.Equal(1.8, Settings.Read(doc).Brightness);
@@ -156,6 +157,24 @@ namespace DeadLetter.Core.Tests
             Assert.True(store.TryLoad(0, out var m));
             Assert.True(m.Settings.Calm);
             Assert.Equal(1.2, m.Settings.Brightness);
+        }
+
+        [Fact]
+        public void Settings_AppliedFromReloaded_StayPendingThroughLoad_WhenWritesAreRateLimited()
+        {
+            // The options store (U-17) applies settings edited before the slot was loaded from inside Reloaded.
+            var g = Mech.Graph("start", new TestSource("t.a"));
+            var store = new MemorySaveStore();
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store) { MinSecondsBetweenWrites = 2 };
+            svc.ApplySettings(new Settings());                 // a write now, so the next one falls inside the window
+            var slot = svc.ToModel();
+            bool applied = false;
+            svc.Reloaded += _ => { if (!applied) { applied = true; svc.ApplySettings(new Settings { Calm = true }); } };
+            svc.Load(slot);
+            Assert.True(svc.Pending);
+            svc.Flush();
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.True(m.Settings.Calm);
         }
 
         [Fact]

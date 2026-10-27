@@ -1,15 +1,16 @@
 using System;
-using DeadLetter.Core.Options;
 using UnityEngine.InputSystem;
 
 namespace DeadLetter.Runtime.Settings
 {
     /// <summary>
     /// Interactive rebinding for the options screen, on the Input System's own machinery
-    /// (<c>PerformInteractiveRebinding</c>). Overrides are kept in <see cref="GameSettings.BindingOverrides"/> as the
-    /// asset's <c>SaveBindingOverridesAsJson</c> text, so they persist with the other settings.
+    /// (<c>PerformInteractiveRebinding</c>). Overrides are kept in <see cref="DeadLetter.Core.Save.Settings.BindingOverrides"/>
+    /// (<c>opt/bindings</c>) as the asset's <c>SaveBindingOverridesAsJson</c> text, so they are saved with the other
+    /// options in the save slot.
     /// <para>
-    /// Usage from the options UI: <c>BindingRebinder.Start(action, bindingIndex, ok => { draft.BindingOverrides =
+    /// Usage from the options UI (<c>draft = SettingsStore.Current.Clone()</c>):
+    /// <c>BindingRebinder.Start(action, bindingIndex, ok => { draft.BindingOverrides =
     /// BindingRebinder.Capture(asset); refreshLabel(); })</c>, then <c>SettingsStore.Instance.Commit(draft)</c> on Confirm.
     /// For a composite (Move's A/D parts) pass the part's binding index, not the composite's. Escape cancels.
     /// </para>

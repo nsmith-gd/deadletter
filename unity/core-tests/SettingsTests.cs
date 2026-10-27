@@ -1,20 +1,23 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using DeadLetter.Core.Options;
+using DeadLetter.Core.Audio;
+using DeadLetter.Core.Mechanisms;
+using DeadLetter.Core.Platform;
+using DeadLetter.Core.Save;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
 {
+    /// <summary>U-17's options on the one settings model, <see cref="Settings"/> (persisted in the save slot, §4.28/§4.29).</summary>
     public class SettingsDefaultsTests
     {
         // OPTS, index.html L8283: { sound: true, music: true, prompts: true, assist: false, calm: false, autorun: true, telemetry: true }
         [Fact]
         public void PrototypeToggles_DefaultAsInOpts()
         {
-            var s = new GameSettings();
+            var s = new Settings();
             Assert.True(s.AutoRun);
             Assert.True(s.Sound);
             Assert.True(s.Music);
@@ -27,17 +30,18 @@ namespace DeadLetter.Core.Tests
         public void Telemetry_DefaultsOff_DeliberateDeviationForOptIn()
         {
             // The prototype defaults telemetry on; §4.30 makes the shipped uploader opt-in.
-            Assert.False(new GameSettings().Telemetry);
+            Assert.False(new Settings().Telemetry);
+            Assert.False(Settings.Read(new SaveDocument(SaveModel.CurrentVersion)).Telemetry);
         }
 
         [Fact]
         public void Brightness_DefaultAndRange_MatchPrototype()
         {
             // L175: range 0.8–1.8, value 1; L8309: exposure = 1.4 × v.
-            var s = new GameSettings();
+            var s = new Settings();
             Assert.Equal(1.0, s.Brightness);
-            Assert.Equal(0.8, GameSettings.BrightnessMin);
-            Assert.Equal(1.8, GameSettings.BrightnessMax);
+            Assert.Equal(0.8, Settings.BrightnessMin);
+            Assert.Equal(1.8, Settings.BrightnessMax);
             Assert.Equal(1.4, s.Exposure, 12);
         }
 
@@ -45,7 +49,7 @@ namespace DeadLetter.Core.Tests
         public void Bloom_CalmIs035_NormalIs055()
         {
             // L8290: bloom.strength = calm ? 0.35 : 0.55
-            var s = new GameSettings();
+            var s = new Settings();
             Assert.Equal(0.55, s.Bloom);
             s.Calm = true;
             Assert.Equal(0.35, s.Bloom);
@@ -54,21 +58,31 @@ namespace DeadLetter.Core.Tests
         [Fact]
         public void NewOptions_HaveNeutralDefaults()
         {
-            var s = new GameSettings();
+            var s = new Settings();
             Assert.Equal(1.0, s.MasterVolume);
             Assert.Equal(1.0, s.MusicVolume);
             Assert.Equal(1.0, s.SfxVolume);
             Assert.Equal(1.0, s.VoiceVolume);
             Assert.Equal(1.0, s.AmbienceVolume);
-            Assert.Equal(TextSize.Default, s.TextSize);
+            Assert.True(s.Subtitles);
+            Assert.Equal(TextSize.Default, s.SubtitleSize);
+            Assert.Equal(1L, (long)s.SubtitleSize);   // U-14's "1 = medium"
             Assert.Equal(1.0, s.TextScale);
-            Assert.False(s.TextBackground);
+            Assert.False(s.SubtitleBackground);
             Assert.False(s.ColourIndependentCues);
-            Assert.False(s.ToggleHolds);
+            Assert.False(s.HoldToToggle);
             Assert.Equal(GlyphPreference.Auto, s.Glyphs);
             Assert.Equal("", s.BindingOverrides);
-            Assert.Equal(GameSettings.CurrentVersion, s.Version);
-            Assert.Empty(s.UnknownEntries);
+            Assert.Empty(s.UnknownOptions);
+        }
+
+        [Fact]
+        public void TextSize_KeepsU14Numbering()
+        {
+            Assert.Equal(0, (int)TextSize.Small);
+            Assert.Equal(1, (int)TextSize.Default);
+            Assert.Equal(2, (int)TextSize.Large);
+            Assert.Equal(3, (int)TextSize.ExtraLarge);
         }
 
         [Fact]
@@ -77,7 +91,7 @@ namespace DeadLetter.Core.Tests
             double prev = 0;
             foreach (TextSize t in new[] { TextSize.Small, TextSize.Default, TextSize.Large, TextSize.ExtraLarge })
             {
-                double k = GameSettings.TextScaleFor(t);
+                double k = Settings.TextScaleFor(t);
                 Assert.True(k > prev);
                 prev = k;
             }
@@ -86,51 +100,58 @@ namespace DeadLetter.Core.Tests
         [Fact]
         public void Sanitise_ClampsAndRepairs()
         {
-            var s = new GameSettings
+            var s = new Settings
             {
                 Brightness = 5, MasterVolume = -1, MusicVolume = double.NaN, SfxVolume = 2,
-                TextSize = (TextSize)99, Glyphs = (GlyphPreference)42, BindingOverrides = null,
+                SubtitleSize = (TextSize)99, Glyphs = (GlyphPreference)42, BindingOverrides = null,
             };
             s.Sanitise();
             Assert.Equal(1.8, s.Brightness);
             Assert.Equal(0.0, s.MasterVolume);
             Assert.Equal(1.0, s.MusicVolume);
             Assert.Equal(1.0, s.SfxVolume);
-            Assert.Equal(TextSize.Default, s.TextSize);
+            Assert.Equal(TextSize.ExtraLarge, s.SubtitleSize);
             Assert.Equal(GlyphPreference.Auto, s.Glyphs);
             Assert.Equal("", s.BindingOverrides);
+            s.Brightness = double.NaN;
+            s.SubtitleSize = (TextSize)(-3);
+            s.Sanitise();
+            Assert.Equal(1.0, s.Brightness);
+            Assert.Equal(TextSize.Small, s.SubtitleSize);
         }
 
         [Fact]
         public void Clone_IsDeep()
         {
-            var a = new GameSettings { Calm = true, MusicVolume = 0.3 };
-            a.UnknownEntries.Add(new KeyValuePair<string, string>("x", "1"));
+            var a = new Settings { Calm = true, MusicVolume = 0.3 };
+            a.UnknownOptions["opt/x"] = new SaveValue(SaveValueKind.Long, 1, null);
             var b = a.Clone();
             b.Calm = false;
-            b.UnknownEntries.Add(new KeyValuePair<string, string>("y", "2"));
+            b.UnknownOptions["opt/y"] = new SaveValue(SaveValueKind.Long, 2, null);
             Assert.True(a.Calm);
             Assert.Equal(0.3, b.MusicVolume);
-            Assert.Single(a.UnknownEntries);
-            Assert.Equal(2, b.UnknownEntries.Count);
+            Assert.Single(a.UnknownOptions);
+            Assert.Equal(2, b.UnknownOptions.Count);
         }
     }
 
-    public class SettingsSerializerTests
+    public class SettingsPersistenceTests
     {
-        private static GameSettings NonDefault()
+        private const string Json = "{\"bindings\":[{\"action\":\"Gameplay/Jump\",\"id\":\"a=b\",\"path\":\"<Keyboard>/k\"}]}\n{line2}\\end";
+
+        private static Settings NonDefault()
         {
-            return new GameSettings
+            return new Settings
             {
                 AutoRun = false, Sound = false, Music = false, Prompts = false, StuckAssist = true, Calm = true,
                 Telemetry = true, Brightness = 1.35, MasterVolume = 0.9, MusicVolume = 0.123456789, SfxVolume = 0,
-                VoiceVolume = 0.5, AmbienceVolume = 0.25, TextSize = TextSize.ExtraLarge, TextBackground = true,
-                ColourIndependentCues = true, ToggleHolds = true, Glyphs = GlyphPreference.PlayStation,
-                BindingOverrides = "{\"bindings\":[{\"action\":\"Gameplay/Jump\",\"id\":\"a=b\",\"path\":\"<Keyboard>/k\"}]}\n{line2}\\end",
+                VoiceVolume = 0.5, AmbienceVolume = 0.25, Subtitles = false, SubtitleSize = TextSize.ExtraLarge,
+                SubtitleBackground = true, ColourIndependentCues = true, HoldToToggle = true, Glyphs = GlyphPreference.PlayStation,
+                BindingOverrides = Json,
             };
         }
 
-        private static void AssertSame(GameSettings a, GameSettings b)
+        private static void AssertSame(Settings a, Settings b)
         {
             Assert.Equal(a.AutoRun, b.AutoRun);
             Assert.Equal(a.Sound, b.Sound);
@@ -145,236 +166,228 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(a.SfxVolume, b.SfxVolume);
             Assert.Equal(a.VoiceVolume, b.VoiceVolume);
             Assert.Equal(a.AmbienceVolume, b.AmbienceVolume);
-            Assert.Equal(a.TextSize, b.TextSize);
-            Assert.Equal(a.TextBackground, b.TextBackground);
+            Assert.Equal(a.Subtitles, b.Subtitles);
+            Assert.Equal(a.SubtitleSize, b.SubtitleSize);
+            Assert.Equal(a.SubtitleBackground, b.SubtitleBackground);
             Assert.Equal(a.ColourIndependentCues, b.ColourIndependentCues);
-            Assert.Equal(a.ToggleHolds, b.ToggleHolds);
+            Assert.Equal(a.HoldToToggle, b.HoldToToggle);
             Assert.Equal(a.Glyphs, b.Glyphs);
             Assert.Equal(a.BindingOverrides, b.BindingOverrides);
+            Assert.Equal(a.UnknownOptions, b.UnknownOptions);
+        }
+
+        private static Settings ViaDocument(Settings s)
+        {
+            var d = new SaveDocument(SaveModel.CurrentVersion);
+            s.Write(d);
+            return Settings.Read(d);
+        }
+
+        private static Settings ViaBytes(Settings s)
+        {
+            Assert.True(SaveCodec.TryLoad(SaveCodec.Encode(new SaveModel { Settings = s }), out var m, out string err), err);
+            return m.Settings;
         }
 
         [Fact]
         public void RoundTrip_Defaults()
         {
-            var d = new GameSettings();
-            AssertSame(d, SettingsSerializer.Deserialize(SettingsSerializer.Serialize(d)));
+            var d = new Settings();
+            AssertSame(d, ViaDocument(d));
+            AssertSame(d, ViaBytes(d));
         }
 
         [Fact]
         public void RoundTrip_EveryFieldChanged_IncludingMultilineBindingJson()
         {
             var a = NonDefault();
-            int rejected;
-            var b = SettingsSerializer.Deserialize(SettingsSerializer.Serialize(a), out rejected);
-            AssertSame(a, b);
-            Assert.Equal(0, rejected);
+            AssertSame(a, ViaDocument(a));
+            AssertSame(a, ViaBytes(a));
         }
 
         [Fact]
-        public void RoundTrip_Utf8Bytes()
+        public void Encode_IsStable_SameInputSameBytes()
         {
-            var a = NonDefault();
-            AssertSame(a, SettingsSerializer.DeserializeUtf8(SettingsSerializer.SerializeUtf8(a)));
-        }
-
-        [Fact]
-        public void Serialize_IsStable_SameInputSameText()
-        {
-            var a = NonDefault();
-            string once = SettingsSerializer.Serialize(a);
-            string twice = SettingsSerializer.Serialize(SettingsSerializer.Deserialize(once));
+            byte[] once = SaveCodec.Encode(new SaveModel { Settings = NonDefault() });
+            byte[] twice = SaveCodec.Encode(new SaveModel { Settings = ViaBytes(NonDefault()) });
             Assert.Equal(once, twice);
         }
 
         [Fact]
-        public void Serialize_OneLinePerKey_NoRawNewlinesInValues()
+        public void Write_EveryKnownKeyOnce_UnderOpt_WithItsKind()
         {
-            string text = SettingsSerializer.Serialize(NonDefault());
-            var lines = text.Split('\n').Where(l => l.Length > 0 && l[0] != '#').ToList();
-            Assert.Equal(SettingsSerializer.KnownKeys.Count() + 1, lines.Count);   // + version
-            Assert.StartsWith("version=", lines[0]);
-            Assert.All(lines, l => Assert.Contains("=", l));
+            var d = new SaveDocument(SaveModel.CurrentVersion);
+            NonDefault().Write(d);
+            Assert.Equal(Settings.KnownKeys.OrderBy(k => k, StringComparer.Ordinal), d.Entries.Select(e => e.Key));
+            Assert.Equal(Settings.KnownKeys.Count, Settings.KnownKeys.Distinct().Count());
+            Assert.All(Settings.KnownKeys, k => Assert.StartsWith(Settings.Prefix, k));
+            Assert.True(d.TryGet("opt/calm", out var v) && v.Kind == SaveValueKind.Bool);
+            Assert.True(d.TryGet("opt/bright", out v) && v.Kind == SaveValueKind.Double);
+            Assert.True(d.TryGet("opt/volMusic", out v) && v.Kind == SaveValueKind.Double);
+            Assert.True(d.TryGet("opt/subtitleSize", out v) && v.Kind == SaveValueKind.Long && v.Bits == 3);
+            Assert.True(d.TryGet("opt/glyphs", out v) && v.Kind == SaveValueKind.Long && v.Bits == (long)GlyphPreference.PlayStation);
+            Assert.True(d.TryGet("opt/bindings", out v) && v.Kind == SaveValueKind.String && v.Text == Json);
         }
 
         [Fact]
-        public void Serialize_IsCultureInvariant()
+        public void U14Keys_KeepTheirMeaning()
+        {
+            // A save written before U-17's options were merged: only U-14's keys.
+            var d = new SaveDocument(SaveModel.CurrentVersion);
+            d.SetBool("opt/autorun", false);
+            d.SetDouble("opt/bright", 1.2);
+            d.SetLong("opt/subtitleSize", 2);
+            d.SetBool("opt/subtitleBox", true);
+            d.SetBool("opt/holdToggle", true);
+            var s = Settings.Read(d);
+            Assert.False(s.AutoRun);
+            Assert.Equal(1.2, s.Brightness);
+            Assert.Equal(TextSize.Large, s.SubtitleSize);
+            Assert.True(s.SubtitleBackground);
+            Assert.True(s.HoldToToggle);
+            Assert.Equal(1.0, s.MasterVolume);                        // missing → default
+            Assert.Equal(GlyphPreference.Auto, s.Glyphs);
+            Assert.Equal("", s.BindingOverrides);
+            Assert.Empty(s.UnknownOptions);
+        }
+
+        [Fact]
+        public void Encode_IsCultureInvariant()
         {
             var prev = Thread.CurrentThread.CurrentCulture;
             try
             {
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("de-DE");
-                string text = SettingsSerializer.Serialize(new GameSettings { Brightness = 1.25 });
-                Assert.Contains("brightness=1.25\n", text);
-                Assert.Equal(1.25, SettingsSerializer.Deserialize(text).Brightness);
+                var a = new Settings { Brightness = 1.25, MusicVolume = 0.75 };
+                byte[] de = SaveCodec.Encode(new SaveModel { Settings = a });
+                Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+                Assert.Equal(de, SaveCodec.Encode(new SaveModel { Settings = a }));
+                Assert.Equal(1.25, ViaBytes(a).Brightness);
             }
             finally { Thread.CurrentThread.CurrentCulture = prev; }
         }
 
         [Fact]
-        public void BoolsWrittenAsOneZero_LikeThePrototypesLocalStorage()
+        public void UnknownOptKeys_ArePreserved_AndWrittenBack()
         {
-            // L8285: localStorage.setItem('dl01-' + name, value ? '1' : '0')
-            string text = SettingsSerializer.Serialize(new GameSettings());
-            Assert.Contains("autoRun=1\n", text);
-            Assert.Contains("calm=0\n", text);
-        }
-
-        [Fact]
-        public void UnknownKeys_ArePreservedInOrder_AndWrittenBack()
-        {
-            string text = "version=1\nfuture.hdr=1\ncalm=1\nfuture.fov=72.5\nfuture.note=a\\nb\n";
-            var s = SettingsSerializer.Deserialize(text);
+            var d = new SaveDocument(SaveModel.CurrentVersion);
+            d.SetBool("opt/future.hdr", true);
+            d.SetBool("opt/calm", true);
+            d.SetDouble("opt/future.fov", 72.5);
+            d.SetString("opt/future.note", "a\nb");
+            d.SetString("cp", "hall");                                 // not an option: not Settings' business
+            var s = Settings.Read(d);
             Assert.True(s.Calm);
-            Assert.Equal(new[] { "future.hdr", "future.fov", "future.note" }, s.UnknownEntries.Select(e => e.Key));
-            Assert.Equal("a\nb", s.UnknownEntries[2].Value);
+            Assert.Equal(new[] { "opt/future.fov", "opt/future.hdr", "opt/future.note" }, s.UnknownOptions.Keys);
 
-            string written = SettingsSerializer.Serialize(s);
-            Assert.Contains("future.hdr=1\n", written);
-            Assert.Contains("future.fov=72.5\n", written);
-            Assert.Contains("future.note=a\\nb\n", written);
-            Assert.True(written.IndexOf("future.hdr") < written.IndexOf("future.fov"));
-            // and again
-            var again = SettingsSerializer.Deserialize(written);
-            Assert.Equal(s.UnknownEntries, again.UnknownEntries);
+            var again = ViaBytes(s);
+            Assert.Equal(s.UnknownOptions, again.UnknownOptions);
+            Assert.Equal("a\nb", again.UnknownOptions["opt/future.note"].Text);
+            var w = new SaveDocument(SaveModel.CurrentVersion);
+            again.Write(w);
+            Assert.True(w.GetBool("opt/future.hdr", false));
+            Assert.Equal(72.5, w.GetDouble("opt/future.fov", 0));
+            Assert.False(w.Contains("cp"));
         }
 
         [Fact]
-        public void UnknownKey_DuplicateKeepsLastValue_FirstPosition()
+        public void UnknownEntry_ShadowingAKnownKey_DoesNotOverrideIt()
         {
-            var s = SettingsSerializer.Deserialize("a.x=1\nb.y=2\na.x=3\n");
-            Assert.Equal(2, s.UnknownEntries.Count);
-            Assert.Equal("a.x", s.UnknownEntries[0].Key);
-            Assert.Equal("3", s.UnknownEntries[0].Value);
+            var s = new Settings();
+            s.UnknownOptions["opt/calm"] = new SaveValue(SaveValueKind.Bool, 1, null);
+            s.UnknownOptions["cp"] = new SaveValue(SaveValueKind.String, 0, "x");
+            var d = new SaveDocument(SaveModel.CurrentVersion);
+            s.Write(d);
+            Assert.False(d.GetBool("opt/calm", true));
+            Assert.False(d.Contains("cp"));
+            Assert.False(Settings.Read(d).Calm);
+            Assert.Empty(Settings.Read(d).UnknownOptions);
         }
 
         [Fact]
-        public void NewerVersion_IsKeptOnWrite()
+        public void EmptyDocument_GivesDefaults()
         {
-            var s = SettingsSerializer.Deserialize("version=7\ncalm=1\n");
-            Assert.Equal(7, s.Version);
-            Assert.Contains("version=7\n", SettingsSerializer.Serialize(s));
+            var s = Settings.Read(new SaveDocument(SaveModel.CurrentVersion));
+            AssertSame(new Settings(), s);
         }
 
         [Fact]
-        public void MissingVersion_TreatedAsCurrent()
+        public void WrongKindOrBadValues_FallBackToDefault_GoodOnesStillLoad()
         {
-            var s = SettingsSerializer.Deserialize("music=0\n");
+            var d = new SaveDocument(SaveModel.CurrentVersion);
+            d.SetString("opt/autorun", "maybe");                      // wrong kind → default on
+            d.SetBool("opt/music", false);                            // good
+            d.SetString("opt/bright", "bright");                      // wrong kind → default
+            d.SetDouble("opt/volSfx", double.NaN);                    // NaN → default
+            d.SetDouble("opt/volVoice", 0.4);
+            d.SetLong("opt/glyphs", 42);                              // unknown enum → Auto
+            d.SetLong("opt/bindings", 7);                             // wrong kind → ""
+            d.SetBool("opt/calm", true);
+            var s = Settings.Read(d);
+            Assert.True(s.AutoRun);
             Assert.False(s.Music);
-            Assert.Equal(GameSettings.CurrentVersion, s.Version);
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   \n\n")]
-        [InlineData("\0\0\0\u0001garbage")]
-        [InlineData("{\"json\": true}")]
-        [InlineData("=====\n=\n")]
-        public void EmptyOrGarbage_GivesDefaults(string text)
-        {
-            var s = SettingsSerializer.Deserialize(text);
-            var d = new GameSettings();
-            Assert.Equal(d.AutoRun, s.AutoRun);
-            Assert.Equal(d.Brightness, s.Brightness);
-            Assert.Equal(d.Calm, s.Calm);
-            Assert.Empty(s.UnknownEntries);
-        }
-
-        [Fact]
-        public void BadValues_FallBackToDefault_GoodOnesStillLoad()
-        {
-            string text = "autoRun=maybe\nmusic=0\nbrightness=bright\nvolume.sfx=NaN\nvolume.voice=0.4\ntext.size=huge\ninput.glyphs=atari\ncalm=yes\n";
-            int rejected;
-            var s = SettingsSerializer.Deserialize(text, out rejected);
-            Assert.True(s.AutoRun);                         // bad → default on
-            Assert.False(s.Music);                          // good
-            Assert.Equal(1.0, s.Brightness);                // bad → default
-            Assert.Equal(1.0, s.SfxVolume);                 // NaN rejected
+            Assert.Equal(1.0, s.Brightness);
+            Assert.Equal(1.0, s.SfxVolume);
             Assert.Equal(0.4, s.VoiceVolume);
-            Assert.Equal(TextSize.Default, s.TextSize);
             Assert.Equal(GlyphPreference.Auto, s.Glyphs);
+            Assert.Equal("", s.BindingOverrides);
             Assert.True(s.Calm);
-            Assert.Equal(5, rejected);
-            Assert.Empty(s.UnknownEntries);                 // a bad known key is not demoted to unknown
+            Assert.Empty(s.UnknownOptions);                           // a bad known key is not demoted to unknown
         }
 
         [Fact]
         public void OutOfRangeNumbers_AreClamped()
         {
-            var s = SettingsSerializer.Deserialize("brightness=9\nvolume.master=-3\nvolume.music=1e300\n");
+            var d = new SaveDocument(SaveModel.CurrentVersion);
+            d.SetDouble("opt/bright", 9);
+            d.SetDouble("opt/volMaster", -3);
+            d.SetDouble("opt/volMusic", 1e300);
+            d.SetLong("opt/subtitleSize", 99);
+            var s = Settings.Read(d);
             Assert.Equal(1.8, s.Brightness);
             Assert.Equal(0.0, s.MasterVolume);
             Assert.Equal(1.0, s.MusicVolume);
+            Assert.Equal(TextSize.ExtraLarge, s.SubtitleSize);
+            d.SetLong("opt/subtitleSize", -5);
+            d.SetLong("opt/glyphs", long.MaxValue);
+            s = Settings.Read(d);
+            Assert.Equal(TextSize.Small, s.SubtitleSize);
+            Assert.Equal(GlyphPreference.Auto, s.Glyphs);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   \n\n")]
+        [InlineData("\0\0\0\u0001garbage")]
+        [InlineData("{\"json\": true}")]
+        [InlineData("calm=1\nversion=1\n")]
+        public void GarbageBytes_DoNotThrow_AndLoadNothing(string text)
+        {
+            // The old settings.cfg text format is not a save: it is not read as options (the slot's defaults apply).
+            Assert.False(SaveCodec.TryLoad(System.Text.Encoding.UTF8.GetBytes(text), out _, out _));
         }
 
         [Fact]
-        public void CorruptLines_AreDropped_NotPreserved()
+        public void CorruptedBytes_LoadNothing_NotHalfASettings()
         {
-            int rejected;
-            var s = SettingsSerializer.Deserialize("no equals sign\n=novalue\nbad key=1\nk\u0001=2\nok.key=v\u0002x\ncalm=1\n", out rejected);
-            Assert.True(s.Calm);
-            Assert.Empty(s.UnknownEntries);
-            Assert.Equal(5, rejected);
+            byte[] b = SaveCodec.Encode(new SaveModel { Settings = NonDefault() });
+            b[b.Length / 2] ^= 0x5A;
+            Assert.False(SaveCodec.TryLoad(b, out _, out _));
+            Assert.False(SaveCodec.TryLoad(b.AsSpan(0, b.Length / 3).ToArray(), out _, out _));
         }
 
         [Fact]
-        public void Tolerates_CrLf_Bom_Comments_Whitespace_AndTruncation()
+        public void ApplySettings_SavesTheNewOptions_AndCopies()
         {
-            var s = SettingsSerializer.Deserialize("﻿# hand edited\r\n  calm = 1 \r\nsound=0\r\nbrightn");
-            Assert.True(s.Calm);
-            Assert.False(s.Sound);
-            Assert.Equal(1.0, s.Brightness);
-        }
-
-        [Fact]
-        public void BoolParsing_AcceptsCommonSpellings()
-        {
-            foreach (var t in new[] { "1", "true", "TRUE", "yes", "on" })
-                Assert.True(SettingsSerializer.Deserialize("music=0\nmusic=" + t).Music);
-            foreach (var f in new[] { "0", "false", "No", "off" })
-                Assert.False(SettingsSerializer.Deserialize("music=" + f).Music);
-        }
-
-        [Fact]
-        public void ValueMayContainEquals()
-        {
-            var s = SettingsSerializer.Deserialize("input.bindings=a=b=c\n");
-            Assert.Equal("a=b=c", s.BindingOverrides);
-        }
-
-        [Fact]
-        public void Escape_Unescape_RoundTrip()
-        {
-            foreach (var v in new[] { "", "plain", "a\\b", "line1\nline2", "cr\r\nlf", "\\n literal", "trailing\\" })
-                Assert.Equal(v, SettingsSerializer.Unescape(SettingsSerializer.Escape(v)));
-        }
-
-        [Fact]
-        public void UnknownEntry_ShadowingAKnownKey_IsNotWrittenTwice()
-        {
-            var s = new GameSettings();
-            s.UnknownEntries.Add(new KeyValuePair<string, string>("calm", "1"));
-            s.UnknownEntries.Add(new KeyValuePair<string, string>("version", "99"));
-            string text = SettingsSerializer.Serialize(s);
-            Assert.Equal(1, CountOccurrences(text, "\ncalm="));
-            Assert.Equal(1, CountOccurrences(text, "version="));
-            Assert.False(SettingsSerializer.Deserialize(text).Calm);
-        }
-
-        [Fact]
-        public void KnownKeys_AreUniqueAndValid()
-        {
-            var keys = SettingsSerializer.KnownKeys.ToList();
-            Assert.Equal(keys.Count, keys.Distinct().Count());
-            Assert.All(keys, k => Assert.True(SettingsSerializer.IsValidKey(k)));
-            Assert.DoesNotContain(SettingsSerializer.VersionKey, keys);
-        }
-
-        private static int CountOccurrences(string hay, string needle)
-        {
-            int n = 0, i = 0;
-            while ((i = hay.IndexOf(needle, i, StringComparison.Ordinal)) >= 0) { n++; i += needle.Length; }
-            return n;
+            var g = Mech.Graph("start", new TestSource("t.a"));
+            var store = new MemorySaveStore();
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store);
+            var edited = NonDefault();
+            svc.ApplySettings(edited);
+            edited.MusicVolume = 0.9;                                 // the service holds its own copy
+            Assert.Equal(0.123456789, svc.Settings.MusicVolume);
+            Assert.True(store.TryLoad(0, out var m));
+            AssertSame(NonDefault(), m.Settings);
         }
     }
 
@@ -403,7 +416,7 @@ namespace DeadLetter.Core.Tests
         [Fact]
         public void SoundToggle_MutesSfxVoiceAmbience_NotMusicOrMaster()
         {
-            var s = new GameSettings { Sound = false };
+            var s = new Settings { Sound = false };
             Assert.Equal(AudioLevels.SilentDb, AudioLevels.Decibels(s, AudioGroup.Sfx));
             Assert.Equal(AudioLevels.SilentDb, AudioLevels.Decibels(s, AudioGroup.Voice));
             Assert.Equal(AudioLevels.SilentDb, AudioLevels.Decibels(s, AudioGroup.Ambience));
@@ -414,7 +427,7 @@ namespace DeadLetter.Core.Tests
         [Fact]
         public void MusicToggle_MutesOnlyMusic_AndKeepsTheSliderValue()
         {
-            var s = new GameSettings { Music = false, MusicVolume = 0.7 };
+            var s = new Settings { Music = false, MusicVolume = 0.7 };
             Assert.Equal(0.0, AudioLevels.Linear(s, AudioGroup.Music));
             Assert.Equal(1.0, AudioLevels.Linear(s, AudioGroup.Sfx));
             s.Music = true;
@@ -424,7 +437,7 @@ namespace DeadLetter.Core.Tests
         [Fact]
         public void Master_IsNotMultipliedIntoChildGroups()
         {
-            var s = new GameSettings { MasterVolume = 0.5, SfxVolume = 0.5 };
+            var s = new Settings { MasterVolume = 0.5, SfxVolume = 0.5 };
             Assert.Equal(0.5, AudioLevels.Linear(s, AudioGroup.Sfx));
             Assert.Equal(0.5, AudioLevels.Linear(s, AudioGroup.Master));
         }

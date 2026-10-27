@@ -182,8 +182,8 @@ namespace DeadLetter.Core.Save
             _graph.Calm = Settings.Calm;
             _snapshot = idx >= 0 && string.Equals(m.Scene ?? "", Scene, StringComparison.Ordinal) ? m.Mechanisms : null;
             _savedFlags = Flags.Version;
-            Reload();
             Pending = false;                                  // what is in the store is what was just loaded
+            Reload();                                         // after: a save from a Reloaded handler must stay pending
         }
 
         /// <summary>The slot as it would be written now.</summary>

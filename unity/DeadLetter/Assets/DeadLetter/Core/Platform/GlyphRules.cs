@@ -1,8 +1,18 @@
 using System;
-using DeadLetter.Core.Options;
 
 namespace DeadLetter.Core.Platform
 {
+    /// <summary>Which button glyphs to show (the <c>opt/glyphs</c> option). <see cref="Auto"/> follows the last device used.</summary>
+    public enum GlyphPreference
+    {
+        Auto = 0,
+        Keyboard = 1,
+        Xbox = 2,
+        PlayStation = 3,
+        Switch = 4,
+        SteamDeck = 5,
+    }
+
     /// <summary>The button-prompt art set the UI draws.</summary>
     public enum GlyphSet
     {

@@ -1,6 +1,7 @@
 using System;
+using DeadLetter.Core.Save;
 
-namespace DeadLetter.Core.Options
+namespace DeadLetter.Core.Audio
 {
     /// <summary>The five mixer groups (U-16). Each has an AudioMixer exposed parameter named by <see cref="AudioLevels.ExposedParameter"/>.</summary>
     public enum AudioGroup
@@ -13,8 +14,9 @@ namespace DeadLetter.Core.Options
     }
 
     /// <summary>
-    /// Slider → mixer maths, engine-free so it is tested here. The Runtime <c>SettingsStore</c> calls
-    /// <c>AudioMixer.SetFloat(ExposedParameter(g), Decibels(settings, g))</c> for each group.
+    /// Slider → mixer maths for the volume options on <see cref="Settings"/>, engine-free so it is tested here. The
+    /// Runtime <c>SettingsStore</c> calls <c>AudioMixer.SetFloat(ExposedParameter(g), Decibels(settings, g))</c> for
+    /// each group.
     /// <para>
     /// The prototype's two toggles are kept: Sound off mutes SFX, Voice and Ambience (<c>Sound.setEnabled</c>, L8286);
     /// Music off mutes Music (L8287). Master is not multiplied into the child groups: the mixer's group hierarchy does
@@ -47,7 +49,7 @@ namespace DeadLetter.Core.Options
         }
 
         /// <summary>Slider value for <paramref name="g"/>, 0–1, before the toggles.</summary>
-        public static double Slider(GameSettings s, AudioGroup g)
+        public static double Slider(Settings s, AudioGroup g)
         {
             switch (g)
             {
@@ -61,7 +63,7 @@ namespace DeadLetter.Core.Options
         }
 
         /// <summary>Linear gain sent to the group: the slider, zeroed by the prototype's Sound/Music toggles.</summary>
-        public static double Linear(GameSettings s, AudioGroup g)
+        public static double Linear(Settings s, AudioGroup g)
         {
             double v = Slider(s, g);
             if (double.IsNaN(v)) v = 1;
@@ -77,7 +79,7 @@ namespace DeadLetter.Core.Options
         }
 
         /// <summary>The group's attenuation in dB for the mixer.</summary>
-        public static double Decibels(GameSettings s, AudioGroup g) => LinearToDecibels(Linear(s, g));
+        public static double Decibels(Settings s, AudioGroup g) => LinearToDecibels(Linear(s, g));
 
         /// <summary><c>20·log10(v)</c>, floored at <see cref="SilentDb"/> (0 → −80 dB, 1 → 0 dB, 0.5 → −6.02 dB).</summary>
         public static double LinearToDecibels(double linear)
