@@ -156,7 +156,7 @@ namespace DeadLetter.Core.Scenes.Dl12
             else if (m.Hold == HoldKind.Item && m.Carried == _coat && Math.Abs(y - Dl12Lane.BenchH) < 0.05 && Math.Abs(x - Dl12Scene.PegX) < 0.4)
                 act = new HangCoatAct(sim, _coat);
             else if (m.Hold == HoldKind.Item && m.Carried == _coat && y < 0.05 && x > Dl12Lane.BenchX0 - 0.45 && x < Dl12Lane.BenchX1 + 0.45)
-                act = new ReachPegAct(sim, _coat);
+                act = new ReachPegAct(sim);
             if (act == null) return;
             input = MotorInput.None;
             sim.StartAct(act);
@@ -198,13 +198,9 @@ namespace DeadLetter.Core.Scenes.Dl12
         {
             double f = Frame;
             if (f >= 22 && !_taken) { _taken = true; _coat.MoveTo(ItemState.Carried, Dl12Scene.BinX, Dl12Scene.CoatHeldBase); }
-            return !(f >= 39);
-        }
-
-        protected override void OnEnd()
-        {
-            base.OnEnd();
-            Sim.Motor.TakeItem(_coat);
+            if (!(f >= 39)) return true;
+            Take(_coat);                                                                                        // L5303
+            return false;
         }
     }
 
@@ -243,22 +239,14 @@ namespace DeadLetter.Core.Scenes.Dl12
     public sealed class ReachPegAct : AttAct
     {
         public static readonly ActId Reach = ActId.Of("dl12.reachPeg"), Present = ActIds.Clip(ClipNames.Present);
-        private readonly CarriedItem _coat;
-
-        public ReachPegAct(ChapterSim sim, CarriedItem coat) : base(sim, Reach, double.NaN, 0) { _coat = coat; Phase = Present; }
+        public ReachPegAct(ChapterSim sim) : base(sim, Reach, double.NaN, 0) { Phase = Present; }
 
         protected override void OnArrive() { }
 
         protected override bool OnClip(double dt)
         {
             if (T < 0.02) { int s = Math.Sign(Dl12Scene.PegX - X); Facing = s != 0 ? s : 1; }   // L5308
-            return !(T > 2.2);                                                                       // L5310
-        }
-
-        protected override void OnEnd()
-        {
-            base.OnEnd();
-            Sim.Motor.TakeItem(_coat);
+            return !(T > 2.2);                                                                       // L5310 (still carrying it)
         }
     }
 }

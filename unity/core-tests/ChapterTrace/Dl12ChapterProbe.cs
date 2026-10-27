@@ -119,9 +119,21 @@ namespace DeadLetter.Core.Tests
                 case "unjam": return "dl14.pole:" + (phase == "approach" ? "Approach" : "Lift");
                 case "jam": return "dl14.wheel:" + (phase == "approach" ? "Approach" : "SetDown");
                 case "duct": return "dl14.hatch:" + (phase == "in" ? "In" : phase == "along" ? "Along" : "Out");
+                case "pawl14a": return "dl14a.brake:" + (phase == "approach" ? "Approach" : "Clip");
+                case "crank14a": return "dl14a.crank:" + (phase == "approach" ? "Approach" : "Clip");
+                case "bagBasket": return "dl14a.basket:" + (phase == "approach" ? "Approach" : "Lift");
+                case "hangHook": return "dl14a.hook:" + Stepped(phase, "SetDownHigh");
+                case "takeHook": return "dl14a.hook:" + Stepped(phase, "Lift");
+                case "hangWall": return "dl14a.wallPeg:" + Stepped(phase, "SetDownHigh");
+                case "takeWall": return "dl14a.wallPeg:" + Stepped(phase, "Lift");
+                case "reachHook": return "dl14a.reachHook:Present";
                 default: return "att." + p.Aw + ":" + phase;
             }
         }
+
+        /// <summary>A step-in act's phase (<see cref="DeadLetter.Core.Scenes.Attendance.AttAct"/>): approach, in, its clip, out.</summary>
+        private static string Stepped(string phase, string clip)
+            => phase == "approach" ? "Approach" : phase == "in" ? "In" : phase == "out" ? "Out" : clip;
 
         /// <summary>The pushable he is taking hold of: the one whose stand points are nearest.</summary>
         private static (string id, double at) PushedNear(TraceStep p)

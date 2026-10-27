@@ -181,13 +181,9 @@ namespace DeadLetter.Core.Scenes.Dl14
             double f = Frame;
             if (f >= 16 && !_freed) { _freed = true; _jam.Set(false); }                                                 // L5297
             if (f >= 22 && !_taken) { _taken = true; _pole.MoveTo(ItemState.Carried, X, _pole.BaseY); }                  // L5299
-            return !(f >= 39);
-        }
-
-        protected override void OnEnd()
-        {
-            base.OnEnd();
-            Sim.Motor.TakeItem(_pole);
+            if (!(f >= 39)) return true;
+            Take(_pole);                                                                                                  // L5303
+            return false;
         }
     }
 
