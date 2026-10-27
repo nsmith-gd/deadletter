@@ -69,7 +69,7 @@ are derived from x (`sceneName`, L8135–8144).
 
 ## 1. Locked decisions (not re-debated here)
 
-Unity 6 LTS `6000.3.x` (the skeleton pins `6000.3.0f1`), URP 17.0.3, project `unity/DeadLetter/`. Packages already in
+Unity 6 `6000.5.3f1` (the director's installed editor; moved from the planned 6000.3 LTS), URP (manifest says 17.0.3; the editor moves it to its bundled version), project `unity/DeadLetter/`. Packages already in
 `Packages/manifest.json`: Input System 1.14.0, Cinemachine 3.1.2, Timeline 1.8.7, glTFast 6.8.0, Test Framework 1.4.5.
 Assemblies `DeadLetter.Core` (`noEngineReferences: true`), `DeadLetter.Runtime`, `DeadLetter.Editor`; Core is also
 compiled by `unity/core-tests` (dotnet 8 + xUnit). Platforms Steam, Itch, Switch (720p handheld / 30 fps target;

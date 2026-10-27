@@ -5,14 +5,16 @@ Unity 6 LTS + URP project skeleton (issue #3, task U-02). The Unity project live
 
 ## Unity version
 
-`ProjectSettings/ProjectVersion.txt` says `6000.3.0f1`. That patch number is a placeholder
-chosen without access to Unity's servers. **Install the newest 6000.3 LTS in Unity Hub and
-open the project with it; Unity will offer to upgrade the version file.** Accept, and commit
-the updated `ProjectVersion.txt`.
+The project is pinned to **Unity 6000.5.3f1** (`ProjectSettings/ProjectVersion.txt`), the
+editor the director has installed. Use exactly that version so every machine serialises
+assets the same way. If you open the project with a different editor, Unity offers to
+change the version file; don't commit that change unless the team has agreed to move
+versions. Before Switch certification, confirm which editor versions Nintendo's Unity
+platform support covers, and move the project to a supported version if 6000.5 isn't one.
 
 ## Opening the project
 
-Unity Hub → Add → Add project from disk → select `unity/DeadLetter/` → open with 6000.3 LTS.
+Unity Hub → Add → Add project from disk → select `unity/DeadLetter/` → open with 6000.5.3f1.
 The first import takes a while (it builds `Library/`, which is ignored).
 
 ## First-open checklist (do these once, then commit)
@@ -57,7 +59,7 @@ doesn't exist.
 
 | Package | Version | Confidence |
 |---|---|---|
-| com.unity.render-pipelines.universal | 17.0.3 | High that it exists. It's the 6000.0 line. URP is an editor-locked core package, so 6000.3 should move it to its bundled 17.3.x on open. |
+| com.unity.render-pipelines.universal | 17.0.3 | High that it exists. It's the 6000.0 line. URP is an editor-locked core package, so 6000.5 should move it to its bundled 17.x on open. |
 | com.unity.inputsystem | 1.14.0 | Medium-high |
 | com.unity.cinemachine | 3.1.2 | High |
 | com.unity.timeline | 1.8.7 | High |
