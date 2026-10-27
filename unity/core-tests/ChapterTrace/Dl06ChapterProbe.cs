@@ -71,8 +71,11 @@ namespace DeadLetter.Core.Tests
 
         private static readonly string[] CarrierStates = { "rise", "dock", "move", "unload", "tipload", "tip", "back", "sink" };
 
-        /// <summary>The line's carriers in the recorder's shape (tools/sim/record_trace.mjs), as Dl06TraceTests writes them.</summary>
-        private static string CarriersOf(CarrierLine line)
+        /// <summary>
+        /// The line's carriers in the recorder's shape (tools/sim/record_trace.mjs), as Dl06TraceTests writes them; with
+        /// <paramref name="loads"/>, DL-07's <c>cr7</c>: each tub's two loads and whether its parcels are hidden.
+        /// </summary>
+        internal static string CarriersOf(CarrierLine line, bool loads = false)
         {
             var sb = new StringBuilder("[");
             for (int i = 0; i < line.Count; i++)
@@ -88,12 +91,15 @@ namespace DeadLetter.Core.Tests
                     if (k > 0) sb.Append(',');
                     sb.Append('[').Append(R(c.ParcelSizeOf(k))).Append(',').Append(R(-c.ParcelZOf(k))).Append(',').Append(R(c.ParcelYawOf(k))).Append(']');
                 }
-                sb.Append("]]");
+                sb.Append(']');
+                if (loads) sb.Append(',').Append(c.Load1).Append(',').Append(c.Load2).Append(',').Append(c.ParcelsHidden && c.Parcels > 0 ? 1 : 0);   // payload.some(!visible)
+                sb.Append(']');
             }
             return sb.Append(']').ToString();
         }
 
-        private static void CompareCarriers(List<string> bad, int i, string proto, string core, ref int seen)
+        /// <summary>Carriers field by field: numbers from the fourth at 1e-6, the rest exactly, the payload at 1e-6 (DL-07's loads after it, exactly).</summary>
+        internal static void CompareCarriers(List<string> bad, int i, string proto, string core, ref int seen)
         {
             using var a = JsonDocument.Parse(proto);
             using var b = JsonDocument.Parse(core);
@@ -103,7 +109,8 @@ namespace DeadLetter.Core.Tests
             {
                 seen++;
                 var x = a.RootElement[k]; var y = b.RootElement[k];
-                for (int f = 0; f < 11; f++)
+                if (x.GetArrayLength() != y.GetArrayLength()) { bad.Add($"#{i} carrier {k} {x} vs {y}"); continue; }
+                for (int f = 0; f < x.GetArrayLength(); f++)
                 {
                     var u = x[f]; var v = y[f];
                     if (f == 10)
@@ -112,7 +119,7 @@ namespace DeadLetter.Core.Tests
                         for (int q = 0; q < u.GetArrayLength(); q++)
                             for (int e = 0; e < 3; e++) Check(bad, i, $"carrier {k} parcel {q}.{e}", u[q][e].GetDouble(), v[q][e].GetDouble());
                     }
-                    else if (u.ValueKind == JsonValueKind.Number && f >= 3) Check(bad, i, $"carrier {k} field {f}", u.GetDouble(), v.GetDouble());
+                    else if (u.ValueKind == JsonValueKind.Number && f >= 3 && f < 10) Check(bad, i, $"carrier {k} field {f}", u.GetDouble(), v.GetDouble());
                     else if (u.ToString() != v.ToString()) bad.Add($"#{i} carrier {k} field {f} {u} vs {v}");
                 }
             }

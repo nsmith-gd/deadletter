@@ -267,7 +267,7 @@ namespace DeadLetter.Core.Scenes
         /// the world rebuilt there with the slot's snapshot (any scene's: the chapter is one graph), and D-17 placed at the
         /// checkpoint. False when the slot is empty or unreadable, or when its checkpoint is not one of this chapter's
         /// scenes' (<see cref="SceneOf"/> null: another chapter's, or a scene not ported yet, such as the prologue table's
-        /// DL-07 to DL-11 rows): nothing changes then, here or in the slot, and the runtime continues in the chapter that
+        /// DL-08 to DL-11 rows): nothing changes then, here or in the slot, and the runtime continues in the chapter that
         /// owns it (<see cref="CanContinueAt"/>).
         /// </summary>
         public bool Continue()

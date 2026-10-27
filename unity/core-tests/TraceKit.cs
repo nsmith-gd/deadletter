@@ -56,6 +56,12 @@ namespace DeadLetter.Core.Tests
         public string Sp6, Rt6, Cr6;
         public double? St6, Sl6, Pl6, Rd6;
         public bool? Bl6;
+        // DL-07 (U-21): the weights (state, x, base, a tumble's T.t), the bucket, the gate, the gallery, the collapse, the
+        // heap letter, the belt, the route, the levers, what he rides and the carriers with their loads (tools/sim/record_trace.mjs).
+        public string W0s7, W1s7, Rt7, Hl7, Cr7;
+        public double? W0x7, W0b7, W0t7, W1x7, W1b7, W1t7, G7, Ct7, Ht7, Sl7, Pl7, Rd7;
+        public int? Bk7, Co7;
+        public bool? Up7, Bl7;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -209,12 +215,34 @@ namespace DeadLetter.Core.Tests
                 case "pl6": s.Pl6 = N(v); break;
                 case "rd6": s.Rd6 = N(v); break;
                 case "cr6": s.Cr6 = S(v); break;
+                case "w0s7": s.W0s7 = S(v); break;
+                case "w0x7": s.W0x7 = N(v); break;
+                case "w0b7": s.W0b7 = N(v); break;
+                case "w0t7": s.W0t7 = N(v); break;
+                case "w1s7": s.W1s7 = S(v); break;
+                case "w1x7": s.W1x7 = N(v); break;
+                case "w1b7": s.W1b7 = N(v); break;
+                case "w1t7": s.W1t7 = N(v); break;
+                case "bk7": s.Bk7 = I(v); break;
+                case "g7": s.G7 = N(v); break;
+                case "up7": s.Up7 = B(v); break;
+                case "co7": s.Co7 = I(v); break;
+                case "ct7": s.Ct7 = N(v); break;
+                case "hl7": s.Hl7 = S(v); break;
+                case "ht7": s.Ht7 = N(v); break;
+                case "bl7": s.Bl7 = B(v); break;
+                case "rt7": s.Rt7 = S(v); break;
+                case "sl7": s.Sl7 = N(v); break;
+                case "pl7": s.Pl7 = N(v); break;
+                case "rd7": s.Rd7 = N(v); break;
+                case "cr7": s.Cr7 = S(v); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }
 
         private static bool B(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetInt32() != 0 : v.ValueKind == JsonValueKind.True;
         private static string S(JsonElement v) => v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        private static int? I(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetInt32() : (int?)null;
         private static double? N(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetDouble() : (double?)null;
 
         /// <summary>Index of the first step in <paramref name="mode"/> (e.g. the first step of play).</summary>

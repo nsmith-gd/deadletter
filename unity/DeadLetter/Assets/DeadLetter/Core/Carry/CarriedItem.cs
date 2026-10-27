@@ -115,6 +115,20 @@ namespace DeadLetter.Core.Carry
         }
 
         /// <summary>
+        /// A receiver that steps after it moves it within the same step, logged there (<paramref name="ctx"/> is the
+        /// receiver's): the prototype's receivers set <c>it.state</c> inside their own update, so the item has moved by the
+        /// step's end (DL-07's weights: into a carrier at SetDownHigh f14, L4446–L4453; out of it at the tip, L4991–L5001;
+        /// into the bucket as it lands, L4962, L5002; back by the dock 4 s after the chute took it, L5004).
+        /// <see cref="MoveTo"/> is the same move applied at the item's next step.
+        /// </summary>
+        public void Take(in StepContext ctx, ItemState state, double x, double baseY, int slot = -1)
+        {
+            X = x; BaseY = baseY; Slot = state == ItemState.Placed ? slot : -1;
+            Enter(ctx, (int)state);
+            Emit(ctx, (int)ItemEvent.Moved, (int)state, X);
+        }
+
+        /// <summary>
         /// He dropped it where he stood, at once (a death's <c>releaseHolds</c>, L7425–L7428: <c>state 'floor'</c>, his x,
         /// <c>max(0, y)</c>). It runs inside the hazards' step in the prototype, so it is applied now, unlogged, rather than
         /// at the next <see cref="Step"/>. Only an item in his hands drops.

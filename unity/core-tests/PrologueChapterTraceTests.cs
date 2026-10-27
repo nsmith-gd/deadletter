@@ -13,10 +13,10 @@ using static DeadLetter.Core.Tests.ChapterTraceKit;
 namespace DeadLetter.Core.Tests
 {
     /// <summary>
-    /// The whole prologue as far as it is ported, DL-01 to DL-06, replayed through ONE <see cref="ChapterSim"/> over
+    /// The whole prologue as far as it is ported, DL-01 to DL-07, replayed through ONE <see cref="ChapterSim"/> over
     /// <see cref="ChapterDefs.Prologue"/>: the prototype's own run (the mechanical bot, seed 1,
     /// Traces/prologue_mech_seed1.jsonl.gz) from the first step of play at DL-01's <c>start</c> (#1768, the opening's last
-    /// step) to the first step of the scene after the last ported one (DL-07's, #14016), input for input, with no hand-over
+    /// step) to the first step of the scene after the last ported one (DL-08's, #17677), input for input, with no hand-over
     /// anywhere: one motor carries his speed, yaw and holds across every seam, one graph steps every scene's mechanisms all
     /// along, one checkpoint service holds the game.
     /// <para>This class compares what every scene shares, at 1e-6 on every continuous value and discrete ones on the same
@@ -106,13 +106,13 @@ namespace DeadLetter.Core.Tests
             foreach (var w in rows) if (scenes.Count == 0 || scenes[scenes.Count - 1] != w.ProtoScene) scenes.Add(w.ProtoScene);
             var want = new List<string>();
             foreach (var p in r.Probes) want.Add(p.Scene);
-            want.Add(rows[rows.Count - 1].ProtoScene);                                          // the scene after the ported ones (DL-07, #14016)
+            want.Add(rows[rows.Count - 1].ProtoScene);                                          // the scene after the ported ones (DL-08, #17677)
             Assert.Equal(want, scenes);
             Assert.DoesNotContain(rows[rows.Count - 1].ProtoScene, want.GetRange(0, r.Probes.Count));
         }
 
         // ---- (a) position -----------------------------------------------------------------------------------------------
-        /// <summary>x, y, z, vx, yaw, grounded and the region at every step from the wake to the belt running to the exit.</summary>
+        /// <summary>x, y, z, vx, yaw, grounded and the region at every step from the wake to the residential doorway.</summary>
         [Fact]
         public void X_Y_Z_Vx_Yaw_Grounded_AndRegion_MatchEveryStep()
         {
@@ -165,13 +165,15 @@ namespace DeadLetter.Core.Tests
             Assert.True(bad.Count == 0, Report(bad));
             var want = new List<string>();
             foreach (var p in r.Probes) foreach (var cp in ChapterDefs.PrologueCheckpoints.Of(p.Scene)) want.Add(cp.Name);
-            Assert.Equal(want, order);                                                          // start … scanned
+            var end = r.Rows[r.Rows.Count - 1];                                                 // crossing into the next scene may reach its first (DL-08's goods, L2044)
+            if (ChapterDefs.PrologueCheckpoints.SceneOf(end.Cp) == end.ProtoScene) want.Add(end.Cp);
+            Assert.Equal(want, order);                                                          // start … gallery, goods
         }
 
         // ---- (c) the scenes -------------------------------------------------------------------------------------------------
         /// <summary>
         /// The scene that holds him is the prototype's <c>sceneName</c> on every step (by region and x for DL-01 to DL-05, by
-        /// what has happened for DL-06 → DL-07, which is past this chapter), and <see cref="ChapterSim.SceneChanged"/> fires
+        /// what has happened for DL-06 → DL-07, by region for DL-07 → DL-08, which is past this chapter), and <see cref="ChapterSim.SceneChanged"/> fires
         /// once at each seam, on its step (each probe's <see cref="IChapterTraceProbe.FirstStep"/>, then the window's last),
         /// going right.
         /// </summary>

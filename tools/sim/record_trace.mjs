@@ -1,6 +1,6 @@
 // Golden trace recorder (U-20): runs the simulated player (bot.js) through the prototype and writes one JSON line per
 // 60 Hz game step: the inputs the game consumed that step and D-17's and the scenes' state after it. The Core
-// parity tests (unity/core-tests/Dl01TraceTests.cs … Dl06TraceTests.cs) replay the inputs
+// parity tests (unity/core-tests/Dl01TraceTests.cs … Dl06TraceTests.cs, PrologueChapterTraceTests.cs) replay the inputs
 // through Core and compare. Format: tools/sim/README.md.
 //
 //   node record_trace.mjs <seed> <out.jsonl.gz> [mechanical]
@@ -9,11 +9,14 @@
 // at http://127.0.0.1:8765 (or GAME). CHROME = the Chromium executable; BOT = bot.js (default: next to this file);
 // RNG_SEED = the seed of the page's Math.random (default 1); PROGRESS=1 prints the clock now and then.
 // BOT_OPTS = JSON merged into the bot's options (e.g. '{"pressMistake":true}': a death under DL-02's press);
-// UNTIL = game-clock seconds after which the recording stops (the end line then says "stopped").
+// UNTIL = game-clock seconds: the recording stops, inside the page, after the first step whose clock is >= UNTIL (that
+// step is the last line; the end line then says "stopped"), so a stopped trace ends on the same step on every run.
+// The header carries the sha256 of the index.html the page loaded (as served), so a trace names the game it was taken from.
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(path.join(process.cwd(), 'noop.js'));            // resolve from the run folder, as sim.mjs does
@@ -61,7 +64,7 @@ const INIT = `(() => {
 // what step i-1 left), then lets the bot set the input, then keeps a copy of the input step i will consume. Its first
 // call starts the game: Math.random reseeded, timers on game time, game.clock = 0, then Begin. Nothing before it
 // (the title screen's real-time frames) reaches the trace, so two runs of the same seed are identical.
-const RECORDER = `window.__record = (rngSeed) => {
+const RECORDER = `window.__record = (rngSeed, until) => {
   const D = window.__dl01, G = D.game, I = D.input, sim = window.__sim, bot = sim.bot, SH = D.k.SH, PR = D.k2.PRESS2;
   const r6 = (v) => (typeof v === 'number' ? Math.round(v * 1e6) / 1e6 : v);
   const b = (v) => (v ? 1 : 0);
@@ -130,6 +133,31 @@ const RECORDER = `window.__record = (rngSeed) => {
       rd6: G.riding ? G.riding.id : null, cr6: JSON.stringify(cr),
     };
   }
+  // DL-07 (U-21): the two sorting weights (state, x, base, and a tumble's progress T.t while one tumbles toward the
+  // bucket, L4957-L4962), the bucket's count and the gate's height (game.ch1.bucket, gate6, L4826-L4832), the gallery
+  // (game.upper), the collapse (s.collapse 0/1/2 and its clock, L7355-L7364), the heap letter (letterState.heap and
+  // s.heapT, L4840-L4847), the belt, the route, the two levers and what he rides as DL-06's fields, and the carriers as
+  // DL-06's cr6 with each tub's loads (the weight's index + 1, or 0) and whether its parcels are hidden. Only while
+  // sceneName() is DL-07 and on the step he leaves it; names end in 7 so no other scene's fields collide.
+  let in07 = false;
+  function dl07() {
+    const now = /^DL-07/.test(D.scene()), emit = now || in07;
+    in07 = now;
+    const s = G.ch1;
+    if (!emit || !s || !s.weights || !D.refs.carriers) return {};
+    const lh = G.leverHold, run = G.belt.running, ws = s.weights, li = (w) => (w ? ws.indexOf(w) + 1 : 0);
+    const cr = D.refs.carriers.map((c) => [c.id, c.state, c.route, r6(c.root.position.x), r6(c.root.position.y), r6(c.s), r6(c.wait), r6(c.t), b(c.ridden),
+      r6(c.pivot.rotation.z), c.payload.map((m) => [r6(m.geometry.parameters.height), r6(m.position.z), r6(m.rotation.y)]),
+      li(c.load), li(c.load2), b(c.payload.some((m) => !m.visible))]);
+    const w = (k) => ws[k] || {};
+    return {
+      w0s7: w(0).state ?? null, w0x7: r6(w(0).x ?? null), w0b7: r6(w(0).base ?? null), w0t7: w(0).state === 'tumble' ? r6(w(0).tumble.t) : null,
+      w1s7: w(1).state ?? null, w1x7: r6(w(1).x ?? null), w1b7: r6(w(1).base ?? null), w1t7: w(1).state === 'tumble' ? r6(w(1).tumble.t) : null,
+      bk7: s.bucket, g7: r6(s.gate6), up7: b(G.upper), co7: s.collapse, ct7: r6(s.collapseT), hl7: D.letters.heap ?? null, ht7: r6(s.heapT),
+      bl7: b(run), rt7: G.route, sl7: r6(lh && lh.which === 'stop' ? lh.angle : run ? -18 : 6), pl7: r6(lh && lh.which === 'points' ? lh.angle : G.route === 'exit' ? 6 : -18),
+      rd7: G.riding ? G.riding.id : null, cr7: JSON.stringify(cr),
+    };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -145,19 +173,24 @@ const RECORDER = `window.__record = (rngSeed) => {
       ...dl04(),
       ...dl05(),
       ...dl06(),
+      ...dl07(),
     };
   }
+  window.__stopped = false;
   function flush() {
     if (!inp) return;
     const full = Object.assign({}, inp, state()), line = { i: i - 1 };
     for (const k in full) if (full[k] !== prev[k]) line[k] = full[k];
     prev = full;
     window.__trace.push(JSON.stringify(line));
+    if (until && G.clock >= until) window.__stopped = true;          // this step's line is the last
   }
   sim.bot = function (dt) {
+    if (window.__stopped) return;                                     // stopped at UNTIL: nothing more is recorded or played
     if (i === 0) { window.__seedRandom(rngSeed); window.__virtualTime(true); G.clock = 0; document.getElementById('begin').click(); }
     window.__advanceTime(1000 / 60);
     if (!sim.out.done) flush();
+    if (window.__stopped) return;
     bot.call(sim, dt);
     inp = { L: b(I.left), R: b(I.right), JP: b(I.jumpPressed), JH: b(I.jumpHeld), UP: b(I.usePressed), UH: b(I.useHeld), SH: b(I.shift), AX: r6(I.axis || 0) };
     i++;
@@ -172,17 +205,18 @@ page.on('pageerror', (e) => errs.push(e.message));
 await page.addInitScript(INIT);
 await page.route('https://cdn.jsdelivr.net/npm/three@0.169.0/**', (r) => r.fulfill({ path: path.join(path.resolve('node_modules/three'), r.request().url().split('three@0.169.0/')[1]), contentType: 'text/javascript' }));
 await page.route('https://fonts.**', (r) => r.abort());
-await page.goto((process.env.GAME || 'http://127.0.0.1:8765') + '/index.html' + (process.env.QUERY || ''));
+const resp = await page.goto((process.env.GAME || 'http://127.0.0.1:8765') + '/index.html' + (process.env.QUERY || ''));
+const sha256 = crypto.createHash('sha256').update(await resp.body()).digest('hex');           // the game as the page loaded it
 await page.waitForFunction(() => !document.getElementById('begin').disabled, null, { timeout: 300000 });
 await page.addScriptTag({ content: BOT });
 await page.addScriptTag({ content: RECORDER });
 // One task: no frame runs between starting the bot and wrapping it; the wrapper's first call presses Begin.
-await page.evaluate(([s, m, r, o]) => { window.__startBot(s, { mechanical: m === 'mechanical', steps: 10, ...(o || {}) }); window.__record(r); }, [seed, mode, rngSeed, BOT_OPTS]);
+await page.evaluate(([s, m, r, o, u]) => { window.__startBot(s, { mechanical: m === 'mechanical', steps: 10, ...(o || {}) }); window.__record(r, u); }, [seed, mode, rngSeed, BOT_OPTS, UNTIL]);
 
 const gz = zlib.createGzip({ level: 9 });
 const file = fs.createWriteStream(OUT);
 gz.pipe(file);
-const header = { format: 'deadletter-trace/1', game: 'game/undelivered/index.html', bot: 'tools/sim/bot.js', seed, mode: mode || 'first_playthrough',
+const header = { format: 'deadletter-trace/1', game: 'game/undelivered/index.html', sha256, bot: 'tools/sim/bot.js', seed, mode: mode || 'first_playthrough',
   rngSeed, rng: 'lcg16807', step: 1 / 60, round: 1e-6, delta: true, ...(BOT_OPTS ? { botOpts: BOT_OPTS } : {}), ...(UNTIL ? { until: UNTIL } : {}) };
 gz.write(JSON.stringify(header) + '\n');
 const t0 = Date.now();
@@ -192,10 +226,9 @@ while (Date.now() - t0 < 40 * 60000) {
   const chunk = await page.evaluate(() => window.__trace.splice(0));
   for (const l of chunk) gz.write(l + '\n');
   lines += chunk.length;
-  out = await page.evaluate(() => ({ ...window.__sim.out, x: window.__dl01.game.x, clock: window.__dl01.game.clock }));
+  out = await page.evaluate(() => ({ ...window.__sim.out, x: window.__dl01.game.x, clock: window.__dl01.game.clock, stopped: window.__stopped }));
   if (process.env.PROGRESS) console.log('  ..', Math.round(out.clock), 'x=' + out.x.toFixed(2), lines + ' steps');
-  if (out.done) break;
-  if (UNTIL && out.clock >= UNTIL) { out.stopped = true; break; }
+  if (out.done || out.stopped) break;
   if (errs.length) { out.error = 'page error: ' + errs[0]; break; }
 }
 const rest = await page.evaluate(() => window.__trace.splice(0));

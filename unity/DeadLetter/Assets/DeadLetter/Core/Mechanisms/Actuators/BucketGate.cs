@@ -18,15 +18,24 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         /// <summary>From this checkpoint on the bucket holds <see cref="FullCount"/> weights (<c>past(cp, 'gallery') ? 2 : 0</c>, L4099).</summary>
         public string FullAfter = "gallery";
         public int FullCount = 2;
+        /// <summary>
+        /// Optional: the mechanism whose <see cref="FeedEvent"/> drops a weight in (the carrier line's
+        /// <see cref="Routes.CarrierLineEvent.LoadToBucket"/>), read from this step's log. It must step first, so the weight
+        /// starts its tumble on the step the carrier lets it go, as <c>placeItem</c> moves it in the same step's
+        /// <c>updateCh1</c> (L4957, after <c>updateCarriers</c>). None: only <see cref="GateBucket.Drop"/> feeds it.
+        /// </summary>
+        public MechanismId Feed;
+        public int FeedEvent = (int)Routes.CarrierLineEvent.LoadToBucket;
 
-        /// <summary>DL-07: the gallery gate's bucket at <c>HP.bucketX</c> = OFF3 + 39.0 (L3893, L4099, L4991–L5003).</summary>
+        /// <summary>DL-07: the gallery gate's bucket at <c>HP.bucketX</c> = OFF3 + 39.0 (L3893, L4099, L4991–L5003); the scene feeds it from <c>dl06.line</c>.</summary>
         public static GateBucketParams Dl07Bucket() => new GateBucketParams();
     }
 
     /// <summary>
     /// The DL-07 gallery gate's counterweight bucket (§4.13d). A weight tipped toward it by the carrier line
-    /// (<see cref="Routes.CarrierLineEvent.LoadToBucket"/>; the Runtime calls <see cref="Drop"/> for each, as it calls
-    /// <c>CarrierLine.Place</c> for the loader) tumbles for 0.7 s, then counts (L4991–L5003). Weights never leave it.
+    /// (<see cref="Routes.CarrierLineEvent.LoadToBucket"/>, read from the log when <see cref="GateBucketParams.Feed"/> names
+    /// the line, or <see cref="Drop"/>) tumbles for 0.7 s, then counts (L4991–L5003): <c>T.t += dt / 0.7</c> from the step it
+    /// is let go, landing once it reaches 1 (L4957–L4962). Weights never leave it. Tumbles land in the order they started.
     /// Signal: <see cref="Load"/> = the weights in it (the HUD pips, <c>Pips.set('bucket6', s.bucket)</c>, L4828).
     /// </summary>
     public sealed class GateBucket : Mechanism, ILoad
@@ -50,6 +59,10 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         public double Load => Weights;
         /// <summary>Weights on their way in.</summary>
         public int Tumbling => _tumbling;
+        /// <summary>Seconds a weight tumbles before it lands (<see cref="GateBucketParams.TumbleTime"/>).</summary>
+        public double TumbleTime => _p.TumbleTime;
+        /// <summary>Seconds the <paramref name="i"/>-th weight in the air has tumbled (0 = the first let go); the prototype's <c>T.t</c> is this / 0.7.</summary>
+        public double TumbleSeconds(int i) => i >= 0 && i < _tumbling ? _tumble[i] : throw new ArgumentOutOfRangeException(nameof(i));
 
         /// <summary>A weight tumbles out of a carrier toward the bucket (between steps; it counts when it lands).</summary>
         public void Drop()
@@ -60,6 +73,8 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             _tumbling++;
         }
 
+        public override void Link(MechanismLinker link) => link.Read<IMechanism>(_p.Feed);      // steps first (None: unfed)
+
         public override void Reset(in Checkpoint cp)
         {
             Weights = cp.Past(_p.FullAfter) ? _p.FullCount : 0;           // L4099
@@ -69,6 +84,15 @@ namespace DeadLetter.Core.Mechanisms.Actuators
 
         public override void Step(in StepContext ctx)
         {
+            if (!_p.Feed.IsNone)
+            {
+                var log = ctx.Log;
+                for (int i = 0; i < log.Count; i++)
+                {
+                    var e = log[i];
+                    if (e.Kind == MechanismEventKind.Event && e.Code == _p.FeedEvent && e.Id == _p.Feed) Drop();
+                }
+            }
             for (int i = 0; i < _tumbling; i++)
             {
                 if (!_announced[i]) { _announced[i] = true; Emit(ctx, (int)GateBucketEvent.Tumbling); }

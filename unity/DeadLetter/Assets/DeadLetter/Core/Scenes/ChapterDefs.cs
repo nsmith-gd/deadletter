@@ -6,6 +6,7 @@ using DeadLetter.Core.Scenes.Dl03;
 using DeadLetter.Core.Scenes.Dl04;
 using DeadLetter.Core.Scenes.Dl05;
 using DeadLetter.Core.Scenes.Dl06;
+using DeadLetter.Core.Scenes.Dl07;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -17,7 +18,7 @@ namespace DeadLetter.Core.Scenes
 
         /// <summary>The prototype's x offsets of the later sets (<c>OFF2</c>…<c>OFF5</c>, L274).</summary>
         public const double Off2 = 13, Off3 = 33, Off4 = 42, Off5 = 54;
-        /// <summary><c>CG.top</c> (L3900) and <c>DECK</c> (L3007): the cage's top and the balcony deck.</summary>
+        /// <summary><c>CG.top</c> (L3900) and <c>DECK</c> (L3007): the cage's top and the balcony deck (also <c>GALLERY.h</c>, DL-07's gallery, L2459).</summary>
         public const double CageTop = 3.4, Deck = 1.6;
 
         /// <summary>
@@ -39,8 +40,8 @@ namespace DeadLetter.Core.Scenes
             new CheckpointDef("ration", Dl05Lane.HallX0 + 0.7, region: 2, scene: "DL-05"),                 // RATION5.x0 + 0.7
             new CheckpointDef("hatch", Dl05Lane.CrawlX1 + 0.35, region: 2, scene: "DL-05"),                // RH5.crawl[1] + 0.35
             new CheckpointDef("scanned", Off3 + 30.3, region: 3, scene: "DL-06"),
-            new CheckpointDef("landing", Off3 + 40.0, region: 3, scene: "DL-07"),                           // past landing is DL-07's
-            new CheckpointDef("gallery", Off3 + 42.3, region: 3, scene: "DL-07"),
+            new CheckpointDef("landing", Off3 + 40.0, Deck, region: 3, scene: "DL-07"),                     // c.upper: on the deck (GALLERY.h, L8039)
+            new CheckpointDef("gallery", Off3 + 42.3, Deck, region: 3, scene: "DL-07"),
             new CheckpointDef("goods", Off3 + 48.9, region: 4, scene: "DL-08"),
             new CheckpointDef("latched", Off3 + 56.2, region: 4, scene: "DL-08"),
             new CheckpointDef("cage", Off3 + 67.8, CageTop, region: 4, scene: "DL-09"),                     // x ≥ CG.x0
@@ -52,10 +53,10 @@ namespace DeadLetter.Core.Scenes
             new CheckpointDef("forwarded", Off5 + 113.1, region: 5, scene: "DL-11"));
 
         /// <summary>
-        /// The prologue as far as it is ported: DL-01 to DL-06 (regions 1–3), one world from the wake to the belt running
-        /// to the exit, where DL-07 begins.
+        /// The prologue as far as it is ported: DL-01 to DL-07 (regions 1–3), one world from the wake to the residential
+        /// doorway at the gallery's end, where DL-08 begins (region 4, <c>goods</c>). DL-07 shares DL-06's floor.
         /// </summary>
         public static ChapterDef Prologue() => new ChapterDef(PrologueId, PrologueCheckpoints,
-            Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def());
+            Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def(), Dl07Scene.Def());
     }
 }

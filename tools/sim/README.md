@@ -80,8 +80,9 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
 - Usage: `node record_trace.mjs <seed> <out.jsonl.gz> [mechanical]`, from a folder with `playwright-core` and `three`
   in `node_modules/`, the game served on :8765 (or `GAME`). `CHROME` = the Chromium binary, `BOT` = bot.js (default:
   next to the script), `RNG_SEED` = the page's `Math.random` seed (default 1), `PROGRESS=1` prints progress,
-  `BOT_OPTS` = JSON merged into the bot's options (recorded in the header as `botOpts`), `UNTIL` = game-clock seconds
-  after which the recording stops (the end line says `"stopped": true`; the header has `until`).
+  `BOT_OPTS` = JSON merged into the bot's options (recorded in the header as `botOpts`), `UNTIL` = game-clock seconds:
+  the recording stops inside the page after the first step whose `clk` is ≥ `UNTIL`, which is the last line (the end
+  line says `"stopped": true`; the header has `until`), so a stopped trace ends on the same step on every run.
 - **Determinism.** Before the page's scripts, `Math.random` becomes the prototype's own LCG (`s = (s·16807 + 11) mod
   2147483647`, as Core's `SimRng.Lcg`). The recorder's first step reseeds it, puts `setTimeout` and
   `AudioContext.currentTime` on game time (1/60 s a step), sets `game.clock = 0` and presses Begin, so the real-time
@@ -90,10 +91,12 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
 - **`unity/core-tests/Traces/prologue_mech_seed1.jsonl.gz`:** the whole prologue, mechanical, seed 1: 33,207 steps
   (play from step 1768, `room` at 4082, DL-03 from 5228 to 6278, the end card at 553 s).
 - **`unity/core-tests/Traces/dl02_press_death_seed1.jsonl.gz`:** the same run with `BOT_OPTS='{"pressMistake":true}'`
-  and `UNTIL=100`: identical to the prologue's up to DL-02's press, where the bot walks in on the slam (bot.js
-  `passPress`), is crushed (#4106), respawns at `room` (#4185) and goes on into DL-03; 71 KB (`Dl02TraceTests`).
-- **Format** (`deadletter-trace/1`): gzip, one JSON object per line. Line 1 is a header (`format`, `seed`, `mode`,
-  `rngSeed`, `rng`, `step`, `round`, `delta: true`); the last line is `{"end": true, steps, error, marks, events}`.
+  and `UNTIL=100`: identical to the prologue's up to DL-02's press (#4095), where the bot walks in on the slam (bot.js
+  `passPress`), is crushed (#4106), respawns at `room` (#4185) and goes on into DL-03; it ends at #6000, the first step
+  with `clk` ≥ 100; 70 KB (`Dl02TraceTests`).
+- **Format** (`deadletter-trace/1`): gzip, one JSON object per line. Line 1 is a header (`format`, `game`, `sha256` (of
+  the `index.html` the page loaded, as served), `bot`, `seed`, `mode`, `rngSeed`, `rng`, `step`, `round`, `delta: true`);
+  the last line is `{"end": true, steps, error, marks, events}`.
   Every other line is step `i` (0-based, from Begin) and holds **only the fields that changed** since the line before;
   a reader carries the rest forward. Numbers are rounded to 1e-6, except `clk`, which is exact (the quirk timers
   compare `game.clock` differences, so a replay starts from the recorded clock bit for bit).
@@ -132,4 +135,12 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     `cr6` (the carriers as one JSON string: `[id, state, route, x, y, s, wait, t, ridden, tip, [[size, z, yaw], ...]]`
     each, from `root.position`, `pivot.rotation.z` and the payload's meshes). Every line is unchanged apart from these
     keys (checked line by line against the previous recording).
+  - DL-07 (`unity/core-tests/ChapterTrace/Dl07ChapterProbe.cs`), only while `sceneName()` is DL-07 and on the step he
+    leaves it (so steps 14016–17677 here, DL-08's first): `w0s7`/`w0x7`/`w0b7`/`w0t7` and `w1s7`/… (each sorting
+    weight's state, x, base, and while it tumbles toward the bucket its `T.t`, else null), `bk7` (`ch1.bucket`), `g7`
+    (`ch1.gate6`), `up7` (`game.upper`), `co7`/`ct7` (`ch1.collapse` 0/1/2 and `collapseT`), `hl7`/`ht7`
+    (`letterState.heap` and `ch1.heapT`), `bl7`/`rt7`/`sl7`/`pl7`/`rd7` (as DL-06's), `cr7` (as `cr6`, each carrier
+    followed by its loads, the weight's index + 1 or 0, and whether its parcels are hidden). Re-recorded with these
+    (U-21): every earlier field of every step is unchanged in both traces (checked step by step on the expanded
+    records), and two recordings of each are byte-identical.
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).
