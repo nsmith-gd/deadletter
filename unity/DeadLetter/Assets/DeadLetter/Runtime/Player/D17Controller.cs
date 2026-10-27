@@ -29,6 +29,20 @@ namespace DeadLetter.Runtime
     /// against physics probes, for test rigs and scenes not yet ported; give it a <see cref="Graph"/> and it steps the
     /// mechanisms after the motor with <see cref="Pose"/> (§3.1 #4 then #6), as the scene simulator does.</para>
     /// </summary>
+    /// <summary>
+    /// Hosted mode: where D-17 is when the host's simulator says so (a scene act that owns his pose, such as a transit or a
+    /// death, places him itself; the motor's pose is then stale). Read after each host step.
+    /// </summary>
+    public interface ID17HostPose
+    {
+        double X { get; }
+        double Y { get; }
+        /// <summary>Depth, Unity sign (+ into the set).</summary>
+        double Z { get; }
+        /// <summary>Core yaw (π/2 = +x, π = into the set).</summary>
+        double Yaw { get; }
+    }
+
     [DisallowMultipleComponent]
     public sealed class D17Controller : MonoBehaviour, IMotorWorld
     {
@@ -63,6 +77,8 @@ namespace DeadLetter.Runtime
         private FixedTick _tick;
         private bool _hosted;
         private Func<float> _hostAlpha;
+        private Func<double> _hostClock;
+        private ID17HostPose _hostPose;
         private int _overrideSerial;
         private string _overrideClip;
         private InteractionResolver _resolver;
@@ -107,8 +123,11 @@ namespace DeadLetter.Runtime
         /// <summary>Raised after each Core step with the step length (camera rig, cue-driven systems).</summary>
         public event Action<double> Stepped;
 
-        /// <summary>Simulation time: Core steps × step length.</summary>
-        public double SimTime => _motor != null ? _motor.StepCount * StepSeconds : 0;
+        /// <summary>
+        /// Simulation time: Core steps × step length; hosted, the host's game clock when it gave one (a scene act that owns
+        /// his pose does not step the motor, so the motor's step count would stand still under it).
+        /// </summary>
+        public double SimTime => _hostClock != null ? _hostClock() : _motor != null ? _motor.StepCount * StepSeconds : 0;
 
         /// <summary>Render interpolation factor between the last two Core steps (as used for the transform).</summary>
         public float RenderAlpha => _hosted ? (_hostAlpha != null ? Mathf.Clamp01(_hostAlpha()) : 1f)
@@ -133,10 +152,19 @@ namespace DeadLetter.Runtime
         /// lane geometry); <paramref name="renderAlpha"/> is the host tick's interpolation factor.
         /// </summary>
         public void AttachToHost(D17Motor motor, InteractionResolver resolver, Func<float> renderAlpha)
+            => AttachToHost(motor, resolver, renderAlpha, null, null);
+
+        /// <summary>
+        /// <see cref="AttachToHost(D17Motor, InteractionResolver, Func{float})"/> with the host's game clock
+        /// (<see cref="SimTime"/>) and its pose of D-17 (<see cref="ID17HostPose"/>; null = the motor's).
+        /// </summary>
+        public void AttachToHost(D17Motor motor, InteractionResolver resolver, Func<float> renderAlpha, Func<double> simTime, ID17HostPose pose)
         {
             _motor = motor ?? throw new ArgumentNullException(nameof(motor));
             _resolver = resolver;
             _hostAlpha = renderAlpha;
+            _hostClock = simTime;
+            _hostPose = pose;
             _hosted = true;
             _motor.AutoRun = autoRun;
             SnapToMotor();
@@ -290,10 +318,12 @@ namespace DeadLetter.Runtime
             return input;
         }
 
-        private Vector3 CorePosition() => new Vector3((float)_motor.X, (float)_motor.Y, laneZ + (float)_motor.Z);
+        private Vector3 CorePosition() => _hostPose != null
+            ? new Vector3((float)_hostPose.X, (float)_hostPose.Y, laneZ + (float)_hostPose.Z)
+            : new Vector3((float)_motor.X, (float)_motor.Y, laneZ + (float)_motor.Z);
 
         /// <summary>Core yaw (π/2 = +x, π = into the set) → Unity Y angle (90° = +x, 0° = +z into the set).</summary>
-        private float CoreYawDegrees() => 180f - (float)(_motor.Yaw * (180.0 / Math.PI));
+        private float CoreYawDegrees() => 180f - (float)((_hostPose != null ? _hostPose.Yaw : _motor.Yaw) * (180.0 / Math.PI));
 
         // ---- Animator -------------------------------------------------------------------------------------------------
         private void CacheAnimatorParams()
