@@ -36,9 +36,8 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         /// <summary>DL-01: the exit door's crank, 5 strokes (L299, L1877–L1897).</summary>
         public static CrankParams Dl01Crank() => new CrankParams
         {
-            // CRANK_X 9.62, reach 0.36 (L1813). The prototype faces him toward the crank from his side (L1835);
-            // IStation.Face cannot depend on his side, so 0 keeps his facing (he turns into the set either way).
-            Station = new Station(standX: 9.62, reach: 0.36, face: 0),
+            // CRANK_X 9.62, reach 0.36 (L1813); he faces the crank from his side (x < CRANK_X ? 1 : −1, L1835).
+            Station = new Station(standX: 9.62, reach: 0.36, face: 0, faceTowards: true),
             Strokes = 5,
             DoneAfter = "door",                       // CHECKPOINTS.door.door = 1, L7979
         };
@@ -91,13 +90,13 @@ namespace DeadLetter.Core.Mechanisms.Actuators
 
         protected override bool CanUse(in InteractionQuery q) => Position < 1;   // L1813
 
-        public override bool OnActFrame(in ActFrame f)
+        public override ActStep OnActFrame(in ActFrame f)
         {
             if (!_act.Active || f.Frame < _act.Frame)                            // the first frame of an act (as ActInput.Take)
                 _base = _p.ResumeFromOpening ? Math.Min(_p.Strokes - 1, (int)Math.Floor(Position * _p.Strokes + 0.5)) : 0;   // L4318
             _act.Receive(f);
-            if (StrokesAt(f.Frame) >= _p.Strokes) return true;                   // L1889
-            return _p.CancelAfter >= 0 && f.Time > _p.CancelAfter && Math.Abs(f.Input.Move) > _p.CancelMove;   // L4575
+            if (StrokesAt(f.Frame) >= _p.Strokes) return ActStep.Done;           // L1889
+            return ActStep.DoneIf(_p.CancelAfter >= 0 && f.Time > _p.CancelAfter && Math.Abs(f.Input.Move) > _p.CancelMove);   // L4575
         }
 
         public override void Step(in StepContext ctx)
@@ -126,8 +125,15 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             }
         }
 
-        /// <summary>Strokes counted by the act at <paramref name="frame"/>, including those it resumed from.</summary>
-        private int StrokesAt(double frame) => _base + (int)Math.Floor((frame + ClipClock.Epsilon) / _p.LoopFrames);
+        /// <summary>
+        /// Strokes counted by the act at <paramref name="frame"/>, including those it resumed from. The loop wraps when
+        /// the mixer's time reaches the clip's duration in seconds (three.js LoopRepeat); counting in frames, a wrap that
+        /// lands on a step to within rounding is counted on that step (<see cref="WrapSlack"/>).
+        /// </summary>
+        private int StrokesAt(double frame) => _base + (int)Math.Floor((frame + WrapSlack) / _p.LoopFrames);
+
+        /// <summary>Frames of slack for the loop wrap (seconds-vs-frames rounding), as before ClipClock became exact.</summary>
+        private const double WrapSlack = 1e-6;
 
         protected override void WriteFields(ISnapshotWriter w)
         {

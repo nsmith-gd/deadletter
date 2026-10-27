@@ -8,6 +8,7 @@ using DeadLetter.Core.Motor;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Scenes.Dl02;
 using Xunit;
+using DeathKind = DeadLetter.Core.Hazards.DeathKind;   // #22: Motor has a DeathKind of its own (same members)
 
 namespace DeadLetter.Core.Tests
 {

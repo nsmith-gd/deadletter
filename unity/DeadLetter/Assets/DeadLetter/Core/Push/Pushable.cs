@@ -59,11 +59,15 @@ namespace DeadLetter.Core.Push
         /// <summary>Bodies (<see cref="IPlateBody"/>) that can ride on it: loaded while one's support is <see cref="BodySupport.Carrier"/>.</summary>
         public MechanismId[] Riders = Array.Empty<MechanismId>();
         /// <summary>
-        /// The prototype's hold acceleration, m/s² (old holds 3, the heavy ones 1.3, L2332; chapter 1 1.4, L4690). U-11 gap
-        /// (#22): <see cref="IPushable"/> has no acceleration, so the motor uses <see cref="Motor.MotorConfig.AccelPush"/> for
-        /// every pushable; a scene sets that to this value (<c>SceneDef.Motor</c>).
+        /// The prototype's hold acceleration, m/s² (old holds 3, the heavy ones 1.3, L2332; chapter 1 1.4, L4690): the
+        /// motor reads it as <see cref="IPushable.Accel"/> (#22).
         /// </summary>
         public double Accel = 1.4;
+        /// <summary>
+        /// At Max he lets go and it takes its end-of-travel state (chapter 1, L4723–L4735). False for the old holds
+        /// (DL-03's trolley): it stops at Max and stays in his hands (L2338–L2346). <see cref="IPushable.LetGoAtMax"/> (#22).
+        /// </summary>
+        public bool LetGoAtMax = true;
         /// <summary>Its travel (for a pit, <see cref="Max"/> is the lip, <see cref="TipParams.LipX"/>).</summary>
         public double Min, Max;
         /// <summary>Bodies it stops against while they stand on the floor (DL-03's weight, L2343–L2346).</summary>
@@ -103,7 +107,7 @@ namespace DeadLetter.Core.Push
             ParkedAfter = "solved", ParkedX = (13 + 15.8 + (13 + 16.55)) / 2,    // (PLATE.x0 + PLATE.x1) / 2, L8026
             Side = +1, Gap = 0.62,                                                // grabL, PUSH_GAP L321
             Speed = 0.55, LoadedSpeed = 0.42, Riders = new MechanismId[] { "dl03.weight" },   // PUSH_SPEED, PUSH_LOADED L325; L2330
-            Accel = 3,                                                            // L2332
+            Accel = 3, LetGoAtMax = false,                                        // L2332; holds on at Max, L2338–L2346
             Min = 13 + 12.1 + 0.06 + 0.28, Max = 13 + 17.6 - 0.35 - 0.28,         // TROLLEY_MIN/MAX L322 (ROOM_X0, TROLLEY_HALF)
             Blocks = new[] { new PushBlock("dl03.weight", 0.28 + 0.1 + 0.01) },  // TROLLEY_HALF + WEIGHT_R + 0.01, L2344
             FloorY = 0, Z = 0, ForwardReach = 0.34, BackReach = 0.34,             // y ≤ 0.05; |x − stand| < 0.34, L2249, L2257
@@ -197,6 +201,8 @@ namespace DeadLetter.Core.Push
         public int Side => _p.Side;
         public double Gap => _p.Gap;
         public double Speed => !double.IsNaN(_p.LoadedSpeed) && Loaded ? _p.LoadedSpeed : _p.Speed;
+        public double Accel => _p.Accel;
+        public bool LetGoAtMax => _p.LetGoAtMax;
         public double Min { get { Range(out double lo, out _); return lo; } }
         public double Max { get { Range(out _, out double hi); return hi; } }
         public double FloorY => _p.FloorY;

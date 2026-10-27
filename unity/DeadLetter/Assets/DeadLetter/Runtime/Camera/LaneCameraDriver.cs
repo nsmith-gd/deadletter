@@ -17,6 +17,9 @@ namespace DeadLetter.Runtime.Camera
     /// framing and shot blending (1.4 in / 0.8 out, cue-clock dt) for parity. With no CinemachineCamera assigned the
     /// Unity <c>Camera</c> transform and FOV are written directly (same result; use that for tests and tools).</para>
     /// Positions convert at this edge only: Unity = (x, y, −z) (§0.2).
+    /// <para><b>Bound mode</b> (U-20): with a scene host, Core's scene simulator steps the rig as step #10 of its pipeline
+    /// (opening move included); <see cref="BindRig"/> makes this component only read <see cref="CameraRig.Pose"/> after each
+    /// step and render it, interpolated.</para>
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-100)]   // before CinemachineBrain's LateUpdate
@@ -33,6 +36,7 @@ namespace DeadLetter.Runtime.Camera
         [SerializeField] private bool calm;
 
         private CameraRig _rig;
+        private bool _bound;
         private readonly FramingSignalTable _signals = new FramingSignalTable();
         private CameraPose _prev, _curr;
         private bool _hasPose;
@@ -52,14 +56,27 @@ namespace DeadLetter.Runtime.Camera
         public void SetTrack(FramingTrack track)
         {
             _rig = new CameraRig(CameraConfig.Prototype, track);
+            _bound = false;
             _hasPose = false;
         }
+
+        /// <summary>Render a rig that Core steps (the scene simulator's); this component no longer steps it.</summary>
+        public void BindRig(CameraRig rig)
+        {
+            _rig = rig ?? throw new System.ArgumentNullException(nameof(rig));
+            _bound = true;
+            _hasPose = false;
+        }
+
+        /// <summary>The viewport aspect, for Core's framing (the runner's <c>Aspect</c>).</summary>
+        public double Aspect => targetCamera != null ? targetCamera.aspect : 16.0 / 9.0;
 
         public void Shake(float amount) => _rig?.Shake(amount, calm);
 
         /// <summary>Checkpoint load / respawn: jump to the frame (L8115).</summary>
         public void Snap()
         {
+            if (_bound && _rig != null) { _curr = _prev = _rig.Pose; _hasPose = true; return; }
             if (_rig == null || player == null) return;
             CameraRigInput i = BuildInput();
             _rig.SnapToFrame(i);
@@ -78,6 +95,13 @@ namespace DeadLetter.Runtime.Camera
 
         private void OnStep(double dt)
         {
+            if (_bound)
+            {
+                _prev = _hasPose ? _curr : _rig.Pose;
+                _curr = _rig.Pose;
+                _hasPose = true;
+                return;
+            }
             CameraRigInput i = BuildInput();
             _prev = _hasPose ? _curr : _rig.Pose;
             _curr = _rig.Step(i, dt);
@@ -89,7 +113,7 @@ namespace DeadLetter.Runtime.Camera
             D17Motor m = player.Motor;
             CameraPush push = CameraPush.None;
             if (m.IsMantling) push = CameraPush.Mantle;
-            else if (m.IsActing && m.ActPhase != ActPhase.Approach && m.ActVerb != Verb.Grab) push = CameraPush.Act;
+            else if (m.IsActing && m.ActPhase != ActPhase.Approach && m.ActVerb != Verb.Grab && m.ActVerb != Verb.Quirk) push = CameraPush.Act;   // quirks do not push in (L7788)
             else if (Realising) push = CameraPush.Realise;
             else if (TransitStage0) push = CameraPush.Transit;
             return new CameraRigInput

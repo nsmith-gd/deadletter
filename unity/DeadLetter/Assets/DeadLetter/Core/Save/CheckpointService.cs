@@ -25,7 +25,7 @@ namespace DeadLetter.Core.Save
         private readonly List<(string name, Func<bool> get, Action<bool> set)> _bindings = new List<(string, Func<bool>, Action<bool>)>();
         private MemorySnapshot _snapshot;
         private double _sinceWrite = double.PositiveInfinity;
-        private long _savedFlags = -1;
+        private long _savedFlags = -1, _savedSeen = -1;
 
         public CheckpointService(MechanismGraph graph, IReadOnlyList<string> order, ISaveStore store, int slot = 0, string scene = "")
         {
@@ -43,6 +43,12 @@ namespace DeadLetter.Core.Save
         public string Scene { get; set; }
         public Checkpoint Current { get; private set; }
         public PersistFlags Flags => _graph.Flags;
+        /// <summary>
+        /// The moments and once-only beats already played (<c>seen</c>, L1309–L1310; §4.5): they survive respawns and
+        /// reloads, are saved with the slot (<see cref="SaveModel.Seen"/>) and are cleared by <see cref="NewGame"/>.
+        /// Resolve a handle once and read it per step; mark with <see cref="MarkSeen"/> (which saves).
+        /// </summary>
+        public PersistFlags Seen { get; } = new PersistFlags();
         public Settings Settings { get; private set; } = new Settings();
         /// <summary>Seconds of play (accumulated by <see cref="Update"/>).</summary>
         public double PlayTime { get; private set; }
@@ -79,6 +85,7 @@ namespace DeadLetter.Core.Save
         public void NewGame()
         {
             Flags.Clear();
+            Seen.Clear();
             PushBindings();
             Current = new Checkpoint(_order, _order[0]);
             PlayTime = 0;
@@ -110,12 +117,21 @@ namespace DeadLetter.Core.Save
             SaveIfFlagsChanged();
         }
 
-        /// <summary>Saves when a flag (or a bound flag) has changed since the last write.</summary>
+        /// <summary>Saves when a flag (or a bound flag) or the seen set has changed since the last write.</summary>
         public void SaveIfFlagsChanged()
         {
             PullBindings();
-            if (Flags.Version != _savedFlags) Save();
+            if (Flags.Version != _savedFlags || Seen.Version != _savedSeen) Save();
         }
+
+        /// <summary>A moment or once-only beat has played (<c>seen.add</c>, <c>once()</c>, L1310): remembered and saved.</summary>
+        public void MarkSeen(string moment)
+        {
+            Seen.Set(moment);
+            SaveIfFlagsChanged();
+        }
+
+        public bool HasSeen(string moment) => Seen.Has(moment);
 
         /// <summary>Changed options: saved with the slot.</summary>
         public void ApplySettings(Settings settings)
@@ -154,7 +170,7 @@ namespace DeadLetter.Core.Save
                 }
             }
             PushBindings();                                   // a snapshot holds old copies of bound flags
-            if (Flags.Version != _savedFlags) Save();         // e.g. warned on the run that ended in this respawn
+            if (Flags.Version != _savedFlags || Seen.Version != _savedSeen) Save();   // e.g. warned on the run that ended in this respawn
             Reloaded?.Invoke(Current);
         }
 
@@ -176,12 +192,14 @@ namespace DeadLetter.Core.Save
             for (int i = 0; i < _order.Count; i++) if (string.Equals(_order[i], m.Checkpoint, StringComparison.Ordinal)) idx = i;
             Current = new Checkpoint(_order, idx >= 0 ? m.Checkpoint : _order[0]);
             Flags.Load(m.Flags);
+            Seen.Load(m.Seen ?? new List<string>());
             PushBindings();
             PlayTime = m.PlayTime;
             Settings = (m.Settings ?? new Settings()).Clone();
             _graph.Calm = Settings.Calm;
             _snapshot = idx >= 0 && string.Equals(m.Scene ?? "", Scene, StringComparison.Ordinal) ? m.Mechanisms : null;
             _savedFlags = Flags.Version;
+            _savedSeen = Seen.Version;
             Reload();
             Pending = false;                                  // what is in the store is what was just loaded
         }
@@ -196,6 +214,7 @@ namespace DeadLetter.Core.Save
                 Scene = Scene,
                 PlayTime = PlayTime,
                 Flags = Flags.SetNames(),
+                Seen = Seen.SetNames(),
                 Mechanisms = _snapshot,
                 Settings = Settings.Clone(),
             };
@@ -207,7 +226,7 @@ namespace DeadLetter.Core.Save
             if (playing) PlayTime += dt;
             _sinceWrite += dt;
             PullBindings();
-            if (Flags.Version != _savedFlags) Pending = true;
+            if (Flags.Version != _savedFlags || Seen.Version != _savedSeen) Pending = true;
             if (Pending && _sinceWrite >= MinSecondsBetweenWrites) Write();
         }
 
@@ -228,6 +247,7 @@ namespace DeadLetter.Core.Save
             var m = ToModel();
             _store.Save(Slot, m);
             _savedFlags = Flags.Version;
+            _savedSeen = Seen.Version;
             Pending = false;
             _sinceWrite = 0;
             Writes++;

@@ -349,7 +349,9 @@ namespace DeadLetter.Core.Tests
         {
             Assert.True(ClipClock.Crossed(21.9, 22.3, 22));
             Assert.False(ClipClock.Crossed(22.3, 22.7, 22));
-            Assert.True(ClipClock.Reached(21.9999999999, 22));
+            Assert.False(ClipClock.Reached(21.9999999999, 22));           // exactly f >= n, no slack (M2)
+            Assert.True(ClipClock.Reached(22, 22));
+            Assert.False(ClipClock.Crossed(21.9999999999, 21.9999999999999, 22));
         }
 
         [Theory]

@@ -174,7 +174,7 @@ namespace DeadLetter.Core.Tests
         /// M7 (U-11, #22): the resolver ranks targets in front of him before those behind for pushables too; the prototype's
         /// push branch has no facing preference (<c>d &lt; best.d</c>, L4254). The scene works round it (<see cref="WeighIn05"/>).
         /// </summary>
-        [Fact(Skip = "U-11 issue M7 (#22): InteractionResolver ranks in-front targets first for pushables; the prototype's push branch "
+        [Fact(Skip = "U-11 issue M7 (#22, still in #25): InteractionResolver ranks in-front targets first for pushables; the prototype's push branch "
             + "takes the nearest grip whatever his facing (nearUse L4251-L4255). Facing left at 53.049 it offers the body (0.30 ahead), not the drum (0.15 behind).")]
         public void Resolver_TakesTheNearestGrip_WhicheverWayHeFaces_L4254()
         {

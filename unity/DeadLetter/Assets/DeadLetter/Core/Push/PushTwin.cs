@@ -32,6 +32,8 @@ namespace DeadLetter.Core.Push
         public int Side => -Base.Side;
         public double Gap => Base.Gap;
         public double Speed => Base.Speed;
+        public double Accel => Base.Accel;
+        public bool LetGoAtMax => Base.LetGoAtMax;
         public double Min => Base.Min;
         public double Max => Base.Max;
         public double FloorY => Base.FloorY;

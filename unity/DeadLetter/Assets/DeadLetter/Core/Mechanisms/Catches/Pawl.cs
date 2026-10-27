@@ -43,7 +43,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
 
     /// <summary>
     /// A pawl worked by a lever act: it bites only while another mechanism's position is inside the bite window
-    /// (<c>dl08.pawl</c>: platform h ≥ 0.985). The window is judged when the lever act starts (L3305); inside it, the
+    /// (<c>dl08.pawl</c>: platform h ≥ 0.985). The window is judged when he has stepped in and the clip starts (L3305); inside it, the
     /// lever throws and the pawl engages at f22 (L3316–L3318); outside it the dog rattles (LeverStuck) and nothing holds.
     /// Signals: <see cref="Engaged"/>. The source reads it back (a latched platform stays at the landing, L3180), so the
     /// pawl is added before the source and reads it with ReadAnyOrder (last tick's position, as the prototype's act did).
@@ -53,7 +53,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
         private readonly PawlParams _p;
         private IPositionSource _source;
         private ActInput _act;
-        private bool _stuck;
+        private bool _stuck, _clipStuck;
 
         public Pawl(MechanismId id, PawlParams p) : base(id, p.Station) { _p = p; }
 
@@ -67,7 +67,10 @@ namespace DeadLetter.Core.Mechanisms.Catches
         /// <summary>True if the source is inside the bite window now.</summary>
         public bool InWindow => _source.Position >= _p.BiteMin && _source.Position <= _p.BiteMax;
 
-        /// <summary>Read by the motor when Use starts (see the U-11 note in Mechanisms/README.md).</summary>
+        /// <summary>
+        /// Asked when Use starts and again at the end of step-in, which decides the clip: <c>a.stuck = plat.h &lt; 0.985</c>
+        /// is judged there (L3305), so a platform that reaches the landing while he steps in still bites.
+        /// </summary>
         public override ActProfile Profile => InWindow ? _p.BiteProfile : _p.StuckProfile;
 
         public override void Link(MechanismLinker link) => _source = link.ReadAnyOrder<IPositionSource>(_p.Source)
@@ -79,16 +82,18 @@ namespace DeadLetter.Core.Mechanisms.Catches
             Init((int)(engaged ? PawlState.Engaged : PawlState.Free));
             LeverDeg = engaged ? _p.LeverNear : _p.LeverAway;
             Dip = 0;
-            _stuck = false;
+            _stuck = _clipStuck = false;
             _act.Clear();
         }
 
         protected override bool CanUse(in InteractionQuery q) => State == PawlState.Free;   // L3269
 
-        public override bool OnActFrame(in ActFrame f)
+        /// <summary>The clip the motor chose at the end of step-in says which it is (LeverStuck or LeverPull, L3305–L3306).</summary>
+        public override ActStep OnActFrame(in ActFrame f)
         {
             _act.Receive(f);
-            return ClipClock.Reached(f.Frame, _stuck ? _p.StuckOutFrame : _p.BiteOutFrame);
+            _clipStuck = f.Clip != null ? f.Clip == _p.StuckProfile.Clip : !InWindow;
+            return ActStep.DoneIf(ClipClock.Reached(f.Frame, _clipStuck ? _p.StuckOutFrame : _p.BiteOutFrame));
         }
 
         public override void Step(in StepContext ctx)
@@ -100,7 +105,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
                 Dip = 0;
                 return;
             }
-            if (_act.Started) _stuck = !InWindow;                                                   // L3305
+            if (_act.Started) _stuck = _clipStuck;                                                  // L3305
             double f = _act.Frame, prev = _act.PrevFrame;
             if (_stuck)
             {
@@ -123,6 +128,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
             w.WriteDouble("lever", LeverDeg);
             w.WriteDouble("dip", Dip);
             w.WriteBool("stuck", _stuck);
+            w.WriteBool("clipStuck", _clipStuck);
             _act.Write(w);
         }
 
@@ -131,6 +137,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
             LeverDeg = r.ReadDouble("lever");
             Dip = r.ReadDouble("dip");
             _stuck = r.ReadBool("stuck");
+            _clipStuck = r.ReadBool("clipStuck");
             _act.Read(r);
         }
     }

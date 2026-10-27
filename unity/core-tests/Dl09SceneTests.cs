@@ -14,8 +14,9 @@ namespace DeadLetter.Core.Tests
     /// DL-09 The Slipping Cage as a scene: the counterweight tray (a stand-in source: the plates family), the cage's pawl
     /// and the cage, driven by the real motor in the pipeline order (motor #4, graph #6–7, ride sync #9; §3.1), with the
     /// prototype's timings (§4.13c, §4.13f, L5011–L5095). The cage act's own parts (bracing at <c>CG.braceX</c>, the
-    /// CageRideLever/CagePullPawl clips) belong to U-11; here Use during the ride calls <see cref="SlippingCage.PullPawl"/>
-    /// and ride sync places him on the cage floor.
+    /// CageRideLever/CagePullPawl clips) are not ported yet; here Use during the ride calls <see cref="SlippingCage.PullPawl"/>
+    /// and ride sync (<see cref="D17Motor.SnapToFloor"/>, as <see cref="MotorSync"/>'s #9 does for every <see cref="ILiftRide"/>)
+    /// places him on the cage floor.
     /// </summary>
     public class Dl09SceneTests
     {
@@ -66,7 +67,7 @@ namespace DeadLetter.Core.Tests
                 if (input.UsePressed && Cage.Riding) Cage.PullPawl();
                 Motor.Step(input, Dt);                                                    // #4
                 G.Step(Dt, Mech.Pose(Motor));                                             // #6–7
-                if (Cage.Carrying) Motor.Place(Motor.X, Cage.FloorY, Motor.Facing);       // #9 ride sync
+                if (Cage.Carrying) Motor.SnapToFloor(Cage.FloorY);                         // #9 ride sync
                 foreach (var e in Mech.Events(G))
                     if (e.Id == "dl09.cage")
                         Trace.Add(e.Kind == MechanismEventKind.State ? ((SlippingCageState)e.Code).ToString() : ((SlippingCageEvent)e.Code) + "#" + e.Index);

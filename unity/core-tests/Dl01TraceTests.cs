@@ -22,12 +22,8 @@ namespace DeadLetter.Core.Tests
     /// <para><b>Tolerance 1e-6</b> on every continuous value: the trace rounds to 1e-6 (≤ 5e-7 of error), and the port
     /// computes the same expressions in the same order on the same clock, so the rest is float noise (≈ 1e-12 seen).
     /// Discrete signals (acts, grounded, checkpoints, relay sets, the scene exit) must fall on the same step.</para>
-    /// <para><b>Known motor issues</b> (U-11, issue #22; nothing in Lane, Scenes or Mechanisms):
-    /// M2, the mantle ends one step early (<c>ClipClock</c>'s 1e-6 slack against the prototype's raw <c>f &gt;= 56</c>, L1946);
-    /// M3, a walk-off fall drops g·dt²·n/2 less than the prototype's semi-implicit Euler (L2013–L2014).
-    /// The checks below run with the M2 step fed no input (it is the prototype's last mantle step, which ignores input),
-    /// so M2 does not shift every later step; M2's own act step, its one-step-early <c>hall</c>, and M3's falls are
-    /// asserted exactly as the issues predict. The strict replay (no compensation) is the skipped test at the end.</para>
+    /// <para>No compensation: the motor issues this trace exposed (M1–M4, #22) are fixed in U-11b (#25), so every check
+    /// below replays the recorded input unchanged.</para>
     /// </summary>
     public class Dl01TraceTests
     {
@@ -49,23 +45,16 @@ namespace DeadLetter.Core.Tests
         {
             public readonly List<Row> Rows = new List<Row>();
             public SceneSim Sim;
-            /// <summary>Steps where the prototype was still mantling after Core's mantle had ended (fed no input; see <see cref="Run"/>).</summary>
-            public readonly List<int> MantleCompensated = new List<int>();
         }
 
-        private static readonly Replay[] Cache = new Replay[2];
+        private static Replay Cache;
 
-        /// <summary>
-        /// Plays DL-01 from the first step of play to the end of the passage. <paramref name="compensateMantle"/>: on a
-        /// step that the prototype spends in a mantle Core has already ended (M2), Core gets no input, as the prototype
-        /// ignored it there; that keeps M2 from shifting every later step, so the rest stays testable at 1e-6.
-        /// </summary>
-        internal static Replay Run(bool compensateMantle = true)
+        /// <summary>Plays DL-01 from the first step of play to the end of the passage, the recorded input unchanged.</summary>
+        internal static Replay Run()
         {
-            int slot = compensateMantle ? 1 : 0;
-            lock (Cache)
+            lock (typeof(Dl01TraceTests))
             {
-                if (Cache[slot] != null) return Cache[slot];
+                if (Cache != null) return Cache;
                 var t = Trace.Load(TraceFile);
                 int play = t.FirstIndex(p => p.Mode == "play");
                 int room = t.FirstIndex(p => p.Cp == "room");
@@ -75,11 +64,6 @@ namespace DeadLetter.Core.Tests
                 CrankActuator crank = null;
                 TippingBridge cart = null;
                 PulseSequencer relay = null;
-                MotorInput Input(int k, SceneSim sim)
-                {
-                    if (compensateMantle && t.Steps[k - 1].Mt && !sim.Motor.IsMantling && sim.Act == null) { r.MantleCompensated.Add(t.Steps[k].I); return default; }
-                    return t.Steps[k].Input;
-                }
                 r.Sim = TraceReplay.Run(t, Dl01Scene.Def(), "start", fromOpening: true, play, room, (p, sim) =>
                 {
                     if (shutter == null)
@@ -101,8 +85,8 @@ namespace DeadLetter.Core.Tests
                         Door = crank.Position, Wheel = crank.WheelDeg, CartX = cart.X, CartDrop = cart.Drop, CartState = cart.State.ToString(),
                         Lip = cart.State == TippingBridgeState.AtLip, Relay = relay.Units, RelaySets = sets,
                     });
-                }, Input);
-                return Cache[slot] = r;
+                });
+                return Cache = r;
             }
         }
 
@@ -130,7 +114,6 @@ namespace DeadLetter.Core.Tests
         {
             var r = Run();
             Assert.True(r.Rows.Count > 2000);
-            Assert.Equal(new[] { 3130 }, r.MantleCompensated);                                   // M2: one step, the mantle's last
             var bad = new List<string>();
             foreach (var w in r.Rows)
             {
@@ -143,13 +126,11 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// y matches at every step except while falling from a walk-off (the motor's M3), where Core is higher by exactly
-        /// g·dt²·n/2 at the n-th step of the fall: Core integrates exactly from vy = 0 (y −= g(n·dt)²/2) while the
-        /// prototype's <c>vy −= g·dt; y += vy·dt</c> (L2013–L2014) drops g·dt²·n(n+1)/2. Both land on the same step here.
-        /// Jumps match exactly: the motor's parity launch speed makes its exact arc equal the prototype's Euler arc.
+        /// y matches at every step, the two walk-off falls included (M3, fixed in #25: a fall from rest starts at
+        /// vy = −g/120, so the motor's exact arc equals the prototype's <c>vy −= g·dt; y += vy·dt</c>, L2013–L2014).
         /// </summary>
         [Fact]
-        public void Y_MatchesEveryStep_ExceptWalkOffFalls_WhereTheGapIsExactlyM3()
+        public void Y_MatchesEveryStep_WalkOffFallsIncluded()
         {
             var r = Run();
             var bad = new List<string>();
@@ -160,8 +141,7 @@ namespace DeadLetter.Core.Tests
                 var p = r.Rows[k].P;
                 if (p.G) walkOff = -1;
                 else if (walkOff < 0 && k > 0 && r.Rows[k - 1].P.G && p.Vy == 0) { walkOff = p.I; falls.Add((p.I, 0)); }   // walked off: vy = 0, y kept (L2032)
-                double expected = walkOff >= 0 ? G * Dt * Dt * (p.I - walkOff) / 2 : 0;
-                if (Math.Abs(r.Rows[k].Y - p.Y - expected) > Tol) bad.Add($"#{p.I} y {p.Y} vs {r.Rows[k].Y:R} (expected gap {expected:E3})");
+                if (Math.Abs(r.Rows[k].Y - p.Y) > Tol) bad.Add($"#{p.I} y {p.Y} vs {r.Rows[k].Y:R}");
                 if (walkOff >= 0 && p.I > walkOff) falls[falls.Count - 1] = (walkOff, p.I - walkOff);
             }
             Assert.True(bad.Count == 0, Report(bad));
@@ -180,10 +160,10 @@ namespace DeadLetter.Core.Tests
         /// <summary>
         /// Every act and phase on the prototype's steps: the label beat, the latch (approach, Pull, Flinch), the cart (approach,
         /// Grab), the shove, the mantle, the crank (approach, turn, Crank, the wait to turn back), Proud, and the four legs
-        /// of the passage. The one exception is M2's step (#3129: the prototype is in its 141st mantle step).
+        /// of the passage. The mantle takes the prototype's 141 steps (M2, fixed in #25).
         /// </summary>
         [Fact]
-        public void Acts_MatchEveryStep_ExceptTheMantlesLastStep()
+        public void Acts_MatchEveryStep()
         {
             var rows = Run().Rows;
             var bad = new List<string>();
@@ -192,12 +172,9 @@ namespace DeadLetter.Core.Tests
             {
                 string want = ExpectedAct(w.P), got = CoreAct(w);
                 if (want != null) seen.Add(want);
-                if (want != got && w.P.I != 3129) bad.Add($"#{w.P.I} act {want ?? "-"} vs {got ?? "-"}");
+                if (want != got) bad.Add($"#{w.P.I} act {want ?? "-"} vs {got ?? "-"}");
             }
             Assert.True(bad.Count == 0, Report(bad));
-            var row = rows.Find(w => w.P.I == 3129);
-            Assert.Equal("mantle:", ExpectedAct(row.P));
-            Assert.Null(CoreAct(row));
             foreach (var a in new[] { "quirk:CheckLabel", "dl01.latch:Approach", "dl01.latch:Clip", "dl01.latch:Flinch", "dl01.cart:Approach",
                          "dl01.cart:Clip", "shove:Clip", "mantle:", "dl01.crank:Approach", "dl01.crank:Turn", "dl01.crank:Clip", "dl01.crank:Done",
                          "quirk:Proud", "transit:0", "transit:1", "transit:2", "transit:3" })
@@ -206,23 +183,19 @@ namespace DeadLetter.Core.Tests
 
         // ---- (c) checkpoints ------------------------------------------------------------------------------------------
         /// <summary>
-        /// shutter (the latch's release, L1677), door (the fifth stroke, L1890) and room (the passage's end, L2145) fire on
-        /// the prototype's step. hall (L2065) fires one step early: its trigger runs only on free steps, and M2 frees him one
-        /// step before the prototype's mantle ends (#3130, his first step on the floor past the trench).
+        /// shutter (the latch's release, L1677), hall (L2065, his first free step past the trench), door (the fifth stroke,
+        /// L1890) and room (the passage's end, L2145) all fire on the prototype's step.
         /// </summary>
         [Fact]
-        public void Checkpoints_FireOnThePrototypesSteps_HallOneEarlyFromM2()
+        public void Checkpoints_FireOnThePrototypesSteps()
         {
             var r = Run();
             var proto = FirstSteps(r.Rows, w => w.P.Cp);
             var core = FirstSteps(r.Rows, w => w.Cp);
             Assert.Equal(new[] { "start", "shutter", "hall", "door", "room" }, proto.Keys);
             Assert.Equal(proto.Keys, core.Keys);
-            Assert.Equal(proto["shutter"], core["shutter"]);
-            Assert.Equal(proto["door"], core["door"]);
-            Assert.Equal(proto["room"], core["room"]);
+            foreach (var cp in proto.Keys) Assert.Equal(proto[cp], core[cp]);
             Assert.Equal(3131, proto["hall"]);
-            Assert.Equal(proto["hall"] - 1, core["hall"]);
         }
 
         // ---- (d) mechanisms -------------------------------------------------------------------------------------------
@@ -283,14 +256,11 @@ namespace DeadLetter.Core.Tests
 
         // ---- Strict ---------------------------------------------------------------------------------------------------
         /// <summary>The replay with nothing compensated: every signal at 1e-6 on every step.</summary>
-        [Fact(Skip = "U-11 motor issues (#22). M2: ClipClock's 1e-6 slack ends the mantle after 140 steps (f = 55.999999999999915) where the "
-            + "prototype's raw f >= MANTLE_FRAMES (L1946) needs 141 (#2989 to #3130): he walks a step early, hall fires a step early, the "
-            + "crank approach ends 3 steps early and door fires at #3516, not #3519. M3: a walk-off fall starts from vy = 0 with exact "
-            + "integration, g*dt^2*n/2 above the prototype's semi-implicit Euler (L2013-L2014): #2684-#2695 and #2935-#2947, up to 1.77 cm.")]
+        [Fact]
         public void Strict_EverySignalMatchesEveryStep()
         {
             var bad = new List<string>();
-            foreach (var w in Run(compensateMantle: false).Rows)
+            foreach (var w in Run().Rows)
             {
                 var p = w.P;
                 Check(bad, p.I, "x", p.X, w.X);
@@ -348,13 +318,13 @@ namespace DeadLetter.Core.Tests
             return sb.ToString();
         }
 
-        /// <summary>Writes the replay side by side as TSV when DL01_TRACE_DUMP names a file (DL01_TRACE_STRICT=1: no compensation).</summary>
+        /// <summary>Writes the replay side by side as TSV when DL01_TRACE_DUMP names a file.</summary>
         [Fact]
         public void Dump()
         {
             var path = Environment.GetEnvironmentVariable("DL01_TRACE_DUMP");
             if (string.IsNullOrEmpty(path)) return;
-            var r = Run(Environment.GetEnvironmentVariable("DL01_TRACE_STRICT") != "1");
+            var r = Run();
             var sb = new StringBuilder("i\tpx\tcx\tpy\tcy\tpg\tcg\tpact\tcact\tpcp\tccp\tpsh\tcsh\tpdoor\tcdoor\tpcx\tccx\tpyaw\tcyaw\tpz\tcz\tin\n");
             foreach (var w in r.Rows)
             {

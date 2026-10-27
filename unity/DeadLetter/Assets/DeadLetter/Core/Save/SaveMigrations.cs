@@ -14,6 +14,7 @@ namespace DeadLetter.Core.Save
         {
             null,
             V1ToV2,
+            V2ToV3,
         };
 
         public static bool TryMigrate(SaveDocument d, out string error)
@@ -47,6 +48,21 @@ namespace DeadLetter.Core.Save
             d.RenamePrefix("persist/", "flag/persist.");
             if (!d.Contains("playTime")) d.SetDouble("playTime", 0);
             if (!d.Contains("scene")) d.SetString("scene", "");
+        }
+    
+        /// <summary>
+        /// Version 3 keeps the seen moments in their own set (<c>seen/&lt;moment&gt;</c>, <see cref="SaveModel.Seen"/>) instead
+        /// of as persist flags named <c>seen.&lt;moment&gt;</c> (the v2 home, <c>StoryFlags.Seen</c>, now gone): a seen moment
+        /// is not story state a mechanism reads, and the runner asks the set every step.
+        /// </summary>
+        private static void V2ToV3(SaveDocument d)
+        {
+            foreach (var name in d.KeysUnder("flag/seen."))
+            {
+                bool on = d.GetBool("flag/seen." + name, false);
+                d.Remove("flag/seen." + name);
+                if (on) d.SetBool("seen/" + name, true);
+            }
         }
     }
 }

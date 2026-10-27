@@ -32,9 +32,8 @@ namespace DeadLetter.Core.Tests
             bool grounded = true, bool holding = false, double vx = 0)
             => new PlayerPose(x, y, 0, crouched, busy, vx, grounded, holding);
 
-        /// <summary>The pose the step pipeline builds from the real motor (Hiding: the motor has no hide act yet).</summary>
-        public static PlayerPose Pose(D17Motor m)
-            => new PlayerPose(m.X, m.Y, m.Z, m.Crouched, m.IsActing, m.Vx, m.Grounded, m.Hold != HoldKind.None);
+        /// <summary>The pose the step pipeline builds from the real motor (<see cref="PlayerPose.Of"/>).</summary>
+        public static PlayerPose Pose(D17Motor m) => PlayerPose.Of(m);
 
         public static void Run(MechanismGraph g, int steps, PlayerPose? pose = null)
         {
@@ -53,21 +52,27 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// Plays an act on a station as the motor does: each step, OnActFrame with the clip clock (frames 0.4, 0.8, ...),
-        /// then the graph steps. <paramref name="onStep"/> runs after each graph step. Returns the steps until the act ended.
+        /// Plays an act on a station as the motor does: each step, OnActFrame with the clip clock (frames 0.4, 0.8, ...)
+        /// and the clip from <see cref="IUsable.ProfileFor"/>, then the graph steps; a chained clip (<see cref="ActStep.Then"/>)
+        /// restarts the clock as a new part; a hop ends the act (the motor owns it). <paramref name="onStep"/> runs after each
+        /// graph step with the frame of the current part. Returns the steps until the act ended.
         /// </summary>
         public static int PlayAct(MechanismGraph g, IUsable u, int max = 2000, Func<int, double> move = null,
             Action<int, double> onStep = null, PlayerPose? pose = null, int startStep = 1)
         {
+            var at = pose ?? PlayerPose.Away;
+            string clip = u.ProfileFor(new InteractionQuery(at.X, at.Y, at.Z, 1, true, true, HoldKind.None, null, null)).Clip;
+            int part = 0, k0 = 0;                                   // frames count from step 0 until a chained clip restarts them
             double prev = (startStep - 1) * FramesPerStep;
             for (int k = startStep; k < startStep + max; k++)
             {
-                double f = k * FramesPerStep, t = k * Dt;
-                bool over = u.OnActFrame(new ActFrame(prev, f, t, new MotorInput { Move = move?.Invoke(k) ?? 0 }));
-                g.Step(Dt, pose ?? PlayerPose.Away);
+                double f = (k - k0) * FramesPerStep, t = (k - k0) * Dt;
+                var step = u.OnActFrame(new ActFrame(prev, f, t, new MotorInput { Move = move?.Invoke(k) ?? 0 }, clip, part));
+                g.Step(Dt, at);
                 onStep?.Invoke(k, f);
                 prev = f;
-                if (over) return k - startStep + 1;
+                if (step.Kind == ActStepKind.Then) { part++; clip = step.Clip; k0 = k; prev = 0; continue; }
+                if (step.Kind == ActStepKind.Done || step.Kind == ActStepKind.Hop) return k - startStep + 1;
             }
             return -1;
         }

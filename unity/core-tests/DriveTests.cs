@@ -74,15 +74,15 @@ namespace DeadLetter.Core.Tests
             Mech.Graph("window", crank);
             var q = new InteractionQuery(x, y, 0, 1, true, false, HoldKind.None, null, null);
             Assert.Equal(answers, crank.IsAvailable(q));
-            Assert.Equal(242.18, crank.StandX, 9);                   // ATT.crankX − 0.22, L5298
+            Assert.Equal(242.18, crank.Station.StandX, 9);           // ATT.crankX − 0.22, L5298
         }
 
         [Fact]
         public void WindCrank_Dl14a_StandsShortOfItsCrank_L6006()
         {
             var crank = new WindCrank("dl14a.crank", WindCrankParams.Dl14aCrank());
-            Assert.Equal(258.48, crank.StandX, 9);
-            Assert.Equal(258.7, crank.AnchorX, 9);
+            Assert.Equal(258.48, crank.Station.StandX, 9);
+            Assert.Equal(258.7, crank.Station.ReachX, 9);
         }
 
         // ---- DL-14: the jam, the slip, the peel -----------------------------------------------------------------------
