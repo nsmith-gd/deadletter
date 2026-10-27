@@ -13,6 +13,7 @@ using DeadLetter.Core.Scenes.Dl14a;
 using DeadLetter.Core.Scenes.Dl14b;
 using DeadLetter.Core.Scenes.Dl15;
 using DeadLetter.Core.Scenes.Dl16;
+using DeadLetter.Core.Scenes.Dl16a;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -97,6 +98,6 @@ namespace DeadLetter.Core.Scenes
         /// </summary>
         public static ChapterDef Attendance() => new ChapterDef(AttendanceId, AttendanceCheckpoints,
             Dl12Scene.Def(), Dl13Scene.Def(), Dl14Scene.Def(), Dl14aScene.Def(), Dl14bScene.Def(),
-            Dl15Scene.Def(), Dl16Scene.Def());
+            Dl15Scene.Def(), Dl16Scene.Def(), Dl16aScene.Def());
     }
 }

@@ -133,6 +133,9 @@ namespace DeadLetter.Core.Tests
                 case "escorted": return "Escorted:Clip";
                 case "sit": return "dl15.chair:" + (phase == "approach" ? "Approach" : phase == "up" ? "SitUp" : "Clip");
                 case "lever16": return "dl16.lever:" + (phase == "approach" ? "Approach" : "Clip");
+                case "call16a": return "dl16a.callPush:" + (phase == "approach" ? "Approach" : "PressButtonHigh");
+                case "bell16a": return "dl16a.car:PressButtonHigh";
+                case "ride16a": return "dl16a.car:Ride";
                 default: return "att." + p.Aw + ":" + phase;
             }
         }

@@ -110,24 +110,25 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             _call = _bell = false;
             bool rideFrom = Moving && pl.X >= _p.X0 && pl.X <= _p.X1 && Math.Abs(pl.Y - h) < _p.RideTolerance;
 
-            // updateAtt3 (#7).
+            // updateAtt3 (#7). F.mt is a sum of dt, as _t is: the prototype's comparisons are taken exactly (no slack, which
+            // would arrive a step early: 252 steps sum to 4.1999999…, L6236–L6237).
             _t += dt;                                                                             // L6235
             double floor = _p.Floor, top = _p.Top;
             switch (State)
             {
                 case DumbwaiterState.Rise:
                     h = floor + (top - floor) * Smooth.Step(Math.Min(1, _t / _p.TravelTime));        // L6236
-                    if (Reached(_t, _p.TravelTime)) { Enter(ctx, (int)DumbwaiterState.Top); h = top; Emit(ctx, (int)DumbwaiterEvent.Arrive, 0); }
+                    if (_t >= _p.TravelTime) { Enter(ctx, (int)DumbwaiterState.Top); h = top; Emit(ctx, (int)DumbwaiterEvent.Arrive, 0); }
                     break;
                 case DumbwaiterState.Down:
                     h = top - (top - floor) * Smooth.Step(Math.Min(1, _t / _p.TravelTime));          // L6237
-                    if (Reached(_t, _p.TravelTime)) { Enter(ctx, (int)DumbwaiterState.Bottom); h = floor; Emit(ctx, (int)DumbwaiterEvent.Arrive, 1); }
+                    if (_t >= _p.TravelTime) { Enter(ctx, (int)DumbwaiterState.Bottom); h = floor; Emit(ctx, (int)DumbwaiterEvent.Arrive, 1); }
                     break;
                 case DumbwaiterState.Shoot:
-                    if (!Reached(_t, _p.ShootUp)) h = floor + _p.ShootPeak * Math.Min(1, Math.Pow(_t / _p.ShootUp, _p.ShootPower));   // L6240
+                    if (!(_t >= _p.ShootUp)) h = floor + _p.ShootPeak * Math.Min(1, Math.Pow(_t / _p.ShootUp, _p.ShootPower));   // L6240
                     else if (!_caught) { _caught = true; Emit(ctx, (int)DumbwaiterEvent.CatchBite); }                                 // L6241
-                    if (After(_t, _p.LowerFrom)) h = floor + _p.ShootPeak * (1 - Smooth.Step((_t - _p.LowerFrom) / _p.LowerOver));    // L6242
-                    if (After(_t, _p.ShootEnd)) { Enter(ctx, (int)DumbwaiterState.Bottom); h = floor; _caught = false; Emit(ctx, (int)DumbwaiterEvent.Arrive, 1); }   // L6244
+                    if (_t > _p.LowerFrom) h = floor + _p.ShootPeak * (1 - Smooth.Step((_t - _p.LowerFrom) / _p.LowerOver));    // L6242
+                    if (_t > _p.ShootEnd) { Enter(ctx, (int)DumbwaiterState.Bottom); h = floor; _caught = false; Emit(ctx, (int)DumbwaiterEvent.Arrive, 1); }   // L6244
                     break;
             }
             H = h;

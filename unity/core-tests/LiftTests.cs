@@ -879,7 +879,8 @@ namespace DeadLetter.Core.Tests
             s.Car.Call();
             s.G.Step(Dt, PlayerPose.Away);
             Assert.True(Mech.Entered(s.G, "dl16a.car", DumbwaiterState.Down));
-            Assert.Equal(251, StepsUntilEntered(s.G, "dl16a.car", DumbwaiterState.Bottom));    // 252 steps = 4.2 s
+            // 253 steps: 252 sum to 4.1999999…, short of 4.2 (F.mt >= 4.2, L6237), as the chapter 1 trace has it (#17153).
+            Assert.Equal(252, StepsUntilEntered(s.G, "dl16a.car", DumbwaiterState.Bottom));
             Assert.Equal(0.05, s.Car.Position);
             Assert.Equal(1, Find(s.G, "dl16a.car", DumbwaiterEvent.Arrive).Value.Index);
             s.Car.Call();                                                    // at the bottom: only the ding
@@ -904,7 +905,7 @@ namespace DeadLetter.Core.Tests
                 if (Mech.Entered(s.G, "dl16a.car", DumbwaiterState.Top)) top = i;
                 else Assert.True(s.Car.Carrying && s.Car.FloorVelocity >= 0);
             }
-            Assert.Equal(252, top);
+            Assert.Equal(253, top);                                         // 252 steps sum to 4.1999999… (L6236; the trace, #17469)
             Assert.Equal(2.45, s.Car.Position);
             Assert.Equal(0, Find(s.G, "dl16a.car", DumbwaiterEvent.Arrive).Value.Index);
             s.G.Step(Dt, s.InCar());
