@@ -98,6 +98,23 @@ namespace DeadLetter.Core.Push
             FloorY = 0, Z = 0, ForwardReach = 0.34, BackReach = 0.34,             // y ≤ 0.05; |x − stand| < 0.34, L2249, L2257
             Half = 0.28, Top = 0.16,                                              // TROLLEY_HALF, TROLLEY_DECK L321; surfaceAt L1725
         };
+
+        /// <summary>
+        /// DL-04: the fallen courier, dragged backwards by the tow loop at its head end, from its right (Side −1; pass 10's
+        /// <c>courierAlt</c>, from its left, is a <see cref="PushTwin"/>), 0.67 from its centre; 0.22 m/s, accel 1.4; from
+        /// 41.2 to the bay 44.5, where the travel's end (|x − max| &lt; 0.005, L4724) always docks it and the cradle closes
+        /// on it (L4727); 0.35 behind the lane, so he steps in to take it (three z −0.35, L4461); seated in the cradle from
+        /// <c>bay</c> (L4096). Not on the lane (no Half/Top). <c>PUSHABLES.courier</c> L4275, <c>RK</c> L3890, L4291–L4295.
+        /// </summary>
+        public static PushableParams Dl04Courier() => new PushableParams
+        {
+            StartX = 41.2,                                                        // RK.courierX
+            ParkedAfter = "bay", ParkedX = 44.5, ParkedState = PushableState.Docked,   // L4096
+            Side = -1, Gap = 0.67, Speed = 0.22, Accel = 1.4,                     // RK.gap; L4275; L4690
+            Min = 41.2, Max = 44.5,                                               // min: RK.courierX, max: () => RK.bayX
+            DockAt = 44.5, DockTolerance = 0.01,                                  // L4724–L4727
+            FloorY = 0, Z = 0.35, ForwardReach = 0.34, BackReach = 0.34,          // floor: 0, z: RK.courierZ; p.fwd/back ?? 0.34, L4254
+        };
     }
 
     /// <summary>

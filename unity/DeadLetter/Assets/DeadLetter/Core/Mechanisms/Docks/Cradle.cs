@@ -8,7 +8,10 @@ namespace DeadLetter.Core.Mechanisms.Docks
 
     public enum CradleEvent
     {
-        /// <summary>It took the courier: the drag sound stops, servo whine (L4791).</summary>
+        /// <summary>
+        /// It took the courier: the drag sound stops, servo whine (L4791). Index 1: he dragged it to the end of its travel
+        /// and the arms close on it at once (the drag sound stops, no whine; L4727).
+        /// </summary>
         Take,
         /// <summary>Seated: servo, clunk; the scene starts the <c>bayTouch</c> act once (stand 44.92, face −1; L4806–L4807).</summary>
         Seat,
@@ -36,7 +39,9 @@ namespace DeadLetter.Core.Mechanisms.Docks
 
     /// <summary>
     /// A cradle that takes a body let go near it, draws it in, closes on it and seats it (§4.13b, DL-04 L4787–L4812).
-    /// Once it has taken the body it owns its x: the pushable reads <see cref="Position"/> and <see cref="Taken"/>.
+    /// A body dragged all the way to the end of its travel (a pushable docked there: its <see cref="IEngageable.Engaged"/>)
+    /// is not drawn in: the arms close on it where it lies (<c>s.state = 'cradle'</c>, L4727).
+    /// Once it has taken the body it owns its x: the scene reads <see cref="Position"/> and <see cref="Taken"/>.
     /// Signals: <see cref="Position"/> = the body's x, metres; <see cref="Engaged"/> = seated (holds the bay door).
     /// Deliberate deviation: after a reload the prototype's seated lamps stay at their first flicker frame
     /// (<c>seatedAt</c> is not reset, L4818); here they hold steady (<see cref="SeatedFor"/> starts large).
@@ -45,6 +50,7 @@ namespace DeadLetter.Core.Mechanisms.Docks
     {
         private readonly CradleParams _p;
         private IPlateBody _body;
+        private IEngageable _docked;
         private double _x, _t, _seatedFor;
 
         public Cradle(MechanismId id, CradleParams p) : base(id) { _p = p ?? throw new ArgumentNullException(nameof(p)); }
@@ -59,8 +65,11 @@ namespace DeadLetter.Core.Mechanisms.Docks
         /// <summary>Seconds since it seated (−1 before): drives the lamps through <see cref="SeatedLamp"/>.</summary>
         public double SeatedFor => _seatedFor;
 
-        public override void Link(MechanismLinker link) => _body = link.Read<IPlateBody>(_p.Body)
-            ?? throw new InvalidOperationException(Id + " needs a Body.");
+        public override void Link(MechanismLinker link)
+        {
+            _body = link.Read<IPlateBody>(_p.Body) ?? throw new InvalidOperationException(Id + " needs a Body.");
+            _docked = _body as IEngageable;                                          // optional: a pushable docks at its travel's end
+        }
 
         public override void Reset(in Checkpoint cp)
         {
@@ -77,6 +86,13 @@ namespace DeadLetter.Core.Mechanisms.Docks
             double dt = ctx.Dt;
             if (State == CradleState.Seated) _seatedFor += dt;
             var s = _body.Support;
+            if (State == CradleState.Free && s != BodySupport.Away && _docked != null && _docked.Engaged)             // L4727
+            {
+                // Dragged to the end of its travel: he let go there and it is the cradle's, closing at once (t = 0, then
+                // the closing below runs this step too, as updateCh1 follows updateHoldCh1).
+                Enter(ctx, (int)CradleState.Closing); _x = _body.X; _t = 0;
+                Emit(ctx, (int)CradleEvent.Take, 1, _x);
+            }
             if (State == CradleState.Free && s != BodySupport.Pushed && s != BodySupport.Away && _body.X > _p.BayX - _p.TakeWithin)   // L4790
             {
                 Enter(ctx, (int)CradleState.Drawing); _x = _body.X; _t = 0;
