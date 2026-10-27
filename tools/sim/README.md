@@ -133,3 +133,20 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     each, from `root.position`, `pivot.rotation.z` and the payload's meshes). Every line is unchanged apart from these
     keys (checked line by line against the previous recording).
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).
+- **Chapter 1 (`CHAPTER=att`, U-22):** `CHAPTER=att node record_trace.mjs 1 attendance_mech_seed1.jsonl.gz mechanical`
+  records Chapter 1 Attendance from `school`, as `sim.mjs` plays it. The school's set is loaded before the bot starts,
+  so the first step's `startAt('school')` runs synchronously and the run stays deterministic (two recordings are
+  byte-identical); the header has `chapter` and `start`. **In region 6 the prologue's DL-06 carrier line is held off**
+  (`game.belt.running = false`, no carriers): `resetWorld` starts its belt at every checkpoint past `scanned`, and each
+  chute tip startles him anywhere past x 67.8 on the floor (L2734 has no region test), every 6 s, drawing
+  `Math.random`. That is a leak of the prologue into the school, not chapter 1, so it stays out of the trace.
+  - **`unity/core-tests/Traces/attendance_mech_seed1.jsonl.gz`:** the whole of Chapter 1, mechanical, seed 1: 20,842
+    steps (DL-13 from #1313, DL-14 from #3042, the duct at #7886, DL-14a from #8265; the end at 347 s).
+  - Its fields, only while `r` is 6 (so no prologue line changes), named with the scene's number:
+    - DL-12: `c12x`/`c12b`/`c12s` (the coat's x, base, state), `f12x`/`f12v` (the stand-in figure), `g12y`/`g12v`
+      (the gate's height and fall speed), `p12` (someone on the strip), `pc12` (`presentCount`).
+    - DL-13: `f13x`/`f13v` (the second figure), `l13` (the lesson on), `t13` (its clock), `k13` (braked), `s13` (the
+      three steps, comma-separated), `tr13` (the tree).
+    - DL-14: `ba14`/`bb14` (the blinds), `ta14`/`tb14` (their targets), `w14` (winds), `j14` (jammed), `px14`/`pb14`/`ps14`
+      (the pole's x, base, state), `pe14`/`pd14` (the peel, peeled), `rt14` (the chain rattling on the pole), `du14`
+      (the duct taken).

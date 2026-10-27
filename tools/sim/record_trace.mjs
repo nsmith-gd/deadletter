@@ -10,6 +10,10 @@
 // RNG_SEED = the seed of the page's Math.random (default 1); PROGRESS=1 prints the clock now and then.
 // BOT_OPTS = JSON merged into the bot's options (e.g. '{"pressMistake":true}': a death under DL-02's press);
 // UNTIL = game-clock seconds after which the recording stops (the end line then says "stopped").
+// CHAPTER=att records Chapter 1 Attendance from its first checkpoint (`school`), as sim.mjs plays it: the school's set
+// is loaded before the bot starts, so the first step's startAt runs synchronously (no await) and the run stays
+// deterministic. The header then has `chapter` and `start`. In region 6 the prologue's DL-06 carrier line is held off
+// (see the step wrapper): it leaks into the school otherwise.
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,6 +26,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const [seedArg = '1', OUT = 'trace.jsonl.gz', mode = ''] = process.argv.slice(2);
 const seed = +seedArg, rngSeed = +(process.env.RNG_SEED || 1);
 const BOT_OPTS = process.env.BOT_OPTS ? JSON.parse(process.env.BOT_OPTS) : null, UNTIL = +(process.env.UNTIL || 0);
+const CHAPTER = process.env.CHAPTER || '', START_CP = { att: 'school' }[CHAPTER] || '';
+if (CHAPTER && !START_CP) throw new Error('CHAPTER: only att is recorded');
 const BOT = fs.readFileSync(process.env.BOT || path.join(HERE, 'bot.js'), 'utf8');
 const CHROME = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
@@ -61,7 +67,7 @@ const INIT = `(() => {
 // what step i-1 left), then lets the bot set the input, then keeps a copy of the input step i will consume. Its first
 // call starts the game: Math.random reseeded, timers on game time, game.clock = 0, then Begin. Nothing before it
 // (the title screen's real-time frames) reaches the trace, so two runs of the same seed are identical.
-const RECORDER = `window.__record = (rngSeed) => {
+const RECORDER = `window.__record = (rngSeed, startCp) => {
   const D = window.__dl01, G = D.game, I = D.input, sim = window.__sim, bot = sim.bot, SH = D.k.SH, PR = D.k2.PRESS2;
   const r6 = (v) => (typeof v === 'number' ? Math.round(v * 1e6) / 1e6 : v);
   const b = (v) => (v ? 1 : 0);
@@ -130,6 +136,28 @@ const RECORDER = `window.__record = (rngSeed) => {
       rd6: G.riding ? G.riding.id : null, cr6: JSON.stringify(cr),
     };
   }
+  // Chapter 1 (U-22): game.att, only in region 6 (so no prologue line changes). Names end in the scene's number.
+  // DL-12: the coat (x, base, state), the stand-in figure (x, v), the gate (y, fall speed), someone on the strip and
+  // how many times (index.html L5228-L5243, L5381-L5408).
+  const A6 = () => (G.region === 6 && G.att ? G.att : null);
+  function dl12() {
+    const s = A6(); if (!s) return {};
+    return { c12x: r6(s.coat.x), c12b: r6(s.coat.base), c12s: s.coat.state, f12x: r6(s.fig.x), f12v: r6(s.fig.v), g12y: r6(s.gateY), g12v: r6(s.gateV), p12: b(s.present), pc12: s.presentCount };
+  }
+  // DL-13: the second figure (x, v), the lesson (on, its clock, braked, the three steps, the tree) (L5409-L5436).
+  function dl13() {
+    const s = A6(); if (!s) return {};
+    const L = s.lesson;
+    return { f13x: r6(s.fig2.x), f13v: r6(s.fig2.v), l13: b(L.on), t13: r6(L.t), k13: b(L.braked), s13: L.steps.map(r6).join(','), tr13: r6(L.tree) };
+  }
+  // DL-14: the blinds (a, b and their targets), the winds, the jam, the pole (x, base, state), the peel, the chain
+  // rattling against the pole, the duct taken (L5437-L5511).
+  function dl14() {
+    const s = A6(); if (!s) return {};
+    const B = s.blinds;
+    return { ba14: r6(B.a), bb14: r6(B.b), ta14: B.ta, tb14: B.tb, w14: B.winds, j14: b(s.jammed), px14: r6(s.pole.x), pb14: r6(s.pole.base), ps14: s.pole.state,
+      pe14: r6(s.peel), pd14: b(s.peeled), rt14: b(s.rattle), du14: b(s.duct) };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -145,6 +173,9 @@ const RECORDER = `window.__record = (rngSeed) => {
       ...dl04(),
       ...dl05(),
       ...dl06(),
+      ...dl12(),
+      ...dl13(),
+      ...dl14(),
     };
   }
   function flush() {
@@ -155,9 +186,14 @@ const RECORDER = `window.__record = (rngSeed) => {
     window.__trace.push(JSON.stringify(line));
   }
   sim.bot = function (dt) {
-    if (i === 0) { window.__seedRandom(rngSeed); window.__virtualTime(true); G.clock = 0; document.getElementById('begin').click(); }
+    if (i === 0) { window.__seedRandom(rngSeed); window.__virtualTime(true); G.clock = 0; if (startCp) D.startAt(startCp); else document.getElementById('begin').click(); }
     window.__advanceTime(1000 / 60);
     if (!sim.out.done) flush();
+    // CHAPTER: the prologue's DL-06 carrier line runs on under the school (resetWorld starts its belt at every checkpoint
+    // past 'scanned', L8015+), and each chute tip startles him anywhere past x 67.8 on the floor (L2734 has no region
+    // test), every 6 s, drawing Math.random. That is a leak, not chapter 1: in region 6 the belt is held off and no
+    // carrier exists, so nothing of DL-06 reaches the trace. Nothing else read in region 6 depends on them.
+    if (startCp && G.region === 6 && D.refs.carriers) { G.belt.running = false; D.refs.carriers.length = 0; }
     bot.call(sim, dt);
     inp = { L: b(I.left), R: b(I.right), JP: b(I.jumpPressed), JH: b(I.jumpHeld), UP: b(I.usePressed), UH: b(I.useHeld), SH: b(I.shift), AX: r6(I.axis || 0) };
     i++;
@@ -176,14 +212,19 @@ await page.goto((process.env.GAME || 'http://127.0.0.1:8765') + '/index.html' + 
 await page.waitForFunction(() => !document.getElementById('begin').disabled, null, { timeout: 300000 });
 await page.addScriptTag({ content: BOT });
 await page.addScriptTag({ content: RECORDER });
-// One task: no frame runs between starting the bot and wrapping it; the wrapper's first call presses Begin.
-await page.evaluate(([s, m, r, o]) => { window.__startBot(s, { mechanical: m === 'mechanical', steps: 10, ...(o || {}) }); window.__record(r); }, [seed, mode, rngSeed, BOT_OPTS]);
+// CHAPTER: load the school's set first (startAt loads it and starts play; the title comes back at once, in the same
+// task, so no frame plays it), then the recorder's first step starts there again, synchronously.
+if (START_CP) await page.evaluate(async (cp) => { const D = window.__dl01; await D.startAt(cp); D.game.mode = 'title'; }, START_CP);
+// One task: no frame runs between starting the bot and wrapping it; the wrapper's first call presses Begin (or starts at
+// the chapter's checkpoint).
+await page.evaluate(([s, m, r, o, ch, cp]) => { window.__startBot(s, { mechanical: m === 'mechanical', steps: 10, ...(o || {}), ...(ch ? { chapter: ch } : {}) }); window.__record(r, cp); }, [seed, mode, rngSeed, BOT_OPTS, CHAPTER, START_CP]);
 
 const gz = zlib.createGzip({ level: 9 });
 const file = fs.createWriteStream(OUT);
 gz.pipe(file);
 const header = { format: 'deadletter-trace/1', game: 'game/undelivered/index.html', bot: 'tools/sim/bot.js', seed, mode: mode || 'first_playthrough',
-  rngSeed, rng: 'lcg16807', step: 1 / 60, round: 1e-6, delta: true, ...(BOT_OPTS ? { botOpts: BOT_OPTS } : {}), ...(UNTIL ? { until: UNTIL } : {}) };
+  rngSeed, rng: 'lcg16807', step: 1 / 60, round: 1e-6, delta: true, ...(BOT_OPTS ? { botOpts: BOT_OPTS } : {}), ...(UNTIL ? { until: UNTIL } : {}),
+  ...(CHAPTER ? { chapter: CHAPTER, start: START_CP } : {}) };
 gz.write(JSON.stringify(header) + '\n');
 const t0 = Date.now();
 let out, lines = 0;
