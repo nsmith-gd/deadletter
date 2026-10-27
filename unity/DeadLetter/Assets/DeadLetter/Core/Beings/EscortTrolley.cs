@@ -1,4 +1,5 @@
 using System;
+using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Save;
 using DeadLetter.Core.Simulation;
@@ -27,10 +28,10 @@ namespace DeadLetter.Core.Beings
         /// <summary>It turned round at an end (servo whine, L6379).</summary>
         Turned,
         /// <summary>It saw him (L6397–L6403): two bells 0.26 s apart, <c>failAtt('14b')</c>, the <c>att_trolley</c> voice
-        /// at Value = its x (reach 9, level 0.8). The driver makes him drop what he pushes or carries (L6399–L6400) and
-        /// hands his position to <see cref="EscortTrolley.HeroEscortX"/> until <see cref="HimHome"/>.</summary>
+        /// at Value = its x (reach 9, level 0.8). From now it asks for him (<see cref="IEscort.WantsEscort"/>): the pipeline
+        /// starts the motor's escorted act, which drops what he holds (L6399–L6400) and walks him home.</summary>
         CaughtHim,
-        /// <summary>He is back at the dormitory door: the escorted act ends, he faces +x (L6133).</summary>
+        /// <summary>He is back at the dormitory door: the motor's escorted act ended there, he faces +x (L6133). Value = his x.</summary>
         HimHome,
         /// <summary>It saw the figure first (L6405–L6409): two bells, the voice at Value = its x (level 0.7); the driver
         /// releases his push if he is pushing the figure.</summary>
@@ -77,7 +78,7 @@ namespace DeadLetter.Core.Beings
         public double SeeBelowY = 1.25;
         /// <summary>Hidden: in the hide act and stepped back past this depth (Unity z; three <c>game.z &lt; −0.4</c>, L5973).</summary>
         public double HiddenDepth = 0.4;
-        /// <summary>The escorted act: idle 0.7 s, then walked back to 263.45; it ends at ≤ 263.46 (L6130–L6133).</summary>
+        /// <summary>The escorted act (the motor's): idle 0.7 s, then walked back to 263.45; it ends at ≤ 263.46 (L6130–L6133).</summary>
         public double HeroHold = 0.7, HeroHomeX = 263.45, HeroHomeArrive = 263.46;
         /// <summary>It follows 0.75–0.9 m behind him (L6132).</summary>
         public double FollowMin = 0.75, FollowMax = 0.9;
@@ -103,13 +104,13 @@ namespace DeadLetter.Core.Beings
     /// the beam — him, not tucked into a recess, or the nudged figure on the rail; the nearer wins — it rings for and
     /// takes back toward the dormitory: him to the door at 0.8 m/s, then it stops 2 s; the figure to 262.2, then it
     /// stops 6 s (the window to pass). The template for the attendant (rail patrol + beam sensor + escort).
-    /// <para>The escorted walk is modelled here (<see cref="HeroEscortX"/>): the motor has no escorted act (U-11 gap), so
-    /// the driver places him there while <see cref="HeroHeld"/>. If he is no longer in play while held (a respawn cut the
-    /// act), it stops 2 s (<c>updateEscortHim14b</c>, L6419–L6422).</para>
-    /// <para>Inputs: <see cref="StepContext.Player"/> (x, y, z, hiding), <see cref="BeingSenses"/> (alive, region), the
-    /// optional <see cref="IDecoy"/>. Signals: <see cref="IPositionSource.Position"/> = its x; <see cref="IDecoyEscort"/>.</para>
+    /// <para>The escorted walk is the motor's act (<see cref="IEscort"/>: <see cref="WantsEscort"/>, <see cref="Walk"/>); the
+    /// trolley follows him 0.75–0.9 behind once he walks (L6132). If the act is not running while it holds him (a respawn
+    /// cut it, or he is out of play), it stops 2 s (<c>updateEscortHim14b</c>, L6413, L6419–L6422).</para>
+    /// <para>Inputs: <see cref="StepContext.Player"/> (x, y, z, hiding, escorted), <see cref="BeingSenses"/> (alive, region), the
+    /// optional <see cref="IDecoy"/>. Signals: <see cref="IPositionSource.Position"/> = its x; <see cref="IDecoyEscort"/>; <see cref="IEscort"/>.</para>
     /// </summary>
-    public sealed class EscortTrolley : Mechanism, IPositionSource, IDecoyEscort
+    public sealed class EscortTrolley : Mechanism, IPositionSource, IDecoyEscort, IEscort
     {
         private readonly EscortTrolleyParams _p;
         private readonly BeingSenses _sense;
@@ -120,7 +121,7 @@ namespace DeadLetter.Core.Beings
         private int _dir;
         private double _decoyX;
         private bool _decoyHeld, _decoyKept;
-        private double _heroX, _heroT;
+        private double _heroT;
         private bool _heroHeld;
 
         public EscortTrolley(MechanismId id, EscortTrolleyParams p, BeingSenses senses) : base(id)
@@ -159,9 +160,13 @@ namespace DeadLetter.Core.Beings
         public double BeamHi => Math.Max(BeamA, BeamA + _dir * _p.Beam);
         private double BeamA => _x + _dir * _p.LampDX;
 
-        /// <summary>He is in the escorted act: the driver keeps him at <see cref="HeroEscortX"/>, facing −x.</summary>
+        /// <summary>It has him: from the catch until he is home (or the act is cut).</summary>
         public bool HeroHeld => _heroHeld;
-        public double HeroEscortX => _heroX;
+        /// <summary>Seconds of the escorted act it has seen (the follow starts at <see cref="EscortTrolleyParams.HeroHold"/>).</summary>
+        public double HeroTime => _heroT;
+        public bool WantsEscort => State == EscortState.EscortHim && _heroHeld;
+        /// <summary>Stand 0.7 s, then walk at 0.8 m/s to the dormitory door, facing −x; done at ≤ 263.46, then face +x (L6127–L6133).</summary>
+        public EscortWalk Walk => new EscortWalk(_p.HeroHold, _p.EscortSpeed, _p.HeroHomeX, _p.HeroHomeArrive, -1, +1);
         public bool HoldsDecoy => _decoyHeld;
         public double DecoyX => _decoyX;
         public bool DecoyKept => _decoyKept;
@@ -175,7 +180,7 @@ namespace DeadLetter.Core.Beings
             _decoyKept = checkpoint.Past(_p.KeptAfter);
             _decoyHeld = false;
             _decoyX = _decoyKept ? _p.KeepX : 0;
-            _heroHeld = false; _heroX = 0; _heroT = 0;
+            _heroHeld = false; _heroT = 0;
             _rng.Reseed((long)_p.Seed);
         }
 
@@ -183,20 +188,23 @@ namespace DeadLetter.Core.Beings
         {
             double dt = ctx.Dt;
 
-            // The escorted act (updatePlayer, #4; L6127–L6134).
-            if (State == EscortState.EscortHim && _heroHeld && _sense.Alive)
+            // The escorted act is the motor's (#4, L6127–L6134): it follows him once he walks, and stops when the act ends.
+            if (State == EscortState.EscortHim && _heroHeld)
             {
-                _heroT += dt;
-                if (_heroT >= _p.HeroHold)
+                var pl = ctx.Player;
+                if (!pl.Escorted || !_sense.Alive)                                                     // L6413, L6421
                 {
-                    _heroX = Math.Max(_p.HeroHomeX, _heroX - _p.EscortSpeed * dt);
-                    _x = Math.Max(_x, _heroX + _p.FollowMin);
-                    _x = Math.Min(_x, _heroX + _p.FollowMax);
-                    if (_heroX <= _p.HeroHomeArrive)
+                    _heroHeld = false;
+                    if (_sense.Alive && pl.X <= _p.HeroHomeArrive) Emit(ctx, (int)EscortEvent.HimHome, 0, pl.X);   // L6133
+                    ToStop(ctx, _p.CaughtStop);
+                }
+                else
+                {
+                    _heroT += dt;
+                    if (_heroT >= _p.HeroHold)
                     {
-                        _heroHeld = false;
-                        Emit(ctx, (int)EscortEvent.HimHome, 0, _heroX);
-                        ToStop(ctx, _p.CaughtStop);
+                        _x = Math.Max(_x, pl.X + _p.FollowMin);                                        // L6132
+                        _x = Math.Min(_x, pl.X + _p.FollowMax);
                     }
                 }
             }
@@ -232,7 +240,6 @@ namespace DeadLetter.Core.Beings
                     }
                     return;
                 case EscortState.EscortHim:
-                    if (!_sense.Alive) { _heroHeld = false; ToStop(ctx, _p.CaughtStop); }          // updateEscortHim14b, L6421
                     return;
             }
             if (State != EscortState.Patrol && State != EscortState.Turn) return;
@@ -244,7 +251,7 @@ namespace DeadLetter.Core.Beings
             if (him && (!it || dHim < dFig))
             {
                 Enter(ctx, (int)EscortState.EscortHim); _mt = 0;
-                _heroHeld = true; _heroX = hero.X; _heroT = 0;
+                _heroHeld = true; _heroT = 0;
                 Emit(ctx, (int)EscortEvent.CaughtHim, 0, _x);
                 return;
             }
@@ -261,6 +268,7 @@ namespace DeadLetter.Core.Beings
         {
             if (_sense.Region != _p.Region || !_sense.Alive) return false;
             if (hero.Hiding && hero.Z > _p.HiddenDepth) return false;
+            if (hero.Escorted) return false;                                                           // L6368
             double a = BeamLo, b = BeamHi;
             return hero.X > Math.Max(a, _p.WallX) && hero.X < b && hero.Y < _p.SeeBelowY;
         }
@@ -282,7 +290,7 @@ namespace DeadLetter.Core.Beings
         {
             w.WriteDouble("x", _x); w.WriteLong("dir", _dir); w.WriteDouble("mt", _mt); w.WriteDouble("stopFor", _stopFor);
             w.WriteDouble("decoyX", _decoyX); w.WriteBool("decoyHeld", _decoyHeld); w.WriteBool("decoyKept", _decoyKept);
-            w.WriteDouble("heroX", _heroX); w.WriteDouble("heroT", _heroT); w.WriteBool("heroHeld", _heroHeld);
+            w.WriteDouble("heroT", _heroT); w.WriteBool("heroHeld", _heroHeld);
             _rng.Write(w, "rng");
         }
 
@@ -290,8 +298,16 @@ namespace DeadLetter.Core.Beings
         {
             _x = r.ReadDouble("x"); _dir = (int)r.ReadLong("dir"); _mt = r.ReadDouble("mt"); _stopFor = r.ReadDouble("stopFor");
             _decoyX = r.ReadDouble("decoyX"); _decoyHeld = r.ReadBool("decoyHeld"); _decoyKept = r.ReadBool("decoyKept");
-            _heroX = r.ReadDouble("heroX"); _heroT = r.ReadDouble("heroT"); _heroHeld = r.ReadBool("heroHeld");
+            _heroT = r.ReadDouble("heroT"); _heroHeld = r.ReadBool("heroHeld");
             _rng.Read(r, "rng");
+            // The escorted act is the motor's, and the motor is not in the snapshot (a reload places him afresh): a
+            // restored hold would start the escort over. End it as a cut act does (L6413, L6421): he is let go and it
+            // stops for B.stopFor, without the event, which belongs to the run that was cut.
+            if (_heroHeld)
+            {
+                _heroHeld = false; _heroT = 0;
+                if (State == EscortState.EscortHim) { Init((int)EscortState.Stop); _mt = 0; _stopFor = _p.CaughtStop; }
+            }
         }
     }
 }

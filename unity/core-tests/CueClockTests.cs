@@ -343,5 +343,45 @@ namespace DeadLetter.Core.Tests
             }
             Assert.Equal(Run(), Run());
         }
+
+        // ---- Skip (#22): jump to the moment's control-return state ---------------------------------------------------
+
+        [Fact]
+        public void Skip_BeforeLock_ReleasesTheHold_ReportsControlOnTheNextGate_ShotLetsGo_CuePlaysOn_L8071()
+        {
+            var h = new Harness();
+            h.Start(PrologueMoments.Kin);
+            for (int i = 0; i < 120; i++) h.Step(Right, out _);                       // 2 s in: locked
+            Assert.Equal(MomentControl.Locked, h.Director.ControlAt(h.Director.Time(h.Sim)));
+            Assert.True(h.Director.VoicesHeld(h.Sim));
+            double t = h.Director.Time(h.Sim).Value;
+            Assert.True(h.Director.Skip(h.Sim));
+            Assert.False(h.Director.Skip(h.Sim));                                       // control is already back
+            Assert.True(h.Director.Skipped && h.Director.Cut);
+            Assert.False(h.Director.Holding);
+            Assert.Equal(t, h.Director.ReturnedAt.Value, 9);
+            Assert.Null(h.Director.ShotTime("kin", h.Sim));                             // the shot lets go
+            Assert.False(h.Director.VoicesHeld(h.Sim));                                 // voices may play again
+            Assert.Equal(MomentControl.Player, h.Director.ControlAt(h.Director.Time(h.Sim)));
+
+            h.Step(Right, out var gated);                                               // reported once, that input consumed
+            Assert.True(h.Director.ControlReturned);
+            Assert.Equal(0.0, gated.Move);
+            h.Step(Right, out gated);
+            Assert.False(h.Director.ControlReturned);
+            Assert.Equal(1.0, gated.Move);
+            Assert.Same(PrologueMoments.Kin, h.Director.Current);                       // its cue plays on (startPlay, L8086)
+            Assert.True(h.Director.Time(h.Sim) > t);
+        }
+
+        [Fact]
+        public void Skip_WithNoMoment_DoesNothing()
+        {
+            var h = new Harness();
+            Assert.False(h.Director.Skip(h.Sim));
+            h.Step(Right, out var gated);
+            Assert.False(h.Director.ControlReturned);
+            Assert.Equal(1.0, gated.Move);
+        }
     }
 }

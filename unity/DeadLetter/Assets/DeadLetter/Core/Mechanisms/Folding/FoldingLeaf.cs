@@ -36,8 +36,10 @@ namespace DeadLetter.Core.Mechanisms.Folding
         /// <summary>Where he uses its handle.</summary>
         public Station Station;
         public ActProfile Profile = new ActProfile("Pull");
-        /// <summary>The Use takes effect at this clip frame (Pull f31, as the latch, L1874) and the act ends at <see cref="EndFrame"/>.</summary>
+        /// <summary>The Use takes effect at this clip frame (Pull f31, as the latch, L1874) and the clip ends at <see cref="EndFrame"/>.</summary>
         public double ToggleFrame = ClipTimings.PullEvents.Release, EndFrame = ClipTimings.PullEvents.Flinch;
+        /// <summary>After the clip he hops this far along the lane, clear of the swing (0 = no hop; DL-18's strap: 0.4 to the left).</summary>
+        public double HopAfter;
 
         /// <summary>Seconds for a full swing either way (it moves only on input and is counterbalanced: it stays wherever it stops).</summary>
         public double Travel = 1.4;
@@ -89,13 +91,15 @@ namespace DeadLetter.Core.Mechanisms.Folding
         /// <summary>
         /// DL-18: the fold bench, 353.4–354.2, a 0.45 leaf hinged along its back edge at 0.6: folded vertical (0.6–1.05),
         /// down to its stop as a seat at 0.6 in 1.2 s. Use at the strap (353.45) from the floor or the bed: a tug (Tug f19,
-        /// the act over at f43). Folded at the start, down once past <c>terrace</c>.
+        /// the clip over at f43), then a 0.4 m hop back to the left so he is never under it (§3 "Stepping clear"). Folded at
+        /// the start, down once past <c>terrace</c>.
         /// </summary>
         public static FoldingLeafParams Dl18Bench() => new FoldingLeafParams
         {
             Station = new Station(standX: 353.45, reach: 0.3, face: +1, floorY: 0.45),
             Profile = new ActProfile("Tug"),
             ToggleFrame = ClipTimings.TugEvents.Click, EndFrame = ClipTimings.TugEvents.Done,
+            HopAfter = -0.4,                                                 // "a tug, then a 0.4 m hop back to the left" (§3)
             Travel = 1.2,
             HingeD = 0, HingeY = 0.6,
             Boxes = new[] { new LeafBox(353.4, 354.2, 0, 0.45, -0.04, 0) },  // seat top at 0.6; its underside clears the folded bed (0.55)
@@ -172,10 +176,12 @@ namespace DeadLetter.Core.Mechanisms.Folding
 
         protected override bool CanUse(in InteractionQuery q) => true;
 
-        public override bool OnActFrame(in ActFrame f)
+        /// <summary>The clip; at its end, the hop clear when the leaf has one (DL-18's strap), else done.</summary>
+        public override ActStep OnActFrame(in ActFrame f)
         {
             _act.Receive(f);
-            return ClipClock.Reached(f.Frame, _p.EndFrame);
+            if (!ClipClock.Reached(f.Frame, _p.EndFrame)) return ActStep.Continue;
+            return _p.HopAfter != 0 ? ActStep.HopBy(_p.HopAfter) : ActStep.Done;
         }
 
         public override void Step(in StepContext ctx)

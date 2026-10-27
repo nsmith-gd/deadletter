@@ -15,8 +15,9 @@ namespace DeadLetter.Core.Save
 
     /// <summary>
     /// The named story flags that outlive a respawn and a checkpoint reload and are cleared by Start over (L4133,
-    /// L7307): letters read, curiosities, secret rooms, voice cards, seen moments, and the prototype's <c>persist</c>
-    /// object. The save holds the names of the flags that are set (sorted, ordinal).
+    /// L7307): letters read, curiosities, secret rooms, voice cards, and the prototype's <c>persist</c> object. The save
+    /// holds the names of the flags that are set (sorted, ordinal). The seen moments use a second instance of this class
+    /// (<see cref="CheckpointService.Seen"/>), saved under their own keys since version 3.
     /// </summary>
     public sealed class PersistFlags : IPersistFlagReader
     {
@@ -92,6 +93,5 @@ namespace DeadLetter.Core.Save
         public static string Curio(string id) => "curio." + id;
         public static string Secret(string id) => "secret." + id;
         public static string Voice(string id) => "voice." + id;
-        public static string Seen(string moment) => "seen." + moment;
     }
 }

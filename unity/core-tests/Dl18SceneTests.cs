@@ -186,7 +186,9 @@ namespace DeadLetter.Core.Tests
             Assert.False(r.Bed.IsAvailable(At(354.0, 0.45)));                     // not from the bed
             Assert.True(r.Bench.IsAvailable(At(353.45)));
             Assert.True(r.Bench.IsAvailable(At(353.45, 0.45)));                    // from the bed
-            Assert.Equal(-1, r.Bed.Face);
+            Assert.True(r.Bed.Offer(At(353.7), out var pose));
+            Assert.Equal(-1, pose.Face);
+            Assert.Equal(354.0, pose.StandX, 12);
         }
 
         [Theory]

@@ -21,6 +21,10 @@ namespace DeadLetter.Runtime.Camera
     /// (kin: realise act idle; refuge: awe clip done; ringc: car gone) and <see cref="CarRise"/>.
     /// The pause card (U-17) must call <see cref="SetPaused"/> on open and close, or a moment keeps playing under it;
     /// checkpoint reload must call <see cref="ResetForReload"/>.
+    /// <para><b>Hosted mode</b> (U-20): a scene host's Core scene simulator owns the <see cref="MomentDirector"/>, starts moments
+    /// from its rules and gates input itself (§3.1 #3). <see cref="UseDirector"/> hands this component that director; the
+    /// host then calls <see cref="Present"/> for each moment Core started (cue on the DSP clock, Timeline), and this
+    /// component never installs the input filter or starts moments on its own.</para>
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class DirectedMomentPlayer : MonoBehaviour
@@ -49,7 +53,7 @@ namespace DeadLetter.Runtime.Camera
 
         private MomentDirector _director;
         private Binding _active;
-        private bool _paused;
+        private bool _paused, _hosted;
 
         public MomentDirector Director => _director;
 
@@ -74,12 +78,51 @@ namespace DeadLetter.Runtime.Camera
 
         private void Awake()
         {
-            _director = new MomentDirector(musicClock);
+            if (_director == null) _director = new MomentDirector(musicClock);
+        }
+
+        /// <summary>Hosted mode: use the scene simulator's director (Core starts moments and gates input).</summary>
+        public void UseDirector(MomentDirector director)
+        {
+            _director = director ?? throw new ArgumentNullException(nameof(director));
+            _hosted = true;
+            if (player != null && player.InputFilter == (Func<MotorInput, MotorInput>)Gate) player.InputFilter = null;
+        }
+
+        /// <summary>The music clock this player schedules cues on (the host passes it to the Core scene simulator).</summary>
+        public AudioDspMusicClock MusicClock => musicClock;
+
+        /// <summary>
+        /// Hosted mode: Core started <paramref name="momentName"/> this step. Schedule its cue from the top on the DSP clock
+        /// and start its Timeline (the presentation half of <see cref="Trigger"/>). Moments with no binding (DL-01's
+        /// <c>wake</c>) run on the sim clock.
+        /// </summary>
+        public void Present(string momentName)
+        {
+            StopTimeline();
+            _active = Find(momentName);
+            AudioSource cue = _active?.cue;
+            bool music = cue != null && cue.clip != null && musicClock != null && musicClock.Running;
+            if (music)
+            {
+                double clockTime = musicClock.ScheduleAhead(CueClock.ScheduleLeadIn, out double dsp);
+                cue.time = 0f;
+                cue.PlayScheduled(dsp);
+                _director.Clock.Scheduled(clockTime);
+            }
+            else _director.Clock.MusicFailed();
+            if (_active?.timeline != null)
+            {
+                _active.timeline.timeUpdateMode = DirectorUpdateMode.Manual;
+                _active.timeline.time = 0;
+                _active.timeline.Play();
+                _active.timeline.Evaluate();
+            }
         }
 
         private void OnEnable()
         {
-            if (player != null) player.InputFilter = Gate;
+            if (player != null && !_hosted) player.InputFilter = Gate;
             CheckpointTrigger.ServiceChanged += BindReloads;
             BindReloads(CheckpointTrigger.Service);
         }
