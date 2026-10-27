@@ -30,7 +30,8 @@ namespace DeadLetter.Core.Tests
         {
             var ported = new HashSet<string>();
             foreach (var p in probes) ported.Add(p.Scene);
-            return (t.FirstIndex(p => p.Mode == "play"), t.FirstIndex(p => p.Mode == "play" && p.Scene != null && !ported.Contains(SceneId(p.Scene))));
+            int to = t.FirstIndex(p => p.Mode == "play" && p.Scene != null && !ported.Contains(SceneId(p.Scene)));
+            return (t.FirstIndex(p => p.Mode == "play"), to >= 0 ? to : t.Steps.Count - 1);            // every scene ported: to the end
         }
 
         internal static ChapterTraceRun Run()
@@ -106,7 +107,7 @@ namespace DeadLetter.Core.Tests
             foreach (var w in rows) if (scenes.Count == 0 || scenes[scenes.Count - 1] != Scene5(w)) scenes.Add(Scene5(w));
             var want = new List<string>();
             foreach (var p in r.Probes) want.Add(p.Scene);
-            want.Add(Scene5(rows[rows.Count - 1]));
+            if (!Complete(r)) want.Add(Scene5(rows[rows.Count - 1]));                           // the scene after the ported ones
             Assert.Equal(want, scenes);
         }
 
@@ -172,13 +173,15 @@ namespace DeadLetter.Core.Tests
             var r = Run();
             var bad = new List<string>();
             var seams = new List<(int, string, string, ExitDir)>();
-            string last = r.Probes[0].Scene, after = Scene5(r.Rows[r.Rows.Count - 1]);
+            bool complete = Complete(r);
+            string last = r.Probes[0].Scene, after = complete ? null : Scene5(r.Rows[r.Rows.Count - 1]);
             foreach (var w in r.Rows)
             {
-                string proto = Scene5(w), core = w.Scene ?? after;
+                string proto = Scene5(w), core = w.Scene ?? after ?? proto;                     // past the chapter: the next scene's (or, at its end, its last)
                 if (proto != core) bad.Add($"#{w.P.I} scene {proto} vs {core}");
                 if (proto != last) { seams.Add((w.P.I, last, proto == after ? null : proto, ExitDir.Right)); last = proto; }
             }
+            if (complete) seams.Add((r.Rows[r.Rows.Count - 1].P.I, last, null, ExitDir.Right));   // he leaves the chapter on its last step
             Assert.True(bad.Count == 0, Report(bad));
             Assert.Equal(seams, r.Changes);
             var steps = new List<int>();
@@ -212,6 +215,9 @@ namespace DeadLetter.Core.Tests
         }
 
         // ---- Helpers --------------------------------------------------------------------------------------------------------
+        /// <summary>Every scene of the chapter is ported: the window runs to the trace's last step, where he leaves the school.</summary>
+        private static bool Complete(ChapterTraceRun r) => r.Probes.Count == ChapterDefs.Attendance().Scenes.Count && r.Probes[r.Probes.Count - 1].Scene == "DL-17";
+
         /// <summary>"DL-14a" and "DL-14b" are scenes of their own; the prototype's name starts with the ID and a space.</summary>
         internal static string SceneId(string sceneName) => sceneName.Substring(0, sceneName.IndexOf(' '));
 

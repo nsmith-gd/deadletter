@@ -135,6 +135,11 @@ namespace DeadLetter.Core.Tests
                 case "lever16": return "dl16.lever:" + (phase == "approach" ? "Approach" : "Clip");
                 case "call16a": return "dl16a.callPush:" + (phase == "approach" ? "Approach" : "PressButtonHigh");
                 case "bell16a": return "dl16a.car:PressButtonHigh";
+                case "tray": return "dl17.tray:" + (phase == "approach" ? "Approach" : "Lift");
+                case "drawer": return "dl17.drawer:" + (phase == "approach" ? "Approach" : "Tug");
+                case "read": return "dl17.read:" + (phase == "approach" ? "Approach" : "ReadRoute");
+                case "sluice17": return SluiceAt(p.X) + ":" + (phase == "approach" ? "Approach" : "Clip");
+                case "valve17": return "dl17.valve:" + (phase == "approach" ? "Approach" : "Clip");
                 case "ride16a": return "dl16a.car:Ride";
                 default: return "att." + p.Aw + ":" + phase;
             }
@@ -159,7 +164,10 @@ namespace DeadLetter.Core.Tests
             return ("dl12.figure", p.F12x.Value);
         }
 
-        /// <summary>The item he lifts or sets down (by where he is: the coat in DL-12, the pole in DL-14).</summary>
-        private static string ItemAt(TraceStep p) => p.X < 216 ? "dl12.coat" : "dl14.pole";
+        /// <summary>The item he lifts or sets down (by where he is: the coat in DL-12, the pole in DL-14, the tray in DL-17).</summary>
+        private static string ItemAt(TraceStep p) => p.X < 216 ? "dl12.coat" : p.X > 324 ? "dl17.tray" : "dl14.pole";
+
+        /// <summary>The sluice he works (stand 0.18 short of each, within 0.24: 337.45, 338.1, 338.8).</summary>
+        private static string SluiceAt(double x) => x < 337.7 ? "dl17.sluiceA" : x < 338.4 ? "dl17.sluiceB" : "dl17.sluiceC";
     }
 }
