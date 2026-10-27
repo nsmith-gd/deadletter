@@ -253,11 +253,11 @@ namespace DeadLetter.Core.Motor
             Ride = null; _rideToken = 0;
             if (s.Clip != null)
             {
-                SetClip(s.Clip, 0, s.ClipTimeScale);
+                SetClip(s.Clip, 0, s.ClipTimeScale, restart: true);
                 ClipTime = s.ClipTime;
                 _lastStepPhase = s.StepPhase;
             }
-            else SetClip(s.Grounded ? ClipNames.Idle : ClipNames.JumpAir, 0, 1);
+            else SetClip(s.Grounded ? ClipNames.Idle : ClipNames.JumpAir, 0, 1, restart: true);
             _events.Clear();
             _stepEvents = 0;
         }

@@ -237,6 +237,34 @@ namespace DeadLetter.Core.Tests
             }
         }
 
+        /// <summary>
+        /// A hand-over doesn't depend on the receiving motor's history (#33 review): one already in the snapshot's clip
+        /// restarts it at the snapshot's time, as a fresh motor does, instead of keeping its own time and serial.
+        /// </summary>
+        [Fact]
+        public void Snapshot_HandOverOntoAMotorAlreadyInThatClip_MatchesAFreshMotor()
+        {
+            var a = Sim.Make(BoxWorld.Flat(), 0);
+            a.Step(Sim.Jump(1), Dt);
+            Sim.Run(a, Sim.Move(1), 10);
+            var s = a.Capture();
+            s.Clip = null;                                                             // no clip given: JumpAir in the air
+
+            var used = Sim.Make(BoxWorld.Flat(), 3);
+            used.Step(Sim.Jump(1), Dt);
+            Sim.Run(used, Sim.Move(1), 20);
+            Assert.Equal(ClipNames.JumpAir, used.Clip);
+            int serial = used.ClipSerial;
+            used.SetState(s);
+
+            var fresh = Sim.Make(BoxWorld.Flat(), 3);
+            fresh.SetState(s);
+            Assert.Equal(fresh.Clip, used.Clip);
+            Assert.Equal(fresh.ClipTime, used.ClipTime);
+            Assert.Equal(0, used.ClipTime);
+            Assert.NotEqual(serial, used.ClipSerial);
+        }
+
         // ---- Capture refuses what a snapshot cannot hold ----------------------------------------------------------------
 
         [Fact]
