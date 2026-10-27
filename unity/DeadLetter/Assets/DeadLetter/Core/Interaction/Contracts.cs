@@ -121,11 +121,17 @@ namespace DeadLetter.Core.Interaction
         public readonly int Face;
         /// <summary>Where the thing itself is, for the in-front preference.</summary>
         public readonly double AnchorX;
+        /// <summary>
+        /// How fast he steps into the set to <see cref="StandZ"/> and back out (m/s); 0 or NaN = the motor's
+        /// <see cref="MotorConfig.StepInSpeed"/> (0.45, L1845, L3615). DL-06's levers and DL-08's pawl step at 0.4 (L2916, L3306).
+        /// </summary>
+        public readonly double StepInSpeed;
 
-        public StationPose(double standX, int face, double standZ = 0, double anchorX = double.NaN)
+        public StationPose(double standX, int face, double standZ = 0, double anchorX = double.NaN, double stepInSpeed = double.NaN)
         {
             StandX = standX; Face = face; StandZ = standZ;
             AnchorX = double.IsNaN(anchorX) ? standX : anchorX;
+            StepInSpeed = stepInSpeed;
         }
     }
 
@@ -148,10 +154,16 @@ namespace DeadLetter.Core.Interaction
         public readonly bool TurnIntoSet;
         /// <summary>Approach and act crouched (DL-01 latch).</summary>
         public readonly bool Crouch;
+        /// <summary>
+        /// With <see cref="TurnIntoSet"/>: the step he finishes turning only turns, and the clip starts on the step after even
+        /// with no depth to step to (DL-05's toy, <c>updateAct5</c> L3606: turn → <c>'in'</c> → the clip; the levers and the
+        /// pawl alike, L2900, L3291). Without it, a station on the lane starts its clip on the turn's step (the crank, L1879).
+        /// </summary>
+        public readonly bool StepAfterTurn;
 
-        public ActProfile(string clip, bool turnIntoSet = false, bool crouch = false)
+        public ActProfile(string clip, bool turnIntoSet = false, bool crouch = false, bool stepAfterTurn = false)
         {
-            Clip = clip; TurnIntoSet = turnIntoSet; Crouch = crouch;
+            Clip = clip; TurnIntoSet = turnIntoSet; Crouch = crouch; StepAfterTurn = stepAfterTurn;
         }
     }
 

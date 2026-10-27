@@ -21,6 +21,34 @@ namespace DeadLetter.Core.Motor
         Dead,
     }
 
+    /// <summary>
+    /// D-17's free-movement state (<see cref="D17Motor.Capture"/>, <see cref="D17Motor.SetState"/>): the prototype's
+    /// <c>game.x, y, z, vx, vy, yaw, facing, grounded, crouched</c> and the jump timers, for a hand-over of a moving D-17
+    /// (a scene he walks or runs into, a replay that starts mid-run) and for a rule that sets one field
+    /// (<c>game.vx = 0</c>). Not the act, the mantle, the ride or the holds: those are set by playing them.
+    /// <para><see cref="Vy"/> is the motor's (<see cref="D17Motor.Vy"/>: the prototype's less
+    /// <see cref="MotorConfig.ParityVelocityOffset"/> while airborne in parity mode, 0 on the ground).</para>
+    /// </summary>
+    public struct MotorSnapshot
+    {
+        public double X, Y, Z, Vx, Vy;
+        /// <summary>+1 / −1.</summary>
+        public int Facing;
+        /// <summary>The prototype's yaw convention (<see cref="D17Motor.Yaw"/>): ±π/2 along the lane.</summary>
+        public double Yaw;
+        public bool Grounded, Crouched;
+        public double Coyote, JumpBuffer, LandTimer;
+        /// <summary>The top of the current fall's arc (for the landing's drop); NaN = <see cref="Y"/>. Ignored on the ground (his y).</summary>
+        public double PeakY;
+
+        /// <summary>At rest on the lane at (x, y), facing <paramref name="facing"/>, its yaw along the lane.</summary>
+        public static MotorSnapshot AtRest(double x, double y, int facing = 1)
+        {
+            int f = facing >= 0 ? 1 : -1;
+            return new MotorSnapshot { X = x, Y = y, Facing = f, Yaw = f * System.Math.PI / 2, Grounded = true, PeakY = y };
+        }
+    }
+
     /// <summary>How he dies (<c>DEATH</c>, L7421–L7424): the clip, how long it holds before the cut, and the shake.</summary>
     public enum DeathKind { Crush, Shock, Grabbed, Fall }
 

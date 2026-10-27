@@ -171,11 +171,10 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// M7 (#28): the resolver ranks targets in front of him before those behind for pushables too; the prototype's
-        /// push branch has no facing preference (<c>d &lt; best.d</c>, L4254). The scene works round it (<see cref="WeighIn05"/>).
+        /// M7 (fixed in #28): the resolver ranks pushables by their grip's distance alone, as the prototype's push branch
+        /// does (<c>d &lt; best.d</c>, L4254): facing left at 53.049 the drum (0.15 behind) wins over the body (0.30 ahead).
         /// </summary>
-        [Fact(Skip = "Motor parity M7 (#28): InteractionResolver ranks in-front targets first for pushables; the prototype's push branch "
-            + "takes the nearest grip whatever his facing (nearUse L4251-L4255). Facing left at 53.049 it offers the body (0.30 ahead), not the drum (0.15 behind).")]
+        [Fact]
         public void Resolver_TakesTheNearestGrip_WhicheverWayHeFaces_L4254()
         {
             var drum = new Pushable("dl05.drum", Dl05Scene.DrumParams());

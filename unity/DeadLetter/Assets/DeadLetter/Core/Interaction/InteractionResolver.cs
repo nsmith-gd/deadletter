@@ -14,6 +14,8 @@ namespace DeadLetter.Core.Interaction
         public IInteractable Target;
         public double StandX;
         public double StandZ;
+        /// <summary>A station's own step-in speed (<see cref="StationPose.StepInSpeed"/>); 0 or NaN = the motor's.</summary>
+        public double StepInSpeed;
         /// <summary>Facing during the act (±1), or 0 to keep his facing.</summary>
         public int Face;
         /// <summary>Where the thing is, for the in-front preference.</summary>
@@ -40,8 +42,9 @@ namespace DeadLetter.Core.Interaction
     /// takes the query and returns the stand point and facing, or refuses (reach, floor, state; L1812–L1814).</item>
     /// <item>Rides (carriers) offer a board (<c>boardable()</c>, L2854–L2862; Fixed, as <c>nearUse3</c>, L2869).</item>
     /// <item>Ranking: category priority (Item, Curio, Secret, Voice, Fixed, Letter, Push; L4204–L4257), then targets in
-    /// front of him before targets behind (DL-01 §8 "nearest target in facing direction"), then the nearest stand
-    /// point (the prototype's "nearest grip wins", L4252), then registration order.</item>
+    /// front of him before targets behind (DL-01 §8 "nearest target in facing direction"; not for pushables, whose
+    /// branch takes the nearest grip whichever way he faces, L4251–L4255), then the nearest stand point (the
+    /// prototype's "nearest grip wins", L4252), then registration order.</item>
     /// </list>
     /// </summary>
     public sealed class InteractionResolver
@@ -181,6 +184,7 @@ namespace DeadLetter.Core.Interaction
         {
             if (!s.Offer(q, out var pose)) { c = default; return false; }
             c = Make(verb, s, pose.StandX, pose.StandZ, pose.Face, pose.AnchorX, Math.Abs(q.X - pose.StandX), q);
+            c.StepInSpeed = pose.StepInSpeed;
             return true;
         }
 
@@ -196,7 +200,8 @@ namespace DeadLetter.Core.Interaction
         private static bool Better(in Candidate a, in Candidate b)
         {
             if (a.Category != b.Category) return a.Category < b.Category;
-            if (a.InFront != b.InFront) return a.InFront;
+            // Pushables: the nearest grip wins whichever way he faces (L4251–L4255: d < best.d, in PUSHABLES order; M7).
+            if (a.Category != InteractionCategory.Push && a.InFront != b.InFront) return a.InFront;
             if (Math.Abs(a.Distance - b.Distance) > 1e-9) return a.Distance < b.Distance;
             return a.Order < b.Order;
         }

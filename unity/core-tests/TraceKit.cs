@@ -238,7 +238,9 @@ namespace DeadLetter.Core.Tests
         /// <param name="input">Optional: the input to give Core at step k (a documented compensation); default the record's own.</param>
         /// <param name="handover">
         /// Optional: start from the record of the step before the window instead of a checkpoint's spot, for a scene he
-        /// walks into (<see cref="SceneSim.Handover"/> at <paramref name="checkpoint"/>, at rest at that step's x, y and facing).
+        /// walks into (<see cref="SceneSim.Handover"/> at <paramref name="checkpoint"/>), in that step's state: x, y, z, vx,
+        /// vy, yaw, facing, grounded and crouched (<see cref="D17Motor.SetState"/>), so a D-17 still turning or running in
+        /// is handed over as he is.
         /// </param>
         public static SceneSim Run(Trace t, SceneDef def, string checkpoint, bool fromOpening, int from, int to,
             Action<TraceStep, SceneSim> onStep, Func<int, SceneSim, MotorInput> input = null, bool handover = false)
@@ -246,7 +248,11 @@ namespace DeadLetter.Core.Tests
             var sim = new SceneSim(def);
             sim.Clock = t.Steps[from - 1].Clk;
             var before = t.Steps[from - 1];
-            if (handover) sim.Handover(checkpoint, before.X, before.Y, before.F);
+            if (handover)
+            {
+                sim.Handover(checkpoint, before.X, before.Y, before.F);
+                sim.Motor.SetState(StateOf(before, sim.Config));
+            }
             else sim.Begin(checkpoint, fromOpening);
             for (int k = from; k <= to; k++)
             {
@@ -255,5 +261,12 @@ namespace DeadLetter.Core.Tests
             }
             return sim;
         }
+
+        /// <summary>The motor state a record shows (Unity z = −three z, §0.2; the motor's vy is the prototype's less the parity offset).</summary>
+        public static MotorSnapshot StateOf(TraceStep p, MotorConfig c) => new MotorSnapshot
+        {
+            X = p.X, Y = p.Y, Z = -p.Z, Vx = p.Vx, Vy = p.G ? 0 : p.Vy - c.ParityVelocityOffset,
+            Facing = p.F, Yaw = p.Yaw, Grounded = p.G, Crouched = p.C, PeakY = p.Y,
+        };
     }
 }

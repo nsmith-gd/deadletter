@@ -34,7 +34,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
         {
             // PAWL_X = OFF3 + 52.45; reach 0.36 (L3269); on the deck (y ≤ DECK + 0.05, L3267); steps in to PAWL_Z + 0.26
             // = −0.04 (three) = +0.04 (Unity, §0.2).
-            Station = new Station(standX: 85.45, reach: 0.36, face: +1, standZ: 0.04, floorY: 1.6),
+            Station = new Station(standX: 85.45, reach: 0.36, face: +1, standZ: 0.04, floorY: 1.6, stepInSpeed: Station.LeverStepInSpeed),   // 0.4, L3306
             Source = "dl08.platform",
             BiteMin = 0.985,                                   // a.stuck = plat.h < 0.985, L3305
             EngagedAfter = "latched",                          // CHECKPOINTS.latched, L7989; resetWorld L8043

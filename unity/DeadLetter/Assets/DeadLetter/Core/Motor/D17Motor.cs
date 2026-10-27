@@ -31,8 +31,10 @@ namespace DeadLetter.Core.Motor
             public ActPhase Phase;
             public IInteractable Target;
             public double StandX, ApproachZ, InZ;
+            /// <summary>How fast he steps along z for this act (a station's own, else the config's).</summary>
+            public double StepSpeed;
             public int Face;
-            public bool Turn, Crouch;
+            public bool Turn, Crouch, StepAfterTurn;
             public string ClipName;
             /// <summary>Seconds since the act started, or since its current clip started (EnterClip resets it).</summary>
             public double T, PrevFrame;
@@ -59,7 +61,7 @@ namespace DeadLetter.Core.Motor
             public void Reset()
             {
                 Verb = Verb.None; Shove = false; Phase = ActPhase.None; Target = null;
-                StandX = ApproachZ = InZ = 0; Face = 0; Turn = Crouch = false; ClipName = null;
+                StandX = ApproachZ = InZ = StepSpeed = 0; Face = 0; Turn = Crouch = StepAfterTurn = false; ClipName = null;
                 T = PrevFrame = Total = 0; TargetX = BaseY = 0; Done1 = Seated = false; Part = 0;
                 FromX = FromY = FromZ = ToX = ToY = ToZ = 0; TrackRide = TookOff = Landed = false; Token = 0;
                 Cancel = false; HoldFor = CancelAfter = EndAfter = EndAt = double.NaN;
@@ -196,14 +198,38 @@ namespace DeadLetter.Core.Motor
             }
         }
 
-        /// <summary>Puts him at rest, standing on the lane at (x, y). Clears holds, acts and timers.</summary>
-        public void Place(double x, double y, int facing = 1)
+        /// <summary>
+        /// Puts him at rest, standing on the lane at (x, y), facing <paramref name="facing"/>; his yaw is
+        /// <paramref name="yaw"/> (NaN = along the lane, ±π/2: he may still be turning, as after an act that faced him
+        /// elsewhere). Clears holds, acts and timers.
+        /// </summary>
+        public void Place(double x, double y, int facing = 1, double yaw = double.NaN)
         {
-            X = x; Y = y; Z = 0; Vx = Vy = 0;
-            Facing = facing >= 0 ? 1 : -1;
-            Yaw = Facing * Math.PI / 2;
-            Grounded = true; Crouched = false;
-            Coyote = JumpBuffer = LandTimer = 0; PeakY = y;
+            var s = MotorSnapshot.AtRest(x, y, facing);
+            if (!double.IsNaN(yaw)) s.Yaw = yaw;
+            SetState(s);
+        }
+
+        /// <summary>His free-movement state now (<see cref="MotorSnapshot"/>): position, velocity, facing, yaw, grounded, crouched, the jump timers.</summary>
+        public MotorSnapshot Capture() => new MotorSnapshot
+        {
+            X = X, Y = Y, Z = Z, Vx = Vx, Vy = Vy, Facing = Facing, Yaw = Yaw, Grounded = Grounded, Crouched = Crouched,
+            Coyote = Coyote, JumpBuffer = JumpBuffer, LandTimer = LandTimer, PeakY = PeakY,
+        };
+
+        /// <summary>
+        /// Puts him in <paramref name="s"/> with nothing in hand: the hand-over of a D-17 in motion (running in from the
+        /// previous scene, a replay's first step) where <see cref="Place"/> hands over one at rest. Clears holds, acts, the
+        /// mantle and the ride, as <see cref="Place"/> does; the clip is Idle until his next step picks his own.
+        /// </summary>
+        public void SetState(in MotorSnapshot s)
+        {
+            X = s.X; Y = s.Y; Z = s.Z; Vx = s.Vx; Vy = s.Grounded ? 0 : s.Vy;
+            Facing = s.Facing >= 0 ? 1 : -1;
+            Yaw = s.Yaw;
+            Grounded = s.Grounded; Crouched = s.Crouched;
+            Coyote = s.Coyote; JumpBuffer = s.JumpBuffer; LandTimer = s.LandTimer;
+            PeakY = s.Grounded || double.IsNaN(s.PeakY) ? s.Y : s.PeakY;
             Hold = HoldKind.None; Carried = null; Pushed = null; CarryBlend = 0;
             _mantling = false; _act.Reset(); _hasYawOverride = false; _shove = 0; _atLip = false;
             Ride = null; _rideToken = 0;
@@ -211,6 +237,12 @@ namespace DeadLetter.Core.Motor
             _events.Clear();
             _stepEvents = 0;
         }
+
+        /// <summary>
+        /// He stops dead where he is (<c>game.vx = 0</c>): a scene rule's quirk (<c>playQuirk</c>, L3843), a refused Use
+        /// (L1821), the realisation. Nothing else changes: his yaw, clip, crouch and what he holds stay.
+        /// </summary>
+        public void Stop() => Vx = 0;
 
         /// <summary>What Use would do now, without doing it (for glints and hints, §4.19).</summary>
         public bool PreviewUse(out Candidate candidate)
@@ -239,6 +271,10 @@ namespace DeadLetter.Core.Motor
             else if (Ride != null) StepRide(input);
             else StepFree(input, move, dt);
 
+            // Back to the lane after an act that stepped off it (updateCh1, L4876, L5796; L3569–L3570): after the player's
+            // update (#7), so on the step he lets go of what held him there, whenever no act and no push holds him (M8).
+            if (Z != 0 && !_act.Active && Hold != HoldKind.Push && Ride == null) Z = Smooth.MoveTowards(Z, 0, _c.StepInSpeed * dt);
+
             // updateCharacter (L7579–L7583): yaw turns toward ±π/2 or the act's override.
             double targetYaw = _hasYawOverride ? _yawOverride : (Facing > 0 ? Math.PI / 2 : -Math.PI / 2);
             Yaw = Smooth.MoveTowards(Yaw, targetYaw, _c.YawRate * dt);
@@ -251,9 +287,6 @@ namespace DeadLetter.Core.Motor
         // ---- Free movement: updatePlayer L1950–L2067 ----------------------------------------------------------------------
         private void StepFree(in MotorInput input, double move, double dt)
         {
-            // Back to the lane after an act that stepped off it (L4876, L5796).
-            if (Hold != HoldKind.Push && Z != 0) Z = Smooth.MoveTowards(Z, 0, _c.StepInSpeed * dt);
-
             if (input.UsePressed && _r != null && _r.Resolve(Query(), out var use))   // L1956–L1957
             {
                 BeginUse(use);
@@ -550,8 +583,10 @@ namespace DeadLetter.Core.Motor
         // ---- Acts: beginUse / beginCh1 / updateActCh1 ------------------------------------------------------------------
         private void BeginUse(in Candidate c)
         {
-            Vx = 0;                                                                     // L4308
-            if (c.Verb == Verb.Release) { ReleasePush(_atLip); return; }               // L4309–L4313
+            // Use lets go before the prototype's game.vx = 0 (beginUse 'release', L1820, returns before L1821; beginCh1's
+            // own release branch, L4309–L4313, is never reached): he keeps his push speed and it decays as he stands (M5).
+            if (c.Verb == Verb.Release) { ReleasePush(_atLip); return; }
+            Vx = 0;                                                                     // L1821, L4308
 
             _act.Reset();
             _act.Verb = c.Verb;
@@ -560,6 +595,7 @@ namespace DeadLetter.Core.Motor
             _act.Face = c.Face;
             _act.ApproachZ = Z;
             _act.InZ = Z;
+            _act.StepSpeed = c.StepInSpeed > 0 ? c.StepInSpeed : _c.StepInSpeed;   // M10: the levers' 0.4 (L2916)
             _act.Phase = ActPhase.Approach;
             Emit(MotorEventKind.ActStart, c.Verb.ToString(), 0);
 
@@ -593,6 +629,7 @@ namespace DeadLetter.Core.Motor
                 {
                     var prof = ((IUsable)c.Target).ProfileFor(Query());                // turn and crouch from the first answer
                     _act.Turn = prof.TurnIntoSet; _act.Crouch = prof.Crouch; _act.InZ = c.StandZ; _act.ClipName = prof.Clip;
+                    _act.StepAfterTurn = prof.StepAfterTurn;
                     break;
                 }
                 case Verb.Hide:
@@ -648,22 +685,23 @@ namespace DeadLetter.Core.Motor
             {
                 case ActPhase.Approach: StepApproach(dt); return;
                 case ActPhase.Turn:
-                    if (Math.Abs(Yaw - Math.PI) < _c.TurnTolerance) BeginStepIn();       // L3606; on the lane: the clip now (L1879)
-                    else SetClip(ClipNames.Walk, 0.2, 0.6);
+                    if (!(Math.Abs(Yaw - Math.PI) < _c.TurnTolerance)) SetClip(ClipNames.Walk, 0.2, 0.6);
+                    else if (a.StepAfterTurn) a.Phase = ActPhase.StepIn;                    // L3606: 'in' first, the clip next step
+                    else BeginStepIn();                                                     // on the lane: the clip now (L1879)
                     return;
                 case ActPhase.StepIn:
                 {
                     if (TryEnterStationClip()) return;                                         // L3609–L3613
                     double dz = a.InZ - Z;
-                    Z += Smooth.Sign(dz) * Math.Min(Math.Abs(dz), _c.StepInSpeed * dt);
-                    SetClip(ClipNames.Walk, 0.2, _c.StepInSpeed / _c.ClipSpeedWalk);
+                    Z += Smooth.Sign(dz) * Math.Min(Math.Abs(dz), a.StepSpeed * dt);       // L3615; the levers 0.4, L2916
+                    SetClip(ClipNames.Walk, 0.2, _c.StepInSpeed / _c.ClipSpeedWalk);         // the clip at 0.45 whatever the step (L2917)
                     return;
                 }
                 case ActPhase.StepOut:
                 {
                     double dz = -Z;
                     if (Math.Abs(dz) < _c.ArriveZ) { Z = 0; EndAct(true); return; }
-                    Z += Smooth.Sign(dz) * Math.Min(Math.Abs(dz), _c.StepInSpeed * dt);
+                    Z += Smooth.Sign(dz) * Math.Min(Math.Abs(dz), a.StepSpeed * dt);
                     SetClip(ClipNames.Walk, 0.2, -_c.StepInSpeed / _c.ClipSpeedWalk);
                     return;
                 }
@@ -726,7 +764,7 @@ namespace DeadLetter.Core.Motor
             if (a.Face != 0) Facing = a.Face;
             if (a.Crouch) Crouched = true;
             double dx = a.StandX - X, dz = a.ApproachZ - Z;
-            if (dz != 0) Z += Smooth.Sign(dz) * Math.Min(Math.Abs(dz), _c.StepInSpeed * dt);
+            if (dz != 0) Z += Smooth.Sign(dz) * Math.Min(Math.Abs(dz), a.StepSpeed * dt);   // approachCh1's zSpeed, L4383
             if (Math.Abs(dx) < _c.ArriveX && Math.Abs(dz) < _c.ArriveZ)
             {
                 X = a.StandX;

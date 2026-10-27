@@ -20,8 +20,8 @@ namespace DeadLetter.Core.Tests
     /// DL-04 parity (U-20): the prototype's own run (the mechanical bot, seed 1, Traces/prologue_mech_seed1.jsonl.gz, with
     /// DL-04's fields: the fallen courier's x and state, the cradle's arms, the bay door and what the bay wants) replayed
     /// through Core's <see cref="SceneSim"/> with <see cref="Dl04Scene.Def"/>, input for input, compared at every 60 Hz step.
-    /// <para><b>One window</b>, from where he last stood at rest before DL-04 (the motor cannot be handed a moving D-17,
-    /// <see cref="SceneSim.Handover"/>): after the gate's slam startled him in DL-03's weighing room (x 29.97, 0.63 short of
+    /// <para><b>One window</b>, from where he last stood at rest before DL-04 (handed over in the recorded state,
+    /// <see cref="SceneSim.Handover"/> and <see cref="D17Motor.SetState"/>): after the gate's slam startled him in DL-03's weighing room (x 29.97, 0.63 short of
     /// the gate), through the gate into DL-04, the reveal, the realisation (the <c>kin</c> moment: 22.5 s held), the slow
     /// walk to 36.6, the run to the fallen courier, the grab (stepping in 0.35 behind the lane), the drag over the bay
     /// plate to the end of its travel, the cradle closing on it and seating it, the door opening, the walk back out to
@@ -30,11 +30,9 @@ namespace DeadLetter.Core.Tests
     /// <para><b>Tolerance 1e-6</b> on every continuous value (the trace rounds to 1e-6; the hand-over pose too).
     /// Discrete signals (acts, holds, grounded, the courier's state, what the bay wants, checkpoints, the exit) fall on the
     /// same step.</para>
-    /// <para><b>Known differences</b>, each asserted exactly where it shows: <b>M8 (#28)</b>: after he lets go of the courier
-    /// he steps back out to the lane (0.45 m/s); the prototype does it in <c>updateCh1</c> (#7, L4876), so on the very step
-    /// he lets go; the motor at the head of its next free step (D17Motor.StepFree, "Back to the lane"), so Core's z is the
-    /// prototype's of the step before, from the release (#9534) until it is back at 0 (#9581, one step after the
-    /// prototype). And the bay door's deliberate deviation (<see cref="PlateDoor"/>): fully open with the bay wanting it,
+    /// <para>M8 is fixed (#28): after he lets go of the courier he steps back out to the lane (0.45 m/s) after the player's
+    /// update (<c>updateCh1</c>, #7, L4876), so on the very step he lets go, as the prototype does.</para>
+    /// <para><b>Known difference</b>, asserted exactly where it shows: the bay door's deliberate deviation (<see cref="PlateDoor"/>): fully open with the bay wanting it,
     /// the prototype's <c>if (want &gt; door) … else close</c> (L4814) saws it 1 → 0.967 → 0.982 → 0.997 → 1; Core holds
     /// it at 1. The door's law, driven by Core's own want, reproduces the prototype's every step; Core is above it by the
     /// saw's phase while the door holds or closes after it, never by more than dt / 0.5, and never on the wrong side of
@@ -168,35 +166,24 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// z (he steps in 0.35 behind the lane to take the tow loop, and back out after) matches at every step except
-        /// M8's: from the step he lets go (#9534) Core's z is exactly the prototype's of the step before, until Core too is
-        /// back on the lane (#9581, a step after the prototype).
+        /// z (he steps in 0.35 behind the lane to take the tow loop, and back out after) matches at every step: from the step
+        /// he lets go (#9534) he steps back out on the prototype's steps (M8, fixed in #28), back on the lane at #9580.
         /// </summary>
         [Fact]
-        public void Z_MatchesEveryStep_ExceptM8_WhereItIsTheStepBefores()
+        public void Z_MatchesEveryStep_TheStepBackOnTheReleasesStep_M8()
         {
             var rows = Run().Rows;
             var bad = new List<string>();
-            var lagged = new List<int>();
-            for (int k = 0; k < rows.Count; k++)
-            {
-                var w = rows[k];
-                double proto = -w.P.Z;                                                         // Unity z = −three z (§0.2)
-                if (Math.Abs(w.Z - proto) <= Tol) continue;
-                lagged.Add(w.P.I);
-                Check(bad, w.P.I, "z (M8: the step before's)", -rows[k - 1].P.Z, w.Z);
-            }
+            foreach (var w in rows) Check(bad, w.P.I, "z", -w.P.Z, w.Z);                             // Unity z = −three z (§0.2)
             Assert.True(bad.Count == 0, Report(bad));
-            Assert.Equal(47, lagged.Count);
-            Assert.Equal(9534, lagged[0]);
-            Assert.Equal(9580, lagged[lagged.Count - 1]);
-            for (int k = 1; k < lagged.Count; k++) Assert.Equal(lagged[k - 1] + 1, lagged[k]);
             var release = rows.Find(w => w.P.I == 9534);
             Assert.Null(release.P.Hold);
-            Assert.Equal("push:courier", rows.Find(w => w.P.I == 9533).P.Hold);
-            Assert.Equal(0.35, release.Z, 12);                                                 // still where he held it ...
-            Assert.Equal(0.35 - 0.45 * Dt, -release.P.Z, 6);                                   // ... the prototype already a step out
-            Assert.Equal(0, rows.Find(w => w.P.I == 9581).Z);
+            Assert.Null(release.Hold);
+            Assert.Equal("push:courier", rows.Find(w => w.P.I == 9533).Hold);
+            Assert.Equal(0.35, rows.Find(w => w.P.I == 9533).Z, 12);                           // where he held it ...
+            Assert.Equal(0.35 - 0.45 * Dt, release.Z, 12);                                     // ... a step out on the release's step
+            Assert.True(rows.Find(w => w.P.I == 9579).Z > 0);
+            Assert.Equal(0, rows.Find(w => w.P.I == 9580).Z);
             Assert.Equal(0.35, rows.Find(w => w.P.I == 8598).Z, 12);                           // stepped in for the grab, on its step
         }
 
