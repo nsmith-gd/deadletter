@@ -1,6 +1,6 @@
 // Golden trace recorder (U-20): runs the simulated player (bot.js) through the prototype and writes one JSON line per
 // 60 Hz game step: the inputs the game consumed that step and D-17's and the scenes' state after it. The Core
-// parity tests (unity/core-tests/Dl01TraceTests.cs … Dl05TraceTests.cs) replay the inputs
+// parity tests (unity/core-tests/Dl01TraceTests.cs … Dl06TraceTests.cs) replay the inputs
 // through Core and compare. Format: tools/sim/README.md.
 //
 //   node record_trace.mjs <seed> <out.jsonl.gz> [mechanical]
@@ -111,6 +111,25 @@ const RECORDER = `window.__record = (rngSeed) => {
       t5: r6(tw > 0 ? 0.14 * Math.sin(Math.PI * (1 - tw)) : 0), h5: r6(rh.h), f5: r6(rh.flag), s5: b(rh.served),
     };
   }
+  // DL-06 (U-20): the scanner (phase, its clock), the belt and the route, the two levers' angles as the levers set them
+  // (game.leverHold's angle in an act, else the rest angle; L2833-L2834 before the view's easing), what he rides, and the
+  // carriers as one JSON string (so unchanged steps stay deltas): per carrier [id, state, route, x, y, s, wait, t, ridden,
+  // tip (pivot.rotation.z), payload [[size, z, yaw], ...]] (index.html L2660-L2751). Only while sceneName() is DL-06 and on
+  // the step he leaves it; names end in 6 so no other scene's fields collide.
+  let in06 = false;
+  function dl06() {
+    const now = /^DL-06/.test(D.scene()), emit = now || in06;
+    in06 = now;
+    if (!emit || !D.refs.carriers) return {};
+    const sc = G.scan, lh = G.leverHold, run = G.belt.running;
+    const cr = D.refs.carriers.map((c) => [c.id, c.state, c.route, r6(c.root.position.x), r6(c.root.position.y), r6(c.s), r6(c.wait), r6(c.t), b(c.ridden),
+      r6(c.pivot.rotation.z), c.payload.map((m) => [r6(m.geometry.parameters.height), r6(m.position.z), r6(m.rotation.y)])]);
+    return {
+      sp6: sc.phase, st6: r6(sc.t), bl6: b(run), rt6: G.route,
+      sl6: r6(lh && lh.which === 'stop' ? lh.angle : run ? -18 : 6), pl6: r6(lh && lh.which === 'points' ? lh.angle : G.route === 'exit' ? 6 : -18),
+      rd6: G.riding ? G.riding.id : null, cr6: JSON.stringify(cr),
+    };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -125,6 +144,7 @@ const RECORDER = `window.__record = (rngSeed) => {
       gy: r6(G.gate.y), gv: r6(G.gate.v),
       ...dl04(),
       ...dl05(),
+      ...dl06(),
     };
   }
   function flush() {

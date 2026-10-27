@@ -125,4 +125,11 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     `s5` (served). Every earlier field of every step is unchanged. Note: `setTimeout`s run at the start of the
     recorder's per-step call, before it writes the previous step's line, so a timeout's effects (DL-05's pat) show on
     the step before the one they first act in.
+  - DL-06 (`unity/core-tests/Dl06TraceTests.cs`), only while `sceneName()` is DL-06 and on the step he leaves it (so
+    steps 12073–14016 here): `sp6`/`st6` (the scanner's phase and `scan.t`), `bl6` (`belt.running`), `rt6`
+    (`game.route`), `sl6`/`pl6` (the stop and points levers' angles as the levers set them: `leverHold`'s angle in an
+    act, else the rest angle, before the view's easing, L2833–L2834), `rd6` (the id of the carrier he rides, null),
+    `cr6` (the carriers as one JSON string: `[id, state, route, x, y, s, wait, t, ridden, tip, [[size, z, yaw], ...]]`
+    each, from `root.position`, `pivot.rotation.z` and the payload's meshes). Every line is unchanged apart from these
+    keys (checked line by line against the previous recording).
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).

@@ -205,6 +205,13 @@ namespace DeadLetter.Core.Scenes
         /// <summary>Starts a scene act (it replaces any running one). Its first <see cref="SceneAct.Step"/> is the next step's #4.</summary>
         public void StartAct(SceneAct act) => _act = act ?? throw new ArgumentNullException(nameof(act));
 
+        /// <summary>
+        /// Ends the running scene act now, from a rule after the mechanisms (the prototype clearing <c>game.act</c> in #6:
+        /// DL-06's scanner ends the scan and the label check, L2799, L2812). The next step's #4 is the motor's again; an act
+        /// that owned his pose leaves it to the rule to hand back (<see cref="D17Motor.Place"/>).
+        /// </summary>
+        public void EndAct() => _act = null;
+
         /// <summary>Switches <c>game.region</c> (and the lane, while it has a table for it).</summary>
         public void SetRegion(int region)
         {

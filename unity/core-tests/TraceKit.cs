@@ -50,6 +50,12 @@ namespace DeadLetter.Core.Tests
         public double? D5x, B5x, W5, N5, P5, T5, H5, F5;
         public string D5s, B5s, W5r;
         public bool? S5;
+        // DL-06 (only while in DL-06 and on the step he leaves it; null before): the scanner's phase and clock, the belt
+        // running, the route, the stop and points levers' angles, the carrier he rides (its id) and the carriers (raw JSON:
+        // [id, state, route, x, y, s, wait, t, ridden, tip, [[size, z, yaw], ...]] each, tools/sim/record_trace.mjs).
+        public string Sp6, Rt6, Cr6;
+        public double? St6, Sl6, Pl6, Rd6;
+        public bool? Bl6;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -195,6 +201,14 @@ namespace DeadLetter.Core.Tests
                 case "h5": s.H5 = N(v); break;
                 case "f5": s.F5 = N(v); break;
                 case "s5": s.S5 = B(v); break;
+                case "sp6": s.Sp6 = S(v); break;
+                case "st6": s.St6 = N(v); break;
+                case "bl6": s.Bl6 = B(v); break;
+                case "rt6": s.Rt6 = S(v); break;
+                case "sl6": s.Sl6 = N(v); break;
+                case "pl6": s.Pl6 = N(v); break;
+                case "rd6": s.Rd6 = N(v); break;
+                case "cr6": s.Cr6 = S(v); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }

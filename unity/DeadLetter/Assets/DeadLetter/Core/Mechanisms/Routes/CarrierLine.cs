@@ -244,8 +244,13 @@ namespace DeadLetter.Core.Mechanisms.Routes
         public Carrier At(int i) => _all[_live[i]];
         /// <summary>The carrier he rides, or null (<c>game.riding</c>).</summary>
         public Carrier Ride { get { for (int i = 0; i < _count; i++) if (At(i).Ridden) return At(i); return null; } }
-        /// <summary>The line's clock, seconds since the graph was built (the prototype's <c>game.clock</c> for spawns).</summary>
-        public double Clock => _clock;
+        /// <summary>
+        /// The line's clock (the prototype's <c>game.clock</c>, which <c>spawnCarrier</c> reads twice: <c>lastSpawn</c> and the
+        /// payload's seed <c>floor(game.clock · 13)</c>, L2666, L2678). It advances by the step's dt and starts at 0 when the
+        /// graph is built, so a scene that does not start at game time 0 sets it to its game clock when it builds the world
+        /// (a SceneSim's <c>Clock</c>); otherwise its carriers would carry other payloads than the prototype's.
+        /// </summary>
+        public double Clock { get => _clock; set => _clock = value; }
         public double SDock => _sDock;
         public double SJunction => _sJunction;
         public double SLanding => _sLanding;
@@ -364,27 +369,27 @@ namespace DeadLetter.Core.Mechanisms.Routes
                     if (!c.Ridden)
                     {
                         c.T += dt;
-                        if (c.T > _p.UnloadWait + 1e-9 && run) { c.State = c.Load1 != 0 ? CarrierState.TipLoad : CarrierState.Move; c.T = 0; }   // L2719
+                        if (c.T > _p.UnloadWait && run) { c.State = c.Load1 != 0 ? CarrierState.TipLoad : CarrierState.Move; c.T = 0; }   // L2719
                     }
                     break;
                 case CarrierState.TipLoad:
                     c.T += dt;
                     c.TipRad = Deg(_p.TipLoadDeg) * Smooth.Step(c.T / 0.6) * (1 - Smooth.Step((c.T - 1.2) / 0.5));   // L2724
-                    if (c.T > _p.TipLoadOut + 1e-9 && c.Load1 != 0) TipLoads(ctx, c, true);                         // L2725
-                    if (c.T > _p.TipLoadEnd + 1e-9) { c.State = CarrierState.Move; c.TipRad = 0; }                  // L2726
+                    if (c.T > _p.TipLoadOut && c.Load1 != 0) TipLoads(ctx, c, true);                         // L2725
+                    if (c.T > _p.TipLoadEnd) { c.State = CarrierState.Move; c.TipRad = 0; }                  // L2726
                     break;
                 case CarrierState.Tip:
                     c.T += dt;
                     c.TipRad = -Deg(_p.TipDeg) * Smooth.Step(c.T / 0.7) * (1 - Smooth.Step((c.T - 1.6) / 0.5));       // L2729
-                    if (c.T > _p.TipOut + 1e-9 && c.Parcels > 0) { Emit(ctx, (int)CarrierLineEvent.PayloadDumped, c.Seq, c.Parcels); c.Parcels = 0; }   // L2730–L2732
-                    if (c.T > _p.TipOut + 1e-9 && c.Ridden) { c.Ridden = false; Emit(ctx, (int)CarrierLineEvent.RiderTipped, c.Seq); }   // L2733
-                    if (c.T > _p.TipOut + 1e-9 && c.Load1 != 0) TipLoads(ctx, c, false);                            // L2734
-                    if (c.T > _p.TipBang + 1e-9 && !c.Banged)                                                      // L2735
+                    if (c.T > _p.TipOut && c.Parcels > 0) { Emit(ctx, (int)CarrierLineEvent.PayloadDumped, c.Seq, c.Parcels); c.Parcels = 0; }   // L2730–L2732
+                    if (c.T > _p.TipOut && c.Ridden) { c.Ridden = false; Emit(ctx, (int)CarrierLineEvent.RiderTipped, c.Seq); }   // L2733
+                    if (c.T > _p.TipOut && c.Load1 != 0) TipLoads(ctx, c, false);                            // L2734
+                    if (c.T > _p.TipBang && !c.Banged)                                                      // L2735
                     {
                         c.Banged = true;
                         if (ctx.Player.X > _p.StartleFromX && ctx.Player.Y < _p.StartleBelowY) Emit(ctx, (int)CarrierLineEvent.Startle, c.Seq);
                     }
-                    if (c.T > _p.TipEnd + 1e-9) { c.State = CarrierState.Back; c.T = 0; }                          // L2736
+                    if (c.T > _p.TipEnd) { c.State = CarrierState.Back; c.T = 0; }                          // L2736
                     break;
                 case CarrierState.Back:
                     c.S = Math.Max(_sReturn, c.S - _p.BackSpeed * dt);                                            // L2740
