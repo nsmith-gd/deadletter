@@ -79,14 +79,19 @@ the script exits non-zero if there are any. Run it after moving anything he can 
 same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
 - Usage: `node record_trace.mjs <seed> <out.jsonl.gz> [mechanical]`, from a folder with `playwright-core` and `three`
   in `node_modules/`, the game served on :8765 (or `GAME`). `CHROME` = the Chromium binary, `BOT` = bot.js (default:
-  next to the script), `RNG_SEED` = the page's `Math.random` seed (default 1), `PROGRESS=1` prints progress.
+  next to the script), `RNG_SEED` = the page's `Math.random` seed (default 1), `PROGRESS=1` prints progress,
+  `BOT_OPTS` = JSON merged into the bot's options (recorded in the header as `botOpts`), `UNTIL` = game-clock seconds
+  after which the recording stops (the end line says `"stopped": true`; the header has `until`).
 - **Determinism.** Before the page's scripts, `Math.random` becomes the prototype's own LCG (`s = (s·16807 + 11) mod
   2147483647`, as Core's `SimRng.Lcg`). The recorder's first step reseeds it, puts `setTimeout` and
   `AudioContext.currentTime` on game time (1/60 s a step), sets `game.clock = 0` and presses Begin, so the real-time
   title screen never reaches the trace. Two recordings of the same seed are byte-identical. (DL-01's own state draws
   no random numbers; later scenes do: crates, carrier payloads, the White.)
 - **`unity/core-tests/Traces/prologue_mech_seed1.jsonl.gz`:** the whole prologue, mechanical, seed 1: 33,207 steps
-  (play from step 1768, `room` at 4082, the end card at 553 s), 390 KB.
+  (play from step 1768, `room` at 4082, the end card at 553 s), 391 KB.
+- **`unity/core-tests/Traces/dl02_press_death_seed1.jsonl.gz`:** the same run with `BOT_OPTS='{"pressMistake":true}'`
+  and `UNTIL=100`: identical to the prologue's up to DL-02's press, where the bot walks in on the slam (bot.js
+  `passPress`), is crushed (#4106), respawns at `room` (#4185) and goes on into DL-03; 71 KB (`Dl02TraceTests`).
 - **Format** (`deadletter-trace/1`): gzip, one JSON object per line. Line 1 is a header (`format`, `seed`, `mode`,
   `rngSeed`, `rng`, `step`, `round`, `delta: true`); the last line is `{"end": true, steps, error, marks, events}`.
   Every other line is step `i` (0-based, from Begin) and holds **only the fields that changed** since the line before;
@@ -100,4 +105,8 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     (checkpoint), `fr` (`game.frame`), `clip` (the clip playing), `sc` (`sceneName()`).
   - DL-01: `rel` (released), `sh` (shutter angle), `lv` (latch lever angle), `wy` (counterweight y), `door`
     (`doorOpen`), `wh` (wheel angle), `cx`/`cs`/`cd`/`cl` (the cart's x, state, drop, lip), `nr` (`nextRelay`).
+  - DL-02, only while `r` is 2 and x < `SH.x1` + 1 (so its exit step too; no other step's line changes): `pf` (the
+    press's face, from its model), `bx`/`bb`/`bs` (the box's x, base and state), `tl` (`letterState.tube`), `dn`
+    (`game.deaths`), `ra` (`game.respawnAt`, 0 = none). Adding them left every line before the passage's stage 2
+    (steps 0–3998) byte-identical and every earlier field of every step unchanged.
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).

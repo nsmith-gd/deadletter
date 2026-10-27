@@ -34,6 +34,8 @@ namespace DeadLetter.Core.Scenes
         /// <summary>Depth, Unity sign (+ into the set).</summary>
         public double Z { get; protected set; }
         public double Yaw { get; protected set; }
+        /// <summary>Whether he is on a support while the act owns his pose (default true; a death mid-air keeps <c>game.grounded</c> false).</summary>
+        public virtual bool PoseGrounded => true;
 
         /// <summary>He stays crouched while it runs (the motor gets <see cref="MotorInput.CrouchHeld"/>).</summary>
         public bool Crouch { get; protected set; }

@@ -32,6 +32,12 @@ namespace DeadLetter.Core.Tests
         public string Cs;
         public bool Cl;
         public double Nr;
+        // DL-02 (only while in DL-02, else carried forward): the press's face, the box (x, base, state), the tube's letter,
+        // deaths so far and a pending respawn (game.respawnAt, 0 = none).
+        public double? Pf, Bx, Bb;
+        public string Bs, Tl;
+        public int Dn;
+        public double Ra;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -145,6 +151,13 @@ namespace DeadLetter.Core.Tests
                 case "cd": s.Cd = N(v); break;
                 case "cl": s.Cl = v.ValueKind == JsonValueKind.Number && v.GetInt32() != 0; break;
                 case "nr": s.Nr = v.GetDouble(); break;
+                case "pf": s.Pf = N(v); break;
+                case "bx": s.Bx = N(v); break;
+                case "bb": s.Bb = N(v); break;
+                case "bs": s.Bs = S(v); break;
+                case "tl": s.Tl = S(v); break;
+                case "dn": s.Dn = v.GetInt32(); break;
+                case "ra": s.Ra = v.GetDouble(); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }
