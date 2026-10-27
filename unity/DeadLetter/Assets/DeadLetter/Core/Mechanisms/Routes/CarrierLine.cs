@@ -248,7 +248,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         /// The line's clock (the prototype's <c>game.clock</c>, which <c>spawnCarrier</c> reads twice: <c>lastSpawn</c> and the
         /// payload's seed <c>floor(game.clock · 13)</c>, L2666, L2678). It advances by the step's dt and starts at 0 when the
         /// graph is built, so a scene that does not start at game time 0 sets it to its game clock when it builds the world
-        /// (a SceneSim's <c>Clock</c>); otherwise its carriers would carry other payloads than the prototype's.
+        /// (the <c>ChapterSim</c>'s <c>Clock</c>); otherwise its carriers would carry other payloads than the prototype's.
         /// </summary>
         public double Clock { get => _clock; set => _clock = value; }
         public double SDock => _sDock;

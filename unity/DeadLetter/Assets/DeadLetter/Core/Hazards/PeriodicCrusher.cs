@@ -28,7 +28,7 @@ namespace DeadLetter.Core.Hazards
         /// </summary>
         Slam,
         /// <summary>He is under the ram while its face is below <see cref="PeriodicCrusherParams.Lethal"/> and his feet are below
-        /// <see cref="PeriodicCrusherParams.BelowY"/> (L7351). Emitted on every such step; the scene's <see cref="DeathRule"/> kills him once.</summary>
+        /// <see cref="PeriodicCrusherParams.BelowY"/> (L7351). Emitted on every such step; the scene's rules kill him (<see cref="Scenes.ChapterSim.Die"/>), once.</summary>
         Crushed,
     }
 
@@ -70,7 +70,7 @@ namespace DeadLetter.Core.Hazards
     /// clock's phase (<c>pressFace(game.clock % period)</c>, L7310–L7316, L7345), so it keeps its rhythm through deaths and
     /// respawns exactly as the prototype's does. The scene binds the game clock (<see cref="BindClock"/>); unbound (tests),
     /// it runs on its own clock from 0. Each step it reports the slam and whether D-17 is under it while it kills
-    /// (<see cref="CrusherEvent.Crushed"/>); killing him is the scene's (<see cref="DeathRule"/>).
+    /// (<see cref="CrusherEvent.Crushed"/>); killing him is the scene rules' (<see cref="Scenes.ChapterSim.Die"/>).
     /// Signals: <see cref="Position"/> = the face's height, metres; <see cref="Engaged"/> = lethal now.
     /// Presentation: <see cref="Lamp"/>, <see cref="WheelRad"/>.
     /// </summary>

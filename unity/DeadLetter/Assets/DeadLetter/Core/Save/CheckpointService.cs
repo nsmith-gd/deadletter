@@ -205,8 +205,8 @@ namespace DeadLetter.Core.Save
         }
 
         /// <summary>
-        /// Takes a game's flags, seen moments, play time and options from <paramref name="m"/> (the slot, or the previous
-        /// scene's service at a hand-over: <see cref="ToModel"/>) without moving the checkpoint or rebuilding the world; the
+        /// Takes a game's flags, seen moments, play time and options from <paramref name="m"/> (the slot's, or another
+        /// service's <see cref="ToModel"/>) without moving the checkpoint or rebuilding the world; the
         /// world follows with <see cref="Restart"/>. They are taken as already saved: <paramref name="m"/> is what the slot holds.
         /// </summary>
         public void Adopt(SaveModel m)
