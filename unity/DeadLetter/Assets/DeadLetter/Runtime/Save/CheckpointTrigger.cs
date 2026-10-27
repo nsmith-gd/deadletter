@@ -1,3 +1,4 @@
+using System;
 using DeadLetter.Core.Save;
 using UnityEngine;
 
@@ -13,8 +14,26 @@ namespace DeadLetter.Runtime.Save
     [RequireComponent(typeof(Collider))]
     public sealed class CheckpointTrigger : MonoBehaviour
     {
+        private static CheckpointService _service;
+
         /// <summary>The running game's service (one per loaded scene graph).</summary>
-        public static CheckpointService Service { get; set; }
+        public static CheckpointService Service
+        {
+            get => _service;
+            set
+            {
+                if (_service == value) return;
+                _service = value;
+                ServiceChanged?.Invoke(value);
+            }
+        }
+
+        /// <summary>
+        /// The service was set or replaced (a scene's simulation was built). Listeners outside the graph that must reset
+        /// with the world (<c>DirectedMomentPlayer</c>) rebind their <see cref="CheckpointService.Reloaded"/> here, so the
+        /// order in which the scene's objects are enabled does not matter.
+        /// </summary>
+        public static event Action<CheckpointService> ServiceChanged;
 
         [Tooltip("A name in the checkpoint order (Checkpoint.PrototypeOrder), e.g. \"hall\".")]
         [SerializeField] private string checkpoint;

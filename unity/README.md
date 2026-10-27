@@ -26,6 +26,9 @@ The first import takes a while (it builds `Library/`, which is ignored).
 3. **Input System prompt.** When Unity asks whether to enable the new input backends,
    choose **Yes** (the editor restarts). Then check Project Settings → Player → Other
    Settings → *Active Input Handling* = **Input System Package (New)**.
+   Input System 1.14 may apply default stick deadzone processing to `<Gamepad>/leftStick/x` before the motor's
+   own 0.22 deadzone and 0.65 run threshold — check the action's processors and remove the default deadzone if it
+   double-applies.
 4. **Player settings** (Project Settings → Player). These were left out on purpose: a
    hand-written `ProjectSettings.asset` with the wrong serialized schema is worse than none.
    - Company Name: `DeadLetter` (no company name is defined in `docs/`)
@@ -126,7 +129,7 @@ Assets/DeadLetter/Core/
   Interaction/  Contracts      ICarryable, IPlaceTarget, IPushable, IPresentTarget, ISeat, IUsable (U-10 implements)
                 InteractionResolver, PlaceSearch
 Assets/DeadLetter/Runtime/
-  Player/       D17Controller  MonoBehaviour: input → FixedTick → D17Motor; physics probes; transform + Animator
+  Player/       D17Controller  MonoBehaviour: input → FixedTick (Update) → D17Motor; physics probes; transform + Animator
                 D17AnimatorParams  Animator parameter names (states are named after the clips)
   Input/        DeadLetter.inputactions  Gameplay map: Move, Jump, Crouch, Use, Run, Pause, Checkpoint
 ```
@@ -139,7 +142,9 @@ event frames, the resolver's in-front rule, and that the same inputs give the sa
 **To use it in a scene:** add `D17Controller` to D-17's root, assign `DeadLetter.inputactions` and the Animator.
 Put D-17's own colliders on a layer outside the probe masks. Set `groundMask` (floors, crates, walls),
 `ceilingMask` (undersides) and `rampMask`. Every Animator state needs its Speed Multiplier bound to `ClipSpeed`.
-Core runs at 60 Hz whatever `Time.fixedDeltaTime` is. Setting Fixed Timestep to 1/60 gives one step per FixedUpdate.
+Core runs at 60 Hz from `Update` (`Time.deltaTime` through `FixedTick`), whatever `Time.fixedDeltaTime` is, and the
+transform is interpolated with `FixedTick.Alpha`. The lane probes are raycasts against static colliders; if moving
+colliders are added to the probe masks, sync transforms (`Physics.SyncTransforms`) before the Core tick.
 
 **D-17 asset and Animator (U-11 slice 2).** `Assets/Art/D17/d17.glb` is the shipped `game/undelivered/assets/d17.glb`
 copied unchanged (skinned rig, 26 joints, 76 clips). glTFast imports it; `Editor/Import/D17ImportSettings` pins the
@@ -156,3 +161,84 @@ First open, after the import finishes:
    (the clips' curve paths are relative to that object; do not move the Animator to a child). Add `D17Controller`
    to the same root or a parent and assign that Animator.
 3. Commit `D17.controller` and the `.meta` files.
+
+## Cameras and directed moments (U-13)
+
+The lane camera, its framing volumes, the four prologue moments and the cue clock are Core code, ported from
+`game/undelivered/index.html`. The sources are `frameFor`/`updateCamera` (L7644–7806), `applyShots`/`currentShot` (L3687–3836),
+`MOMENTS` (L945–964) and `Music.momentTime` (L905–927). See `docs/unity/port_architecture.md` §4.17, §4.18 and §4.24,
+and `docs/directed_moments.md`.
+
+```
+Assets/DeadLetter/Core/
+  Maths/    Vec3 (prototype axes, ToUnity = (x, y, −z)), Damp (exact-at-60 Hz exponential easing)
+  Camera/   CameraConfig    every rig constant, with its index.html line; lens maths (widthFit, filmGauge 36 → vertical FOV)
+            Framing         FramingZone / FramingTrack: framing volumes as data (x/y blends, signal gates, nested zones,
+                            fit width, cx clamp, lead, fog), evaluated exactly as frameFor
+            PrologueFraming DL-01 to DL-07 (floor and gallery) transcribed as zones + the signals scene rules publish
+            CameraRig       follow lag, push-in, height follow, ending fog, shot blend 1.4 in / 0.8 out, shake, opening
+            MomentShots     the camera beats of kin / refuge / ringc / window on their cue clocks; ring C's cold light
+  Cues/     IMusicClock     the audio clock interface (Runtime: AudioDspMusicClock; tests: a fake)
+            CueClock        momentTime: heard time from the scheduled start minus output latency; monotonic; freezes
+                            when paused; falls back to the sim clock (no music, 0.6 s unstarted, 2.0 s stalled)
+            DirectedMoment  lock / release / control (L948) + peak; PrologueMoments.Kin/Refuge/RingC/Window
+            MomentDirector  startMoment / momentShot / momentFree / voicesHeld + GateInput(MotorInput) for D-17
+Assets/DeadLetter/Runtime/Camera/
+            LaneCameraDriver      steps CameraRig on every Core step (D17Controller.Stepped), interpolates, writes a
+                                  CinemachineCamera (or a Camera) and the fog
+            AudioDspMusicClock    IMusicClock on AudioSettings.dspTime: buffer smoothing, pause, per-platform latency
+            DirectedMomentPlayer  Trigger(name): cue via PlayScheduled 0.1 s ahead, input gate, Timeline scrubbed to the
+                                  cue clock, moment shot handed to the camera
+```
+
+**Moment timing (seconds from the trigger, the cue's first sample as heard).**
+
+| Moment | lock | release (shot lets go, voices back) | control back | peak |
+|---|---|---|---|---|
+| `kin` (DL-04) | 19 | 21 | 22.5 | 15 |
+| `refuge` (DL-09) | 14 | 16 | **16.6** + his turn home (the awe act stops waiting at release + 0.6, L3390; `MOMENTS` says 18.5) | 10 |
+| `ringc` (DL-10) | 16 | 20 | 22 | 12 |
+| `window` (end) | never | 13.6 (label check) | never: the ending sequence owns him | 6.5 |
+
+Before `lock`, input is withheld. From `lock`, any input (move, use or jump) cuts the hold, and control comes back on that step.
+`MomentDirector.GateInput` returns `MotorInput.None` while the moment holds him, including on the step where control comes
+back. Raw input passes from the next step. Each moment's act condition (kin's realise act idle, refuge's awe clip done,
+ringc's car gone) is passed in as `actReady` (`DirectedMomentPlayer.ActReady`).
+
+**Deviations from the prototype.**
+- Every `x += (t − x)·min(1, dt·k)` easing is `Damp`. It is exact at 60 Hz and frame-rate independent, so the 30 fps
+  Switch build frames the same as PC. The prototype lags differently at each frame rate.
+- The rig steps on the fixed 60 Hz Core step and is render-interpolated. The prototype stepped once per rendered frame.
+- A moment shot still uses the cue-clock delta (clamped to 0.5 s) as its dt, as in the prototype.
+- `MusicFailed` and the stalled fallbacks follow L918–919. Unity has no `getOutputTimestamp`, so the DSP clock is
+  extrapolated by up to one mix buffer instead.
+- The camera maths is in the prototype's axes, and only `LaneCameraDriver` converts to Unity's.
+- Not yet transcribed as framing data, because they arrive with their scene ports: DL-07's `watchLoad` wide frame (its
+  centre and width move with x), DL-08–DL-11 (`k4`, `k5`), chapter 1 (`frameAtt`, `frameAtt2`; restore DL-17's volume,
+  §9 #1), and the non-moment authored shots (label, scan, pit, knock…, a `ShotSelector`).
+
+**Scene setup.** Add these to `DL_Persistent`:
+1. One `CinemachineBrain` on the main Camera.
+2. One `CinemachineCamera` "Lane" with **no Position/Rotation Control and no noise**. Cinemachine must leave its
+   transform alone.
+3. `LaneCameraDriver`, with `player` set to `D17Controller` and the Lane camera assigned.
+4. `AudioDspMusicClock`. Fill in the per-platform latency offsets once measured. Switch is still to be measured.
+5. `DirectedMomentPlayer`, with one binding per moment: the cue `AudioSource` (`playOnAwake` off) and an optional
+   `PlayableDirector` (Timeline `Moment_kin` …).
+
+Scene rules call `DirectedMomentPlayer.Trigger("kin")` at the prototype's triggers. They publish framing signals in
+`LaneCameraDriver.Signals` (`dl02`, `dl02.reveal`, `dl02.realised`, `dl06.pit`; see `PrologueFraming`). They also set the
+driver's transit, slow-pace and well flags.
+
+Tests: `CameraRigTests` checks the zones against a literal transcription of `frameFor` along x 0–80, including portrait
+and gallery heights. It also checks the blends, damping convergence and frame-rate independence, the shot blend, the
+cue-clock dt and determinism. `CueClockTests` checks lock, release and control per moment, the cut, latency, pause,
+the fallbacks, the ring C light and determinism.
+
+**Unverified (no editor here).** The Runtime files compile only against stubs.
+- Cinemachine 3's `CinemachineCamera.Lens` / `LensSettings.FieldOfView` field.
+- Whether a CinemachineCamera with no behaviours really keeps its transform.
+- `DefaultExecutionOrder(-100)` running before the Brain.
+- Whether `PlayableDirector` in `Manual` mode needs `Play()` before `Evaluate()`.
+- Whether `AudioSettings.dspTime` keeps running while `AudioListener.pause` is set.
+- Whether `GetDSPBufferSize` × buffers overstates latency on some platforms.

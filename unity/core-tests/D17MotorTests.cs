@@ -32,16 +32,22 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
-        public void JumpVelocity_IsSqrtTwoGravityApex_L307()
+        public void JumpVelocity_DefaultsToSixtyHertzParity_DesignedIsSqrtTwoGravityApex_L307()
         {
             var c = MotorConfig.Prototype();
-            Assert.Equal(Math.Sqrt(2 * 9.8 * 0.4), c.JumpVelocity, 12);
-            Assert.Equal(2.80, c.JumpVelocity, 2);
+            Assert.Equal(JumpMode.Parity60Hz, c.JumpMode);
+            Assert.Equal(Math.Sqrt(2 * 9.8 * 0.4), c.JumpVelocityDesigned, 12);
+            Assert.Equal(2.80, c.JumpVelocityDesigned, 2);
+            Assert.Equal(Math.Sqrt(2 * 9.8 * 0.4) - 9.8 / 120, c.JumpVelocity, 12);
+            Assert.Equal(2.7183, c.JumpVelocity, 4);
 
             var m = Sim.Make(BoxWorld.Flat());
             m.Step(Sim.Jump(), Dt);
             Assert.True(Sim.Has(m, MotorEventKind.Jump));
-            Assert.Equal(Math.Sqrt(2 * 9.8 * 0.4), FindJump(m), 12);
+            Assert.Equal(c.JumpVelocityParity, FindJump(m), 12);
+
+            c.JumpMode = JumpMode.Designed;
+            Assert.Equal(c.JumpVelocityDesigned, c.JumpVelocity, 12);
         }
 
         private static double FindJump(D17Motor m)
@@ -52,18 +58,40 @@ namespace DeadLetter.Core.Tests
 
         // ---- Jump ---------------------------------------------------------------------------------------------------------
 
-        [Fact]
-        public void JumpApex_ReachesJumpApexWithinOneCentimetre_L306()
+        /// <summary>Highest Y over a jump from flat ground, and the steps until he lands.</summary>
+        private static double JumpPeak(MotorConfig config, double dt, out int steps)
         {
-            var m = Sim.Make(BoxWorld.Flat());
-            m.Step(Sim.Jump(), Dt);
+            var m = Sim.Make(BoxWorld.Flat(), config: config);
+            m.Step(Sim.Jump(), dt);
             double peak = m.Y;
-            int steps = Sim.RunUntil(m, Sim.Move(0), d => { peak = Math.Max(peak, d.Y); return d.Grounded; });
-            Assert.True(steps > 0);
-            Assert.InRange(peak, 0.39, 0.41);
-            // Airtime 2·v/g ≈ 0.571 s, within a step.
-            Assert.InRange((steps + 1) * Dt, 2 * 2.8 / 9.8 - Dt, 2 * 2.8 / 9.8 + 2 * Dt);
+            steps = 1;
+            for (int i = 0; i < 4000 && !m.Grounded; i++) { m.Step(Sim.Move(0), dt); peak = Math.Max(peak, m.Y); steps++; }
+            Assert.True(m.Grounded);
             Assert.Equal(0.0, m.Y);
+            return peak;
+        }
+
+        [Fact]
+        public void JumpApex_Parity_MatchesSixtyHertzPrototypePeak_L1992_L2013()
+        {
+            // The prototype's 60 Hz Euler step (vy -= g·dt; y += vy·dt) peaks at 0.3768 m and lands on frame 34.
+            double peak = JumpPeak(MotorConfig.Prototype(), Dt, out int steps);
+            Assert.InRange(peak, 0.375, 0.379);
+            Assert.InRange(steps, 33, 35);
+            // Exact integration: the same apex at any step length.
+            Assert.InRange(JumpPeak(MotorConfig.Prototype(), 1.0 / 144.0, out _), 0.375, 0.379);
+            Assert.InRange(JumpPeak(MotorConfig.Prototype(), 1.0 / 30.0, out _), 0.373, 0.379);
+        }
+
+        [Fact]
+        public void JumpApex_Designed_ReachesJumpApexWithinOneCentimetre_L306()
+        {
+            var c = MotorConfig.Prototype();
+            c.JumpMode = JumpMode.Designed;
+            double peak = JumpPeak(c, Dt, out int steps);
+            Assert.InRange(peak, 0.398, 0.401);
+            // Airtime 2·v/g ≈ 0.571 s, within a step.
+            Assert.InRange(steps * Dt, 2 * 2.8 / 9.8 - Dt, 2 * 2.8 / 9.8 + 2 * Dt);
         }
 
         [Fact]
@@ -251,8 +279,9 @@ namespace DeadLetter.Core.Tests
 
         [Theory]
         [InlineData(0.70, true)]
-        [InlineData(1.10, true)]    // at the apex (0.4) the ledge is 0.70 above him: inside MANTLE_MAX + 0.1
-        [InlineData(1.15, false)]   // 0.75 above the apex: beyond 0.72
+        [InlineData(1.09, true)]    // at the parity apex (≈0.377) the ledge is ≈0.713 above him: inside MANTLE_MAX + 0.1
+        [InlineData(1.11, false)]   // ≈0.733 above the apex: beyond 0.72 (highest catchable ≈ 1.097, as the prototype)
+        [InlineData(1.15, false)]
         public void MidAirCatch_UpTo072AboveHim_L2022(double height, bool caught)
         {
             var m = Sim.Make(BoxWorld.Flat().AddSolid(1.3, 3.0, height), 1.0);
@@ -266,6 +295,47 @@ namespace DeadLetter.Core.Tests
                 Assert.True(Sim.Run(m, Sim.Move(0), 200, MotorEventKind.MantleEnd));
                 Assert.Equal(height, m.Y, 12);
             }
+        }
+
+        [Theory]
+        [InlineData(0.5, 48)]       // standing mantle scan, L1989: d = 0.02 … 0.49
+        [InlineData(0.32, 30)]      // mid-air scan, L2021: d = 0.02 … 0.31
+        [InlineData(0.6, 58)]       // ledgeAhead's default range, L1738
+        public void LedgeScan_SamplesLikeThePrototypeLoop_L1739(double range, int samples)
+        {
+            var w = new CountingWorld(BoxWorld.Flat());
+            Assert.False(LaneProbe.ScanLedge(w, 0, 0, 1, range, 0.07, out _));
+            Assert.Equal(samples, w.SurfaceCalls);
+            Assert.Equal(samples, LaneProbe.ScanSampleCount(range));
+            Assert.Equal(0.02, w.MinX, 9);
+            Assert.Equal(range - 0.01, w.MaxX, 9);
+        }
+
+        [Fact]
+        public void LedgeScan_FaceAtExactlyTheRange_IsNotSeen()
+        {
+            // A face at 0.32 is beyond the prototype's last mid-air sample (0.31); at 0.31 it is caught.
+            Assert.False(LaneProbe.ScanLedge(BoxWorld.Flat().AddSolid(0.32, 3.0, 0.5), 0, 0, 1, 0.32, 0.07, out _));
+            Assert.True(LaneProbe.ScanLedge(BoxWorld.Flat().AddSolid(0.31, 3.0, 0.5), 0, 0, 1, 0.32, 0.07, out var l));
+            Assert.Equal(0.31, l.Distance, 9);
+        }
+
+        private sealed class CountingWorld : IMotorWorld
+        {
+            private readonly IMotorWorld _w;
+            public int SurfaceCalls;
+            public double MinX = double.PositiveInfinity, MaxX = double.NegativeInfinity;
+            public CountingWorld(IMotorWorld w) { _w = w; }
+            public double SurfaceAt(double x, double refY)
+            {
+                SurfaceCalls++; MinX = Math.Min(MinX, x); MaxX = Math.Max(MaxX, x);
+                return _w.SurfaceAt(x, refY);
+            }
+            public double CeilingAt(double x, double refY) => _w.CeilingAt(x, refY);
+            public void Limits(double x, double y, out double left, out double right) => _w.Limits(x, y, out left, out right);
+            public bool IsRamp(double x) => _w.IsRamp(x);
+            public bool LedgeAhead(double x, double y, int dir, double range, double stepUp, out Ledge ledge)
+                => _w.LedgeAhead(x, y, dir, range, stepUp, out ledge);
         }
 
         // ---- Ceilings and crouch ---------------------------------------------------------------------------------------------

@@ -2,6 +2,15 @@ using System;
 
 namespace DeadLetter.Core.Motor
 {
+    /// <summary>Jump launch speed: prototype parity (default) or the designed value. See <see cref="MotorConfig.JumpMode"/>.</summary>
+    public enum JumpMode
+    {
+        /// <summary>Launch at <c>JUMP_V − g/(2·60)</c>: apex ≈ 0.377 m, as the playtested 60 Hz prototype jumps.</summary>
+        Parity60Hz = 0,
+        /// <summary>Launch at <c>JUMP_V = √(2·g·JUMP_APEX)</c>: apex = JUMP_APEX = 0.40 m.</summary>
+        Designed = 1,
+    }
+
     /// <summary>
     /// Every number the D-17 motor uses, with the prototype's exact values. Line numbers are
     /// <c>game/undelivered/index.html</c> at 7b3c123 (port_architecture §0.1, §4.7, §4.9–4.12).
@@ -66,8 +75,25 @@ namespace DeadLetter.Core.Motor
         public double Coyote = 0.10;
         /// <summary><c>JUMP_BUFFER</c>, L308.</summary>
         public double JumpBuffer = 0.12;
-        /// <summary><c>JUMP_V = √(2·GRAVITY·JUMP_APEX)</c> ≈ 2.80 m/s, L307.</summary>
-        public double JumpVelocity => Math.Sqrt(2 * Gravity * JumpApex);
+        /// <summary>
+        /// <b>Director's switch</b> for the jump launch speed. <see cref="Motor.JumpMode.Parity60Hz"/> (default) matches the
+        /// playtested prototype, whose semi-implicit 60 Hz Euler step (<c>vy -= g·dt; y += vy·dt</c>, L1992–L1993,
+        /// L2013–L2014) peaks at 0.377 m, not JUMP_APEX. <see cref="Motor.JumpMode.Designed"/> launches at the designed
+        /// <c>JUMP_V</c> and peaks at exactly JUMP_APEX (0.40 m). Core integrates gravity exactly in both modes.
+        /// </summary>
+        public JumpMode JumpMode = JumpMode.Parity60Hz;
+        /// <summary>The prototype's frame rate the parity launch speed reproduces (its rAF step, 60 Hz).</summary>
+        public double JumpParityRate = 60;
+
+        /// <summary><c>JUMP_V = √(2·GRAVITY·JUMP_APEX)</c> ≈ 2.80 m/s, L307 (the designed launch speed).</summary>
+        public double JumpVelocityDesigned => Math.Sqrt(2 * Gravity * JumpApex);
+        /// <summary>
+        /// <c>JUMP_V − GRAVITY/(2·60)</c> ≈ 2.7183 m/s: with exact integration this peaks where the prototype's 60 Hz
+        /// Euler step does (≈ 0.377 m), at any step length.
+        /// </summary>
+        public double JumpVelocityParity => JumpVelocityDesigned - Gravity / (2 * JumpParityRate);
+        /// <summary>Launch speed the motor uses, per <see cref="JumpMode"/>.</summary>
+        public double JumpVelocity => JumpMode == JumpMode.Designed ? JumpVelocityDesigned : JumpVelocityParity;
 
         // ---- Body (L309–L310) ------------------------------------------------------------------------------------
         /// <summary><c>STAND_H</c>, L309.</summary>

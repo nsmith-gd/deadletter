@@ -1006,11 +1006,14 @@ deterministically. Checkpoints are set by position/state triggers in each scene 
 moments, `letterState`, `curioFound`, `secretFound`, `voiceFound`, `persist {cw, shockedOnce, warned, cageDanger}`.
 `Resume` stores `{cp, scene, at, found{curio,secret,voice}, read[]}` in `localStorage['dl01-resume']` whenever the
 checkpoint changes; finishing the prologue saves `school`. Options persist as `dl01-<name>`; brightness `dl01-bright`.
-**Unity (U-14):** Core `SaveModel { version, checkpoint, seenMoments, letters, curios, secrets, voices, persistFlags,
-options, playTime }` serialised as JSON through `ISaveStore` (Steam: file in `Application.persistentDataPath` + Steam
-Cloud; Switch: save-data mount, commit on checkpoint). `CheckpointDef` (scene id, x, y, region flags, solved-set) as
-data. Keep the prototype's rule: **checkpoint state is derived, not stored** — the save holds only the checkpoint name
-and the collection/persist sets. Save on checkpoint change (rate-limit to one write per 2 s on Switch).
+**Unity (U-14, as built in #11):** Core `SaveModel { version, checkpoint, seenMoments, letters, curios, secrets,
+voices, persistFlags, options, playTime }` plus a `mech/` mechanism snapshot, written by `SaveCodec` in a
+hand-rolled binary format (DLSV: magic, u16 version, CRC-32; no reflection, so IL2CPP/AOT-safe) through `ISaveStore`
+(Steam: file in `Application.persistentDataPath` + Steam Cloud; Switch: save-data mount, commit on checkpoint).
+`CheckpointDef` (scene id, x, y, region flags, solved-set) as data. The prototype's rule still holds underneath: the
+world is first **derived** from the checkpoint name; the stored snapshot is then applied on top, and skipped when its
+scene no longer matches (or fails to read), so a stale save falls back to the derived world. Save on checkpoint change
+(rate-limit to one write per 2 s on Switch).
 
 ### 4.29 Title, pause, end cards, options and accessibility
 

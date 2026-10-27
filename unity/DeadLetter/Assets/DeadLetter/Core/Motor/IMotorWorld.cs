@@ -68,11 +68,13 @@ namespace DeadLetter.Core.Motor
         /// <summary>
         /// <c>ledgeAhead</c>, L1738–L1748, by sampling the ground probe every centimetre from 0.02 m. A step with a taller
         /// thing right behind it (within 6 cm) climbs as one. Integer stepping replaces the prototype's accumulated
-        /// <c>d += 0.01</c> so every platform samples the same distances.
+        /// <c>d += 0.01</c> so every platform samples the same distances. The prototype's float accumulation overshoots
+        /// <c>range</c> on the last step (0.02 + 30 × 0.01 &gt; 0.32), so its <c>d &lt;= range</c> never samples the end
+        /// point: 0.02 … range − 0.01, i.e. 48 samples for 0.5 and 30 for 0.32 (<see cref="ScanSampleCount"/>).
         /// </summary>
         public static bool ScanLedge(IMotorWorld w, double x, double y, int dir, double range, double stepUp, out Ledge ledge)
         {
-            int last = (int)Math.Floor(range * 100 + 1e-6);
+            int last = ScanLastIndex(range);
             for (int i = 2; i <= last; i++)
             {
                 double d = i * 0.01;
@@ -88,5 +90,11 @@ namespace DeadLetter.Core.Motor
             ledge = default;
             return false;
         }
+
+        /// <summary>Index (centimetres) of the last distance <see cref="ScanLedge"/> samples: range − 0.01.</summary>
+        private static int ScanLastIndex(double range) => (int)Math.Round(range * 100) - 1;
+
+        /// <summary>How many distances <see cref="ScanLedge"/> samples for <paramref name="range"/> (48 for 0.5, 30 for 0.32).</summary>
+        public static int ScanSampleCount(double range) => Math.Max(0, ScanLastIndex(range) - 1);
     }
 }
