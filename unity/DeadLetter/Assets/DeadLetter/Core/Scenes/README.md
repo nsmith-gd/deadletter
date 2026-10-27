@@ -10,9 +10,9 @@ respawn or continue anywhere rebuilds the whole world there. `Current` is the sc
 **Mechanism update order:** each scene's own order, scenes in lane order. The prototype updates by system (§3.1,
 L8511–L8518), which interleaves scenes, but a mechanism reads another scene's only when that scene comes first (DL-07's
 bucket and loading read DL-06's line and weights, from this step's log), so the two agree:
-`PrologueChapterTraceTests` replays DL-01 to DL-07 (#1768–#17677) in one sim at 1e-6.
+`PrologueChapterTraceTests` replays DL-01 to DL-08 (#1768–#20840) in one sim at 1e-6.
 
-## Adding a scene to the prologue (DL-08 next)
+## Adding a scene to the prologue (DL-09 next)
 
 The steps as DL-07 took them (U-21); DL-07's specifics are kept where they show the pattern.
 
@@ -75,3 +75,27 @@ The steps as DL-07 took them (U-21); DL-07's specifics are kept where they show 
 - Not ported (other systems): picking up and posting the heap letter at MailSlot6 (letters, §4.26: like DL-02's tube
   letter, its fallen state comes back with a checkpoint's snapshot), the gallery clock's key (curios), the White's roll
   in the heap's sump (beings).
+
+## DL-08 as ported (U-21), and notes for DL-09
+
+- DL-08 (`Dl08/`, region 4, `REGION4_X` 80.75 to `CG.x0` 97.6): `dl08.trolley` (`PushableParams.Dl08Trolley`: its travel
+  ends at the pan's buffer, or past it to the rail once `ExtendedBy` the pawl), `dl08.pan`, `dl08.pawl`, `dl08.platform`
+  (never a ride: the shaft's floor is its top, `Dl08ShaftLane`), `dl08.belt`. The lane (`Dl08Lane`) adds the shaft's walls
+  while the platform is down, the rail, the trolley's top, the crates, and the belt's carry (`LaneGeometry` is an
+  `ILaneConveyor` over its region's contributors). Rules (`Handbrake08`, `Always`, guarded by region 4): Teeter
+  (`Dl08TeeterAct`), Proud after the pawl, `latched`, careful by the sump (`Motor.Careful`), the sump's death
+  (`Die(Grabbed, sink 0.8, hold 1.3)`), the way back into region 3. Scene act for #32: `Dl08BeltMantleAct` (the motor's
+  climb cannot be carried along by the belt, L1942).
+- The crates' draws: the prototype's come from the page's shared `Math.random`; the recorder finds each spawn's three LCG
+  states (`rs8`) and `Dl08ChapterProbe` feeds them through `ReturnsBelt.Draws` (tests only). Core's own runs use the
+  belt's `SimRng`, reseeded on reset (a reload replays the same crates).
+- **DL-09 starts at #20840** (x 97.616, region 4, checkpoint `latched`, the belt running with crates on it, the pawl set,
+  the trolley by the rail): its X0 is `Dl08Lane.X1`; its table joins region 4's at that seam (the antechamber's ceiling,
+  `ceilingCh1` L4166, and the cage's walls are DL-09's). Its rows: `cage` (y `CageTop`, set), `landing8` (y `Deck`, set),
+  `tunnel` (no `y`, `c.upper`: set it to `Deck`). From `cage` the belt runs from the start (`RunningAfter`), and the
+  trolley is parked at the rail.
+- DL-08's rules keep running there: the belt and its crates are one graph's, and a climb started over the belt's end
+  stays the belt-mantle act until it ends. `PlayerPose` has no mantle flag: the belt's trigger cannot see a climb (it
+  needs a free step, L3416), harmless in DL-08's run.
+- Not ported: the White in the sump (first sight, the scare and its knockback: beings), the idle look down the shaft
+  (`PEEK_SPOTS`: no idle clock in Core), the camera's platform look.

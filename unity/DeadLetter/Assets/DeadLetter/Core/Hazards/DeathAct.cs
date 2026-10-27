@@ -30,7 +30,7 @@ namespace DeadLetter.Core.Hazards
         /// <c>die(how)</c>, L7432–L7442, sinking: he lets go of what he holds (a carried item drops where he is,
         /// <c>releaseHolds</c> L7425–L7428), stops, and the act owns his pose. Called by <see cref="ChapterSim.Die"/>.
         /// </summary>
-        internal static void Begin(ChapterSim sim, DeathKind how, double sinkRate)
+        internal static void Begin(ChapterSim sim, DeathKind how, double sinkRate, double hold = double.NaN)
         {
             var m = sim.Motor;
             double x = sim.X, y = sim.Y, z = sim.Z, yaw = sim.Yaw;
@@ -42,7 +42,8 @@ namespace DeadLetter.Core.Hazards
                 else m.Carried.OnSetDown(x, System.Math.Max(0, y));
             }
             m.Place(x, y, facing);                                                              // the motor has no "let go of everything" (#28)
-            sim.StartAct(new DeathAct(DeathProfile.Of(how), x, y, z, yaw, facing, grounded, sinkRate, sim.Config.YawRate));
+            var profile = double.IsNaN(hold) ? DeathProfile.Of(how) : DeathProfile.Of(how).WithHold(hold);
+            sim.StartAct(new DeathAct(profile, x, y, z, yaw, facing, grounded, sinkRate, sim.Config.YawRate));
         }
 
         private static readonly ActId[] Phases =

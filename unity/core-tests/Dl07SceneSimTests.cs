@@ -359,16 +359,18 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(HeapLetterState.Rail, off.State);
         }
 
-        /// <summary>Past <c>REGION4_X</c> on the gallery he is in region 4, at <c>goods</c>, DL-08's: past this chapter (L2044).</summary>
+        /// <summary>Past <c>REGION4_X</c> on the gallery he is in region 4, at <c>goods</c>, in DL-08, on its deck (L2044).</summary>
         [Fact]
-        public void Doorway_PastRegion4X_Region4_Goods_AndOutOfTheChapter_L2044()
+        public void Doorway_PastRegion4X_Region4_Goods_DL08_L2044()
         {
             var s = Begin("gallery");
-            Until(s, Right, x => x.Exited);
-            Assert.Equal(4, s.Region);
+            Until(s, Right, x => x.Region == 4);
             Assert.Equal("goods", s.Checkpoints.Current.Name);
             Assert.True(s.X > Dl07Scene.DoorwayX);
-            Assert.Null(s.Current);
+            Assert.Equal("DL-08", s.Current.Id);
+            Assert.Equal(4, s.Lane.Region);
+            Assert.Equal(Dl07Lane.Deck, s.Y);
+            Assert.False(s.Exited);
         }
 
         // ---- Weights down the chute, refused --------------------------------------------------------------------------------

@@ -33,7 +33,12 @@ const CHROME = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linu
 const INIT = `(() => {
   // The prototype's own LCG (index.html L2666-L2667; Core SimRng.Lcg): s = (s * 16807 + 11) mod 2147483647.
   let s = ${rngSeed} % 2147483647;
-  Math.random = () => { s = (s * 16807 + 11) % 2147483647; return s / 2147483647; };
+  // The last 2^18 states drawn (it changes no draw): DL-08's recorder finds a crate's draws in it (dl08, rs8).
+  const ring = new Int32Array(1 << 18); let rn = 0;
+  Math.random = () => { s = (s * 16807 + 11) % 2147483647; ring[rn++ & 262143] = s; return s / 2147483647; };
+  window.__rngRing = () => ({ ring, n: rn });
+  // How many draws fn makes, with the generator put back as it was (used before the run's reseed).
+  window.__countDraws = (fn) => { const s0 = s, n0 = rn; fn(); const d = rn - n0; s = s0; rn = n0; return d; };
   window.__seedRandom = (v) => { s = v % 2147483647; };
   // Virtual time: from __virtualTime(true) on, setTimeout callbacks run at the start of the step their delay reaches,
   // and AudioContext.currentTime reads game time (the ambience and voices schedule from it and draw Math.random).
@@ -158,6 +163,44 @@ const RECORDER = `window.__record = (rngSeed, until) => {
       rd7: G.riding ? G.riding.id : null, cr7: JSON.stringify(cr),
     };
   }
+  // DL-08 (U-21): the goods trolley (x, t.v), the pan's load (panLoad, L3026-L3029, recomputed after the step), Lift 2's
+  // platform (h, v, latched, lurch; L3171-L3197), the pawl's lever as the act sets it (game.pawlHold, else the rest angle
+  // LEVER_NEAR/AWAY, before the view's easing, L3211) and its dip, the returns belt (belt4.state, t, next; L3218-L3225),
+  // the turn flaps' swing (L3146-L3148) and the crates as one JSON string ([type, state, x, y, z, t, spin] each, L3134),
+  // and, on the step a crate spawns, the three LCG states its draws took (rs8: the type's, the spin's and the next
+  // interval's, L3130, L3134, L3144), found in the ring of draws: the page's Math.random is shared by everything (the
+  // clone's uuids and the scrape's noise draw between them), so a replay feeds these to the belt. Only while sceneName()
+  // is DL-08 and on the step he leaves it; names end in 8 so no other scene's fields collide.
+  let in08 = false;
+  const seen08 = new Set(), M8 = 2147483647;
+  // The draws spawnCrate's clone(true) of each template makes (its objects' uuids), counted now, before the run's reseed.
+  const cloneDraws8 = (D.refs.crateTemplates || []).map((m) => window.__countDraws(() => m.clone(true)));
+  function crateDraws(c, next) {
+    const { ring, n } = window.__rngRing(), at = (k) => ring[k & 262143], lo = Math.max(0, n - 262144);
+    let k3 = -1, k2 = -1;
+    for (let k = n - 1; k >= lo && k3 < 0; k--) if (2.9 + (at(k) / M8) * 1.3 === next) k3 = k;
+    for (let k = k3 - 1; k >= lo && k2 < 0; k--) if ((at(k) / M8 - 0.5) * 0.4 === c.spin) k2 = k;
+    const k1 = k2 - 1 - cloneDraws8[c.type], r = at(k1) / M8, type = r < 0.55 ? 0 : r < 0.85 ? 1 : 2;
+    if (k3 < 0 || k2 < 0 || k1 < lo || type !== c.type) throw new Error('dl08: crate draws not found at clock ' + G.clock);
+    return [at(k1), at(k2), at(k3)];
+  }
+  function dl08() {
+    const now = /^DL-08/.test(D.scene()), emit = now || in08;
+    in08 = now;
+    if (!emit || !G.plat || !G.trolley4 || !G.belt4) return {};
+    const t = G.trolley4, p = G.plat, b4 = G.belt4, crates = D.refs.crates || [];
+    let rs = null;
+    for (const c of crates) if (!seen08.has(c)) { seen08.add(c); rs = crateDraws(c, b4.next); }
+    const k = Math.min(1, Math.max(0, (t.x - (83.5 - 0.36 + 0.1)) / (2 * 0.36 - 0.2)));                    // panTrolleyK, L3023
+    const on = G.region === 4 && G.x > 83.5 - 0.04 && G.x < 84.9 + 0.04 && G.y < 1.6 + 0.6;               // PAN, DECK, L3027
+    return {
+      tx8: r6(t.x), tv8: r6(t.v), pn8: r6(1.05 * k + (on ? 0.5 : 0)),
+      ph8: r6(p.h), pv8: r6(p.v), la8: b(p.latched), lu8: b(p.lurch),
+      pw8: r6(G.pawlHold ?? (p.latched ? 6 : -18)), pd8: r6(G.pawlDip || 0),
+      bs8: b4.state, bt8: r6(b4.t), bn8: r6(b4.next), fl8: r6(D.refs.TurnFlaps ? D.refs.TurnFlaps.rotation.x : 0),
+      cr8: JSON.stringify(crates.map((c) => [c.type, c.state, r6(c.x), r6(c.y ?? null), r6(c.z), r6(c.t), r6(c.spin)])), rs8: rs,
+    };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -174,6 +217,7 @@ const RECORDER = `window.__record = (rngSeed, until) => {
       ...dl05(),
       ...dl06(),
       ...dl07(),
+      ...dl08(),
     };
   }
   window.__stopped = false;

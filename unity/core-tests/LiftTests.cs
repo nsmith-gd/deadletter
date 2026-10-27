@@ -150,8 +150,25 @@ namespace DeadLetter.Core.Tests
             Mech.Run(s.G, 120, Mech.Pose(87.0, 1.6));                       // he walks over it: no teeter once latched
             Assert.Equal(1.0, s.Lift.Position);
             Assert.False(s.Lift.Lurching);
-            Assert.True(s.Lift.Carrying);
+            Assert.False(s.Lift.Carrying);                                   // the lane's floor, not a ride (no syncRide, L2959)
             Assert.Equal(CounterweightLiftState.Still, s.Lift.State);
+        }
+
+        /// <summary>
+        /// The platform is the shaft's floor (<c>floorAt</c> → <c>platTop()</c>, L1714), never a ride: the prototype has no
+        /// ride sync for it, so a jump over the latched platform is not snapped back onto its top (#9 would, through
+        /// <see cref="MotorSync"/>, while he is within 0.3 above it).
+        /// </summary>
+        [Fact]
+        public void Platform_IsNeverARide_AJumpOverItIsNotSnappedDown_L1714_L2959()
+        {
+            var s = new Dl08(pan: 0, latched: true);
+            for (int i = 0; i < 20; i++)
+            {
+                s.G.Step(Dt, Mech.Pose(87.0, 1.6 + 0.01 * i));                 // on it, then rising off it
+                Assert.False(s.Lift.Carrying);
+            }
+            Assert.DoesNotContain(new MotorSync(s.G).Lifts, l => l.Carrying);
         }
 
         [Fact]

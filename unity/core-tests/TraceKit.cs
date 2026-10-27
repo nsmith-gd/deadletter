@@ -62,6 +62,13 @@ namespace DeadLetter.Core.Tests
         public double? W0x7, W0b7, W0t7, W1x7, W1b7, W1t7, G7, Ct7, Ht7, Sl7, Pl7, Rd7;
         public int? Bk7, Co7;
         public bool? Up7, Bl7;
+        // DL-08 (U-21): the goods trolley (x, v), the pan's load, the platform (h, fall speed, latched, lurch), the pawl's
+        // lever and dip, the returns belt (state, t, next), the turn flaps, the crates (raw JSON: [type, state, x, y, z, t,
+        // spin] each) and, on a crate's spawn step, its three LCG draws (tools/sim/record_trace.mjs).
+        public double? Tx8, Tv8, Pn8, Ph8, Pv8, Pw8, Pd8, Bt8, Bn8, Fl8;
+        public bool? La8, Lu8;
+        public string Bs8, Cr8;
+        public long[] Rs8;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -236,6 +243,21 @@ namespace DeadLetter.Core.Tests
                 case "pl7": s.Pl7 = N(v); break;
                 case "rd7": s.Rd7 = N(v); break;
                 case "cr7": s.Cr7 = S(v); break;
+                case "tx8": s.Tx8 = N(v); break;
+                case "tv8": s.Tv8 = N(v); break;
+                case "pn8": s.Pn8 = N(v); break;
+                case "ph8": s.Ph8 = N(v); break;
+                case "pv8": s.Pv8 = N(v); break;
+                case "la8": s.La8 = B(v); break;
+                case "lu8": s.Lu8 = B(v); break;
+                case "pw8": s.Pw8 = N(v); break;
+                case "pd8": s.Pd8 = N(v); break;
+                case "bs8": s.Bs8 = S(v); break;
+                case "bt8": s.Bt8 = N(v); break;
+                case "bn8": s.Bn8 = N(v); break;
+                case "fl8": s.Fl8 = N(v); break;
+                case "cr8": s.Cr8 = S(v); break;
+                case "rs8": s.Rs8 = L(v); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }
@@ -243,6 +265,14 @@ namespace DeadLetter.Core.Tests
         private static bool B(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetInt32() != 0 : v.ValueKind == JsonValueKind.True;
         private static string S(JsonElement v) => v.ValueKind == JsonValueKind.String ? v.GetString() : null;
         private static int? I(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetInt32() : (int?)null;
+        private static long[] L(JsonElement v)
+        {
+            if (v.ValueKind != JsonValueKind.Array) return null;
+            var a = new long[v.GetArrayLength()];
+            int i = 0;
+            foreach (var e in v.EnumerateArray()) a[i++] = e.GetInt64();
+            return a;
+        }
         private static double? N(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetDouble() : (double?)null;
 
         /// <summary>Index of the first step in <paramref name="mode"/> (e.g. the first step of play).</summary>

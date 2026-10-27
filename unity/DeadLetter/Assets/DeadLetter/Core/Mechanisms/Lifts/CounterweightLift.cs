@@ -60,7 +60,8 @@ namespace DeadLetter.Core.Mechanisms.Lifts
     /// the pan's load and drops fast, crashing; a pawl holds it at the landing; stepping onto it unlatched makes it dip
     /// under him and he scrambles back (Teeter, L3278–L3281, L3329–L3336).
     /// Signals: <see cref="Position"/> = h, 0 (down in the sump) … 1 (at the landing), read by the pawl's bite window
-    /// (h ≥ 0.985, L3305); <see cref="ILiftRide"/> with FloorY = <c>platTop()</c> (L3021).
+    /// (h ≥ 0.985, L3305); <see cref="ILiftRide"/> with FloorY = <c>platTop()</c> (L3021), never <c>Carrying</c>: the lane's
+    /// floor in the shaft is its top (DL-08's <c>Dl08ShaftLane</c>), not a ride.
     /// Inputs: the Teeter act calls <see cref="EndLurch"/> when he lands back on the deck (f22, L3335).
     /// Not ported here: the camera's "platform look" (<c>riseSeen</c>, L3187, L3208) needs the pan's trolley share and
     /// belongs to the camera rules (§4.17); the view's chain, drum, needle and lamps (L3198–L3220) read Position.
@@ -155,7 +156,10 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             H = h;
             Enter(ctx, (int)(h > before ? CounterweightLiftState.Rising : h < before ? CounterweightLiftState.Falling : CounterweightLiftState.Still));
             MoveFloor(ctx, FloorAt(h));
-            Carrying = OnPlatform(pl, h);
+            // Not a ride: the prototype never syncs him to it (no syncRide, L2959); the lane's floor in the shaft is the
+            // platform's top (floorAt, L1714), which he walks on as any floor, and it moves only unlatched, under the Teeter
+            // act. A ride sync here would snap him onto it in mid-jump over the latched platform (MotorSync, #9).
+            Carrying = false;
         }
 
         protected override void WriteLift(ISnapshotWriter w)

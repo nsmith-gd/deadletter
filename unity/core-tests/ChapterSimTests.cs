@@ -18,6 +18,7 @@ using DeadLetter.Core.Scenes.Dl03;
 using DeadLetter.Core.Scenes.Dl04;
 using DeadLetter.Core.Scenes.Dl05;
 using DeadLetter.Core.Scenes.Dl06;
+using DeadLetter.Core.Scenes.Dl08;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -175,8 +176,8 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// Continue at every checkpoint the prologue places (#31 review): each of DL-01 to DL-07's lands him in its own scene,
-        /// region and lane; each of DL-08 to DL-11's (placed in the table, owned by scenes this chapter lacks) is refused,
+        /// Continue at every checkpoint the prologue places (#31 review): each of DL-01 to DL-08's lands him in its own scene,
+        /// region and lane; each of DL-09 to DL-11's (placed in the table, owned by scenes this chapter lacks) is refused,
         /// with nothing changed here or in the slot, where it used to return true with him exited and the lane on region 1.
         /// </summary>
         [Fact]
@@ -230,8 +231,8 @@ namespace DeadLetter.Core.Tests
                 Assert.Equal(slot, store.Slots[0]);
                 refused++;
             }
-            Assert.Equal(13, continued);                                                        // start … gallery
-            Assert.Equal(9, refused);                                                           // goods … forwarded
+            Assert.Equal(15, continued);                                                        // start … latched
+            Assert.Equal(7, refused);                                                           // cage … forwarded
         }
 
         /// <summary>A respawn due at a checkpoint none of the chapter's scenes owns is refused before anything reloads (#31 review).</summary>
@@ -241,7 +242,7 @@ namespace DeadLetter.Core.Tests
             var s = new ChapterSim(ChapterDefs.Prologue());
             s.Begin("scanned");
             for (int i = 0; i < 10; i++) s.Step(Right);
-            Assert.True(s.Checkpoints.Reach("goods"));                                          // DL-08's: placed, not ours
+            Assert.True(s.Checkpoints.Reach("cage"));                                           // DL-09's: placed, not ours
             double x = s.X;
             int region = s.Region, lane = s.Lane.Region;
             var scene = s.Current;
@@ -250,7 +251,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(region, s.Region);
             Assert.Equal(lane, s.Lane.Region);
             Assert.Same(scene, s.Current);
-            Assert.Equal("goods", s.Checkpoints.Current.Name);
+            Assert.Equal("cage", s.Checkpoints.Current.Name);
         }
 
         /// <summary>
@@ -312,7 +313,7 @@ namespace DeadLetter.Core.Tests
             Assert.True(store.TryLoad(0, out var m));
             Assert.Equal("start", m.Checkpoint);
             Assert.Empty(m.Flags);
-            Assert.Throws<ArgumentException>(() => b.Begin("goods"));                          // DL-08's: not in this chapter
+            Assert.Throws<ArgumentException>(() => b.Begin("cage"));                           // DL-09's: not in this chapter
             Assert.Throws<ArgumentException>(() => b.Begin("school"));                         // chapter 1's
         }
 
@@ -383,8 +384,12 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(0, s.DistanceToSeam(ExitDir.Right));
             s.Begin("gallery");
             Assert.Equal("DL-06", s.Next(ExitDir.Left).Id);
-            Assert.Null(s.Next(ExitDir.Right));                                                 // DL-08 is not ported yet
+            Assert.Equal("DL-08", s.Next(ExitDir.Right).Id);                                    // through the doorway: region 4
             Assert.Equal(Dl06Scene.X1 - (33 + 42.3), s.DistanceToSeam(ExitDir.Right), 12);
+            s.Begin("latched");
+            Assert.Equal("DL-07", s.Next(ExitDir.Left).Id);
+            Assert.Null(s.Next(ExitDir.Right));                                                 // DL-09 is not ported yet
+            Assert.Equal(Dl08Scene.X1 - (33 + 56.2), s.DistanceToSeam(ExitDir.Right), 12);     // the end of the belt
             Assert.Equal(double.PositiveInfinity, new ChapterSim(ChapterDefs.Prologue()).DistanceToSeam(ExitDir.Right));   // not placed
 
             var (t, _) = TestChapter(sharedLast: true);                                          // a scene on the same stretch: in view already
@@ -401,7 +406,8 @@ namespace DeadLetter.Core.Tests
             Assert.Equal("DL-05", s.SceneOf("hatch").Id);
             Assert.Equal("DL-04", s.SceneOf("bay").Id);
             Assert.Equal("DL-07", s.SceneOf("landing").Id);
-            Assert.Null(s.SceneOf("goods"));                                                    // DL-08's
+            Assert.Equal("DL-08", s.SceneOf("goods").Id);
+            Assert.Null(s.SceneOf("cage"));                                                     // DL-09's
             var dl04 = s.SceneOf("bay");
             Assert.Equal(new[] { "dl04.courier", "dl04.bayPlate", "dl04.cradle", "dl04.bayDoor" },
                 Array.ConvertAll(ToArray(s.MechanismsOf(dl04)), m => m.Id.Value));
@@ -466,7 +472,7 @@ namespace DeadLetter.Core.Tests
             Assert.Throws<ArgumentException>(() => new ChapterDef("x", cps, Dl02Scene.Def(), Dl02Scene.Def()));            // twice
             Assert.Throws<ArgumentException>(() => new ChapterDef("x", cps, Dl06Scene.Def(), Dl05Scene.Def()));            // regions go back
             var prologue = ChapterDefs.Prologue();
-            Assert.Equal(new[] { "DL-01", "DL-02", "DL-03", "DL-04", "DL-05", "DL-06", "DL-07" }, Array.ConvertAll(ToArray(prologue.Scenes), d => d.Id));
+            Assert.Equal(new[] { "DL-01", "DL-02", "DL-03", "DL-04", "DL-05", "DL-06", "DL-07", "DL-08" }, Array.ConvertAll(ToArray(prologue.Scenes), d => d.Id));
             Assert.NotNull(new ChapterDef("x", cps, Dl01Scene.Def(), Dl02Scene.Def()));                                    // a region seam: DL-01 → DL-02
         }
 

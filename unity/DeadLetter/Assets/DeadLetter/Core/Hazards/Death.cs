@@ -62,6 +62,9 @@ namespace DeadLetter.Core.Hazards
             }
         }
 
+        /// <summary>This death held <paramref name="hold"/> seconds before the cut instead (<c>die(how, { hold })</c>: DL-08's sump, 1.3, L7374).</summary>
+        public DeathProfile WithHold(double hold) => new DeathProfile(Kind, Clip, hold, Sparks, SparkSpeed, Shake);
+
         /// <summary>The eye's level <paramref name="t"/> seconds into a death: a stutter, then dark (<c>game.eyeLevel</c>, L7447).</summary>
         public static double EyeLevel(double t) => t < EyeOut ? (Math.Sin(t * 70) > 0 ? 1 - t / EyeOut : 0.1) : 0;
     }
