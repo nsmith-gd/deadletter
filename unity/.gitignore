@@ -37,3 +37,6 @@
 /core-tests/TestResults/
 /core-build/bin/
 /core-build/obj/
+
+# Steam: local-testing App ID file (U-17). Never commit or ship it; Steam supplies the ID when it launches the game.
+/DeadLetter/steam_appid.txt

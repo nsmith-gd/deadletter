@@ -1,7 +1,9 @@
 using System;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Motor;
+using DeadLetter.Core.Settings;
 using DeadLetter.Core.Simulation;
+using DeadLetter.Runtime.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -46,6 +48,7 @@ namespace DeadLetter.Runtime
         [SerializeField] private float probeUp = 8.0f;
 
         [Header("Motor")]
+        [Tooltip("Used only when there is no SettingsStore; otherwise the player's auto-run option wins (U-17).")]
         [SerializeField] private bool autoRun = true;
 
         private D17Motor _motor;
@@ -90,7 +93,7 @@ namespace DeadLetter.Runtime
         {
             var config = MotorConfig.Prototype();
             _resolver = new InteractionResolver(config);
-            _motor = new D17Motor(config, this, _resolver) { AutoRun = autoRun };
+            _motor = new D17Motor(config, this, _resolver) { AutoRun = SettingsStore.Loaded ? SettingsStore.Current.AutoRun : autoRun };
             _tick = new FixedTick(StepSeconds, 4);
 
             Vector3 p = transform.position;
@@ -118,10 +121,15 @@ namespace DeadLetter.Runtime
             else Debug.LogWarning("D17Controller: no InputActionAsset assigned; D-17 will not respond to input.", this);
         }
 
-        private void OnEnable() { _map?.Enable(); }
+        private void OnEnable()
+        {
+            _map?.Enable();
+            SettingsStore.Applied += OnSettingsApplied;
+        }
 
         private void OnDisable()
         {
+            SettingsStore.Applied -= OnSettingsApplied;
             _map?.Disable();
             _jumpLatched = _useLatched = false;
         }
@@ -165,6 +173,12 @@ namespace DeadLetter.Runtime
                 Vector3.Lerp(_prevPos, _currPos, alpha),
                 Quaternion.Euler(0f, Mathf.LerpAngle(_prevYaw, _currYaw, alpha), 0f));
             DriveAnimator();
+        }
+
+        /// <summary>U-17: the options' auto-run toggle ("Auto-run (hold Shift or B to walk)", L170) → D17Motor.AutoRun.</summary>
+        private void OnSettingsApplied(GameSettings s)
+        {
+            if (_motor != null) _motor.AutoRun = s.AutoRun;
         }
 
         private MotorInput ReadInput()

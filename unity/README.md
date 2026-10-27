@@ -242,3 +242,154 @@ the fallbacks, the ring C light and determinism.
 - Whether `PlayableDirector` in `Manual` mode needs `Play()` before `Evaluate()`.
 - Whether `AudioSettings.dspTime` keeps running while `AudioListener.pause` is set.
 - Whether `GetDSPBufferSize` × buffers overstates latency on some platforms.
+
+## Platforms and settings (U-17)
+
+Store layer, player options, accessibility and command-line builds for Steam, Itch (DRM-free) and Switch (stub).
+See `docs/unity/port_architecture.md` §4.4, §4.29 and §4.30.
+
+```
+Assets/DeadLetter/Core/
+  Settings/   GameSettings        every option + default; the prototype's options card (OPTS L8283, brightness L8307–8319)
+                                  ported key for key, then the port's additions
+              SettingsSerializer  key=value text, hand-written key table (no reflection, IL2CPP-safe), unknown keys kept,
+                                  bad values → default, out-of-range → clamped, never throws, stable output
+              AudioLevels         slider → dB for the five mixer groups; Sound/Music toggles
+  Platform/   IPlatformServices   achievements, rich presence, overlay-opened event, CloudSync; NullPlatformServices
+              ICloudSync          whole-file cloud blobs (U-14's ISaveStore can wrap it later)
+              Achievements        the catalog: empty for now (how to add one is in the file)
+              GlyphRules          which button-prompt set to draw (keyboard / Xbox / PlayStation / Switch / Steam Deck)
+              PauseGate           player pause + overlay + focus loss; a system interruption leaves the pause card up
+Assets/DeadLetter/Runtime/
+  Platform/   PlatformServices    compile-time factory + Current; PlatformServicesHost (DL_Persistent): init, tick, pause
+              SteamPlatformServices (#if DL_STEAM), ItchPlatformServices (no-op), SwitchPlatformServices (NDA stub)
+              GlyphTracker        last device used → GlyphRules
+  Settings/   SettingsStore       persistentDataPath/settings.cfg; applies mixer, calm, brightness/bloom, bindings
+              BindingRebinder     PerformInteractiveRebinding + SaveBindingOverridesAsJson / LoadBindingOverridesFromJson
+Assets/DeadLetter/Editor/Build/BuildScripts   -executeMethod player builds (IL2CPP; Steam/Itch variants)
+tools/build/itch_push.sh                      butler push helper (documented, not run)
+tools/build/steam/app_build.vdf               ContentBuilder template (placeholders only)
+```
+
+Tests: `SettingsTests` (defaults against `OPTS`, round trip, stable output, unknown-key preservation, corrupt and
+truncated input, clamping, culture invariance, dB maths) and `PlatformTests` (glyph selection, pause gate, no-op
+services, achievement ids). Run `dotnet test unity/core-tests`.
+
+### Options
+
+| Option | Default | Source |
+|---|---|---|
+| Auto-run (hold Shift or B to walk) | on | `autorun: true`, L170, L8283 → `D17Motor.AutoRun` |
+| Sound | on | L171; off mutes SFX, Voice, Ambience |
+| Music | on | L172; off mutes Music |
+| Light up things I can use, and show the button | on | `prompts`, L173 |
+| Show a button prompt if I'm stuck | off | `assist`, L174 |
+| Reduce flicker and flashes (calm) | off | `calm`, L176: no flicker, flashes, shake or sparks; bloom 0.35 instead of 0.55 |
+| Brightness | 1.0 (0.8–1.8) | L175, L8308; URP post-exposure log2(v) on top of the authored look |
+| Share anonymous play data | **off** | prototype default is on; §4.30 says the shipped uploader is opt-in. **Director to confirm.** |
+| Master / Music / SFX / Voice / Ambience volume | 1.0 each | new; linear sliders → `AudioMixer.SetFloat(name, 20·log10 v)` (−80 dB floor) |
+| Text size (subtitles, letters) | Default (×1.0; Small 0.85, Large 1.25, Extra large 1.6) | new |
+| Text background panel | off | new (§4.29) |
+| Colour-independent cues | off | new; every colour-only cue also gets a shape or pattern when on |
+| Hold actions toggle | off | new (§4.29: DL-16's held lever) |
+| Button prompts | Auto | new; Auto follows the last device used |
+| Key bindings | defaults | new; Input System override JSON |
+
+Settings are per device and are not cloud-synced (a Deck and a desktop want different text and glyphs).
+
+**Hooks wired:** `D17Controller` takes auto-run from `SettingsStore.Applied` (its serialized `autoRun` is used only
+when no store exists). `LaneCameraDriver.Shake` honours `SettingsStore.Calm`. **Hooks still needed** as their systems
+land: every light flicker, spark and flash source must read `SettingsStore.Calm` (§4.14, §4.20, §4.22); the glint/
+prompt view reads `Prompts` and `StuckAssist`; the subtitle/letter UI reads `TextScale` and `TextBackground`; colour
+cues read `ColourIndependentCues`; DL-16's lever reads `ToggleHolds`; the telemetry uploader (§4.30) reads `Telemetry`.
+The options and pause screens (UI Toolkit) are not built yet: they edit `SettingsStore.Current.Clone()` and call
+`SettingsStore.Instance.Commit(draft)` on Confirm, or `RevertBindings()` on Cancel.
+
+**Scene setup** (`DL_Persistent`): add `SettingsStore` (assign the U-16 mixer, `DeadLetter.inputactions` and the global
+post Volume) and `PlatformServicesHost` (assign D-17 and the `DirectedMomentPlayer`). The U-16 mixer must expose its
+group volumes as exactly `Master`, `Music`, `SFX`, `Voice`, `Ambience`.
+
+### Scripting defines
+
+| Define | Set by | Effect |
+|---|---|---|
+| `DL_STEAM` | `BuildScripts` Steam methods (per build, via `BuildPlayerOptions.extraScriptingDefines`; Player Settings are not changed). For the editor, add it by hand in Player Settings → Scripting Define Symbols. | compiles `SteamPlatformServices` (standalone targets only) |
+| `UNITY_SWITCH` | Unity, when the Switch module is the build target | chooses `SwitchPlatformServices` |
+| neither | Itch builds, editor default | `ItchPlatformServices` (no-ops) |
+
+If Steam fails to start, the game logs a warning and carries on with the no-op services.
+
+### Building
+
+IL2CPP does not cross-compile: build Windows on Windows, macOS on a Mac, Linux on Linux (or with Unity's Linux
+IL2CPP toolchain package). Each OS needs its Unity build-support module with IL2CPP. Scenes come from the enabled
+entries in the build profile (EditorBuildSettings). Output goes to `unity/DeadLetter/Builds/<target>-<store>/` (ignored),
+and IL2CPP/Burst do-not-ship folders are moved to `Builds/symbols/<target>-<store>/` (keep them for crash symbols).
+
+```
+Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.BuildWindowsSteam -logFile -
+Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.BuildWindowsItch  -logFile -
+Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.BuildMacSteam     -logFile -
+Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.BuildMacItch      -logFile -
+Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.BuildLinuxSteam   -logFile -
+Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.BuildLinuxItch    -logFile -
+# or: -executeMethod DeadLetter.Editor.Build.BuildScripts.Build -dlTarget windows|mac|linux -dlStore steam|itch
+# options: -dlDevelopment, -dlOut <dir>, -dlSteamAppId <id> (local Steam testing only: writes steam_appid.txt; never upload)
+```
+
+The same builds are under **Dead Letter → Build** in the editor menu. macOS is built universal (Intel + Apple silicon)
+through `UserBuildSettings.architecture`, set by reflection; if the Console says it was not found, set it in the build
+profile by hand. Code signing and notarisation for macOS are not automated.
+
+Uploads: `tools/build/itch_push.sh <version>` (butler; see its header) and `tools/build/steam/app_build.vdf` (fill the
+placeholders, then `steamcmd +login <account> +run_app_build <path> +quit` from the Steamworks SDK's ContentBuilder).
+
+**Switch is human-only.** The Switch build module and the NintendoSDK are under NDA and come from the Nintendo
+Developer Portal. A licensed developer installs them on a licensed machine, builds from the editor's Switch build profile,
+and implements the TODOs in `SwitchPlatformServices` (user selection, save-data mount/commit, focus/HOME handling).
+None of that can be done or checked from this repo's cloud sessions, and no Switch SDK names appear in the code.
+
+### Steamworks.NET (director: one-time setup)
+
+1. Add this line to `Packages/manifest.json` → `dependencies` (pick the latest release tag from
+   https://github.com/rlabrecque/Steamworks.NET/releases and put it after `#`):
+   ```
+   "com.rlabrecque.steamworks.net": "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#<tag>",
+   ```
+2. Add `"com.rlabrecque.steamworks.net"` to the `references` of `Assets/DeadLetter/Runtime/DeadLetter.Runtime.asmdef`
+   (after `"DeadLetter.Core"`). It is safe without `DL_STEAM`: nothing outside `#if DL_STEAM && UNITY_STANDALONE` uses it.
+   (Optional, to keep the Itch build free of `steam_api` libraries: install the package only on the Steam build
+   machine, or exclude the plugin's platforms in its importer. Shipping the unused native library in the Itch build is
+   harmless but untidy.)
+3. Set `SteamPlatformServices.AppId` to the real App ID when it exists (0 = skip the restart-through-Steam check).
+4. **steam_appid.txt:** for the editor, put a file `unity/DeadLetter/steam_appid.txt` containing just the App ID (480,
+   Valve's Spacewar test app, works before the real one exists). It is git-ignored. For a local player build outside Steam use
+   `-dlSteamAppId <id>`. Never ship the file: Steam supplies the ID when it launches the game, and the depot script excludes it.
+5. Create achievements on the partner site with the same API names as `Core/Platform/Achievements.cs` (empty for now).
+   Rich presence needs a localisation file with `steam_display` tokens uploaded on the partner site.
+
+### Steam Deck checklist
+
+- [ ] Default text is legible at 1280×800 on a 7" screen: check subtitles, letters and prompts at Text size Default.
+      Valve's Deck Verified review fails very small text; Large / Extra large must not clip or overflow.
+- [ ] Glyphs: Auto shows Steam Deck prompts on a Deck (`SteamUtils.IsSteamRunningOnSteamDeck()`, or `SteamDeck=1`
+      in the environment for non-Steam builds) and Keyboard once a keyboard is used. Steam Deck glyph art is needed.
+- [ ] Every action works on the Deck's controls with the default Steam Input (gamepad) configuration; no mouse-only UI.
+- [ ] Rebinding works with a pad (Escape cancels on keyboard; add a pad cancel button in the options UI).
+- [ ] The Steam overlay (Steam button) pauses the game and leaves the pause card up when it closes.
+- [ ] Suspend / resume (power button) pauses the game (focus loss → `PauseGate`) and audio resumes cleanly.
+- [ ] 16:10 aspect: framing and UI at 1280×800 (the camera's width fit should hold; check letterboxing).
+- [ ] Default graphics hold a stable 30 or 60 fps on the Deck (choose the Switch-like quality tier if not).
+- [ ] The text input for any name field uses the Steam on-screen keyboard (none exist yet).
+- [ ] Linux depot runs natively on SteamOS, or the Windows depot runs under Proton (test both; mark the one you ship).
+
+### Unverified (no editor here)
+
+The Runtime and Editor files were type-checked against hand-written stubs only.
+- Steamworks.NET: `SteamUtils.IsSteamRunningOnSteamDeck()` is present in the chosen tag; `Callback<T>.Dispose()`;
+  achievements without `RequestCurrentStats()` (fine on Steamworks SDK 1.61+, older SDKs need it after Init).
+- `UnityEditor.OSXStandalone.UserBuildSettings.architecture` and its `x64ARM64` value in Unity 6 (set by reflection).
+- `PlayerSettings.Get/SetScriptingBackend(NamedBuildTarget, …)` restore after a build in batch mode leaving no diff.
+- `AudioMixer.SetFloat` ignored in Awake (the store applies in Start); check the levels on the first frame.
+- The bloom scale (calm 0.35 / normal 0.55 of the authored URP intensity) is a proportional guess, not a match to
+  three.js's UnrealBloom strength.

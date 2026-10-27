@@ -1,0 +1,58 @@
+// Steam ContentBuilder app build script (U-17). TEMPLATE: every <...> is a placeholder; no real IDs exist yet.
+//
+// Use with steamcmd from the Steamworks SDK's tools/ContentBuilder (not in this repo):
+//   steamcmd +login <build-account> +run_app_build "<repo>/tools/build/steam/app_build.vdf" +quit
+// Paths below are relative to this file. Build the Steam players first (DL_STEAM on), one per OS host:
+//   Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.BuildWindowsSteam -logFile -
+//   (BuildMacSteam, BuildLinuxSteam likewise) -> unity/DeadLetter/Builds/{windows,mac,linux}-steam/
+// Never upload a build made with -dlSteamAppId (it contains steam_appid.txt); the exclusion below is a second guard.
+// Set "SetLive" to a beta branch name (never "default") to publish on upload; leave empty to set live by hand.
+"AppBuild"
+{
+	"AppID" "<APP_ID>"
+	"Desc" "Dead Letter <VERSION>"
+	"BuildOutput" "./output/"
+	"ContentRoot" "../../../unity/DeadLetter/Builds/"
+	"SetLive" ""
+	"Preview" "0"
+
+	"Depots"
+	{
+		// Windows x64 depot (partner site: OS = Windows, 64-bit)
+		"<WINDOWS_DEPOT_ID>"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "windows-steam/*"
+				"DepotPath" "."
+				"Recursive" "1"
+			}
+			"FileExclusion" "*.pdb"
+			"FileExclusion" "steam_appid.txt"
+		}
+
+		// macOS universal depot (partner site: OS = macOS)
+		"<MAC_DEPOT_ID>"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "mac-steam/*"
+				"DepotPath" "."
+				"Recursive" "1"
+			}
+			"FileExclusion" "steam_appid.txt"
+		}
+
+		// Linux x64 depot (partner site: OS = Linux + SteamOS; this is the depot Steam Deck runs if it is marked native)
+		"<LINUX_DEPOT_ID>"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "linux-steam/*"
+				"DepotPath" "."
+				"Recursive" "1"
+			}
+			"FileExclusion" "steam_appid.txt"
+		}
+	}
+}
