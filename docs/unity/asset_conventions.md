@@ -73,8 +73,19 @@ always go to their scene's region.
 | DL-10 | DL-10 | 4 | 118.8–127.9 | 3.65 | 49 | 155 | 71,820 | 53 | 6 | 4.50 | 2.02 | 17 | 1 |
 | DL-11 | DL-11 | 5 | ≥ 127.9 | 4.28 | 94 | 221 | 85,262 | 95 | 34 | 9.44 | 4.25 | 10 | 3 |
 | DL-09_Atrium | DL-09–11 (backdrop) | 4 | > 30 m wide | 6.04 | 25 | 59 | 132,919 | 43 | 1 | 0.67 | 0.30 | 0 | 0 |
+| DL-12 | DL-12 | 6 | 199.0–216.0 | 2.32 | — | — | — | — | — | — | — | 0 | 2 |
+| DL-13 | DL-13 | 6 | 216.0–232.0 | 2.15 | — | — | — | — | — | — | — | 0 | 2 |
+| DL-14 | DL-14 | 6 | 232.0–248.0 | 1.05 | — | — | — | — | — | — | — | 0 | 2 |
+| DL-14a | DL-14a | 6 | 248.0–263.0 | 1.49 | — | — | — | — | — | — | — | 0 | 1 |
+| DL-14b | DL-14b | 6 | 263.0–278.0 | 0.62 | — | — | — | — | — | — | — | 0 | 1 |
+| DL-15 | DL-15 | 6 | 278.0–294.0 | 1.44 | — | — | — | — | — | — | — | 0 | 3 |
+| DL-16 | DL-16 | 6 | 294.0–310.0 | 1.23 | — | — | — | — | — | — | — | 0 | 2 |
+| DL-16a | DL-16a | 6 | 310.0–324.0 | 0.87 | — | — | — | — | — | — | — | 0 | 1 |
+| DL-17 | DL-17 | 6 | ≥ 324.0 | 3.04 | — | — | — | — | — | — | — | 0 | 1 |
 
-These cover all 777 objects of `set.glb`, plus 22 checkpoints and 4 mechanism anchors. Sizes are the .gltf plus the
+The prologue rows cover all 777 objects of `set.glb`, plus 22 checkpoints and 4 mechanism anchors. **Chapter 1
+(DL-12 to DL-17, from `attendance.glb`'s builder, `--chapter1 --no-prologue`)** adds 9 regions (14.2 MB of glTF + bin)
+and 18 textures, with its 15 checkpoints; its mesh and texture columns are not measured yet (`report.py` predates it). Sizes are the .gltf plus the
 .bin; textures are counted separately (7.3 MB, shared). The largest texture is 1621×192. Switch caps 7 textures above
 1024 px. On PC nothing is capped.
 
@@ -130,6 +141,7 @@ the glTF as extras and the sidecar as `source`.
 | DL-10 | uponly (y 1.6) | case, lift, carPlate, upButton, serviceCrank, serviceDoor, serviceUp, counterweight | TODO |
 | DL-11 | ringc, bedroom, forwarded | bell, junction, duct, c114Door, facade, desk, terminal | TODO |
 | DL-09_Atrium | — | — | TODO |
+| DL-12 to DL-17 | school, register, lesson, gallery13, window, hatch14, dorm, corridor, sickbay, class6, dismissed, crossing, store, kitchen, workshop | **none yet**: `conventions.py` `MECHANISMS` has no chapter 1 rows. Add them with U-10's class names when chapter 1's Core port (#18) names its mechanisms (§5's `dl12.*` to `dl17.*` IDs), then re-export with `--chapter1 --no-prologue --regions …` | TODO |
 
 \* anchor empty.
 

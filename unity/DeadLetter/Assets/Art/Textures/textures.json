@@ -175,6 +175,168 @@
    ]
   },
   {
+   "file": "dl12_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-12"
+   ]
+  },
+  {
+   "file": "dl12_lore.png",
+   "width": 1024,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-12"
+   ]
+  },
+  {
+   "file": "dl13_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-13"
+   ]
+  },
+  {
+   "file": "dl13_sheet.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-13"
+   ]
+  },
+  {
+   "file": "dl14_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14"
+   ]
+  },
+  {
+   "file": "dl14_chain.png",
+   "width": 64,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-14"
+   ]
+  },
+  {
+   "file": "dl14_drive.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14"
+   ]
+  },
+  {
+   "file": "dl14_panels.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14"
+   ]
+  },
+  {
+   "file": "dl14a_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14a"
+   ]
+  },
+  {
+   "file": "dl14a_signs.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14a"
+   ]
+  },
+  {
+   "file": "dl14b_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14b"
+   ]
+  },
+  {
+   "file": "dl15_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-15"
+   ]
+  },
+  {
+   "file": "dl15_drawing.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-15"
+   ]
+  },
+  {
+   "file": "dl16_mural.png",
+   "width": 4096,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-16"
+   ]
+  },
+  {
+   "file": "dl16a_atlas.png",
+   "width": 2048,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-16a"
+   ]
+  },
+  {
+   "file": "dl16a_chalk.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-16a"
+   ]
+  },
+  {
+   "file": "dl17_atlas.png",
+   "width": 2048,
+   "height": 2048,
+   "use": "color",
+   "regions": [
+    "DL-17"
+   ]
+  },
+  {
+   "file": "dl17_drawingwall.png",
+   "width": 1536,
+   "height": 768,
+   "use": "color",
+   "regions": [
+    "DL-17"
+   ]
+  },
+  {
    "file": "drag_marks.png",
    "width": 1024,
    "height": 640,
