@@ -165,3 +165,65 @@ namespace DeadLetter.Core.Tests
         }
     }
 }
+
+namespace DeadLetter.Core.Tests
+{
+    using DeadLetter.Core.Motor;
+    using DeadLetter.Core.Simulation.Replay;
+    using DeadLetter.Core.Simulation.Replay.Scripts;
+    using Xunit;
+
+    /// <summary>U-18 (#15): recorded input, replayed without the bot, reproduces the run bit for bit.</summary>
+    public class InputRecordingTests
+    {
+        private static string State(Dl01SimRig r) => Sim.Snapshot(r.Motor) + "#" + Mech.Dump(r.Graph) + "#" + r.Checkpoint + "#" + r.Region + "#" + r.Deaths;
+
+        [Theory]
+        [InlineData(1u, true)]       // the mechanical solve
+        [InlineData(201u, false)]    // a first playthrough with the trench fail and a respawn
+        public void ARecordedRun_ReplaysBitIdentically_ThroughItsText(uint seed, bool mechanical)
+        {
+            var a = new Dl01SimRig();
+            var rec = new InputRecording("DL-01", "start");
+            var trace = new System.Collections.Generic.List<string>();
+            var player = new Dl01WakeScript(new PlayerModel(seed, mechanical));
+            player.Begin(a);
+            while (!player.Done)
+            {
+                var input = player.Tick();
+                if (player.Done) break;
+                rec.Add(input);
+                a.Step(input);
+                trace.Add(State(a));
+            }
+            Assert.Null(player.Out.Error);
+            Assert.Equal(2, a.Region);
+
+            string text = rec.ToText();
+            var back = InputRecording.Parse(text);
+            Assert.Equal(rec.Steps, back.Steps);
+            Assert.Equal(text, back.ToText());
+            Assert.True(rec.Runs < rec.Steps / 4, "run-length encoding: " + rec.Runs + " runs for " + rec.Steps + " steps");
+
+            var b = new Dl01SimRig();
+            SimRun.Replay(b, back, i => Assert.Equal(trace[i], State(b)));
+            Assert.Equal(2, b.Region);
+            Assert.Equal(a.Deaths, b.Deaths);
+        }
+
+        [Fact]
+        public void Parse_RejectsBadInput()
+        {
+            Assert.Throws<System.FormatException>(() => InputRecording.Parse("nope 1 DL-01 start 1\n1 0\n"));
+            Assert.Throws<System.FormatException>(() => InputRecording.Parse("dlrec 2 DL-01 start 1\n1 0\n"));
+            Assert.Throws<System.FormatException>(() => InputRecording.Parse("dlrec 1 DL-01 start 2\n1 0\n"));
+            Assert.Throws<System.FormatException>(() => InputRecording.Parse("dlrec 1 DL-01 start 1\n1 0 X\n"));
+            var r = InputRecording.Parse("# a comment\ndlrec 1 DL-01 hall 3\n2 1 R\n1 -0.5 JjA\n");
+            Assert.Equal("hall", r.Checkpoint);
+            var all = new System.Collections.Generic.List<MotorInput>(r.Inputs());
+            Assert.Equal(3, all.Count);
+            Assert.True(all[0].RunModifierHeld && all[0].Move == 1);
+            Assert.True(all[2].JumpPressed && all[2].JumpHeld && all[2].MoveIsAnalog && all[2].Move == -0.5);
+        }
+    }
+}
