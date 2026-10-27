@@ -89,11 +89,11 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(release + 34, cue);                      // the thud at 0.56 s (L1683)
             Assert.Equal(release + 54, open);                     // settled at 0.9 s
             Assert.InRange((flinch - release) * 24.0 / 60, 39 - 31.4, 39 - 31 + 0.8);   // Pull f39 chains Flinch (L1875)
-            Assert.Equal(96, actEnd - flinch);                    // 1.6 s of Flinch, still crouched, then the act ends (L1876)
+            Assert.Equal(97, actEnd - flinch);                    // Flinch.time >= 1.6 (97 steps), still crouched, then the act ends (L1876)
             Assert.True(crouchedFlinch);
             Assert.False(s.Motor.Crouched);
             Assert.Equal(15.0, s.Shutter.Position);
-            Assert.InRange(s.Latch.LeverDeg, 71.5, 72);           // leverAngleAt(39), L1872
+            Assert.Equal(72, s.Latch.LeverDeg, 9);                // the lever runs on with Pull to f40 under the Flinch (L1872)
             Assert.False(s.Motor.PreviewUse(out _));              // nothing else to use at the latch
         }
 

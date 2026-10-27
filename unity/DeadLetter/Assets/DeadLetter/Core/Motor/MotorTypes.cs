@@ -126,16 +126,19 @@ namespace DeadLetter.Core.Motor
         }
     }
 
-    /// <summary>Clip-frame comparisons with a tolerance, so accumulated step time never misses a threshold by 1e-15.</summary>
+    /// <summary>
+    /// Clip-frame comparisons, exactly the prototype's: <c>f &gt;= n</c> with no slack. The clip clock accumulates
+    /// <c>dt · timeScale</c> per step as the three.js mixer does (and the mantle <c>m.t += dt</c>), so a threshold a step
+    /// lands on to within rounding (56 frames = 140 steps of 1/60 s) is reached when the prototype's is: on the next step
+    /// if the sum falls a hair short (the mantle ends on step 141, L1946). A slack would end it a step early.
+    /// </summary>
     public static class ClipClock
     {
-        public const double Epsilon = 1e-6;
-
         /// <summary>The prototype's <c>f &gt;= n</c>.</summary>
-        public static bool Reached(double frame, double threshold) => frame + Epsilon >= threshold;
+        public static bool Reached(double frame, double threshold) => frame >= threshold;
 
-        /// <summary>True on the one step where the clip passes <paramref name="threshold"/>.</summary>
+        /// <summary>True on the one step where the clip passes <paramref name="threshold"/> (<c>prev &lt; n &amp;&amp; f &gt;= n</c>).</summary>
         public static bool Crossed(double prevFrame, double frame, double threshold)
-            => prevFrame + Epsilon < threshold && frame + Epsilon >= threshold;
+            => prevFrame < threshold && frame >= threshold;
     }
 }

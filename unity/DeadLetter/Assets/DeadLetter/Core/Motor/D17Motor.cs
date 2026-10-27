@@ -324,18 +324,25 @@ namespace DeadLetter.Core.Motor
             }
             X = nx;
 
-            // Vertical (L2012–L2034). Gravity is integrated exactly: y += vy·dt − ½g·dt², vy −= g·dt.
+            // Vertical (L2012–L2034). Gravity is integrated exactly: y += vy·dt − ½g·dt², vy −= g·dt. In parity mode Vy is
+            // the prototype's less ParityVelocityOffset (launches and falls from rest start lower by it), so heights match
+            // its Euler step and thresholds compare the prototype's velocity (pvy).
             double support = LaneProbe.SupportAt(_w, X, Y, _c.Foot);
             if (!Grounded)
             {
                 Y += Vy * dt - 0.5 * _c.Gravity * dt * dt;
                 Vy -= _c.Gravity * dt;
+                double pvy = Vy + _c.ParityVelocityOffset;
                 double ceil = _w.CeilingAt(X, Y);
-                if (Vy > 0 && Y + _c.StandHeight > ceil) { Vy = 0; Y = ceil - _c.StandHeight; Emit(MotorEventKind.Bonk, null, 0); }
-                if (Clip == ClipNames.JumpAir && Vy < _c.FallClipVy && PeakY - Y > _c.FallClipDrop && Hold == HoldKind.None)
+                if (pvy > 0 && Y + _c.StandHeight > ceil)                                                   // L2016
+                {
+                    Vy = _c.FallStartVelocity; pvy = 0; Y = ceil - _c.StandHeight;
+                    Emit(MotorEventKind.Bonk, null, 0);
+                }
+                if (Clip == ClipNames.JumpAir && pvy < _c.FallClipVy && PeakY - Y > _c.FallClipDrop && Hold == HoldKind.None)
                     SetClip(ClipNames.Fall, 0.22, 1);
                 // Catch a ledge edge mid-air (L2021–L2022).
-                if (_w.LedgeAhead(X, Y, Facing, _c.MantleScanAir, _c.StepUp, out var la) && Vy < _c.MantleAirMaxVy
+                if (_w.LedgeAhead(X, Y, Facing, _c.MantleScanAir, _c.StepUp, out var la) && pvy < _c.MantleAirMaxVy
                     && la.Top - Y > _c.MantleMin && la.Top - Y <= _c.MantleMax + _c.MantleAirExtra)
                 {
                     StartMantle(la);
@@ -359,7 +366,7 @@ namespace DeadLetter.Core.Motor
             }
             else if (Y > support + 0.001)
             {
-                Grounded = false; Vy = 0; PeakY = Y;            // walked off an edge
+                Grounded = false; Vy = _c.FallStartVelocity; PeakY = Y;   // walked off an edge (vy = 0, L2032; M3: see FallStartVelocity)
                 SetClip(ClipNames.JumpAir, 0.12, 1);
             }
             else Y = support;
@@ -641,19 +648,13 @@ namespace DeadLetter.Core.Motor
             {
                 case ActPhase.Approach: StepApproach(dt); return;
                 case ActPhase.Turn:
-                    if (Math.Abs(Yaw - Math.PI) < _c.TurnTolerance) a.Phase = ActPhase.StepIn;   // L3606
+                    if (Math.Abs(Yaw - Math.PI) < _c.TurnTolerance) BeginStepIn();       // L3606; on the lane: the clip now (L1879)
                     else SetClip(ClipNames.Walk, 0.2, 0.6);
                     return;
                 case ActPhase.StepIn:
                 {
+                    if (TryEnterStationClip()) return;                                         // L3609–L3613
                     double dz = a.InZ - Z;
-                    if (Math.Abs(dz) < _c.ArriveZ)                                             // L3609–L3613
-                    {
-                        Z = a.InZ;
-                        if (a.Verb == Verb.Use) a.ClipName = ((IUsable)a.Target).ProfileFor(Query()).Clip;   // asked again here (L3305, L2910)
-                        EnterClip(a.ClipName, 0.2);
-                        return;
-                    }
                     Z += Smooth.Sign(dz) * Math.Min(Math.Abs(dz), _c.StepInSpeed * dt);
                     SetClip(ClipNames.Walk, 0.2, _c.StepInSpeed / _c.ClipSpeedWalk);
                     return;
@@ -755,9 +756,32 @@ namespace DeadLetter.Core.Motor
                     return;
                 default:
                     if (a.Turn) { _hasYawOverride = true; _yawOverride = Math.PI; a.Phase = ActPhase.Turn; }
-                    else a.Phase = ActPhase.StepIn;
+                    else BeginStepIn();                                                  // on the lane: the clip now (L1846–L1850)
                     return;
             }
+        }
+
+        /// <summary>
+        /// Into the step-in phase. A station on the lane (already within <see cref="MotorConfig.ArriveZ"/> of its depth)
+        /// starts its clip on this same step, as the prototype's does on the step he arrives (<c>updateAct</c>,
+        /// L1846–L1850: the latch's Pull) or finishes turning (L1879: the crank). A station in the set starts it on the
+        /// step he reaches its depth.
+        /// </summary>
+        private void BeginStepIn()
+        {
+            _act.Phase = ActPhase.StepIn;
+            TryEnterStationClip();
+        }
+
+        /// <summary>At the station's depth: snap to it, ask the profile again (L3305, L2910) and start the clip. False while still stepping in.</summary>
+        private bool TryEnterStationClip()
+        {
+            var a = _act;
+            if (!(Math.Abs(a.InZ - Z) < _c.ArriveZ)) return false;
+            Z = a.InZ;
+            if (a.Verb == Verb.Use) a.ClipName = ((IUsable)a.Target).ProfileFor(Query()).Clip;   // asked again here
+            EnterClip(a.ClipName, 0.2);
+            return true;
         }
 
         // ---- Hop: board, alight, a chained hop (hopTo, L2884–L2894) -------------------------------------------------
@@ -827,7 +851,7 @@ namespace DeadLetter.Core.Motor
             var r = Ride;
             SyncRide();
             RideStatus st = r.Status(_rideToken);
-            if (st == RideStatus.Gone) { LeaveRide("gone"); Grounded = false; Vy = 0; PeakY = Y; return; }
+            if (st == RideStatus.Gone) { LeaveRide("gone"); Grounded = false; Vy = _c.FallStartVelocity; PeakY = Y; return; }
             if (st == RideStatus.Unloading)                                               // turn to the landing, then hop (L2970)
             {
                 _act.Reset(); _act.Verb = Verb.Alight; _act.Target = r; _act.Token = _rideToken; _act.Phase = ActPhase.Turn;

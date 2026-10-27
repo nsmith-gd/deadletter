@@ -125,8 +125,15 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             }
         }
 
-        /// <summary>Strokes counted by the act at <paramref name="frame"/>, including those it resumed from.</summary>
-        private int StrokesAt(double frame) => _base + (int)Math.Floor((frame + ClipClock.Epsilon) / _p.LoopFrames);
+        /// <summary>
+        /// Strokes counted by the act at <paramref name="frame"/>, including those it resumed from. The loop wraps when
+        /// the mixer's time reaches the clip's duration in seconds (three.js LoopRepeat); counting in frames, a wrap that
+        /// lands on a step to within rounding is counted on that step (<see cref="WrapSlack"/>).
+        /// </summary>
+        private int StrokesAt(double frame) => _base + (int)Math.Floor((frame + WrapSlack) / _p.LoopFrames);
+
+        /// <summary>Frames of slack for the loop wrap (seconds-vs-frames rounding), as before ClipClock became exact.</summary>
+        private const double WrapSlack = 1e-6;
 
         protected override void WriteFields(ISnapshotWriter w)
         {

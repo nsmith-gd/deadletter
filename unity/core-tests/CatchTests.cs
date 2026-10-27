@@ -45,12 +45,15 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(ActStepKind.Then, then.Kind);                 // the same act plays on (#22)
             Assert.Equal(ClipNames.Flinch, then.Clip);
             Assert.Equal(0.06, then.Fade);                             // setClip('Flinch', 0.06), L1875
-            Assert.Equal(ActStepKind.Continue, latch.OnActFrame(new ActFrame(37.6, 38.0, 95 * Mech.Dt, none, "Flinch", 1)).Kind);
-            Assert.True(latch.OnActFrame(new ActFrame(38.0, 38.4, 96 * Mech.Dt, none, "Flinch", 1)).IsDone);   // Flinch f38.4 = 1.6 s, L1876
+            double t = 0;
+            for (int i = 0; i < 96; i++) t += Mech.Dt;                 // the mixer's time after 96 steps: 1.5999999999999992
+            Assert.Equal(ActStepKind.Continue, latch.OnActFrame(new ActFrame(37.6, 38.0, t - Mech.Dt, none, "Flinch", 1)).Kind);
+            Assert.Equal(ActStepKind.Continue, latch.OnActFrame(new ActFrame(38.0, 38.4, t, none, "Flinch", 1)).Kind);
+            Assert.True(latch.OnActFrame(new ActFrame(38.4, 38.8, t + Mech.Dt, none, "Flinch", 1)).IsDone);   // time >= 1.6 s, L1876
 
             var g = Mech.Graph(new Latch("dl01.latch", LatchParams.Dl01Latch()));
             int steps = Mech.PlayAct(g, (Latch)g[0]);
-            Assert.Equal(98 + 96, steps);                              // to Pull f39.2, then 1.6 s of Flinch
+            Assert.Equal(98 + 97, steps);                              // to Pull f39.2, then Flinch.time >= 1.6 on its 97th step
         }
 
         [Theory]
@@ -68,8 +71,8 @@ namespace DeadLetter.Core.Tests
             int creaks = 0;
             Mech.PlayAct(g, latch, onStep: (k, f) =>
             {
-                double pull = Math.Min(k * Mech.FramesPerStep, 39.2);  // through the Flinch the lever stays where the pull left it
-                Assert.Equal(Latch.LeverAngleAt(Math.Min(pull, 40)), latch.LeverDeg, 12);
+                double pull = k * Mech.FramesPerStep;                  // the lever runs on with Pull under the Flinch (L1871–L1872) ...
+                Assert.Equal(Latch.LeverAngleAt(Math.Min(pull, 40)), latch.LeverDeg, 9);   // ... to its last key, f40
                 if (Mech.Emitted(g, "dl01.latch", LatchEvent.Creak)) { creaks++; Assert.InRange(f, 20, 20.41); }
             });
             Assert.Equal(1, creaks);

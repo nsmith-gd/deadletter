@@ -45,3 +45,17 @@ in this order, once per 1/60 s step:
 
 The simulator clears edge-triggered input (Jump, Use) after the step (#12). Everything above is allocation-free per
 step and deterministic.
+
+Notes for parity with the prototype (golden-trace replay):
+
+- A station with no depth (`StandZ` 0) starts its clip on the step he arrives (no turn) or finishes turning (L1846–L1850,
+  L1879); stations that step in start it on the step he reaches their depth.
+- Clip-frame thresholds are the prototype's `f >= n` exactly (`ClipClock`), so the 56-frame mantle ends on its 141st step.
+- Falls integrate like the prototype at 60 Hz (`MotorConfig.JumpMode.Parity60Hz`): a fall from rest (walking off, a
+  bonk, a ride that is gone) starts at `vy = −g/(2·60)`, as the jump's launch speed is lowered by `g/(2·60)`, so his
+  height matches `vy −= g·dt; y += vy·dt` on every step. `D17Motor.Vy` is then the prototype's vy less
+  `MotorConfig.ParityVelocityOffset`; the motor adds it back for the prototype's velocity thresholds.
+- The latch's Flinch is chained to its Pull (one act, crouched throughout); a time threshold in seconds compares the
+  clip's seconds (`ActFrame.Time >= 1.6`), not frames, as the prototype's `actions.Flinch.time >= 1.6` does.
+- Known residual: DL-05's toy (L3606) turns, then spends a step in `in` with no depth before its clip; the port starts
+  the clip on the turn's step, as the crank (L1879).

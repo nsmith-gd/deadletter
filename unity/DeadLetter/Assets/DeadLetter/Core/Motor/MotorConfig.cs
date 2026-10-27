@@ -94,6 +94,21 @@ namespace DeadLetter.Core.Motor
         public double JumpVelocityParity => JumpVelocityDesigned - Gravity / (2 * JumpParityRate);
         /// <summary>Launch speed the motor uses, per <see cref="JumpMode"/>.</summary>
         public double JumpVelocity => JumpMode == JumpMode.Designed ? JumpVelocityDesigned : JumpVelocityParity;
+        /// <summary>
+        /// What the parity launch speed shifts every airborne velocity by: <c>GRAVITY/(2·60)</c> ≈ 0.0817 m/s in
+        /// <see cref="Motor.JumpMode.Parity60Hz"/>, 0 in Designed. With exact integration, a body launched at
+        /// <c>v − g·dt/2</c> is where the prototype's Euler step (<c>vy −= g·dt; y += vy·dt</c>, L2013–L2014) puts one
+        /// launched at <c>v</c>, on every 60 Hz step; its velocity is the prototype's less this. The motor adds it back
+        /// before comparing a velocity with the prototype's thresholds (the bonk's vy &gt; 0, the fall clip's vy &lt; −1.4,
+        /// the mid-air catch's vy &lt; 1.2), so they trip on the prototype's steps.
+        /// </summary>
+        public double ParityVelocityOffset => JumpMode == JumpMode.Designed ? 0 : Gravity / (2 * JumpParityRate);
+        /// <summary>
+        /// The velocity a fall from rest starts at (walking off an edge L2032, a bonk L2016, a ride that is gone): 0 in
+        /// Designed; <c>−GRAVITY/(2·60)</c> in parity, so the fall's height matches the prototype's at every 60 Hz step
+        /// (exact integration from rest would sit g·dt²·n/2 above it at the n-th step: up to 1.8 cm on DL-01's falls).
+        /// </summary>
+        public double FallStartVelocity => -ParityVelocityOffset;
 
         // ---- Body (L309–L310) ------------------------------------------------------------------------------------
         /// <summary><c>STAND_H</c>, L309.</summary>
