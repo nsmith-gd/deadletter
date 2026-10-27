@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    xUnit tests for the engine-free DeadLetter.Core sources, run with plain `dotnet test`
+    (no Unity editor needed). Core itself is compiled by ../core-build (netstandard2.1, C# 9,
+    the same API surface and language version Unity 6 uses), so a net5+ API in Core fails
+    that build rather than slipping through. This test project targets net8.0 only to host
+    the test runner; its own test code may use net8 APIs, Core may not.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RootNamespace>DeadLetter.Core.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../core-build/DeadLetter.Core.Build.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+</Project>

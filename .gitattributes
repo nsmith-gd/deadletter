@@ -1,0 +1,40 @@
+# Dead Letter — repo-wide git attributes.
+# Only patterns below are affected; nothing here matches existing files in game/, art/,
+# docs/, tools/ etc., so their handling is unchanged.
+
+# ---- Unity YAML assets (force text + LF, Smart Merge) ----
+# merge=unityyamlmerge needs a one-time local git config per machine; see unity/README.md.
+*.unity              text eol=lf merge=unityyamlmerge
+*.prefab             text eol=lf merge=unityyamlmerge
+*.asset              text eol=lf merge=unityyamlmerge
+LightingData.asset   binary
+*.mat                text eol=lf merge=unityyamlmerge
+*.anim               text eol=lf merge=unityyamlmerge
+*.controller         text eol=lf merge=unityyamlmerge
+*.overrideController text eol=lf merge=unityyamlmerge
+*.physicMaterial     text eol=lf merge=unityyamlmerge
+*.playable           text eol=lf merge=unityyamlmerge
+*.mask               text eol=lf merge=unityyamlmerge
+*.meta               text eol=lf merge=unityyamlmerge
+*.asmdef             text eol=lf
+*.asmref             text eol=lf
+
+# ---- Code ----
+*.cs                 text diff=csharp
+
+# ---- Git LFS (DISABLED — needs a director decision) ----
+# The repo already commits binaries (≈143 png, 49 mp3, 5 mp4, 4 glb, 3 blend) as normal
+# git objects. Enabling these lines changes how those files are stored for every future
+# change and should be paired with a deliberate `git lfs migrate` (history rewrite) or an
+# explicit "new files only" policy. Uncomment only once that's decided.
+# *.fbx   filter=lfs diff=lfs merge=lfs -text
+# *.glb   filter=lfs diff=lfs merge=lfs -text
+# *.png   filter=lfs diff=lfs merge=lfs -text
+# *.psd   filter=lfs diff=lfs merge=lfs -text
+# *.exr   filter=lfs diff=lfs merge=lfs -text
+# *.tga   filter=lfs diff=lfs merge=lfs -text
+# *.wav   filter=lfs diff=lfs merge=lfs -text
+# *.ogg   filter=lfs diff=lfs merge=lfs -text
+# *.mp3   filter=lfs diff=lfs merge=lfs -text
+# *.mp4   filter=lfs diff=lfs merge=lfs -text
+# *.blend filter=lfs diff=lfs merge=lfs -text
