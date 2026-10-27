@@ -73,7 +73,7 @@ namespace DeadLetter.Core.Scenes
         public Func<MechanismGraph, ILaneContributor[]> LaneContributors;
         /// <summary>Bespoke rules (triggers, follow-up acts, transits); null = none.</summary>
         public Func<SceneRules> Rules;
-        /// <summary>The motor's tuning in this scene (null = <see cref="MotorConfig.Prototype"/>), e.g. DL-06's lever step-in speed (M10).</summary>
+        /// <summary>The motor's tuning in this scene (null = <see cref="MotorConfig.Prototype"/>).</summary>
         public Func<MotorConfig> Motor;
         /// <summary>Things he can use that are not mechanisms (a pushable's <c>PushTwin</c> face), registered after the graph's; null = none.</summary>
         public Func<MechanismGraph, IInteractable[]> Interactables;

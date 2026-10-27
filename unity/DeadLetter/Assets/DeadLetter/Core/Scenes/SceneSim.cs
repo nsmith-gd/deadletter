@@ -203,8 +203,8 @@ namespace DeadLetter.Core.Scenes
         /// <paramref name="checkpoint"/>, which may still be the previous scene's (DL-03 starts under DL-02's <c>room</c>),
         /// and he stands at rest at (<paramref name="x"/>, <paramref name="y"/>). <paramref name="carry"/>: the previous
         /// scene's service, whose game (flags, seen moments, play time, options) goes on here; it is flushed first. Without
-        /// it the game is kept as <see cref="Begin"/> keeps it. Nothing is written. The hand-over of a moving D-17 is the
-        /// runtime's (the motor cannot be given a velocity, #28).
+        /// it the game is kept as <see cref="Begin"/> keeps it. Nothing is written. A moving D-17 is handed over by setting the
+        /// motor's state after this (<see cref="D17Motor.SetState"/>).
         /// </summary>
         public void Handover(string checkpoint, double x, double y, int facing = 1, CheckpointService carry = null)
         {

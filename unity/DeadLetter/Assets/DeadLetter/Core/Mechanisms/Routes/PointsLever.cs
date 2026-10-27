@@ -49,7 +49,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         public static PointsLeverParams Dl06StopLever() => new PointsLeverParams
         {
             // reach 0.38 (L2867); steps in to LEVER_Z + 0.26 = 0.11 (three) = −0.11 (Unity, §0.2), L2901
-            Station = new Station(standX: 33 + 29.5, reach: 0.38, face: +1, standZ: -0.11),
+            Station = new Station(standX: 33 + 29.5, reach: 0.38, face: +1, standZ: -0.11, stepInSpeed: Station.LeverStepInSpeed),   // 0.4, L2916
             OffDeg = 6, OnDeg = -18,
             StartWith = "dl06.scanner",
             OnAfter = "scanned",                                       // game.belt.running = !!c.scanned, L8032
@@ -58,7 +58,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         /// <summary>DL-06: the points lever, <c>POINTS_LEVER_X</c> 63.3; Off = chute (−18°), On = exit (6°); stuck while the belt runs (L2457–L2458, L2910).</summary>
         public static PointsLeverParams Dl06Points() => new PointsLeverParams
         {
-            Station = new Station(standX: 33 + 30.3, reach: 0.38, face: +1, standZ: -0.11),
+            Station = new Station(standX: 33 + 30.3, reach: 0.38, face: +1, standZ: -0.11, stepInSpeed: Station.LeverStepInSpeed),   // 0.4, L2916
             OffDeg = -18, OnDeg = 6,
             Lock = "dl06.stopLever", StartWith = "dl06.scanner", IsPoints = true,
             OnAfter = "landing", OnUntil = "school",                   // game.route = c.upper ? 'exit' : 'chute', L8032 (upper: landing..forwarded)

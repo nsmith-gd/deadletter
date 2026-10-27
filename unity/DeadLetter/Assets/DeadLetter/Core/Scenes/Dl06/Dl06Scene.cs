@@ -45,9 +45,6 @@ namespace DeadLetter.Core.Scenes.Dl06
         public const string ScannedCheckpoint = "scanned";
         public const double ScannedX = Dl06Lane.Off3 + 30.3;
 
-        /// <summary>The levers' step-in and out speed (<c>game.z += … 0.4 · dt</c>, L2916): the motor's is 0.45 (M10).</summary>
-        public const double LeverStepSpeed = 0.4;
-
         /// <summary><c>CHUTE</c> (L2463): where a tipped carrier sends him and the post, (x, y) at its top and its foot.</summary>
         public const double ChuteX0 = Dl06Lane.Off3 + 36.6, ChuteY0 = 0.0, ChuteX1 = Dl06Lane.Off3 + 39.3, ChuteY1 = -2.4;
         /// <summary><c>tipOut</c>/<c>updateFall</c> (L2977–L2994): 0.8 m/s down the chute, + 3.5 m/s², 0.1 above it; off its foot at
@@ -82,7 +79,6 @@ namespace DeadLetter.Core.Scenes.Dl06
             Interactables = FloorInteractables,
             Lane = Dl06Lane.Table,
             LaneContributors = Dl06Lane.Contributors,
-            Motor = MotorTuning,
             Rules = rules,
         };
 
@@ -125,18 +121,6 @@ namespace DeadLetter.Core.Scenes.Dl06
             Radius = Dl06Lane.WeightR, Half = Dl06Lane.WeightR, Height = Dl06Lane.WeightH,
             BelowWrist = 0.28,
         };
-
-        /// <summary>
-        /// The motor's tuning here: the prototype's, but the levers step in and out at 0.4 m/s (L2902, L2916), where the
-        /// motor's station step-in is 0.45 (M10: <see cref="MotorConfig.StepInSpeed"/> is one speed for every station).
-        /// Nothing else on this floor steps off the lane, so the scene sets it for the floor.
-        /// </summary>
-        public static MotorConfig MotorTuning()
-        {
-            var c = MotorConfig.Prototype();
-            c.StepInSpeed = LeverStepSpeed;
-            return c;
-        }
     }
 
     /// <summary>
@@ -274,15 +258,8 @@ namespace DeadLetter.Core.Scenes.Dl06
             sim.StartAct(new QuirkAct(clip, QuirkAct.ClipSeconds(clip), cancel, startClock: sim.Clock));
         }
 
-        /// <summary>
-        /// <c>game.vx = 0</c>. The motor can be stopped only by <see cref="D17Motor.Place"/> (#28), which also settles his yaw on
-        /// his facing (M9), so it is placed only when he is moving; standing, nothing changes.
-        /// </summary>
-        protected static void StopMotor(SceneSim sim)
-        {
-            var m = sim.Motor;
-            if (m.Vx != 0) m.Place(m.X, m.Y, m.Facing);
-        }
+        /// <summary><c>game.vx = 0</c> (<see cref="D17Motor.Stop"/>).</summary>
+        protected static void StopMotor(SceneSim sim) => sim.Motor.Stop();
     }
 
     /// <summary>

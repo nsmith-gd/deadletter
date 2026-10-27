@@ -127,7 +127,6 @@ namespace DeadLetter.Core.Scenes.Dl05
         public const string SeenBodyGrab = "bodyGrab", SeenLabel = "label5";
 
         private Pushable _drum, _body;
-        private IPushable[] _faces = Array.Empty<IPushable>();
         private CheckpointService _save;
         private int _bodyGrabSeen, _labelSeen;                                         // handles in _save.Seen
         private ActPhase _lastPhase;
@@ -149,10 +148,6 @@ namespace DeadLetter.Core.Scenes.Dl05
             _labelSeen = _save.Seen.Resolve(SeenLabel);
             _drum = sim.Graph.Get<Pushable>("dl05.drum");
             _body = sim.Graph.Get<Pushable>("dl05.body");
-            // The faces in the prototype's PUSHABLES order (drum, body, then the twins, L4273–L4295).
-            _faces = new IPushable[] { _drum, _body, TwinOf(sim, _drum), TwinOf(sim, _body) };
-            _drum.CanStandAt = stand => GripWins(sim, _drum, stand);
-            _body.CanStandAt = stand => GripWins(sim, _body, stand);
             _patAt = double.NaN;                     // nothing kills here, so no timeout is pending across a rebuilt world
             _lastPhase = ActPhase.None;
         }
@@ -207,38 +202,6 @@ namespace DeadLetter.Core.Scenes.Dl05
             if (sim.Region != Dl05Lane.Region) sim.Exit();
         }
 
-        /// <summary>
-        /// The prototype's push branch takes the nearest grip in reach, whichever way he faces (<c>nearUse</c>, L4251–L4255:
-        /// <c>d &lt; best.d</c> in <c>PUSHABLES</c> order). U-11's resolver ranks targets in front of him first (#28, M7): at
-        /// #10227, facing left between the body's grip 0.30 ahead and the drum's 0.15 behind, it takes the body. So each face
-        /// here is available only while it is the nearest grip (<see cref="Pushable.CanStandAt"/> gets the asking face's
-        /// stand point). Reads state only; never asks a face's <c>IsAvailable</c> (which calls this).
-        /// </summary>
-        private bool GripWins(SceneSim sim, Pushable asking, double stand)
-        {
-            double x = sim.Motor.X, y = sim.Motor.Y, bestD = double.PositiveInfinity;
-            IPushable best = null;
-            for (int i = 0; i < _faces.Length; i++)
-            {
-                var f = _faces[i];
-                var b = Base(f);
-                if (b.State != PushableState.Free || Math.Abs(y - f.FloorY) >= 0.05) continue;               // state 'free'; L4254
-                if (!double.IsNaN(b.Params.MinRoom) && !(b.Max - b.X > b.Params.MinRoom)) continue;            // avail, L4281
-                double dx = x - (f.X - f.Side * f.Gap), d = Math.Abs(dx);
-                if (d < (dx * f.Side < 0 ? f.BackReach : f.ForwardReach) && d < bestD) { best = f; bestD = d; }
-            }
-            if (best == null || !ReferenceEquals(Base(best), asking)) return false;
-            return stand == asking.X - best.Side * asking.Gap;
-        }
-
-        private static Pushable Base(IPushable f) => f is PushTwin tw ? tw.Base : (Pushable)f;
-
-        private static IPushable TwinOf(SceneSim sim, Pushable p)
-        {
-            foreach (var it in sim.Resolver.Registered) if (it is PushTwin tw && ReferenceEquals(tw.Base, p)) return tw;
-            throw new InvalidOperationException(p.Id + " has no twin registered.");
-        }
-
         private bool IsBody(IInteractable t) => ReferenceEquals(t, _body) || (t is PushTwin tw && ReferenceEquals(tw.Base, _body));
 
         private bool PatDue(SceneSim sim) => !double.IsNaN(_patAt) && sim.Clock >= _patAt - 1e-9;
@@ -248,14 +211,11 @@ namespace DeadLetter.Core.Scenes.Dl05
             => !sim.Busy && sim.Motor.Hold == HoldKind.None && !sim.Motor.IsMantling && sim.Motor.Grounded;
 
         /// <summary>
-        /// <c>playQuirk(clip)</c> (L3841–L3845): cancellable, and he stops (<c>game.vx = 0</c>). #28 (M9): the motor
-        /// can only be stopped by <see cref="D17Motor.Place"/>, which also settles his yaw on his facing and stands him up;
-        /// under the hatch the motor crouches him again on its next step (the clearance, L1975).
+        /// <c>playQuirk(clip)</c> (L3841–L3845): cancellable, and he stops (<c>game.vx = 0</c>, <see cref="D17Motor.Stop"/>).
         /// </summary>
         private static void StartQuirk(SceneSim sim, string clip)
         {
-            var m = sim.Motor;
-            m.Place(m.X, m.Y, m.Facing);
+            sim.Motor.Stop();
             sim.StartAct(new QuirkAct(clip, QuirkAct.ClipSeconds(clip), cancel: true, startClock: sim.Clock));
         }
     }

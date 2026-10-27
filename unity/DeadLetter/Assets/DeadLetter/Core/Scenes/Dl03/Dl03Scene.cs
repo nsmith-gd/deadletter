@@ -114,8 +114,9 @@ namespace DeadLetter.Core.Scenes.Dl03
                 && Math.Abs(tx - Dl03Scene.GateX) > 0.2 && tx < Dl03Scene.Exit2X;
             if (!onDeck && !floorOk)
             {
-                // Refused: no act. The prototype also stops him dead (game.vx = 0, L1821); the motor has no way to (#28).
-                input.UsePressed = false;
+                // Refused: no act; he stops dead and the step ends there (game.vx = 0, L1821; return, L1962).
+                input = MotorInput.None;
+                m.Stop();
                 sim.Cue("sound:worried");
                 return;
             }
@@ -132,9 +133,7 @@ namespace DeadLetter.Core.Scenes.Dl03
                 var m = sim.Motor;
                 if (!m.IsActing && !m.IsMantling && m.Hold == HoldKind.None && m.Grounded)
                 {
-                    // #28 (M9): no way to stop him but Place (which also settles his yaw on his facing: the slam comes
-                    // after he has walked out from under the gate, turned along the lane).
-                    m.Place(m.X, m.Y, m.Facing);
+                    m.Stop();                                                                     // game.vx = 0
                     sim.StartAct(new QuirkAct("Startle", QuirkAct.ClipSeconds("Startle"), cancel: true, startClock: sim.Clock));
                 }
             }

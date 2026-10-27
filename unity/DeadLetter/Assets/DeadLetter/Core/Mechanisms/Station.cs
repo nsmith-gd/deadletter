@@ -26,14 +26,23 @@ namespace DeadLetter.Core.Mechanisms
         /// L1835): +1 when he is left of <see cref="ReachX"/>, else −1.
         /// </summary>
         public readonly bool FaceTowards;
+        /// <summary>
+        /// How fast he steps in to <see cref="StandZ"/> and back out (m/s); NaN = the motor's (0.45, L1845, L3615). The
+        /// prototype's levers and pawl step at 0.4 (<c>updateAct3</c> L2916, <c>updateAct4</c> L3306).
+        /// </summary>
+        public readonly double StepInSpeed;
 
         public Station(double standX, double reach, int face, double standZ = 0, double floorY = 0, double reachX = double.NaN,
-            bool faceTowards = false)
+            bool faceTowards = false, double stepInSpeed = double.NaN)
         {
             StandX = standX; Reach = reach; Face = face; StandZ = standZ; FloorY = floorY;
             ReachX = double.IsNaN(reachX) ? standX : reachX;
             FaceTowards = faceTowards;
+            StepInSpeed = stepInSpeed;
         }
+
+        /// <summary>The prototype's lever and pawl step-in speed (<c>game.z += … 0.4 · dt</c>, L2916, L3306).</summary>
+        public const double LeverStepInSpeed = 0.4;
 
         /// <summary>He is in reach and on its floor.</summary>
         public bool Answers(in InteractionQuery q)
@@ -41,7 +50,7 @@ namespace DeadLetter.Core.Mechanisms
 
         /// <summary>The stand point, depth and facing for <paramref name="q"/>; the anchor is the reach centre.</summary>
         public StationPose Pose(in InteractionQuery q)
-            => new StationPose(StandX, FaceTowards ? (q.X < ReachX ? 1 : -1) : Face, StandZ, ReachX);
+            => new StationPose(StandX, FaceTowards ? (q.X < ReachX ? 1 : -1) : Face, StandZ, ReachX, StepInSpeed);
     }
 
     /// <summary>

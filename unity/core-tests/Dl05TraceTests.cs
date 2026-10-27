@@ -18,14 +18,15 @@ namespace DeadLetter.Core.Tests
     /// DL-05's fields: the drum, the body, the weigh-in's load, reading, needle, dip and twitch, the hatch, the flag)
     /// replayed through Core's <see cref="SceneSim"/> with <see cref="Dl05Scene.Def"/>, input for input, compared at every
     /// 60 Hz step.
-    /// <para><b>One window</b>, from his last rest before DL-05 (the end of DL-04's bay touch: the motor cannot be handed a
-    /// moving D-17, <see cref="SceneSim.Handover"/>, under DL-04's <c>solved</c>) through <c>bay</c>, <c>ration</c>, the label
+    /// <para><b>One window</b>, from his last rest before DL-05 (the end of DL-04's bay touch, handed over in the recorded
+    /// state, <see cref="SceneSim.Handover"/> and <see cref="D17Motor.SetState"/>, under DL-04's <c>solved</c>) through <c>bay</c>, <c>ration</c>, the label
     /// check, standing on the plate (UNDER), the drum pushed over the plate (UNDER, PERSON, OVER) and on to the wall (set),
     /// the first grab of the body and its hesitation, the drag onto the plate (PERSON, served, the hatch winding up, the
     /// flag), the pat, the crawl under the hatch, <c>hatch</c>, and out into region 3, DL-06.</para>
     /// <para><b>Tolerance 1e-6</b> on every continuous value (the trace rounds to 1e-6; the hand-over pose too). Discrete
     /// signals (acts and phases, holds, grounded, the drum's and the body's states, the reading, served, checkpoints, the
-    /// region and the exit) fall on the same step. One compensation, M9 (#28): the hand-over's yaw (below).</para>
+    /// region and the exit) fall on the same step. Nothing is compensated: the hand-over is the recorded state (he is still
+    /// turning back to the lane from the bay touch, #9748 yaw −1.437; <see cref="D17Motor.SetState"/>, #28 M9).</para>
     /// </summary>
     public class Dl05TraceTests
     {
@@ -93,19 +94,10 @@ namespace DeadLetter.Core.Tests
                         Load = scale.Load, Reading = scale.Reading.ToString().ToLowerInvariant(), Needle = scale.Needle, Dip = scale.Dip,
                         Twitch = scale.TwitchOffset, Served = scale.Engaged, Hatch = hatch.Position, Flag = flag.Position,
                     });
-                }, (k, sim) =>
-                {
-                    // The hand-over's yaw: he is still turning back to the lane from the bay touch (#9748 yaw −1.437); the
-                    // motor can only be placed facing ±π/2 (D17Motor.Place, #28 M9), so the test hands it the recorded yaw.
-                    if (k == from) SetMotorYaw(sim.Motor, t.Steps[from - 1].Yaw);
-                    return t.Steps[k].Input;
                 }, handover: true);
                 return _cached = r;
             }
         }
-
-        /// <summary>The motor keeps no setter for its yaw (U-11): the hand-over gives it the recorded one.</summary>
-        private static void SetMotorYaw(D17Motor m, double yaw) => typeof(D17Motor).GetProperty(nameof(D17Motor.Yaw)).SetValue(m, yaw);
 
         private static string HoldName(D17Motor m, Pushable drum, Pushable body)
         {
