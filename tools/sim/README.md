@@ -72,3 +72,32 @@ the script exits non-zero if there are any. Run it after moving anything he can 
 - **`results_expansion_attendance_mechanical.jsonl`** and **`results_expansion_attendance_first_playthrough.jsonl`:**
   chapter 1 with the expansion (DL-14a, DL-14b, DL-16a, DL-17's rig) and the design review's trims, on the new sets:
   6:40 mechanical; three first-time runs at 9:45 to 11:15 (about 7:00 before). The overlap audit is clean.
+
+## Golden traces for the Unity port (`record_trace.mjs`)
+
+`record_trace.mjs` runs the simulated player and writes what the game did at every 60 Hz step, so Core can replay the
+same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
+- Usage: `node record_trace.mjs <seed> <out.jsonl.gz> [mechanical]`, from a folder with `playwright-core` and `three`
+  in `node_modules/`, the game served on :8765 (or `GAME`). `CHROME` = the Chromium binary, `BOT` = bot.js (default:
+  next to the script), `RNG_SEED` = the page's `Math.random` seed (default 1), `PROGRESS=1` prints progress.
+- **Determinism.** Before the page's scripts, `Math.random` becomes the prototype's own LCG (`s = (s·16807 + 11) mod
+  2147483647`, as Core's `SimRng.Lcg`). The recorder's first step reseeds it, puts `setTimeout` and
+  `AudioContext.currentTime` on game time (1/60 s a step), sets `game.clock = 0` and presses Begin, so the real-time
+  title screen never reaches the trace. Two recordings of the same seed are byte-identical. (DL-01's own state draws
+  no random numbers; later scenes do: crates, carrier payloads, the White.)
+- **`unity/core-tests/Traces/prologue_mech_seed1.jsonl.gz`:** the whole prologue, mechanical, seed 1: 33,207 steps
+  (play from step 1768, `room` at 4082, the end card at 553 s), 390 KB.
+- **Format** (`deadletter-trace/1`): gzip, one JSON object per line. Line 1 is a header (`format`, `seed`, `mode`,
+  `rngSeed`, `rng`, `step`, `round`, `delta: true`); the last line is `{"end": true, steps, error, marks, events}`.
+  Every other line is step `i` (0-based, from Begin) and holds **only the fields that changed** since the line before;
+  a reader carries the rest forward. Numbers are rounded to 1e-6, except `clk`, which is exact (the quirk timers
+  compare `game.clock` differences, so a replay starts from the recorded clock bit for bit).
+  - Input the step consumed (after the bot set it, before `step()`): `L`, `R` (keys held), `JP`/`JH` (jump pressed,
+    held), `UP`/`UH` (use pressed, held), `SH` (`input.shift`, the walk modifier), `AX` (`input.axis`, 0 without a pad).
+  - D-17 after the step: `clk`, `x`, `y`, `z` (three.js: − into the set), `vx`, `vy`, `yaw`, `f` (facing), `g`
+    (grounded), `c` (crouched), `m` (mode), `a` (`kind:phase` of `game.act`, `quirk:<clip>` for quirks, null), `h`
+    (`game.hold`, `push:<key>` while pushing), `mt` (mantling), `tr` (transit stage, −1), `r` (region), `cp`
+    (checkpoint), `fr` (`game.frame`), `clip` (the clip playing), `sc` (`sceneName()`).
+  - DL-01: `rel` (released), `sh` (shutter angle), `lv` (latch lever angle), `wy` (counterweight y), `door`
+    (`doorOpen`), `wh` (wheel angle), `cx`/`cs`/`cd`/`cl` (the cart's x, state, drop, lip), `nr` (`nextRelay`).
+  - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).

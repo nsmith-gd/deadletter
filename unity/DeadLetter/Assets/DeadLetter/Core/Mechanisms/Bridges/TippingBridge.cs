@@ -182,7 +182,8 @@ namespace DeadLetter.Core.Mechanisms.Bridges
             }
 
             var pl = ctx.Player;
-            if (State != TippingBridgeState.Bridge && !pl.Busy && pl.X > _p.StrandFrom && pl.X < _p.StrandTo && pl.Y < _p.StrandBelowY)   // L4764, L4860
+            // Grounded: the prototype strands him only once he has landed (game.grounded, L4764, L4860), not while he falls past StrandBelowY.
+            if (State != TippingBridgeState.Bridge && !pl.Busy && pl.Grounded && pl.X > _p.StrandFrom && pl.X < _p.StrandTo && pl.Y < _p.StrandBelowY)   // L4764, L4860
                 Emit(ctx, (int)TippingBridgeEvent.Stranded, 0, _p.BackX);
         }
 
