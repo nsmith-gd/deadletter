@@ -35,7 +35,7 @@ namespace DeadLetter.Core.Tests
                 PlayTime = 81.25,
                 Flags = new List<string> { StoryFlags.Curio("scale"), StoryFlags.WhiteWarned },
                 Mechanisms = snap,
-                Settings = new Settings { AutoRun = false, Calm = true, Brightness = 1.35, Music = false, SubtitleSize = 2 },
+                Settings = new Settings { AutoRun = false, Calm = true, Brightness = 1.35, Music = false, SubtitleSize = TextSize.Large },
             };
         }
 
@@ -235,7 +235,7 @@ namespace DeadLetter.Core.Tests
             var s = new Settings
             {
                 AutoRun = false, Sound = false, Music = false, Prompts = false, StuckAssist = true, Calm = true,
-                Telemetry = false, Brightness = 1.8, Subtitles = false, SubtitleSize = 0, SubtitleBackground = true, HoldToToggle = true,
+                Telemetry = true, Brightness = 1.8, Subtitles = false, SubtitleSize = TextSize.Small, SubtitleBackground = true, HoldToToggle = true,
             };
             Assert.True(SaveCodec.TryLoad(SaveCodec.Encode(new SaveModel { Settings = s }), out var m, out _));
             var r = m.Settings;
@@ -249,7 +249,8 @@ namespace DeadLetter.Core.Tests
         public void Settings_PrototypeDefaults_AndBrightnessIsClamped_L8283_L8307()
         {
             var d = new Settings();
-            Assert.True(d.Sound && d.Music && d.Prompts && !d.StuckAssist && !d.Calm && d.AutoRun && d.Telemetry);
+            Assert.True(d.Sound && d.Music && d.Prompts && !d.StuckAssist && !d.Calm && d.AutoRun);
+            Assert.False(d.Telemetry);   // §4.30: the shipped uploader is opt-in (the prototype defaulted it on)
             var doc = new SaveDocument(2);
             doc.SetDouble("opt/bright", 5);
             Assert.Equal(1.8, Settings.Read(doc).Brightness);
@@ -268,6 +269,215 @@ namespace DeadLetter.Core.Tests
             Assert.True(store.TryLoad(0, out var m));
             Assert.True(m.Settings.Calm);
             Assert.Equal(1.2, m.Settings.Brightness);
+        }
+
+        [Fact]
+        public void Settings_AppliedFromReloaded_StayPendingThroughLoad_WhenWritesAreRateLimited()
+        {
+            // The options store (U-17) applies settings edited before the slot was loaded from inside Reloaded.
+            var g = Mech.Graph("start", new TestSource("t.a"));
+            var store = new MemorySaveStore();
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store) { MinSecondsBetweenWrites = 2 };
+            svc.ApplySettings(new Settings());                 // a write now, so the next one falls inside the window
+            var slot = svc.ToModel();
+            bool applied = false;
+            svc.Reloaded += _ => { if (!applied) { applied = true; svc.ApplySettings(new Settings { Calm = true }); } };
+            svc.Load(slot);
+            Assert.True(svc.Pending);
+            svc.Flush();
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.True(m.Settings.Calm);
+        }
+
+        /// <summary>A slot with progress (checkpoint hall, a flag, play time, a snapshot) and non-default options.</summary>
+        private static MemorySaveStore SlotWithProgress(out SaveModel saved)
+        {
+            var store = new MemorySaveStore();
+            saved = Sample();
+            saved.Checkpoint = "hall";
+            saved.Settings = new Settings { Calm = true, MusicVolume = 0.25, SfxVolume = 0.5, BindingOverrides = "{\"bindings\":[]}" };
+            store.Save(0, saved);
+            return store;
+        }
+
+        [Fact]
+        public void Settings_SavedOptionsHoldFromConstruction_WithoutContinue()
+        {
+            var store = SlotWithProgress(out _);
+            var g = Mech.Graph("start", new TestSource("t.a"));
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store, 0, "S");
+            Assert.True(svc.Settings.Calm);                            // photosensitivity: calm from the title screen on
+            Assert.True(g.Calm);
+            Assert.Equal(0.25, svc.Settings.MusicVolume);
+            Assert.Equal(0.5, svc.Settings.SfxVolume);
+            Assert.Equal("{\"bindings\":[]}", svc.Settings.BindingOverrides);
+            Assert.False(svc.Started);
+            Assert.Equal("start", svc.Current.Name);                   // the world is not loaded
+            Assert.Equal(1, store.Writes);                             // and nothing was written
+        }
+
+        [Fact]
+        public void Settings_EmptyStore_GivesDefaults()
+        {
+            var store = new MemorySaveStore();
+            var g = Mech.Graph("start", new TestSource("t.a"));
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store);
+            Assert.False(svc.TryLoadSettings());
+            var d = new Settings();
+            Assert.Equal(d.Calm, svc.Settings.Calm);
+            Assert.Equal(d.MusicVolume, svc.Settings.MusicVolume);
+            Assert.Equal(d.Brightness, svc.Settings.Brightness);
+            Assert.Equal(d.BindingOverrides, svc.Settings.BindingOverrides);
+            Assert.False(g.Calm);
+            Assert.Equal(0, store.Writes);
+        }
+
+        [Fact]
+        public void NewGame_KeepsThePlayersOptions()
+        {
+            var store = SlotWithProgress(out _);
+            var g = Mech.Graph("start", new TestSource("t.a"));
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store);
+            svc.NewGame();
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.Equal("start", m.Checkpoint);                       // progress cleared
+            Assert.Empty(m.Flags);
+            Assert.True(m.Settings.Calm);                              // options kept
+            Assert.Equal(0.25, m.Settings.MusicVolume);
+            Assert.True(g.Calm);
+        }
+
+        [Fact]
+        public void Settings_AppliedOnTheTitleScreen_KeepTheSlotsProgress_AndContinueUsesThem()
+        {
+            var store = SlotWithProgress(out var saved);
+            var g = Mech.Graph("start", new TestSource("t.a"));
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store, 0, saved.Scene);
+            var edited = svc.Settings.Clone();
+            edited.Calm = false;
+            edited.Brightness = 1.5;
+            svc.ApplySettings(edited);                                 // before Continue or New Game
+
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.Equal("hall", m.Checkpoint);
+            Assert.Equal(saved.Scene, m.Scene);
+            Assert.Equal(saved.PlayTime, m.PlayTime);
+            Assert.Equal(saved.Flags, m.Flags);
+            Assert.Equal(saved.Mechanisms.Dump(), m.Mechanisms.Dump());
+            Assert.False(m.Settings.Calm);
+            Assert.Equal(1.5, m.Settings.Brightness);
+            Assert.Equal(0.25, m.Settings.MusicVolume);                // untouched options carried over
+
+            // A fresh boot sees them, and Continue keeps them.
+            var svc2 = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store, 0, saved.Scene);
+            Assert.Equal(1.5, svc2.Settings.Brightness);
+            Assert.True(svc2.TryContinue());
+            Assert.Equal("hall", svc2.Current.Name);
+            Assert.Equal(1.5, svc2.Settings.Brightness);
+            Assert.False(svc2.Settings.Calm);
+        }
+
+        [Fact]
+        public void Settings_AppliedOnTheTitleScreen_RateLimited_KeepProgress_AndSurviveContinue()
+        {
+            var store = SlotWithProgress(out var saved);
+            var g = Mech.Graph("start", new TestSource("t.a"));
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store, 0, saved.Scene) { MinSecondsBetweenWrites = 2 };
+            svc.ApplySettings(new Settings { Brightness = 1.2 });      // written now (options only)
+            svc.ApplySettings(new Settings { Brightness = 1.6 });      // held by the rate limit
+            Assert.True(svc.Pending);
+            Assert.False(svc.TryLoadSettings());                       // the held options are newer than the slot's
+            Assert.Equal(1.6, svc.Settings.Brightness);
+            Assert.True(svc.TryContinue());                            // continue before the held write
+            Assert.Equal("hall", svc.Current.Name);
+            Assert.Equal(1.6, svc.Settings.Brightness);                // not the slot's older 1.2
+            Assert.True(svc.Pending);
+            svc.Flush();
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.Equal("hall", m.Checkpoint);
+            Assert.Equal(saved.Flags, m.Flags);
+            Assert.Equal(1.6, m.Settings.Brightness);
+        }
+
+        [Fact]
+        public void Update_BeforeAGameStarts_NeverOverwritesTheSlotsProgress()
+        {
+            var store = SlotWithProgress(out var saved);
+            var white = new WhiteBrain("dl11.white", WhiteParams.Dl11(), new BeingSenses { Region = 5 });
+            var g = Mech.Graph("start", white);
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store, 0, saved.Scene);
+            svc.BindFlag(StoryFlags.Curio("other"), () => true, _ => { });  // a bound flag that differs from the slot's
+            svc.Update(0.1, false);
+            svc.SetFlag(StoryFlags.Curio("mug"));
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.Equal("hall", m.Checkpoint);
+            Assert.Equal(saved.Flags, m.Flags);
+            Assert.Equal(saved.Mechanisms.Dump(), m.Mechanisms.Dump());
+        }
+
+        [Fact]
+        public void Settings_AppliedBeforeAnySlot_WriteAFreshSlot_WithTheDefaultsElsewhere()
+        {
+            var store = new MemorySaveStore();
+            var svc = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            svc.ApplySettings(new Settings { Calm = true });
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.True(m.Settings.Calm);
+            Assert.Equal(Checkpoint.PrototypeOrder[0], m.Checkpoint);
+            Assert.Empty(m.Flags);
+            Assert.Equal(0, m.PlayTime);
+            Assert.True(m.OptionsOnly);
+            // Nothing to continue: a fresh install that only changed options never offers Continue.
+            var svc2 = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            Assert.True(svc2.Settings.Calm);
+            Assert.False(svc2.TryContinue());
+            svc2.NewGame();                                          // the first real save is a normal slot
+            Assert.True(store.TryLoad(0, out var m2));
+            Assert.False(m2.OptionsOnly);
+            Assert.True(m2.Settings.Calm);
+            Assert.True(new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store).TryContinue());
+        }
+
+        [Fact]
+        public void SceneStart_AdoptThenRestart_SavesProgress_NotOnlyOptions()
+        {
+            // #26's Begin/Handover path (TryAdoptSlot/Adopt, then Restart): a moment seen before the next checkpoint must
+            // reach the slot (nathaniel3's probe on #24).
+            var store = new MemorySaveStore();
+            var first = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            first.NewGame();
+            var svc = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            Assert.True(svc.TryAdoptSlot());
+            svc.Restart(Checkpoint.PrototypeOrder[0]);
+            svc.MarkSeen("kin");
+            svc.Flush();
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.Contains("kin", m.Seen);
+            Assert.False(m.OptionsOnly);
+        }
+
+        [Fact]
+        public void Adopt_KeepsOptionsAppliedBeforeTheGameStarted_StillWaitingToBeWritten()
+        {
+            var store = new MemorySaveStore();
+            var first = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            first.NewGame();                                    // the slot holds default options
+            var svc = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store) { MinSecondsBetweenWrites = 2 };
+            svc.ApplySettings(new Settings());                  // a write now, so the next one is held
+            svc.ApplySettings(new Settings { Calm = true });
+            Assert.True(svc.Pending);
+            Assert.True(svc.TryAdoptSlot());
+            Assert.True(svc.Settings.Calm);
+        }
+
+        [Fact]
+        public void Boot_WritesNothingUntilSomethingChanges()
+        {
+            var store = new MemorySaveStore();
+            var svc = new CheckpointService(Mech.Graph("start", new TestSource("t.a")), Checkpoint.PrototypeOrder, store);
+            svc.Update(10, false);
+            Assert.Equal(0, store.Writes);
+            Assert.False(store.TryLoad(0, out _));
         }
 
         [Fact]

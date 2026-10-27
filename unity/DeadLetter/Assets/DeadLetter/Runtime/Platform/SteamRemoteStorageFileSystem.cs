@@ -1,4 +1,4 @@
-#if STEAMWORKS_NET
+#if DL_STEAM && UNITY_STANDALONE
 using DeadLetter.Core.Save;
 using Steamworks;
 
@@ -6,7 +6,7 @@ namespace DeadLetter.Runtime.Platform
 {
     /// <summary>
     /// <see cref="IFileSystem"/> over Steam Cloud (<c>ISteamRemoteStorage</c>, Steamworks.NET). Compiled only with
-    /// <c>STEAMWORKS_NET</c> (U-17 adds the package and the define). Steam has no rename: <see cref="Replace"/> is a
+    /// <c>DL_STEAM</c> on standalone (the define the Steam build sets; see <c>SteamPlatformServices</c>). Steam has no rename: <see cref="Replace"/> is a
     /// read, a write of the destination (Steam's FileWrite replaces a file whole) and a delete, so the destination is
     /// never torn; Core's <see cref="AtomicFileStore"/> keeps the backup and checks the checksum.
     /// </summary>

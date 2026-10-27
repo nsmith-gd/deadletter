@@ -217,6 +217,9 @@ namespace DeadLetter.Core.Tests
         public void Continue_PlacesHimAtTheSlotsCheckpoint_WithItsGame()
         {
             Assert.False(new SceneSim(Dl01Scene.Def(), store: new MemorySaveStore()).Continue());   // an empty slot
+            var optionsOnly = new MemorySaveStore();
+            optionsOnly.Save(0, new SaveModel { OptionsOnly = true, Settings = new Settings { Calm = true } });
+            Assert.False(new SceneSim(Dl01Scene.Def(), store: optionsOnly).Continue());           // options only (#24)
             var store = SavedAtHall();
             int writes = store.Writes;
             var s = new SceneSim(Dl01Scene.Def(), store: store);

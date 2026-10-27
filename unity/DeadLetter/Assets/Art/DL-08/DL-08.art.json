@@ -1,0 +1,2249 @@
+{
+ "format": 1,
+ "region": "DL-08",
+ "scenes": [
+  "DL-08"
+ ],
+ "gameRegion": 4,
+ "laneRange": [
+  80.75,
+  97.6
+ ],
+ "boundsMin": [
+  80.3,
+  -6.0087,
+  -8.208
+ ],
+ "boundsMax": [
+  98.7958,
+  7.4,
+  14.593
+ ],
+ "axes": "unity = (blender.x, blender.z, blender.y), port_architecture 0.2",
+ "gltf": "DL-08.gltf",
+ "counts": {
+  "nodes": 93,
+  "meshes": 91,
+  "primitives": 113,
+  "triangles": 15798,
+  "materials": 49,
+  "textures": 17
+ },
+ "markers": [
+  {
+   "name": "MECH_Pushable_dl08_trolley",
+   "prefix": "MECH",
+   "source": "GoodsTrolley",
+   "position": [
+    82.5,
+    1.6,
+    0.0
+   ],
+   "center": [
+    82.4829,
+    1.865,
+    0.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.trolley"
+    },
+    {
+     "key": "name",
+     "value": "GoodsTrolley"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pushable_dl08_trolley__GoodsTrolleyGrip",
+   "prefix": "MECH",
+   "source": "GoodsTrolleyGrip",
+   "position": [
+    82.5,
+    1.6,
+    0.0
+   ],
+   "center": [
+    82.12,
+    2.04,
+    0.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.trolley"
+    },
+    {
+     "key": "name",
+     "value": "GoodsTrolleyGrip"
+    },
+    {
+     "key": "part",
+     "value": "GoodsTrolleyGrip"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pushable_dl08_trolley__GoodsBallast",
+   "prefix": "MECH",
+   "source": "GoodsBallast",
+   "position": [
+    82.5,
+    1.6,
+    0.0
+   ],
+   "center": [
+    82.5003,
+    1.905,
+    0.0024
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.trolley"
+    },
+    {
+     "key": "name",
+     "value": "GoodsBallast"
+    },
+    {
+     "key": "part",
+     "value": "GoodsBallast"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pushable_dl08_trolley__GoodsStraps",
+   "prefix": "MECH",
+   "source": "GoodsStraps",
+   "position": [
+    82.5,
+    1.6,
+    0.0
+   ],
+   "center": [
+    82.5,
+    1.9255,
+    0.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.trolley"
+    },
+    {
+     "key": "name",
+     "value": "GoodsStraps"
+    },
+    {
+     "key": "part",
+     "value": "GoodsStraps"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pushable_dl08_trolley__GoodsWheel0",
+   "prefix": "MECH",
+   "source": "GoodsWheel0",
+   "position": [
+    82.21,
+    1.655,
+    -0.15
+   ],
+   "center": [
+    82.21,
+    1.655,
+    -0.15
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.trolley"
+    },
+    {
+     "key": "name",
+     "value": "GoodsWheel0"
+    },
+    {
+     "key": "part",
+     "value": "GoodsWheel0"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pushable_dl08_trolley__GoodsWheel1",
+   "prefix": "MECH",
+   "source": "GoodsWheel1",
+   "position": [
+    82.21,
+    1.655,
+    0.15
+   ],
+   "center": [
+    82.21,
+    1.655,
+    0.15
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.trolley"
+    },
+    {
+     "key": "name",
+     "value": "GoodsWheel1"
+    },
+    {
+     "key": "part",
+     "value": "GoodsWheel1"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pushable_dl08_trolley__GoodsWheel2",
+   "prefix": "MECH",
+   "source": "GoodsWheel2",
+   "position": [
+    82.79,
+    1.655,
+    -0.15
+   ],
+   "center": [
+    82.79,
+    1.655,
+    -0.15
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.trolley"
+    },
+    {
+     "key": "name",
+     "value": "GoodsWheel2"
+    },
+    {
+     "key": "part",
+     "value": "GoodsWheel2"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pushable_dl08_trolley__GoodsWheel3",
+   "prefix": "MECH",
+   "source": "GoodsWheel3",
+   "position": [
+    82.79,
+    1.655,
+    0.15
+   ],
+   "center": [
+    82.79,
+    1.655,
+    0.15
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.trolley"
+    },
+    {
+     "key": "name",
+     "value": "GoodsWheel3"
+    },
+    {
+     "key": "part",
+     "value": "GoodsWheel3"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_LoadPlate_dl08_pan",
+   "prefix": "MECH",
+   "source": "GoodsPan",
+   "position": [
+    84.2,
+    1.604,
+    0.0
+   ],
+   "center": [
+    84.189,
+    1.589,
+    0.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.pan"
+    },
+    {
+     "key": "name",
+     "value": "GoodsPan"
+    },
+    {
+     "key": "type",
+     "value": "LoadPlate"
+    }
+   ]
+  },
+  {
+   "name": "MECH_LoadPlate_dl08_pan__HeadDrum",
+   "prefix": "MECH",
+   "source": "HeadDrum",
+   "position": [
+    87.05,
+    5.2,
+    0.7
+   ],
+   "center": [
+    87.05,
+    5.2,
+    0.65
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.pan"
+    },
+    {
+     "key": "name",
+     "value": "HeadDrum"
+    },
+    {
+     "key": "part",
+     "value": "HeadDrum"
+    },
+    {
+     "key": "type",
+     "value": "LoadPlate"
+    }
+   ]
+  },
+  {
+   "name": "MECH_LoadPlate_dl08_pan__PanPulley",
+   "prefix": "MECH",
+   "source": "PanPulley",
+   "position": [
+    84.2,
+    5.2,
+    0.42
+   ],
+   "center": [
+    84.2,
+    5.2,
+    0.412
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.pan"
+    },
+    {
+     "key": "name",
+     "value": "PanPulley"
+    },
+    {
+     "key": "part",
+     "value": "PanPulley"
+    },
+    {
+     "key": "type",
+     "value": "LoadPlate"
+    }
+   ]
+  },
+  {
+   "name": "MECH_CounterweightLift_dl08_platform",
+   "prefix": "MECH",
+   "source": "GoodsPlatform",
+   "position": [
+    87.05,
+    1.6,
+    0.0
+   ],
+   "center": [
+    87.05,
+    1.561,
+    0.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.platform"
+    },
+    {
+     "key": "name",
+     "value": "GoodsPlatform"
+    },
+    {
+     "key": "type",
+     "value": "CounterweightLift"
+    }
+   ]
+  },
+  {
+   "name": "MECH_CounterweightLift_dl08_platform__GoodsPlatformFrame",
+   "prefix": "MECH",
+   "source": "GoodsPlatformFrame",
+   "position": [
+    87.05,
+    1.6,
+    0.0
+   ],
+   "center": [
+    87.05,
+    2.245,
+    0.06
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.platform"
+    },
+    {
+     "key": "name",
+     "value": "GoodsPlatformFrame"
+    },
+    {
+     "key": "part",
+     "value": "GoodsPlatformFrame"
+    },
+    {
+     "key": "type",
+     "value": "CounterweightLift"
+    }
+   ]
+  },
+  {
+   "name": "MECH_CounterweightLift_dl08_platform__GoodsPlatformRail",
+   "prefix": "MECH",
+   "source": "GoodsPlatformRail",
+   "position": [
+    87.05,
+    1.6,
+    0.0
+   ],
+   "center": [
+    87.05,
+    2.1,
+    0.74
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.platform"
+    },
+    {
+     "key": "name",
+     "value": "GoodsPlatformRail"
+    },
+    {
+     "key": "part",
+     "value": "GoodsPlatformRail"
+    },
+    {
+     "key": "type",
+     "value": "CounterweightLift"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pawl_dl08_pawl",
+   "prefix": "MECH",
+   "source": "Pawl",
+   "position": [
+    85.72,
+    1.84,
+    0.5
+   ],
+   "center": [
+    85.8278,
+    1.821,
+    0.5
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.pawl"
+    },
+    {
+     "key": "name",
+     "value": "Pawl"
+    },
+    {
+     "key": "type",
+     "value": "Pawl"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pawl_dl08_pawl__PawlLever",
+   "prefix": "MECH",
+   "source": "PawlLever",
+   "position": [
+    85.45,
+    1.8,
+    0.3
+   ],
+   "center": [
+    85.45,
+    2.0195,
+    0.3
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.pawl"
+    },
+    {
+     "key": "name",
+     "value": "PawlLever"
+    },
+    {
+     "key": "part",
+     "value": "PawlLever"
+    },
+    {
+     "key": "type",
+     "value": "Pawl"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pawl_dl08_pawl__PawlLamp",
+   "prefix": "MECH",
+   "source": "PawlLamp",
+   "position": [
+    33.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    85.54,
+    2.24,
+    0.245
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.pawl"
+    },
+    {
+     "key": "name",
+     "value": "PawlLamp"
+    },
+    {
+     "key": "part",
+     "value": "PawlLamp"
+    },
+    {
+     "key": "type",
+     "value": "Pawl"
+    }
+   ]
+  },
+  {
+   "name": "MECH_ReturnsBelt_dl08_belt",
+   "prefix": "MECH",
+   "source": "ReturnsBelt",
+   "position": [
+    33.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    94.15,
+    1.604,
+    0.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.belt"
+    },
+    {
+     "key": "name",
+     "value": "ReturnsBelt"
+    },
+    {
+     "key": "type",
+     "value": "ReturnsBelt"
+    }
+   ]
+  },
+  {
+   "name": "MECH_ReturnsBelt_dl08_belt__ReturnCrate0",
+   "prefix": "MECH",
+   "source": "ReturnCrate0",
+   "position": [
+    93.0,
+    -6.0,
+    -8.0
+   ],
+   "center": [
+    93.0,
+    -5.8968,
+    -8.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.belt"
+    },
+    {
+     "key": "name",
+     "value": "ReturnCrate0"
+    },
+    {
+     "key": "part",
+     "value": "ReturnCrate0"
+    },
+    {
+     "key": "type",
+     "value": "ReturnsBelt"
+    }
+   ]
+  },
+  {
+   "name": "MECH_ReturnsBelt_dl08_belt__ReturnCrate1",
+   "prefix": "MECH",
+   "source": "ReturnCrate1",
+   "position": [
+    94.0,
+    -6.0,
+    -8.0
+   ],
+   "center": [
+    94.0,
+    -5.88,
+    -8.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.belt"
+    },
+    {
+     "key": "name",
+     "value": "ReturnCrate1"
+    },
+    {
+     "key": "part",
+     "value": "ReturnCrate1"
+    },
+    {
+     "key": "type",
+     "value": "ReturnsBelt"
+    }
+   ]
+  },
+  {
+   "name": "MECH_ReturnsBelt_dl08_belt__ReturnCrate2",
+   "prefix": "MECH",
+   "source": "ReturnCrate2",
+   "position": [
+    95.0,
+    -6.0,
+    -8.0
+   ],
+   "center": [
+    95.0,
+    -5.79,
+    -8.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl08.belt"
+    },
+    {
+     "key": "name",
+     "value": "ReturnCrate2"
+    },
+    {
+     "key": "part",
+     "value": "ReturnCrate2"
+    },
+    {
+     "key": "type",
+     "value": "ReturnsBelt"
+    }
+   ]
+  },
+  {
+   "name": "CHK_goods",
+   "prefix": "CHK",
+   "source": "",
+   "position": [
+    81.9,
+    0.0,
+    0.0
+   ],
+   "center": [
+    81.9,
+    0.0,
+    0.0
+   ],
+   "hasMesh": false,
+   "props": [
+    {
+     "key": "game_region",
+     "value": "4"
+    },
+    {
+     "key": "height",
+     "value": "0.0"
+    },
+    {
+     "key": "order",
+     "value": "14"
+    }
+   ]
+  },
+  {
+   "name": "CHK_latched",
+   "prefix": "CHK",
+   "source": "",
+   "position": [
+    89.2,
+    0.0,
+    0.0
+   ],
+   "center": [
+    89.2,
+    0.0,
+    0.0
+   ],
+   "hasMesh": false,
+   "props": [
+    {
+     "key": "game_region",
+     "value": "4"
+    },
+    {
+     "key": "height",
+     "value": "0.0"
+    },
+    {
+     "key": "order",
+     "value": "15"
+    }
+   ]
+  }
+ ],
+ "materials": [
+  {
+   "name": "AtLanding",
+   "baseColor": [
+    1,
+    0.6200000047683716,
+    0.18000000715255737,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RingLetterC",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.8999999761581421,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "BLEND",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "ring_C.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BeaconLamp",
+   "baseColor": [
+    1,
+    0.550000011920929,
+    0.11999999731779099,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "DepotSteel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "CastIron",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.5,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BeltWarningMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.699999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "belt_warning.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "CrateWood",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "ShutterSteel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.4000000059604645,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "SafetyYellow",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "LiftDialMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.699999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "lift_dial.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "AtriumRust",
+   "baseColor": [
+    0.10999999940395355,
+    0.04800000041723251,
+    0.02500000037252903,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.8500000238418579,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Concrete",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "HallBulb4",
+   "baseColor": [
+    1,
+    0.8799999952316284,
+    0.699999988079071,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Lift1PlateMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.699999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "lift1_plate.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WallPanel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Lift2SignMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.699999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "lift2_sign.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Rubber",
+   "baseColor": [
+    0.012000000104308128,
+    0.012000000104308128,
+    0.010999999940395355,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.699999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "ParcelBrown",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "PawlPlateMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.699999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "pawl_plate.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Copper",
+   "baseColor": [
+    0.550000011920929,
+    0.30000001192092896,
+    0.18000000715255737,
+    1
+   ],
+   "metallic": 1.0,
+   "roughness": 0.3499999940395355,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RepairTag0",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.4000000059604645,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "repair_tag0.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RepairTag1",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.4000000059604645,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "repair_tag1.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RepairTag2",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.4000000059604645,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "repair_tag2.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RepairTag3",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.4000000059604645,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "repair_tag3.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RepairTag4",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.4000000059604645,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "repair_tag4.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RepairTag5",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.4000000059604645,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "repair_tag5.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "ReturnsSignMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.699999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "returns_sign.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "GaugeNeedle",
+   "baseColor": [
+    0.019999999552965164,
+    0.017999999225139618,
+    0.01600000075995922,
+    1
+   ],
+   "metallic": 0.30000001192092896,
+   "roughness": 0.4000000059604645,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "LoreSootMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.800000011920929,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "BLEND",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "lore_soot.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BareMetal",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "ToyFabric",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "LoreTallyMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.800000011920929,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "BLEND",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "lore_tally.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "LoreTimetableMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.8500000238418579,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "BLEND",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "lore_timetable.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "PlateSteel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.699999988079071,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "PawlLamp",
+   "baseColor": [
+    1,
+    0.20000000298023224,
+    0.10000000149011612,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "HandledSteel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "DepotGreen",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.20000000298023224,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BeltRubber",
+   "baseColor": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "ToteGreen",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "LetterPaper",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Water",
+   "baseColor": [
+    0.009999999776482582,
+    0.012000000104308128,
+    0.012000000104308128,
+    1
+   ],
+   "metallic": 0.20000000298023224,
+   "roughness": 0.05000000074505806,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WornIron",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "LuggageLeather",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "LuggageCanvas",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "CoatWool",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "HandleBlack",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.550000011920929,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "FloodMud",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Shaft",
+   "baseColor": [
+    0.004999999888241291,
+    0.004999999888241291,
+    0.004999999888241291,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.8999999761581421,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WayRingCMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.8500000238418579,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "BLEND",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "ring_c.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  }
+ ],
+ "textures": [
+  {
+   "file": "ring_C.png",
+   "width": 512,
+   "height": 512,
+   "use": "color"
+  },
+  {
+   "file": "belt_warning.png",
+   "width": 520,
+   "height": 640,
+   "use": "color"
+  },
+  {
+   "file": "lift_dial.png",
+   "width": 256,
+   "height": 256,
+   "use": "color"
+  },
+  {
+   "file": "lift1_plate.png",
+   "width": 640,
+   "height": 240,
+   "use": "color"
+  },
+  {
+   "file": "lift2_sign.png",
+   "width": 900,
+   "height": 640,
+   "use": "color"
+  },
+  {
+   "file": "pawl_plate.png",
+   "width": 630,
+   "height": 420,
+   "use": "color"
+  },
+  {
+   "file": "repair_tag0.png",
+   "width": 200,
+   "height": 128,
+   "use": "color"
+  },
+  {
+   "file": "repair_tag1.png",
+   "width": 200,
+   "height": 128,
+   "use": "color"
+  },
+  {
+   "file": "repair_tag2.png",
+   "width": 200,
+   "height": 128,
+   "use": "color"
+  },
+  {
+   "file": "repair_tag3.png",
+   "width": 200,
+   "height": 128,
+   "use": "color"
+  },
+  {
+   "file": "repair_tag4.png",
+   "width": 200,
+   "height": 128,
+   "use": "color"
+  },
+  {
+   "file": "repair_tag5.png",
+   "width": 200,
+   "height": 128,
+   "use": "color"
+  },
+  {
+   "file": "returns_sign.png",
+   "width": 1400,
+   "height": 240,
+   "use": "color"
+  },
+  {
+   "file": "lore_soot.png",
+   "width": 256,
+   "height": 512,
+   "use": "color"
+  },
+  {
+   "file": "lore_tally.png",
+   "width": 384,
+   "height": 384,
+   "use": "color"
+  },
+  {
+   "file": "lore_timetable.png",
+   "width": 512,
+   "height": 704,
+   "use": "color"
+  },
+  {
+   "file": "ring_c.png",
+   "width": 512,
+   "height": 256,
+   "use": "color"
+  }
+ ],
+ "driven": [
+  "AtLandingLamp",
+  "BeaconLamp",
+  "GoodsBallast",
+  "GoodsPan",
+  "GoodsPlatform",
+  "GoodsPlatformFrame",
+  "GoodsPlatformRail",
+  "GoodsStraps",
+  "GoodsTrolley",
+  "GoodsTrolleyGrip",
+  "GoodsWheel0",
+  "GoodsWheel1",
+  "GoodsWheel2",
+  "GoodsWheel3",
+  "HeadDrum",
+  "LiftNeedle",
+  "PanPulley",
+  "Pawl",
+  "PawlLamp",
+  "PawlLever",
+  "ReturnCrate0",
+  "ReturnCrate1",
+  "ReturnCrate2",
+  "ReturnsBelt",
+  "TurnFlaps"
+ ],
+ "todo": [
+  "COL_: lane collision is code in index.html (floorAt/surfaceAt/ceilingAt, L1617-L1769, L4135-L4201): author COL_ boxes",
+  "LGT_: every light is created in code (port_architecture \u00a74.20, ~160 proxies): author LGT_ empties",
+  "CAM_: framing zones are code (frameFor L7644-L7806; Core PrologueFraming has DL-01..07): author CAM_ empties"
+ ]
+}

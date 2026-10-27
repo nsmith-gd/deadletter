@@ -1,0 +1,1410 @@
+{
+ "format": 1,
+ "region": "DL-04",
+ "scenes": [
+  "DL-04"
+ ],
+ "gameRegion": 2,
+ "laneRange": [
+  30.6,
+  47.9
+ ],
+ "boundsMin": [
+  25.0,
+  -0.1,
+  -4.0
+ ],
+ "boundsMax": [
+  51.0,
+  6.4,
+  12.0
+ ],
+ "axes": "unity = (blender.x, blender.z, blender.y), port_architecture 0.2",
+ "gltf": "DL-04.gltf",
+ "counts": {
+  "nodes": 62,
+  "meshes": 60,
+  "primitives": 94,
+  "triangles": 31606,
+  "materials": 41,
+  "textures": 6
+ },
+ "markers": [
+  {
+   "name": "MECH_LoadPlate_dl04_bayPlate",
+   "prefix": "MECH",
+   "source": "BayPlate",
+   "position": [
+    44.5,
+    0.004,
+    0.17
+   ],
+   "center": [
+    44.5,
+    -0.0102,
+    0.17
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl04.bayPlate"
+    },
+    {
+     "key": "name",
+     "value": "BayPlate"
+    },
+    {
+     "key": "type",
+     "value": "LoadPlate"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Cradle_dl04_cradle__CradleArmL",
+   "prefix": "MECH",
+   "source": "CradleArmL",
+   "position": [
+    44.225,
+    0.4291,
+    0.72
+   ],
+   "center": [
+    44.205,
+    0.3304,
+    0.5421
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl04.cradle"
+    },
+    {
+     "key": "name",
+     "value": "CradleArmL"
+    },
+    {
+     "key": "part",
+     "value": "CradleArmL"
+    },
+    {
+     "key": "type",
+     "value": "Cradle"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Cradle_dl04_cradle__CradleArmR",
+   "prefix": "MECH",
+   "source": "CradleArmR",
+   "position": [
+    44.775,
+    0.4291,
+    0.72
+   ],
+   "center": [
+    44.795,
+    0.3304,
+    0.5421
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl04.cradle"
+    },
+    {
+     "key": "name",
+     "value": "CradleArmR"
+    },
+    {
+     "key": "part",
+     "value": "CradleArmR"
+    },
+    {
+     "key": "type",
+     "value": "Cradle"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PlateDoor_dl04_bayDoor",
+   "prefix": "MECH",
+   "source": "BayDoor",
+   "position": [
+    46.5,
+    0.0,
+    0.0
+   ],
+   "center": [
+    46.5,
+    0.7985,
+    0.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl04.bayDoor"
+    },
+    {
+     "key": "name",
+     "value": "BayDoor"
+    },
+    {
+     "key": "type",
+     "value": "PlateDoor"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pushable_dl04_courier",
+   "prefix": "MECH",
+   "source": "FallenCourier",
+   "position": [
+    41.2,
+    0.0,
+    0.35
+   ],
+   "center": [
+    41.2015,
+    0.2891,
+    0.3675
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl04.courier"
+    },
+    {
+     "key": "name",
+     "value": "FallenCourier"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Cradle_dl04_cradle",
+   "prefix": "MECH",
+   "source": "",
+   "position": [
+    44.5,
+    0.3304,
+    0.5421
+   ],
+   "center": [
+    44.5,
+    0.3304,
+    0.5421
+   ],
+   "hasMesh": false,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl04.cradle"
+    },
+    {
+     "key": "type",
+     "value": "Cradle"
+    }
+   ]
+  },
+  {
+   "name": "CHK_bay",
+   "prefix": "CHK",
+   "source": "",
+   "position": [
+    47.1,
+    0.0,
+    0.0
+   ],
+   "center": [
+    47.1,
+    0.0,
+    0.0
+   ],
+   "hasMesh": false,
+   "props": [
+    {
+     "key": "game_region",
+     "value": "2"
+    },
+    {
+     "key": "height",
+     "value": "0.0"
+    },
+    {
+     "key": "order",
+     "value": "8"
+    }
+   ]
+  }
+ ],
+ "materials": [
+  {
+   "name": "DepotSteel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BayEnamel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.10000000149011612,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BayLamp0",
+   "baseColor": [
+    0.7200000286102295,
+    0.9200000166893005,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BayLamp1",
+   "baseColor": [
+    0.7200000286102295,
+    0.9200000166893005,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BayLamp2",
+   "baseColor": [
+    0.7200000286102295,
+    0.9200000166893005,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BayLight",
+   "baseColor": [
+    0.7200000286102295,
+    0.8799999952316284,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0.7200000286102295,
+    0.8799999952316284,
+    1
+   ],
+   "emissiveStrength": 2,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Rubber",
+   "baseColor": [
+    0.012000000104308128,
+    0.012000000104308128,
+    0.010999999940395355,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.699999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BayPictogram",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "bay_pictogram.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "DustOutline",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.949999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "BLEND",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "fallen_dust.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "SafetyYellow",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WallPanel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "GaugeFaceMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.6000000238418579,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "gate_gauge.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "ReflectTag",
+   "baseColor": [
+    0.800000011920929,
+    0.7799999713897705,
+    0.699999988079071,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 0.15000000596046448,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Copper",
+   "baseColor": [
+    0.550000011920929,
+    0.30000001192092896,
+    0.18000000715255737,
+    1
+   ],
+   "metallic": 1.0,
+   "roughness": 0.3499999940395355,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "PlateSteel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.699999988079071,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "FallenLamp",
+   "baseColor": [
+    0.8500000238418579,
+    0.30000001192092896,
+    0.07999999821186066,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "DustyDark",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.20000000298023224,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "DustyCream",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "EyeDark",
+   "baseColor": [
+    0.003000000026077032,
+    0.003000000026077032,
+    0.003000000026077032,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.30000001192092896,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Cable",
+   "baseColor": [
+    0.014000000432133675,
+    0.013000000268220901,
+    0.012000000104308128,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.550000011920929,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Canister",
+   "baseColor": [
+    0.44999998807907104,
+    0.47999998927116394,
+    0.44999998807907104,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.4000000059604645,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.800000011920929,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "BareMetal",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RodMetal",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.699999988079071,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Window",
+   "baseColor": [
+    0.800000011920929,
+    0.8199999928474426,
+    0.800000011920929,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.11999999731779099,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.949999988079071,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WornStrap",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Shaft",
+   "baseColor": [
+    0.004999999888241291,
+    0.004999999888241291,
+    0.004999999888241291,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.8999999761581421,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "OrderMottoMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.75,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "BLEND",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "order_motto.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Concrete",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "DepotGreen",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.20000000298023224,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "ChalkFlowers",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.949999988079071,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "BLEND",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "chalk_flowers.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "ParcelBrown",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RowLight0",
+   "baseColor": [
+    0.800000011920929,
+    0.9200000166893005,
+    0.949999988079071,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RowLight1",
+   "baseColor": [
+    0.800000011920929,
+    0.9200000166893005,
+    0.949999988079071,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RowLight2",
+   "baseColor": [
+    0.800000011920929,
+    0.9200000166893005,
+    0.949999988079071,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RowLight3",
+   "baseColor": [
+    0.800000011920929,
+    0.9200000166893005,
+    0.949999988079071,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RowLight4",
+   "baseColor": [
+    0.800000011920929,
+    0.9200000166893005,
+    0.949999988079071,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "RowLight5",
+   "baseColor": [
+    0.800000011920929,
+    0.9200000166893005,
+    0.949999988079071,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "SeatedLamp",
+   "baseColor": [
+    0.8500000238418579,
+    0.30000001192092896,
+    0.07999999821186066,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "TannoyEnamel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.10000000149011612,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "DarkMetal",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.25,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WayRingCMat",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.8500000238418579,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "BLEND",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "ring_c.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  }
+ ],
+ "textures": [
+  {
+   "file": "bay_pictogram.png",
+   "width": 512,
+   "height": 512,
+   "use": "color"
+  },
+  {
+   "file": "fallen_dust.png",
+   "width": 256,
+   "height": 160,
+   "use": "color"
+  },
+  {
+   "file": "gate_gauge.png",
+   "width": 256,
+   "height": 256,
+   "use": "color"
+  },
+  {
+   "file": "order_motto.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color"
+  },
+  {
+   "file": "chalk_flowers.png",
+   "width": 192,
+   "height": 288,
+   "use": "color"
+  },
+  {
+   "file": "ring_c.png",
+   "width": 512,
+   "height": 256,
+   "use": "color"
+  }
+ ],
+ "driven": [
+  "BayDoor",
+  "BayPlate",
+  "CradleArmL",
+  "CradleArmR",
+  "FallenCourier",
+  "FallenLamps",
+  "SeatedCourier",
+  "SeatedLamps"
+ ],
+ "todo": [
+  "COL_: lane collision is code in index.html (floorAt/surfaceAt/ceilingAt, L1617-L1769, L4135-L4201): author COL_ boxes",
+  "LGT_: every light is created in code (port_architecture \u00a74.20, ~160 proxies): author LGT_ empties",
+  "CAM_: framing zones are code (frameFor L7644-L7806; Core PrologueFraming has DL-01..07): author CAM_ empties"
+ ]
+}
