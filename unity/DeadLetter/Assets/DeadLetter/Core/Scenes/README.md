@@ -12,7 +12,7 @@ L8511–L8518), which interleaves scenes, but a mechanism reads another scene's 
 bucket and loading read DL-06's line and weights, from this step's log), so the two agree:
 `PrologueChapterTraceTests` replays DL-01 to DL-09 (#1768–#25182) in one sim at 1e-6.
 
-## Adding a scene to the prologue (DL-09 next)
+## Adding a scene to the prologue (DL-10 next)
 
 The steps as DL-07 took them (U-21); DL-07's specifics are kept where they show the pattern.
 
@@ -54,13 +54,12 @@ The steps as DL-07 took them (U-21); DL-07's specifics are kept where they show 
    checkpoint if its first step reaches one, as DL-08's `goods`) from the probes. The chapter replay is the proof; a
    per-scene window only localises a failure. Nothing is compensated: every replay is strict (#30).
 
-## DL-09 as ported (U-21, alongside DL-08)
+## DL-09 as ported (U-21)
 
 - DL-09 (`Dl09/`, `Lane/Tables/Dl09Lane.cs`) is region 4 from `CG.x0` 97.6 to `UPONLY.x0` 118.8, listed in `Prologue()`
-  after DL-07; **DL-08 goes between them**. DL-09 does not start its region (`SceneDef.RegionStart = false`): until DL-08
-  is in, region 4 left of 97.6 is past the chapter (the chapter replay still ends at the doorway, #17677), and once it is,
-  `SceneAt` finds DL-08 there and DL-09's flag no longer matters. DL-09 reads nothing of DL-08's (the deck is 1.6
-  throughout region 4: `game.upper` holds from `landing` to `school`; the left wall is DL-08's, outside DL-09's stretch).
+  after DL-08, which starts the region (left of 97.6 is DL-08's: `SceneAt` finds it there). DL-09 reads nothing of
+  DL-08's (the deck is 1.6 throughout region 4: `game.upper` holds from `landing` to `school`; the left wall is DL-08's,
+  outside DL-09's stretch).
   Its checkpoint rows are `cage`, `landing8` and `tunnel` (`tunnel` now stands on the deck, y 1.6); it reaches `tunnel`
   from DL-08's `goods` and `latched` too (L3421).
 - Mechanisms, in order: `dl09.plate0/1` (`CarriedItem`; in the tray past `landing8`, or past `cage` with
@@ -69,8 +68,8 @@ The steps as DL-07 took them (U-21); DL-07's specifics are kept where they show 
 - Scene acts (motor gaps, #32): the cage act (`Dl09CageAct`: the prototype has him on the cage floor *as it was at the
   step's start*, `game.y = c.y` at #4, with no ride sync; `MotorSync`'s #9 snap would put him a step ahead), the long
   hopscotch (root motion), the city (`Dl09AweAct`: a yaw of its own, held on the `refuge` moment), the arcs' knock-back.
-- Proven in its own window from a recorded rest (`Dl09TraceTests`, #20880–#25182, strict); `Dl09ChapterProbe` is
-  written but not registered: register it after DL-08's probe once DL-08 is in the chapter.
+- Proven in the chapter replay (`Dl09ChapterProbe`, #20840–#25182, DL-10's first step, strict), and in its own window
+  from a recorded rest (`Dl09TraceTests`, #20880–#25182), which localises a failure.
 - Not ported: the den (a secret), the coin viewer and the hopscotch as curios, the tannoy, the camera.
 
 ## DL-07 as ported, and notes for DL-08
@@ -106,8 +105,9 @@ The steps as DL-07 took them (U-21); DL-07's specifics are kept where they show 
   (`Die(Grabbed, sink 0.8, hold 1.3)`), the way back into region 3. Scene act for #32: `Dl08BeltMantleAct` (the motor's
   climb cannot be carried along by the belt, L1942).
 - The crates' draws: the prototype's come from the page's shared `Math.random`; the recorder finds each spawn's three LCG
-  states (`rs8`) and `Dl08ChapterProbe` feeds them through `ReturnsBelt.Draws` (tests only). Core's own runs use the
-  belt's `SimRng`, reseeded on reset (a reload replays the same crates).
+  states (`rs8`) and `Dl08ChapterProbe` feeds them through `ReturnsBelt.Draws` (tests only), only while DL-08 holds him:
+  the belt runs on behind him through DL-09, and once they are spent it draws its own again (no step it compares). Core's
+  own runs use the belt's `SimRng`, reseeded on reset (a reload replays the same crates).
 - **DL-09 starts at #20840** (x 97.616, region 4, checkpoint `latched`, the belt running with crates on it, the pawl set,
   the trolley by the rail): its X0 is `Dl08Lane.X1`; its table joins region 4's at that seam (the antechamber's ceiling,
   `ceilingCh1` L4166, and the cage's walls are DL-09's). Its rows: `cage` (y `CageTop`, set), `landing8` (y `Deck`, set),

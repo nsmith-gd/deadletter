@@ -18,14 +18,13 @@ namespace DeadLetter.Core.Tests
     /// DL-09's fields: the cage, its pawl, the balance gauge, the plates, the persist flags, the cable's clock, the tunnel's
     /// triggers, the <c>refuge</c> moment, the act's clock) replayed through Core's <see cref="SceneSim"/> with
     /// <see cref="Dl09Scene.Def"/>, input for input, compared at every 60 Hz step.
-    /// <para><b>One window, from a recorded rest.</b> DL-08 is not in Core yet, so the chapter replay cannot reach DL-09: this
-    /// window starts DL-09 on its own (<see cref="ChapterSim.BeginAt"/> through the scene shim's hand-over) at the first rest in
+    /// <para><b>One window, from a recorded rest.</b> The chapter replay covers DL-09 from #20840 (<see cref="Dl09ChapterProbe"/>,
+    /// through DL-08); this window, written before DL-08 was in Core, stays as a check that localises a failure. It starts DL-09 on its own (<see cref="ChapterSim.BeginAt"/> through the scene shim's hand-over) at the first rest in
     /// DL-09, #20879 (he has run off the belt's top and stopped at the first climb's face, x 98.63, still on <c>latched</c>),
     /// and runs to DL-10's first step (#25182): the climbs, both plates into the tray, the ride (settle, lower, shudder, slip,
     /// the catch at 1.95, the pawl thrown in the stall, the bite, caught), Proud, <c>cage</c>, off onto the landing
     /// (<c>landing8</c>), through the antechamber between the arcs, <c>tunnel</c>, the long hopscotch, the city and its moment,
-    /// the slow walk and his label, and out to DL-10. Once DL-08 is merged the chapter replay covers all of it from #20840
-    /// (<see cref="Dl09ChapterProbe"/>, not registered until then).</para>
+    /// the slow walk and his label, and out to DL-10.</para>
     /// <para><b>Tolerance 1e-6</b> on every continuous value; discrete ones on the same step. The cage's clock (<c>c.t</c>) and
     /// its <c>readyAt</c> count from the world's build, which here is the window's start: the clock is compared from the cage's
     /// first change of phase, <c>readyAt</c> as whether he may board.</para>

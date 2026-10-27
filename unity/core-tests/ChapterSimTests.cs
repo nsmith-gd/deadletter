@@ -242,7 +242,7 @@ namespace DeadLetter.Core.Tests
             var s = new ChapterSim(ChapterDefs.Prologue());
             s.Begin("scanned");
             for (int i = 0; i < 10; i++) s.Step(Right);
-            Assert.True(s.Checkpoints.Reach("cage"));                                           // DL-09's: placed, not ours
+            Assert.True(s.Checkpoints.Reach("uponly"));                                         // DL-10's: placed, not ours
             double x = s.X;
             int region = s.Region, lane = s.Lane.Region;
             var scene = s.Current;
@@ -251,7 +251,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(region, s.Region);
             Assert.Equal(lane, s.Lane.Region);
             Assert.Same(scene, s.Current);
-            Assert.Equal("cage", s.Checkpoints.Current.Name);
+            Assert.Equal("uponly", s.Checkpoints.Current.Name);
         }
 
         /// <summary>
@@ -313,7 +313,7 @@ namespace DeadLetter.Core.Tests
             Assert.True(store.TryLoad(0, out var m));
             Assert.Equal("start", m.Checkpoint);
             Assert.Empty(m.Flags);
-            Assert.Throws<ArgumentException>(() => b.Begin("cage"));                           // DL-09's: not in this chapter
+            Assert.Throws<ArgumentException>(() => b.Begin("uponly"));                         // DL-10's: not in this chapter
             Assert.Throws<ArgumentException>(() => b.Begin("school"));                         // chapter 1's
         }
 
@@ -388,8 +388,12 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(Dl06Scene.X1 - (33 + 42.3), s.DistanceToSeam(ExitDir.Right), 12);
             s.Begin("latched");
             Assert.Equal("DL-07", s.Next(ExitDir.Left).Id);
-            Assert.Null(s.Next(ExitDir.Right));                                                 // DL-09 is not ported yet
+            Assert.Equal("DL-09", s.Next(ExitDir.Right).Id);                                    // off the end of the belt
             Assert.Equal(Dl08Scene.X1 - (33 + 56.2), s.DistanceToSeam(ExitDir.Right), 12);     // the end of the belt
+            s.Begin("tunnel");
+            Assert.Equal("DL-08", s.Next(ExitDir.Left).Id);
+            Assert.Null(s.Next(ExitDir.Right));                                                 // DL-10 is not ported yet
+            Assert.Equal(Dl09Lane.X1 - (42 + 65.7), s.DistanceToSeam(ExitDir.Right), 12);      // UPONLY.x0
             Assert.Equal(double.PositiveInfinity, new ChapterSim(ChapterDefs.Prologue()).DistanceToSeam(ExitDir.Right));   // not placed
 
             var (t, _) = TestChapter(sharedLast: true);                                          // a scene on the same stretch: in view already
@@ -407,7 +411,8 @@ namespace DeadLetter.Core.Tests
             Assert.Equal("DL-04", s.SceneOf("bay").Id);
             Assert.Equal("DL-07", s.SceneOf("landing").Id);
             Assert.Equal("DL-08", s.SceneOf("goods").Id);
-            Assert.Null(s.SceneOf("cage"));                                                     // DL-09's
+            Assert.Equal("DL-09", s.SceneOf("cage").Id);
+            Assert.Null(s.SceneOf("uponly"));                                                   // DL-10's
             var dl04 = s.SceneOf("bay");
             Assert.Equal(new[] { "dl04.courier", "dl04.bayPlate", "dl04.cradle", "dl04.bayDoor" },
                 Array.ConvertAll(ToArray(s.MechanismsOf(dl04)), m => m.Id.Value));

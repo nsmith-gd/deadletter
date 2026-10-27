@@ -18,7 +18,11 @@ namespace DeadLetter.Core.Tests
     /// walked into on the run from the gallery, so it has no scene replay of its own: this chapter replay is its proof.
     /// <para>The crates' draws are the prototype's: its <c>Math.random</c> is the page's, shared with everything else, so no
     /// seed reproduces them; the recorder found each crate's three LCG states (<c>rs8</c>) and this probe feeds them to the
-    /// belt (<see cref="ReturnsBelt.Draws"/>) in spawn order. When and where a crate spawns is still the belt's own.</para>
+    /// belt (<see cref="ReturnsBelt.Draws"/>) in spawn order. When and where a crate spawns is still the belt's own. The
+    /// recorder writes them only while DL-08 holds him, but the belt runs on behind him through DL-09 (one graph, as the
+    /// prototype's <c>updateCrates</c>): once the recorded draws are spent the belt draws from its own generator again. Those
+    /// crates are past every step this probe compares (each step's crates are compared, count, type and spin included, so a
+    /// spawn inside the window could not take an unrecorded draw unnoticed), and nothing in DL-09 reads them.</para>
     /// </summary>
     internal sealed class Dl08ChapterProbe : ChapterTraceProbe<Dl08ChapterProbe.S>
     {
@@ -57,7 +61,13 @@ namespace DeadLetter.Core.Tests
             foreach (var p in t.Steps)
                 if (p.Rs8 != null) foreach (long s in p.Rs8) draws.Enqueue(s / 2147483647.0);   // the LCG's value, s / M (L2667)
             _draws = draws.Count;
-            _rules.Belt.Draws = () => draws.Dequeue();
+            var belt = _rules.Belt;
+            belt.Draws = () =>
+            {
+                double v = draws.Dequeue();
+                if (draws.Count == 0) belt.Draws = null;                                    // spent: the belt's own from here (past DL-08)
+                return v;
+            };
         }
 
         protected override S Sample(ChapterSim sim)

@@ -11,9 +11,6 @@ namespace DeadLetter.Core.Tests
     /// step-out, ready), the balance gauge, the plates, <c>persist.cw</c>, the cage's danger, the cable (its clock, shocks, the
     /// first touch), the tunnel's triggers, the <c>refuge</c> moment, the act's clock, deaths and the respawn (the recorder's
     /// DL-09 fields, tools/sim/record_trace.mjs), compared as <see cref="Dl09TraceTests"/> compares them in its own window.
-    /// <para><b>Not registered yet</b>: the chapter replay reaches DL-09 only through DL-08, which is being ported in parallel.
-    /// Once DL-08 is in <see cref="ChapterDefs.Prologue"/> (between DL-07 and DL-09) and its probe is registered, add
-    /// <c>new Dl09ChapterProbe()</c> after DL-08's in <see cref="ChapterTraceProbes.Prologue"/>.</para>
     /// </summary>
     internal sealed class Dl09ChapterProbe : ChapterTraceProbe<Dl09Sample>
     {

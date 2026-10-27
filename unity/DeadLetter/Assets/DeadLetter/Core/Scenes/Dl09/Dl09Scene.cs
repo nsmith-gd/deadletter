@@ -25,7 +25,7 @@ namespace DeadLetter.Core.Scenes.Dl09
     /// knocks him back, any other kills him), into the tunnel (<c>tunnel</c>), the long hopscotch, the city from the balcony
     /// (<c>awe</c>, the <c>refuge</c> moment), the slow walk on and his label, to DL-10 at <c>UPONLY.x0</c>. Region 4, from
     /// <c>CG.x0</c>; lines are index.html at 7b3c123.
-    /// <para><b>Without DL-08.</b> DL-09 does not start its region (<see cref="SceneDef.RegionStart"/> false): DL-08 does, and its
+    /// <para><b>After DL-08.</b> DL-09 does not start its region: DL-08 does (the chapter lists it first in region 4), and its
     /// def owns region 4's way in and back (the doorway at <c>REGION4_X</c>, DL-07's rules switch him to region 4), its belt,
     /// platform and pawl. DL-09 reads nothing of DL-08's: the deck is <c>GALLERY.h</c> wherever he is in region 4
     /// (<c>game.upper</c> holds from <c>landing</c> to <c>school</c>), the left wall is DL-08's and outside DL-09's stretch. The
@@ -71,7 +71,6 @@ namespace DeadLetter.Core.Scenes.Dl09
             Title = "The Slipping Cage",
             X0 = Dl09Lane.X0, X1 = Dl09Lane.X1,                                                          // sceneName, L8142
             Region = Region,
-            RegionStart = false,                                                                          // DL-08 starts region 4
             Mechanisms = Mechanisms(),
             Lane = Dl09Lane.Table,
             LaneContributors = Dl09Lane.Contributors,

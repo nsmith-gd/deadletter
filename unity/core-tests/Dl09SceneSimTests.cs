@@ -190,17 +190,17 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// Without DL-08 in the chapter, region 4 left of DL-09 is a scene the chapter lacks: through the residential doorway
-        /// off the gallery he is past the chapter (as before DL-09 was added), not in DL-09 (<see cref="SceneDef.RegionStart"/>).
+        /// Region 4 left of DL-09 is DL-08's: through the residential doorway off the gallery he is in DL-08 (the region's
+        /// first scene), not past the chapter and not in DL-09.
         /// </summary>
         [Fact]
-        public void WithoutDl08_Region4LeftOfDl09_IsPastTheChapter()
+        public void Region4LeftOfDl09_IsDl08s()
         {
             var s = new ChapterSim(ChapterDefs.Prologue()) { Clock = 290 };
             s.Begin("gallery");
             Until(s, Right, x => x.Region == 4, 2000);
-            Assert.True(s.Exited);
-            Assert.Null(s.Current);
+            Assert.False(s.Exited);
+            Assert.Equal("DL-08", s.Current.Id);
             Assert.True(s.X < Dl09Lane.X0);
         }
     }

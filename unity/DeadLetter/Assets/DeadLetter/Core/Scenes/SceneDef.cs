@@ -38,13 +38,6 @@ namespace DeadLetter.Core.Scenes
         public double X0, X1;
         /// <summary>The prototype's <c>game.region</c> for this scene's lane (§0.3).</summary>
         public int Region = 1;
-        /// <summary>
-        /// The prototype's region begins with this scene (DL-01, DL-02, DL-06, DL-08 ...): as its region's first scene in a
-        /// chapter it also holds him a little left of <see cref="X0"/>, where the walls let him go. False for a scene that
-        /// follows another in its region (DL-09, after DL-08): when it is its region's first in a chapter (the one before it
-        /// not ported yet), left of it is a scene the chapter lacks, which <see cref="ChapterSim"/> treats as past its end.
-        /// </summary>
-        public bool RegionStart = true;
         /// <summary>The mechanisms, in step order.</summary>
         public MechanismDef[] Mechanisms = Array.Empty<MechanismDef>();
         /// <summary>The static lane of the scene's stretch (<c>Lane/Tables/</c>).</summary>

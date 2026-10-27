@@ -160,4 +160,7 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     outside it, and `game.momentCut`), `at9` (`game.act.t`, null outside an act), `dn9`/`ra9` (deaths, a pending
     respawn). Re-recorded with these (U-21): every earlier field of all 33,207 steps is unchanged (checked step by step
     on the expanded records), and two recordings are byte-identical.
+  - DL-08's and DL-09's fields were added in parallel and merged (U-21): the trace was re-recorded once with both, and
+    every field of every step of each side's trace is unchanged in it (checked on the expanded records), two recordings
+    byte-identical. `dl02_press_death_seed1.jsonl.gz` re-recorded with the merged recorder is byte-identical to its own.
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).
