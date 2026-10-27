@@ -542,7 +542,7 @@ hold-to-latch), `FollowerActuator` (the law above, parameterised).
 | `dl13.brake` | L5344–5363 | toggles `lesson.braked`; freezes the cycle where it is; with no lesson running it only clunks | — |
 | `dl14a.brake` | L6078–6082 | toggles the night-light cycle | — |
 | `dl16.latch` | L5764 | drops when the rack is full | — |
-| `dl17.floatLatch` | L6258–6259, L6314 | bed 1 ≥ 0.95 → latched; latch angle follows 0.7·bed1 before (a shared run lifts it part-way) | — |
+| `dl17.latch` | L6258–6259, L6314 | bed 1 ≥ 0.95 → latched; latch angle follows 0.7·bed1 before (a shared run lifts it part-way) | — |
 
 **Unity:** Core `Latch` (Locked→Released), `Pawl` (bite window predicate on another mechanism's position),
 `CycleBrake`. These are the "Brakes and catches" permanent rule (full_game_plan §5).

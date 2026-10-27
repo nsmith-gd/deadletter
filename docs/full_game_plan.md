@@ -862,3 +862,78 @@ context in the homes (selected service lines kept and repurposed while personal 
 ecological destination in the Works; confirm its author through her working habits and the repaired circuit in the
 workshop. Don't attach it to every scene: each recurrence must add a relationship, not repeat a symbol. Each chapter
 should carry a live question in and out (the review's table, section 5.2).
+
+## Addendum, 23 October 2026: the director's perspective
+
+From the director's answers to the perspective questions, approved for the story board. Where this disagrees with
+sections 1 to 9, this wins.
+
+### The theme
+
+**Nothing stays: not the refuge, not its people, not the tree. What we get is the time in between, and it is best
+spent close to someone: mending what's near, making room for what comes next, and playing for no reason at all.**
+
+Three strands, always together:
+- **Endings are part of the pattern.** Passing is not failure. Humanity is the old tree; the world grows back around
+  it. The game mourns and does not despair.
+- **Loneliness is the worst of fates.** Mara's nine years alone are the real danger, not extinction. The climax is not
+  the delivery but someone arriving who stays. Protection that isolates (Order, the protocols) is the same enemy in a
+  kinder coat.
+- **Whimsy is joy for its own sake,** and it is the game's signature. D-17 plays when nothing asks him to. People are
+  wonderful and weird, and the world shows it.
+
+What the game argues against: noble sacrifice. Care matters, but it cannot eat a life; Mara leaves work unfinished
+because her one life matters too. Don't change the world: change what's around you.
+
+### Mara's calling
+
+Mara mends and she grows, and to her they are one act: **keeping company with something until it can go on without
+her.** She learned it by being mended herself: a toy patched, sleeves let down year after year, a parent's "keep
+drawing your trees". Repair is how she was loved; growing things is how she was hoped for. So she keeps the old going
+as long as it can go (pumps, circuits, the old tree she draws) and makes room for the new to start (the nursery).
+Alone, her repairs have become her company: she names the pumps, logs her work to nobody, chats to seedlings. Her
+habit is one more thing to mend. Her need is to let someone mend her, then to sit.
+
+### D-17: persistence, whimsy, and making room
+
+D-17 persists, and he chooses whimsy because he can: the hopscotch on the way to C-114 is the signature moment. Give
+every chapter one moment of play that no puzzle needs. His second quirk grows across the game: a courier's habit of
+stepping aside (for the dormant courier, the procession, the attendant seating its pad) becomes care. At the end he
+steps back while Mara opens the boots, giving her room, before she makes room for him.
+
+### The survey: beautiful and consequential
+
+The last children rebelled against protection that kept them safe and alone. In P.A. 319 Mara, Abel and Orme went
+outside without leave, to see a real tree. Both things are true at once:
+- **What they brought back:** a tin of soil and two seedlings, the nursery's first tray, and a photograph of a grey
+  field with one dead, gnarled tree in it. Mara knew it at once: the crooked tree she had always drawn. The
+  restoration began here.
+- **What they gave:** Orme, the careful one who checked every seal and came anyway, breathed the outside air when his
+  mask's seal failed. He lived, never went outside again, and breathed through a filter for the rest of his life (he
+  built the nursery's first air filters). The three were held a season in quarantine, in separate rooms: the custody
+  wards. Mara's guardian, who could not let go, never quite forgave her, and Mara's apology was never sent.
+
+Nobody died because of them. The adults were not villains: they were terrified, right about the danger and wrong
+about the cage. Rebellion is not punished and not glorified; it is beautiful and it costs.
+
+In the wards: the survey kit replaces the "breach tools"; the line was the guardian hauling them back; the soil jar is
+dated; the three friends tapped to each other through the pipes (the cup at the pipe, from the school refuge).
+
+### The tree
+
+One dead tree, woody, gnarled and almost haunted, a great branch long fallen, standing alone in a wild field brimming
+with light and wildflowers. The player watches the world reclaim it over time, out of order: Mara's yearly drawings
+through the Works' sampling periscope (grass, then wildflowers, then saplings at its foot, then a vine up the trunk),
+and late, in the ward, the survey's photograph of the grey field where it began. Outside, it stands among young
+growth. Mara sits beneath it. Humanity is the old tree; the world grows back around it.
+
+### Human weirdness
+
+Lean on it everywhere: quirks, odd hobbies, jokes in margins, personal rules. A mosaic of bottle caps sorted by
+colour; rota margins full of jokes; a council rule, *Argue with the plan, not the person*; the last party room with
+every cup washed ("Last ones out do the washing up"); two stools and a homemade rod by the reservoir with a tally of
+fish caught (none); Lisle's bench sign, *Break it here, not out there*.
+
+### Names
+
+The school volunteer and sponsor is **E. Lisle** (he), in every document, line and prop.

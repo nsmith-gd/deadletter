@@ -2,6 +2,8 @@ using System;
 using DeadLetter.Core.Camera;
 using DeadLetter.Core.Cues;
 using DeadLetter.Core.Motor;
+using DeadLetter.Core.Save;
+using DeadLetter.Runtime.Save;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -71,12 +73,29 @@ namespace DeadLetter.Runtime.Camera
         private void OnEnable()
         {
             if (player != null) player.InputFilter = Gate;
+            CheckpointTrigger.ServiceChanged += BindReloads;
+            BindReloads(CheckpointTrigger.Service);
         }
 
         private void OnDisable()
         {
             if (player != null && player.InputFilter == (Func<MotorInput, MotorInput>)Gate) player.InputFilter = null;
+            CheckpointTrigger.ServiceChanged -= BindReloads;
+            BindReloads(null);
         }
+
+        private CheckpointService _reloads;
+
+        /// <summary>Follows the running <see cref="CheckpointService"/>: every respawn, reload or continue resets the moment.</summary>
+        private void BindReloads(CheckpointService service)
+        {
+            if (_reloads == service) return;
+            if (_reloads != null) _reloads.Reloaded -= OnReloaded;
+            _reloads = service;
+            if (_reloads != null) _reloads.Reloaded += OnReloaded;
+        }
+
+        private void OnReloaded(DeadLetter.Core.Mechanisms.Checkpoint checkpoint) => ResetForReload();
 
         /// <summary><c>startMoment(name)</c> (L950): the cue from its top 0.1 s ahead on the DSP clock, no queue.</summary>
         public void Trigger(string momentName)
@@ -114,8 +133,7 @@ namespace DeadLetter.Runtime.Camera
 
         /// <summary>
         /// Checkpoint reload: no moment, no cut, and the camera jumps to the respawn frame instead of easing out of the
-        /// moment's shot (L8017, L8115). Subscribe this to <c>CheckpointService.Reloaded</c> (Core/Save, U-14) once that
-        /// lands.
+        /// moment's shot (L8017, L8115). Called on <c>CheckpointService.Reloaded</c> (bound in <c>OnEnable</c>).
         /// </summary>
         public void ResetForReload()
         {
