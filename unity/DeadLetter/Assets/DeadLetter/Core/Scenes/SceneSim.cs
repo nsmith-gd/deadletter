@@ -19,9 +19,11 @@ namespace DeadLetter.Core.Scenes
     /// position triggers (<see cref="SceneRules.AfterMotor"/>).</item>
     /// <item>#5–#7 the mechanisms (relays first: the scene definition's order), then
     /// <see cref="SceneRules.AfterGraph"/> (checkpoints and acts that follow a mechanism's transition).</item>
+    /// <item>After the mechanisms: an escort that has caught him starts the motor's escorted act, then #9 ride sync
+    /// (<see cref="MotorSync"/>; Core/Motor/README.md, "Integrating with a scene simulator").</item>
     /// </list>
     /// #2 (input) is the caller's <see cref="MotorInput"/>; #3 (the opening timeline), #8–#11 (presentation and audio)
-    /// are not Core's; #9 ride sync has no rides in DL-01. Edge-triggered input is the caller's to clear (#12).
+    /// are not Core's. Edge-triggered input is the caller's to clear (#12).
     /// <para>Time: <see cref="Step"/> always advances exactly 1/60 s (<see cref="StepSeconds"/>), the prototype's
     /// <c>__sim</c> step. <see cref="Advance"/> feeds variable frame time through <see cref="FixedTick"/>, whose 100 ns
     /// quantised step is used only to count steps (its 0.0166667 s would drift from the prototype's 1/60 by 2e-8 a step).</para>
@@ -34,7 +36,7 @@ namespace DeadLetter.Core.Scenes
         private static readonly MotorInput Crouching = new MotorInput { CrouchHeld = true };
         private readonly List<string> _cues = new List<string>(4);
         private SceneAct _act;
-        private IInteractable _motorTarget, _endedTarget;
+        private IInteractable _endedTarget;
         private bool _pendingOpening;
 
         public SceneSim(SceneDef def, MotorConfig config = null, ISaveStore store = null)
@@ -62,6 +64,7 @@ namespace DeadLetter.Core.Scenes
             if (extra != null) foreach (var it in extra) Resolver.Register(it);
 
             Motor = new D17Motor(Config, Lane, Resolver);
+            Sync = new MotorSync(Graph);
             Checkpoints = new CheckpointService(Graph, def.CheckpointOrder, store ?? new NoStore(), 0, def.Id);
             Rules = def.Rules?.Invoke() ?? new SceneRules();
             Tick = new FixedTick(StepSeconds);
@@ -77,6 +80,8 @@ namespace DeadLetter.Core.Scenes
         public CheckpointService Checkpoints { get; }
         public SceneRules Rules { get; }
         public FixedTick Tick { get; }
+        /// <summary>The escort hook and #9 ride sync, after the mechanisms (#22).</summary>
+        public MotorSync Sync { get; }
 
         /// <summary>The game clock, seconds (<c>game.clock</c>): +1/60 a step. Settable so a replay can start from a recorded clock.</summary>
         public double Clock { get; set; }
@@ -116,19 +121,29 @@ namespace DeadLetter.Core.Scenes
                 if (Motor.IsMantling) return "mantle";
                 if (!Motor.IsActing) return null;
                 if (Motor.ActVerb == Verb.None) return "shove";
-                return _motorTarget is IMechanism m ? m.Id.Value : Motor.ActVerb.ToString();
+                return Motor.ActTarget is IMechanism m ? m.Id.Value : Motor.ActVerb.ToString();
             }
         }
 
-        public string ActPhase => _act != null ? _act.Phase : Motor.IsActing ? Motor.ActPhase.ToString() : null;
+        /// <summary>
+        /// The act's phase: a scene act's own; a motor act's <see cref="ActPhase"/>, or, for a clip the station chained
+        /// (#22, <see cref="D17Motor.ActPart"/> &gt; 0: the latch's Flinch), that clip's name.
+        /// </summary>
+        public string ActPhase => _act != null ? _act.Phase
+            : !Motor.IsActing ? null
+            : Motor.ActPart > 0 && Motor.ActPhase == global::DeadLetter.Core.Motor.ActPhase.Clip ? Motor.Clip
+            : Motor.ActPhase.ToString();
 
-        /// <summary>The thing the motor's current act is on (null outside an act). U-11 does not expose it (#22); the scene records it when Use starts one.</summary>
-        public IInteractable MotorActTarget => Motor.IsActing ? _motorTarget : null;
+        /// <summary>The thing the motor's current act is on (null outside an act): <see cref="D17Motor.ActTarget"/>.</summary>
+        public IInteractable MotorActTarget => Motor.ActTarget;
         /// <summary>The target of a motor act that ended this step (else null).</summary>
         public IInteractable MotorActEndedOn => _endedTarget;
 
         /// <summary>D-17 as the mechanisms see him this step (<see cref="StepContext.Player"/>).</summary>
-        public PlayerPose Pose => new PlayerPose(X, Y, Z, Motor.Crouched, Busy, Vx, Grounded, Motor.Hold != HoldKind.None);
+        public PlayerPose Pose => _act != null && _act.OwnsPose
+            ? new PlayerPose(X, Y, Z, Motor.Crouched, Busy, Vx, Grounded, Motor.Hold != HoldKind.None)
+            : _act != null ? new PlayerPose(Motor.X, Motor.Y, Motor.Z, Motor.Crouched, true, Motor.Vx, Motor.Grounded, Motor.Hold != HoldKind.None, Motor.IsHiding, Motor.IsEscorted)
+            : PlayerPose.Of(Motor);
 
         // ---- Lifecycle -------------------------------------------------------------------------------------------------
         /// <summary>
@@ -162,7 +177,7 @@ namespace DeadLetter.Core.Scenes
             Exited = false;
             _pendingOpening = false;
             _act = null;
-            _motorTarget = _endedTarget = null;
+            _endedTarget = null;
             RespawnAt = 0;
             SetRegion(Def.Region);
             Motor.Place(x, y, facing);
@@ -181,7 +196,7 @@ namespace DeadLetter.Core.Scenes
         private void Place(in CheckpointDef cp)
         {
             _act = null;
-            _motorTarget = _endedTarget = null;
+            _endedTarget = null;
             RespawnAt = 0;
             SetRegion(cp.Region != 0 ? cp.Region : Def.Region);
             Motor.Place(cp.X, cp.Y, 1);
@@ -189,6 +204,13 @@ namespace DeadLetter.Core.Scenes
 
         /// <summary>Starts a scene act (it replaces any running one). Its first <see cref="SceneAct.Step"/> is the next step's #4.</summary>
         public void StartAct(SceneAct act) => _act = act ?? throw new ArgumentNullException(nameof(act));
+
+        /// <summary>
+        /// Ends the running scene act now, from a rule after the mechanisms (the prototype clearing <c>game.act</c> in #6:
+        /// DL-06's scanner ends the scan and the label check, L2799, L2812). The next step's #4 is the motor's again; an act
+        /// that owned his pose leaves it to the rule to hand back (<see cref="D17Motor.Place"/>).
+        /// </summary>
+        public void EndAct() => _act = null;
 
         /// <summary>Switches <c>game.region</c> (and the lane, while it has a table for it).</summary>
         public void SetRegion(int region)
@@ -226,6 +248,7 @@ namespace DeadLetter.Core.Scenes
             if (!Exited || _act != null) StepPlayer(input, dt);                             // #4 (after the exit, only the act that carries him out)
             Graph.Step(dt, Pose);                                                           // #5–#7
             Rules.AfterGraph(this);
+            if (_act == null || !_act.OwnsPose) Sync.AfterMechanisms(Motor);                // escort start, #9 ride sync (L6399, L2959)
         }
 
         private void StepPlayer(MotorInput input, double dt)
@@ -242,22 +265,13 @@ namespace DeadLetter.Core.Scenes
 
             bool wasFree = !Motor.IsActing && !Motor.IsMantling && Motor.Hold == HoldKind.None;
             bool wasActing = Motor.IsActing;
-            var before = _motorTarget;
-            Candidate use = default;
-            bool willUse = input.UsePressed && !Motor.IsActing && !Motor.IsMantling && Motor.PreviewUse(out use);
+            var before = Motor.ActTarget;
 
             Motor.Step(input, dt);
 
-            if (Motor.IsActing && !wasActing) _motorTarget = willUse ? use.Target : null;
-            // U-11 gap (#22): a station he uses on the lane (StandZ 0) still spends one step in StepIn before its clip
-            // (D17Motor.StepAct: Arrived → StepIn; next step → EnterClip). The prototype starts the clip on the step he
-            // arrives or finishes turning (updateAct L1846–L1850, L1879). Run that empty step now, so the clip frames and
-            // everything keyed to them (the latch's release, the crank's strokes) fall on the prototype's steps. Once
-            // the motor enters the clip directly this never triggers.
-            if (Motor.IsActing && Motor.ActPhase == global::DeadLetter.Core.Motor.ActPhase.StepIn && _motorTarget is IStation st
-                && Math.Abs(st.StandZ - Motor.Z) < Config.ArriveZ)
-                Motor.Step(MotorInput.None, dt);
-            if (wasActing && !Motor.IsActing) { _endedTarget = before; _motorTarget = null; }
+            // The motor's stuck and death acts ask for the reload themselves (#22).
+            if (Motor.RespawnDue(out double delay) && !(RespawnAt > 0)) RespawnAt = Clock + delay;
+            if (wasActing && !Motor.IsActing) _endedTarget = before;
             bool freeStep = wasFree && !Motor.IsActing && !Motor.IsMantling && Motor.Hold == HoldKind.None;
             Rules.AfterMotor(this, freeStep);
         }

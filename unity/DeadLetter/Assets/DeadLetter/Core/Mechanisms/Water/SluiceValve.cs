@@ -57,10 +57,10 @@ namespace DeadLetter.Core.Mechanisms.Water
 
         protected override bool CanUse(in InteractionQuery q) => true;
 
-        public override bool OnActFrame(in ActFrame f)
+        public override ActStep OnActFrame(in ActFrame f)
         {
             _act.Receive(f);
-            return f.Time > _p.DoneAfter;                                                              // L6207
+            return ActStep.DoneIf(f.Time > _p.DoneAfter);                                                             // L6207
         }
 
         public override void Step(in StepContext ctx)

@@ -59,17 +59,32 @@ namespace DeadLetter.Core.Push
         /// <summary>Bodies (<see cref="IPlateBody"/>) that can ride on it: loaded while one's support is <see cref="BodySupport.Carrier"/>.</summary>
         public MechanismId[] Riders = Array.Empty<MechanismId>();
         /// <summary>
-        /// The prototype's hold acceleration, m/s² (old holds 3, the heavy ones 1.3, L2332; chapter 1 1.4, L4690). U-11 gap
-        /// (#22): <see cref="IPushable"/> has no acceleration, so the motor uses <see cref="Motor.MotorConfig.AccelPush"/> for
-        /// every pushable; a scene sets that to this value (<c>SceneDef.Motor</c>).
+        /// The prototype's hold acceleration, m/s² (old holds 3, the heavy ones 1.3, L2332; chapter 1 1.4, L4690): the
+        /// motor reads it as <see cref="IPushable.Accel"/> (#22).
         /// </summary>
         public double Accel = 1.4;
+        /// <summary>
+        /// At Max he lets go and it takes its end-of-travel state (chapter 1, L4723–L4735). False for the old holds
+        /// (DL-03's trolley): it stops at Max and stays in his hands (L2338–L2346). <see cref="IPushable.LetGoAtMax"/> (#22).
+        /// </summary>
+        public bool LetGoAtMax = true;
         /// <summary>Its travel (for a pit, <see cref="Max"/> is the lip, <see cref="TipParams.LipX"/>).</summary>
         public double Min, Max;
         /// <summary>Bodies it stops against while they stand on the floor (DL-03's weight, L2343–L2346).</summary>
         public PushBlock[] Blocks = Array.Empty<PushBlock>();
         /// <summary>Ascending stops (<see cref="Push.Detents"/>); empty = none.</summary>
         public double[] Detents = Array.Empty<double>();
+        /// <summary>
+        /// A first stop short of <see cref="Max"/> (NaN = none): while it stands more than <see cref="Pushable.StopSlack"/>
+        /// short of it, its travel ends there; past that, at Max. Unlike a detent it is read from where it stands, not
+        /// where he took hold, and he keeps hold (DL-05's drum: <c>x &lt; drumPlate − 0.01 ? drumPlate : drumPark</c>, L4277).
+        /// </summary>
+        public double StopAt = double.NaN;
+        /// <summary>
+        /// Grabbable only while it can still move more than this toward its travel's end (NaN = always): DL-05's body,
+        /// <c>avail: max() − x &gt; 0.05</c> (L4281).
+        /// </summary>
+        public double MinRoom = double.NaN;
         /// <summary>The pit it tips into at <see cref="Max"/>; null = none.</summary>
         public TipParams Pit;
         /// <summary>Reaching the end of its travel within <see cref="DockTolerance"/> of this docks it (NaN = never).</summary>
@@ -92,11 +107,28 @@ namespace DeadLetter.Core.Push
             ParkedAfter = "solved", ParkedX = (13 + 15.8 + (13 + 16.55)) / 2,    // (PLATE.x0 + PLATE.x1) / 2, L8026
             Side = +1, Gap = 0.62,                                                // grabL, PUSH_GAP L321
             Speed = 0.55, LoadedSpeed = 0.42, Riders = new MechanismId[] { "dl03.weight" },   // PUSH_SPEED, PUSH_LOADED L325; L2330
-            Accel = 3,                                                            // L2332
+            Accel = 3, LetGoAtMax = false,                                        // L2332; holds on at Max, L2338–L2346
             Min = 13 + 12.1 + 0.06 + 0.28, Max = 13 + 17.6 - 0.35 - 0.28,         // TROLLEY_MIN/MAX L322 (ROOM_X0, TROLLEY_HALF)
             Blocks = new[] { new PushBlock("dl03.weight", 0.28 + 0.1 + 0.01) },  // TROLLEY_HALF + WEIGHT_R + 0.01, L2344
             FloorY = 0, Z = 0, ForwardReach = 0.34, BackReach = 0.34,             // y ≤ 0.05; |x − stand| < 0.34, L2249, L2257
             Half = 0.28, Top = 0.16,                                              // TROLLEY_HALF, TROLLEY_DECK L321; surfaceAt L1725
+        };
+
+        /// <summary>
+        /// DL-04: the fallen courier, dragged backwards by the tow loop at its head end, from its right (Side −1; pass 10's
+        /// <c>courierAlt</c>, from its left, is a <see cref="PushTwin"/>), 0.67 from its centre; 0.22 m/s, accel 1.4; from
+        /// 41.2 to the bay 44.5, where the travel's end (|x − max| &lt; 0.005, L4724) always docks it and the cradle closes
+        /// on it (L4727); 0.35 behind the lane, so he steps in to take it (three z −0.35, L4461); seated in the cradle from
+        /// <c>bay</c> (L4096). Not on the lane (no Half/Top). <c>PUSHABLES.courier</c> L4275, <c>RK</c> L3890, L4291–L4295.
+        /// </summary>
+        public static PushableParams Dl04Courier() => new PushableParams
+        {
+            StartX = 41.2,                                                        // RK.courierX
+            ParkedAfter = "bay", ParkedX = 44.5, ParkedState = PushableState.Docked,   // L4096
+            Side = -1, Gap = 0.67, Speed = 0.22, Accel = 1.4,                     // RK.gap; L4275; L4690
+            Min = 41.2, Max = 44.5,                                               // min: RK.courierX, max: () => RK.bayX
+            DockAt = 44.5, DockTolerance = 0.01,                                  // L4724–L4727
+            FloorY = 0, Z = 0.35, ForwardReach = 0.34, BackReach = 0.34,          // floor: 0, z: RK.courierZ; p.fwd/back ?? 0.34, L4254
         };
     }
 
@@ -112,6 +144,9 @@ namespace DeadLetter.Core.Push
     /// </summary>
     public sealed class Pushable : Mechanism, IPushable, IPlateBody, IPositionSource, IEngageable
     {
+        /// <summary><see cref="PushableParams.StopAt"/> holds while it stands more than this short of it (L4277).</summary>
+        public const double StopSlack = 0.01;
+
         private readonly PushableParams _p;
         private readonly TipIntoPit _tip;
         private IPlateBody[] _riders = Array.Empty<IPlateBody>(), _blocks = Array.Empty<IPlateBody>();
@@ -166,6 +201,8 @@ namespace DeadLetter.Core.Push
         public int Side => _p.Side;
         public double Gap => _p.Gap;
         public double Speed => !double.IsNaN(_p.LoadedSpeed) && Loaded ? _p.LoadedSpeed : _p.Speed;
+        public double Accel => _p.Accel;
+        public bool LetGoAtMax => _p.LetGoAtMax;
         public double Min { get { Range(out double lo, out _); return lo; } }
         public double Max { get { Range(out _, out double hi); return hi; } }
         public double FloorY => _p.FloorY;
@@ -179,15 +216,18 @@ namespace DeadLetter.Core.Push
 
         /// <summary>Grabbable from the face <paramref name="side"/>: on the floor, and he can stand at its stand point.</summary>
         public bool IsAvailableFrom(int side, in InteractionQuery q)
-            => (State == PushableState.Free || State == PushableState.AtLip) && (CanStandAt == null || CanStandAt(X - side * _p.Gap));
+            => (State == PushableState.Free || State == PushableState.AtLip) && (CanStandAt == null || CanStandAt(X - side * _p.Gap))
+               && (double.IsNaN(_p.MinRoom) || Max - X > _p.MinRoom);
 
         /// <summary>
-        /// Its travel now: [Min, Max] narrowed by the <see cref="PushableParams.Blocks"/> standing on the floor (L2343–L2346:
-        /// stops gap short of a body ahead or behind) and the <see cref="Detents"/> either side of where he took hold.
+        /// Its travel now: [Min, Max] narrowed by its <see cref="PushableParams.StopAt"/> while short of it, the
+        /// <see cref="PushableParams.Blocks"/> standing on the floor (L2343–L2346: stops gap short of a body ahead or behind)
+        /// and the <see cref="Detents"/> either side of where he took hold.
         /// </summary>
         public void Range(out double lo, out double hi)
         {
             lo = _p.Min; hi = _p.Max;
+            if (!double.IsNaN(_p.StopAt) && X < _p.StopAt - StopSlack && hi > _p.StopAt) hi = _p.StopAt;   // L4277
             for (int i = 0; i < _blocks.Length; i++)
             {
                 var b = _blocks[i];

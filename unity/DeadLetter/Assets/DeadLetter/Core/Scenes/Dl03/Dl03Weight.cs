@@ -84,6 +84,8 @@ namespace DeadLetter.Core.Scenes.Dl03
 
         /// <summary>Set down on the floor at <paramref name="x"/> (<c>w.state = 'floor'; w.x = a.tx</c>, L2284).</summary>
         public void OnSetDown(double x, double baseY) { _toFloor = true; _pendingX = x; }
+        /// <summary>A context set-down (#22). DL-03 has no <see cref="IPlaceTarget"/>: the deck set-down is a scene act (<see cref="OnSetDownOnTrolley"/>).</summary>
+        public void OnPlaced(IPlaceTarget target) { }
 
         /// <summary>Set down on the trolley's deck, <paramref name="offset"/> from its centre (<c>w.off = a.tx − t.x</c>, L2284).</summary>
         public void OnSetDownOnTrolley(double offset) { _toTrolley = true; _pendingOff = offset; }

@@ -49,6 +49,9 @@ namespace DeadLetter.Core.Motor
         public const string CarryIdle = "CarryIdle", CarryWalk = "CarryWalk";
         public const string Grab = "Grab", PushIdle = "PushIdle", PushWalk = "PushWalk", Nudge = "Nudge";
         public const string Present = "Present", Sit = "Sit", SitIdle = "SitIdle", SitUp = "SitUp";
+        public const string Hop = "Hop", Ride = "Ride", Flinch = "Flinch", CheckLabel = "CheckLabel", Proud = "Proud", Startle = "Startle", PeekDown = "PeekDown";
+        public const string Pull = "Pull", Tug = "Tug", Crank = "Crank", LeverPull = "LeverPull", LeverStuck = "LeverStuck";
+        public const string DeathCrush = "DeathCrush", DeathShock = "DeathShock", DeathGrabbed = "DeathGrabbed", DeathFall = "DeathFall";
     }
 
     /// <summary>
@@ -81,6 +84,11 @@ namespace DeadLetter.Core.Motor
         public static class HopEvents { public const double TakeOff = 8, Land = 18, Done = 23; }
         /// <summary>Up button: press window f13–22, act f16, done f34. L4579–L4597.</summary>
         public static class PressButtonHighEvents { public const double WindowStart = 13, Act = 16, WindowEnd = 22, Done = 34; }
+        /// <summary>Flinch after the latch: 1.6 s of the clip (f38.4), L1875–L1876; the trench's stuck act plays it from 0.2 s (L4520).</summary>
+        public static class FlinchEvents { public const double End = 1.6 * 24; }
+        /// <summary>CheckLabel: he perks up at f56 and is done at f83 (the scanner's check, L2811–L2812); a quirk ends 0.05 s
+        /// before the clip's end (<c>act.time &gt;= dur − 0.05</c>, L3852) and CheckLabel then holds 0.8 s (L3853).</summary>
+        public static class CheckLabelEvents { public const double Perk = 56, Done = 83; }
         /// <summary>Knock: taps f14, f20. L3634–L3668.</summary>
         public static class KnockEvents { public const double Tap0 = 14, Tap1 = 20; }
 
@@ -114,6 +122,9 @@ namespace DeadLetter.Core.Motor
             new ClipEvent("Hop", "done", HopEvents.Done, "L2884–L2894"),
             new ClipEvent("PressButtonHigh", "act", PressButtonHighEvents.Act, "L4579–L4597"),
             new ClipEvent("PressButtonHigh", "done", PressButtonHighEvents.Done, "L4579–L4597"),
+            new ClipEvent("Flinch", "end", FlinchEvents.End, "L1876"),
+            new ClipEvent("CheckLabel", "perk", CheckLabelEvents.Perk, "L2811"),
+            new ClipEvent("CheckLabel", "done", CheckLabelEvents.Done, "L2812"),
             new ClipEvent("Knock", "tap0", KnockEvents.Tap0, "L3634–L3668"),
             new ClipEvent("Knock", "tap1", KnockEvents.Tap1, "L3634–L3668"),
         };

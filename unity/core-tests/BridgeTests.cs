@@ -102,7 +102,7 @@ namespace DeadLetter.Core.Tests
             Assert.False(Mech.Emitted(g, "dl01.cart", TippingBridgeEvent.Stranded));   // within 0.1 of the edge
             Mech.Run(g, 1, new PlayerPose(7.0, -0.8, busy: true));
             Assert.False(Mech.Emitted(g, "dl01.cart", TippingBridgeEvent.Stranded));
-            Mech.Run(g, 1, new PlayerPose(7.0, -0.76, grounded: false));               // still falling: only once he lands (game.grounded, L4764)
+            Mech.Run(g, 1, new PlayerPose(7.0, -0.78, grounded: false));                // still falling: game.grounded, L4764
             Assert.False(Mech.Emitted(g, "dl01.cart", TippingBridgeEvent.Stranded));
             var (b2, g2) = Cart("hall");
             Assert.Equal(-0.25, b2.SurfaceAt(7.0), 12);                           // PIT.y + CART1.h

@@ -24,7 +24,7 @@ namespace DeadLetter.Core.Cues
     public sealed class MomentDirector
     {
         private readonly CueClock _clock;
-        private bool _released;
+        private bool _released, _skipped;
 
         public MomentDirector(IMusicClock music, double prime = 0)
         {
@@ -39,13 +39,16 @@ namespace DeadLetter.Core.Cues
         public bool ControlReturned { get; private set; }
         /// <summary>Moment time at which control came back (for the ring C light's switch-off, L4606), or null.</summary>
         public double? ReturnedAt { get; private set; }
+        /// <summary>The moment was skipped (<see cref="Skip"/>) rather than played out or cut.</summary>
+        public bool Skipped { get; private set; }
 
         /// <summary><c>startMoment(name)</c>, L950. Runtime then schedules the cue and calls <c>Clock.Scheduled</c>.</summary>
         public void Start(DirectedMoment moment, double simTime, bool musicAvailable)
         {
             Current = moment ?? throw new ArgumentNullException(nameof(moment));
             Cut = false;
-            _released = false;
+            _released = _skipped = false;
+            Skipped = false;
             ControlReturned = false;
             ReturnedAt = null;
             _clock.Begin(moment.Name, simTime, musicAvailable);
@@ -57,9 +60,29 @@ namespace DeadLetter.Core.Cues
             _clock.End();
             Current = null;
             Cut = false;
-            _released = false;
+            _released = _skipped = false;
+            Skipped = false;
             ControlReturned = false;
             ReturnedAt = null;
+        }
+
+        /// <summary>
+        /// Skip the moment (the opening's Skip button, L8070–L8071; a pause-menu skip): jump to the state it is in once
+        /// control has come back. The hold is released, the shot lets go (<see cref="ShotTime"/> is null, as after a cut),
+        /// voices are no longer held, and the next <see cref="GateInput"/> reports <see cref="ControlReturned"/> (that
+        /// step's input is consumed, as on a natural return). The cue plays on (<c>startPlay</c> keeps the music,
+        /// L8086–L8087): the moment stays <see cref="Current"/> on its clock until a reload ends it. Returns false when
+        /// nothing holds him (no moment, or control is already back).
+        /// </summary>
+        public bool Skip(double simTime)
+        {
+            if (Current == null || _released) return false;
+            _released = true;
+            _skipped = true;
+            Skipped = true;
+            Cut = true;
+            ReturnedAt = Time(simTime);
+            return true;
         }
 
         /// <summary>The current moment's time, or null.</summary>
@@ -107,6 +130,12 @@ namespace DeadLetter.Core.Cues
         public MotorInput GateInput(in MotorInput raw, double simTime, bool actReady = true)
         {
             ControlReturned = false;
+            if (_skipped)                                                     // a skip between steps: report it now
+            {
+                _skipped = false;
+                ControlReturned = true;
+                return MotorInput.None;
+            }
             if (Current == null || _released) return raw;
             double? t = Time(simTime);
             if (actReady && Current.ReturnsControl && Free(Current, t, AnyInput(raw)))

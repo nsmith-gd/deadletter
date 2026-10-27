@@ -10,8 +10,8 @@ namespace DeadLetter.Core.Tests
     /// <summary>
     /// DL-14 The Window as a scene: the crank winds the chain, the pole through A's wheel jams A, the clutch slips and B
     /// comes down alone, the panel peels; then pole out, wind, pole in, wind: both down, both ledges out. Driven by the
-    /// real motor and resolver in the pipeline order (motor #4, graph #6–7; §3.1). The pole (an item, U-11) is a test
-    /// source: engaged = through A's wheel.
+    /// real motor and resolver in the pipeline order (motor #4, graph #6–7; §3.1). The pole is a test source (engaged =
+    /// through A's wheel): its jam/unjam at the wheel (a place target for a light carried item) is not ported yet.
     /// </summary>
     public class Dl14SceneTests
     {

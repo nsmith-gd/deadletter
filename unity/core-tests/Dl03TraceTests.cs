@@ -29,10 +29,9 @@ namespace DeadLetter.Core.Tests
     /// </list></para>
     /// <para><b>Tolerance 1e-6</b> on every continuous value (the trace rounds to 1e-6; the hand-over pose too, ≤ 5e-7).
     /// Discrete signals (acts, holds, grounded, the weight's state, checkpoints, the exit) fall on the same step.</para>
-    /// <para><b>Known motor issues</b> (U-11, #22), each asserted exactly where it shows: M2 (the mantle ends a step early:
-    /// that step is fed no input, as in DL-01); M3 (walk-off falls stay g·dt²·n/2 above the prototype: the entry's
-    /// 1.35 m drop off the sill therefore lands one step late, which ends the entry window; the room window's two drops
-    /// land on the same step); and <b>M5, new</b>: Use lets go of a pushable with his speed zeroed (D17Motor.BeginUse's
+    /// <para>M2 and M3 (#22) are fixed in U-11b (#25): the climb over the trolley takes the prototype's 141 steps and every
+    /// walk-off fall, the entry's 1.35 m drop off the sill included, follows the prototype's arc and lands on its step.
+    /// <b>One known motor issue remains, M5</b>: Use lets go of a pushable with his speed zeroed (D17Motor.BeginUse's
     /// <c>Vx = 0</c>, ported from beginCh1's release branch, L4307–L4313), but the prototype's Use-release
     /// (<c>beginUse('release')</c>, L1820) returns before <c>game.vx = 0</c> (L1821), so he keeps his push speed and
     /// drifts on as it decays (#5977: 0.42 m/s, 7.3 mm over four steps). The compensated replay gives the motor back the
@@ -59,8 +58,6 @@ namespace DeadLetter.Core.Tests
             public SceneSim Sim;
             public int From, To;
             public string Checkpoint;
-            /// <summary>Steps fed no input: the prototype was still mantling after Core's mantle had ended (M2).</summary>
-            public readonly List<int> MantleCompensated = new List<int>();
             /// <summary>Steps where Use let go of the trolley and Core was given back the speed it had (M5).</summary>
             public readonly List<int> ReleaseCompensated = new List<int>();
         }
@@ -107,7 +104,6 @@ namespace DeadLetter.Core.Tests
                     var given = t.Steps[k].Input;
                     vxBefore = sim.Motor.Vx;
                     pushUse = given.UsePressed && sim.Motor.Hold == HoldKind.Push && sim.Act == null && !sim.Motor.IsActing;
-                    if (compensate && t.Steps[k - 1].Mt && !sim.Motor.IsMantling && sim.Act == null) { r.MantleCompensated.Add(t.Steps[k].I); return default; }
                     return given;
                 }
                 r.Sim = TraceReplay.Run(t, Dl03Scene.Def(), r.Checkpoint, false, from, to, (p, sim) =>
@@ -174,19 +170,16 @@ namespace DeadLetter.Core.Tests
                     Check(bad, w.P.I, "yaw", w.P.Yaw, w.Yaw);
                 }
             Assert.True(bad.Count == 0, Report(bad));
-            Assert.Equal(new[] { 6184 }, Room().MantleCompensated);                                 // M2: the climb over the trolley's last step
             Assert.Equal(new[] { 5977 }, Room().ReleaseCompensated);                                // M5: Use lets go of the trolley at 0.42 m/s
-            Assert.Empty(Entry().MantleCompensated);
             Assert.Empty(Entry().ReleaseCompensated);
         }
 
         /// <summary>
-        /// y matches at every step except while falling from a walk-off (M3), where Core is higher by exactly g·dt²·n/2 at
-        /// the n-th step: off the sill into the room (1.35 m, from #5243), off the weight onto the deck (#6194) and off the
-        /// deck to the floor (#6210). The two short drops land on the prototype's steps.
+        /// y matches at every step, the three walk-off falls included (M3, fixed in #25): off the sill into the room
+        /// (1.35 m, from #5243), off the weight onto the deck (#6194) and off the deck to the floor (#6210).
         /// </summary>
         [Fact]
-        public void Y_MatchesEveryStep_ExceptWalkOffFalls_WhereTheGapIsExactlyM3()
+        public void Y_MatchesEveryStep_WalkOffFallsIncluded()
         {
             var bad = new List<string>();
             var falls = new List<(int at, int steps)>();
@@ -198,9 +191,7 @@ namespace DeadLetter.Core.Tests
                     var p = r.Rows[k].P;
                     if (p.G) walkOff = -1;
                     else if (walkOff < 0 && k > 0 && r.Rows[k - 1].P.G && p.Vy == 0) { walkOff = p.I; falls.Add((p.I, 0)); }
-                    double expected = walkOff >= 0 ? G * Dt * Dt * (p.I - walkOff) / 2 : 0;
-                    if (p.I == 5274) continue;                                                       // M3's late landing: the next test
-                    if (Math.Abs(r.Rows[k].Y - p.Y - expected) > Tol) bad.Add($"#{p.I} y {p.Y} vs {r.Rows[k].Y:R} (expected gap {expected:E3})");
+                    if (Math.Abs(r.Rows[k].Y - p.Y) > Tol) bad.Add($"#{p.I} y {p.Y} vs {r.Rows[k].Y:R}");
                     if (walkOff >= 0 && p.I > walkOff) falls[falls.Count - 1] = (walkOff, p.I - walkOff);
                 }
             }
@@ -209,25 +200,24 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// The entry's 1.35 m drop lands a step late in Core (M3), which is why the entry window ends there: the
-        /// prototype's semi-implicit Euler has fallen g·dt²·31·32/2 = 1.3502 m after 31 steps (it lands, #5274), Core's exact
-        /// integration g·dt²·31²/2 = 1.3080 m, still 4.2 cm up. The <c>weighroom</c> checkpoint (y &lt; 0.05, L4946) fires on
-        /// the same step all the same.
+        /// The entry's 1.35 m drop lands on the prototype's step (M3, fixed in #25): its semi-implicit Euler has fallen
+        /// g·dt²·31·32/2 = 1.3502 m after 31 steps, and so has Core's parity arc, so he lands at #5274, and the
+        /// <c>weighroom</c> checkpoint (y &lt; 0.05, L4946) fires on that step.
         /// </summary>
         [Fact]
-        public void Entry_LandsOneStepLate_FromM3_AndReachesWeighroomOnThePrototypesStep()
+        public void Entry_LandsAndReachesWeighroom_OnThePrototypesStep()
         {
             var r = Entry();
             var last = r.Rows[r.Rows.Count - 1];
             Assert.Equal(5274, last.P.I);
             Assert.True(last.P.G);
             Assert.Equal(0, last.P.Y);
-            Assert.False(last.G);
-            Assert.Equal(1.35 - G * Dt * Dt * 31 * 31 / 2, last.Y, 9);
-            Assert.True(G * Dt * Dt * 31 * 32 / 2 > 1.35 && G * Dt * Dt * 31 * 31 / 2 < 1.35);
+            Assert.True(last.G);
+            Assert.Equal(0, last.Y, 9);
+            Assert.True(G * Dt * Dt * 31 * 32 / 2 > 1.35 && G * Dt * Dt * 30 * 31 / 2 < 1.35);
             Assert.Equal("weighroom", last.Cp);
             Assert.Equal("room", r.Rows[r.Rows.Count - 2].Cp);
-            for (int k = 0; k < r.Rows.Count - 1; k++) Assert.True(r.Rows[k].G == r.Rows[k].P.G, "#" + r.Rows[k].P.I);
+            for (int k = 0; k < r.Rows.Count; k++) Assert.True(r.Rows[k].G == r.Rows[k].P.G, "#" + r.Rows[k].P.I);
         }
 
         // ---- (b) acts, holds and grounded -----------------------------------------------------------------------------
@@ -241,11 +231,11 @@ namespace DeadLetter.Core.Tests
 
         /// <summary>
         /// Every act and phase on the prototype's steps: the lift (approach, clip), the set-down onto the deck (SetDownHigh),
-        /// the grab (approach, clip), the climb over the loaded trolley, the startle; and what his hands hold. The one
-        /// exception is M2's step (#6183: the prototype is in its 141st mantle step).
+        /// the grab (approach, clip), the climb over the loaded trolley (141 steps, M2 fixed in #25), the startle; and what
+        /// his hands hold.
         /// </summary>
         [Fact]
-        public void Acts_And_Holds_MatchEveryStep_ExceptTheMantlesLastStep()
+        public void Acts_And_Holds_MatchEveryStep()
         {
             var bad = new List<string>();
             var seen = new HashSet<string>();
@@ -254,13 +244,10 @@ namespace DeadLetter.Core.Tests
                 {
                     string want = ExpectedAct(w.P), got = CoreAct(w);
                     if (want != null) seen.Add(want);
-                    if (want != got && w.P.I != 6183) bad.Add($"#{w.P.I} act {want ?? "-"} vs {got ?? "-"}");
+                    if (want != got) bad.Add($"#{w.P.I} act {want ?? "-"} vs {got ?? "-"}");
                     if (w.P.Hold != w.Hold) bad.Add($"#{w.P.I} hold {w.P.Hold ?? "-"} vs {w.Hold ?? "-"}");
                 }
             Assert.True(bad.Count == 0, Report(bad));
-            var row = Room().Rows.Find(w => w.P.I == 6183);
-            Assert.Equal("mantle:", ExpectedAct(row.P));
-            Assert.Null(CoreAct(row));
             foreach (var a in new[] { "dl03.weight:Approach", "dl03.weight:Clip", "dl03.weight:SetDownHigh", "dl03.trolley:Approach",
                          "dl03.trolley:Clip", "mantle:", "quirk:Startle" })
                 Assert.Contains(a, seen);
@@ -323,10 +310,9 @@ namespace DeadLetter.Core.Tests
 
         // ---- Strict -----------------------------------------------------------------------------------------------------
         /// <summary>The room window with nothing compensated: every signal at 1e-6 on every step.</summary>
-        [Fact(Skip = "U-11 motor issues (#22). M5: Use lets go of the trolley with vx zeroed (D17Motor.BeginUse); the prototype's "
+        [Fact(Skip = "U-11 motor issue M5 (#22, still in #25): Use lets go of the trolley with vx zeroed (D17Motor.BeginUse); the prototype's "
             + "beginUse('release') returns before game.vx = 0 (L1820-L1821), so he drifts on 7.3 mm (#5977 vx 0.42; #5978-#5980) and every "
-            + "later x is 7.3 mm short. M2: the climb over the loaded trolley ends a step early (#6183). M3: the walk-off drops off the "
-            + "weight (#6194) and the deck (#6210) stay g*dt^2*n/2 high; the sill's (#5243, entry window) lands a step late.")]
+            + "later x is 7.3 mm short. Nothing else differs: M2 and M3 are fixed.")]
         public void Strict_EverySignalMatchesEveryStep()
         {
             var bad = new List<string>();

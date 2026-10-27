@@ -113,6 +113,25 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     `x` and deck offset), `ld` (`game.load`, the plate with him), `nd` (the gauge's needle), `gy`/`gv` (the gate's
     height and fall speed). Added after DL-01's: every DL-01 field is unchanged at every step (only step 0's line gains
     the new keys, at their reset values).
+  - DL-04 (`unity/core-tests/Dl04TraceTests.cs`), only while `r` is 2 and 30.6 ≤ x < `RATION5.x0` + 1 (so its exit
+    step too; `null` before, carried forward after): `kx4`/`ks4` (the fallen courier's x and state: free, drawn,
+    cradle, seated), `ka4` (the cradle's arms, `rotation.x`), `bd4` (`ch1.bayDoor`, 0..1), `bw4` (what the bay wants:
+    him on the plate or the courier seated, read back from the plate's 1 cm dip). Adding them left every line outside
+    DL-04 byte-identical and every earlier field of every step unchanged.
+  - DL-05 (`unity/core-tests/Dl05TraceTests.cs`), only while `r` is 2 and x ≥ `RATION5.x0` (47.9), and on the step he
+    leaves (so steps 9868–12073 here): `d5x`/`d5s` (the drum's x and state), `b5x`/`b5s` (the body's), `w5` (the
+    weigh-in's W, recomputed as `updateCh1` weighs it, L4890–L4892), `w5r` (its reading), `n5` (the needle), `p5` (the
+    plate's dip), `t5` (the hatch's twitch lift, L4920), `h5` (`rh.h`, the hatch's height), `f5` (the SERVED flag),
+    `s5` (served). Every earlier field of every step is unchanged. Note: `setTimeout`s run at the start of the
+    recorder's per-step call, before it writes the previous step's line, so a timeout's effects (DL-05's pat) show on
+    the step before the one they first act in.
+  - DL-06 (`unity/core-tests/Dl06TraceTests.cs`), only while `sceneName()` is DL-06 and on the step he leaves it (so
+    steps 12073–14016 here): `sp6`/`st6` (the scanner's phase and `scan.t`), `bl6` (`belt.running`), `rt6`
+    (`game.route`), `sl6`/`pl6` (the stop and points levers' angles as the levers set them: `leverHold`'s angle in an
+    act, else the rest angle, before the view's easing, L2833–L2834), `rd6` (the id of the carrier he rides, null),
+    `cr6` (the carriers as one JSON string: `[id, state, route, x, y, s, wait, t, ridden, tip, [[size, z, yaw], ...]]`
+    each, from `root.position`, `pivot.rotation.z` and the payload's meshes). Every line is unchanged apart from these
+    keys (checked line by line against the previous recording).
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).
 
 ## The bot in Unity's Core (`ReplayTests`, U-18)

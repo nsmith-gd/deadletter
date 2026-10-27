@@ -22,6 +22,8 @@ namespace DeadLetter.Core.Interaction
         public double Distance;
         /// <summary>The thing is in his facing direction (or level with him).</summary>
         public bool InFront;
+        /// <summary>Board: the part of the <see cref="IRide"/> he would hop onto.</summary>
+        public int Token;
         internal int Order;
     }
 
@@ -34,7 +36,9 @@ namespace DeadLetter.Core.Interaction
     /// <item>Items: he stands GRIP_FWD (0.29) short of the item on whichever side he is, within 0.4 of that point, at its
     /// level ±0.05 (L4218–L4221).</item>
     /// <item>Pushables: stand point X − Side·Gap; reach 0.34 in front of it, BackReach behind; floor level &lt; 0.05 (L4251–L4255).</item>
-    /// <item>Stations (levers, cranks, seats, terminals): |x − StandX| &lt; Reach (L1812–L1814).</item>
+    /// <item>Stations (levers, cranks, seats, terminals, hide spots) answer for themselves: <see cref="IStation.Offer"/>
+    /// takes the query and returns the stand point and facing, or refuses (reach, floor, state; L1812–L1814).</item>
+    /// <item>Rides (carriers) offer a board (<c>boardable()</c>, L2854–L2862; Fixed, as <c>nearUse3</c>, L2869).</item>
     /// <item>Ranking: category priority (Item, Curio, Secret, Voice, Fixed, Letter, Push; L4204–L4257), then targets in
     /// front of him before targets behind (DL-01 §8 "nearest target in facing direction"), then the nearest stand
     /// point (the prototype's "nearest grip wins", L4252), then registration order.</item>
@@ -93,6 +97,26 @@ namespace DeadLetter.Core.Interaction
             return found;
         }
 
+        /// <summary>
+        /// A standing jump beside something he can board hops him on (L1964–L1966): the nearest <see cref="IRide"/> that
+        /// offers a board, with his hands empty and on the ground. Not a Use, so it ignores the category ranking.
+        /// </summary>
+        public bool ResolveBoard(in InteractionQuery q, out Candidate best)
+        {
+            best = default;
+            if (!q.Grounded || q.Busy || q.Hold != HoldKind.None) return false;
+            bool found = false;
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (!(_items[i] is IRide ride) || !ride.IsAvailable(q) || !ride.OfferBoard(q, out int token, out double d)) continue;
+                if (found && d >= best.Distance) continue;
+                best = Make(Verb.Board, ride, q.X, 0, 0, q.X, d, q);
+                best.Token = token; best.InFront = true; best.Order = i;
+                found = true;
+            }
+            return found;
+        }
+
         /// <summary>Every category that answers here (for the overlap audit: more than one is a priority clash).</summary>
         public int AnswersByCategory(in InteractionQuery q, List<Candidate> output)
         {
@@ -108,7 +132,7 @@ namespace DeadLetter.Core.Interaction
             if (q.Hold == HoldKind.Item)
             {
                 // Carrying: only context set-downs answer.
-                if (!(it is IPlaceTarget pt) || !pt.IsAvailable(q) || !pt.Accepts(q.Carried)) return false;
+                if (!(it is IPlaceTarget pt) || !pt.Accepts(q.Carried)) return false;
                 return Station(pt, Verb.Place, q, out c);
             }
             if (it is IPlaceTarget) return false;
@@ -137,17 +161,26 @@ namespace DeadLetter.Core.Interaction
                 return true;
             }
 
-            if (it is IPresentTarget pr) return pr.IsAvailable(q) && Station(pr, Verb.Present, q, out c);
-            if (it is ISeat seat) return seat.IsAvailable(q) && Station(seat, Verb.Sit, q, out c);
-            if (it is IUsable u) return u.IsAvailable(q) && Station(u, Verb.Use, q, out c);
+            if (it is IPresentTarget pr) return Station(pr, Verb.Present, q, out c);
+            if (it is ISeat seat) return Station(seat, Verb.Sit, q, out c);
+            if (it is IHideSpot hide) return Station(hide, Verb.Hide, q, out c);
+            if (it is IUsable u) return Station(u, Verb.Use, q, out c);
+            if (it is IRide ride)
+            {
+                if (!ride.IsAvailable(q) || !ride.OfferBoard(q, out int token, out double d)) return false;
+                c = Make(Verb.Board, ride, q.X, 0, 0, q.X, d, q);
+                c.Token = token;
+                c.InFront = true;
+                return true;
+            }
             return false;
         }
 
+        /// <summary>The station answers for itself (<see cref="IStation.Offer"/>): reach, floor, state, stand point, facing.</summary>
         private static bool Station(IStation s, Verb verb, in InteractionQuery q, out Candidate c)
         {
-            double d = Math.Abs(q.X - s.StandX);
-            if (d >= s.Reach) { c = default; return false; }
-            c = Make(verb, s, s.StandX, s.StandZ, s.Face, s.AnchorX, d, q);
+            if (!s.Offer(q, out var pose)) { c = default; return false; }
+            c = Make(verb, s, pose.StandX, pose.StandZ, pose.Face, pose.AnchorX, Math.Abs(q.X - pose.StandX), q);
             return true;
         }
 

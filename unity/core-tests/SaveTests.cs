@@ -101,9 +101,68 @@ namespace DeadLetter.Core.Tests
             Assert.Contains(StoryFlags.LetterRead("tube"), m.Flags);
             Assert.True(m.Settings.AutoRun && m.Settings.Sound && !m.Settings.Calm);   // options: the defaults
             Assert.Equal(1.0, m.Settings.Brightness);
-            Assert.True(SaveCodec.TryLoad(SaveCodec.Encode(m), out var again, out _));    // re-saved as v2
+            Assert.True(SaveCodec.TryLoad(SaveCodec.Encode(m), out var again, out _));    // re-saved as the current version
             Assert.Equal(m.Flags, again.Flags);
             Assert.Equal(SaveModel.CurrentVersion, SaveCodec.Encode(m)[4]);
+        }
+
+        [Fact]
+        public void Migration_V2SeenFlags_BecomeTheSeenSet_V3_OtherFlagsStay()
+        {
+            // A version 2 slot kept seen moments as persist flags named seen.<moment> (StoryFlags.Seen, now gone).
+            var v2 = new SaveDocument(2);
+            v2.SetString("cp", "bay"); v2.SetString("scene", "DL-04"); v2.SetDouble("playTime", 12.5);
+            v2.SetBool("flag/seen.realise", true);
+            v2.SetBool("flag/seen.labelWake", true);
+            v2.SetBool("flag/seen.awe", false);
+            v2.SetBool("flag/curio.scale", true);
+            v2.SetDouble("mech/dl04.cradle/t", 0.25);
+            byte[] bytes = SaveCodec.Encode(v2);
+            Assert.Equal(2, bytes[4]);
+            Assert.True(SaveCodec.TryLoad(bytes, out var m, out string err), err);
+            Assert.Equal(new[] { "labelWake", "realise" }, m.Seen);
+            Assert.Equal(new[] { "curio.scale" }, m.Flags);
+            Assert.Equal("bay", m.Checkpoint);
+            Assert.Equal(12.5, m.PlayTime);
+            Assert.Equal(0.25, m.Mechanisms.ReadDouble("dl04.cradle/t"));
+            byte[] again = SaveCodec.Encode(m);
+            Assert.Equal(3, again[4]);
+            Assert.True(SaveCodec.TryLoad(again, out var m3, out _));
+            Assert.Equal(m.Seen, m3.Seen);
+            Assert.Equal(again, SaveCodec.Encode(m3));
+
+            // The v1 fixture goes through both steps.
+            Assert.True(SaveCodec.TryLoad(Convert.FromBase64String(V1Fixture), out var m1, out _));
+            Assert.Empty(m1.Seen);
+        }
+
+        [Fact]
+        public void Seen_IsSavedWithTheSlot_SurvivesARespawn_AndStartOverClearsIt_L1309_L4133()
+        {
+            var fs = new MemoryFileSystem();
+            var g = Mech.Graph("start", new TestSource("t.src"));
+            var svc = SaveKit.Service(g, fs, "DL-01");
+            svc.NewGame();
+            int writes = svc.Writes;
+            svc.MarkSeen("labelWake");
+            Assert.True(svc.HasSeen("labelWake"));
+            Assert.Equal(writes + 1, svc.Writes);                                    // saved when it played
+            svc.MarkSeen("labelWake");
+            Assert.Equal(writes + 1, svc.Writes);                                    // no change, no write
+            svc.Reach("shutter");
+            svc.Reload();
+            Assert.True(svc.HasSeen("labelWake"));                                   // a respawn never replays it
+            Assert.True(new AtomicFileStore(fs).TryLoad(0, out var saved));
+            Assert.Equal(new[] { "labelWake" }, saved.Seen);
+
+            var g2 = Mech.Graph("start", new TestSource("t.src"));
+            var svc2 = SaveKit.Service(g2, fs, "DL-01");
+            Assert.True(svc2.TryContinue());
+            Assert.True(svc2.HasSeen("labelWake"));
+            svc2.NewGame();
+            Assert.False(svc2.HasSeen("labelWake"));                                 // Start over
+            Assert.True(new AtomicFileStore(fs).TryLoad(0, out var fresh));
+            Assert.Empty(fresh.Seen);
         }
 
         [Fact]

@@ -1,6 +1,6 @@
 // Golden trace recorder (U-20): runs the simulated player (bot.js) through the prototype and writes one JSON line per
 // 60 Hz game step: the inputs the game consumed that step and D-17's and the scenes' state after it. The Core
-// parity tests (unity/core-tests/Dl01TraceTests.cs, Dl02TraceTests.cs, Dl03TraceTests.cs) replay the inputs
+// parity tests (unity/core-tests/Dl01TraceTests.cs … Dl06TraceTests.cs) replay the inputs
 // through Core and compare. Format: tools/sim/README.md.
 //
 //   node record_trace.mjs <seed> <out.jsonl.gz> [mechanical]
@@ -80,6 +80,56 @@ const RECORDER = `window.__record = (rngSeed) => {
       bx: bx ? r6(bx.x) : null, bb: bx ? r6(bx.base) : null, bs: bx ? bx.state : null, tl: D.letters.tube ?? null, dn: G.deaths, ra: r6(G.respawnAt || 0),
     };
   }
+  // DL-04 (U-20): the fallen courier (x, state), the cradle's arms (rotation.x), the bay door (0..1) and what the bay
+  // wants (want: him on the plate, or the courier seated; read back from the plate's 1 cm dip). Only while in DL-04
+  // (region 2, x from GATE_X 30.6 to RATION5.x0 + 1, so its exit step too); absent fields are not written.
+  function dl04() {
+    if (G.region !== 2 || !(G.x >= 30.6 && G.x < D.k2.RATION5.x0 + 1)) return {};
+    const k = D.refs.ch1, cr = G.ch1 && G.ch1.courier, p = k && k.bayPlate;
+    return {
+      kx4: cr ? r6(cr.x) : null, ks4: cr ? cr.state : null, ka4: k && k.armL ? r6(k.armL.rotation.x) : null,
+      bd4: G.ch1 ? r6(G.ch1.bayDoor) : null, bw4: p && p.userData.y0 != null ? r6((p.userData.y0 - p.position.y) / 0.01) : null,
+    };
+  }
+  // DL-05 (U-20): the drum and the body (x, state), the weigh-in (W as updateCh1 weighs it, L4890-L4892; its reading,
+  // needle, plate dip; the hatch's twitch lift, L4920), the hatch's height and the SERVED flag. Only while in DL-05
+  // (region 2, x >= RATION5.x0) and on the step he leaves it; names end in 5 so no other scene's fields collide.
+  const R5 = D.k2.RH5, X5 = D.k2.RATION5.x0;
+  let in05 = false;
+  function dl05() {
+    const now = G.region === 2 && G.x >= X5, emit = now || in05;
+    in05 = now;
+    const s = G.ch1;
+    if (!emit || !s || !s.drum) return {};
+    const dr = s.drum, bd = s.body, rh = s.rh, sc = s.weigh;
+    const on = (x, half) => Math.min(1, Math.max(0, (Math.min(x + half, R5.plate[1]) - Math.max(x - half, R5.plate[0])) / (2 * half)));
+    const meOn = G.region === 2 && G.y < 0.05 && G.x > R5.plate[0] && G.x < R5.plate[1];
+    const tw = rh.served ? 0 : Math.max(0, 1 - (G.clock - (sc.twitchAt ?? -9)) / 0.9);
+    return {
+      d5x: r6(dr.x), d5s: dr.state, b5x: r6(bd.x), b5s: bd.state,
+      w5: r6(on(bd.x, R5.bodyHalf) + 1.7 * on(dr.x, 0.225) + (meOn ? 0.2 : 0)), w5r: sc.reading, n5: r6(sc.needle), p5: r6(sc.dip),
+      t5: r6(tw > 0 ? 0.14 * Math.sin(Math.PI * (1 - tw)) : 0), h5: r6(rh.h), f5: r6(rh.flag), s5: b(rh.served),
+    };
+  }
+  // DL-06 (U-20): the scanner (phase, its clock), the belt and the route, the two levers' angles as the levers set them
+  // (game.leverHold's angle in an act, else the rest angle; L2833-L2834 before the view's easing), what he rides, and the
+  // carriers as one JSON string (so unchanged steps stay deltas): per carrier [id, state, route, x, y, s, wait, t, ridden,
+  // tip (pivot.rotation.z), payload [[size, z, yaw], ...]] (index.html L2660-L2751). Only while sceneName() is DL-06 and on
+  // the step he leaves it; names end in 6 so no other scene's fields collide.
+  let in06 = false;
+  function dl06() {
+    const now = /^DL-06/.test(D.scene()), emit = now || in06;
+    in06 = now;
+    if (!emit || !D.refs.carriers) return {};
+    const sc = G.scan, lh = G.leverHold, run = G.belt.running;
+    const cr = D.refs.carriers.map((c) => [c.id, c.state, c.route, r6(c.root.position.x), r6(c.root.position.y), r6(c.s), r6(c.wait), r6(c.t), b(c.ridden),
+      r6(c.pivot.rotation.z), c.payload.map((m) => [r6(m.geometry.parameters.height), r6(m.position.z), r6(m.rotation.y)])]);
+    return {
+      sp6: sc.phase, st6: r6(sc.t), bl6: b(run), rt6: G.route,
+      sl6: r6(lh && lh.which === 'stop' ? lh.angle : run ? -18 : 6), pl6: r6(lh && lh.which === 'points' ? lh.angle : G.route === 'exit' ? 6 : -18),
+      rd6: G.riding ? G.riding.id : null, cr6: JSON.stringify(cr),
+    };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -92,6 +142,9 @@ const RECORDER = `window.__record = (rngSeed) => {
       // DL-03: the trolley, the sort weight, the plate's load and needle, the gate.
       tx: r6(G.trolley.x), ws: G.weight.state, wx: r6(G.weight.x), wo: r6(G.weight.off), ld: r6(G.load), nd: r6(G.needle),
       gy: r6(G.gate.y), gv: r6(G.gate.v),
+      ...dl04(),
+      ...dl05(),
+      ...dl06(),
     };
   }
   function flush() {

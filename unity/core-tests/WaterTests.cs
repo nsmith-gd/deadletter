@@ -44,7 +44,7 @@ namespace DeadLetter.Core.Tests
             {
                 var s = new Sluice("dl17.sluiceA", SluiceParams.Dl17Sluice(i));
                 double x = SluiceRigParams.Dl17SluiceX[i];
-                Assert.Equal(x - 0.18, s.StandX, 12);
+                Assert.Equal(x - 0.18, s.Station.StandX, 12);
                 Assert.True(s.IsAvailable(At(x + 0.23)));
                 Assert.False(s.IsAvailable(At(x - 0.25)));
                 Assert.False(s.IsAvailable(At(x, 0.06)));
@@ -89,8 +89,8 @@ namespace DeadLetter.Core.Tests
         public void Valve_StandsShortOfIt_AnswersWithin0_26_L5999_L6007()
         {
             var v = new SluiceValve("dl17.valve", SluiceValveParams.Dl17Valve());
-            Assert.Equal(336.35, v.StandX, 12);
-            Assert.Equal(336.55, v.AnchorX, 12);
+            Assert.Equal(336.35, v.Station.StandX, 12);
+            Assert.Equal(336.55, v.Station.ReachX, 12);
             Assert.True(v.IsAvailable(At(336.55 - 0.25)));
             Assert.False(v.IsAvailable(At(336.55 + 0.27)));
         }

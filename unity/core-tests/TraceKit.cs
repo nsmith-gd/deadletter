@@ -41,6 +41,21 @@ namespace DeadLetter.Core.Tests
         // DL-03: the trolley's x, the weight's state, x (game.weight.x) and deck offset, game.load, the needle, the gate's y and fall speed.
         public double Tx, Wx, Wo, Ld, Nd, Gy, Gv;
         public string Ws;
+        // DL-04 (only while in DL-04, else carried forward; null before): the fallen courier's x and state, the cradle's
+        // arms (rotation.x), the bay door (0..1) and what the bay wants (him on the plate, or the courier seated).
+        public double? Kx4, Ka4, Bd4, Bw4;
+        public string Ks4;
+        // DL-05 (only while in DL-05 and on the step he leaves it; null before): the drum and the body (x, state), the
+        // weigh-in's W, reading, needle and plate dip, the hatch's twitch lift, the hatch's height, the flag, served.
+        public double? D5x, B5x, W5, N5, P5, T5, H5, F5;
+        public string D5s, B5s, W5r;
+        public bool? S5;
+        // DL-06 (only while in DL-06 and on the step he leaves it; null before): the scanner's phase and clock, the belt
+        // running, the route, the stop and points levers' angles, the carrier he rides (its id) and the carriers (raw JSON:
+        // [id, state, route, x, y, s, wait, t, ridden, tip, [[size, z, yaw], ...]] each, tools/sim/record_trace.mjs).
+        public string Sp6, Rt6, Cr6;
+        public double? St6, Sl6, Pl6, Rd6;
+        public bool? Bl6;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -169,6 +184,31 @@ namespace DeadLetter.Core.Tests
                 case "nd": s.Nd = v.GetDouble(); break;
                 case "gy": s.Gy = v.GetDouble(); break;
                 case "gv": s.Gv = v.GetDouble(); break;
+                case "kx4": s.Kx4 = N(v); break;
+                case "ks4": s.Ks4 = S(v); break;
+                case "ka4": s.Ka4 = N(v); break;
+                case "bd4": s.Bd4 = N(v); break;
+                case "bw4": s.Bw4 = N(v); break;
+                case "d5x": s.D5x = N(v); break;
+                case "d5s": s.D5s = S(v); break;
+                case "b5x": s.B5x = N(v); break;
+                case "b5s": s.B5s = S(v); break;
+                case "w5": s.W5 = N(v); break;
+                case "w5r": s.W5r = S(v); break;
+                case "n5": s.N5 = N(v); break;
+                case "p5": s.P5 = N(v); break;
+                case "t5": s.T5 = N(v); break;
+                case "h5": s.H5 = N(v); break;
+                case "f5": s.F5 = N(v); break;
+                case "s5": s.S5 = B(v); break;
+                case "sp6": s.Sp6 = S(v); break;
+                case "st6": s.St6 = N(v); break;
+                case "bl6": s.Bl6 = B(v); break;
+                case "rt6": s.Rt6 = S(v); break;
+                case "sl6": s.Sl6 = N(v); break;
+                case "pl6": s.Pl6 = N(v); break;
+                case "rd6": s.Rd6 = N(v); break;
+                case "cr6": s.Cr6 = S(v); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }

@@ -29,10 +29,12 @@ namespace DeadLetter.Core.Tests
             public readonly Door Door;
             public readonly D17Motor Motor;
 
-            public Scene(string checkpoint, double x)
+            public Scene(string checkpoint, double x, bool flinch = true)
             {
+                var latch = LatchParams.Dl01Latch();
+                if (!flinch) latch.FlinchClip = null;
                 Relay = G.Add(new PulseSequencer("dl01.relay", PulseParams.Dl01Relay()));     // #5 relay pulse
-                Latch = G.Add(new Latch("dl01.latch", LatchParams.Dl01Latch()));             // #6 updateMechanisms
+                Latch = G.Add(new Latch("dl01.latch", latch));                               // #6 updateMechanisms
                 Shutter = G.Add(new Door("dl01.shutter", DoorParams.Dl01Shutter()));
                 Crank = G.Add(new CrankActuator("dl01.crank", CrankParams.Dl01Crank()));
                 Door = G.Add(new Door("dl01.door", DoorParams.Dl01Door()));
@@ -61,8 +63,8 @@ namespace DeadLetter.Core.Tests
             Assert.True(s.Motor.PreviewUse(out var c));
             Assert.Same(s.Latch, c.Target);
             s.Step(Sim.Use());
-            bool crouchedApproach = false;
-            int release = -1, cue = -1, open = -1, actEnd = -1;
+            bool crouchedApproach = false, crouchedFlinch = true;
+            int release = -1, cue = -1, open = -1, actEnd = -1, flinch = -1;
             for (int i = 1; i <= 600; i++)
             {
                 double f = s.Step(Sim.Move(0));
@@ -78,15 +80,20 @@ namespace DeadLetter.Core.Tests
                 }
                 if (Mech.Emitted(s.G, "dl01.shutter", DoorEvent.Cue)) cue = i;
                 if (Mech.Entered(s.G, "dl01.shutter", DoorState.Open)) open = i;
+                if (flinch < 0 && s.Motor.Clip == ClipNames.Flinch) flinch = i;
+                if (flinch > 0 && actEnd < 0 && s.Motor.IsActing) crouchedFlinch &= s.Motor.Crouched && s.Motor.ActPart == 1;
                 if (actEnd < 0 && release > 0 && !s.Motor.IsActing) actEnd = i;
             }
             Assert.True(crouchedApproach);
             Assert.True(release > 0);
             Assert.Equal(release + 34, cue);                      // the thud at 0.56 s (L1683)
             Assert.Equal(release + 54, open);                     // settled at 0.9 s
-            Assert.InRange((actEnd - release) * 24.0 / 60, 39 - 31.4, 39 - 31 + 0.8);   // the act ends at Pull f39
+            Assert.InRange((flinch - release) * 24.0 / 60, 39 - 31.4, 39 - 31 + 0.8);   // Pull f39 chains Flinch (L1875)
+            Assert.Equal(97, actEnd - flinch);                    // Flinch.time >= 1.6 (97 steps), still crouched, then the act ends (L1876)
+            Assert.True(crouchedFlinch);
+            Assert.False(s.Motor.Crouched);
             Assert.Equal(15.0, s.Shutter.Position);
-            Assert.InRange(s.Latch.LeverDeg, 71.5, 72);           // leverAngleAt(39), L1872
+            Assert.Equal(72, s.Latch.LeverDeg, 9);                // the lever runs on with Pull to f40 under the Flinch (L1872)
             Assert.False(s.Motor.PreviewUse(out _));              // nothing else to use at the latch
         }
 
@@ -155,7 +162,7 @@ namespace DeadLetter.Core.Tests
         [Fact]
         public void SnapshotMidSwing_RestoresAndContinuesBitIdentically()
         {
-            var a = new Scene("start", 2.7);
+            var a = new Scene("start", 2.7, flinch: false);       // the act is over 0.4 s in, so the copy needs no act frames
             a.Step(Sim.Use());
             int i = 0;
             while (a.Latch.State == LatchState.Locked && i++ < 600) a.Step(Sim.Move(0));

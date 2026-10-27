@@ -1,5 +1,6 @@
 using System;
 using DeadLetter.Core.Interaction;
+using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Simulation;
 using DeadLetter.Runtime.Settings;
@@ -21,6 +22,12 @@ namespace DeadLetter.Runtime
     /// Scene setup: D-17's own colliders must be on a layer outside <see cref="groundMask"/> and <see cref="ceilingMask"/>.
     /// Standable geometry and walls go in groundMask; undersides he can bump or crouch under go in ceilingMask; ramp
     /// colliders also go in rampMask (step-up 0.45 there).
+    /// <para><b>Hosted mode</b> (U-20): a scene host's Core scene simulator owns the motor, the lane (Core lane geometry,
+    /// not physics) and the 60 Hz tick (§3.1). After <see cref="AttachToHost"/> this component only
+    /// reads input (<see cref="TakeInput"/>), places the transform and drives the Animator; the host calls
+    /// <see cref="OnHostStepped"/> after each Core step. Standalone mode (no host) is unchanged: it ticks its own motor
+    /// against physics probes, for test rigs and scenes not yet ported; give it a <see cref="Graph"/> and it steps the
+    /// mechanisms after the motor with <see cref="Pose"/> (§3.1 #4 then #6), as the scene simulator does.</para>
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class D17Controller : MonoBehaviour, IMotorWorld
@@ -54,13 +61,17 @@ namespace DeadLetter.Runtime
 
         private D17Motor _motor;
         private FixedTick _tick;
+        private bool _hosted;
+        private Func<float> _hostAlpha;
+        private int _overrideSerial;
+        private string _overrideClip;
         private InteractionResolver _resolver;
         private InputActionMap _map;
         private InputAction _move, _jump, _crouch, _use, _run, _pause;
         private bool _jumpLatched, _useLatched;
         private Vector3 _prevPos, _currPos;
         private float _prevYaw, _currYaw;
-        private int _lastClipSerial = -1;
+        private int _lastClipSerial = -1, _lastOverrideSerial;
         private bool _hasClipSpeed, _hasSpeed, _hasVy, _hasGrounded, _hasCrouched, _hasCarrying, _hasPushing, _hasState, _hasCarryBlend;
 
         /// <summary>The Core motor (read-only use from views; never write its state from Runtime).</summary>
@@ -68,6 +79,18 @@ namespace DeadLetter.Runtime
 
         /// <summary>Mechanism and item views register their Core interactables here (U-10).</summary>
         public InteractionResolver Resolver => _resolver;
+
+        /// <summary>
+        /// D-17 as the mechanisms see him after the last Core step (<see cref="PlayerPose.Of"/>: position, speed, crouch,
+        /// act, footing, hands, hiding, escorted). Hosted, the runner fills the same pose for its graph.
+        /// </summary>
+        public PlayerPose Pose => _motor != null ? PlayerPose.Of(_motor) : PlayerPose.Away;
+
+        /// <summary>
+        /// Standalone mode only: mechanisms stepped after each motor step with <see cref="Pose"/> (a test rig's graph,
+        /// built and reset by its owner). Hosted, the scene simulator steps its own graph. Null = none.
+        /// </summary>
+        public MechanismGraph Graph { get; set; }
 
         /// <summary>Every motor event, after each Core step (sound, shake, noise, clip events).</summary>
         public event Action<MotorEvent> MotorEventRaised;
@@ -88,10 +111,68 @@ namespace DeadLetter.Runtime
         public double SimTime => _motor != null ? _motor.StepCount * StepSeconds : 0;
 
         /// <summary>Render interpolation factor between the last two Core steps (as used for the transform).</summary>
-        public float RenderAlpha => _tick == null ? 1f : Mathf.Clamp01((float)_tick.Alpha);
+        public float RenderAlpha => _hosted ? (_hostAlpha != null ? Mathf.Clamp01(_hostAlpha()) : 1f)
+            : _tick == null ? 1f : Mathf.Clamp01((float)_tick.Alpha);
+
+        /// <summary>True once a scene host owns the motor and the tick.</summary>
+        public bool Hosted => _hosted;
+
+        /// <summary>
+        /// A clip the host plays instead of the motor's (the opening's <c>Opening</c> clip while the runner holds him,
+        /// L8064). Null = the motor's clip. <see cref="OverrideClipTime"/> is seconds into it when it starts.
+        /// </summary>
+        public string OverrideClip
+        {
+            get => _overrideClip;
+            set { if (value != _overrideClip) { _overrideClip = value; _overrideSerial++; } }
+        }
+        public double OverrideClipTime { get; set; }
+
+        /// <summary>
+        /// Hand the motor and the tick to a scene host (U-20). The host's motor answers its own lane (Core
+        /// lane geometry); <paramref name="renderAlpha"/> is the host tick's interpolation factor.
+        /// </summary>
+        public void AttachToHost(D17Motor motor, InteractionResolver resolver, Func<float> renderAlpha)
+        {
+            _motor = motor ?? throw new ArgumentNullException(nameof(motor));
+            _resolver = resolver;
+            _hostAlpha = renderAlpha;
+            _hosted = true;
+            _motor.AutoRun = autoRun;
+            SnapToMotor();
+        }
+
+        /// <summary>This step's input, consuming the latched Jump/Use presses (L8527). Hosted mode; the host gates it.</summary>
+        public MotorInput TakeInput()
+        {
+            MotorInput input = ReadInput();
+            _jumpLatched = _useLatched = false;
+            return input;
+        }
+
+        /// <summary>After each host Core step: interpolation endpoints, motor events, <see cref="Stepped"/>.</summary>
+        public void OnHostStepped(double dt)
+        {
+            _prevPos = _currPos;
+            _prevYaw = _currYaw;
+            _currPos = CorePosition();
+            _currYaw = CoreYawDegrees();
+            var events = _motor.Events;
+            if (MotorEventRaised != null)
+                for (int e = 0; e < events.Count; e++) MotorEventRaised(events[e]);
+            Stepped?.Invoke(dt);
+        }
+
+        /// <summary>A teleport (respawn, reload, continue): no interpolation across it.</summary>
+        public void SnapToMotor()
+        {
+            _currPos = _prevPos = CorePosition();
+            _currYaw = _prevYaw = CoreYawDegrees();
+        }
 
         private void Awake()
         {
+            if (_hosted) { CacheAnimatorAndInput(); return; }   // a host attached first (its Awake ran before this one)
             var config = MotorConfig.Prototype();
             _resolver = new InteractionResolver(config);
             _motor = new D17Motor(config, this, _resolver) { AutoRun = SettingsStore.Loaded ? SettingsStore.Current.AutoRun : autoRun };
@@ -101,7 +182,12 @@ namespace DeadLetter.Runtime
             _motor.Place(p.x, p.y, 1);
             _currPos = _prevPos = CorePosition();
             _currYaw = _prevYaw = CoreYawDegrees();
+            CacheAnimatorAndInput();
+        }
 
+        private void CacheAnimatorAndInput()
+        {
+            if (_map != null) return;
             if (animator == null) animator = GetComponentInChildren<Animator>();
             if (animator != null)
             {
@@ -142,6 +228,7 @@ namespace DeadLetter.Runtime
             if (_jump != null && _jump.WasPressedThisFrame()) _jumpLatched = true;
             if (_use != null && _use.WasPressedThisFrame()) _useLatched = true;
             if (_pause != null && _pause.WasPressedThisFrame()) PauseRequested?.Invoke();
+            if (_hosted) return;                     // the scene host ticks Core and calls OnHostStepped
 
             // Core ticks at its own 60 Hz from the render frame's delta, not from FixedUpdate: Unity's default fixed
             // step is 50 Hz, which would step Core 1,1,1,1,2 and leave nothing to interpolate (judder). The lane probes
@@ -157,6 +244,8 @@ namespace DeadLetter.Runtime
                 _prevPos = _currPos;
                 _prevYaw = _currYaw;
                 _motor.Step(input, _tick.StepSeconds);
+                Graph?.Step(_tick.StepSeconds, PlayerPose.Of(_motor));         // #6: the mechanisms see him after #4
+                _motor.SyncRide();                                             // #9
                 _currPos = CorePosition();
                 _currYaw = CoreYawDegrees();
                 var events = _motor.Events;
@@ -226,6 +315,18 @@ namespace DeadLetter.Runtime
         private void DriveAnimator()
         {
             if (animator == null || !animator.isActiveAndEnabled) return;
+            if (_overrideClip != null)
+            {
+                if (_overrideSerial != _lastOverrideSerial)
+                {
+                    _lastOverrideSerial = _overrideSerial;
+                    int o = Animator.StringToHash(_overrideClip);
+                    if (animator.HasState(0, o)) animator.CrossFadeInFixedTime(o, 0f, 0, Mathf.Max(0f, (float)OverrideClipTime));
+                    _lastClipSerial = -1;            // back to the motor's clip when the override ends
+                }
+                return;
+            }
+            _lastOverrideSerial = _overrideSerial;
             if (_motor.ClipSerial != _lastClipSerial)
             {
                 _lastClipSerial = _motor.ClipSerial;

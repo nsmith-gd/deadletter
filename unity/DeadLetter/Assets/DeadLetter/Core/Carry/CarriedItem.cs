@@ -105,6 +105,8 @@ namespace DeadLetter.Core.Carry
         public bool IsAvailable(in InteractionQuery q) => State == ItemState.Floor;
         public void OnLifted() => _lift = true;
         public void OnSetDown(double x, double baseY) { _down = true; _downX = x; _downY = baseY; }
+        /// <summary>A context set-down (#22): the target has taken it and moves it with <see cref="MoveTo"/>; nothing to record here.</summary>
+        public void OnPlaced(IPlaceTarget target) { }
 
         /// <summary>A receiver takes it (or a carrier tips it, or it is lost): applied at the next <see cref="Step"/>.</summary>
         public void MoveTo(ItemState state, double x, double baseY, int slot = -1)

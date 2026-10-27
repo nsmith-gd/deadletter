@@ -150,12 +150,10 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// M6 (U-11, #22): the motor lets go at Max for every pushable without detents or a pit (D17Motor.StepPush's end
-        /// of travel, after chapter 1's updateHoldCh1 L4723). DL-03's trolley is an old hold (updateHold, L2341–L2349): it
-        /// stops at the weight, or at TROLLEY_MAX, and he keeps hold, so he can pull it back without grabbing again.
+        /// M6 (#22, fixed in #25 by <c>IPushable.LetGoAtMax</c>): DL-03's trolley is an old hold (updateHold, L2341–L2349):
+        /// it stops at the weight, or at TROLLEY_MAX, and he keeps hold, so he can pull it back without grabbing again.
         /// </summary>
-        [Fact(Skip = "U-11 motor issue M6 (#22): D17Motor.StepPush ends the hold at Max (|x - Max| < 0.005) for every pushable without "
-            + "detents or a pit; DL-03's trolley (updateHold, L2341-L2349) keeps hold at the weight and at TROLLEY_MAX.")]
+        [Fact]
         public void GrabL_KeepsHoldAtTheStop_L2341()
         {
             var s = PushedIntoTheWeight();

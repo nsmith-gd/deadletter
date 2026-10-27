@@ -9,14 +9,15 @@ namespace DeadLetter.Core.Save
     /// settings. The world is rebuilt from the checkpoint and the flags (derived); the snapshot then puts every
     /// mechanism back exactly as it was when the checkpoint was reached (the plan's "Recovery": braked platforms,
     /// docked routes, inserted parts stay as left). A snapshot that no longer fits the scene is skipped.
-    /// <para>Keys (version 2): <c>cp</c>, <c>scene</c>, <c>playTime</c>, <c>flag/&lt;name&gt;</c> (true),
-    /// <c>mech/&lt;id&gt;/&lt;field&gt;</c> (the graph snapshot), <c>opt/&lt;name&gt;</c> (<see cref="Settings"/>).</para>
+    /// <para>Keys (version 3): <c>cp</c>, <c>scene</c>, <c>playTime</c>, <c>flag/&lt;name&gt;</c> (true),
+    /// <c>seen/&lt;moment&gt;</c> (true), <c>mech/&lt;id&gt;/&lt;field&gt;</c> (the graph snapshot), <c>opt/&lt;name&gt;</c>
+    /// (<see cref="Settings"/>). Version 3 added the seen moments (<see cref="SaveMigrations"/>).</para>
     /// </summary>
     public sealed class SaveModel
     {
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
-        private const string FlagPrefix = "flag/", MechPrefix = "mech/";
+        private const string FlagPrefix = "flag/", SeenPrefix = "seen/", MechPrefix = "mech/";
 
         public string Checkpoint = "start";
         /// <summary>The scene the checkpoint is in (the title card's "Continue: …").</summary>
@@ -24,6 +25,12 @@ namespace DeadLetter.Core.Save
         public double PlayTime;
         /// <summary>The set persist flags, sorted ordinal.</summary>
         public List<string> Flags = new List<string>();
+        /// <summary>
+        /// The directed moments and once-only beats already played (the prototype's <c>seen</c> set, <c>once()</c>,
+        /// L1309–L1310: <c>wake</c>'s <c>labelWake</c>, <c>realise</c>, <c>awe</c>...), sorted ordinal. A checkpoint
+        /// replay or a continue never plays them again; Start over clears them (§4.5).
+        /// </summary>
+        public List<string> Seen = new List<string>();
         /// <summary>The graph snapshot at the checkpoint; null: rebuild from the checkpoint alone.</summary>
         public MemorySnapshot Mechanisms;
         public Settings Settings = new Settings();
@@ -35,6 +42,7 @@ namespace DeadLetter.Core.Save
             d.SetString("scene", Scene ?? "");
             d.SetDouble("playTime", PlayTime);
             foreach (var f in Flags) d.SetBool(FlagPrefix + f, true);
+            foreach (var m in Seen ?? new List<string>()) d.SetBool(SeenPrefix + m, true);
             Mechanisms?.CopyTo(new PrefixWriter(d, MechPrefix));
             (Settings ?? new Settings()).Write(d);
             return d;
@@ -53,6 +61,8 @@ namespace DeadLetter.Core.Save
             };
             foreach (var f in d.KeysUnder(FlagPrefix)) if (d.GetBool(FlagPrefix + f, false)) m.Flags.Add(f);
             m.Flags.Sort(StringComparer.Ordinal);
+            foreach (var n in d.KeysUnder(SeenPrefix)) if (d.GetBool(SeenPrefix + n, false)) m.Seen.Add(n);
+            m.Seen.Sort(StringComparer.Ordinal);
             var mech = new MemorySnapshot();
             foreach (var kv in d.Entries)
             {

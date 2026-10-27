@@ -25,9 +25,8 @@ namespace DeadLetter.Core.Tests
     /// </list>
     /// <para><b>Tolerance 1e-6</b> (the trace's rounding) on every continuous value; discrete signals (acts, holds, grounded,
     /// item and letter states, deaths, the respawn, the scene exit) on the same step.</para>
-    /// <para><b>Known motor issue</b> (U-11, #22): M2 only. Each of the two mantles (onto the table, onto the gantry) ends one
-    /// step early, so the prototype's last mantle step is fed no input (as in <see cref="Dl01TraceTests"/>), and that one
-    /// step's act is asserted as M2 predicts. The strict replay is the skipped test.</para>
+    /// <para>No compensation: M2 (the mantle ending a step early, #22) is fixed in U-11b (#25), so both mantles take the
+    /// prototype's 141 steps and every check replays the recorded input unchanged.</para>
     /// </summary>
     public class Dl02TraceTests
     {
@@ -48,21 +47,17 @@ namespace DeadLetter.Core.Tests
         {
             public readonly List<Row> Rows = new List<Row>();
             public SceneSim Sim;
-            public readonly List<int> MantleCompensated = new List<int>();
             public int Room, Exit;
         }
 
         private static readonly Dictionary<string, Replay> Cache = new Dictionary<string, Replay>();
 
-        /// <summary>
-        /// Plays DL-02 of <paramref name="file"/> from the step after <c>room</c> to the first step in DL-03 (inclusive).
-        /// <paramref name="compensateMantle"/>: see <see cref="Dl01TraceTests.Run"/> (M2).
-        /// </summary>
-        internal static Replay Run(string file, bool compensateMantle = true)
+        /// <summary>Plays DL-02 of <paramref name="file"/> from the step after <c>room</c> to the first step in DL-03 (inclusive).</summary>
+        internal static Replay Run(string file)
         {
             lock (Cache)
             {
-                string key = file + compensateMantle;
+                string key = file;
                 if (Cache.TryGetValue(key, out var cached)) return cached;
                 var t = Trace.Load(file);
                 int room = t.FirstIndex(p => p.Cp == "room");
@@ -71,11 +66,6 @@ namespace DeadLetter.Core.Tests
                 PeriodicCrusher press = null;
                 CarriedItem box = null;
                 Dl02TubeLetter letter = null;
-                MotorInput Input(int k, SceneSim sim)
-                {
-                    if (compensateMantle && t.Steps[k - 1].Mt && !sim.Motor.IsMantling && sim.Act == null) { r.MantleCompensated.Add(t.Steps[k].I); return default; }
-                    return t.Steps[k].Input;
-                }
                 r.Sim = TraceReplay.Run(t, Dl02Scene.Def(), "room", fromOpening: false, room + 1, exit, (p, sim) =>
                 {
                     if (press == null)
@@ -91,7 +81,7 @@ namespace DeadLetter.Core.Tests
                         Press = press.Face, BoxX = box.X, BoxBase = box.BaseY, BoxState = box.State.ToString(), Letter = letter.State.ToString(),
                         Deaths = ((Dl02Rules)sim.Rules).Death.Deaths, RespawnAt = sim.RespawnAt,
                     });
-                }, Input);
+                });
                 return Cache[key] = r;
             }
         }
@@ -142,60 +132,48 @@ namespace DeadLetter.Core.Tests
             Assert.True(bad.Count == 0, Report(bad));
         }
 
-        /// <summary>M2 compensates exactly the last step of each mantle: onto the table, then onto the gantry.</summary>
+        /// <summary>Both mantles (onto the table, onto the gantry) end on the prototype's step: Core is still mantling on each one's last step (M2, fixed in #25).</summary>
         [Theory, MemberData(nameof(Traces))]
-        public void MantleCompensation_IsTheTwoMantlesLastSteps(string file)
+        public void BothMantles_EndOnThePrototypesStep(string file)
         {
             var r = Run(file);
             var ends = MantleEnds(r.Rows);
             Assert.Equal(2, ends.Count);
-            Assert.Equal(ends, r.MantleCompensated);
+            foreach (int end in ends)
+            {
+                Assert.Equal("mantle:", CoreAct(r.Rows.Find(w => w.P.I == end - 1)));
+                Assert.NotEqual("mantle:", CoreAct(r.Rows.Find(w => w.P.I == end)));
+            }
         }
 
         // ---- (b) acts, holds and grounded -----------------------------------------------------------------------------
         /// <summary>
-        /// Grounded on every step except M2's, where the prototype is still in the mantle that started in the air (the
-        /// jump that catches the table's edge: <c>game.grounded</c> stays false until it ends, L1946) and Core's has ended.
-        /// The standing climb onto the gantry keeps him grounded throughout, so its M2 step matches.
+        /// Grounded on every step, the mantle that starts in the air included (the jump that catches the table's edge:
+        /// <c>game.grounded</c> stays false until it ends, L1946).
         /// </summary>
         [Theory, MemberData(nameof(Traces))]
-        public void Grounded_MatchesEveryStep_ExceptTheAirMantlesLastStep(string file)
+        public void Grounded_MatchesEveryStep(string file)
         {
-            var r = Run(file);
             var bad = new List<string>();
-            var m2 = new List<int>();
-            foreach (var w in r.Rows)
-            {
-                if (w.G == w.P.G) continue;
-                if (r.MantleCompensated.Contains(w.P.I + 1) && w.P.Mt && !w.P.G && w.G && w.Kind == null) m2.Add(w.P.I);
-                else bad.Add($"#{w.P.I} grounded {w.P.G} vs {w.G}");
-            }
+            foreach (var w in Run(file).Rows) if (w.G != w.P.G) bad.Add($"#{w.P.I} grounded {w.P.G} vs {w.G}");
             Assert.True(bad.Count == 0, Report(bad));
-            Assert.Equal(new[] { r.MantleCompensated[0] - 1 }, m2);                             // the table; not the gantry
         }
 
         /// <summary>
         /// Every act and phase on the prototype's steps (the box's approach, Lift and SetDown, the two mantles, the death),
-        /// and the carry (<c>game.hold === 'item'</c>) on the same steps. The exceptions are M2's: the step before each
-        /// compensated one, where the prototype is in its 141st mantle step and Core's mantle has ended.
+        /// and the carry (<c>game.hold === 'item'</c>) on the same steps.
         /// </summary>
         [Theory, MemberData(nameof(Traces))]
-        public void Acts_And_TheCarry_MatchEveryStep_ExceptEachMantlesLastStep(string file)
+        public void Acts_And_TheCarry_MatchEveryStep(string file)
         {
             var r = Run(file);
-            var m2 = new HashSet<int>();
-            foreach (var i in r.MantleCompensated) m2.Add(i - 1);
             var bad = new List<string>();
             var seen = new HashSet<string>();
             foreach (var w in r.Rows)
             {
                 string want = ExpectedAct(w.P), got = CoreAct(w);
                 if (want != null) seen.Add(want);
-                if (m2.Contains(w.P.I))
-                {
-                    if (want != "mantle:" || got != null) bad.Add($"#{w.P.I} M2 step: act {want ?? "-"} vs {got ?? "-"}");
-                }
-                else if (want != got) bad.Add($"#{w.P.I} act {want ?? "-"} vs {got ?? "-"}");
+                if (want != got) bad.Add($"#{w.P.I} act {want ?? "-"} vs {got ?? "-"}");
                 bool holding = w.P.Hold == "item";
                 if (holding != w.Holding) bad.Add($"#{w.P.I} hold {w.P.Hold ?? "-"} vs {(w.Holding ? "item" : "-")}");
             }
@@ -280,14 +258,11 @@ namespace DeadLetter.Core.Tests
         }
 
         // ---- Strict ---------------------------------------------------------------------------------------------------
-        [Fact(Skip = "U-11 motor issue M2 (#22): the mantle ends after 140 steps where the prototype's raw f >= MANTLE_FRAMES (L1946) needs "
-            + "141. Uncompensated, each of DL-02's two mantles (#4698-#4838 onto the table, #4990-#5130 onto the gantry) frees him a step "
-            + "early: the acts differ at #4838 and #5130, and he walks on a step ahead, so x differs on 239 of the 1,146 steps (up to "
-            + "2.7 cm, one step's travel at a run) until the bot's next stop; y matches throughout.")]
+        [Fact]
         public void Strict_EverySignalMatchesEveryStep()
         {
             var bad = new List<string>();
-            foreach (var w in Run(MainTrace, compensateMantle: false).Rows)
+            foreach (var w in Run(MainTrace).Rows)
             {
                 var p = w.P;
                 Check(bad, p.I, "x", p.X, w.X);
@@ -336,14 +311,13 @@ namespace DeadLetter.Core.Tests
             return sb.ToString();
         }
 
-        /// <summary>Writes a replay side by side as TSV when DL02_TRACE_DUMP names a file (DL02_TRACE=death: the death trace; DL02_TRACE_STRICT=1).</summary>
+        /// <summary>Writes a replay side by side as TSV when DL02_TRACE_DUMP names a file (DL02_TRACE=death: the death trace).</summary>
         [Fact]
         public void Dump()
         {
             var path = Environment.GetEnvironmentVariable("DL02_TRACE_DUMP");
             if (string.IsNullOrEmpty(path)) return;
-            var r = Run(Environment.GetEnvironmentVariable("DL02_TRACE") == "death" ? DeathTrace : MainTrace,
-                Environment.GetEnvironmentVariable("DL02_TRACE_STRICT") != "1");
+            var r = Run(Environment.GetEnvironmentVariable("DL02_TRACE") == "death" ? DeathTrace : MainTrace);
             var sb = new StringBuilder("i\tpx\tcx\tpy\tcy\tpvx\tcvx\tpyaw\tcyaw\tpg\tcg\tpact\tcact\tph\tch\tppf\tcpf\tpbx\tcbx\tpbs\tcbs\tptl\tctl\tin\n");
             foreach (var w in r.Rows)
             {

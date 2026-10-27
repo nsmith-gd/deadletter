@@ -269,8 +269,10 @@ namespace DeadLetter.Core.Tests
             m.Step(Sim.Jump(), Dt);
             Assert.Equal(MotorState.Mantling, m.State);
             int steps = Sim.RunUntil(m, Sim.Move(0), d => Sim.Has(d, MotorEventKind.MantleEnd));
-            Assert.Equal(140, steps);                                 // 56 / 24 s = 2.333 s = 140 steps at 60 Hz
-            Assert.InRange(steps * Dt, 56.0 / 24.0 - Dt, 56.0 / 24.0 + Dt);
+            // M2: f >= 56 exactly (L1946). 140 steps of m.t += 1/60 sum to f 55.9999999999999 (short of 56), so the
+            // prototype ends the climb on its 141st step; a slack on the comparison ended it on the 140th.
+            Assert.Equal(141, steps);
+            Assert.InRange(steps * Dt, 56.0 / 24.0, 56.0 / 24.0 + Dt);
             Assert.Equal(0.5, m.Y, 12);
             Assert.Equal(1.0 + 0.38 + (0.30 - 0.17), m.X, 9);       // MANTLE_KEYS forward 0.38 + (dist − FACE_D)
             Assert.True(m.Grounded);

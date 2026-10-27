@@ -71,18 +71,17 @@ namespace DeadLetter.Core.Scenes.Dl01
 
     /// <summary>
     /// DL-01's bespoke rules: the label beat when play starts (<c>startPlay</c>, L8104–L8110), the checkpoints (L1677,
-    /// L2065, L1890), the latch's flinch (L1875–L1876), the crank's wait to turn back and Proud (L1890–L1893), the trench
+    /// L2065, L1890), the crank's wait to turn back and Proud (L1890–L1893), the trench
     /// (L4764–L4766, L4519–L4523) and the passage into DL-02 (L2040–L2042, L2129–L2157).
     /// </summary>
     public sealed class Dl01Rules : SceneRules
     {
-        /// <summary>The flinch after the latch: <c>actions.Flinch.time &gt;= 1.6</c>, L1876.</summary>
+        /// <summary>The flinch after the latch: <c>actions.Flinch.time &gt;= 1.6</c>, L1876. The latch chains it to its Pull (#22, <c>LatchParams.FlinchSeconds</c>).</summary>
         public const double FlinchSeconds = 1.6;
         /// <summary>CheckLabel at the handover: cancellable by a move after 2.5 s, held 3.2 s after the clip (L8108).</summary>
         public const double LabelCancelAfter = 2.5, LabelHold = 3.2;
 
         private readonly HashSet<string> _seen = new HashSet<string>();
-        private Latch _latch;
         private CrankActuator _crank;
         private PulseSequencer _relay;
         private bool _heardHall;
@@ -92,7 +91,6 @@ namespace DeadLetter.Core.Scenes.Dl01
 
         public override void OnBegin(SceneSim sim, string checkpoint, bool fromOpening)
         {
-            _latch = sim.Graph.Get<Latch>("dl01.latch");
             _crank = sim.Graph.Get<CrankActuator>("dl01.crank");
             _relay = sim.Graph.Get<PulseSequencer>("dl01.relay");
             _heardHall = checkpoint != "start" && checkpoint != "shutter";                         // L8090
@@ -113,11 +111,6 @@ namespace DeadLetter.Core.Scenes.Dl01
 
         public override void AfterMotor(SceneSim sim, bool freeStep)
         {
-            if (sim.MotorActEndedOn == _latch && _latch != null)
-            {
-                sim.StartAct(new HoldAct("dl01.latch", "Flinch", FlinchSeconds, crouch: true));                     // Pull f39 → Flinch, L1875
-                return;
-            }
             if (!freeStep || sim.Region != Dl01Lane.Region) return;
             var m = sim.Motor;
             if (_crank.Position >= 1 && m.X > Dl01Scene.DoorX0 + 0.15 && m.X < Dl01Scene.DoorX1 - 0.15 && m.Grounded)   // L2040
