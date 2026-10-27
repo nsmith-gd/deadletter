@@ -11,6 +11,13 @@ namespace DeadLetter.Runtime.Platform
     /// </summary>
     public sealed class SwitchPlatformServices : NullPlatformServices
     {
+        /// <summary>
+        /// This class is still the stub (Initialize succeeds without doing anything). The Editor's
+        /// <c>SwitchStubBuildGuard</c> fails any Switch build while this is true; set it to false with the real
+        /// implementation (see unity/README.md, U-17).
+        /// </summary>
+        public const bool IsStub = true;
+
         public override PlatformKind Kind => PlatformKind.Switch;
         public override string Name => "Switch";
 

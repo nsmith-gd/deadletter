@@ -16,6 +16,11 @@ namespace DeadLetter.Core.Save
     /// <para>Writes can be rate-limited (<see cref="MinSecondsBetweenWrites"/>; Switch: 2 s): a save inside the window
     /// is held and written by <see cref="Update"/>. The Runtime calls <see cref="Update"/> every frame and
     /// <see cref="Flush"/> on quit/suspend.</para>
+    /// <para>Options (<see cref="Settings"/>) are the player's, not the run's: the constructor reads them from the slot
+    /// (<see cref="TryLoadSettings"/>) without touching the world, so calm mode, volumes and bindings hold from boot, and
+    /// <see cref="NewGame"/> keeps them. Until the service holds a game (<see cref="Started"/>: a new game, a load or a
+    /// reached checkpoint) its world is only the scene's start, so a write then puts only the options into the slot and
+    /// leaves the slot's checkpoint, flags, play time and snapshot as they are (an empty slot gets a fresh model).</para>
     /// </summary>
     public sealed class CheckpointService
     {
@@ -36,6 +41,7 @@ namespace DeadLetter.Core.Save
             Slot = slot;
             Scene = scene ?? "";
             Current = new Checkpoint(_order, _order[0]);
+            TryLoadSettings();
         }
 
         public int Slot { get; }
@@ -54,6 +60,12 @@ namespace DeadLetter.Core.Save
         public int Writes { get; private set; }
         /// <summary>The last load restored the snapshot (false: derived from the checkpoint alone).</summary>
         public bool RestoredSnapshot { get; private set; }
+        /// <summary>
+        /// The service holds a game (<see cref="NewGame"/>, <see cref="Load"/>/<see cref="TryContinue"/> or a
+        /// <see cref="Reach"/>), so a write saves the whole slot. Before that, a write saves only <see cref="Settings"/>
+        /// into what the slot already holds.
+        /// </summary>
+        public bool Started { get; private set; }
         /// <summary>
         /// The world was rebuilt at <see cref="Current"/> (respawn, reload, continue or a new game). Systems outside the
         /// graph that hold time or control (directed moments, the camera, hints) reset themselves here.
@@ -75,9 +87,27 @@ namespace DeadLetter.Core.Save
             Flags.Resolve(name);
         }
 
-        /// <summary>Start over (<c>clearLetters</c>, L4133): no flags, the first checkpoint, the world rebuilt; saved.</summary>
+        /// <summary>
+        /// Adopt the options saved in the slot without loading the world (boot, the title screen). Called by the
+        /// constructor. False when the slot is empty or unreadable (the options stay as they are: defaults at boot), or
+        /// when options applied here are still waiting to be written (they are newer than the slot's).
+        /// </summary>
+        public bool TryLoadSettings()
+        {
+            if (Pending) return false;
+            if (!_store.TryLoad(Slot, out var m) || m == null) return false;
+            Settings = (m.Settings ?? new Settings()).Clone();
+            _graph.Calm = Settings.Calm;
+            return true;
+        }
+
+        /// <summary>
+        /// Start over (<c>clearLetters</c>, L4133): no flags, the first checkpoint, the world rebuilt; saved. The
+        /// player's options (<see cref="Settings"/>) are kept.
+        /// </summary>
         public void NewGame()
         {
+            Started = true;
             Flags.Clear();
             PushBindings();
             Current = new Checkpoint(_order, _order[0]);
@@ -96,6 +126,7 @@ namespace DeadLetter.Core.Save
         public bool Reach(string name)
         {
             if (IndexOf(name) <= IndexOf(Current.Name)) return false;
+            Started = true;
             Current = new Checkpoint(_order, name);
             PullBindings();
             _snapshot = Capture();
@@ -117,7 +148,10 @@ namespace DeadLetter.Core.Save
             if (Flags.Version != _savedFlags) Save();
         }
 
-        /// <summary>Changed options: saved with the slot.</summary>
+        /// <summary>
+        /// Changed options: saved with the slot. Before <see cref="Started"/> (the title screen) only the options are
+        /// written into the slot; its progress is kept.
+        /// </summary>
         public void ApplySettings(Settings settings)
         {
             Settings = (settings ?? throw new ArgumentNullException(nameof(settings))).Clone();
@@ -164,25 +198,32 @@ namespace DeadLetter.Core.Save
         /// </summary>
         public bool TryContinue()
         {
-            if (!_store.TryLoad(Slot, out var m)) return false;
+            if (!_store.TryLoad(Slot, out var m) || m.OptionsOnly) return false;
             Load(m);
             return true;
         }
 
-        /// <summary>Applies a loaded model and reloads (see <see cref="TryContinue"/>).</summary>
+        /// <summary>
+        /// Applies a loaded model and reloads (see <see cref="TryContinue"/>). Options applied before the service
+        /// started that are still waiting for the rate limit are newer than the model's, so they are kept (and stay
+        /// pending).
+        /// </summary>
         public void Load(SaveModel m)
         {
+            if (m == null) throw new ArgumentNullException(nameof(m));
+            bool keepOptions = !Started && Pending;
+            Started = true;
             int idx = -1;
             for (int i = 0; i < _order.Count; i++) if (string.Equals(_order[i], m.Checkpoint, StringComparison.Ordinal)) idx = i;
             Current = new Checkpoint(_order, idx >= 0 ? m.Checkpoint : _order[0]);
             Flags.Load(m.Flags);
             PushBindings();
             PlayTime = m.PlayTime;
-            Settings = (m.Settings ?? new Settings()).Clone();
+            if (!keepOptions) Settings = (m.Settings ?? new Settings()).Clone();
             _graph.Calm = Settings.Calm;
             _snapshot = idx >= 0 && string.Equals(m.Scene ?? "", Scene, StringComparison.Ordinal) ? m.Mechanisms : null;
             _savedFlags = Flags.Version;
-            Pending = false;                                  // what is in the store is what was just loaded
+            Pending = keepOptions;                            // else what is in the store is what was just loaded
             Reload();                                         // after: a save from a Reloaded handler must stay pending
         }
 
@@ -225,12 +266,25 @@ namespace DeadLetter.Core.Save
 
         private void Write()
         {
-            var m = ToModel();
+            var m = Started ? ToModel() : OptionsIntoSlot();
             _store.Save(Slot, m);
             _savedFlags = Flags.Version;
             Pending = false;
             _sinceWrite = 0;
             Writes++;
+        }
+
+        /// <summary>Not started: the slot as stored with only its options replaced (a fresh model when it is empty).</summary>
+        private SaveModel OptionsIntoSlot()
+        {
+            if (!_store.TryLoad(Slot, out var stored) || stored == null)
+            {
+                var fresh = ToModel();
+                fresh.OptionsOnly = true;
+                return fresh;
+            }
+            stored.Settings = Settings.Clone();
+            return stored;
         }
 
         private MemorySnapshot Capture()

@@ -337,6 +337,7 @@ Assets/DeadLetter/Runtime/
                                   ApplySettings); applies mixer, calm, brightness/bloom, bindings
               BindingRebinder     PerformInteractiveRebinding + SaveBindingOverridesAsJson / LoadBindingOverridesFromJson
 Assets/DeadLetter/Editor/Build/BuildScripts   -executeMethod player builds (IL2CPP; Steam/Itch variants)
+Assets/DeadLetter/Editor/Build/SwitchStubBuildGuard   fails Switch builds while SwitchPlatformServices.IsStub
 tools/build/itch_push.sh                      butler push helper (documented, not run)
 tools/build/steam/app_build.vdf               ContentBuilder template (placeholders only)
 ```
@@ -370,10 +371,15 @@ One model: `DeadLetter.Core.Save.Settings`. Its fields are saved in the slot (`S
 | Button prompts | `Glyphs` (`GlyphPreference`), `opt/glyphs` | Auto | new; Auto follows the last device used |
 | Key bindings | `BindingOverrides`, `opt/bindings` | defaults ("") | new; Input System override JSON |
 
-Options travel with the save slot (and with it any cloud sync of the slot). `SettingsStore` adopts
-`CheckpointService.Settings` whenever `CheckpointTrigger.Service` is set or reloads (new game, continue, respawn); a
-commit made before the slot is loaded (the title screen) is held and handed to the service on its first reload, so it
-never writes a slot that was not continued or started.
+Options travel with the save slot (and with it any cloud sync of the slot), but they are the player's, not the run's.
+`CheckpointService` reads them from the slot when it is constructed (`TryLoadSettings`, without loading the world), so
+build it and set `CheckpointTrigger.Service` at boot, before the title screen: calm mode, volumes and bindings then hold
+from the first frame. `NewGame()` keeps them. A commit before a game is continued or started (the title screen) writes
+only the options into the slot and keeps its checkpoint, flags, play time and snapshot (an empty slot gets a fresh one).
+`SettingsStore` adopts `CheckpointService.Settings` whenever the service is set or reloads (new game, continue, respawn).
+
+No migration from earlier formats: U-17's old `settings.cfg` and U-14 slots holding `opt/telemetry=true` were
+pre-release only (no shipped format existed before this model), so they are not read or converted.
 
 **Hooks wired:** `D17Controller` takes auto-run from `SettingsStore.Applied` (its serialized `autoRun` is used only
 when no store exists). `LaneCameraDriver.Shake` honours `SettingsStore.Calm`. **Hooks still needed** as their systems
@@ -392,7 +398,7 @@ group volumes as exactly `Master`, `Music`, `SFX`, `Voice`, `Ambience`.
 
 | Define | Set by | Effect |
 |---|---|---|
-| `DL_STEAM` | `BuildScripts` Steam methods (per build, via `BuildPlayerOptions.extraScriptingDefines`; Player Settings are not changed). For the editor, add it by hand in Player Settings → Scripting Define Symbols. | compiles `SteamPlatformServices` (standalone targets only) |
+| `DL_STEAM` | `BuildScripts` Steam methods (per build, via `BuildPlayerOptions.extraScriptingDefines`; Player Settings are not changed). For the editor, add it by hand in Player Settings → Scripting Define Symbols. | compiles `SteamPlatformServices` and `SteamRemoteStorageFileSystem` (Steam Cloud saves) (standalone targets only) |
 | `UNITY_SWITCH` | Unity, when the Switch module is the build target | chooses `SwitchPlatformServices` |
 | neither | Itch builds, editor default | `ItchPlatformServices` (no-ops) |
 
@@ -427,6 +433,14 @@ placeholders, then `steamcmd +login <account> +run_app_build <path> +quit` from 
 Developer Portal. A licensed developer installs them on a licensed machine, builds from the editor's Switch build profile,
 and implements the TODOs in `SwitchPlatformServices` (user selection, save-data mount/commit, focus/HOME handling).
 None of that can be done or checked from this repo's cloud sessions, and no Switch SDK names appear in the code.
+Until then `SwitchPlatformServices.IsStub` is `true`, and `Editor/Build/SwitchStubBuildGuard` fails every Switch build
+(editor or command line); set it to `false` with the real implementation.
+
+`-dlOut` folders are emptied before the build. `BuildScripts` refuses the project, any folder containing it, the
+`Builds` folder itself and any folder with `Assets` or `.git`; outside `Builds/` it only empties a folder that is new,
+empty, or holds the `.dl-build-output` marker it writes into every output folder (the Steam depot and `itch_push.sh`
+exclude the marker). Steam builds stop first, with a pointer to the steps below, if Steamworks.NET is not installed or
+not referenced by `DeadLetter.Runtime.asmdef`.
 
 ### Steamworks.NET (director: one-time setup)
 
@@ -467,6 +481,7 @@ None of that can be done or checked from this repo's cloud sessions, and no Swit
 The Runtime and Editor files were type-checked against hand-written stubs only.
 - Steamworks.NET: `SteamUtils.IsSteamRunningOnSteamDeck()` is present in the chosen tag; `Callback<T>.Dispose()`;
   achievements without `RequestCurrentStats()` (fine on Steamworks SDK 1.61+, older SDKs need it after Init).
+- `UnityEditor.PackageManager.PackageInfo.FindForPackageName` (the Steam pre-build check) in Unity 6.
 - `UnityEditor.OSXStandalone.UserBuildSettings.architecture` and its `x64ARM64` value in Unity 6 (set by reflection).
 - `PlayerSettings.Get/SetScriptingBackend(NamedBuildTarget, …)` restore after a build in batch mode leaving no diff.
 - `AudioMixer.SetFloat` ignored in Awake (the store applies in Start); check the levels on the first frame.

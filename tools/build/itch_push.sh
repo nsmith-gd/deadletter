@@ -48,7 +48,8 @@ for channel in windows mac linux; do
     echo "refusing $channel: $dir contains steam_appid.txt (a Steam test build?)" >&2
     exit 1
   fi
-  cmd=(butler push "$dir" "$TARGET:$channel" --userversion "$VERSION")
+  # .dl-build-output is BuildScripts' marker (it guards -dlOut deletes); it is not part of the game.
+  cmd=(butler push "$dir" "$TARGET:$channel" --userversion "$VERSION" --ignore ".dl-build-output")
   if [[ -n "${DRY_RUN:-}" ]]; then echo "${cmd[*]}"; else "${cmd[@]}"; fi
   pushed=$((pushed + 1))
 done

@@ -19,11 +19,13 @@ namespace DeadLetter.Runtime.Settings
     /// <para>
     /// <b>Storage:</b> the options live in the save slot (<c>opt/</c> keys of <see cref="SaveModel"/>), owned by U-14's
     /// <see cref="CheckpointService"/>, which this store reaches through <see cref="CheckpointTrigger.Service"/>.
-    /// <see cref="Commit"/> calls <see cref="CheckpointService.ApplySettings"/> (which also sets the graph's calm flag
-    /// and saves). When the service is replaced or reloads (new game, continue, respawn) the store adopts
-    /// <see cref="CheckpointService.Settings"/> and applies it. Before a service exists, or before it has loaded its
-    /// slot, a commit is held in memory and handed to the service on its first reload, so the title screen's options
-    /// never write a slot that has not been continued or started.
+    /// The service reads the slot's options when it is constructed (<see cref="CheckpointService.TryLoadSettings"/>), so
+    /// whoever builds it must set <see cref="CheckpointTrigger.Service"/> at boot, before the title screen, for calm
+    /// mode, volumes and bindings to hold there. <see cref="Commit"/> calls <see cref="CheckpointService.ApplySettings"/>
+    /// (which also sets the graph's calm flag and saves; before a game is started or continued it writes only the
+    /// options into the slot, keeping its progress). When the service is replaced or reloads (new game, continue,
+    /// respawn) the store adopts <see cref="CheckpointService.Settings"/> and applies it. A commit made while no service
+    /// exists is held in memory and handed to the next service bound.
     /// </para>
     /// <para>
     /// <b>Applying</b> (<see cref="Apply"/>, after every commit and adopt):
@@ -57,16 +59,14 @@ namespace DeadLetter.Runtime.Settings
         private static Options _current = new Options();
         private static SettingsStore _instance;
         private CheckpointService _service;
-        /// <summary>The bound service has loaded or started its slot (a commit may save it).</summary>
-        private bool _serviceReady;
-        /// <summary>A commit made before the service was ready; handed to it on its first reload.</summary>
+        /// <summary>A commit made while no service was bound; handed to the next one.</summary>
         private Options _held;
         private float _authoredBloom = -1f;
         private bool _started;
 
         public static SettingsStore Instance => _instance;
 
-        /// <summary>The live options (defaults until a slot is loaded). Treat as read-only; change via <see cref="Commit"/>.</summary>
+        /// <summary>The live options (defaults until a service is bound). Treat as read-only; change via <see cref="Commit"/>.</summary>
         public static Options Current => _current;
 
         /// <summary>A store is running, so <see cref="Current"/> is the player's options (not just the defaults of no store).</summary>
@@ -121,14 +121,14 @@ namespace DeadLetter.Runtime.Settings
 
         /// <summary>
         /// Replace the options with an edited copy and apply it (the options screen's Confirm). Saved with the slot
-        /// through <see cref="CheckpointService.ApplySettings"/>, or held until the slot is loaded.
+        /// through <see cref="CheckpointService.ApplySettings"/>, or held until a service is bound.
         /// </summary>
         public void Commit(Options edited)
         {
             if (edited == null) throw new ArgumentNullException(nameof(edited));
             var next = edited.Clone();
             next.Sanitise();
-            if (_service != null && _serviceReady)
+            if (_service != null)
             {
                 _service.ApplySettings(next);   // clones, sets the graph's calm, saves
                 _current = _service.Settings.Clone();
@@ -161,27 +161,21 @@ namespace DeadLetter.Runtime.Settings
             if (_service == service) return;
             if (_service != null) _service.Reloaded -= OnReloaded;
             _service = service;
-            _serviceReady = false;
             if (_service == null) return;
             _service.Reloaded += OnReloaded;
-            // Show what the service holds (defaults until its slot is continued or started). Saving waits for its first
-            // Reloaded, so whoever builds the simulation must set CheckpointTrigger.Service before TryContinue/NewGame
-            // (as DirectedMomentPlayer also requires).
-            if (_held == null) Adopt(_service.Settings);
-        }
-
-        /// <summary>New game, continue or respawn: the service's options are now the slot's.</summary>
-        private void OnReloaded(Checkpoint _)
-        {
-            _serviceReady = true;
             if (_held != null)
             {
+                // Edited while no service existed: newer than the slot's. ApplySettings keeps the slot's progress.
                 var held = _held;
                 _held = null;
                 _service.ApplySettings(held);
             }
+            // The service read the slot's options when it was built, so this is the player's options from boot.
             Adopt(_service.Settings);
         }
+
+        /// <summary>New game, continue or respawn: adopt the service's options (a continue loads the slot's).</summary>
+        private void OnReloaded(Checkpoint _) => Adopt(_service.Settings);
 
         private void Adopt(Options s)
         {
