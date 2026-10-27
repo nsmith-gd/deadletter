@@ -1025,9 +1025,11 @@ scene no longer matches (or fails to read), so a stale save falls back to the de
 L8123–8133 (`togglePause`), L8169–8196 (`tally`, `finish`: 4 s fade, end card at 5.2 s), L8282–8331 (options),
 L6461–6469 (chapter 1 end text). Options: auto-run, sound, music, prompts/glints, stuck-assist glyph, brightness
 0.8–1.8, calm mode (no flicker, flashes, shake, sparks; bloom 0.35), telemetry. Touch: four on-screen buttons.
-**Unity (U-17):** UI Toolkit screens; `Settings` (Core POCO) persisted via `ISaveStore`; add subtitles size/background,
-rebinding, hold-to-press alternatives (DL-16's held lever), and a photosensitivity check for the relay pulse
-(`DL-01_the_wake.md` §9). Calm mode must be honoured by every flicker/shake/spark source listed in §4.14, §4.20, §4.22.
+**Unity (U-17):** UI Toolkit screens; one settings model, `DeadLetter.Core.Save.Settings` (Core POCO), saved in the
+slot under `opt/` keys via `ISaveStore` and applied by `CheckpointService.ApplySettings`; the Runtime `SettingsStore`
+only pushes it to the mixer, post volume and input bindings. Adds volumes, subtitles on/size/background, colour-
+independent cues, glyph choice, rebinding, hold-to-press alternatives (DL-16's held lever), and a photosensitivity
+check for the relay pulse (`DL-01_the_wake.md` §9). Calm mode must be honoured by every flicker/shake/spark source listed in §4.14, §4.20, §4.22.
 
 ### 4.30 Telemetry
 
@@ -1039,7 +1041,8 @@ chapterStart resume contextLost end leave hidden prompt whiteWarn unjam blinds l
 dismissal stored16 rackFull door17 float17 duct drawer placement hook14a gownHem blinds14a nightBrake figOut14b hide14b
 caught14b figSeen14b figKept14b call16a dumbwaiter load16a rode16a sluice17 valve17 dark14a continue loadFail`.
 **Unity:** Core `EventLog` (same schema, so `tools/telemetry/summarise.py` keeps working); Runtime uploader on PC
-builds only (opt-in), disabled on Switch retail.
+builds only (opt-in: `Settings.Telemetry`, `opt/telemetry`, defaults off, unlike the prototype's `telemetry: true`),
+disabled on Switch retail.
 
 ### 4.31 Test hooks and the simulated player
 
@@ -1228,6 +1231,7 @@ on baked worn masks if option (b) of §4.3 is chosen. No lightmaps: lights flick
 | 13 | L2182 | courier slots are matched as `CourierSlot[ABC]…` after three.js strips `.` from `CourierSlot.A.0`; glTFast keeps raw names | normalise names in `NameConventions` |
 | 14 | L1467 | the relay lamp's shadow is off on touch devices (look differs by device) | tie to quality tier |
 | 15 | L5466–5467 | jam light pulse and pole glow were disabled by the 23 Oct playtest but the code paths remain | port only what is live |
+| 16 | L7152, L7965 | the White's warning `Sound.hiss(1)` shares one gain node with the DL-01 steam, which `updateAtmosphere` sets every frame, so the warning is overwritten on the next frame and never heard | **decided (#20, #13):** make it audible; Unity gives it its own layer (`SfxLoop.WhiteHiss`, 1 for 0.9 s) |
 
 ---
 

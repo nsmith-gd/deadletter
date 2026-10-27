@@ -1,0 +1,16 @@
+{
+  "name": "deadletter-audio-render",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Renders the web build's synthesized SFX to WAV for the Unity port (issue #20).",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "render": "node render.mjs",
+    "verify": "node verify.mjs",
+    "callsites": "node callsites.mjs"
+  },
+  "dependencies": {
+    "node-web-audio-api": "^2.2.0"
+  }
+}

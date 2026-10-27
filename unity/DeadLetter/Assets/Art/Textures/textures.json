@@ -1,0 +1,1193 @@
+{
+ "format": 1,
+ "textures": [
+  {
+   "file": "SecretAtlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-06_07",
+    "DL-09"
+   ]
+  },
+  {
+   "file": "SecretChalk.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "atrium_signs.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-09_Atrium"
+   ]
+  },
+  {
+   "file": "bay_pictogram.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-04"
+   ]
+  },
+  {
+   "file": "belt_warning.png",
+   "width": 520,
+   "height": 640,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "cage_plate.png",
+   "width": 256,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "chalk_floor.png",
+   "width": 1080,
+   "height": 360,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "chalk_flowers.png",
+   "width": 192,
+   "height": 288,
+   "use": "color",
+   "regions": [
+    "DL-04"
+   ]
+  },
+  {
+   "file": "chalk_tally.png",
+   "width": 512,
+   "height": 768,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "chalk_wall.png",
+   "width": 1600,
+   "height": 400,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "child_drawing.png",
+   "width": 384,
+   "height": 288,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "clock_face_nohands.png",
+   "width": 400,
+   "height": 400,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "coin_viewer_plate.png",
+   "width": 256,
+   "height": 160,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "courier_board.png",
+   "width": 704,
+   "height": 448,
+   "use": "color",
+   "regions": [
+    "DL-02"
+   ]
+  },
+  {
+   "file": "crayon_drawing.png",
+   "width": 640,
+   "height": 480,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "day_board.png",
+   "width": 900,
+   "height": 640,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "dead_letters_sign.png",
+   "width": 1600,
+   "height": 400,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "depot_pictogram.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-01",
+    "DL-11"
+   ]
+  },
+  {
+   "file": "dispatch_board.png",
+   "width": 768,
+   "height": 480,
+   "use": "color",
+   "regions": [
+    "DL-01"
+   ]
+  },
+  {
+   "file": "dl12_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-12"
+   ]
+  },
+  {
+   "file": "dl12_lore.png",
+   "width": 1024,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-12"
+   ]
+  },
+  {
+   "file": "dl13_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-13"
+   ]
+  },
+  {
+   "file": "dl13_sheet.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-13"
+   ]
+  },
+  {
+   "file": "dl14_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14"
+   ]
+  },
+  {
+   "file": "dl14_chain.png",
+   "width": 64,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-14"
+   ]
+  },
+  {
+   "file": "dl14_drive.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14"
+   ]
+  },
+  {
+   "file": "dl14_panels.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14"
+   ]
+  },
+  {
+   "file": "dl14a_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14a"
+   ]
+  },
+  {
+   "file": "dl14a_signs.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14a"
+   ]
+  },
+  {
+   "file": "dl14b_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-14b"
+   ]
+  },
+  {
+   "file": "dl15_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-15"
+   ]
+  },
+  {
+   "file": "dl15_drawing.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-15"
+   ]
+  },
+  {
+   "file": "dl16_mural.png",
+   "width": 4096,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-16"
+   ]
+  },
+  {
+   "file": "dl16a_atlas.png",
+   "width": 2048,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-16a"
+   ]
+  },
+  {
+   "file": "dl16a_chalk.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-16a"
+   ]
+  },
+  {
+   "file": "dl17_atlas.png",
+   "width": 2048,
+   "height": 2048,
+   "use": "color",
+   "regions": [
+    "DL-17"
+   ]
+  },
+  {
+   "file": "dl17_drawingwall.png",
+   "width": 1536,
+   "height": 768,
+   "use": "color",
+   "regions": [
+    "DL-17"
+   ]
+  },
+  {
+   "file": "drag_marks.png",
+   "width": 1024,
+   "height": 640,
+   "use": "color",
+   "regions": [
+    "DL-03"
+   ]
+  },
+  {
+   "file": "drop_mark.png",
+   "width": 256,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "drum_ring.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "drum_stencil.png",
+   "width": 512,
+   "height": 192,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "fallen_dust.png",
+   "width": 256,
+   "height": 160,
+   "use": "color",
+   "regions": [
+    "DL-04"
+   ]
+  },
+  {
+   "file": "gate_gauge.png",
+   "width": 256,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-03",
+    "DL-04"
+   ]
+  },
+  {
+   "file": "gate_sign.png",
+   "width": 768,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-03"
+   ]
+  },
+  {
+   "file": "goneup.png",
+   "width": 768,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "grade4.png",
+   "width": 256,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "grade_notice.png",
+   "width": 560,
+   "height": 800,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "grade_sign.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "graffiti.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "growth_marks.png",
+   "width": 1024,
+   "height": 931,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "heap_shaft-1.png",
+   "width": 64,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "heap_shaft.png",
+   "width": 64,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "highwater.png",
+   "width": 512,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "letter_c110.png",
+   "width": 640,
+   "height": 224,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "letter_heap.png",
+   "width": 640,
+   "height": 224,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "letter_tube.png",
+   "width": 1280,
+   "height": 448,
+   "use": "color",
+   "regions": [
+    "DL-02"
+   ]
+  },
+  {
+   "file": "lift1_plate.png",
+   "width": 640,
+   "height": 240,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "lift2_sign.png",
+   "width": 900,
+   "height": 640,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "lift_dial.png",
+   "width": 256,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "lore_chevrons.png",
+   "width": 256,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "lore_gauge.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-09",
+    "DL-10"
+   ]
+  },
+  {
+   "file": "lore_grade_chart.png",
+   "width": 1024,
+   "height": 704,
+   "use": "color",
+   "regions": [
+    "DL-01"
+   ]
+  },
+  {
+   "file": "lore_mug_names.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-02"
+   ]
+  },
+  {
+   "file": "lore_notices.png",
+   "width": 768,
+   "height": 640,
+   "use": "color",
+   "regions": [
+    "DL-02"
+   ]
+  },
+  {
+   "file": "lore_protest.png",
+   "width": 768,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-03"
+   ]
+  },
+  {
+   "file": "lore_roster.png",
+   "width": 384,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-01"
+   ]
+  },
+  {
+   "file": "lore_soot.png",
+   "width": 256,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-03",
+    "DL-08"
+   ]
+  },
+  {
+   "file": "lore_stencil_keep.png",
+   "width": 1621,
+   "height": 192,
+   "use": "color",
+   "regions": [
+    "DL-03"
+   ]
+  },
+  {
+   "file": "lore_tally.png",
+   "width": 384,
+   "height": 384,
+   "use": "color",
+   "regions": [
+    "DL-01",
+    "DL-08"
+   ]
+  },
+  {
+   "file": "lore_timetable.png",
+   "width": 512,
+   "height": 704,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "lore_up_stencil.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "mug_d17.png",
+   "width": 256,
+   "height": 128,
+   "use": "color",
+   "regions": [
+    "DL-02"
+   ]
+  },
+  {
+   "file": "namecard114.png",
+   "width": 320,
+   "height": 200,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "notice_ring_c.png",
+   "width": 640,
+   "height": 860,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "noticeboard.png",
+   "width": 1024,
+   "height": 720,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "order_motto.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-01",
+    "DL-02",
+    "DL-04",
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "pawl_plate.png",
+   "width": 630,
+   "height": 420,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "photo.png",
+   "width": 336,
+   "height": 416,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "plate_c102.png",
+   "width": 256,
+   "height": 112,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "plate_c104.png",
+   "width": 256,
+   "height": 112,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "plate_c104a.png",
+   "width": 256,
+   "height": 112,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "plate_c106.png",
+   "width": 256,
+   "height": 112,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "plate_c108.png",
+   "width": 256,
+   "height": 112,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "plate_c110.png",
+   "width": 256,
+   "height": 112,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "plate_c112.png",
+   "width": 256,
+   "height": 112,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "plate_c114.png",
+   "width": 256,
+   "height": 112,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "poster_service.png",
+   "width": 600,
+   "height": 860,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "queue_marks.png",
+   "width": 1024,
+   "height": 112,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "quilt.png",
+   "width": 256,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "ration_board.png",
+   "width": 1024,
+   "height": 552,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "ration_sign.png",
+   "width": 1024,
+   "height": 128,
+   "use": "color",
+   "regions": [
+    "DL-05",
+    "DL-11"
+   ]
+  },
+  {
+   "file": "remains_atlas.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-02",
+    "DL-05",
+    "DL-06_07",
+    "DL-10",
+    "DL-11"
+   ]
+  },
+  {
+   "file": "repair_tag0.png",
+   "width": 200,
+   "height": 128,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "repair_tag1.png",
+   "width": 200,
+   "height": 128,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "repair_tag2.png",
+   "width": 200,
+   "height": 128,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "repair_tag3.png",
+   "width": 200,
+   "height": 128,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "repair_tag4.png",
+   "width": 200,
+   "height": 128,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "repair_tag5.png",
+   "width": 200,
+   "height": 128,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "residential_sign.png",
+   "width": 900,
+   "height": 360,
+   "use": "color",
+   "regions": [
+    "DL-06_07",
+    "DL-09"
+   ]
+  },
+  {
+   "file": "return_stamp.png",
+   "width": 512,
+   "height": 320,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "returns_sign.png",
+   "width": 1400,
+   "height": 240,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "ring_A.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "ring_B.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "ring_C.png",
+   "width": 512,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-08"
+   ]
+  },
+  {
+   "file": "ring_c.png",
+   "width": 512,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-01",
+    "DL-02",
+    "DL-03",
+    "DL-04",
+    "DL-05",
+    "DL-06_07",
+    "DL-08",
+    "DL-09",
+    "DL-10"
+   ]
+  },
+  {
+   "file": "ringc_notice.png",
+   "width": 320,
+   "height": 448,
+   "use": "color",
+   "regions": [
+    "DL-02"
+   ]
+  },
+  {
+   "file": "ringc_sealed.png",
+   "width": 768,
+   "height": 300,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "ringc_story.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-10",
+    "DL-11"
+   ]
+  },
+  {
+   "file": "rings_board.png",
+   "width": 900,
+   "height": 300,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "route_card_d17.png",
+   "width": 480,
+   "height": 672,
+   "use": "color",
+   "regions": [
+    "DL-01"
+   ]
+  },
+  {
+   "file": "route_map.png",
+   "width": 1024,
+   "height": 680,
+   "use": "color",
+   "regions": [
+    "DL-01"
+   ]
+  },
+  {
+   "file": "rug.png",
+   "width": 256,
+   "height": 160,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "scale_dial.png",
+   "width": 256,
+   "height": 256,
+   "use": "color",
+   "regions": [
+    "DL-01"
+   ]
+  },
+  {
+   "file": "scale_ticket.png",
+   "width": 320,
+   "height": 206,
+   "use": "color",
+   "regions": [
+    "DL-01"
+   ]
+  },
+  {
+   "file": "school_sign.png",
+   "width": 768,
+   "height": 320,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "scratched_tally.png",
+   "width": 1024,
+   "height": 704,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "shrine_names.png",
+   "width": 640,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "sky_mural.png",
+   "width": 1536,
+   "height": 768,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "slot_picto.png",
+   "width": 128,
+   "height": 128,
+   "use": "color",
+   "regions": [
+    "DL-06_07"
+   ]
+  },
+  {
+   "file": "steward_portrait.png",
+   "width": 768,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-05",
+    "DL-10"
+   ]
+  },
+  {
+   "file": "story_air.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-02"
+   ]
+  },
+  {
+   "file": "tap_sign.png",
+   "width": 256,
+   "height": 176,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "tape.png",
+   "width": 128,
+   "height": 32,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "tideline.png",
+   "width": 512,
+   "height": 320,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "tunnel_tiles.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-09"
+   ]
+  },
+  {
+   "file": "uponly_atlas.png",
+   "width": 1024,
+   "height": 1024,
+   "use": "color",
+   "regions": [
+    "DL-09",
+    "DL-10",
+    "DL-11"
+   ]
+  },
+  {
+   "file": "weighin.png",
+   "width": 1024,
+   "height": 512,
+   "use": "color",
+   "regions": [
+    "DL-05"
+   ]
+  },
+  {
+   "file": "white_drawing.png",
+   "width": 384,
+   "height": 270,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  },
+  {
+   "file": "window_paint.png",
+   "width": 512,
+   "height": 448,
+   "use": "color",
+   "regions": [
+    "DL-11"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,82 @@
+name: core-tests
+
+on:
+  pull_request:
+    paths:
+      - "unity/**"
+      - ".github/workflows/core-tests.yml"
+  push:
+    paths:
+      - "unity/**"
+      - ".github/workflows/core-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Only superseded PR runs are cancelled; runs on merged branches always finish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  core-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false  # LFS is off in .gitattributes; switch to true if the director enables it, or Unity imports pointer files
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: dotnet test
+        run: dotnet test unity/core-tests --configuration Release --logger "trx;LogFileName=core.trx"
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-tests-trx
+          path: unity/core-tests/TestResults/core.trx
+          if-no-files-found: warn
+
+  check-unity-license:
+    runs-on: ubuntu-latest
+    outputs:
+      has_license: ${{ steps.check.outputs.has_license }}
+    steps:
+      - id: check
+        env:
+          HAS_LICENSE: ${{ secrets.UNITY_LICENSE != '' }}
+        run: echo "has_license=$HAS_LICENSE" >> "$GITHUB_OUTPUT"
+
+  unity-tests:
+    needs: check-unity-license
+    if: needs.check-unity-license.outputs.has_license == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write  # unity-test-runner posts its results as a check run via githubToken
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false  # LFS is off in .gitattributes; switch to true if the director enables it, or Unity imports pointer files
+      - uses: actions/cache@v4
+        with:
+          path: unity/DeadLetter/Library
+          key: Library-${{ hashFiles('unity/DeadLetter/Packages/manifest.json', 'unity/DeadLetter/ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+      - uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity/DeadLetter
+          testMode: all
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          artifactsPath: unity-test-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unity-test-results
+          path: unity-test-results

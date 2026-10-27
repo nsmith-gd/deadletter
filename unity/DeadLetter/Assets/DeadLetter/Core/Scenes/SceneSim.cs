@@ -175,7 +175,7 @@ namespace DeadLetter.Core.Scenes
         /// </summary>
         public bool Continue()
         {
-            if (!_store.TryLoad(Checkpoints.Slot, out var m)) return false;
+            if (!_store.TryLoad(Checkpoints.Slot, out var m) || m.OptionsOnly) return false;   // options only: nothing to continue
             if (!TryGetPlace(m.Checkpoint, out var cp)) throw new InvalidOperationException(Def.Id + " cannot continue at '" + m.Checkpoint + "'.");
             Checkpoints.Load(m);
             _hasGame = true;
