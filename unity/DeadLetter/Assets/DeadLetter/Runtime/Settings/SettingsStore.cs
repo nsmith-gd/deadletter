@@ -1,36 +1,45 @@
 using System;
-using System.IO;
-using DeadLetter.Core.Options;
+using DeadLetter.Core.Audio;
+using DeadLetter.Core.Mechanisms;
+using DeadLetter.Core.Save;
+using DeadLetter.Runtime.Save;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+// Inside DeadLetter.Runtime, a bare "Settings" names this namespace, so the options type goes by an alias.
+using Options = DeadLetter.Core.Save.Settings;
 
 namespace DeadLetter.Runtime.Settings
 {
     /// <summary>
-    /// Loads, saves and applies <see cref="GameSettings"/>. One per game, in <c>DL_Persistent</c>.
+    /// Applies the player's options (Core <see cref="Options"/>, the one settings model) to the engine. One per game,
+    /// in <c>DL_Persistent</c>. It keeps no copy of its own on disk.
     /// <para>
-    /// <b>File:</b> <c>Application.persistentDataPath/settings.cfg</c>, the Core <see cref="SettingsSerializer"/> text
-    /// format, written atomically (temp file, then replace). Settings are per device on purpose (a Deck and a desktop
-    /// want different text sizes and glyphs), so they are not cloud-synced. On Switch the path must move into the mounted
-    /// save data first (<c>SwitchPlatformServices</c> TODO).
+    /// <b>Storage:</b> the options live in the save slot (<c>opt/</c> keys of <see cref="SaveModel"/>), owned by U-14's
+    /// <see cref="CheckpointService"/>, which this store reaches through <see cref="CheckpointTrigger.Service"/>.
+    /// <see cref="Commit"/> calls <see cref="CheckpointService.ApplySettings"/> (which also sets the graph's calm flag
+    /// and saves). When the service is replaced or reloads (new game, continue, respawn) the store adopts
+    /// <see cref="CheckpointService.Settings"/> and applies it. Before a service exists, or before it has loaded its
+    /// slot, a commit is held in memory and handed to the service on its first reload, so the title screen's options
+    /// never write a slot that has not been continued or started.
     /// </para>
     /// <para>
-    /// <b>Applying</b> (<see cref="Apply"/>, also after every <see cref="Commit"/>):
+    /// <b>Applying</b> (<see cref="Apply"/>, after every commit and adopt):
     /// <list type="bullet">
     /// <item>Audio: each U-16 mixer group's exposed parameter (<c>Master</c>, <c>Music</c>, <c>SFX</c>, <c>Voice</c>,
     /// <c>Ambience</c>) gets <see cref="AudioLevels.Decibels"/>. Unity ignores <c>AudioMixer.SetFloat</c> during Awake, so the
     /// first apply runs in Start.</item>
     /// <item>Calm mode: <see cref="Calm"/> is a static flag every flicker / shake / spark source reads
-    /// (<c>LaneCameraDriver.Shake</c> already does; lights and sparks must, §4.29). Bloom drops to 0.35/0.55 of authored.</item>
+    /// (<c>LaneCameraDriver.Shake</c> already does; lights and sparks must, §4.29); Core mechanisms read the graph's
+    /// <c>Calm</c>, set by the service. Bloom drops to 0.35/0.55 of authored.</item>
     /// <item>Brightness: URP <c>ColorAdjustments.postExposure</c> on <see cref="postVolume"/> = log2(brightness), so 1.0 is
     /// the authored look (the prototype's 1.4× exposure is the authored base).</item>
-    /// <item>Auto-run: <c>D17Controller</c> copies <see cref="GameSettings.AutoRun"/> into <c>D17Motor.AutoRun</c> on
+    /// <item>Auto-run: <c>D17Controller</c> copies <see cref="Options.AutoRun"/> into <c>D17Motor.AutoRun</c> on
     /// <see cref="Applied"/>.</item>
-    /// <item>Rebinding: <see cref="GameSettings.BindingOverrides"/> is loaded into <see cref="actions"/>
-    /// (<c>LoadBindingOverridesFromJson</c>); <see cref="BindingRebinder"/> writes it back.</item>
+    /// <item>Rebinding: <see cref="Options.BindingOverrides"/> is loaded into <see cref="actions"/>
+    /// (<c>LoadBindingOverridesFromJson</c>); <see cref="BindingRebinder"/> captures it back.</item>
     /// </list>
     /// </para>
     /// </summary>
@@ -38,8 +47,6 @@ namespace DeadLetter.Runtime.Settings
     [DisallowMultipleComponent]
     public sealed class SettingsStore : MonoBehaviour
     {
-        public const string FileName = "settings.cfg";
-
         [Tooltip("The U-16 mixer, with exposed parameters Master, Music, SFX, Voice, Ambience (dB).")]
         [SerializeField] private AudioMixer mixer;
         [Tooltip("DeadLetter.inputactions: binding overrides are loaded into and saved from this asset.")]
@@ -47,28 +54,31 @@ namespace DeadLetter.Runtime.Settings
         [Tooltip("Global post-processing Volume with ColorAdjustments (brightness) and Bloom (calm).")]
         [SerializeField] private Volume postVolume;
 
-        private static GameSettings _current = new GameSettings();
+        private static Options _current = new Options();
         private static SettingsStore _instance;
+        private CheckpointService _service;
+        /// <summary>The bound service has loaded or started its slot (a commit may save it).</summary>
+        private bool _serviceReady;
+        /// <summary>A commit made before the service was ready; handed to it on its first reload.</summary>
+        private Options _held;
         private float _authoredBloom = -1f;
         private bool _started;
 
         public static SettingsStore Instance => _instance;
 
-        /// <summary>The live settings (defaults until loaded). Treat as read-only; change via <see cref="Commit"/>.</summary>
-        public static GameSettings Current => _current;
+        /// <summary>The live options (defaults until a slot is loaded). Treat as read-only; change via <see cref="Commit"/>.</summary>
+        public static Options Current => _current;
 
-        /// <summary>The settings file has been read (or found missing) this session.</summary>
+        /// <summary>A store is running, so <see cref="Current"/> is the player's options (not just the defaults of no store).</summary>
         public static bool Loaded { get; private set; }
 
         /// <summary>Calm mode ("Reduce flicker and flashes"): no flicker, flashes, shake or sparks. Read by every such source.</summary>
         public static bool Calm => _current.Calm;
 
-        /// <summary>Raised after settings are applied (load, commit). Listeners: D-17 auto-run, glyphs, UI text size, cues.</summary>
-        public static event Action<GameSettings> Applied;
+        /// <summary>Raised after the options are applied (adopt, commit). Listeners: D-17 auto-run, glyphs, UI text size, cues.</summary>
+        public static event Action<Options> Applied;
 
         public InputActionAsset Actions => actions;
-
-        public static string FilePath => Path.Combine(Application.persistentDataPath, FileName);
 
         private void Awake()
         {
@@ -79,8 +89,9 @@ namespace DeadLetter.Runtime.Settings
                 return;
             }
             _instance = this;
-            _current = Load();
             Loaded = true;
+            CheckpointTrigger.ServiceChanged += Bind;
+            Bind(CheckpointTrigger.Service);
             ApplyBindings();
         }
 
@@ -92,36 +103,51 @@ namespace DeadLetter.Runtime.Settings
 
         private void OnDestroy()
         {
-            if (_instance == this) _instance = null;
+            if (_instance != this) return;
+            CheckpointTrigger.ServiceChanged -= Bind;
+            if (_service != null) _service.Reloaded -= OnReloaded;
+            _service = null;
+            _instance = null;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
-            _current = new GameSettings();
+            _current = new Options();
             _instance = null;
             Loaded = false;
             Applied = null;
         }
 
-        /// <summary>Replace the settings with an edited copy, save, and apply (the options screen's Confirm).</summary>
-        public void Commit(GameSettings edited)
+        /// <summary>
+        /// Replace the options with an edited copy and apply it (the options screen's Confirm). Saved with the slot
+        /// through <see cref="CheckpointService.ApplySettings"/>, or held until the slot is loaded.
+        /// </summary>
+        public void Commit(Options edited)
         {
             if (edited == null) throw new ArgumentNullException(nameof(edited));
             var next = edited.Clone();
             next.Sanitise();
-            _current = next;
-            Save();
+            if (_service != null && _serviceReady)
+            {
+                _service.ApplySettings(next);   // clones, sets the graph's calm, saves
+                _current = _service.Settings.Clone();
+                _held = null;
+            }
+            else
+            {
+                _current = next;
+                _held = next;
+            }
             ApplyBindings();
             Apply();
         }
 
-        /// <summary>Back to defaults (keeps unknown keys from newer builds), save and apply.</summary>
+        /// <summary>Back to defaults (keeps <c>opt/</c> keys from newer builds) and apply.</summary>
         public void ResetToDefaults()
         {
-            var d = new GameSettings();
-            d.UnknownEntries.AddRange(_current.UnknownEntries);
-            d.Version = _current.Version;
+            var d = new Options();
+            foreach (var kv in _current.UnknownOptions) d.UnknownOptions[kv.Key] = kv.Value;
             if (actions != null) actions.RemoveAllBindingOverrides();
             Commit(d);
         }
@@ -129,52 +155,53 @@ namespace DeadLetter.Runtime.Settings
         /// <summary>The options screen was cancelled: drop rebinds made while editing and restore the saved ones.</summary>
         public void RevertBindings() => ApplyBindings();
 
-        // ---- Persistence ----------------------------------------------------------------------------------------------
-        public static GameSettings Load()
+        // ---- The save system ------------------------------------------------------------------------------------------
+        private void Bind(CheckpointService service)
         {
-            string path = FilePath;
-            try
-            {
-                if (!File.Exists(path)) return new GameSettings();
-                int rejected;
-                var s = SettingsSerializer.Deserialize(File.ReadAllText(path), out rejected);
-                if (rejected > 0) Debug.LogWarning($"SettingsStore: {rejected} unreadable line(s) in {path}; those options use defaults.");
-                return s;
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"SettingsStore: could not read {path} ({e.Message}); using defaults.");
-                return new GameSettings();
-            }
+            if (_service == service) return;
+            if (_service != null) _service.Reloaded -= OnReloaded;
+            _service = service;
+            _serviceReady = false;
+            if (_service == null) return;
+            _service.Reloaded += OnReloaded;
+            // Show what the service holds (defaults until its slot is continued or started). Saving waits for its first
+            // Reloaded, so whoever builds the simulation must set CheckpointTrigger.Service before TryContinue/NewGame
+            // (as DirectedMomentPlayer also requires).
+            if (_held == null) Adopt(_service.Settings);
         }
 
-        public void Save()
+        /// <summary>New game, continue or respawn: the service's options are now the slot's.</summary>
+        private void OnReloaded(Checkpoint _)
         {
-            string path = FilePath;
-            string tmp = path + ".tmp";
-            try
+            _serviceReady = true;
+            if (_held != null)
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllBytes(tmp, SettingsSerializer.SerializeUtf8(_current));
-                if (File.Exists(path)) File.Delete(path);
-                File.Move(tmp, path);
+                var held = _held;
+                _held = null;
+                _service.ApplySettings(held);
             }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"SettingsStore: could not write {path} ({e.Message}).");
-            }
+            Adopt(_service.Settings);
+        }
+
+        private void Adopt(Options s)
+        {
+            var next = s.Clone();
+            next.Sanitise();
+            _current = next;
+            ApplyBindings();
+            Apply();
         }
 
         // ---- Applying -------------------------------------------------------------------------------------------------
         public void Apply()
         {
-            GameSettings s = _current;
+            Options s = _current;
             if (_started) ApplyAudio(s);
             ApplyPost(s);
             Applied?.Invoke(s);
         }
 
-        private void ApplyAudio(GameSettings s)
+        private void ApplyAudio(Options s)
         {
             if (mixer == null) return;
             for (int i = 0; i < AudioLevels.All.Length; i++)
@@ -186,7 +213,7 @@ namespace DeadLetter.Runtime.Settings
             }
         }
 
-        private void ApplyPost(GameSettings s)
+        private void ApplyPost(Options s)
         {
             if (postVolume == null) return;
             VolumeProfile profile = postVolume.profile;   // instance copy; the asset on disk is untouched
@@ -196,7 +223,7 @@ namespace DeadLetter.Runtime.Settings
             if (profile.TryGet(out Bloom bloom))
             {
                 if (_authoredBloom < 0f) _authoredBloom = bloom.intensity.value;
-                bloom.intensity.Override(_authoredBloom * (float)(s.Bloom / GameSettings.BloomStrength));
+                bloom.intensity.Override(_authoredBloom * (float)(s.Bloom / Options.BloomStrength));
             }
         }
 

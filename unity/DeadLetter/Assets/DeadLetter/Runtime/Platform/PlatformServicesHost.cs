@@ -1,9 +1,10 @@
 using System;
 using DeadLetter.Core.Platform;
-using DeadLetter.Core.Options;
 using DeadLetter.Runtime.Camera;
 using DeadLetter.Runtime.Settings;
 using UnityEngine;
+// Inside DeadLetter.Runtime, a bare "Settings" names the Runtime.Settings namespace.
+using Options = DeadLetter.Core.Save.Settings;
 
 namespace DeadLetter.Runtime.Platform
 {
@@ -93,7 +94,7 @@ namespace DeadLetter.Runtime.Platform
             if (InPlay()) _pause.TogglePlayer();
         }
 
-        private void OnSettingsApplied(GameSettings s) => _glyphs?.SetPreference(s.Glyphs);
+        private void OnSettingsApplied(Options s) => _glyphs?.SetPreference(s.Glyphs);
 
         private void OnPauseChanged()
         {

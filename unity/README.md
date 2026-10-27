@@ -318,60 +318,71 @@ See `docs/unity/port_architecture.md` §4.4, §4.29 and §4.30.
 
 ```
 Assets/DeadLetter/Core/
-  Settings/   GameSettings        every option + default; the prototype's options card (OPTS L8283, brightness L8307–8319)
-                                  ported key for key, then the port's additions
-              SettingsSerializer  key=value text, hand-written key table (no reflection, IL2CPP-safe), unknown keys kept,
-                                  bad values → default, out-of-range → clamped, never throws, stable output
-              AudioLevels         slider → dB for the five mixer groups; Sound/Music toggles
+  Save/       Settings            THE settings model (shared with U-14): every option + default, the prototype's options
+                                  card (OPTS L8283, brightness L8307–8319) then the port's additions; persisted in the
+                                  save slot under opt/ keys (missing → default, out of range → clamped, unknown opt/
+                                  keys kept); derived Exposure, Bloom, TextScale
+  Audio/      AudioLevels         slider → dB for the five mixer groups; Sound/Music toggles
   Platform/   IPlatformServices   achievements, rich presence, overlay-opened event, CloudSync; NullPlatformServices
               ICloudSync          whole-file cloud blobs (U-14's ISaveStore can wrap it later)
               Achievements        the catalog: empty for now (how to add one is in the file)
-              GlyphRules          which button-prompt set to draw (keyboard / Xbox / PlayStation / Switch / Steam Deck)
+              GlyphRules          GlyphPreference; which button-prompt set to draw (keyboard / Xbox / PlayStation /
+                                  Switch / Steam Deck)
               PauseGate           player pause + overlay + focus loss; a system interruption leaves the pause card up
 Assets/DeadLetter/Runtime/
   Platform/   PlatformServices    compile-time factory + Current; PlatformServicesHost (DL_Persistent): init, tick, pause
               SteamPlatformServices (#if DL_STEAM), ItchPlatformServices (no-op), SwitchPlatformServices (NDA stub)
               GlyphTracker        last device used → GlyphRules
-  Settings/   SettingsStore       persistentDataPath/settings.cfg; applies mixer, calm, brightness/bloom, bindings
+  Settings/   SettingsStore       no file of its own: reads/commits Settings through CheckpointService (Settings,
+                                  ApplySettings); applies mixer, calm, brightness/bloom, bindings
               BindingRebinder     PerformInteractiveRebinding + SaveBindingOverridesAsJson / LoadBindingOverridesFromJson
 Assets/DeadLetter/Editor/Build/BuildScripts   -executeMethod player builds (IL2CPP; Steam/Itch variants)
 tools/build/itch_push.sh                      butler push helper (documented, not run)
 tools/build/steam/app_build.vdf               ContentBuilder template (placeholders only)
 ```
 
-Tests: `SettingsTests` (defaults against `OPTS`, round trip, stable output, unknown-key preservation, corrupt and
-truncated input, clamping, culture invariance, dB maths) and `PlatformTests` (glyph selection, pause gate, no-op
+Tests: `SettingsTests` (defaults against `OPTS`, round trip through `SaveDocument` and the save codec, stable bytes,
+U-14 keys keep their meaning, unknown `opt/` key preservation, wrong-kind and corrupt input, clamping, culture
+invariance, dB maths), the settings cases in `SaveTests` and `PlatformTests` (glyph selection, pause gate, no-op
 services, achievement ids). Run `dotnet test unity/core-tests`.
 
 ### Options
 
-| Option | Default | Source |
-|---|---|---|
-| Auto-run (hold Shift or B to walk) | on | `autorun: true`, L170, L8283 → `D17Motor.AutoRun` |
-| Sound | on | L171; off mutes SFX, Voice, Ambience |
-| Music | on | L172; off mutes Music |
-| Light up things I can use, and show the button | on | `prompts`, L173 |
-| Show a button prompt if I'm stuck | off | `assist`, L174 |
-| Reduce flicker and flashes (calm) | off | `calm`, L176: no flicker, flashes, shake or sparks; bloom 0.35 instead of 0.55 |
-| Brightness | 1.0 (0.8–1.8) | L175, L8308; URP post-exposure log2(v) on top of the authored look |
-| Share anonymous play data | **off** | prototype default is on; §4.30 says the shipped uploader is opt-in. **Director to confirm.** |
-| Master / Music / SFX / Voice / Ambience volume | 1.0 each | new; linear sliders → `AudioMixer.SetFloat(name, 20·log10 v)` (−80 dB floor) |
-| Text size (subtitles, letters) | Default (×1.0; Small 0.85, Large 1.25, Extra large 1.6) | new |
-| Text background panel | off | new (§4.29) |
-| Colour-independent cues | off | new; every colour-only cue also gets a shape or pattern when on |
-| Hold actions toggle | off | new (§4.29: DL-16's held lever) |
-| Button prompts | Auto | new; Auto follows the last device used |
-| Key bindings | defaults | new; Input System override JSON |
+One model: `DeadLetter.Core.Save.Settings`. Its fields are saved in the slot (`SaveModel`, §4.28) and applied by
+`CheckpointService.ApplySettings`; `SettingsStore` only pushes them to the engine.
 
-Settings are per device and are not cloud-synced (a Deck and a desktop want different text and glyphs).
+| Option | Field, save key | Default | Source |
+|---|---|---|---|
+| Auto-run (hold Shift or B to walk) | `AutoRun`, `opt/autorun` | on | `autorun: true`, L170, L8283 → `D17Motor.AutoRun` |
+| Sound | `Sound`, `opt/sound` | on | L171; off mutes SFX, Voice, Ambience |
+| Music | `Music`, `opt/music` | on | L172; off mutes Music |
+| Light up things I can use, and show the button | `Prompts`, `opt/prompts` | on | `prompts`, L173 |
+| Show a button prompt if I'm stuck | `StuckAssist`, `opt/assist` | off | `assist`, L174 |
+| Reduce flicker and flashes (calm) | `Calm`, `opt/calm` | off | `calm`, L176: no flicker, flashes, shake or sparks; bloom 0.35 instead of 0.55 |
+| Share anonymous play data | `Telemetry`, `opt/telemetry` | **off** | prototype default is on; §4.30 says the shipped uploader is opt-in. **Director to confirm.** |
+| Brightness | `Brightness`, `opt/bright` | 1.0 (0.8–1.8) | L175, L8308; URP post-exposure log2(v) on top of the authored look |
+| Master / Music / SFX / Voice / Ambience volume | `MasterVolume` … `AmbienceVolume`, `opt/volMaster`, `opt/volMusic`, `opt/volSfx`, `opt/volVoice`, `opt/volAmbience` | 1.0 each | new; linear sliders → `AudioMixer.SetFloat(name, 20·log10 v)` (−80 dB floor) |
+| Subtitles | `Subtitles`, `opt/subtitles` | on | new |
+| Text size (subtitles, letters) | `SubtitleSize` (`TextSize`), `opt/subtitleSize` | Default = 1 (×1.0; Small 0 ×0.85, Large 2 ×1.25, Extra large 3 ×1.6) | new |
+| Text background box | `SubtitleBackground`, `opt/subtitleBox` | off | new (§4.29) |
+| Colour-independent cues | `ColourIndependentCues`, `opt/colourCues` | off | new; every colour-only cue also gets a shape or pattern when on |
+| Hold actions toggle | `HoldToToggle`, `opt/holdToggle` | off | new (§4.29: DL-16's held lever) |
+| Button prompts | `Glyphs` (`GlyphPreference`), `opt/glyphs` | Auto | new; Auto follows the last device used |
+| Key bindings | `BindingOverrides`, `opt/bindings` | defaults ("") | new; Input System override JSON |
+
+Options travel with the save slot (and with it any cloud sync of the slot). `SettingsStore` adopts
+`CheckpointService.Settings` whenever `CheckpointTrigger.Service` is set or reloads (new game, continue, respawn); a
+commit made before the slot is loaded (the title screen) is held and handed to the service on its first reload, so it
+never writes a slot that was not continued or started.
 
 **Hooks wired:** `D17Controller` takes auto-run from `SettingsStore.Applied` (its serialized `autoRun` is used only
 when no store exists). `LaneCameraDriver.Shake` honours `SettingsStore.Calm`. **Hooks still needed** as their systems
 land: every light flicker, spark and flash source must read `SettingsStore.Calm` (§4.14, §4.20, §4.22); the glint/
-prompt view reads `Prompts` and `StuckAssist`; the subtitle/letter UI reads `TextScale` and `TextBackground`; colour
-cues read `ColourIndependentCues`; DL-16's lever reads `ToggleHolds`; the telemetry uploader (§4.30) reads `Telemetry`.
+prompt view reads `Prompts` and `StuckAssist`; the subtitle/letter UI reads `Subtitles`, `TextScale` and
+`SubtitleBackground`; colour cues read `ColourIndependentCues`; DL-16's lever reads `HoldToToggle`; the telemetry uploader (§4.30) reads `Telemetry`.
 The options and pause screens (UI Toolkit) are not built yet: they edit `SettingsStore.Current.Clone()` and call
-`SettingsStore.Instance.Commit(draft)` on Confirm, or `RevertBindings()` on Cancel.
+`SettingsStore.Instance.Commit(draft)` on Confirm, or `RevertBindings()` on Cancel. Core mechanisms read calm from
+the graph (`MechanismGraph.Calm`, set by `ApplySettings`).
 
 **Scene setup** (`DL_Persistent`): add `SettingsStore` (assign the U-16 mixer, `DeadLetter.inputactions` and the global
 post Volume) and `PlatformServicesHost` (assign D-17 and the `DirectedMomentPlayer`). The U-16 mixer must expose its
