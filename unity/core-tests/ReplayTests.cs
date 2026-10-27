@@ -171,16 +171,17 @@ namespace DeadLetter.Core.Tests
         /// Its choices read the scene's state, so this checks the port of bot.js and Core's responses together.
         /// </summary>
         [Fact]
-        public void Dl01_TheLiveBot_GivesTheRecordedBotsInput_AtEveryStep() => LiveBotParity("DL-01");
+        public void Dl01_TheLiveBot_GivesTheRecordedBotsInput_AtEveryStep() => LiveBotParity("DL-01", 2232);
 
         /// <summary>
         /// The same, on through DL-06: the prologue as far as Core has ported it, in one <see cref="ChapterSim"/>, until the
         /// bot's DL-06 script ends (the belt runs to the exit).
         /// </summary>
         [Fact]
-        public void Prologue_TheLiveBot_GivesTheRecordedBotsInput_AtEveryStep() => LiveBotParity("DL-06");
+        public void Prologue_TheLiveBot_GivesTheRecordedBotsInput_AtEveryStep() => LiveBotParity("DL-06", 12250);
 
-        private void LiveBotParity(string lastScene)
+        /// <param name="steps">How many steps the window holds (the recorded run's, from play to the script's end).</param>
+        private void LiveBotParity(string lastScene, int steps)
         {
             var t = Trace.Load(Dl01TraceTests.TraceFile);
             int play = t.FirstIndex(p => p.Mode == "play");
@@ -205,11 +206,12 @@ namespace DeadLetter.Core.Tests
             Assert.Empty(diffs);
             Assert.Null(bot.Out.Error);
             Assert.True(bot.Done, "the bot finished " + lastScene + " inside the recorded run");
+            Assert.Equal(steps, k - play);
         }
 
         private static bool SameInput(MotorInput a, MotorInput b) =>
             a.Move == b.Move && a.JumpPressed == b.JumpPressed && a.JumpHeld == b.JumpHeld && a.UsePressed == b.UsePressed
-            && a.RunModifierHeld == b.RunModifierHeld;
+            && a.UseHeld == b.UseHeld && a.RunModifierHeld == b.RunModifierHeld;
 
         private static string Show(MotorInput m) =>
             "move " + m.Move.ToString(CultureInfo.InvariantCulture) + (m.JumpPressed ? " J" : "") + (m.JumpHeld ? " j" : "")

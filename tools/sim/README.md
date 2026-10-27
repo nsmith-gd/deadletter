@@ -153,6 +153,10 @@ first-playthrough distributions.
   `DL_SIM_SEEDS=2,3,6`) in this format, with `"engine": "core"` and the chapter's cues under `"cues"`.
   `summarise.py` reads both kinds. The run ends where the ported prologue does, so DL-06 has no column of its own
   (no DL-07 mark); it is in `total`.
+- **Comparing first playthroughs with the prototype's: use `total` only.** Core's start at clock 0 with control after
+  one step, so `opening` and `with opening` read 0:00 (the prototype's ~29 s are its title and opening). Core's runs
+  also leave out the ride into the pile in DL-06, which about half of the prototype's players take, so their `total`
+  runs short of the prototype's by that ride.
 - **A new scene:** port its `bot.js` function into the script (or a new `ScriptedPlayer` under `Replay/Scripts/` for
   another chapter), extend the parity test's window, and play it with
   `SimRun.Play(new ChapterSimTarget(new ChapterSim(def)).NewGame(fromOpening: true), script)`.

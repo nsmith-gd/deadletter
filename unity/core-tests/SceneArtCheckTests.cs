@@ -22,7 +22,7 @@ namespace DeadLetter.Core.Tests
         {
             public Func<SceneDef> Def;
             public string Art;
-            public string[] LogicOnly = Array.Empty<string>(), NotPorted = Array.Empty<string>();
+            public string[] LogicOnly = Array.Empty<string>(), NotPorted = Array.Empty<string>(), SharedWith = Array.Empty<string>();
         }
 
         /// <summary>
@@ -33,6 +33,7 @@ namespace DeadLetter.Core.Tests
         {
             ["Press"] = "PeriodicCrusher",       // Core/Hazards (DL-02's franking press)
             ["Draggable"] = "Pushable",          // Core/Push drags too (DL-05's body: StopAt/MinRoom)
+            ["Scanner"] = "Dl06Scanner",         // DL-06's scanner is a scene mechanism of its own
         };
 
         private static readonly Dictionary<string, Row> Rows = new Dictionary<string, Row>
@@ -42,6 +43,13 @@ namespace DeadLetter.Core.Tests
             ["DL-03"] = new Row { Def = DeadLetter.Core.Scenes.Dl03.Dl03Scene.Def, Art = "DL-03" },
             ["DL-04"] = new Row { Def = () => DeadLetter.Core.Scenes.Dl04.Dl04Scene.Def(), Art = "DL-04" },
             ["DL-05"] = new Row { Def = DeadLetter.Core.Scenes.Dl05.Dl05Scene.Def, Art = "DL-05" },
+            // DL-06 shares DL-07's sidecar (the floor): DL-07's gate and collapse are not ported yet (#17), its checkpoints are
+            // DL-07's; the hatch is the scanner's, with no art of its own.
+            ["DL-06"] = new Row
+            {
+                Def = DeadLetter.Core.Scenes.Dl06.Dl06Scene.Def, Art = "DL-06_07", LogicOnly = new[] { "dl06.hatch" },
+                NotPorted = new[] { "dl07.gate", "dl07.collapse" }, SharedWith = new[] { "DL-07" },
+            },
         };
 
         private static CheckpointTable Table => ChapterDefs.PrologueCheckpoints;
@@ -83,7 +91,7 @@ namespace DeadLetter.Core.Tests
         public void TheSceneDefinition_AgreesWithItsArt(string scene)
         {
             var row = Rows[scene];
-            var problems = SceneArtCheck.Check(row.Def(), Table, LoadMarkers(row.Art), row.LogicOnly, row.NotPorted, Aliases);
+            var problems = SceneArtCheck.Check(row.Def(), Table, LoadMarkers(row.Art), row.LogicOnly, row.NotPorted, Aliases, row.SharedWith);
             foreach (var p in problems) _out.WriteLine(p);
             Assert.Empty(problems);
         }

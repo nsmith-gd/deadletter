@@ -92,7 +92,7 @@ namespace DeadLetter.Core.Simulation.Replay
                 JumpPressed = _jumpPressed,
                 JumpHeld = _jumpHeld,
                 UsePressed = _usePressed,
-                UseHeld = _usePressed,
+                UseHeld = false,                         // bot.js never holds Use (it sets usePressed only, L29)
                 RunModifierHeld = _shift,
             };
             _jumpPressed = false;
@@ -197,7 +197,7 @@ namespace DeadLetter.Core.Simulation.Replay
             if (!ok())
             {
                 int d = Math.Sign(x - G.X); if (d == 0) d = 1;
-                var back = o; back.Max = 30;
+                var back = o; if (back.Max <= 0) back.Max = 30;   // { max: 30, ...o }: a caller's max wins (L56)
                 foreach (var s in Walk(d, ok, label + " (back)", back)) yield return s;
             }
             for (int k = 0; k < 12; k++)

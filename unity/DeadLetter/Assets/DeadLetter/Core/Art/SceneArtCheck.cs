@@ -40,9 +40,10 @@ namespace DeadLetter.Core.Art
         /// <param name="notPorted">Marker ids the def does not have yet (e.g. a curiosity's scale).</param>
         /// <param name="typeAliases">Marker type → Core class name, where U-12's name map and Core differ.</param>
         /// <param name="checkpoints">The chapter's checkpoint table: the rows this scene owns (<see cref="CheckpointDef.Scene"/>) are checked against its <c>CHK_</c> markers.</param>
+        /// <param name="sharedWith">Scenes that share this sidecar (DL-06 and DL-07: <c>Art/DL-06_07</c>): their <c>CHK_</c> markers are theirs to check, not this scene's.</param>
         /// <returns>Problems, one line each; empty when the definition and the art agree.</returns>
         public static List<string> Check(SceneDef def, CheckpointTable checkpoints, IEnumerable<ArtMarker> markers, IEnumerable<string> logicOnly = null,
-            IEnumerable<string> notPorted = null, IDictionary<string, string> typeAliases = null)
+            IEnumerable<string> notPorted = null, IDictionary<string, string> typeAliases = null, IEnumerable<string> sharedWith = null)
         {
             if (def == null) throw new ArgumentNullException(nameof(def));
             if (markers == null) throw new ArgumentNullException(nameof(markers));
@@ -50,6 +51,7 @@ namespace DeadLetter.Core.Art
             var logic = new HashSet<string>(logicOnly ?? Array.Empty<string>(), StringComparer.Ordinal);
             var later = new HashSet<string>(notPorted ?? Array.Empty<string>(), StringComparer.Ordinal);
             if (checkpoints == null) throw new ArgumentNullException(nameof(checkpoints));
+            var shared = new HashSet<string>(sharedWith ?? Array.Empty<string>(), StringComparer.Ordinal);
 
             // ---- the definition on its own ----------------------------------------------------------------------------
             var built = new Dictionary<string, Type>(StringComparer.Ordinal);         // id → class
@@ -108,6 +110,7 @@ namespace DeadLetter.Core.Art
             {
                 string name = mk.Name.StartsWith("CHK_", StringComparison.Ordinal) ? mk.Name.Substring(4) : mk.Name;
                 seen.Add(name);
+                if (checkpoints.TryGet(name, out var other) && other.Scene != def.Id && shared.Contains(other.Scene)) continue;   // a sharing scene's
                 if (!checkpoints.TryGet(name, out var cp) || cp.Scene != def.Id) { problems.Add(def.Id + ": the art's " + mk.Name + " is not one of this scene's checkpoints in the chapter table"); continue; }
                 if (Math.Abs(cp.X - mk.X) > PositionTolerance)
                     problems.Add(def.Id + ": checkpoint " + name + " is at x " + cp.X.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
