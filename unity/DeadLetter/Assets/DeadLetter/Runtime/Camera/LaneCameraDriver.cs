@@ -2,6 +2,7 @@ using DeadLetter.Core.Camera;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Maths;
 using DeadLetter.Core.Motor;
+using DeadLetter.Runtime.Settings;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -29,7 +30,7 @@ namespace DeadLetter.Runtime.Camera
         [SerializeField] private UnityEngine.Camera targetCamera;
         [Tooltip("Write RenderSettings.fogDensity (ExponentialSquared) from the framing (U-15 may own this instead).")]
         [SerializeField] private bool driveFog = true;
-        [Tooltip("Accessibility: no camera shake.")]
+        [Tooltip("Accessibility: no camera shake. The player's calm-mode option (SettingsStore.Calm) also disables it.")]
         [SerializeField] private bool calm;
 
         private CameraRig _rig;
@@ -55,7 +56,7 @@ namespace DeadLetter.Runtime.Camera
             _hasPose = false;
         }
 
-        public void Shake(float amount) => _rig?.Shake(amount, calm);
+        public void Shake(float amount) => _rig?.Shake(amount, calm || SettingsStore.Calm);
 
         /// <summary>Checkpoint load / respawn: jump to the frame (L8115).</summary>
         public void Snap()
