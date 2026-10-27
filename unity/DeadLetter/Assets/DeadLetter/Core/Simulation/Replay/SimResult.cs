@@ -18,6 +18,8 @@ namespace DeadLetter.Core.Simulation.Replay
         public uint Seed;
         public double Skill, Curious;
         public readonly List<string> Events = new List<string>();
+        /// <summary>Presentation cues the run raised, "&lt;seconds from play&gt; &lt;cue&gt;" (Core runs only; summarise.py ignores them).</summary>
+        public readonly List<string> Cues = new List<string>();
         public bool Done;
         public string Error;
         public int Deaths, Found;
@@ -67,6 +69,12 @@ namespace DeadLetter.Core.Simulation.Replay
             {
                 if (i > 0) sb.Append(',');
                 Str(sb, Events[i]);
+            }
+            sb.Append("],\"cues\":[");
+            for (int i = 0; i < Cues.Count; i++)
+            {
+                if (i > 0) sb.Append(',');
+                Str(sb, Cues[i]);
             }
             sb.Append("],\"done\":").Append(Done ? "true" : "false");
             sb.Append(",\"error\":"); Str(sb, Error);

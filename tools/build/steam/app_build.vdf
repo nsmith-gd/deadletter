@@ -6,6 +6,7 @@
 //   Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.BuildWindowsSteam -logFile -
 //   (BuildMacSteam, BuildLinuxSteam likewise) -> unity/DeadLetter/Builds/{windows,mac,linux}-steam/
 // Never upload a build made with -dlSteamAppId (it contains steam_appid.txt); the exclusion below is a second guard.
+// .dl-build-output is BuildScripts' output-folder marker (it guards -dlOut deletes) and is excluded too.
 // Set "SetLive" to a beta branch name (never "default") to publish on upload; leave empty to set live by hand.
 "AppBuild"
 {
@@ -29,6 +30,7 @@
 			}
 			"FileExclusion" "*.pdb"
 			"FileExclusion" "steam_appid.txt"
+			"FileExclusion" ".dl-build-output"
 		}
 
 		// macOS universal depot (partner site: OS = macOS)
@@ -41,6 +43,7 @@
 				"Recursive" "1"
 			}
 			"FileExclusion" "steam_appid.txt"
+			"FileExclusion" ".dl-build-output"
 		}
 
 		// Linux x64 depot (partner site: OS = Linux + SteamOS; this is the depot Steam Deck runs if it is marked native)
@@ -53,6 +56,7 @@
 				"Recursive" "1"
 			}
 			"FileExclusion" "steam_appid.txt"
+			"FileExclusion" ".dl-build-output"
 		}
 	}
 }

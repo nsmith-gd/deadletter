@@ -16,11 +16,18 @@ namespace DeadLetter.Core.Simulation.Replay
         {
             var wall = Stopwatch.StartNew();
             player.Begin(target);
+            var cues = target as ICueSource;
             for (int i = 0; i < maxSteps && !player.Done; i++)
             {
                 var input = player.Tick();
                 if (player.Done) break;
                 target.Step(input);
+                if (cues != null && cues.Cues.Count > 0)
+                {
+                    double t = target.Clock - (player.Out.TryGetMark("play", out var play) ? play : target.Clock);
+                    foreach (var c in cues.Cues)
+                        player.Out.Cues.Add(t.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " " + c);
+                }
             }
             var o = player.Out;
             if (!o.Done) o.Error = "wall timeout at x=" + target.X.ToString("R", System.Globalization.CultureInfo.InvariantCulture);

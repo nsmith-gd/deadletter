@@ -41,6 +41,13 @@ namespace DeadLetter.Core.Simulation.Replay
         MechanismGraph Mechanisms { get; }
     }
 
+    /// <summary>A target that raises presentation cues (music, voices, shots) each step; <see cref="SimRun"/> logs them.</summary>
+    public interface ICueSource
+    {
+        /// <summary>The cues raised by the last step.</summary>
+        System.Collections.Generic.IReadOnlyList<Cues.Cue> Cues { get; }
+    }
+
     /// <summary>A headless scene a script can play: the view, plus one 60 Hz pipeline step.</summary>
     public interface ISimTarget : ISimView
     {

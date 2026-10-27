@@ -167,13 +167,12 @@ namespace DeadLetter.Core.Tests
         public void Crushed_HeDies_HoldsAndCuts_ThenRespawnsAtRoom_WithTheWorldRebuilt()
         {
             var sim = Hall(26.0, 13.9);
-            var rules = (Dl02Rules)sim.Rules;
             int k = 0;
-            while (rules.Death.Deaths == 0 && k++ < 200) sim.Step(default);
-            Assert.Equal(1, rules.Death.Deaths);
-            Assert.Equal("death", sim.ActKind);
+            while (sim.Deaths == 0 && k++ < 200) sim.Step(default);
+            Assert.Equal(1, sim.Deaths);
+            Assert.Equal("death", sim.ActKind);                                                       // the motor's death act
             Assert.Equal("Crush", sim.ActPhase);
-            Assert.Contains("death:crush", sim.Cues);
+            Assert.True(sim.Motor.Has(MotorEventKind.Death, "Crush"));                                // for the sparks, the eye and the shake
             Assert.InRange(sim.Clock % 2.6, 0.5, 0.62);                                               // as the face drops past 0.74
             Assert.Equal(0, sim.Vx);
             Assert.True(sim.Busy);
@@ -184,11 +183,11 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(42, toCut);                                                                  // 0.7 s
             Assert.Equal(sim.Clock + 0.6, sim.RespawnAt);
             int toRespawn = 0;
-            while (sim.Act != null) { sim.Step(default); toRespawn++; }
+            while (sim.ActKind != null) { sim.Step(default); toRespawn++; }
             Assert.Equal(37, toRespawn);                                                              // clock ≥ respawnAt, L8494
             Assert.Equal(13.2, sim.X);
             Assert.Equal("room", sim.Checkpoints.Current.Name);
-            Assert.Equal(1, rules.Death.Deaths);                                                      // game.deaths outlives the respawn
+            Assert.Equal(1, sim.Deaths);                                                              // game.deaths outlives the respawn
             Assert.Equal(ItemState.Floor, sim.Graph.Get<CarriedItem>("dl02.box").State);
             Assert.Equal(17.4, sim.Graph.Get<CarriedItem>("dl02.box").X);
         }
@@ -197,10 +196,9 @@ namespace DeadLetter.Core.Tests
         public void Dying_IsOnce_UntilTheRespawn()
         {
             var sim = Hall(26.0, 13.9);
-            var rules = (Dl02Rules)sim.Rules;
             for (int i = 0; i < 60; i++) sim.Step(default);
-            Assert.Equal(1, rules.Death.Deaths);
-            Assert.False(rules.Death.Die(sim, DeathKind.Fall));
+            Assert.Equal(1, sim.Deaths);
+            Assert.False(sim.Chapter.Die(DeathKind.Fall));
         }
 
         [Fact]
@@ -216,7 +214,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(ItemState.Carried, box.State);
             for (int i = 0; i < 30; i++) sim.Step(new MotorInput { Move = 1 });
             double x = sim.X;
-            Assert.True(((Dl02Rules)sim.Rules).Death.Die(sim, DeathKind.Fall));
+            Assert.True(sim.Chapter.Die(DeathKind.Fall));
             Assert.Equal(ItemState.Floor, box.State);
             Assert.Equal(x, box.X);
             Assert.Equal(0, box.BaseY);
@@ -235,7 +233,7 @@ namespace DeadLetter.Core.Tests
             sim.Step(new MotorInput { Move = -1 });
             Assert.False(sim.Grounded);
             double y = sim.Y;
-            ((Dl02Rules)sim.Rules).Death.Die(sim, DeathKind.Fall);
+            sim.Chapter.Die(DeathKind.Fall);
             Assert.False(sim.Grounded);
             for (int i = 0; i < 30; i++) sim.Step(default);
             Assert.Equal(y, sim.Y);                                                                   // he does not fall meanwhile
@@ -243,12 +241,13 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
-        public void DeathAct_Sinks_WhenAsked()
+        public void ASinkingDeath_IsTheSceneAct_TheMotorsCannotSink_28()
         {
             var sim = new SceneSim(Dl02Scene.Def());
             sim.Begin("room");
             sim.Motor.Place(16.0, 0, 1);
-            ((Dl02Rules)sim.Rules).Death.Die(sim, DeathKind.Grabbed, sinkRate: 0.8);
+            Assert.True(sim.Chapter.Die(DeathKind.Grabbed, sinkRate: 0.8));
+            Assert.False(sim.Chapter.Die(DeathKind.Fall));
             for (int i = 0; i < 60; i++) sim.Step(default);
             Assert.Equal(-0.8, sim.Y, 9);
             Assert.Equal(1.15, ((DeathAct)sim.Act).Profile.Hold);

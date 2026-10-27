@@ -19,10 +19,15 @@ namespace DeadLetter.Editor.Build
     /// Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.BuildWindowsSteam -logFile -
     /// Unity -batchmode -quit -projectPath unity/DeadLetter -executeMethod DeadLetter.Editor.Build.BuildScripts.Build -dlTarget linux -dlStore itch
     /// </code>
-    /// Optional arguments: <c>-dlDevelopment</c> (development build), <c>-dlOut &lt;dir&gt;</c> (output folder),
+    /// Optional arguments: <c>-dlDevelopment</c> (development build), <c>-dlOut &lt;dir&gt;</c> (output folder; it is
+    /// emptied first, so see <see cref="CheckOutputFolder"/> for what may be used),
     /// <c>-dlSteamAppId &lt;id&gt;</c> (writes <c>steam_appid.txt</c> next to the executable, for local testing only; never
     /// upload it). IL2CPP cannot cross-compile: build Windows on Windows, macOS on a Mac, Linux on Linux (or on Windows /
     /// Mac with the Linux IL2CPP toolchain package). Batch mode exits with code 1 on failure.
+    /// <para>
+    /// Steam builds first check that Steamworks.NET is installed and referenced by <c>DeadLetter.Runtime</c>
+    /// (<see cref="CheckSteamworks"/>); without it the <c>DL_STEAM</c> code cannot compile.
+    /// </para>
     /// <para>
     /// Switch is not here: it needs the NDA'd Switch build module from the Nintendo Developer Portal and is built by hand
     /// by a licensed developer (see unity/README.md).
@@ -32,6 +37,10 @@ namespace DeadLetter.Editor.Build
     {
         public const string SteamDefine = "DL_STEAM";
         public const string ProductFileName = "DeadLetter";
+        public const string SteamworksPackage = "com.rlabrecque.steamworks.net";
+        /// <summary>Written into every output folder; a <c>-dlOut</c> folder outside <c>Builds/</c> is emptied only if it has one.</summary>
+        public const string OutputMarker = ".dl-build-output";
+        private const string ReadmeSteam = "unity/README.md, \"Steamworks.NET (director: one-time setup)\", steps 1-2";
 
         public enum Target { Windows, Mac, Linux }
         public enum Store { Steam, Itch }
@@ -76,12 +85,25 @@ namespace DeadLetter.Editor.Build
                 return false;
             }
 
+            if (store == Store.Steam && !CheckSteamworks(out string steamProblem))
+            {
+                Debug.LogError("BuildScripts: " + steamProblem);
+                return false;
+            }
+
             BuildTarget buildTarget = ToBuildTarget(target);
             string outDir = Arg("-dlOut");
             if (string.IsNullOrEmpty(outDir)) outDir = Path.Combine(ProjectRoot(), "Builds", FolderName(target, store));
             outDir = Path.GetFullPath(outDir);
+            if (!CheckOutputFolder(outDir, out string outProblem))
+            {
+                Debug.LogError("BuildScripts: " + outProblem);
+                return false;
+            }
             if (Directory.Exists(outDir)) Directory.Delete(outDir, true);
             Directory.CreateDirectory(outDir);
+            File.WriteAllText(Path.Combine(outDir, OutputMarker),
+                "Dead Letter build output (BuildScripts). This folder is deleted and rebuilt by the next build into it.\n");
 
             var options = new BuildPlayerOptions
             {
@@ -139,6 +161,95 @@ namespace DeadLetter.Editor.Build
         {
             Debug.LogError(message);
             if (Application.isBatchMode) EditorApplication.Exit(1);
+        }
+
+        // ---- Pre-build checks -----------------------------------------------------------------------------------------
+        /// <summary>
+        /// Steam builds compile <c>DL_STEAM</c> code that uses Steamworks.NET: the package must be installed and
+        /// <c>DeadLetter.Runtime.asmdef</c> must reference it by name. False with a message pointing to the README.
+        /// </summary>
+        public static bool CheckSteamworks(out string problem)
+        {
+            problem = null;
+            if (UnityEditor.PackageManager.PackageInfo.FindForPackageName(SteamworksPackage) == null)
+            {
+                problem = $"Steam build needs the Steamworks.NET package ({SteamworksPackage}) in Packages/manifest.json. See {ReadmeSteam}.";
+                return false;
+            }
+            string asmdef = Path.Combine(Application.dataPath, "DeadLetter", "Runtime", "DeadLetter.Runtime.asmdef");
+            string[] refs = null;
+            try
+            {
+                if (File.Exists(asmdef)) refs = JsonUtility.FromJson<AsmdefReferences>(File.ReadAllText(asmdef))?.references;
+            }
+            catch (Exception e)
+            {
+                problem = $"Could not read {asmdef}: {e.Message}. See {ReadmeSteam}.";
+                return false;
+            }
+            if (refs == null || !refs.Contains(SteamworksPackage))
+            {
+                problem = $"Steam build needs \"{SteamworksPackage}\" in the references of Assets/DeadLetter/Runtime/DeadLetter.Runtime.asmdef (by name, not GUID). See {ReadmeSteam}.";
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>The part of an .asmdef this reads (JsonUtility).</summary>
+        [Serializable]
+        public sealed class AsmdefReferences
+        {
+            public string[] references;
+        }
+
+        /// <summary>
+        /// The output folder is deleted before each build, so refuse anything that could be more than a build: the
+        /// Unity project or any folder containing it, a folder with an <c>Assets</c> folder or a <c>.git</c>, and the
+        /// <c>Builds</c> folder itself. Folders inside the project's <c>Builds/</c> are fine; anywhere else must already
+        /// hold <see cref="OutputMarker"/> (written by an earlier build into it) or not exist yet.
+        /// </summary>
+        public static bool CheckOutputFolder(string outDir, out string problem)
+        {
+            problem = null;
+            StringComparison cmp = Application.platform == RuntimePlatform.LinuxEditor ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            string dir = NormalizeDir(outDir);
+            string root = NormalizeDir(ProjectRoot());
+            string builds = NormalizeDir(Path.Combine(root, "Builds"));
+            if (string.Equals(dir, root, cmp) || IsUnder(root, dir, cmp))
+            {
+                problem = $"-dlOut '{dir}' is the Unity project or a folder containing it; refusing to delete it.";
+                return false;
+            }
+            if (string.Equals(dir, builds, cmp))
+            {
+                problem = $"-dlOut '{dir}' is the whole Builds folder (other builds and symbols live there); use a subfolder.";
+                return false;
+            }
+            if (!Directory.Exists(dir)) return true;
+            if (!Directory.EnumerateFileSystemEntries(dir).Any()) return true;   // empty: nothing to lose
+            if (Directory.Exists(Path.Combine(dir, "Assets")) || Directory.Exists(Path.Combine(dir, ".git")) || File.Exists(Path.Combine(dir, ".git")))
+            {
+                problem = $"-dlOut '{dir}' contains an Assets folder or .git; refusing to delete it.";
+                return false;
+            }
+            if (IsUnder(dir, builds, cmp)) return true;
+            if (File.Exists(Path.Combine(dir, OutputMarker))) return true;
+            problem = $"-dlOut '{dir}' is outside {builds} and has no {OutputMarker} from an earlier build; refusing to delete it. Use an empty or new folder.";
+            return false;
+        }
+
+        private static string NormalizeDir(string path)
+        {
+            string full = Path.GetFullPath(path);
+            string trimmed = full.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return trimmed.Length == 0 || trimmed.EndsWith(":", StringComparison.Ordinal) ? full : trimmed;   // "/" and "C:\" stay
+        }
+
+        /// <summary><paramref name="child"/> is strictly inside <paramref name="parent"/> (both normalized).</summary>
+        private static bool IsUnder(string child, string parent, StringComparison cmp)
+        {
+            string prefix = parent.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal) ? parent : parent + Path.DirectorySeparatorChar;
+            return child.Length > prefix.Length && child.StartsWith(prefix, cmp);
         }
 
         // ---- Helpers --------------------------------------------------------------------------------------------------

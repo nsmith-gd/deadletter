@@ -300,6 +300,14 @@ namespace DeadLetter.Core.Beings
             _decoyX = r.ReadDouble("decoyX"); _decoyHeld = r.ReadBool("decoyHeld"); _decoyKept = r.ReadBool("decoyKept");
             _heroT = r.ReadDouble("heroT"); _heroHeld = r.ReadBool("heroHeld");
             _rng.Read(r, "rng");
+            // The escorted act is the motor's, and the motor is not in the snapshot (a reload places him afresh): a
+            // restored hold would start the escort over. End it as a cut act does (L6413, L6421): he is let go and it
+            // stops for B.stopFor, without the event, which belongs to the run that was cut.
+            if (_heroHeld)
+            {
+                _heroHeld = false; _heroT = 0;
+                if (State == EscortState.EscortHim) { Init((int)EscortState.Stop); _mt = 0; _stopFor = _p.CaughtStop; }
+            }
         }
     }
 }

@@ -347,6 +347,231 @@
     0
    ],
    "sidecar": ""
+  },
+  {
+   "name": "DL-12",
+   "kind": "set",
+   "folder": "DL-12",
+   "file": "DL-12.gltf",
+   "scenes": [
+    "DL-12"
+   ],
+   "gameRegion": 6,
+   "laneRange": [
+    199.0,
+    216.0
+   ],
+   "boundsMin": [
+    199.0,
+    -3.2,
+    -1.6
+   ],
+   "boundsMax": [
+    216.0001,
+    3.5,
+    4.6
+   ],
+   "sidecar": "DL-12.art.json"
+  },
+  {
+   "name": "DL-13",
+   "kind": "set",
+   "folder": "DL-13",
+   "file": "DL-13.gltf",
+   "scenes": [
+    "DL-13"
+   ],
+   "gameRegion": 6,
+   "laneRange": [
+    216.0,
+    232.0
+   ],
+   "boundsMin": [
+    215.99,
+    -0.2,
+    -1.6
+   ],
+   "boundsMax": [
+    232.02,
+    4.5,
+    4.2
+   ],
+   "sidecar": "DL-13.art.json"
+  },
+  {
+   "name": "DL-14",
+   "kind": "set",
+   "folder": "DL-14",
+   "file": "DL-14.gltf",
+   "scenes": [
+    "DL-14"
+   ],
+   "gameRegion": 6,
+   "laneRange": [
+    232.0,
+    248.0
+   ],
+   "boundsMin": [
+    232.0,
+    -0.2,
+    -1.6
+   ],
+   "boundsMax": [
+    248.0,
+    4.1,
+    3.55
+   ],
+   "sidecar": "DL-14.art.json"
+  },
+  {
+   "name": "DL-14a",
+   "kind": "set",
+   "folder": "DL-14a",
+   "file": "DL-14a.gltf",
+   "scenes": [
+    "DL-14a"
+   ],
+   "gameRegion": 6,
+   "laneRange": [
+    248.0,
+    263.0
+   ],
+   "boundsMin": [
+    248.0,
+    -0.2,
+    -1.6
+   ],
+   "boundsMax": [
+    263.0,
+    3.65,
+    6.6
+   ],
+   "sidecar": "DL-14a.art.json"
+  },
+  {
+   "name": "DL-14b",
+   "kind": "set",
+   "folder": "DL-14b",
+   "file": "DL-14b.gltf",
+   "scenes": [
+    "DL-14b"
+   ],
+   "gameRegion": 6,
+   "laneRange": [
+    263.0,
+    278.0
+   ],
+   "boundsMin": [
+    262.9999,
+    -0.2,
+    -1.6
+   ],
+   "boundsMax": [
+    278.0001,
+    3.15,
+    1.65
+   ],
+   "sidecar": "DL-14b.art.json"
+  },
+  {
+   "name": "DL-15",
+   "kind": "set",
+   "folder": "DL-15",
+   "file": "DL-15.gltf",
+   "scenes": [
+    "DL-15"
+   ],
+   "gameRegion": 6,
+   "laneRange": [
+    278.0,
+    294.0
+   ],
+   "boundsMin": [
+    277.27,
+    -0.2,
+    -1.6
+   ],
+   "boundsMax": [
+    294.0,
+    5.2,
+    4.15
+   ],
+   "sidecar": "DL-15.art.json"
+  },
+  {
+   "name": "DL-16",
+   "kind": "set",
+   "folder": "DL-16",
+   "file": "DL-16.gltf",
+   "scenes": [
+    "DL-16"
+   ],
+   "gameRegion": 6,
+   "laneRange": [
+    294.0,
+    310.0
+   ],
+   "boundsMin": [
+    293.9,
+    -1.8,
+    -1.6
+   ],
+   "boundsMax": [
+    310.0,
+    4.95,
+    1.6
+   ],
+   "sidecar": "DL-16.art.json"
+  },
+  {
+   "name": "DL-16a",
+   "kind": "set",
+   "folder": "DL-16a",
+   "file": "DL-16a.gltf",
+   "scenes": [
+    "DL-16a"
+   ],
+   "gameRegion": 6,
+   "laneRange": [
+    310.0,
+    324.0
+   ],
+   "boundsMin": [
+    310.0,
+    -0.2,
+    -1.6
+   ],
+   "boundsMax": [
+    324.15,
+    6.67,
+    1.35
+   ],
+   "sidecar": "DL-16a.art.json"
+  },
+  {
+   "name": "DL-17",
+   "kind": "set",
+   "folder": "DL-17",
+   "file": "DL-17.gltf",
+   "scenes": [
+    "DL-17"
+   ],
+   "gameRegion": 6,
+   "laneRange": [
+    324.0,
+    400.0
+   ],
+   "boundsMin": [
+    323.99,
+    -0.2,
+    -1.6
+   ],
+   "boundsMax": [
+    347.15,
+    5.35,
+    2.1
+   ],
+   "sidecar": "DL-17.art.json"
   }
  ]
 }

@@ -22,7 +22,7 @@ namespace DeadLetter.Core.Tests
         {
             public Func<SceneDef> Def;
             public string Art;
-            public string[] LogicOnly = Array.Empty<string>(), NotPorted = Array.Empty<string>(), Borrowed = Array.Empty<string>();
+            public string[] LogicOnly = Array.Empty<string>(), NotPorted = Array.Empty<string>();
         }
 
         /// <summary>
@@ -41,8 +41,10 @@ namespace DeadLetter.Core.Tests
             ["DL-02"] = new Row { Def = DeadLetter.Core.Scenes.Dl02.Dl02Scene.Def, Art = "DL-02", LogicOnly = new[] { "dl02.tubeLetter" } },
             ["DL-03"] = new Row { Def = DeadLetter.Core.Scenes.Dl03.Dl03Scene.Def, Art = "DL-03" },
             ["DL-04"] = new Row { Def = () => DeadLetter.Core.Scenes.Dl04.Dl04Scene.Def(), Art = "DL-04" },
-            ["DL-05"] = new Row { Def = DeadLetter.Core.Scenes.Dl05.Dl05Scene.Def, Art = "DL-05", Borrowed = new[] { "bay" } },   // starts under DL-04's bay
+            ["DL-05"] = new Row { Def = DeadLetter.Core.Scenes.Dl05.Dl05Scene.Def, Art = "DL-05" },
         };
+
+        private static CheckpointTable Table => ChapterDefs.PrologueCheckpoints;
 
         public static IEnumerable<object[]> SceneIds()
         {
@@ -81,7 +83,7 @@ namespace DeadLetter.Core.Tests
         public void TheSceneDefinition_AgreesWithItsArt(string scene)
         {
             var row = Rows[scene];
-            var problems = SceneArtCheck.Check(row.Def(), LoadMarkers(row.Art), row.LogicOnly, row.NotPorted, Aliases, row.Borrowed);
+            var problems = SceneArtCheck.Check(row.Def(), Table, LoadMarkers(row.Art), row.LogicOnly, row.NotPorted, Aliases);
             foreach (var p in problems) _out.WriteLine(p);
             Assert.Empty(problems);
         }
@@ -109,7 +111,7 @@ namespace DeadLetter.Core.Tests
         [Fact]
         public void ACleanDefinition_HasNoProblems()
         {
-            Assert.Empty(SceneArtCheck.Check(DeadLetter.Core.Scenes.Dl01.Dl01Scene.Def(), Dl01Art()));
+            Assert.Empty(SceneArtCheck.Check(DeadLetter.Core.Scenes.Dl01.Dl01Scene.Def(), Table, Dl01Art()));
         }
 
         [Fact]
@@ -123,18 +125,18 @@ namespace DeadLetter.Core.Tests
             art.Find(m => m.Name == "CHK_hall").X = 8.4;                                    // a moved checkpoint
             art.Find(m => m.Name == "CHK_door").Props["order"] = "7";                       // order drift
             art.RemoveAll(m => m.Name == "CHK_start");                                      // a checkpoint without a marker
-            var p = SceneArtCheck.Check(DeadLetter.Core.Scenes.Dl01.Dl01Scene.Def(), art);
+            var p = SceneArtCheck.Check(DeadLetter.Core.Scenes.Dl01.Dl01Scene.Def(), Table, art);
             foreach (var line in p) _out.WriteLine(line);
             Assert.Contains(p, s => s.Contains("dl01.crank has no MECH_ marker"));
             Assert.Contains(p, s => s.Contains("(dl01.scale) is not in the def"));
             Assert.Contains(p, s => s.Contains("has no root marker for dl01.nothing"));
             Assert.Contains(p, s => s.Contains("dl01.cart is a TippingBridge in Core but a Latch"));
             Assert.Contains(p, s => s.Contains("checkpoint hall is at x 8.35 in Core but 8.4"));
-            Assert.Contains(p, s => s.Contains("checkpoint door is #4 in CheckpointOrder but order 7"));
+            Assert.Contains(p, s => s.Contains("checkpoint door is #4 in the save's order but order 7"));
             Assert.Contains(p, s => s.Contains("checkpoint start has no CHK_ marker"));
             Assert.Equal(7, p.Count);
 
-            var listed = SceneArtCheck.Check(DeadLetter.Core.Scenes.Dl01.Dl01Scene.Def(), Dl01Art(), logicOnly: new[] { "dl01.cart" }, notPorted: new[] { "dl01.latch" });
+            var listed = SceneArtCheck.Check(DeadLetter.Core.Scenes.Dl01.Dl01Scene.Def(), Table, Dl01Art(), logicOnly: new[] { "dl01.cart" }, notPorted: new[] { "dl01.latch" });
             Assert.Contains(listed, s => s.Contains("dl01.cart is listed logic-only but has art"));
             Assert.Contains(listed, s => s.Contains("dl01.latch is listed not-yet-ported but the def has it"));
         }
@@ -145,7 +147,7 @@ namespace DeadLetter.Core.Tests
             var def = DeadLetter.Core.Scenes.Dl01.Dl01Scene.Def();
             var ms = new List<MechanismDef>(def.Mechanisms) { def.Mechanisms[0], new MechanismDef("dl01.bad", () => null) };
             def.Mechanisms = ms.ToArray();
-            var p = SceneArtCheck.Check(def, Dl01Art());
+            var p = SceneArtCheck.Check(def, Table, Dl01Art());
             Assert.Contains(p, s => s.Contains("mechanism id dl01.relay is used twice"));
             Assert.Contains(p, s => s.Contains("dl01.bad's factory returned null"));
         }

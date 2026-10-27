@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Text;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Scenes;
-using DeadLetter.Core.Scenes.Dl01;
 using DeadLetter.Core.Simulation.Replay;
 using DeadLetter.Core.Simulation.Replay.Scripts;
 using Xunit;
@@ -13,7 +12,7 @@ using Xunit.Abstractions;
 namespace DeadLetter.Core.Tests
 {
     /// <summary>
-    /// U-18 (#15): bot.js ported to Core, playing DL-01 live on U-20's <see cref="SceneSim"/>. Where the golden trace
+    /// U-18 (#15): bot.js ported to Core, playing DL-01 live on U-20's <see cref="ChapterSim"/>. Where the golden trace
     /// (<see cref="Dl01TraceTests"/>) replays the prototype's recorded inputs, these tests let the C# bot choose its own,
     /// which is what scenes without a prototype trace (DL-18+) and first-playthrough distributions need.
     /// </summary>
@@ -62,15 +61,16 @@ namespace DeadLetter.Core.Tests
             Assert.DoesNotContain("\n", j);
         }
 
-        internal static SceneSimTarget Dl01(double clock = 0)
+        /// <summary>The prologue's world from a new game, play starting at the opening's last step (as the prototype's bot sees it).</summary>
+        internal static ChapterSimTarget Prologue(double clock = 0)
         {
-            var sim = new SceneSim(Dl01Scene.Def()) { Clock = clock };
-            return new SceneSimTarget(sim, "DL-02 The Sorting Hall").Begin("start", fromOpening: true);
+            var sim = new ChapterSim(ChapterDefs.Prologue()) { Clock = clock };
+            return new ChapterSimTarget(sim).NewGame(fromOpening: true);
         }
 
         private SimResult PlayDl01(uint seed, bool mechanical)
         {
-            var r = SimRun.Play(Dl01(), new Dl01WakeScript(new PlayerModel(seed, mechanical)));
+            var r = SimRun.Play(Prologue(), new Dl01WakeScript(new PlayerModel(seed, mechanical)));
             _out.WriteLine(r.ToJson());
             return r;
         }
@@ -96,7 +96,7 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// #15's acceptance: DL-01's mechanical solve, headless on <see cref="SceneSim"/>, compared with the prototype's
+        /// #15's acceptance: DL-01's mechanical solve, headless on <see cref="ChapterSim"/>, compared with the prototype's
         /// (results_moments_mechanical.jsonl) beat by beat, each stretch to 0.1 s (events are logged to 0.1 s).
         /// </summary>
         [Fact]
@@ -139,11 +139,10 @@ namespace DeadLetter.Core.Tests
             var t = Trace.Load(Dl01TraceTests.TraceFile);
             int play = t.FirstIndex(p => p.Mode == "play");
             int room = t.FirstIndex(p => p.Cp == "room");
-            var target = Dl01(t.Steps[play - 1].Clk);
+            var target = Prologue(t.Steps[play - 1].Clk);
             var bot = new Dl01WakeScript(new PlayerModel(1, mechanical: true));
             bot.Begin(target);
             var diffs = new List<string>();
-            int compensated = 0;
             for (int k = play; k <= room && !bot.Done; k++)
             {
                 var mine = bot.Tick();
@@ -151,14 +150,9 @@ namespace DeadLetter.Core.Tests
                 if (!SameInput(mine, theirs) && diffs.Count < 10)
                     diffs.Add(string.Format(CultureInfo.InvariantCulture, "step {0} (+{1}): core {2} vs prototype {3}  [{4}; core x={5:0.000} act={6}]",
                         t.Steps[k].I, k - play, Show(mine), Show(theirs), t.Steps[k], target.X, target.Act));
-                // #22 M2: Core's mantle ends one step before the prototype's, whose last mantle step ignores input. Feed
-                // Core nothing there, as Dl01TraceTests does, so M2 doesn't shift every later step by one.
-                bool m2 = t.Steps[k - 1].Mt && !target.Sim.Motor.IsMantling && target.Sim.Act == null;
-                if (m2) compensated++;
-                target.Step(m2 ? default : mine);
+                target.Step(mine);
             }
             foreach (var d in diffs) _out.WriteLine(d);
-            _out.WriteLine("M2 steps compensated: " + compensated);
             Assert.Empty(diffs);
             Assert.True(bot.Done, "the bot finished DL-01 inside the recorded window");
         }
@@ -194,7 +188,7 @@ namespace DeadLetter.Core.Tests
             string dir = Environment.GetEnvironmentVariable("DL_SIM_OUT");
             var mech = new StringBuilder();
             var first = new StringBuilder();
-            var m = SimRun.Play(Dl01(), new Dl01WakeScript(new PlayerModel(1, true)));
+            var m = SimRun.Play(Prologue(), new Dl01WakeScript(new PlayerModel(1, true)));
             Assert.Null(m.Error);
             mech.Append(m.ToJson()).Append('\n');
             string seeds = Environment.GetEnvironmentVariable("DL_SIM_SEEDS");
@@ -203,7 +197,7 @@ namespace DeadLetter.Core.Tests
             else foreach (var part in seeds.Split(',')) list.Add(uint.Parse(part.Trim(), CultureInfo.InvariantCulture));
             foreach (uint seed in list)
             {
-                var r = SimRun.Play(Dl01(), new Dl01WakeScript(new PlayerModel(seed, false)));
+                var r = SimRun.Play(Prologue(), new Dl01WakeScript(new PlayerModel(seed, false)));
                 Assert.Null(r.Error);
                 first.Append(r.ToJson()).Append('\n');
             }

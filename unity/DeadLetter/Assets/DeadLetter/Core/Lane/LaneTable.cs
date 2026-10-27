@@ -73,5 +73,64 @@ namespace DeadLetter.Core.Lane
         public LaneSpan[] Ceilings = Array.Empty<LaneSpan>();
         /// <summary>Ramp zones (stairs he walks up with the larger step allowance). <see cref="LaneSpan.Y"/> is unused.</summary>
         public LaneSpan[] Ramps = Array.Empty<LaneSpan>();
+
+        /// <summary>
+        /// One region's static lane joined from the tables of the scenes that share it (a chapter's region 2 is DL-02 to
+        /// DL-05): table i answers for x in [seams[i − 1], seams[i]), the first one to the left of everything and the last
+        /// to the right. Inside each stretch every probe answers exactly as that table alone does: its spans are clipped to
+        /// the stretch (an end the clip makes is closed on the left, open on the right) and its default floor and ceiling
+        /// become a span over it, after its own. The walls are the outermost (the least <see cref="Left"/>, the greatest
+        /// <see cref="Right"/>): a wall inside the region is a contributor's (DL-03's gate), not a table's.
+        /// </summary>
+        /// <param name="seams">Where each table hands over to the next, increasing: one fewer than <paramref name="tables"/>.</param>
+        public static LaneTable Join(string name, LaneTable[] tables, double[] seams)
+        {
+            if (tables == null || tables.Length == 0) throw new ArgumentException("Nothing to join.", nameof(tables));
+            if (seams == null || seams.Length != tables.Length - 1) throw new ArgumentException("One seam between each two tables.", nameof(seams));
+            for (int i = 1; i < seams.Length; i++) if (!(seams[i] > seams[i - 1])) throw new ArgumentException("Seams must increase.", nameof(seams));
+            var floors = new System.Collections.Generic.List<LaneSpan>();
+            var platforms = new System.Collections.Generic.List<LaneSpan>();
+            var ceilings = new System.Collections.Generic.List<LaneSpan>();
+            var ramps = new System.Collections.Generic.List<LaneSpan>();
+            double left = double.PositiveInfinity, right = double.NegativeInfinity;
+            for (int i = 0; i < tables.Length; i++)
+            {
+                var t = tables[i] ?? throw new ArgumentException("Table " + i + " is null.", nameof(tables));
+                double lo = i == 0 ? double.NegativeInfinity : seams[i - 1], hi = i == tables.Length - 1 ? double.PositiveInfinity : seams[i];
+                Clip(t.Floors, lo, hi, floors);
+                floors.Add(new LaneSpan(lo, hi, t.Floor, SpanEdges.ClosedOpen));        // after its own: first match wins
+                Clip(t.Platforms, lo, hi, platforms);
+                Clip(t.Ceilings, lo, hi, ceilings);
+                ceilings.Add(new LaneSpan(lo, hi, t.Ceiling, SpanEdges.ClosedOpen));
+                Clip(t.Ramps, lo, hi, ramps);
+                left = Math.Min(left, t.Left);
+                right = Math.Max(right, t.Right);
+            }
+            return new LaneTable
+            {
+                Name = name ?? "",
+                Left = left, Right = right,
+                Floor = tables[0].Floor,                                                     // never reached: the spans cover every x
+                Floors = floors.ToArray(), Platforms = platforms.ToArray(),
+                Ceiling = Motor.LaneProbe.NoCeiling, Ceilings = ceilings.ToArray(),
+                Ramps = ramps.ToArray(),
+            };
+        }
+
+        /// <summary>Adds each span's part in [lo, hi) to <paramref name="into"/>, keeping its own ends where they fall inside.</summary>
+        private static void Clip(LaneSpan[] spans, double lo, double hi, System.Collections.Generic.List<LaneSpan> into)
+        {
+            for (int i = 0; i < spans.Length; i++)
+            {
+                var s = spans[i];
+                bool ownLeft = s.X0 >= lo, ownRight = s.X1 < hi;
+                double a = ownLeft ? s.X0 : lo, b = ownRight ? s.X1 : hi;
+                bool closedLeft = ownLeft ? s.Edges == SpanEdges.Closed || s.Edges == SpanEdges.ClosedOpen : true;
+                bool closedRight = ownRight && (s.Edges == SpanEdges.Closed || s.Edges == SpanEdges.OpenClosed);
+                if (b < a || (b == a && !(closedLeft && closedRight))) continue;           // nothing of it in the stretch
+                var edges = closedLeft ? (closedRight ? SpanEdges.Closed : SpanEdges.ClosedOpen) : (closedRight ? SpanEdges.OpenClosed : SpanEdges.Open);
+                into.Add(new LaneSpan(a, b, s.Y, edges));
+            }
+        }
     }
 }

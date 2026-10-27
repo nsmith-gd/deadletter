@@ -25,11 +25,9 @@ namespace DeadLetter.Core.Tests
     /// <para><b>Tolerance 1e-6</b> on every continuous value (the trace rounds to 1e-6). Discrete signals (acts and phases,
     /// grounded, the scanner's phase, the belt, the route, the carriers' states and routes, checkpoints, the region and the
     /// exit) fall on the same step.</para>
-    /// <para><b>Compensations</b>, each where it shows: the hand-over is of a running D-17 (vx 1.6 at #12072; the motor cannot
-    /// be handed a velocity, #22, <see cref="SceneSim.Handover"/>), so the test gives the motor the recorded speed. <b>M10,
-    /// new</b>: the levers step in and out at 0.4 m/s (L2902, L2916), the motor's stations at its one
-    /// <see cref="MotorConfig.StepInSpeed"/> 0.45; the scene sets 0.4 for its floor (<see cref="Dl06Scene.MotorTuning"/>), and
-    /// <see cref="M10_TheLeversStepInAt0_4_NotTheMotors0_45"/> shows the difference.</para>
+    /// <para>Nothing is compensated: the hand-over is of a running D-17, in the recorded state (vx 1.6 at #12072,
+    /// <see cref="D17Motor.SetState"/>, #28), and the levers step in and out at their own 0.4 m/s (L2902, L2916; the
+    /// station's <see cref="Mechanisms.Station.StepInSpeed"/>, M10), where the motor's other stations step at 0.45.</para>
     /// </summary>
     public class Dl06TraceTests
     {
@@ -59,18 +57,16 @@ namespace DeadLetter.Core.Tests
         internal static (int from, int to) Window(Trace t)
             => (t.FirstIndex(p => p.Scene != null && p.Scene.StartsWith("DL-06")), t.FirstIndex(p => p.Scene != null && p.Scene.StartsWith("DL-07")));
 
-        internal static Replay Run() => RunWith(Dl06Scene.Def());
-
-        private static Replay RunWith(SceneDef def, bool cache = true)
+        internal static Replay Run()
         {
             lock (Gate)
             {
-                if (cache && _cached != null) return _cached;
+                if (_cached != null) return _cached;
                 var t = Trace.Load(TraceFile);
                 var (from, to) = Window(t);
                 var r = new Replay { From = from, To = to };
                 ReturnToSender06 rules = null;
-                r.Sim = TraceReplay.Run(t, def, t.Steps[from - 1].Cp, false, from, to, (p, sim) =>
+                r.Sim = TraceReplay.Run(t, Dl06Scene.Def(), t.Steps[from - 1].Cp, false, from, to, (p, sim) =>
                 {
                     rules ??= (ReturnToSender06)sim.Rules;
                     var line = rules.Line;
@@ -84,19 +80,10 @@ namespace DeadLetter.Core.Tests
                         Stop = rules.StopLever.LeverDeg, Points = rules.Points.LeverDeg,
                         Riding = line.Ride?.Seq ?? -1, Carriers = CarriersOf(line),
                     });
-                }, (k, sim) =>
-                {
-                    // The hand-over is of a running D-17 (#12072: vx 1.6); the motor cannot be handed a velocity (#22).
-                    if (k == from) SetMotorVx(sim.Motor, t.Steps[from - 1].Vx);
-                    return t.Steps[k].Input;
                 }, handover: true);
-                if (cache) _cached = r;
-                return r;
+                return _cached = r;
             }
         }
-
-        /// <summary>The motor keeps no setter for its speed (U-11): the hand-over gives it the recorded one.</summary>
-        private static void SetMotorVx(D17Motor m, double vx) => typeof(D17Motor).GetProperty(nameof(D17Motor.Vx)).SetValue(m, vx);
 
         private static readonly string[] StateNames = { "rise", "dock", "move", "unload", "tipload", "tip", "back", "sink" };
 
@@ -280,30 +267,28 @@ namespace DeadLetter.Core.Tests
             }
         }
 
-        // ---- Known differences ------------------------------------------------------------------------------------------
+        // ---- The levers' own step-in (M10, fixed) -----------------------------------------------------------------------
         /// <summary>
-        /// M10 (new): the motor steps into and out of a station at <see cref="MotorConfig.StepInSpeed"/> (0.45, L1845, L4382), one
-        /// speed for every station; DL-06's levers step at 0.4 (<c>updateAct3</c>, L2902, L2916). With the prototype's tuning
-        /// the stop lever's step-in (turned at #13477; 0.11 m: 16 steps at 0.4, the clip at #13494) takes 15 and the clip starts a step early.
+        /// The levers step in and out at 0.4 m/s (<c>updateAct3</c>, L2902, L2916), their station's own speed
+        /// (<see cref="Mechanisms.Station.StepInSpeed"/>), where the motor's other stations step at 0.45 (L1845, L4382); the
+        /// scene runs on the prototype's motor tuning. The stop lever, turned at #13477: 0.11 m in 16 steps, the clip on the
+        /// 17th (#13494; at 0.45 it took 15 and the clip started a step early).
         /// </summary>
         [Fact]
-        public void M10_TheLeversStepInAt0_4_NotTheMotors0_45()
+        public void TheLeversStepInAtTheirOwn0_4_M10()
         {
-            var def = Dl06Scene.Def();
-            def.Motor = () => MotorConfig.Prototype();
-            var r = RunWith(def, cache: false);
-            int Clip(Replay rp) => rp.Rows.Find(w => CoreAct(w) == "dl06.stopLever:Clip").P.I;
-            Assert.Equal(13494, Clip(Run()));                                                          // the prototype's: 16 steps in at 0.4, the clip on the 17th
-            Assert.Equal(13493, Clip(r));                                                              // the motor's 0.45: 15 steps in, the clip a step early
+            var rows = Run().Rows;
+            int clip = rows.FindIndex(w => CoreAct(w) == "dl06.stopLever:Clip");
+            Assert.Equal(13494, rows[clip].P.I);
+            int stepIn = rows.FindIndex(w => CoreAct(w) == "dl06.stopLever:StepIn");
+            Assert.Equal(16, clip - stepIn - 1);
+            Assert.Equal(0.4 / 60, Math.Abs(rows[stepIn + 2].Z - rows[stepIn + 1].Z), 12);
         }
 
         // ---- Dump ---------------------------------------------------------------------------------------------------
-        /// <summary>Writes the window side by side as TSV when DL06_TRACE_DUMP names a file.</summary>
-        [Fact]
-        public void Dump()
+        /// <summary>Debugging aid, not a test: writes the window side by side as TSV to <paramref name="path"/> (call it from a scratch test or the debugger).</summary>
+        internal static void Dump(string path)
         {
-            var path = Environment.GetEnvironmentVariable("DL06_TRACE_DUMP");
-            if (string.IsNullOrEmpty(path)) return;
             var t = Trace.Load(TraceFile);
             var sb = new StringBuilder("i\tpx\tcx\tpz\tcz\tpvx\tcvx\tpyaw\tcyaw\tpact\tcact\tpcp\tccp\tpscan\tcscan\tpst\tcst\tpsl\tcsl\tppl\tcpl\tin\tpcr\tccr\n");
             foreach (var w in Run().Rows)

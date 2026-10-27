@@ -103,11 +103,13 @@ namespace DeadLetter.Core.Tests
                     }
                 }
             }
-            // index.html's 22 prologue checkpoints (L7975–L7997), once each.
-            Assert.Equal(22, checkpoints.Count);
+            // index.html's checkpoints, once each: 22 in the prologue (L7975–L7997), 15 in chapter 1 (L7999–L8013).
+            Assert.Equal(37, checkpoints.Count);
             Assert.Equal(checkpoints.Count, checkpoints.Distinct().Count());
             Assert.Contains("start", checkpoints);
             Assert.Contains("forwarded", checkpoints);
+            Assert.Contains("school", checkpoints);
+            Assert.Contains("workshop", checkpoints);
             // Every mechanism has exactly one root (its main object or an anchor empty).
             Assert.NotEmpty(roots);
             Assert.All(roots, kv => Assert.Equal(1, kv.Value));

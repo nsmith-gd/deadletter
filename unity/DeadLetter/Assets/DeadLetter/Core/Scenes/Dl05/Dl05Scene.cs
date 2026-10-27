@@ -7,6 +7,7 @@ using DeadLetter.Core.Mechanisms.Actuators;
 using DeadLetter.Core.Mechanisms.Plates;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Push;
+using DeadLetter.Core.Save;
 
 namespace DeadLetter.Core.Scenes.Dl05
 {
@@ -32,8 +33,6 @@ namespace DeadLetter.Core.Scenes.Dl05
         /// <summary><c>RH5</c> (L3452): the body's start and its place on the plate; its half-length and grip gap.</summary>
         public const double Body0 = 13 + 39.30, BodyPlate = 13 + 41.80, BodyHalf = 0.83, BodyGap = 1.05;
 
-        /// <summary>Checkpoints (<c>CHECKPOINTS</c>, L7983–L7985): <c>RK.door.x1 + 0.4</c>, <c>RATION5.x0 + 0.7</c>, <c>RH5.crawl[1] + 0.35</c>.</summary>
-        public const double BayX = 46.7 + 0.4, RationX = X0 + 0.7, HatchX = Dl05Lane.CrawlX1 + 0.35;
         /// <summary>Reached on the lane past these (<c>updateCh1</c>, L4935, L4936, L4947): <c>RATION5.x0 + 0.6</c>, <c>RH5.crawl[1] + 0.25</c>, <c>RK.door.x1 + 0.2</c>.</summary>
         public const double RationAt = X0 + 0.6, HatchAt = Dl05Lane.CrawlX1 + 0.25, BayAt = 46.7 + 0.2;
         /// <summary>The label check by the child's drawing: <c>RATION5.x0 + 4.0 &lt; x &lt; RATION5.x0 + 6</c> (L4941).</summary>
@@ -45,13 +44,7 @@ namespace DeadLetter.Core.Scenes.Dl05
             Id = Id,
             Title = "The Ration Hall",
             X0 = X0, X1 = X1,
-            Region = Dl05Lane.Region,
-            Checkpoints = new[]
-            {
-                new CheckpointDef("bay", BayX, region: 2),                               // DL-04's, just through the bay door (L7983)
-                new CheckpointDef("ration", RationX, region: 2),                         // L7984
-                new CheckpointDef("hatch", HatchX, region: 2),                           // L7985
-            },
+            Region = Dl05Lane.Region,                                                    // its checkpoints: ration, hatch (L7984–L7985)
             // Step order = the prototype's: updatePlayer moves the drum and the body (#4, updateHoldCh1 L4684–L4735), then
             // updateCh1 weighs the plate, winds the hatch and drops the flag (#7, L4878–L4921).
             Mechanisms = new[]
@@ -114,7 +107,7 @@ namespace DeadLetter.Core.Scenes.Dl05
     /// mechanisms): the first time he takes hold of the body he stands over it a moment (<c>grabPush</c>'s
     /// <c>'hesitate'</c>, L4463–L4466); laid on the plate, 1.6 s later he pats the sheet (L4729–L4731); the checkpoints
     /// <c>bay</c>, <c>ration</c> and <c>hatch</c> (L4935–L4936, L4947); the label check by the child's drawing
-    /// (<c>label5</c>, L4940–L4944); and the way on into region 3, DL-06 (L2042, L8139).
+    /// (<c>label5</c>, L4940–L4944); and the switch to region 3, which is DL-06 (L2042, L8139).
     /// </summary>
     public sealed class WeighIn05 : SceneRules
     {
@@ -126,29 +119,34 @@ namespace DeadLetter.Core.Scenes.Dl05
         /// </summary>
         public const double PatDelay = 1.6;
 
+        /// <summary>
+        /// The once-only beats (<c>seen.add('bodyGrab')</c> L4463, <c>seen.add('label5')</c> L4944): the prototype's
+        /// <c>seen</c> set, which outlives respawns (cleared only by a new game, L8058), so they are the save's seen moments.
+        /// </summary>
+        public const string SeenBodyGrab = "bodyGrab", SeenLabel = "label5";
+
         private Pushable _drum, _body;
-        private IPushable[] _faces = Array.Empty<IPushable>();
-        private bool _bodyGrabbed, _labelSeen;
+        private CheckpointService _save;
+        private int _bodyGrabSeen, _labelSeen;                                         // handles in _save.Seen
         private ActPhase _lastPhase;
         private double _patAt = double.NaN;
 
         public Pushable Drum => _drum;
         public Pushable Body => _body;
         /// <summary>He has taken hold of the body once (<c>seen.has('bodyGrab')</c>): no more hesitation.</summary>
-        public bool BodyGrabbed => _bodyGrabbed;
+        public bool BodyGrabbed => _save != null && _save.Seen.Get(_bodyGrabSeen);
         /// <summary>The label check has played (<c>seen.has('label5')</c>).</summary>
-        public bool LabelSeen => _labelSeen;
+        public bool LabelSeen => _save != null && _save.Seen.Get(_labelSeen);
         /// <summary>Game-clock time the pat is due (NaN: none pending).</summary>
         public double PatAt => _patAt;
 
-        public override void OnBegin(SceneSim sim, string checkpoint, bool fromOpening)
+        public override void OnBegin(ChapterSim sim, string checkpoint, bool fromOpening)
         {
+            _save = sim.Checkpoints;
+            _bodyGrabSeen = _save.Seen.Resolve(SeenBodyGrab);
+            _labelSeen = _save.Seen.Resolve(SeenLabel);
             _drum = sim.Graph.Get<Pushable>("dl05.drum");
             _body = sim.Graph.Get<Pushable>("dl05.body");
-            // The faces in the prototype's PUSHABLES order (drum, body, then the twins, L4273–L4295).
-            _faces = new IPushable[] { _drum, _body, TwinOf(sim, _drum), TwinOf(sim, _body) };
-            _drum.CanStandAt = stand => GripWins(sim, _drum, stand);
-            _body.CanStandAt = stand => GripWins(sim, _body, stand);
             _patAt = double.NaN;                     // nothing kills here, so no timeout is pending across a rebuilt world
             _lastPhase = ActPhase.None;
         }
@@ -158,36 +156,35 @@ namespace DeadLetter.Core.Scenes.Dl05
         /// Grab clip. The motor goes straight into the clip on arrival and has no pause (U-11 gap, #22), so the scene holds the
         /// motor still meanwhile (<see cref="Dl05HesitateAct"/>) and lets it go on into the clip from where it was.
         /// </summary>
-        public override void AfterMotor(SceneSim sim, bool freeStep)
+        public override void AfterMotor(ChapterSim sim, bool freeStep)
         {
             var m = sim.Motor;
             var phase = m.IsActing ? m.ActPhase : ActPhase.None;
-            if (!_bodyGrabbed && m.IsActing && m.ActVerb == Verb.Grab && phase == ActPhase.Clip && _lastPhase == ActPhase.Approach && IsBody(sim.MotorActTarget))
+            if (m.IsActing && m.ActVerb == Verb.Grab && phase == ActPhase.Clip && _lastPhase == ActPhase.Approach && IsBody(sim.MotorActTarget)
+                && !BodyGrabbed)
             {
-                _bodyGrabbed = true;
-                sim.StartAct(new Dl05HesitateAct(_body.Id.Value, HesitateSeconds, m.X, m.Y, m.Z, m.Yaw, m.Facing, sim.Config.YawRate));
+                _save.MarkSeen(SeenBodyGrab);
+                sim.StartAct(new Dl05HesitateAct(ActId.Of(_body.Id), HesitateSeconds, m.X, m.Y, m.Z, m.Yaw, m.Facing, sim.Config.YawRate));
             }
             _lastPhase = phase;
             // Past REGION3_X he is in region 3 (L2042, free movement only).
             if (freeStep && sim.Region == Dl05Lane.Region && sim.X > Dl05Lane.Region3X) sim.SetRegion(Dl05Lane.Region + 1);
         }
 
-        public override void AfterGraph(SceneSim sim)
+        public override void AfterGraph(ChapterSim sim)
         {
             // Laid on the plate: he pats the sheet 1.6 s later (L4729–L4731).
             if (sim.Graph.Log.Has("dl05.body", MechanismEventKind.Event, (int)PushableEvent.Dock)) _patAt = sim.Clock + PatDelay;
-            if (sim.Exited) return;
             // updateCh1 (#7), after the weigh-in: the checkpoints (L4935–L4936), the label (L4940–L4944), bay (L4947).
             if (sim.Region == Dl05Lane.Region)
             {
                 double x = sim.X;
                 if (x > Dl05Scene.RationAt) sim.Checkpoints.Reach("ration");
                 if (x > Dl05Scene.HatchAt) sim.Checkpoints.Reach("hatch");
-                if (!_labelSeen && !sim.Busy && sim.Motor.Hold == HoldKind.None && sim.Grounded && x > Dl05Scene.LabelX0 && x < Dl05Scene.LabelX1
-                    && CanQuirk(sim))
+                if (!LabelSeen && x > Dl05Scene.LabelX0 && x < Dl05Scene.LabelX1 && SceneQuirk.CanStart(sim))
                 {
-                    _labelSeen = true;
-                    StartQuirk(sim, "CheckLabel");
+                    _save.MarkSeen(SeenLabel);
+                    SceneQuirk.Start(sim, ClipNames.CheckLabel, cancel: true);
                 }
                 if (x > Dl05Scene.BayAt) sim.Checkpoints.Reach("bay");
             }
@@ -196,63 +193,14 @@ namespace DeadLetter.Core.Scenes.Dl05
             if (PatDue(sim))
             {
                 _patAt = double.NaN;
-                if (sim.Region == Dl05Lane.Region && CanQuirk(sim)) StartQuirk(sim, "Pat");
+                if (sim.Region == Dl05Lane.Region && SceneQuirk.CanStart(sim)) SceneQuirk.Start(sim, "Pat", cancel: true);
             }
-            // sceneName (L8139): region 3 is DL-06.
-            if (sim.Region != Dl05Lane.Region) sim.Exit();
-        }
-
-        /// <summary>
-        /// The prototype's push branch takes the nearest grip in reach, whichever way he faces (<c>nearUse</c>, L4251–L4255:
-        /// <c>d &lt; best.d</c> in <c>PUSHABLES</c> order). U-11's resolver ranks targets in front of him first (#22, M7): at
-        /// #10227, facing left between the body's grip 0.30 ahead and the drum's 0.15 behind, it takes the body. So each face
-        /// here is available only while it is the nearest grip (<see cref="Pushable.CanStandAt"/> gets the asking face's
-        /// stand point). Reads state only; never asks a face's <c>IsAvailable</c> (which calls this).
-        /// </summary>
-        private bool GripWins(SceneSim sim, Pushable asking, double stand)
-        {
-            double x = sim.Motor.X, y = sim.Motor.Y, bestD = double.PositiveInfinity;
-            IPushable best = null;
-            for (int i = 0; i < _faces.Length; i++)
-            {
-                var f = _faces[i];
-                var b = Base(f);
-                if (b.State != PushableState.Free || Math.Abs(y - f.FloorY) >= 0.05) continue;               // state 'free'; L4254
-                if (!double.IsNaN(b.Params.MinRoom) && !(b.Max - b.X > b.Params.MinRoom)) continue;            // avail, L4281
-                double dx = x - (f.X - f.Side * f.Gap), d = Math.Abs(dx);
-                if (d < (dx * f.Side < 0 ? f.BackReach : f.ForwardReach) && d < bestD) { best = f; bestD = d; }
-            }
-            if (best == null || !ReferenceEquals(Base(best), asking)) return false;
-            return stand == asking.X - best.Side * asking.Gap;
-        }
-
-        private static Pushable Base(IPushable f) => f is PushTwin tw ? tw.Base : (Pushable)f;
-
-        private static IPushable TwinOf(SceneSim sim, Pushable p)
-        {
-            foreach (var it in sim.Resolver.Registered) if (it is PushTwin tw && ReferenceEquals(tw.Base, p)) return tw;
-            throw new InvalidOperationException(p.Id + " has no twin registered.");
         }
 
         private bool IsBody(IInteractable t) => ReferenceEquals(t, _body) || (t is PushTwin tw && ReferenceEquals(tw.Base, _body));
 
-        private bool PatDue(SceneSim sim) => !double.IsNaN(_patAt) && sim.Clock >= _patAt - 1e-9;
+        private bool PatDue(ChapterSim sim) => !double.IsNaN(_patAt) && sim.Clock >= _patAt - 1e-9;
 
-        /// <summary><c>playQuirk</c>'s own conditions (L3842): no act, no hold, not mantling, on the ground.</summary>
-        private static bool CanQuirk(SceneSim sim)
-            => !sim.Busy && sim.Motor.Hold == HoldKind.None && !sim.Motor.IsMantling && sim.Motor.Grounded;
-
-        /// <summary>
-        /// <c>playQuirk(clip)</c> (L3841–L3845): cancellable, and he stops (<c>game.vx = 0</c>). U-11 gap (#22): the motor
-        /// can only be stopped by <see cref="D17Motor.Place"/>, which also settles his yaw on his facing and stands him up;
-        /// under the hatch the motor crouches him again on its next step (the clearance, L1975).
-        /// </summary>
-        private static void StartQuirk(SceneSim sim, string clip)
-        {
-            var m = sim.Motor;
-            m.Place(m.X, m.Y, m.Facing);
-            sim.StartAct(new QuirkAct(clip, QuirkAct.ClipSeconds(clip), cancel: true, startClock: sim.Clock));
-        }
     }
 
     /// <summary>
@@ -266,8 +214,11 @@ namespace DeadLetter.Core.Scenes.Dl05
         private readonly double _seconds, _yawRate;
         private readonly int _facing;
 
-        public Dl05HesitateAct(string kind, double seconds, double x, double y, double z, double yaw, int facing, double yawRate)
-            : base(kind, "Hesitate")
+        /// <summary>Its phase (its kind is the body's ID).</summary>
+        public static readonly ActId Hesitate = ActId.Of("Hesitate");
+
+        public Dl05HesitateAct(ActId kind, double seconds, double x, double y, double z, double yaw, int facing, double yawRate)
+            : base(kind, Hesitate)
         {
             _seconds = seconds; _facing = facing; _yawRate = yawRate;
             X = x; Y = y; Z = z; Yaw = yaw;
@@ -275,7 +226,7 @@ namespace DeadLetter.Core.Scenes.Dl05
 
         public override bool OwnsPose => true;
 
-        public override bool Step(SceneSim sim, in MotorInput input, double dt)
+        public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
             T += dt;                                                          // a.t += dt (L4390)
             Yaw = Smooth.MoveTowards(Yaw, _facing * Math.PI / 2, _yawRate * dt);

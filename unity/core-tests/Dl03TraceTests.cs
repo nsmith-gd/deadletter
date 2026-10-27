@@ -17,8 +17,8 @@ namespace DeadLetter.Core.Tests
     /// DL-03 parity (U-20): the prototype's own run (the mechanical bot, seed 1, Traces/prologue_mech_seed1.jsonl.gz, with
     /// DL-03's fields: the trolley, the weight, the plate's load and needle, the gate) replayed through Core's
     /// <see cref="SceneSim"/> with <see cref="Dl03Scene.Def"/>, input for input, compared at every 60 Hz step.
-    /// <para><b>Two windows</b>, each starting where he stands at rest (the motor cannot be handed a moving D-17,
-    /// <see cref="SceneSim.Handover"/>):
+    /// <para><b>Two windows</b>, each starting where he stands at rest (handed over in the recorded state,
+    /// <see cref="SceneSim.Handover"/> and <see cref="D17Motor.SetState"/>):
     /// <list type="bullet">
     /// <item><b>Entry</b>: from his last rest on DL-02's gantry (after the mantle up to it) along the gantry and the sill,
     /// off it into the weighing room (DL-03 from x 25.0), to the step he lands and reaches <c>weighroom</c>.</item>
@@ -31,11 +31,9 @@ namespace DeadLetter.Core.Tests
     /// Discrete signals (acts, holds, grounded, the weight's state, checkpoints, the exit) fall on the same step.</para>
     /// <para>M2 and M3 (#22) are fixed in U-11b (#25): the climb over the trolley takes the prototype's 141 steps and every
     /// walk-off fall, the entry's 1.35 m drop off the sill included, follows the prototype's arc and lands on its step.
-    /// <b>One known motor issue remains, M5</b>: Use lets go of a pushable with his speed zeroed (D17Motor.BeginUse's
-    /// <c>Vx = 0</c>, ported from beginCh1's release branch, L4307–L4313), but the prototype's Use-release
-    /// (<c>beginUse('release')</c>, L1820) returns before <c>game.vx = 0</c> (L1821), so he keeps his push speed and
-    /// drifts on as it decays (#5977: 0.42 m/s, 7.3 mm over four steps). The compensated replay gives the motor back the
-    /// speed it had on that one step. The strict replay (no compensation) is the skipped test at the end.</para>
+    /// M5 is fixed (#28): Use lets go of the trolley before the prototype's <c>game.vx = 0</c> (<c>beginUse('release')</c>,
+    /// L1820–L1821), so he keeps his push speed and drifts on as it decays (#5977: 0.42 m/s, 7.3 mm over four steps). Nothing
+    /// is compensated.</para>
     /// </summary>
     public class Dl03TraceTests
     {
@@ -58,8 +56,8 @@ namespace DeadLetter.Core.Tests
             public SceneSim Sim;
             public int From, To;
             public string Checkpoint;
-            /// <summary>Steps where Use let go of the trolley and Core was given back the speed it had (M5).</summary>
-            public readonly List<int> ReleaseCompensated = new List<int>();
+            /// <summary>Steps where Use let go of the trolley.</summary>
+            public readonly List<int> UseReleases = new List<int>();
         }
 
         private static readonly Dictionary<string, Replay> Cache = new Dictionary<string, Replay>();
@@ -81,12 +79,12 @@ namespace DeadLetter.Core.Tests
         internal static (int from, int to) RoomWindow(Trace t)
             => (t.FirstIndex(p => p.Act != null && p.Act.StartsWith("lift:")), t.FirstIndex(p => p.Scene != null && p.Scene.StartsWith("DL-04")));
 
-        internal static Replay Entry(bool compensate = true) => Run("entry", compensate);
-        internal static Replay Room(bool compensate = true) => Run("room", compensate);
+        internal static Replay Entry() => Run("entry");
+        internal static Replay Room() => Run("room");
 
-        private static Replay Run(string window, bool compensate)
+        private static Replay Run(string window)
         {
-            string key = window + (compensate ? "" : ":strict");
+            string key = window;
             lock (Cache)
             {
                 if (Cache.TryGetValue(key, out var cached)) return cached;
@@ -97,12 +95,10 @@ namespace DeadLetter.Core.Tests
                 Dl03Weight weight = null;
                 LoadPlate plate = null;
                 FollowerActuator gate = null;
-                double vxBefore = 0;
                 bool pushUse = false;
                 MotorInput Input(int k, SceneSim sim)
                 {
                     var given = t.Steps[k].Input;
-                    vxBefore = sim.Motor.Vx;
                     pushUse = given.UsePressed && sim.Motor.Hold == HoldKind.Push && sim.Act == null && !sim.Motor.IsActing;
                     return given;
                 }
@@ -113,11 +109,7 @@ namespace DeadLetter.Core.Tests
                         trolley = sim.Graph.Get<Pushable>("dl03.trolley"); weight = sim.Graph.Get<Dl03Weight>("dl03.weight");
                         plate = sim.Graph.Get<LoadPlate>("dl03.plate"); gate = sim.Graph.Get<FollowerActuator>("dl03.gate");
                     }
-                    if (compensate && pushUse && sim.Motor.Hold == HoldKind.None)
-                    {
-                        SetMotorVx(sim.Motor, vxBefore);                                                  // M5
-                        r.ReleaseCompensated.Add(p.I);
-                    }
+                    if (pushUse && sim.Motor.Hold == HoldKind.None) r.UseReleases.Add(p.I);
                     r.Rows.Add(new Row
                     {
                         P = p, X = sim.X, Y = sim.Y, Z = sim.Z, Vx = sim.Vx, Yaw = sim.Yaw, G = sim.Grounded,
@@ -130,9 +122,6 @@ namespace DeadLetter.Core.Tests
                 return Cache[key] = r;
             }
         }
-
-        /// <summary>M5's compensation: the motor keeps no setter for its speed (U-11), so the test sets it as the prototype keeps it.</summary>
-        private static void SetMotorVx(D17Motor m, double vx) => typeof(D17Motor).GetProperty(nameof(D17Motor.Vx)).SetValue(m, vx);
 
         private static string WeightName(Dl03WeightState s) => s == Dl03WeightState.Floor ? "floor" : s == Dl03WeightState.Carried ? "carried" : "trolley";
 
@@ -170,8 +159,10 @@ namespace DeadLetter.Core.Tests
                     Check(bad, w.P.I, "yaw", w.P.Yaw, w.Yaw);
                 }
             Assert.True(bad.Count == 0, Report(bad));
-            Assert.Equal(new[] { 5977 }, Room().ReleaseCompensated);                                // M5: Use lets go of the trolley at 0.42 m/s
-            Assert.Empty(Entry().ReleaseCompensated);
+            Assert.Equal(new[] { 5977 }, Room().UseReleases);                                       // M5: Use lets go of the trolley ...
+            var release = Room().Rows.Find(w => w.P.I == 5977);
+            Assert.True(release.Vx > 0.4 && Math.Abs(release.Vx - release.P.Vx) <= Tol);           // ... and he keeps his speed (0.42)
+            Assert.Empty(Entry().UseReleases);
         }
 
         /// <summary>
@@ -309,14 +300,12 @@ namespace DeadLetter.Core.Tests
         }
 
         // ---- Strict -----------------------------------------------------------------------------------------------------
-        /// <summary>The room window with nothing compensated: every signal at 1e-6 on every step.</summary>
-        [Fact(Skip = "U-11 motor issue M5 (#22, still in #25): Use lets go of the trolley with vx zeroed (D17Motor.BeginUse); the prototype's "
-            + "beginUse('release') returns before game.vx = 0 (L1820-L1821), so he drifts on 7.3 mm (#5977 vx 0.42; #5978-#5980) and every "
-            + "later x is 7.3 mm short. Nothing else differs: M2 and M3 are fixed.")]
+        /// <summary>The room window, strict: every signal at 1e-6 on every step (M5 fixed in #28: nothing is compensated).</summary>
+        [Fact]
         public void Strict_EverySignalMatchesEveryStep()
         {
             var bad = new List<string>();
-            foreach (var w in Room(compensate: false).Rows)
+            foreach (var w in Room().Rows)
             {
                 var p = w.P;
                 Check(bad, p.I, "x", p.X, w.X);
@@ -330,14 +319,10 @@ namespace DeadLetter.Core.Tests
         }
 
         // ---- Dump ---------------------------------------------------------------------------------------------------
-        /// <summary>Writes a window side by side as TSV when DL03_TRACE_DUMP names a file (DL03_TRACE_WINDOW=entry|room, DL03_TRACE_STRICT=1).</summary>
-        [Fact]
-        public void Dump()
+        /// <summary>Debugging aid, not a test: writes a window side by side as TSV to <paramref name="path"/> (entry: the entry window, else the room's; call it from a scratch test or the debugger).</summary>
+        internal static void Dump(string path, bool entry = false)
         {
-            var path = Environment.GetEnvironmentVariable("DL03_TRACE_DUMP");
-            if (string.IsNullOrEmpty(path)) return;
-            bool strict = Environment.GetEnvironmentVariable("DL03_TRACE_STRICT") == "1";
-            var r = Environment.GetEnvironmentVariable("DL03_TRACE_WINDOW") == "entry" ? Entry(!strict) : Room(!strict);
+            var r = entry ? Entry() : Room();
             var sb = new StringBuilder("i\tpx\tcx\tpy\tcy\tpvx\tcvx\tpg\tcg\tpact\tcact\tph\tch\tpcp\tccp\tptx\tctx\tpws\tcws\tpld\tcld\tpgy\tcgy\tpyaw\tcyaw\tin\n");
             foreach (var w in r.Rows)
             {

@@ -276,7 +276,28 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
-        public void SnapshotMidEscort_RestoresAndContinuesBitIdentically()
+        public void SnapshotMidPatrol_RestoresAndContinuesBitIdentically()
+        {
+            var a = new Rig { X = 250 };
+            a.Run(700);
+            var b = new Rig("sickbay");
+            b.Run(13);
+            b.G.Restore(Mech.Snapshot(a.G));
+            Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
+            for (int k = 0; k < 600; k++)
+            {
+                a.Step(); b.StepWith(new PlayerPose(a.X, a.Y, a.Z));
+                Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
+                Assert.Equal(Mech.Events(a.G).Count, Mech.Events(b.G).Count);
+            }
+        }
+
+        /// <summary>
+        /// A checkpoint taken mid-escort: the motor that walks him is not in the snapshot, so a reload must not start the
+        /// escort over (#25 review). The restored trolley has let him go and stops 2 s where it was, as a cut act does.
+        /// </summary>
+        [Fact]
+        public void SnapshotMidEscort_ReloadDoesNotRestartTheEscort_ItStops2sWhereItWas()
         {
             var a = new Rig { X = 250 };
             a.Run(700);
@@ -284,18 +305,27 @@ namespace DeadLetter.Core.Tests
             a.Until(() => a.T.HeroHeld, 10);
             a.Run(100);
             Assert.Equal(EscortState.EscortHim, a.T.State);
+            Assert.True(a.Driven);
 
-            var b = new Rig("sickbay");
+            var b = new Rig("sickbay") { X = a.M.X };                      // reloaded: he is placed where he stood
             b.Run(13);
             b.G.Restore(Mech.Snapshot(a.G));
-            Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
-            for (int k = 0; k < 1200; k++)
+            Assert.False(b.T.HeroHeld);
+            Assert.False(b.T.WantsEscort);
+            Assert.Equal(EscortState.Stop, b.T.State);
+            Assert.Equal(a.T.X, b.T.X);
+            Assert.Equal(a.T.Dir, b.T.Dir);
+            b.Log.Clear();
+            for (int k = 0; k < 110; k++)
             {
-                a.Step(); b.StepWith(a.Driven ? PlayerPose.Of(a.M) : new PlayerPose(a.X, a.Y, a.Z));
-                Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
-                Assert.Equal(Mech.Events(a.G).Count, Mech.Events(b.G).Count);
+                b.Step();
+                Assert.False(b.Driven);                                        // the motor never begins an escort
+                Assert.False(b.M.IsEscorted);
             }
-            Assert.Contains(b.Log, e => e.Kind == MechanismEventKind.Event && e.Code == (int)EscortEvent.HimHome);
+            Assert.Equal(EscortState.Stop, b.T.State);
+            Assert.DoesNotContain(b.Log, e => e.Kind == MechanismEventKind.Event && e.Code == (int)EscortEvent.CaughtHim);
+            Assert.DoesNotContain(b.Log, e => e.Kind == MechanismEventKind.Event && e.Code == (int)EscortEvent.HimHome);
+            Assert.InRange(b.Until(() => b.T.State == EscortState.Patrol), 10, 11);   // B.stopFor 2 s (120 steps)
         }
 
         [Fact]
