@@ -152,3 +152,19 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     - DL-14: `ba14`/`bb14` (the blinds), `ta14`/`tb14` (their targets), `w14` (winds), `j14` (jammed), `px14`/`pb14`/`ps14`
       (the pole's x, base, state), `pe14`/`pd14` (the peel, peeled), `rt14` (the chain rattling on the pole), `du14`
       (the duct taken).
+    - DL-14a: `nt14a`/`nk14a` (the night-light's clock, braked), `w1a`/`w2a`, `t1a`/`t2a` (the blinds and their
+      targets), `wn14a` (winds), `do14a`/`op14a` (the door, open), `gx14a`/`gb14a`/`gs14a` and `bx14a`/`bb14a`/`bs14a`
+      (the gown and the bag: x, base, state).
+    - DL-14b: `tx14b`/`td14b`/`tm14b`/`tt14b` (the escort trolley's x, direction, mode and its mode clock),
+      `fx14b`/`fs14b`/`fo14b`/`fk14b` (the figure in the bay: x, state, out, kept), `hd14b` (hiding).
+    - DL-15: `ax15`/`ab15`/`as15`/`al15` and `bx15`/`bb15`/`bs15`/`bl15` (figures A and B: x, base, state, lean),
+      `li15`/`lv15` (the pupil lift's height and speed), `lm15` (the seat lamps, comma-separated), `se15` (seated),
+      `di15` (dismissed), `do15` (the class door).
+    - DL-16: `br16` (the bridge), `la16` (latched), `he16` (the lever held), `sn16` (figures stored), `cw16` (the
+      rack's counterweight).
+    - DL-16a: `sx16a`/`ss16a` (the stool), `h16a`/`m16a`/`mt16a` (the dumbwaiter's height, mode and clock), `t1_16a`,
+      `t2_16a`, `bk16a` (the tins and the books, each "x,base,state").
+    - DL-17: `ty17` (the tray, "x,base,state"), `dr17` (the drawer), `rd17` (read), `ky17` (the T-key), `sl17` (the
+      sluices), `tk17`/`ru17` (the tank and its run), `be17` (the beds), `lt17`/`ld17` (the float latch, latched),
+      `do17` (the stair door), `en17` (the chapter ended).
+  - Adding DL-14a's to DL-17's fields left every earlier field of every line unchanged (checked line by line).

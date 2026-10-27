@@ -159,6 +159,51 @@ const RECORDER = `window.__record = (rngSeed, startCp) => {
     return { ba14: r6(B.a), bb14: r6(B.b), ta14: B.ta, tb14: B.tb, w14: B.winds, j14: b(s.jammed), px14: r6(s.pole.x), pb14: r6(s.pole.base), ps14: s.pole.state,
       pe14: r6(s.peel), pd14: b(s.peeled), rt14: b(s.rattle), du14: b(s.duct) };
   }
+  // DL-14a: the night-light (its clock, braked), the blinds W1/W2 and their targets, the winds, the door (0..1, open),
+  // the gown and the bag (x, base, state) (L5912-L5916, L6015-L6105, L6217-L6228).
+  const J = (a) => a.map(r6).join(',');
+  function dl14a() {
+    const s = A6(); if (!s || !s.f14a) return {};
+    const A = s.f14a, g = A.gown, bg = A.bag;
+    return { nt14a: r6(A.t), nk14a: b(A.braked), w1a: r6(A.w1), w2a: r6(A.w2), t1a: A.t1, t2a: A.t2, wn14a: A.winds, do14a: r6(A.door), op14a: b(A.open),
+      gx14a: r6(g.x), gb14a: r6(g.base), gs14a: g.state, bx14a: r6(bg.x), bb14a: r6(bg.base), bs14a: bg.state };
+  }
+  // DL-14b: the escort trolley (x, direction, mode, its mode clock), the figure in the bay (x, state, out, kept), the
+  // hiding (L5917, L6106-L6135, L6352-L6434).
+  function dl14b() {
+    const s = A6(); if (!s || !s.f14b) return {};
+    const B = s.f14b, f = B.fig;
+    return { tx14b: r6(B.tx), td14b: B.dir, tm14b: B.mode, tt14b: r6(B.mt), fx14b: r6(f.x), fs14b: f.state, fo14b: r6(f.out), fk14b: b(f.kept), hd14b: r6(B.hide) };
+  }
+  // DL-15: the two figures (x, base, state, lean), the pupil lift (height, speed), the seat lamps, him seated, the
+  // dismissal and the class door (L5538-L5585, L5709-L5736).
+  function dl15() {
+    const s = A6(); if (!s || !s.f15) return {};
+    const F = s.f15, A = F.A, B = F.B;
+    return { ax15: r6(A.x), ab15: r6(A.base), as15: A.state, al15: r6(A.lean), bx15: r6(B.x), bb15: r6(B.base), bs15: B.state, bl15: r6(B.lean),
+      li15: r6(F.lift), lv15: r6(F.liftV), lm15: F.lamps.join(','), se15: b(F.seated), di15: b(F.dismissed), do15: r6(F.door) };
+  }
+  // DL-16: the bridge, the latch, the lever held, the figures stored, the rack's counterweight (L5737-L5770).
+  function dl16() {
+    const s = A6(); if (!s || !s.f16) return {};
+    const F = s.f16;
+    return { br16: r6(F.bridge), la16: b(F.latched), he16: b(F.held), sn16: F.storedN, cw16: r6(F.cw) };
+  }
+  // DL-16a: the stool (x, state), the dumbwaiter (height, mode, its clock), the tins and the books (x, base, state)
+  // (L5918-L5921, L6136-L6192, L6233-L6246).
+  function dl16a() {
+    const s = A6(); if (!s || !s.f16a) return {};
+    const F = s.f16a, it = (q) => [r6(q.x), r6(q.base), q.state].join(',');
+    return { sx16a: r6(F.stool.x), ss16a: F.stool.state, h16a: r6(F.h), m16a: F.mode, mt16a: r6(F.mt), t1_16a: it(F.tin1), t2_16a: it(F.tin2), bk16a: it(F.books) };
+  }
+  // DL-17: the tray (x, base, state), the drawer, read, the T-key, the sluices, the tank and its run, the beds, the
+  // float latch, the stair door, the end (L5520-L5532, L5695-L5708, L5773-L5794, L6247-L6259).
+  function dl17() {
+    const s = A6(); if (!s || !s.f17) return {};
+    const d = s.f17, t = d.tray;
+    return { ty17: [r6(t.x), r6(t.base), t.state].join(','), dr17: r6(d.drawer), rd17: b(d.read), ky17: b(d.key), sl17: d.sluice.join(','), tk17: r6(d.tank),
+      ru17: r6(d.run), be17: J(d.beds), lt17: r6(d.latch), ld17: b(d.latched), do17: r6(d.door17 || 0), en17: b(s.ended) };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -177,6 +222,12 @@ const RECORDER = `window.__record = (rngSeed, startCp) => {
       ...dl12(),
       ...dl13(),
       ...dl14(),
+      ...dl14a(),
+      ...dl14b(),
+      ...dl15(),
+      ...dl16(),
+      ...dl16a(),
+      ...dl17(),
     };
   }
   function flush() {
