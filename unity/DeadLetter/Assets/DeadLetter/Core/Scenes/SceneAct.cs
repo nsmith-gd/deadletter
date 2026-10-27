@@ -16,16 +16,20 @@ namespace DeadLetter.Core.Scenes
     /// </summary>
     public abstract class SceneAct
     {
-        protected SceneAct(string kind, string phase)
+        protected SceneAct(ActId kind, ActId phase)
         {
-            Kind = kind ?? throw new ArgumentNullException(nameof(kind));
+            if (kind.IsNone) throw new ArgumentException("A scene act needs a kind.", nameof(kind));
+            Kind = kind;
             Phase = phase;
         }
 
-        /// <summary>What the act is about: a mechanism ID (<c>dl01.latch</c>) or a kind (<c>quirk</c>, <c>transit</c>).</summary>
-        public string Kind { get; protected set; }
-        /// <summary>Its phase or clip, e.g. "Flinch", "CheckLabel", "0".</summary>
-        public string Phase { get; protected set; }
+        /// <summary>
+        /// What the act is about: a mechanism (<c>dl06.scanner</c>, <see cref="ActId.Of(Mechanisms.MechanismId)"/>) or a kind
+        /// (<see cref="ActIds.Quirk"/>, <see cref="ActIds.Transit"/>). <see cref="ChapterSim.SceneActKind"/> reports it.
+        /// </summary>
+        public ActId Kind { get; }
+        /// <summary>Its phase or clip, e.g. "Check", "CheckLabel", "0", interned (<see cref="ChapterSim.SceneActPhase"/>); set at its transitions.</summary>
+        public ActId Phase { get; protected set; }
         /// <summary>Seconds of the act's own clock (the prototype's <c>a.t</c> or the clip's time), advanced by the act.</summary>
         public double T { get; protected set; }
 
@@ -58,7 +62,7 @@ namespace DeadLetter.Core.Scenes
         private readonly double _seconds;
 
         /// <param name="crouch">Keep him crouched meanwhile (the latch's flinch: <c>crouched</c> is cleared only when it ends, L1876).</param>
-        public HoldAct(string kind, string phase, double seconds, bool crouch = false) : base(kind, phase) { _seconds = seconds; Crouch = crouch; }
+        public HoldAct(ActId kind, ActId phase, double seconds, bool crouch = false) : base(kind, phase) { _seconds = seconds; Crouch = crouch; }
 
         public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
@@ -75,6 +79,7 @@ namespace DeadLetter.Core.Scenes
     /// </summary>
     public sealed class QuirkAct : SceneAct
     {
+        private static readonly ActId CheckLabel = ActIds.Clip(ClipNames.CheckLabel);
         private readonly double _duration, _cancelAfter, _holdFor, _start;
         private readonly bool _cancel;
         private bool _fresh;
@@ -84,7 +89,7 @@ namespace DeadLetter.Core.Scenes
         /// <param name="startClock">The game clock when it started (<c>a.start = game.clock</c>, L8108).</param>
         /// <param name="startsThisStep">True when created before #4 of the step it starts in (it then ignores that step, as the prototype's first <c>updateQuirk</c> sees time 0).</param>
         public QuirkAct(string clip, double clipSeconds, bool cancel, double startClock, double cancelAfter = 0, double holdFor = 0.8,
-            bool startsThisStep = false) : base("quirk", clip)
+            bool startsThisStep = false) : base(ActIds.Quirk, ActIds.Clip(clip))
         {
             _duration = clipSeconds; _cancel = cancel; _cancelAfter = cancelAfter; _holdFor = holdFor; _start = startClock;
             _fresh = startsThisStep;
@@ -99,7 +104,7 @@ namespace DeadLetter.Core.Scenes
             if (cancel && moving && T > 0.3) return false;                                            // L3851
             if (T >= _duration - 0.05)                                                                // L3852
             {
-                if (Phase == "CheckLabel")
+                if (Phase == CheckLabel)
                 {
                     if (double.IsNaN(_endAt)) _endAt = sim.Clock;                                     // a.endAt ??= game.clock
                     if (sim.Clock - _endAt < _holdFor) return true;                                   // L3853
@@ -130,7 +135,7 @@ namespace DeadLetter.Core.Scenes
     /// clock to 0 for the next step's #4, where the prototype's mixer has already advanced it by a step (it updates before
     /// <c>updatePlayer</c>), so a quirk started after the motor's step runs a step long (DL-05's label at #10038, DL-06's
     /// Proud at #13876). The motor's quirk is exact only when started inside #4 before the motor steps (DL-01's Proud, from
-    /// <c>CrankDoneAct</c>). And <c>game.vx = 0</c> has no motor call but <see cref="D17Motor.Place"/> (M9).</para>
+    /// <c>CrankDoneAct</c>).</para>
     /// </summary>
     public static class SceneQuirk
     {
@@ -150,14 +155,7 @@ namespace DeadLetter.Core.Scenes
             return true;
         }
 
-        /// <summary>
-        /// <c>game.vx = 0</c>. The motor can be stopped only by <see cref="D17Motor.Place"/> (#28), which also settles his yaw on
-        /// his facing and stands him up (M9), so it is placed only when he is moving; standing, nothing changes.
-        /// </summary>
-        public static void Stop(ChapterSim sim)
-        {
-            var m = sim.Motor;
-            if (m.Vx != 0) m.Place(m.X, m.Y, m.Facing);
-        }
+        /// <summary><c>game.vx = 0</c> (<see cref="D17Motor.Stop"/>): his yaw, clip, crouch and hands stay.</summary>
+        public static void Stop(ChapterSim sim) => sim.Motor.Stop();
     }
 }

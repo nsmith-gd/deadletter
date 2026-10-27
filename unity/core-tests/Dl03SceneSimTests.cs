@@ -150,31 +150,34 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
-        /// M6 (#22, fixed in #25 by <c>IPushable.LetGoAtMax</c>): DL-03's trolley is an old hold (updateHold, L2341–L2349):
-        /// it stops at the weight, or at TROLLEY_MAX, and he keeps hold, so he can pull it back without grabbing again.
-        /// </summary>
-        /// <summary>
         /// He walks in over the sill under DL-02's <c>room</c> (he has not reached <c>weighroom</c>, x &gt; 25.6, L4946) and
         /// dies: the respawn is at <c>room</c> (13.2, region 2), from the chapter's table (<see cref="ChapterDefs.PrologueCheckpoints"/>),
-        /// not DL-03's own checkpoints. The world is derived at <c>room</c>: the weight at its stand, the trolley in the room.
+        /// not DL-03's own checkpoints, and the chapter hands him back to DL-02. The world is derived at <c>room</c>: the
+        /// weight at its stand, the trolley in the room. (A one-scene DL-03 cannot respawn there: DL-02 is not in it.)
         /// </summary>
         [Fact]
-        public void ADeathBeforeWeighroom_RespawnsAtRoom_WithoutThrowing_L8494()
+        public void ADeathBeforeWeighroom_RespawnsAtRoom_InDl02_L8494()
         {
-            var s = new SceneSim(Dl03Scene.Def());
-            s.Handover("room", 25.45, 0, 1);
+            var s = new ChapterSim(ChapterDefs.Prologue());
+            s.BeginAt("room", 25.45, 0, 1, 2);
+            Assert.Equal("DL-03", s.Current.Id);
             Assert.Equal("room", s.Checkpoints.Current.Name);
-            Assert.True(s.Chapter.Die(Hazards.DeathKind.Crush));
-            Until(s, default, x => x.ActKind != "death", 600);
+            Assert.True(s.Die(Hazards.DeathKind.Crush));
+            for (int i = 0; i < 600 && s.Motor.IsDead; i++) s.Step(default);
+            Assert.False(s.Motor.IsDead);
             Assert.Equal("room", s.Checkpoints.Current.Name);
             Assert.Equal(13.2, s.X, 12);
             Assert.Equal(0, s.Y);
             Assert.Equal(2, s.Region);
-            Assert.Equal("DL-02", ChapterDefs.PrologueCheckpoints.SceneOf("room"));                  // the chapter's to hand him back to DL-02
-            Assert.Equal(Dl03WeightState.Floor, Weight(s).State);
-            Assert.Equal(13 + 14.55, Trolley(s).X, 12);                                 // TROLLEY_X
+            Assert.Equal("DL-02", s.Current.Id);
+            Assert.Equal(Dl03WeightState.Floor, s.Graph.Get<Dl03Weight>("dl03.weight").State);
+            Assert.Equal(13 + 14.55, s.Graph.Get<Pushable>("dl03.trolley").X, 12);    // TROLLEY_X
         }
 
+        /// <summary>
+        /// M6 (#22, fixed in #25 by <c>IPushable.LetGoAtMax</c>): DL-03's trolley is an old hold (updateHold, L2341–L2349):
+        /// it stops at the weight, or at TROLLEY_MAX, and he keeps hold, so he can pull it back without grabbing again.
+        /// </summary>
         [Fact]
         public void GrabL_KeepsHoldAtTheStop_L2341()
         {

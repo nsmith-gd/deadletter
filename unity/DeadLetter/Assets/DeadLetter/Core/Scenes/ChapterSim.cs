@@ -55,20 +55,17 @@ namespace DeadLetter.Core.Scenes
         private readonly SceneDef[] _scenes;
         private readonly SceneRules[] _rules;
         private readonly IMechanism[][] _mechanisms;
-        private readonly SceneTuning[] _tunings;
         private readonly Dictionary<Type, object> _shared = new Dictionary<Type, object>();
         private readonly List<Cue> _cues = new List<Cue>(8);
         private readonly ISaveStore _store;
         private SceneAct _act;
         private IInteractable _endedTarget;
-        private SceneTuning _tuned;
         private int _current = -1;
         private bool _pendingOpening, _placed;
         /// <summary>The service holds a game (begun, continued or new); until then Begin takes the slot's.</summary>
         private bool _hasGame;
 
-        /// <param name="config">The chapter's motor tuning (null = the prototype's). The motor keeps this instance; a scene
-        /// with its own tuning (<see cref="SceneDef.Motor"/>) changes it in place while he is in that scene.</param>
+        /// <param name="config">The chapter's motor tuning (null = the prototype's). The motor keeps this instance.</param>
         /// <param name="store">Where the slot is saved (null = nowhere: checkpoints still advance and reload from memory).</param>
         public ChapterSim(ChapterDef def, MotorConfig config = null, ISaveStore store = null)
         {
@@ -95,8 +92,6 @@ namespace DeadLetter.Core.Scenes
             Lane = BuildLane();
 
             Config = config ?? MotorConfig.Prototype();
-            _tunings = new SceneTuning[n];
-            for (int i = 0; i < n; i++) if (_scenes[i].Motor != null) _tunings[i] = SceneTuning.Of(_scenes[i].Motor(), Config);
 
             Resolver = new InteractionResolver(Config);
             for (int i = 0; i < n; i++)
@@ -117,7 +112,7 @@ namespace DeadLetter.Core.Scenes
         }
 
         public ChapterDef Def { get; }
-        /// <summary>The motor's tuning now: the chapter's, with the current scene's changes (<see cref="SceneDef.Motor"/>).</summary>
+        /// <summary>The motor's tuning, the chapter's in every scene (a station's own step-in speed is the station's, <see cref="StationPose.StepInSpeed"/>).</summary>
         public MotorConfig Config { get; }
         public D17Motor Motor { get; }
         /// <summary>Every scene's lane: per region, the scenes' tables joined (<see cref="LaneTable.Join"/>) and all their contributors.</summary>
@@ -169,6 +164,15 @@ namespace DeadLetter.Core.Scenes
             return id == null ? null : Def.Scene(id);
         }
 
+        /// <summary>
+        /// <paramref name="checkpoint"/> is placed in this chapter's table and owned by one of its scenes, so <see cref="Begin"/>,
+        /// <see cref="Continue"/> and <see cref="Respawn"/> can put him there (a placed row whose scene the chapter lacks cannot).
+        /// </summary>
+        public bool CanContinueAt(string checkpoint) => CanContinueAt(checkpoint, out _);
+
+        private bool CanContinueAt(string checkpoint, out CheckpointDef cp)
+            => Def.Checkpoints.TryGet(checkpoint, out cp) && SceneOf(checkpoint) != null;
+
         /// <summary>The scene next to <see cref="Current"/> in lane order on the <paramref name="dir"/> side (null: none, or not placed).</summary>
         public SceneDef Next(ExitDir dir)
         {
@@ -219,8 +223,15 @@ namespace DeadLetter.Core.Scenes
         public bool Grounded => _act != null && _act.OwnsPose ? _act.PoseGrounded : Motor.Grounded;
         /// <summary>In a scene act or a motor act.</summary>
         public bool Busy => _act != null || Motor.IsActing;
-        /// <summary>The motor act's phase: <c>None</c> outside one and while a scene act holds him (its phase is <see cref="SceneAct.Phase"/>, set at its transitions).</summary>
+        /// <summary>The motor act's phase: <c>None</c> outside one and while a scene act holds him (then see <see cref="SceneActKind"/>, <see cref="SceneActPhase"/>).</summary>
         public ActPhase ActPhase => _act == null && Motor.IsActing ? Motor.ActPhase : ActPhase.None;
+        /// <summary>
+        /// The scene act's kind (<see cref="SceneAct.Kind"/>; <see cref="ActId.None"/> while the motor has him): what a view
+        /// matches, by an integer compare, alongside <see cref="ActPhase"/> (<c>dl06.scanner</c> is <see cref="Dl06.Dl06ScanAct.Scanner"/>).
+        /// </summary>
+        public ActId SceneActKind => _act != null ? _act.Kind : ActId.None;
+        /// <summary>The scene act's phase (<see cref="SceneAct.Phase"/>: <c>Check</c>, a clip, a leg); <see cref="ActId.None"/> outside one.</summary>
+        public ActId SceneActPhase => _act != null ? _act.Phase : ActId.None;
         /// <summary>The thing the motor's current act is on (null outside an act): <see cref="D17Motor.ActTarget"/>.</summary>
         public IInteractable MotorActTarget => Motor.ActTarget;
         /// <summary>The target of a motor act that ended this step (else null).</summary>
@@ -244,7 +255,7 @@ namespace DeadLetter.Core.Scenes
         public void NewGame(bool fromOpening = false)
         {
             string first = Def.Checkpoints.Order[0];
-            if (!Def.Checkpoints.TryGet(first, out var cp) || SceneOf(first) == null)
+            if (!CanContinueAt(first, out var cp))
                 throw new InvalidOperationException(Def.Id + " cannot start a new game: '" + first + "' is not one of its scenes'.");
             Checkpoints.NewGame();
             _hasGame = true;
@@ -254,13 +265,15 @@ namespace DeadLetter.Core.Scenes
         /// <summary>
         /// Continue from the slot (the title card's Continue): its checkpoint, flags, seen moments, play time and options,
         /// the world rebuilt there with the slot's snapshot (any scene's: the chapter is one graph), and D-17 placed at the
-        /// checkpoint. False when the slot is empty or unreadable; nothing changes then. Throws when the slot's checkpoint
-        /// has no place in this chapter's table.
+        /// checkpoint. False when the slot is empty or unreadable, or when its checkpoint is not one of this chapter's
+        /// scenes' (<see cref="SceneOf"/> null: another chapter's, or a scene not ported yet, such as the prologue table's
+        /// DL-07 to DL-11 rows): nothing changes then, here or in the slot, and the runtime continues in the chapter that
+        /// owns it (<see cref="CanContinueAt"/>).
         /// </summary>
         public bool Continue()
         {
             if (!_store.TryLoad(Checkpoints.Slot, out var m)) return false;
-            if (!Def.Checkpoints.TryGet(m.Checkpoint, out var cp)) throw new InvalidOperationException(Def.Id + " cannot continue at '" + m.Checkpoint + "'.");
+            if (!CanContinueAt(m.Checkpoint, out var cp)) return false;
             Checkpoints.Load(m);
             _hasGame = true;
             Start(cp, false);
@@ -276,7 +289,7 @@ namespace DeadLetter.Core.Scenes
         /// </summary>
         public void Begin(string checkpoint, bool fromOpening = false)
         {
-            if (!Def.Checkpoints.TryGet(checkpoint, out var cp) || SceneOf(checkpoint) == null)
+            if (!CanContinueAt(checkpoint, out var cp))
                 throw new ArgumentException(Def.Id + " has no checkpoint '" + checkpoint + "' in its scenes.", nameof(checkpoint));
             KeepGame();
             Checkpoints.Restart(checkpoint);
@@ -290,7 +303,7 @@ namespace DeadLetter.Core.Scenes
         public void Respawn()
         {
             string name = Checkpoints.Current.Name;
-            if (!Def.Checkpoints.TryGet(name, out var cp)) throw new InvalidOperationException(Def.Id + " cannot respawn at " + name + ".");
+            if (!CanContinueAt(name, out var cp)) throw new InvalidOperationException(Def.Id + " cannot respawn at '" + name + "': not one of its scenes' checkpoints.");
             Checkpoints.Reload();
             Place(cp.X, cp.Y, cp.Facing, RegionOf(cp));
             OnBegin(cp.Name, false);
@@ -300,7 +313,8 @@ namespace DeadLetter.Core.Scenes
         /// <summary>
         /// Tests only (a scene replayed on its own from a recorded rest): <see cref="Begin"/> at <paramref name="checkpoint"/>,
         /// which may be another scene's, but with D-17 at rest at (<paramref name="x"/>, <paramref name="y"/>) in
-        /// <paramref name="region"/>. The motor cannot be handed a moving D-17 (#28); a chapter never needs this.
+        /// <paramref name="region"/> (a replay then hands over a moving D-17 with <see cref="D17Motor.SetState"/>); a chapter
+        /// never needs this.
         /// </summary>
         internal void BeginAt(string checkpoint, double x, double y, int facing, int region)
         {
@@ -450,14 +464,13 @@ namespace DeadLetter.Core.Scenes
         }
 
         // ---- Scenes ----------------------------------------------------------------------------------------------------
-        /// <summary>Commits the scene that holds him now; fires <see cref="SceneChanged"/> and switches the motor's tuning if it changed.</summary>
+        /// <summary>Commits the scene that holds him now; fires <see cref="SceneChanged"/> if it changed.</summary>
         private void Commit(bool placed)
         {
             int next = SceneAt(Region, X);
             if (next == _current) return;
             int from = _current;
             _current = next;
-            Tune(next >= 0 ? _tunings[next] : null);
             var dir = placed ? ExitDir.None : next < 0 || next > from ? ExitDir.Right : ExitDir.Left;
             SceneChanged?.Invoke(from >= 0 ? _scenes[from] : null, next >= 0 ? _scenes[next] : null, dir);
         }
@@ -495,14 +508,6 @@ namespace DeadLetter.Core.Scenes
         {
             for (int i = 0; i < _scenes.Length; i++) if (ReferenceEquals(_scenes[i], scene)) return i;
             throw new ArgumentException((scene?.Id ?? "null") + " is not a scene of " + Def.Id + ".", nameof(scene));
-        }
-
-        private void Tune(SceneTuning tuning)
-        {
-            if (ReferenceEquals(tuning, _tuned)) return;
-            _tuned?.Revert(Config);
-            tuning?.Apply(Config);
-            _tuned = tuning;
         }
 
         private LaneGeometry BuildLane()

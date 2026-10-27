@@ -134,7 +134,7 @@ namespace DeadLetter.Core.Scenes.Dl04
                 {
                     sim.Checkpoints.MarkSeen(SeenRealise);
                     _kinSlow = true;
-                    m.Place(m.X, m.Y, m.Facing);                            // game.vx = 0 (#28: Place is the only way)
+                    m.Stop();                                               // game.vx = 0
                     Moment.Start(PrologueMoments.Kin, sim.Clock, musicAvailable: false);
                     sim.Cue(MomentKin);
                     sim.StartAct(new RealiseAct(Moment, sim.Config.Fps));
@@ -178,7 +178,10 @@ namespace DeadLetter.Core.Scenes.Dl04
         private readonly double _fps;
         private bool _fresh = true;
 
-        public RealiseAct(MomentDirector moment, double fps) : base("realise", "act")
+        /// <summary>Its kind; its phase is <see cref="ActIds.Act"/>.</summary>
+        public static readonly ActId Realise = ActId.Of("realise");
+
+        public RealiseAct(MomentDirector moment, double fps) : base(Realise, ActIds.Act)
         {
             _moment = moment ?? throw new ArgumentNullException(nameof(moment));
             _fps = fps;
@@ -202,9 +205,8 @@ namespace DeadLetter.Core.Scenes.Dl04
     /// L4380–L4388: facing <c>face</c>, back onto the lane at 0.45 m/s, along it at WALK · 0.8, there within 0.012 and 0.004),
     /// lays his claw on its head (<c>TouchHead</c>) and lets go at f51, facing +1 again. It owns his pose (the motor has no
     /// such act, #22); his yaw turns as <c>updateCharacter</c> turns it (8 rad/s, L7579–L7583).
-    /// <para>At the end the motor is put back at rest where he stands (<see cref="D17Motor.Place"/>) facing the courier, and
-    /// stepped once with a vanishing stick (<see cref="double.Epsilon"/>): that faces him +1 and starts his yaw's turn on
-    /// the prototype's step without moving him (#28, M9: the motor cannot be turned in place).</para>
+    /// <para>At the end the motor is put back at rest where he stands (<see cref="D17Motor.Place"/>), facing +1 again, his
+    /// yaw a step into its turn back (<c>updateCharacter</c> on the step he lets go).</para>
     /// </summary>
     public sealed class BayTouchAct : SceneAct
     {
@@ -212,7 +214,10 @@ namespace DeadLetter.Core.Scenes.Dl04
         private readonly int _face;
         private readonly MotorConfig _c;
 
-        public BayTouchAct(double x, double y, double z, double yaw, double standX, int face, MotorConfig c) : base("bayTouch", "approach")
+        /// <summary>Its kind and its phases: <see cref="Approach"/> while he walks to it, then <see cref="ActIds.Act"/> (TouchHead).</summary>
+        public static readonly ActId BayTouch = ActId.Of("bayTouch"), Approach = ActId.Of("approach");
+
+        public BayTouchAct(double x, double y, double z, double yaw, double standX, int face, MotorConfig c) : base(BayTouch, Approach)
         {
             X = x; Y = y; Z = z; Yaw = yaw;
             _standX = standX; _face = face; _c = c ?? throw new ArgumentNullException(nameof(c));
@@ -222,11 +227,11 @@ namespace DeadLetter.Core.Scenes.Dl04
 
         public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
-            if (Phase == "approach")
+            if (Phase == Approach)
             {
                 double dx = _standX - X, dz = 0 - Z;                                                         // L4381
                 if (dz != 0) Z += Smooth.Sign(dz) * Math.Min(Math.Abs(dz), _c.StepInSpeed * dt);          // L4382
-                if (Math.Abs(dx) < _c.ArriveX && Math.Abs(dz) < _c.ArriveZ) { X = _standX; Phase = "act"; T = 0; }   // L4383
+                if (Math.Abs(dx) < _c.ArriveX && Math.Abs(dz) < _c.ArriveZ) { X = _standX; Phase = ActIds.Act; T = 0; }   // L4383
                 else X += Smooth.Sign(dx) * Math.Min(Math.Abs(dx), _c.Walk * _c.ApproachFactor * dt);    // L4384
                 Turn(dt);
                 return true;
@@ -234,9 +239,7 @@ namespace DeadLetter.Core.Scenes.Dl04
             T += dt;                                                                                         // TouchHead's time
             if (T * _c.Fps >= Dl04Scene.TouchEndFrame)                                                       // L4493
             {
-                var m = sim.Motor;
-                m.Place(X, Y, _face);
-                m.Step(new MotorInput { Move = double.Epsilon }, dt);                                       // game.facing = 1; updateCharacter
+                sim.Motor.Place(X, Y, 1, Smooth.MoveTowards(Yaw, Math.PI / 2, _c.YawRate * dt));          // game.facing = 1; updateCharacter
                 return false;
             }
             Turn(dt);

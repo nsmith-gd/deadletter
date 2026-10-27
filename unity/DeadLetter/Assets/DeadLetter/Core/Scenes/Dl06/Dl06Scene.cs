@@ -49,9 +49,6 @@ namespace DeadLetter.Core.Scenes.Dl06
         public const string ScannedCheckpoint = "scanned";
         public const double ScannedX = Dl06Lane.Off3 + 30.3;
 
-        /// <summary>The levers' step-in and out speed (<c>game.z += … 0.4 · dt</c>, L2916): the motor's is 0.45 (M10).</summary>
-        public const double LeverStepSpeed = 0.4;
-
         /// <summary><c>CHUTE</c> (L2463): where a tipped carrier sends him and the post, (x, y) at its top and its foot.</summary>
         public const double ChuteX0 = Dl06Lane.Off3 + 36.6, ChuteY0 = 0.0, ChuteX1 = Dl06Lane.Off3 + 39.3, ChuteY1 = -2.4;
         /// <summary><c>tipOut</c>/<c>updateFall</c> (L2977–L2994): 0.8 m/s down the chute, + 3.5 m/s², 0.1 above it; off its foot at
@@ -85,7 +82,6 @@ namespace DeadLetter.Core.Scenes.Dl06
             Interactables = FloorInteractables,
             Lane = Dl06Lane.Table,
             LaneContributors = Dl06Lane.Contributors,
-            Motor = MotorTuning,
             Rules = rules,
         };
 
@@ -127,20 +123,7 @@ namespace DeadLetter.Core.Scenes.Dl06
             HomeX = x, HomeBaseY = 0,
             Radius = Dl06Lane.WeightR, Half = Dl06Lane.WeightR, Height = Dl06Lane.WeightH,
             BelowWrist = 0.28,
-        };
-
-        /// <summary>
-        /// The motor's tuning here: the prototype's, but the levers step in and out at 0.4 m/s (L2902, L2916), where the
-        /// motor's station step-in is 0.45 (M10: <see cref="MotorConfig.StepInSpeed"/> is one speed for every station).
-        /// Nothing else on this floor steps off the lane, so the scene sets it for the floor.
-        /// </summary>
-        public static MotorConfig MotorTuning()
-        {
-            var c = MotorConfig.Prototype();
-            c.StepInSpeed = LeverStepSpeed;
-            return c;
-        }
-    }
+        };    }
 
     /// <summary>
     /// DL-06's rules (port_architecture §5: "scanner sequence", "chute ride → heap → respawn, pit reveal"; the scanner, the
@@ -241,15 +224,14 @@ namespace DeadLetter.Core.Scenes.Dl06
             if (log.Has("dl06.scanner", MechanismEventKind.State, (int)Dl06ScanPhase.Check))
             {
                 // game.act = check with CheckLabel until the scanner is done (L2808–L2812): a hold the scanner ends, which the
-                // motor's quirk cannot be (#28: no way to end a motor act from outside), so a scene act; and vx = 0, which
-                // only Place can do (M9).
+                // motor's quirk cannot be (#28: no way to end a motor act from outside), so a scene act; and vx = 0.
                 SceneQuirk.Stop(sim);
-                sim.StartAct(new HoldAct("dl06.scanner", "Check", double.PositiveInfinity));
+                sim.StartAct(new HoldAct(Dl06ScanAct.Scanner, Dl06ScanAct.Check, double.PositiveInfinity));
                 sim.Cue(ShotCheck);
             }
             if (log.Has("dl06.scanner", MechanismEventKind.State, (int)Dl06ScanPhase.Done))
             {
-                if (sim.Act != null && sim.Act.Kind == "dl06.scanner") sim.EndAct();                       // L2812
+                if (sim.SceneActKind == Dl06ScanAct.Scanner) sim.EndAct();                                 // L2812
                 sim.Checkpoints.Reach(Dl06Scene.ScannedCheckpoint);                                        // L2813
             }
             // The points thrown to the exit: Proud when he has stepped back (L2907).
@@ -282,7 +264,10 @@ namespace DeadLetter.Core.Scenes.Dl06
     {
         private readonly double _yawRate;
 
-        public Dl06ScanAct(double x, double y, double z, double yaw, double yawRate) : base("dl06.scanner", "Scan")
+        /// <summary>The scanner's acts' kind, and their phases: the scan (this act), the label check (a <see cref="HoldAct"/>, L2808).</summary>
+        public static readonly ActId Scanner = ActId.Of("dl06.scanner"), Scan = ActId.Of("Scan"), Check = ActId.Of("Check");
+
+        public Dl06ScanAct(double x, double y, double z, double yaw, double yawRate) : base(Scanner, Scan)
         {
             X = x; Y = y; Z = z; Yaw = yaw; _yawRate = yawRate;
         }
@@ -310,7 +295,10 @@ namespace DeadLetter.Core.Scenes.Dl06
         private double _s, _v, _vx, _vy;
         private bool _faded;
 
-        public Dl06ChuteFallAct(double x, double y, double z, double yaw, double yawRate) : base("dl06.chute", "Chute")
+        /// <summary>Its kind and its phases: down the chute, in the air, down on the heap.</summary>
+        public static readonly ActId ChuteKind = ActId.Of("dl06.chute"), Chute = ActId.Of("Chute"), Air = ActId.Of("Air"), Down = ActId.Of("Down");
+
+        public Dl06ChuteFallAct(double x, double y, double z, double yaw, double yawRate) : base(ChuteKind, Chute)
         {
             X = x; Y = y; Z = z; Yaw = yaw; _yawRate = yawRate;
             _v = Dl06Scene.ChuteV0;
@@ -325,29 +313,22 @@ namespace DeadLetter.Core.Scenes.Dl06
         public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
             T += dt;                                                                                       // a.t += dt (updateAct, L1840)
-            switch (Phase)
+            if (Phase == Chute)
             {
-                case "Chute":
-                {
-                    _v += Dl06Scene.ChuteAccel * dt; _s += _v * dt;
-                    double k = Math.Min(1, _s / _len);
-                    X = Dl06Scene.ChuteX0 + (Dl06Scene.ChuteX1 - Dl06Scene.ChuteX0) * k;
-                    Y = Dl06Scene.ChuteY0 + (Dl06Scene.ChuteY1 - Dl06Scene.ChuteY0) * k + Dl06Scene.ChuteLift;
-                    Z = Dl06Scene.RailZ;
-                    if (k >= 1) { Phase = "Air"; _vx = _v * Dl06Scene.AirVx; _vy = -_v * Dl06Scene.AirVy; }
-                    break;
-                }
-                case "Air":
-                {
-                    _vy -= Dl06Scene.Gravity * dt; X += _vx * dt; Y += _vy * dt;
-                    double floor = Dl06Scene.HeapHeight(X, -Z) + Dl06Scene.HeapLift;
-                    if (Y <= floor) { Y = floor; Phase = "Down"; T = 0; sim.Cue(ReturnToSender06.Shake, 60); }
-                    break;
-                }
-                case "Down":
-                    if (T > Dl06Scene.DownFor && !_faded) { _faded = true; sim.RespawnAt = sim.Clock + Dl06Scene.Fade; }   // respawn(), L2997–L2999
-                    break;
+                _v += Dl06Scene.ChuteAccel * dt; _s += _v * dt;
+                double k = Math.Min(1, _s / _len);
+                X = Dl06Scene.ChuteX0 + (Dl06Scene.ChuteX1 - Dl06Scene.ChuteX0) * k;
+                Y = Dl06Scene.ChuteY0 + (Dl06Scene.ChuteY1 - Dl06Scene.ChuteY0) * k + Dl06Scene.ChuteLift;
+                Z = Dl06Scene.RailZ;
+                if (k >= 1) { Phase = Air; _vx = _v * Dl06Scene.AirVx; _vy = -_v * Dl06Scene.AirVy; }
             }
+            else if (Phase == Air)
+            {
+                _vy -= Dl06Scene.Gravity * dt; X += _vx * dt; Y += _vy * dt;
+                double floor = Dl06Scene.HeapHeight(X, -Z) + Dl06Scene.HeapLift;
+                if (Y <= floor) { Y = floor; Phase = Down; T = 0; sim.Cue(ReturnToSender06.Shake, 60); }
+            }
+            else if (T > Dl06Scene.DownFor && !_faded) { _faded = true; sim.RespawnAt = sim.Clock + Dl06Scene.Fade; }   // Down; respawn(), L2997–L2999
             Yaw = Smooth.MoveTowards(Yaw, Math.PI / 2, _yawRate * dt);                              // yawOverride = null, facing = 1
             return true;                                                                                   // until the respawn rebuilds the world
         }

@@ -22,7 +22,7 @@ namespace DeadLetter.Core.Scenes
     /// <summary>
     /// A scripted walk that keeps the camera continuous between scenes (<c>TRANSIT</c>/<c>updateTransit</c>, L2129–L2157;
     /// port_architecture §4.8): for each leg he turns at 8 rad/s until within 0.06 rad of its yaw, then walks straight to its
-    /// point at <c>speed</c>, snapping there within 1 cm. It owns his pose; <see cref="SceneAct.Phase"/> is the leg index.
+    /// point at <c>speed</c>, snapping there within 1 cm. It owns his pose; <see cref="SceneAct.Phase"/> is the leg index (<see cref="ActIds.Leg"/>).
     /// </summary>
     public sealed class TransitAct : SceneAct
     {
@@ -36,10 +36,11 @@ namespace DeadLetter.Core.Scenes
 
         /// <param name="onLeg">Called when a leg's point is reached, with the new stage (DL-01: stage 2 is region 2, L2152).</param>
         /// <param name="onEnd">Called on the step the last leg's turn is done (DL-01: checkpoint <c>room</c>, L2145).</param>
-        public TransitAct(string kind, TransitLeg[] legs, double speed, double x, double y, double z, double yaw, double yawRate,
-            Action<ChapterSim, int> onLeg = null, Action<ChapterSim> onEnd = null) : base(kind, "0")
+        public TransitAct(ActId kind, TransitLeg[] legs, double speed, double x, double y, double z, double yaw, double yawRate,
+            Action<ChapterSim, int> onLeg = null, Action<ChapterSim> onEnd = null) : base(kind, ActIds.Leg(0))
         {
             if (legs == null || legs.Length == 0 || !legs[legs.Length - 1].Final) throw new ArgumentException("Legs must end with TurnTo.");
+            ActIds.Leg(legs.Length - 1);                                              // in range: a phase for every leg
             _legs = legs; _speed = speed; _yawRate = yawRate; _onLeg = onLeg; _onEnd = onEnd;
             X = x; Y = y; Z = z; Yaw = yaw;
         }
@@ -87,7 +88,7 @@ namespace DeadLetter.Core.Scenes
             {
                 X = leg.X; Z = leg.Z;
                 _stage++;
-                Phase = _stage.ToString();
+                Phase = ActIds.Leg(_stage);
                 _onLeg?.Invoke(sim, _stage);
                 return true;
             }

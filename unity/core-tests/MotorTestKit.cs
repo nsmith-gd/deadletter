@@ -115,12 +115,14 @@ namespace DeadLetter.Core.Tests
         public double StandX { get; set; }
         public double Reach { get; set; } = 0.3;
         public double StandZ { get; set; }
+        /// <summary>Its own step-in speed (NaN = the motor's).</summary>
+        public double StepInSpeed { get; set; } = double.NaN;
         public int Face { get; set; } = 1;
         public bool Open { get; set; } = true;
         public InteractionCategory Category { get; set; } = InteractionCategory.Fixed;
         public bool Offer(in InteractionQuery q, out StationPose pose)
         {
-            pose = new StationPose(StandX, Face, StandZ);
+            pose = new StationPose(StandX, Face, StandZ, stepInSpeed: StepInSpeed);
             return Open && Math.Abs(q.X - StandX) < Reach;
         }
         public bool IsAvailable(in InteractionQuery q) => Offer(q, out _);

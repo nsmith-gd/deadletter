@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using DeadLetter.Core.Simulation;
 
 namespace DeadLetter.Core.Cues
 {
@@ -11,10 +11,7 @@ namespace DeadLetter.Core.Cues
     /// </summary>
     public readonly struct CueId : IEquatable<CueId>
     {
-        private static readonly object Gate = new object();
-        private static readonly Dictionary<string, int> Ids = new Dictionary<string, int>(StringComparer.Ordinal);
-        /// <summary>Copy-on-write, so <see cref="Name"/> reads without a lock.</summary>
-        private static string[] _names = { "" };
+        private static readonly NameTable Names = new NameTable();
 
         /// <summary>The interned number; 0 is <see cref="None"/>.</summary>
         public readonly int Value;
@@ -24,22 +21,9 @@ namespace DeadLetter.Core.Cues
         public static CueId None => default;
 
         /// <summary>The cue called <paramref name="name"/>, interned on first use (keep it in a static field: this locks).</summary>
-        public static CueId Of(string name)
-        {
-            if (string.IsNullOrEmpty(name)) throw new ArgumentException("A cue needs a name.", nameof(name));
-            lock (Gate)
-            {
-                if (Ids.TryGetValue(name, out int id)) return new CueId(id);
-                var names = new string[_names.Length + 1];
-                Array.Copy(_names, names, _names.Length);
-                names[_names.Length] = name;
-                Ids.Add(name, _names.Length);
-                _names = names;
-                return new CueId(names.Length - 1);
-            }
-        }
+        public static CueId Of(string name) => new CueId(Names.Of(name, "cue"));
 
-        public string Name => _names[Value];
+        public string Name => Names.Name(Value);
         public bool IsNone => Value == 0;
 
         public bool Equals(CueId other) => Value == other.Value;

@@ -116,7 +116,7 @@ namespace DeadLetter.Core.Scenes.Dl01
             if (_crank.Position >= 1 && m.X > Dl01Scene.DoorX0 + 0.15 && m.X < Dl01Scene.DoorX1 - 0.15 && m.Grounded)   // L2040
             {
                 var legs = Dl01Scene.TransitLegs();
-                sim.StartAct(new TransitAct("transit", legs, Dl01Scene.TransitSpeed, m.X, m.Y, m.Z,
+                sim.StartAct(new TransitAct(ActIds.Transit, legs, Dl01Scene.TransitSpeed, m.X, m.Y, m.Z,
                     TransitAct.FirstTurn(m.Yaw, legs[0], sim.Config.YawRate, ChapterSim.StepSeconds), sim.Config.YawRate,
                     OnTransitLeg, OnTransitEnd).ReturnToLaneFrom(2, sim.Config.StepInSpeed));                  // L4876
                 return;
@@ -162,7 +162,10 @@ namespace DeadLetter.Core.Scenes.Dl01
         /// <summary>|yaw − π/2 · facing| &lt; 0.1, L1892.</summary>
         public const double TurnedBack = 0.1;
 
-        public CrankDoneAct() : base("dl01.crank", "Done") { }
+        /// <summary>Its kind (the crank) and phase.</summary>
+        public static readonly ActId Crank = ActId.Of("dl01.crank"), Done = ActId.Of("Done");
+
+        public CrankDoneAct() : base(Crank, Done) { }
 
         public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {

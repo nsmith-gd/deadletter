@@ -311,13 +311,10 @@ namespace DeadLetter.Core.Tests
             return sb.ToString();
         }
 
-        /// <summary>Writes a replay side by side as TSV when DL02_TRACE_DUMP names a file (DL02_TRACE=death: the death trace).</summary>
-        [Fact]
-        public void Dump()
+        /// <summary>Debugging aid, not a test: writes a replay side by side as TSV to <paramref name="path"/> (death: the death trace; call it from a scratch test or the debugger).</summary>
+        internal static void Dump(string path, bool death = false)
         {
-            var path = Environment.GetEnvironmentVariable("DL02_TRACE_DUMP");
-            if (string.IsNullOrEmpty(path)) return;
-            var r = Run(Environment.GetEnvironmentVariable("DL02_TRACE") == "death" ? DeathTrace : MainTrace);
+            var r = Run(death ? DeathTrace : MainTrace);
             var sb = new StringBuilder("i\tpx\tcx\tpy\tcy\tpvx\tcvx\tpyaw\tcyaw\tpg\tcg\tpact\tcact\tph\tch\tppf\tcpf\tpbx\tcbx\tpbs\tcbs\tptl\tctl\tin\n");
             foreach (var w in r.Rows)
             {

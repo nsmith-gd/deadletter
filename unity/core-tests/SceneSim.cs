@@ -88,7 +88,7 @@ namespace DeadLetter.Core.Scenes
         /// <summary><see cref="ActKind"/> of any chapter (the whole-prologue replay names acts as the scene replays do).</summary>
         internal static string KindOf(ChapterSim c)
         {
-            if (c.Act != null) return c.Act.Kind;
+            if (!c.SceneActKind.IsNone) return c.SceneActKind.Name;                       // the test boundary: interned ids to the prototype's names
             var m = c.Motor;
             if (m.IsMantling) return "mantle";
             if (!m.IsActing) return null;
@@ -105,7 +105,7 @@ namespace DeadLetter.Core.Scenes
         /// <summary><see cref="ActPhase"/> of any chapter.</summary>
         internal static string PhaseOf(ChapterSim c)
         {
-            if (c.Act != null) return c.Act.Phase;
+            if (!c.SceneActKind.IsNone) return c.SceneActPhase.IsNone ? null : c.SceneActPhase.Name;
             var m = c.Motor;
             if (!m.IsActing) return null;
             switch (m.ActVerb)

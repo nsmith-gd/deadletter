@@ -7,6 +7,7 @@ using DeadLetter.Core.Lane;
 using DeadLetter.Core.Lane.Tables;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Actuators;
+using DeadLetter.Core.Mechanisms.Routes;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Push;
 using DeadLetter.Core.Save;
@@ -108,8 +109,8 @@ namespace DeadLetter.Core.Tests
         // ---- Respawn and continue anywhere in the chapter ------------------------------------------------------------------
         /// <summary>
         /// He walks into DL-06 under DL-05's <c>hatch</c> and the respawn puts him back in DL-05, in region 2's lane (#26's
-        /// finding: a DL-06 simulation respawned him at hatch outside its lane), where he walks on, and the motor back on
-        /// DL-05's tuning.
+        /// finding: a DL-06 simulation respawned him at hatch outside its lane), where he walks on. The motor runs on the
+        /// chapter's one tuning throughout; DL-06's levers carry their own step-in speed (M10).
         /// </summary>
         [Fact]
         public void ARespawnAtAnotherScenesCheckpoint_LandsInThatSceneAndItsLane()
@@ -122,7 +123,8 @@ namespace DeadLetter.Core.Tests
             Until(s, Right, x => x.Current.Id == "DL-06");
             Assert.Equal(3, s.Region);
             Assert.Equal(3, s.Lane.Region);
-            Assert.Equal(Dl06Scene.LeverStepSpeed, s.Config.StepInSpeed);                       // DL-06's tuning (M10)
+            Assert.Equal(MotorConfig.Prototype().StepInSpeed, s.Config.StepInSpeed);           // one tuning for the chapter
+            Assert.Equal(Station.LeverStepInSpeed, s.Graph.Get<PointsLever>("dl06.stopLever").Station.StepInSpeed);   // the lever's own (M10)
             Assert.Equal("hatch", s.Checkpoints.Current.Name);
 
             changes.Clear();
@@ -132,7 +134,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(ChapterDefs.PrologueCheckpoints.Get("hatch").X, s.X, 12);
             Assert.Equal(2, s.Region);
             Assert.Equal(2, s.Lane.Region);                                                    // region 2's lane, not DL-06's
-            Assert.Equal(MotorConfig.Prototype().StepInSpeed, s.Config.StepInSpeed);           // DL-06's tuning reverted
+            Assert.Equal(MotorConfig.Prototype().StepInSpeed, s.Config.StepInSpeed);           // nothing to revert
             Assert.Equal(ChapterDefs.PrologueId + " (region 2)", s.Lane.Table.Name);          // DL-02 to DL-05's tables, joined
             double x0 = s.X;
             for (int i = 0; i < 30; i++) s.Step(Left);
@@ -170,6 +172,117 @@ namespace DeadLetter.Core.Tests
             var fresh = new ChapterSim(ChapterDefs.Prologue());
             fresh.Begin("weighroom");
             Assert.Equal(17.4, fresh.Graph.Get<CarriedItem>("dl02.box").X);                    // derived: the box at home
+        }
+
+        /// <summary>
+        /// Continue at every checkpoint the prologue places (#31 review): each of DL-01 to DL-06's lands him in its own scene,
+        /// region and lane; each of DL-07 to DL-11's (placed in the table, owned by scenes this chapter lacks) is refused,
+        /// with nothing changed here or in the slot, where it used to return true with him exited and the lane on region 1.
+        /// </summary>
+        [Fact]
+        public void Continue_AtEveryPlacedCheckpoint_LandsInItsScene_AndRefusesTheRowsOfScenesNotInTheChapter()
+        {
+            int continued = 0, refused = 0;
+            foreach (var cp in ChapterDefs.PrologueCheckpoints.All)
+            {
+                var store = new MemorySaveStore();
+                store.Save(0, new SaveModel { Checkpoint = cp.Name, Scene = ChapterDefs.PrologueId, Flags = { StoryFlags.Curio("cot") } });
+                var s = new ChapterSim(ChapterDefs.Prologue(), store: store);
+                bool ours = s.Def.Scene(cp.Scene) != null;
+                Assert.Equal(ours, s.CanContinueAt(cp.Name));
+                if (ours)
+                {
+                    Assert.True(s.Continue(), cp.Name);
+                    Assert.Equal(cp.Scene, s.Current.Id);
+                    Assert.Equal(cp.Name, s.Checkpoints.Current.Name);
+                    Assert.Equal(cp.X, s.X, 12);
+                    Assert.Equal(cp.Y, s.Y, 12);
+                    Assert.Equal(cp.Region, s.Region);
+                    Assert.Equal(cp.Region, s.Lane.Region);
+                    Assert.False(s.Exited, cp.Name);
+                    Assert.True(s.Checkpoints.Flags.Has(StoryFlags.Curio("cot")));                // the slot's game
+                    continued++;
+                    continue;
+                }
+
+                // Refused over a chapter already in play: its game, its world and the slot stay as they were.
+                s.Begin("hatch");                                                               // adopts the slot's game once
+                s.Checkpoints.SetFlag(StoryFlags.Curio("mug"));                                 // played on since (a flag is saved at once)
+                for (int i = 0; i < 20; i++) s.Step(Right);
+                store.Save(0, new SaveModel { Checkpoint = cp.Name, Scene = ChapterDefs.PrologueId });   // and the slot now at the row
+                var slot = (byte[])store.Slots[0].Clone();
+                int writes = store.Writes;
+                double x = s.X, clock = s.Clock;
+                long steps = s.Steps;
+                var scene = s.Current;
+                Assert.False(s.Continue(), cp.Name);
+                Assert.Equal(x, s.X);
+                Assert.Equal(clock, s.Clock);
+                Assert.Equal(steps, s.Steps);
+                Assert.Same(scene, s.Current);
+                Assert.Equal("hatch", s.Checkpoints.Current.Name);
+                Assert.Equal(2, s.Region);
+                Assert.Equal(2, s.Lane.Region);
+                Assert.True(s.Checkpoints.Flags.Has(StoryFlags.Curio("mug")), cp.Name);         // the slot's game was not loaded over it
+                Assert.Equal(slot, store.Slots[0]);
+                Assert.Equal(writes, store.Writes);
+                Assert.Throws<ArgumentException>(() => s.Begin(cp.Name));
+                Assert.Equal(slot, store.Slots[0]);
+                refused++;
+            }
+            Assert.Equal(11, continued);                                                        // start … scanned
+            Assert.Equal(11, refused);                                                          // landing … forwarded
+        }
+
+        /// <summary>A respawn due at a checkpoint none of the chapter's scenes owns is refused before anything reloads (#31 review).</summary>
+        [Fact]
+        public void Respawn_AtACheckpointOfASceneNotInTheChapter_Throws_AndChangesNothing()
+        {
+            var s = new ChapterSim(ChapterDefs.Prologue());
+            s.Begin("scanned");
+            for (int i = 0; i < 10; i++) s.Step(Right);
+            Assert.True(s.Checkpoints.Reach("landing"));                                        // DL-07's: placed, not ours
+            double x = s.X;
+            int region = s.Region, lane = s.Lane.Region;
+            var scene = s.Current;
+            Assert.Throws<InvalidOperationException>(() => s.Respawn());
+            Assert.Equal(x, s.X);
+            Assert.Equal(region, s.Region);
+            Assert.Equal(lane, s.Lane.Region);
+            Assert.Same(scene, s.Current);
+            Assert.Equal("landing", s.Checkpoints.Current.Name);
+        }
+
+        /// <summary>
+        /// Scene acts are typed (#31 review): their kind and phase are interned <see cref="ActId"/>s, the prototype's names,
+        /// reported by the chapter alongside the motor's <see cref="ChapterSim.ActPhase"/>, and matched without a string or
+        /// an allocation.
+        /// </summary>
+        [Fact]
+        public void SceneActs_AreInternedIds_ReportedAlongsideTheMotorsActPhase()
+        {
+            Assert.Equal(ActId.Of("quirk"), ActIds.Quirk);
+            Assert.Equal("dl06.scanner", Dl06ScanAct.Scanner.Name);
+            Assert.Equal(ActId.Of("3"), ActIds.Leg(3));
+            Assert.Equal(ActIds.Clip("CheckLabel"), ActId.Of("CheckLabel"));
+            Assert.True(default(ActId).IsNone);
+            Assert.Throws<ArgumentException>(() => ActId.Of(""));
+
+            var s = new ChapterSim(ChapterDefs.Prologue());
+            s.Begin("scanned");
+            Assert.True(s.SceneActKind.IsNone && s.SceneActPhase.IsNone);
+            s.StartAct(new HoldAct(Dl06ScanAct.Scanner, Dl06ScanAct.Check, 1.0));
+            s.Step(default);
+            Assert.Equal(Dl06ScanAct.Scanner, s.SceneActKind);
+            Assert.Equal(Dl06ScanAct.Check, s.SceneActPhase);
+            Assert.Equal(ActPhase.None, s.ActPhase);                                           // the motor's: none while a scene act holds him
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            int matched = 0;
+            for (int i = 0; i < 1000; i++) if (s.SceneActKind == Dl06ScanAct.Scanner && s.SceneActPhase == Dl06ScanAct.Check) matched++;
+            Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+            Assert.Equal(1000, matched);
+            for (int i = 0; i < 70 && !s.SceneActKind.IsNone; i++) s.Step(default);
+            Assert.True(s.SceneActKind.IsNone && s.SceneActPhase.IsNone);
         }
 
         /// <summary>The save semantics of #26 (a): NewGame is the only reset, Continue loads, Begin keeps the game it holds and writes nothing.</summary>

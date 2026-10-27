@@ -19,7 +19,7 @@ namespace DeadLetter.Core.Hazards
         private readonly bool _grounded;
 
         public DeathAct(DeathProfile profile, double x, double y, double z, double yaw, int facing, bool grounded, double sinkRate, double yawRate)
-            : base("death", profile.Kind.ToString())
+            : base(ActIds.Death, PhaseOf(profile.Kind))
         {
             Profile = profile;
             X = x; Y = y; Z = z; Yaw = yaw;
@@ -44,6 +44,14 @@ namespace DeadLetter.Core.Hazards
             m.Place(x, y, facing);                                                              // the motor has no "let go of everything" (#28)
             sim.StartAct(new DeathAct(DeathProfile.Of(how), x, y, z, yaw, facing, grounded, sinkRate, sim.Config.YawRate));
         }
+
+        private static readonly ActId[] Phases =
+        {
+            ActId.Of(nameof(DeathKind.Crush)), ActId.Of(nameof(DeathKind.Shock)), ActId.Of(nameof(DeathKind.Grabbed)), ActId.Of(nameof(DeathKind.Fall)),
+        };
+
+        /// <summary>The act's phase for <paramref name="kind"/>: its name ("Crush").</summary>
+        public static ActId PhaseOf(DeathKind kind) => Phases[(int)kind];
 
         public DeathProfile Profile { get; }
         public override bool OwnsPose => true;

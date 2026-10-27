@@ -125,8 +125,9 @@ namespace DeadLetter.Core.Scenes.Dl03
                 && Math.Abs(tx - Dl03Scene.GateX) > 0.2 && tx < Dl03Scene.Exit2X;
             if (!onDeck && !floorOk)
             {
-                // Refused: no act. The prototype also stops him dead (game.vx = 0, L1821); the motor has no way to (#28).
-                input.UsePressed = false;
+                // Refused: no act; he stops dead and the step ends there (game.vx = 0, L1821; return, L1962).
+                input = MotorInput.None;
+                m.Stop();
                 sim.Cue(SoundWorried);
                 return;
             }
@@ -163,6 +164,8 @@ namespace DeadLetter.Core.Scenes.Dl03
     {
         /// <summary>SetDown events (L2283, L2285, L2286).</summary>
         public const double ReleaseFrame = 14, PatFrame = 21, DoneFrame = 35;
+        /// <summary>Its phases, the clip it plays (its kind is the weight's ID).</summary>
+        public static readonly ActId SetDownHigh = ActIds.Clip(ClipNames.SetDownHigh), SetDown = ActIds.Clip(ClipNames.SetDown);
 
         private readonly Dl03Weight _weight;
         private readonly Pushable _trolley;
@@ -171,7 +174,7 @@ namespace DeadLetter.Core.Scenes.Dl03
         private bool _fresh = true, _released, _patted;
 
         public Dl03SetDownAct(Dl03Weight weight, Pushable trolley, bool onDeck, double targetX, double x, double y, double yaw, int facing, double yawRate)
-            : base(weight.Id.Value, onDeck ? ClipNames.SetDownHigh : ClipNames.SetDown)
+            : base(ActId.Of(weight.Id), onDeck ? SetDownHigh : SetDown)
         {
             _weight = weight; _trolley = trolley; OnDeck = onDeck; _targetX = targetX; _facing = facing; _yawRate = yawRate;
             X = x; Y = y; Z = 0; Yaw = yaw;

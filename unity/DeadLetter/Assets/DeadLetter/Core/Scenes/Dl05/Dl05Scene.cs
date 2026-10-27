@@ -126,7 +126,6 @@ namespace DeadLetter.Core.Scenes.Dl05
         public const string SeenBodyGrab = "bodyGrab", SeenLabel = "label5";
 
         private Pushable _drum, _body;
-        private IPushable[] _faces = Array.Empty<IPushable>();
         private CheckpointService _save;
         private int _bodyGrabSeen, _labelSeen;                                         // handles in _save.Seen
         private ActPhase _lastPhase;
@@ -148,10 +147,6 @@ namespace DeadLetter.Core.Scenes.Dl05
             _labelSeen = _save.Seen.Resolve(SeenLabel);
             _drum = sim.Graph.Get<Pushable>("dl05.drum");
             _body = sim.Graph.Get<Pushable>("dl05.body");
-            // The faces in the prototype's PUSHABLES order (drum, body, then the twins, L4273–L4295).
-            _faces = new IPushable[] { _drum, _body, TwinOf(sim, _drum), TwinOf(sim, _body) };
-            _drum.CanStandAt = stand => GripWins(sim, _drum, stand);
-            _body.CanStandAt = stand => GripWins(sim, _body, stand);
             _patAt = double.NaN;                     // nothing kills here, so no timeout is pending across a rebuilt world
             _lastPhase = ActPhase.None;
         }
@@ -169,7 +164,7 @@ namespace DeadLetter.Core.Scenes.Dl05
                 && !BodyGrabbed)
             {
                 _save.MarkSeen(SeenBodyGrab);
-                sim.StartAct(new Dl05HesitateAct(_body.Id.Value, HesitateSeconds, m.X, m.Y, m.Z, m.Yaw, m.Facing, sim.Config.YawRate));
+                sim.StartAct(new Dl05HesitateAct(ActId.Of(_body.Id), HesitateSeconds, m.X, m.Y, m.Z, m.Yaw, m.Facing, sim.Config.YawRate));
             }
             _lastPhase = phase;
             // Past REGION3_X he is in region 3 (L2042, free movement only).
@@ -202,38 +197,6 @@ namespace DeadLetter.Core.Scenes.Dl05
             }
         }
 
-        /// <summary>
-        /// The prototype's push branch takes the nearest grip in reach, whichever way he faces (<c>nearUse</c>, L4251–L4255:
-        /// <c>d &lt; best.d</c> in <c>PUSHABLES</c> order). U-11's resolver ranks targets in front of him first (#28, M7): at
-        /// #10227, facing left between the body's grip 0.30 ahead and the drum's 0.15 behind, it takes the body. So each face
-        /// here is available only while it is the nearest grip (<see cref="Pushable.CanStandAt"/> gets the asking face's
-        /// stand point). Reads state only; never asks a face's <c>IsAvailable</c> (which calls this).
-        /// </summary>
-        private bool GripWins(ChapterSim sim, Pushable asking, double stand)
-        {
-            double x = sim.Motor.X, y = sim.Motor.Y, bestD = double.PositiveInfinity;
-            IPushable best = null;
-            for (int i = 0; i < _faces.Length; i++)
-            {
-                var f = _faces[i];
-                var b = Base(f);
-                if (b.State != PushableState.Free || Math.Abs(y - f.FloorY) >= 0.05) continue;               // state 'free'; L4254
-                if (!double.IsNaN(b.Params.MinRoom) && !(b.Max - b.X > b.Params.MinRoom)) continue;            // avail, L4281
-                double dx = x - (f.X - f.Side * f.Gap), d = Math.Abs(dx);
-                if (d < (dx * f.Side < 0 ? f.BackReach : f.ForwardReach) && d < bestD) { best = f; bestD = d; }
-            }
-            if (best == null || !ReferenceEquals(Base(best), asking)) return false;
-            return stand == asking.X - best.Side * asking.Gap;
-        }
-
-        private static Pushable Base(IPushable f) => f is PushTwin tw ? tw.Base : (Pushable)f;
-
-        private static IPushable TwinOf(ChapterSim sim, Pushable p)
-        {
-            foreach (var it in sim.Resolver.Registered) if (it is PushTwin tw && ReferenceEquals(tw.Base, p)) return tw;
-            throw new InvalidOperationException(p.Id + " has no twin registered.");
-        }
-
         private bool IsBody(IInteractable t) => ReferenceEquals(t, _body) || (t is PushTwin tw && ReferenceEquals(tw.Base, _body));
 
         private bool PatDue(ChapterSim sim) => !double.IsNaN(_patAt) && sim.Clock >= _patAt - 1e-9;
@@ -251,8 +214,11 @@ namespace DeadLetter.Core.Scenes.Dl05
         private readonly double _seconds, _yawRate;
         private readonly int _facing;
 
-        public Dl05HesitateAct(string kind, double seconds, double x, double y, double z, double yaw, int facing, double yawRate)
-            : base(kind, "Hesitate")
+        /// <summary>Its phase (its kind is the body's ID).</summary>
+        public static readonly ActId Hesitate = ActId.Of("Hesitate");
+
+        public Dl05HesitateAct(ActId kind, double seconds, double x, double y, double z, double yaw, int facing, double yawRate)
+            : base(kind, Hesitate)
         {
             _seconds = seconds; _facing = facing; _yawRate = yawRate;
             X = x; Y = y; Z = z; Yaw = yaw;

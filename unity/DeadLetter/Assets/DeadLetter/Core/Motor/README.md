@@ -57,5 +57,14 @@ Notes for parity with the prototype (golden-trace replay):
   `MotorConfig.ParityVelocityOffset`; the motor adds it back for the prototype's velocity thresholds.
 - The latch's Flinch is chained to its Pull (one act, crouched throughout); a time threshold in seconds compares the
   clip's seconds (`ActFrame.Time >= 1.6`), not frames, as the prototype's `actions.Flinch.time >= 1.6` does.
-- Known residual: DL-05's toy (L3606) turns, then spends a step in `in` with no depth before its clip; the port starts
-  the clip on the turn's step, as the crank (L1879).
+- A station that turns into the set with no depth starts its clip on the step he finishes turning, as the crank
+  (L1879); one whose profile says `ActProfile.StepAfterTurn` spends that step in `in` first and starts it on the next,
+  as DL-05's toy (L3606).
+- A station steps in and out at its own `Station.StepInSpeed` (`StationPose.StepInSpeed`) when it has one: the levers
+  and the pawl at 0.4 (L2916, L3306), the rest at `MotorConfig.StepInSpeed` 0.45 (L1845, L3615). The walk clip plays at
+  0.45 either way (L2917).
+- Back to the lane after an act that stepped off it (L4876) runs at the end of the step, after the player's update, so
+  on the step he lets go; Use lets go of a pushable keeping his speed (L1820 returns before `game.vx = 0`).
+- `D17Motor.Capture()` / `SetState(in MotorSnapshot)` read and set his free-movement state (x, y, z, vx, vy, facing,
+  yaw, grounded, crouched, jump timers): the hand-over of a moving D-17. `Place(x, y, facing, yaw)` puts him at rest;
+  `Stop()` is a rule's `game.vx = 0`.

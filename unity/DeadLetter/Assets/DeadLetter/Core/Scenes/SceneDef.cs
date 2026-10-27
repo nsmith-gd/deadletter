@@ -2,7 +2,6 @@ using System;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Lane;
 using DeadLetter.Core.Mechanisms;
-using DeadLetter.Core.Motor;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -47,11 +46,6 @@ namespace DeadLetter.Core.Scenes
         public Func<MechanismGraph, ILaneContributor[]> LaneContributors;
         /// <summary>Bespoke rules (triggers, follow-up acts, transits); null = none.</summary>
         public Func<SceneRules> Rules;
-        /// <summary>
-        /// The motor's tuning while he is in this scene (null = the chapter's): the fields where it differs from
-        /// <see cref="MotorConfig.Prototype"/> apply from the step he enters, e.g. DL-06's lever step-in speed (M10, #28).
-        /// </summary>
-        public Func<MotorConfig> Motor;
         /// <summary>Things he can use that are not mechanisms (a pushable's <c>PushTwin</c> face), registered after the scene's mechanisms; null = none.</summary>
         public Func<MechanismGraph, IInteractable[]> Interactables;
 

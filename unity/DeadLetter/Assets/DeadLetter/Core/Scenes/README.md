@@ -18,7 +18,8 @@ L8511–L8518), which interleaves scenes, but no mechanism reads another scene's
    (`LaneTable.Join`): each answers only on its own stretch, so it need not repeat its neighbours' parts.
 2. **Scene def** (`Scenes/Dl07/Dl07Scene.cs`, `Def()` with no parameters): `Id`, `Region`, `X0`/`X1` (in a region each
    scene starts where the one before ends), its mechanisms in step order, `Lane`, `LaneContributors`, `Interactables`,
-   `Rules`, and `Motor` only for a #28 tuning. **DL-07 shares DL-06's floor**: give it DL-06's span (`X0`/`X1` equal:
+   `Rules`. There is no per-scene motor tuning: a station that steps in at its own speed says so itself
+   (`Station.StepInSpeed`, as DL-06's levers and DL-08's pawl at 0.4). **DL-07 shares DL-06's floor**: give it DL-06's span (`X0`/`X1` equal:
    `ChapterDef` allows a scene on the same stretch) and only the mechanisms DL-06's def does not already build (the
    weights, line and levers are there once; a second `Dl06Scene.Floor(...)` would add them twice). Who holds him is
    then `ReturnToSender06.HasLeft` (state, L8141), not x.
@@ -28,19 +29,20 @@ L8511–L8518), which interleaves scenes, but no mechanism reads another scene's
    goes in the graph or in `sim.Shared<T>()` (DL-03/04's `RacksReveal`), taken in `OnBegin`; never in `Def(...)`.
    `PlayerPose` has no region: a mechanism under a gallery (DL-07's `game.upper`) checks it through its rules.
 4. **Acts and cues:** use the motor's acts where they match the prototype: `sim.Die(kind)`, `Motor.BeginStuck()`,
-   `Motor.PlayQuirk` only from inside #4 before the motor steps. A quirk started after the motor's step is
-   `SceneQuirk.Start` (a `QuirkAct`; the motor's runs a step long, #28). Cues are `CueId.Of("name")` in a static
-   field, raised with `sim.Cue(id, arg)`; nothing is formatted per step.
+   `Motor.PlayQuirk` only from inside #4 before the motor steps; `Motor.Stop()` is a rule's `game.vx = 0`. A scene act
+   (`SceneAct`) stands in where the motor still cannot (#28): `SceneQuirk.Start` for a quirk started after the motor's
+   step (a `QuirkAct`; the motor's runs a step long), a `QuirkAct` for DL-01's wake label (the motor's counts its start
+   step: two steps early), `HoldAct` for a hold a rule ends (DL-06's label check), `DeathAct` for a death he sinks in
+   (DL-07's sump). A scene act's kind and phase are `ActId`s (interned, as cues are) in static fields next to it, the
+   prototype's names; a view matches `sim.SceneActKind`/`SceneActPhase` alongside the motor's `ActPhase`. Cues are
+   `CueId.Of("name")` in a static field, raised with `sim.Cue(id, arg)`; nothing is formatted per step.
 5. **Checkpoints:** add the rows to `ChapterDefs.PrologueCheckpoints` (DL-07's are there already: `landing`, `gallery`),
-   then list the def in `ChapterDefs.Prologue()` in lane order.
+   then list the def in `ChapterDefs.Prologue()` in lane order. The chapter begins, continues and respawns only at a
+   row whose scene it has (`CanContinueAt`); a slot at another chapter's row is refused (`Continue()` false).
 6. **Trace tests:** a scene replay (`Dl07TraceTests`, `TraceReplay.Run` with the `SceneSim` test shim, from a rest
-   before the scene, `handover: true`), then extend `PrologueChapterTraceTests` to DL-07's last step: its act mapping,
-   its mechanisms over its steps, and the seam steps in `CurrentScene_IsTheSceneName_EveryStep...`. The chapter replay
-   is the proof; a per-scene window only localises a failure.
-
-## Known motor gaps kept as scene acts (#28)
-
-`QuirkAct` for quirks started after the motor's step (DL-03 Startle, DL-05 CheckLabel/Pat, DL-06 Startle/PeekDown/
-Proud) and for DL-01's wake label (the motor's quirk counts its start step in cancelAfter and the hold: two steps
-early); `HoldAct` for DL-06's label check (a motor act cannot be ended from outside); `Place` to stop him (M9) in
-`SceneQuirk.Stop`, DL-04's realisation and DL-06's check; `DeathAct` for a death he sinks in (DL-07's sump).
+   before the scene, `handover: true`: it hands over the recorded motor state), then a chapter probe:
+   `core-tests/ChapterTrace/Dl07ChapterProbe.cs` (an `IChapterTraceProbe`: its first step, its key acts and cues, its
+   act mapping, its mechanisms sampled each step and checked over its steps) and one line in
+   `ChapterTraceProbes.Prologue()`. `PrologueChapterTraceTests` then runs to the first step past DL-07 and derives the
+   window, the seams and the checkpoint order from the probes; nothing else in it changes. The chapter replay is the proof; a per-scene window only localises a failure. Nothing is
+   compensated: every replay is strict (#30).

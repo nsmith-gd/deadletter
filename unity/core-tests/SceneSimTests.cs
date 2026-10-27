@@ -260,20 +260,31 @@ namespace DeadLetter.Core.Tests
             Assert.Throws<ArgumentException>(() => new CheckpointTable(table.Order, table.Get("hall"), table.Get("start")));   // out of play order
         }
 
-        /// <summary>Each scene respawns at the checkpoint it was walked into under, the previous scene's (L8494).</summary>
+        /// <summary>
+        /// Each scene respawns at the checkpoint it was walked into under, the previous scene's (L8494): the chapter puts him
+        /// back in that scene. A one-scene simulation lacks that scene and refuses the respawn, before anything reloads (#31
+        /// review), where it used to place him outside its lane.
+        /// </summary>
         [Theory]
         [InlineData("DL-03", "room", 25.45, 13.2)]
         [InlineData("DL-04", "solved", 30.0, 29.95)]
         [InlineData("DL-05", "bay", 47.95, 47.1)]
-        public void Respawn_WorksAtThePreviousScenesCheckpoint(string scene, string cp, double x, double respawnX)
+        public void Respawn_AtThePreviousScenesCheckpoint_IsTheChapters_AOneSceneSimRefusesIt(string scene, string cp, double x, double respawnX)
         {
+            var c = new ChapterSim(ChapterDefs.Prologue());
+            c.BeginAt(cp, x, 0, 1, 2);
+            c.Respawn();
+            Assert.Equal(cp, c.Checkpoints.Current.Name);
+            Assert.Equal(respawnX, c.X, 12);
+            Assert.Equal(2, c.Region);
+            Assert.Equal(ChapterDefs.PrologueCheckpoints.SceneOf(cp), c.Current.Id);
+
             var def = scene == "DL-03" ? Dl03Scene.Def() : scene == "DL-04" ? Dl04Scene.Def() : Dl05Scene.Def();
             var s = new SceneSim(def);
             s.Handover(cp, x, 0);
-            s.Respawn();
+            Assert.Throws<InvalidOperationException>(() => s.Respawn());
+            Assert.Equal(x, s.X, 12);
             Assert.Equal(cp, s.Checkpoints.Current.Name);
-            Assert.Equal(respawnX, s.X, 12);
-            Assert.Equal(2, s.Region);
         }
     }
 }
