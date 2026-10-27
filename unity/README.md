@@ -122,11 +122,17 @@ Assets/DeadLetter/Core/
   Maths/        Vec2, Smooth (smoothstep, frame-rate-exact decay)
   Motor/        MotorConfig    every constant, with the index.html line it comes from
                 D17Motor       fixed-step state machine: walk/run/crouch, jump (coyote + buffer), mantle, mid-air
-                               catch, carry, push/pull, acts (lift, set down, place, grab, present, sit, use)
+                               catch, carry, push/pull, belt carry, ride (board, ride sync, alight), acts (lift, set
+                               down, place, grab, present, sit, use with chained clips/hops, hide, escorted, stuck,
+                               death, quirks such as CheckLabel and Flinch)
                 ClipTimings    d17.glb clip lengths + LOOP_FRAMES + the clip-frame events acts fire on
                 IMotorWorld    ground / ceiling / wall / ledge probes in the lane; BoxWorld = box implementation
                 MotorInput     one step's input (Move, Jump, Use, Run modifier, Crouch)
-  Interaction/  Contracts      ICarryable, IPlaceTarget, IPushable, IPresentTarget, ISeat, IUsable (U-10 implements)
+                MotorEvents    RespawnDue / Shake queries; README.md = integrating with a scene simulator
+  Mechanisms/   MotorSync      after the mechanisms: escort start, ride sync #9 (carriers and lifts)
+  Camera/       D17Framing     the rig input, push and label shot read from the motor
+  Interaction/  Contracts      ICarryable, IPlaceTarget, IPushable, IPresentTarget, ISeat, IHideSpot, IRide, IEscort,
+                               IUsable; stations answer the query (Offer → StationPose), acts answer ActStep (U-10 implements)
                 InteractionResolver, PlaceSearch
 Assets/DeadLetter/Runtime/
   Player/       D17Controller  MonoBehaviour: input → FixedTick (Update) → D17Motor; physics probes; transform + Animator
@@ -134,7 +140,8 @@ Assets/DeadLetter/Runtime/
   Input/        DeadLetter.inputactions  Gameplay map: Move, Jump, Crouch, Use, Run, Pause, Checkpoint
 ```
 
-Run the tests with `dotnet test unity/core-tests` (`D17MotorTests`, `InteractionTests`, `ClipTimingsTests`).
+Run the tests with `dotnet test unity/core-tests` (`D17MotorTests`, `InteractionTests`, `ClipTimingsTests`,
+`MotorActTests`, `RideAndLaneTests`).
 They check the prototype's numbers: jump apex and velocity, speeds, coyote and buffer windows, the mantle band
 (0.24 < h ≤ 0.62 standing, ≤ 0.72 caught mid-air), step-up, crouching under ceilings, the 56-frame climb, act
 event frames, the resolver's in-front rule, and that the same inputs give the same trace.

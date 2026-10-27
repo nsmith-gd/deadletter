@@ -1,13 +1,18 @@
 using System;
 using System.Collections.Generic;
 using DeadLetter.Core.Beings;
+using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Mechanisms;
+using DeadLetter.Core.Motor;
 using DeadLetter.Core.Save;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
 {
-    /// <summary>DL-14b's escort trolley (§4.16; L5897–L5900, L5917, L6127–L6134, L6352–L6421).</summary>
+    /// <summary>
+    /// DL-14b's escort trolley (§4.16; L5897–L5900, L5917, L6127–L6134, L6352–L6421). The escorted walk is the real motor's
+    /// act (<see cref="IEscort"/>): the rig starts it as the pipeline does, after the graph step.
+    /// </summary>
     public class EscortTrolleyTests
     {
         private const double Dt = Mech.Dt;
@@ -37,8 +42,10 @@ namespace DeadLetter.Core.Tests
             public readonly TestFigure F = new TestFigure();
             public readonly EscortTrolley T;
             public readonly MechanismGraph G;
+            /// <summary>The motor walks him while he is escorted; otherwise his pose is the fields below.</summary>
+            public readonly D17Motor M = Sim.Make(BoxWorld.Flat(200, 300));
             public double X = 250, Y, Z;
-            public bool Hiding;
+            public bool Hiding, Driven;
             public readonly List<MechanismEvent> Log = new List<MechanismEvent>();
 
             public Rig(string cp = "corridor", ulong seed = 0)
@@ -49,10 +56,29 @@ namespace DeadLetter.Core.Tests
                 G = Mech.Graph(cp, F, T);
             }
 
+            /// <summary>His x: the motor's while it walks him, else the field.</summary>
+            public double HeroX => Driven ? M.X : X;
+
             public void Step()
             {
                 S.BeginStep();
-                G.Step(Dt, new PlayerPose(X, Y, Z, hiding: Hiding));
+                if (Driven) { M.Step(MotorInput.None, Dt); G.Step(Dt, PlayerPose.Of(M)); }      // #4, then #6–#7
+                else G.Step(Dt, new PlayerPose(X, Y, Z, hiding: Hiding));
+                Log.AddRange(Mech.Events(G));
+                if (Driven && !M.IsEscorted) { Driven = false; X = M.X; }
+                if (T.WantsEscort && !M.IsEscorted)                                                // the pipeline's escort hook
+                {
+                    M.Place(X, 0);
+                    M.BeginEscort(T.Walk);
+                    Driven = true;
+                }
+            }
+
+            /// <summary>One step seen with someone else's pose (a restored copy follows the original's motor).</summary>
+            public void StepWith(in PlayerPose pose)
+            {
+                S.BeginStep();
+                G.Step(Dt, pose);
                 Log.AddRange(Mech.Events(G));
             }
 
@@ -111,25 +137,30 @@ namespace DeadLetter.Core.Tests
             Assert.True(r.Entered(EscortState.EscortHim));
             Assert.True(r.Emitted(EscortEvent.CaughtHim));
             Assert.True(r.T.HeroHeld);
-            Assert.Equal(271.0, r.T.HeroEscortX);
-            int hold = r.Until(() => r.T.HeroEscortX < 271.0, 100);
+            Assert.True(r.M.IsEscorted);                                       // the motor's escorted act (#22)
+            Assert.Equal(271.0, r.HeroX);
+            int hold = r.Until(() => r.HeroX < 271.0, 100);
             Assert.InRange(hold, 42, 43);                                      // he stands 0.7 s first
-            Assert.Equal(r.T.HeroEscortX + 0.75, r.T.X, 9);                    // then it is 0.75 behind him (it jumps there, L6132)
+            Assert.Equal(r.HeroX + 0.75, r.T.X, 9);                            // then it is 0.75 behind him (it jumps there, L6132)
+            Assert.Equal(-1, r.M.Facing);
+            Assert.Equal(ClipNames.Walk, r.M.Clip);
             int walked = 0;
             while (r.T.HeroHeld && walked++ < 2000)
             {
-                double h = r.T.HeroEscortX;
+                double h = r.HeroX;
                 r.Step();
                 if (r.T.HeroHeld)
                 {
-                    Assert.Equal(h - 0.8 * Dt, r.T.HeroEscortX, 9);
-                    Assert.InRange(r.T.X - r.T.HeroEscortX, 0.75 - 1e-9, 0.9 + 1e-9);
+                    Assert.Equal(h - 0.8 * Dt, r.HeroX, 9);
+                    Assert.InRange(r.T.X - r.HeroX, 0.75 - 1e-9, 0.9 + 1e-9);
                 }
             }
             Assert.InRange(walked, (int)(7.55 / 0.8 * 60) - 1, (int)(7.55 / 0.8 * 60) + 2);
             Assert.True(r.Emitted(EscortEvent.HimHome));
             Assert.True(r.Entered(EscortState.Stop));
-            Assert.InRange(r.T.HeroEscortX, 263.45, 263.46);                    // the act ends at ≤ 263.46 (L6133)
+            Assert.InRange(r.HeroX, 263.45, 263.46);                            // the act ends at ≤ 263.46 (L6133)
+            Assert.False(r.M.IsActing);
+            Assert.Equal(+1, r.M.Facing);                                      // then he faces +x
             r.X = 263.45;
             Assert.InRange(r.Until(() => r.T.State == EscortState.Patrol), 119, 120);   // 2 s
             Assert.Equal(1, r.T.Dir);
@@ -245,7 +276,28 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
-        public void SnapshotMidEscort_RestoresAndContinuesBitIdentically()
+        public void SnapshotMidPatrol_RestoresAndContinuesBitIdentically()
+        {
+            var a = new Rig { X = 250 };
+            a.Run(700);
+            var b = new Rig("sickbay");
+            b.Run(13);
+            b.G.Restore(Mech.Snapshot(a.G));
+            Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
+            for (int k = 0; k < 600; k++)
+            {
+                a.Step(); b.StepWith(new PlayerPose(a.X, a.Y, a.Z));
+                Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
+                Assert.Equal(Mech.Events(a.G).Count, Mech.Events(b.G).Count);
+            }
+        }
+
+        /// <summary>
+        /// A checkpoint taken mid-escort: the motor that walks him is not in the snapshot, so a reload must not start the
+        /// escort over (#25 review). The restored trolley has let him go and stops 2 s where it was, as a cut act does.
+        /// </summary>
+        [Fact]
+        public void SnapshotMidEscort_ReloadDoesNotRestartTheEscort_ItStops2sWhereItWas()
         {
             var a = new Rig { X = 250 };
             a.Run(700);
@@ -253,19 +305,27 @@ namespace DeadLetter.Core.Tests
             a.Until(() => a.T.HeroHeld, 10);
             a.Run(100);
             Assert.Equal(EscortState.EscortHim, a.T.State);
+            Assert.True(a.Driven);
 
-            var b = new Rig("sickbay");
+            var b = new Rig("sickbay") { X = a.M.X };                      // reloaded: he is placed where he stood
             b.Run(13);
             b.G.Restore(Mech.Snapshot(a.G));
-            Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
-            b.X = a.X;
-            for (int k = 0; k < 1200; k++)
+            Assert.False(b.T.HeroHeld);
+            Assert.False(b.T.WantsEscort);
+            Assert.Equal(EscortState.Stop, b.T.State);
+            Assert.Equal(a.T.X, b.T.X);
+            Assert.Equal(a.T.Dir, b.T.Dir);
+            b.Log.Clear();
+            for (int k = 0; k < 110; k++)
             {
-                a.Step(); b.Step();
-                Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
-                Assert.Equal(Mech.Events(a.G).Count, Mech.Events(b.G).Count);
+                b.Step();
+                Assert.False(b.Driven);                                        // the motor never begins an escort
+                Assert.False(b.M.IsEscorted);
             }
-            Assert.Contains(b.Log, e => e.Kind == MechanismEventKind.Event && e.Code == (int)EscortEvent.HimHome);
+            Assert.Equal(EscortState.Stop, b.T.State);
+            Assert.DoesNotContain(b.Log, e => e.Kind == MechanismEventKind.Event && e.Code == (int)EscortEvent.CaughtHim);
+            Assert.DoesNotContain(b.Log, e => e.Kind == MechanismEventKind.Event && e.Code == (int)EscortEvent.HimHome);
+            Assert.InRange(b.Until(() => b.T.State == EscortState.Patrol), 10, 11);   // B.stopFor 2 s (120 steps)
         }
 
         [Fact]

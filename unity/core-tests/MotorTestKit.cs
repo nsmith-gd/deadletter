@@ -77,8 +77,10 @@ namespace DeadLetter.Core.Tests
         public D17Motor Motor;
         public InteractionCategory Category => InteractionCategory.Item;
         public bool IsAvailable(in InteractionQuery q) => !Carried;
+        public IPlaceTarget PlacedIn;
         public void OnLifted() { Carried = true; LiftedAtStep = Motor != null ? (int)Motor.StepCount : 0; }
         public void OnSetDown(double x, double baseY) { Carried = false; X = x; BaseY = baseY; }
+        public void OnPlaced(IPlaceTarget target) { Carried = false; PlacedIn = target; }
     }
 
     internal sealed class TestPushable : IPushable
@@ -87,6 +89,7 @@ namespace DeadLetter.Core.Tests
         public int Side { get; set; } = 1;
         public double Gap { get; set; } = 0.6;
         public double Speed { get; set; } = 0.4;
+        public double Accel { get; set; } = 1.4;
         public double Min { get; set; }
         public double Max { get; set; }
         public double FloorY { get; set; }
@@ -95,6 +98,7 @@ namespace DeadLetter.Core.Tests
         public double BackReach { get; set; } = 0.34;
         public bool TipsIntoPit { get; set; }
         public bool HasDetents { get; set; }
+        public bool LetGoAtMax { get; set; } = true;
         public bool Released, Tipped, Ended, Shoved, AtLip;
         public InteractionCategory Category => InteractionCategory.Push;
         public bool IsAvailable(in InteractionQuery q) => true;
@@ -105,15 +109,21 @@ namespace DeadLetter.Core.Tests
         public void OnTravelEnd() { Ended = true; }
     }
 
+    /// <summary>A station at a fixed stand point answering within |x − StandX| &lt; Reach (Offer is the U-11 review's shape).</summary>
     internal class TestStation : IStation
     {
         public double StandX { get; set; }
         public double Reach { get; set; } = 0.3;
         public double StandZ { get; set; }
         public int Face { get; set; } = 1;
-        public double AnchorX => StandX;
+        public bool Open { get; set; } = true;
         public InteractionCategory Category { get; set; } = InteractionCategory.Fixed;
-        public bool IsAvailable(in InteractionQuery q) => true;
+        public bool Offer(in InteractionQuery q, out StationPose pose)
+        {
+            pose = new StationPose(StandX, Face, StandZ);
+            return Open && Math.Abs(q.X - StandX) < Reach;
+        }
+        public bool IsAvailable(in InteractionQuery q) => Offer(q, out _);
     }
 
     internal sealed class TestPresent : TestStation, IPresentTarget
@@ -132,13 +142,26 @@ namespace DeadLetter.Core.Tests
     internal sealed class TestLever : TestStation, IUsable
     {
         public ActProfile Profile { get; set; } = new ActProfile("LeverPull", turnIntoSet: true);
+        /// <summary>Asked again at the end of step-in; null = <see cref="Profile"/>.</summary>
+        public Func<ActProfile> ProfileAtStepIn { get; set; }
+        public int ProfileAsks;
+        /// <summary>Optional: answers frames instead of the lever rule (chains, hops).</summary>
+        public Func<ActFrame, ActStep> Answer { get; set; }
         public int ThrownCount;
         public double LastFrame;
-        public bool OnActFrame(in ActFrame f)
+        public readonly List<(string clip, int part, double frame)> Frames = new List<(string, int, double)>();
+        public ActProfile ProfileFor(in InteractionQuery q)
+        {
+            ProfileAsks++;
+            return ProfileAsks > 1 && ProfileAtStepIn != null ? ProfileAtStepIn() : Profile;
+        }
+        public ActStep OnActFrame(in ActFrame f)
         {
             LastFrame = f.Frame;
+            Frames.Add((f.Clip, f.Part, f.Frame));
+            if (Answer != null) return Answer(f);
             if (f.Crossed(ClipTimings.LeverEvents.Throw)) ThrownCount++;
-            return ClipClock.Reached(f.Frame, ClipTimings.LeverEvents.Out);
+            return ActStep.DoneIf(ClipClock.Reached(f.Frame, ClipTimings.LeverEvents.Out));
         }
     }
 }

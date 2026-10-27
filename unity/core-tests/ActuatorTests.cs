@@ -557,8 +557,8 @@ namespace DeadLetter.Core.Tests
         public void ServiceDoor_FourStrokesLiftIt1_45m_L4567_L4570()
         {
             var (g, crank, door) = Dl10();
-            Assert.Equal(54 + 72.45, crank.StandX, 12);                 // UO.crankStand
-            Assert.Equal(1, crank.Face);
+            Assert.Equal(54 + 72.45, crank.Station.StandX, 12);         // UO.crankStand
+            Assert.Equal(1, crank.Station.Face);
             var strokes = new List<double>();
             int steps = Mech.PlayAct(g, crank, onStep: (k, f) => { if (Mech.Emitted(g, "dl10.serviceCrank", CrankEvent.Stroke)) strokes.Add(door.Position); });
             Assert.Equal(240, steps);                                   // 4 × 24 frames at 0.4 frames a step

@@ -26,7 +26,7 @@ namespace DeadLetter.Core.Mechanisms.Bridges
         /// <summary>The duct's splash: noise of <see cref="TippingBridgeParams.NoiseLevel"/> at the pit's middle for the White, unless the bell holds it (L4855). Value = level, Index = 0.</summary>
         Splash,
         /// <summary>
-        /// He is in the pit with no bridge and not in an act: the cart's trench is too deep to climb (<c>trenchStuck</c>:
+        /// He stands in the pit (grounded) with no bridge and not in an act: the cart's trench is too deep to climb (<c>trenchStuck</c>:
         /// flinch, respawn after 2.0 s; L4764–L4766, L4519–L4523); the duct's water turns him back (<c>waterFlinch</c> to
         /// Value = back x; L4860–L4862). Emitted each step the condition holds; the act it starts is the motor's.
         /// </summary>
@@ -37,6 +37,8 @@ namespace DeadLetter.Core.Mechanisms.Bridges
     {
         /// <summary>Push: start x (= Min), grip gap, speed, back reach (L4274, L4285).</summary>
         public double StartX, Gap, Speed = 0.55, BackReach = 0.34, ForwardReach = 0.34;
+        /// <summary>How fast he gets it going (<c>acc = 1.4</c>, L4690).</summary>
+        public double Accel = 1.4;
         public int Side = +1;
         /// <summary>Half-length and height of the thing.</summary>
         public double Half, Height;
@@ -117,6 +119,8 @@ namespace DeadLetter.Core.Mechanisms.Bridges
         public int Side => _p.Side;
         public double Gap => _p.Gap;
         public double Speed => _p.Speed;
+        /// <summary>Chapter 1 pushables, 1.4 m/s² (L4690).</summary>
+        public double Accel => _p.Accel;
         public double Min => _p.StartX;
         public double Max => _p.MaxX;
         public double FloorY => 0;
@@ -125,6 +129,7 @@ namespace DeadLetter.Core.Mechanisms.Bridges
         public double BackReach => _p.BackReach;
         public bool TipsIntoPit => true;
         public bool HasDetents => false;
+        public bool LetGoAtMax => false;
 
         /// <summary>Only while on the floor (<c>p.state().state !== 'free'</c> skips it, L4296).</summary>
         public bool IsAvailable(in InteractionQuery q) => State == TippingBridgeState.Free || State == TippingBridgeState.AtLip;
@@ -182,7 +187,7 @@ namespace DeadLetter.Core.Mechanisms.Bridges
             }
 
             var pl = ctx.Player;
-            if (State != TippingBridgeState.Bridge && !pl.Busy && pl.X > _p.StrandFrom && pl.X < _p.StrandTo && pl.Y < _p.StrandBelowY)   // L4764, L4860
+            if (State != TippingBridgeState.Bridge && !pl.Busy && pl.Grounded && pl.X > _p.StrandFrom && pl.X < _p.StrandTo && pl.Y < _p.StrandBelowY)   // L4764, L4860 (both test game.grounded)
                 Emit(ctx, (int)TippingBridgeEvent.Stranded, 0, _p.BackX);
         }
 

@@ -66,10 +66,10 @@ namespace DeadLetter.Core.Mechanisms.Drives
 
         protected override bool CanUse(in InteractionQuery q) => true;                    // L5291, L5990
 
-        public override bool OnActFrame(in ActFrame f)
+        public override ActStep OnActFrame(in ActFrame f)
         {
             _act.Receive(f);
-            return f.Time > _p.EndAt + 1e-9;                                                // a.t > 1.5, L5375
+            return ActStep.DoneIf(f.Time > _p.EndAt + 1e-9);                                               // a.t > 1.5, L5375
         }
 
         public override void Step(in StepContext ctx)

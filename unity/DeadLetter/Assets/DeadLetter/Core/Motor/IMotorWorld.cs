@@ -36,6 +36,17 @@ namespace DeadLetter.Core.Motor
         bool LedgeAhead(double x, double y, int dir, double range, double stepUp, out Ledge ledge);
     }
 
+    /// <summary>
+    /// Optional, on an <see cref="IMotorWorld"/>: ground that carries what stands on it (DL-08's returns belt,
+    /// <c>beltCarry4</c>, L3439, applied in <c>updatePlayer</c>, L1998–L2006). The motor asks it while he walks free and
+    /// is grounded, and adds <c>CarryAt·dt</c> to his x unless the surface there is a step up (L2006).
+    /// </summary>
+    public interface ILaneConveyor
+    {
+        /// <summary>Lane speed, m/s (+x), of the ground under (x, y); 0 = none.</summary>
+        double CarryAt(double x, double y);
+    }
+
     /// <summary>A ledge found ahead: distance from his centre to its face, and its top.</summary>
     public readonly struct Ledge
     {
