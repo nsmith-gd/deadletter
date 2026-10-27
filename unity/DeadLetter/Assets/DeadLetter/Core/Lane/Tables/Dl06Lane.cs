@@ -26,6 +26,8 @@ namespace DeadLetter.Core.Lane.Tables
         public const double Off3 = 33;
         /// <summary><c>CORRIDOR_X0</c>, <c>REGION3_X</c>, <c>FLOOR3_X1</c> (L2457).</summary>
         public const double CorridorX0 = Off3 + 26.9, Region3X = Off3 + 27.3, Floor3X1 = Off3 + 36.4;
+        /// <summary><c>REGION4_X</c> (L3007): region 3 ends, over the heap.</summary>
+        public const double Region4X = Off3 + 47.75;
         /// <summary>Walls on the floor: <c>REGION3_X − 0.15</c>, <c>FLOOR3_X1 − 0.25</c> (L1759, L1765).</summary>
         public const double Left = Region3X - 0.15, Right = Floor3X1 - 0.25;
         /// <summary>The corridor's ceiling to <c>OFF3 + 30.0</c>, the sorting hall's beyond (L1629).</summary>

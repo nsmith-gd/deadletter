@@ -92,7 +92,7 @@ namespace DeadLetter.Core.Tests
                 Cradle cradle = null;
                 LoadPlate plate = null;
                 PlateDoor door = null;
-                r.Sim = TraceReplay.Run(t, Dl04Scene.Def(pending), r.Checkpoint, false, from, to, (p, sim) =>
+                r.Sim = TraceReplay.Run(t, Dl04Scene.Def().WithRules(() => new Dl04Rules { RacksDarkAtBegin = pending }), r.Checkpoint, false, from, to, (p, sim) =>
                 {
                     if (courier == null)
                     {
@@ -357,12 +357,9 @@ namespace DeadLetter.Core.Tests
         }
 
         // ---- Dump ---------------------------------------------------------------------------------------------------
-        /// <summary>Writes the window side by side as TSV when DL04_TRACE_DUMP names a file.</summary>
-        [Fact]
-        public void Dump()
+        /// <summary>Debugging aid, not a test: writes the window side by side as TSV to <paramref name="path"/> (call it from a scratch test or the debugger).</summary>
+        internal static void Dump(string path)
         {
-            var path = Environment.GetEnvironmentVariable("DL04_TRACE_DUMP");
-            if (string.IsNullOrEmpty(path)) return;
             var sb = new StringBuilder("i\tpx\tcx\tpy\tcy\tpz\tcz\tpvx\tcvx\tpyaw\tcyaw\tpg\tcg\tpact\tcact\tph\tch\tpcp\tccp\tpkx\tckx\tpks\tcks\tpka\tcka\tpbd\tcbd\tpbw\tcbw\tpclip\tcclip\tcues\tin\n");
             foreach (var w in Run().Rows)
             {

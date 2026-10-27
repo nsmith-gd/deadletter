@@ -15,6 +15,12 @@ namespace DeadLetter.Core.Hazards
         Fall,
     }
 
+    /// <summary>The motor's own <see cref="Motor.DeathKind"/> (#22: it has one with the same members).</summary>
+    public static class DeathKinds
+    {
+        public static Motor.DeathKind ToMotor(DeathKind how) => (Motor.DeathKind)(int)how;
+    }
+
     /// <summary>
     /// One kind of death as the prototype stages it (<c>DEATH</c>, L7421–L7424; <c>die</c>, L7429–L7442): the clip, how
     /// long it holds before the cut, the sparks and the shake. Presentation reads <see cref="Clip"/>, <see cref="Sparks"/>,

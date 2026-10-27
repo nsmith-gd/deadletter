@@ -257,12 +257,9 @@ namespace DeadLetter.Core.Tests
         }
 
         // ---- Dump ---------------------------------------------------------------------------------------------------
-        /// <summary>Writes the window side by side as TSV when DL05_TRACE_DUMP names a file.</summary>
-        [Fact]
-        public void Dump()
+        /// <summary>Debugging aid, not a test: writes the window side by side as TSV to <paramref name="path"/> (call it from a scratch test or the debugger).</summary>
+        internal static void Dump(string path)
         {
-            var path = Environment.GetEnvironmentVariable("DL05_TRACE_DUMP");
-            if (string.IsNullOrEmpty(path)) return;
             var t = Trace.Load(TraceFile);
             var sb = new StringBuilder("i\tpx\tcx\tpvx\tcvx\tpyaw\tcyaw\tpg\tcg\tpact\tcact\tph\tch\tpcp\tccp\tpdx\tcdx\tpbx\tcbx\tpw\tcw\tpr\tcr\tpn\tcn\tph5\tch5\tin\n");
             foreach (var w in Run().Rows)

@@ -277,7 +277,6 @@ namespace DeadLetter.Core.Tests
         [Fact]
         public void TheLeversStepInAtTheirOwn0_4_M10()
         {
-            Assert.Null(Dl06Scene.Def().Motor);
             var rows = Run().Rows;
             int clip = rows.FindIndex(w => CoreAct(w) == "dl06.stopLever:Clip");
             Assert.Equal(13494, rows[clip].P.I);
@@ -287,12 +286,9 @@ namespace DeadLetter.Core.Tests
         }
 
         // ---- Dump ---------------------------------------------------------------------------------------------------
-        /// <summary>Writes the window side by side as TSV when DL06_TRACE_DUMP names a file.</summary>
-        [Fact]
-        public void Dump()
+        /// <summary>Debugging aid, not a test: writes the window side by side as TSV to <paramref name="path"/> (call it from a scratch test or the debugger).</summary>
+        internal static void Dump(string path)
         {
-            var path = Environment.GetEnvironmentVariable("DL06_TRACE_DUMP");
-            if (string.IsNullOrEmpty(path)) return;
             var t = Trace.Load(TraceFile);
             var sb = new StringBuilder("i\tpx\tcx\tpz\tcz\tpvx\tcvx\tpyaw\tcyaw\tpact\tcact\tpcp\tccp\tpscan\tcscan\tpst\tcst\tpsl\tcsl\tppl\tcpl\tin\tpcr\tccr\n");
             foreach (var w in Run().Rows)

@@ -319,13 +319,10 @@ namespace DeadLetter.Core.Tests
         }
 
         // ---- Dump ---------------------------------------------------------------------------------------------------
-        /// <summary>Writes a window side by side as TSV when DL03_TRACE_DUMP names a file (DL03_TRACE_WINDOW=entry|room).</summary>
-        [Fact]
-        public void Dump()
+        /// <summary>Debugging aid, not a test: writes a window side by side as TSV to <paramref name="path"/> (entry: the entry window, else the room's; call it from a scratch test or the debugger).</summary>
+        internal static void Dump(string path, bool entry = false)
         {
-            var path = Environment.GetEnvironmentVariable("DL03_TRACE_DUMP");
-            if (string.IsNullOrEmpty(path)) return;
-            var r = Environment.GetEnvironmentVariable("DL03_TRACE_WINDOW") == "entry" ? Entry() : Room();
+            var r = entry ? Entry() : Room();
             var sb = new StringBuilder("i\tpx\tcx\tpy\tcy\tpvx\tcvx\tpg\tcg\tpact\tcact\tph\tch\tpcp\tccp\tptx\tctx\tpws\tcws\tpld\tcld\tpgy\tcgy\tpyaw\tcyaw\tin\n");
             foreach (var w in r.Rows)
             {

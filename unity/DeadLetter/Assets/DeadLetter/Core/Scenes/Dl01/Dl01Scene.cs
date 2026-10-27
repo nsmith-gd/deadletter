@@ -1,4 +1,5 @@
 using System;
+using DeadLetter.Core.Cues;
 using DeadLetter.Core.Lane.Tables;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Actuators;
@@ -33,9 +34,10 @@ namespace DeadLetter.Core.Scenes.Dl01
         {
             Id = Id,
             Title = "The Wake",
-            X0 = Dl01Lane.Left, X1 = Dl01Lane.Right,                                   // region 1 (§0.3)
+            // Region 1 (§0.3), all of it DL-01's (sceneName, L8137): from the depot's wall to where the passage comes out,
+            // EMERGE_X, where the transit switches to region 2. Its checkpoints: start, shutter, hall, door (L7976–L7979).
+            X0 = Dl01Lane.Left, X1 = EmergeX,
             Region = Dl01Lane.Region,
-            Checkpoints = PrologueCheckpoints.Of(Id),                                   // start, shutter, hall, door (L7976–L7979)
             // Step order = the prototype's: the relay (#5, L8511), updateMechanisms (#6: the shutter; the latch releases
             // and the crank turns inside updatePlayer, L1870–L1890), then updateCh1 (#7: the cart falls, L4756).
             Mechanisms = new[]
@@ -64,8 +66,8 @@ namespace DeadLetter.Core.Scenes.Dl01
 
     /// <summary>
     /// DL-01's bespoke rules: the label beat when play starts (<c>startPlay</c>, L8104–L8110), the checkpoints (L1677,
-    /// L2065, L1890), the crank's wait to turn back and Proud (L1890–L1893), the trench
-    /// (L4764–L4766, L4519–L4523) and the passage into DL-02 (L2040–L2042, L2129–L2157).
+    /// L2065, L1890), the crank's wait to turn back and Proud (L1890–L1893), the trench (the motor's stuck act,
+    /// L4764–L4766, L4519–L4523) and the passage into DL-02 (L2040–L2042, L2129–L2157).
     /// </summary>
     public sealed class Dl01Rules : SceneRules
     {
@@ -77,67 +79,72 @@ namespace DeadLetter.Core.Scenes.Dl01
         /// <summary>The label beat's seen moment (<c>seen.has('labelWake')</c>, L8107): saved, so no replay or continue plays it again.</summary>
         public const string LabelWake = "labelWake";
 
+        public static readonly CueId VoiceDispatchItem = CueId.Of("voice:dispatch_item"), MusicHall = CueId.Of("music:hall"),
+            MusicThreshold = CueId.Of("music:threshold");
+
         private CrankActuator _crank;
         private PulseSequencer _relay;
         private bool _heardHall;                                                                   // per life: resetWorld, L8090
 
-        public override void OnBegin(SceneSim sim, string checkpoint, bool fromOpening)
+        public override void OnBegin(ChapterSim sim, string checkpoint, bool fromOpening)
         {
             _crank = sim.Graph.Get<CrankActuator>("dl01.crank");
             _relay = sim.Graph.Get<PulseSequencer>("dl01.relay");
             _heardHall = checkpoint != "start" && checkpoint != "shutter";                         // L8090
         }
 
-        public override void OnOpeningEnd(SceneSim sim)
+        public override void OnOpeningEnd(ChapterSim sim)
         {
             // The step that ends the opening is the first of play (f >= OPENING_FRAMES → startPlay, then updatePlayer and
             // the relay in the same step, L8506–L8516): the relay's clock reaches 480 on it.
-            _relay.SetClock(Dl01Scene.OpeningFrames - 24 * SceneSim.StepSeconds);
+            _relay.SetClock(Dl01Scene.OpeningFrames - 24 * ChapterSim.StepSeconds);
             if (sim.Checkpoints.Current.Name == "start" && !sim.Checkpoints.HasSeen(LabelWake))      // L8107
             {
                 sim.Checkpoints.MarkSeen(LabelWake);                                                  // L8108
-                sim.StartAct(new QuirkAct("CheckLabel", QuirkAct.ClipSeconds("CheckLabel"), cancel: false, startClock: sim.Clock,
+                // A scene act (#28): the motor's quirk counts the step it starts on in its own time (cancelAfter, the hold),
+                // where the prototype compares the game clock with the clock at the start, so it ends two steps early (#2167).
+                sim.StartAct(new QuirkAct(ClipNames.CheckLabel, QuirkAct.ClipSeconds(ClipNames.CheckLabel), cancel: false, startClock: sim.Clock,
                     cancelAfter: LabelCancelAfter, holdFor: LabelHold, startsThisStep: true));
-                sim.Cue("voice:dispatch_item");                                                       // L8109
+                sim.Cue(VoiceDispatchItem);                                                           // L8109
             }
         }
 
-        public override void AfterMotor(SceneSim sim, bool freeStep)
+        public override void AfterMotor(ChapterSim sim, bool freeStep)
         {
             if (!freeStep || sim.Region != Dl01Lane.Region) return;
             var m = sim.Motor;
             if (_crank.Position >= 1 && m.X > Dl01Scene.DoorX0 + 0.15 && m.X < Dl01Scene.DoorX1 - 0.15 && m.Grounded)   // L2040
             {
                 var legs = Dl01Scene.TransitLegs();
-                sim.StartAct(new TransitAct("transit", legs, Dl01Scene.TransitSpeed, m.X, m.Y, m.Z,
-                    TransitAct.FirstTurn(m.Yaw, legs[0], sim.Config.YawRate, SceneSim.StepSeconds), sim.Config.YawRate,
+                sim.StartAct(new TransitAct(ActIds.Transit, legs, Dl01Scene.TransitSpeed, m.X, m.Y, m.Z,
+                    TransitAct.FirstTurn(m.Yaw, legs[0], sim.Config.YawRate, ChapterSim.StepSeconds), sim.Config.YawRate,
                     OnTransitLeg, OnTransitEnd).ReturnToLaneFrom(2, sim.Config.StepInSpeed));                  // L4876
                 return;
             }
             if (m.X > Dl01Scene.HallX && m.Y > -0.05) sim.Checkpoints.Reach("hall");                 // L2065
-            if (m.X > Dl01Scene.HallCueX && !_heardHall && _crank.Position < 1) { _heardHall = true; sim.Cue("music:hall"); }   // L2066
+            if (m.X > Dl01Scene.HallCueX && !_heardHall && _crank.Position < 1) { _heardHall = true; sim.Cue(MusicHall); }   // L2066
         }
 
-        public override void AfterGraph(SceneSim sim)
+        public override void AfterGraph(ChapterSim sim)
         {
             var log = sim.Graph.Log;
             if (log.Has("dl01.latch", MechanismEventKind.State, (int)LatchState.Released)) sim.Checkpoints.Reach("shutter");   // release(), L1677
             if (log.Has("dl01.crank", MechanismEventKind.State, (int)CrankState.Done))                                            // L1889–L1890
             {
                 sim.Checkpoints.Reach("door");
-                sim.Cue("music:threshold");
+                sim.Cue(MusicThreshold);
                 sim.StartAct(new CrankDoneAct());
             }
-            if (sim.Act == null && log.Has("dl01.cart", MechanismEventKind.Event, (int)TippingBridgeEvent.Stranded))             // L4764
-                sim.StartAct(new TrenchStuckAct(sim.X, sim.Y, sim.Z, sim.Yaw));
+            // In the trench with no bridge (trenchStuck, L4764–L4766): he stops, flinches, and the fade brings the respawn.
+            if (sim.Act == null && log.Has("dl01.cart", MechanismEventKind.Event, (int)TippingBridgeEvent.Stranded)) sim.Motor.BeginStuck();
         }
 
-        private static void OnTransitLeg(SceneSim sim, int stage)
+        private static void OnTransitLeg(ChapterSim sim, int stage)
         {
-            if (stage == 2) { sim.SetRegion(2); sim.Exit(); }                                     // region 2: DL-02 (L2152, L8139)
+            if (stage == 2) sim.SetRegion(2);                                                      // region 2: DL-02 (L2152, L8139)
         }
 
-        private static void OnTransitEnd(SceneSim sim)
+        private static void OnTransitEnd(ChapterSim sim)
         {
             sim.Checkpoints.Reach("room");                                                         // L2145
             sim.Motor.Place(Dl01Scene.EmergeX, 0, 1);
@@ -146,49 +153,30 @@ namespace DeadLetter.Core.Scenes.Dl01
 
     /// <summary>
     /// After the fifth stroke (phase <c>done</c>, L1890–L1893): he stands until he has turned back from the wheel (yaw
-    /// within 0.1 of ±π/2), then plays Proud, a quirk he can walk out of.
+    /// within 0.1 of ±π/2), then plays Proud, a quirk he can walk out of: the motor's, started at #4 before the motor
+    /// steps, as the prototype's is inside <c>updatePlayer</c>. The wait itself is a scene act: the motor's crank act
+    /// ends with the fifth stroke and has no "turn back" phase (#28).
     /// </summary>
     public sealed class CrankDoneAct : SceneAct
     {
         /// <summary>|yaw − π/2 · facing| &lt; 0.1, L1892.</summary>
         public const double TurnedBack = 0.1;
 
-        public CrankDoneAct() : base("dl01.crank", "Done") { }
+        /// <summary>Its kind (the crank) and phase.</summary>
+        public static readonly ActId Crank = ActId.Of("dl01.crank"), Done = ActId.Of("Done");
 
-        public override bool Step(SceneSim sim, in MotorInput input, double dt)
+        public CrankDoneAct() : base(Crank, Done) { }
+
+        public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
             T += dt;
             var m = sim.Motor;
             if (Math.Abs(m.Yaw - Math.PI / 2 * m.Facing) < TurnedBack)
             {
-                Next = new QuirkAct("Proud", QuirkAct.ClipSeconds("Proud"), cancel: true, startClock: sim.Clock);   // playQuirk('Proud'), L1893
+                m.PlayQuirk(ClipNames.Proud, cancel: true);                                         // playQuirk('Proud'), L1893
                 return false;
             }
             return true;
-        }
-    }
-
-    /// <summary>
-    /// In the trench with no bridge (<c>trenchStuck</c>, L4764–L4766, L4519–L4523): he flinches after 0.2 s and, after
-    /// 2.0 s, the respawn is set for 1.3 s later (<c>respawn</c>, L2997–L2999). He does not move meanwhile.
-    /// </summary>
-    public sealed class TrenchStuckAct : SceneAct
-    {
-        private bool _requested;
-
-        public TrenchStuckAct(double x, double y, double z, double yaw) : base("dl01.trench", "Stuck")
-        {
-            X = x; Y = y; Z = z; Yaw = yaw;
-        }
-
-        public override bool OwnsPose => true;
-
-        public override bool Step(SceneSim sim, in MotorInput input, double dt)
-        {
-            T += dt;
-            if (T > 0.2) Phase = "Flinch";
-            if (T > 2.0 && !_requested) { _requested = true; sim.RespawnAt = sim.Clock + 1.3; }
-            return true;                                                                            // until the respawn
         }
     }
 }
