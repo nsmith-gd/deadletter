@@ -196,9 +196,11 @@ namespace DeadLetter.Core.Tests
 
         // ---- #28 ------------------------------------------------------------------------------------------------------
 
-        private static D17Motor Pushing(TestPushable p, double x)
+        private static D17Motor Pushing(TestPushable p, double x, MotorConfig config = null)
         {
-            var m = With(BoxWorld.Flat(), x, 0, p);
+            var r = new InteractionResolver();
+            r.Register(p);
+            var m = Sim.Make(BoxWorld.Flat(), x, 0, r, config: config);
             m.Step(Sim.Use(), Dt);
             Assert.True(Sim.RunUntil(m, Sim.Move(0), mm => mm.Hold == HoldKind.Push, 600) > 0);
             return m;
@@ -269,7 +271,9 @@ namespace DeadLetter.Core.Tests
         public void M8_HeStepsBackToTheLaneOnTheStepHeLetsGo_L4876()
         {
             var p = new TestPushable { X = 1.6, Z = 0.35, Min = 0, Max = 10, LetGoAtMax = false };
-            var m = Pushing(p, 1.0);
+            var anywhere = MotorConfig.Prototype();
+            anywhere.ReturnsToLane = (w, x) => true;                                   // a BoxWorld has no region (#32: see MotorFollowUpTests)
+            var m = Pushing(p, 1.0, anywhere);
             Assert.Equal(0.35, m.Z, 12);
             Sim.Run(m, Sim.Move(1), 20);
             Assert.Equal(0.35, m.Z, 12);                                               // not while he holds it (game.hold !== 'push')

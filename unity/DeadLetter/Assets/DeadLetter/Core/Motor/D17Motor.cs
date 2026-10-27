@@ -86,7 +86,6 @@ namespace DeadLetter.Core.Motor
         // Holds
         private int _holdSide;
         private double _pushFrom, _shove;
-        private bool _atLip;
 
         private bool _hasYawOverride;
         private double _yawOverride;
@@ -210,17 +209,36 @@ namespace DeadLetter.Core.Motor
             SetState(s);
         }
 
-        /// <summary>His free-movement state now (<see cref="MotorSnapshot"/>): position, velocity, facing, yaw, grounded, crouched, the jump timers.</summary>
-        public MotorSnapshot Capture() => new MotorSnapshot
+        /// <summary>
+        /// True when <see cref="Capture"/> can describe him: moving free, with no act (a quirk, stuck and death included),
+        /// no mantle, no ride and nothing in hand. A snapshot cannot carry those, so capturing one would lose it.
+        /// </summary>
+        public bool CanCapture => !_mantling && !_act.Active && Ride == null && Hold == HoldKind.None;
+
+        /// <summary>
+        /// His free-movement state now (<see cref="MotorSnapshot"/>): position, velocity, facing, yaw, grounded, crouched,
+        /// the jump timers and the clip. Throws <see cref="InvalidOperationException"/> unless <see cref="CanCapture"/>:
+        /// an act, a hold, a mantle or a ride is not in the snapshot and would be dropped silently.
+        /// </summary>
+        public MotorSnapshot Capture()
         {
-            X = X, Y = Y, Z = Z, Vx = Vx, Vy = Vy, Facing = Facing, Yaw = Yaw, Grounded = Grounded, Crouched = Crouched,
-            Coyote = Coyote, JumpBuffer = JumpBuffer, LandTimer = LandTimer, PeakY = PeakY,
-        };
+            if (!CanCapture)
+                throw new InvalidOperationException("D17Motor.Capture: he is " + State + (Hold != HoldKind.None ? " holding " + Hold : "")
+                    + "; a snapshot holds free movement only (check CanCapture).");
+            return new MotorSnapshot
+            {
+                X = X, Y = Y, Z = Z, Vx = Vx, Vy = Vy, Facing = Facing, Yaw = Yaw, Grounded = Grounded, Crouched = Crouched,
+                Coyote = Coyote, JumpBuffer = JumpBuffer, LandTimer = LandTimer, PeakY = PeakY,
+                Clip = Clip, ClipTime = ClipTime, ClipTimeScale = ClipTimeScale, StepPhase = _lastStepPhase,
+            };
+        }
 
         /// <summary>
         /// Puts him in <paramref name="s"/> with nothing in hand: the hand-over of a D-17 in motion (running in from the
         /// previous scene, a replay's first step) where <see cref="Place"/> hands over one at rest. Clears holds, acts, the
-        /// mantle and the ride, as <see cref="Place"/> does; the clip is Idle until his next step picks his own.
+        /// mantle and the ride, as <see cref="Place"/> does. The clip is the snapshot's (<see cref="MotorSnapshot.Clip"/>,
+        /// at its time and speed, so a run keeps its phase); with none, Idle on the ground and JumpAir in the air (his next
+        /// step picks his own on the ground, and turns JumpAir into Fall where the prototype does, L2019).
         /// </summary>
         public void SetState(in MotorSnapshot s)
         {
@@ -231,9 +249,15 @@ namespace DeadLetter.Core.Motor
             Coyote = s.Coyote; JumpBuffer = s.JumpBuffer; LandTimer = s.LandTimer;
             PeakY = s.Grounded || double.IsNaN(s.PeakY) ? s.Y : s.PeakY;
             Hold = HoldKind.None; Carried = null; Pushed = null; CarryBlend = 0;
-            _mantling = false; _act.Reset(); _hasYawOverride = false; _shove = 0; _atLip = false;
+            _mantling = false; _act.Reset(); _hasYawOverride = false; _shove = 0;
             Ride = null; _rideToken = 0;
-            SetClip(ClipNames.Idle, 0, 1);
+            if (s.Clip != null)
+            {
+                SetClip(s.Clip, 0, s.ClipTimeScale, restart: true);
+                ClipTime = s.ClipTime;
+                _lastStepPhase = s.StepPhase;
+            }
+            else SetClip(s.Grounded ? ClipNames.Idle : ClipNames.JumpAir, 0, 1, restart: true);
             _events.Clear();
             _stepEvents = 0;
         }
@@ -271,9 +295,13 @@ namespace DeadLetter.Core.Motor
             else if (Ride != null) StepRide(input);
             else StepFree(input, move, dt);
 
-            // Back to the lane after an act that stepped off it (updateCh1, L4876, L5796; L3569–L3570): after the player's
-            // update (#7), so on the step he lets go of what held him there, whenever no act and no push holds him (M8).
-            if (Z != 0 && !_act.Active && Hold != HoldKind.Push && Ride == null) Z = Smooth.MoveTowards(Z, 0, _c.StepInSpeed * dt);
+            // Back to the lane after an act that stepped into the set (L3569–L3570, L4876, L5796): after the player's update
+            // (#7), so on the step he lets go of what held him there, whenever no act and no push holds him (M8). Only into
+            // the set (the prototype's z < 0) and only where a scene of the prototype has the rule (MotorConfig.ReturnsToLane:
+            // regions 2 and 5, region 6 past x 248). A mantle does not stop it (those rules do not check game.mantle); a ride
+            // does here, where the prototype's syncRide (L8519) puts him back on the rail after it.
+            if (Z > 0 && !_act.Active && Hold != HoldKind.Push && Ride == null && _c.ReturnsToLane != null && _c.ReturnsToLane(_w, X))
+                Z = Math.Max(0, Z - _c.StepInSpeed * dt);
 
             // updateCharacter (L7579–L7583): yaw turns toward ±π/2 or the act's override.
             double targetYaw = _hasYawOverride ? _yawOverride : (Facing > 0 ? Math.PI / 2 : -Math.PI / 2);
@@ -486,7 +514,7 @@ namespace DeadLetter.Core.Motor
             double max = p.Max;
             bool tips = p.TipsIntoPit;
             bool atLip = tips && Math.Abs(p.X - max) < _c.PushLipTolerance;
-            if (input.JumpPressed) { ReleasePush(atLip); return; }                    // L4688
+            if (input.JumpPressed) { ReleasePush(atLip); return; }                    // L4688: Jump at the lip tips it in
 
             Facing = _holdSide;
             double target = Smooth.Sign(move) * p.Speed * Math.Min(1, Math.Abs(move) * _c.StickGain);
@@ -509,12 +537,11 @@ namespace DeadLetter.Core.Motor
 
             if (tips)
             {
-                _atLip = atLip;
                 p.SetAtLip(atLip);
                 _shove = atLip && move != 0 && Smooth.Sign(move) == p.Side ? _shove + dt : 0;
                 if (_shove > _c.ShoveTime)
                 {
-                    Hold = HoldKind.None; Pushed = null; Vx = 0; _shove = 0; _atLip = false;
+                    Hold = HoldKind.None; Pushed = null; Vx = 0; _shove = 0;
                     p.OnShoved();
                     Emit(MotorEventKind.Released, "shove", 1);
                     _act.Reset(); _act.Shove = true; _act.Phase = ActPhase.Clip;
@@ -549,7 +576,7 @@ namespace DeadLetter.Core.Motor
 
         private void ReleaseTo(IPushable p, bool tip, double fade)
         {
-            Hold = HoldKind.None; Pushed = null; _shove = 0; _atLip = false;
+            Hold = HoldKind.None; Pushed = null; _shove = 0;
             SetClip(ClipNames.Idle, fade, 1);
             p.OnReleased(tip);
             Emit(MotorEventKind.Released, null, tip ? 1 : 0);
@@ -564,7 +591,7 @@ namespace DeadLetter.Core.Motor
             if (Hold == HoldKind.Push && Pushed != null)
             {
                 var p = Pushed;
-                Hold = HoldKind.None; Pushed = null; _shove = 0; _atLip = false;
+                Hold = HoldKind.None; Pushed = null; _shove = 0;
                 p.OnReleased(false);
                 Emit(MotorEventKind.Released, "drop", 0);
             }
@@ -585,7 +612,9 @@ namespace DeadLetter.Core.Motor
         {
             // Use lets go before the prototype's game.vx = 0 (beginUse 'release', L1820, returns before L1821; beginCh1's
             // own release branch, L4309–L4313, is never reached): he keeps his push speed and it decays as he stands (M5).
-            if (c.Verb == Verb.Release) { ReleasePush(_atLip); return; }
+            // It never tips: at a pit's lip the cart or duct stays there teetering (s.lip stays set) until he takes hold
+            // again; only Jump (L4688) and the shove (L4708–L4715) call tipOver.
+            if (c.Verb == Verb.Release) { ReleasePush(false); return; }
             Vx = 0;                                                                     // L1821, L4308
 
             _act.Reset();
@@ -1162,7 +1191,7 @@ namespace DeadLetter.Core.Motor
         {
             if (!ClipClock.Reached(f, ClipTimings.GrabEvents.Hold)) return;            // L4467
             var p = (IPushable)_act.Target;
-            Hold = HoldKind.Push; Pushed = p; _holdSide = p.Side; _pushFrom = p.X; _shove = 0; _atLip = false;
+            Hold = HoldKind.Push; Pushed = p; _holdSide = p.Side; _pushFrom = p.X; _shove = 0;
             EndActKeepingClip();
             SetClip(ClipNames.PushIdle, 0.15, 1);
             Emit(MotorEventKind.Grabbed, null, p.X);

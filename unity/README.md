@@ -307,6 +307,76 @@ URP materials in `Assets/Art/Materials/`). **Dead Letter → Art → Build Regio
 Console for the axis-turn warning (§0.2) and for unmatched materials, then commit the prefabs, the materials and the
 `.meta` files. Tests: `ArtNamesTests`, `ArtExportTests`.
 
+## Playing the prologue in Unity (U-20, #16)
+
+One Core `ChapterSim` runs the whole prologue (DL-01 to DL-06 so far: `Core/Scenes/README.md`). Unity shows it through
+scenes that are views only (port_architecture §7):
+
+```
+Assets/Scenes/DL_Persistent.unity        boot scene, never unloaded: GameHost, PlatformServicesHost, SettingsStore,
+                                         fade, D-17, camera (LaneCameraDriver), audio (clock, score, SFX, voices,
+                                         AudioWorld, DirectedMomentPlayer), a temporary key light
+Assets/Scenes/Prologue/DL-01.unity …     one per SceneDef: a SceneView root + the U-12 region prefab, with a
+Assets/Scenes/Prologue/DL-06.unity       MechanismView on every MECH_ node of a simulated mechanism
+
+Assets/DeadLetter/Runtime/Scenes/  GameHost (boot owner, ticks the sim), SceneStreamer (additive loads), MechanismView
+                                   (+ registry), SceneView (scene root), ScreenFade
+Assets/DeadLetter/Runtime/Save/    PlatformSaveStore (AtomicFileStore over the platform's file system)
+Assets/DeadLetter/Core/Streaming/  the decisions, tested headless (StreamingTests): StreamingPlanner (what to load and
+                                   unload), ChapterPresenter (camera input, signals, label/moment shots, ambience, the
+                                   clip of a scene act, a pending respawn), CueRoutes (cue → music/voice/sound/moment/
+                                   shake), MechanismReadout + MechanismViewBindings (what moves each MECH_ node),
+                                   ChapterScenes (scene paths, chapter IDs)
+Assets/DeadLetter/Editor/Builders/ ChapterSceneBuilder (Dead Letter → Build → Scenes → Prologue)
+```
+
+**How it runs.** `GameHost` builds the `ChapterSim` over the platform's save store in `Awake` and sets
+`CheckpointTrigger.Service` there, so `SettingsStore` applies the slot's options (calm mode included) before the first
+frame. In `Start` it continues from the slot (else a new game; or **Start At** on the GameHost, e.g. `bay`, for testing:
+it keeps the slot's flags and writes nothing), loading the checkpoint's scene and its neighbours behind the fade first.
+Each frame it streams: the next scene loads once he is within the streaming radius of its seam (`StreamingRadii`: 9 m on
+PC, 14 m on Switch; override on the GameHost), and a scene unloads only when he is a full scene away. Each 60 Hz step:
+D-17's input → `ChapterSim.Step` → the camera rig → D-17's transform → the step's cues → the mechanism views. A respawn
+into a scene that is not loaded waits behind the fade. The pause card (PauseGate) stops the steps and pauses the moment
+player. The bootstrap stays the active scene (its lighting settings are the game's); `SceneChanged` commits the scene
+to the views (`SceneView.Current`) instead.
+
+**First open, in order** (after the checklist at the top, Art (U-12) and Audio (U-16)):
+
+1. **Dead Letter → Build → D17 Animator** (needs `Assets/Art/D17/d17.glb` imported by glTFast with Mecanim animation).
+2. **Dead Letter → Audio → Import Audio** (writes `Assets/Audio/` and `SfxBank.asset`; without it the game is silent).
+3. **Dead Letter → Art → Build Region Prefabs** (after glTFast has imported the region glTFs).
+4. **Dead Letter → Build → Scenes → Prologue.** It writes the scenes above, puts them in the build profile's scene
+   list (bootstrap first) and opens `DL_Persistent`. The Console lists, per scene, the art used and the views added; a
+   scene whose art is not imported is still written (empty) and named in a warning. Re-run after any art or Core
+   change: hand edits to these scenes are lost by design (§6.2).
+5. **Press Play** in `DL_Persistent`.
+
+**Verification checklist for the director (first open):**
+
+- [ ] The Console after step 4 has no `[Scenes] … has no serialized field` errors and no "art isn't imported" warnings.
+- [ ] Play from an empty slot: the screen fades in on DL-01 with D-17 checking his label (the wake's label beat); the
+      label shot pushes in and lets go; the dispatch voice plays.
+- [ ] Calm mode: set it in a slot (or `SettingsStore.Commit`), stop, Play: no shake or flicker from the very first frame.
+- [ ] Walk right through DL-01: the relay lamps pulse, the latch lever turns, the shutter rises, its counterweight falls,
+      the crank wheel turns and the door rises, the cart rolls into the trench (check each node's axis, sign and pivot
+      on its `MechanismView`; the bindings are the prototype's, not yet checked against the art).
+- [ ] The passage into DL-02 has no cut: DL-02's geometry is already there when he comes out (Console: `[Streaming]`
+      warnings mean the radius is too small or a scene is missing from the build list).
+- [ ] Hierarchy during play: at most his scene and its two neighbours are loaded; DL-01 unloads once he is in DL-03.
+- [ ] Die under the DL-02 press: the death plays, he respawns at `room` with the camera snapped (no swoop).
+- [ ] DL-04: the racks reveal plays `racks`; the realisation runs the `kin` moment (shot, cue) and control comes back.
+- [ ] DL-06: the scanner sequence, the pit framing, the shake when a carrier bangs down; Proud after the points.
+- [ ] Quit and Play again: Continue resumes at the last checkpoint (Console: `GameHost: Continue at '…'`).
+- [ ] Pause (Esc / Menu) freezes D-17, the mechanisms and a playing moment; resume continues where it stopped.
+
+**Not in this slice (follow-ups):** the opening (§3.1 #3: a new game starts on its last step); the mechanisms' and
+motor's SFX (only cue sounds play; `D17Controller.MotorEventRaised` and the mechanism log have no audio mapping yet);
+the carrier line's carriers (one art carrier, many Core carriers: needs a pooled view); `AudioWorld` conditions and
+tannoys; the DL-06 `shot:*` cues (the framing comes from the scanner state instead); the title card and slot choice
+(slot 0 only); `CHK_` markers get no `CheckpointTrigger` (Core reaches every ported checkpoint itself); a light pool
+(U-15) and the audio mixer (U-16).
+
 ## CI
 
 `.github/workflows/core-tests.yml` runs on pushes and PRs touching `unity/**`:

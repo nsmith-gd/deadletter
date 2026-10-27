@@ -1,7 +1,7 @@
 # Core/Motor
 
 D-17's motor (`D17Motor`): a fixed-step port of the prototype's `updatePlayer` (index.html L1931–L2067), its mantle,
-holds and acts. It owns his pose, the clip to play and the acts; it knows nothing about scenes, regions or checkpoints.
+holds and acts. It owns his pose, the clip to play and the acts; it knows nothing about scenes or checkpoints (regions only through `MotorConfig.ReturnsToLane`).
 `MotorConfig` holds every constant with the line it comes from; `ClipTimings` the clip lengths and act frames;
 `IMotorWorld` is the lane it probes (a scene's lane geometry, `BoxWorld` in tests). See `unity/README.md` for the
 file list and `docs/unity/port_architecture.md` §3.1, §4.7–§4.12 for the design.
@@ -63,8 +63,13 @@ Notes for parity with the prototype (golden-trace replay):
 - A station steps in and out at its own `Station.StepInSpeed` (`StationPose.StepInSpeed`) when it has one: the levers
   and the pawl at 0.4 (L2916, L3306), the rest at `MotorConfig.StepInSpeed` 0.45 (L1845, L3615). The walk clip plays at
   0.45 either way (L2917).
-- Back to the lane after an act that stepped off it (L4876) runs at the end of the step, after the player's update, so
-  on the step he lets go; Use lets go of a pushable keeping his speed (L1820 returns before `game.vx = 0`).
+- Back to the lane after an act that stepped into the set (L3569, L4876, L5796) runs at the end of the step, after the
+  player's update, so on the step he lets go. It is a scene rule, so only where the prototype has one:
+  `MotorConfig.ReturnsToLane` (default: the lane's region 2 or 5, or 6 past x 248; a world with no region, none),
+  only for Z > 0 (the prototype's z < 0), mantling or not.
+- Use lets go of a pushable keeping his speed (L1820 returns before `game.vx = 0`) and never tips it: at a pit's lip
+  it stays teetering. Only Jump at the lip (L4688) and the shove (L4708–L4715) tip it in.
 - `D17Motor.Capture()` / `SetState(in MotorSnapshot)` read and set his free-movement state (x, y, z, vx, vy, facing,
-  yaw, grounded, crouched, jump timers): the hand-over of a moving D-17. `Place(x, y, facing, yaw)` puts him at rest;
-  `Stop()` is a rule's `game.vx = 0`.
+  yaw, grounded, crouched, jump timers, clip with its time and speed): the hand-over of a moving D-17. `Capture()`
+  throws during an act, hold, mantle or ride (`CanCapture`). `Place(x, y, facing, yaw)` puts him at rest; `Stop()` is
+  a rule's `game.vx = 0`.
