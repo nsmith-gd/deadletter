@@ -1,8 +1,10 @@
 using System;
+using DeadLetter.Core.Audio;
 using DeadLetter.Core.Camera;
 using DeadLetter.Core.Cues;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Save;
+using DeadLetter.Runtime.Audio;
 using DeadLetter.Runtime.Save;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -40,6 +42,11 @@ namespace DeadLetter.Runtime.Camera
 
         [SerializeField] private D17Controller player;
         [SerializeField] private AudioDspMusicClock musicClock;
+        [Tooltip("U-16: the score. When set, it plays the moment's cue (the bindings' cue sources are then unused), takes " +
+                 "the previous cue and the ambience out over 1 s, and brings the ambience back if the cue cannot play.")]
+        [SerializeField] private MusicDirector score;
+        [Tooltip("U-16: stopped over 1 s at the trigger (startMoment, L950).")]
+        [SerializeField] private VoicePlayer voices;
         [Tooltip("Snapped on checkpoint reload (ResetForReload).")]
         [SerializeField] private LaneCameraDriver cameraDriver;
         [SerializeField] private Binding[] moments = new Binding[0];
@@ -147,15 +154,27 @@ namespace DeadLetter.Runtime.Camera
             if (m == null) { Debug.LogWarning("Unknown directed moment " + momentName, this); return; }
             StopTimeline();
             _active = Find(momentName);
-            AudioSource cue = _active?.cue;
-            bool music = cue != null && cue.clip != null && musicClock != null && musicClock.Running;
-            _director.Start(m, player != null ? player.SimTime : 0, music);
-            if (music)
+            if (voices != null) voices.Stop(VoiceRules.MomentStopFade);
+            if (score != null)
             {
-                double clockTime = musicClock.ScheduleAhead(CueClock.ScheduleLeadIn, out double dsp);
-                cue.time = 0f;
-                cue.PlayScheduled(dsp);
-                _director.Clock.Scheduled(clockTime);
+                bool scored = score.CanPlay(momentName);
+                _director.Start(m, player != null ? player.SimTime : 0, scored);
+                double start = score.StartMoment(momentName);
+                if (scored) _director.Clock.Scheduled(start);
+                else score.MomentFailed(momentName);
+            }
+            else
+            {
+                AudioSource cue = _active?.cue;
+                bool music = cue != null && cue.clip != null && musicClock != null && musicClock.Running;
+                _director.Start(m, player != null ? player.SimTime : 0, music);
+                if (music)
+                {
+                    double clockTime = musicClock.ScheduleAhead(CueClock.ScheduleLeadIn, out double dsp);
+                    cue.time = 0f;
+                    cue.PlayScheduled(dsp);
+                    _director.Clock.Scheduled(clockTime);
+                }
             }
             if (_active?.timeline != null)
             {
@@ -171,6 +190,7 @@ namespace DeadLetter.Runtime.Camera
         {
             StopTimeline();
             _director.End();
+            if (score != null) score.EndMoment();
             _active = null;
         }
 
@@ -194,6 +214,7 @@ namespace DeadLetter.Runtime.Camera
             if (paused == _paused) return;
             _paused = paused;
             if (musicClock != null) musicClock.SetPaused(paused);
+            if (score != null) score.SetPaused(paused);
             AudioSource cue = _active?.cue;
             if (cue != null)
             {

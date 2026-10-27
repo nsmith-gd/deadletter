@@ -34,6 +34,11 @@ namespace DeadLetter.Core.Save
         /// <summary>The graph snapshot at the checkpoint; null: rebuild from the checkpoint alone.</summary>
         public MemorySnapshot Mechanisms;
         public Settings Settings = new Settings();
+        /// <summary>
+        /// Only the options are saved: the player changed them before ever starting a game. Nothing to continue (the
+        /// prototype kept options apart from progress, so a fresh install never offers Continue).
+        /// </summary>
+        public bool OptionsOnly;
 
         public SaveDocument ToDocument()
         {
@@ -41,6 +46,7 @@ namespace DeadLetter.Core.Save
             d.SetString("cp", Checkpoint ?? throw new InvalidOperationException("A save needs a checkpoint."));
             d.SetString("scene", Scene ?? "");
             d.SetDouble("playTime", PlayTime);
+            if (OptionsOnly) d.SetBool("optionsOnly", true);
             foreach (var f in Flags) d.SetBool(FlagPrefix + f, true);
             foreach (var m in Seen ?? new List<string>()) d.SetBool(SeenPrefix + m, true);
             Mechanisms?.CopyTo(new PrefixWriter(d, MechPrefix));
@@ -57,6 +63,7 @@ namespace DeadLetter.Core.Save
                 Checkpoint = d.GetString("cp", null) ?? throw new FormatException("The save has no checkpoint."),
                 Scene = d.GetString("scene", ""),
                 PlayTime = d.GetDouble("playTime", 0),
+                OptionsOnly = d.GetBool("optionsOnly", false),
                 Settings = Settings.Read(d),
             };
             foreach (var f in d.KeysUnder(FlagPrefix)) if (d.GetBool(FlagPrefix + f, false)) m.Flags.Add(f);
