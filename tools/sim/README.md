@@ -113,4 +113,11 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     `x` and deck offset), `ld` (`game.load`, the plate with him), `nd` (the gauge's needle), `gy`/`gv` (the gate's
     height and fall speed). Added after DL-01's: every DL-01 field is unchanged at every step (only step 0's line gains
     the new keys, at their reset values).
+  - DL-05 (`unity/core-tests/Dl05TraceTests.cs`), only while `r` is 2 and x ≥ `RATION5.x0` (47.9), and on the step he
+    leaves (so steps 9868–12073 here): `d5x`/`d5s` (the drum's x and state), `b5x`/`b5s` (the body's), `w5` (the
+    weigh-in's W, recomputed as `updateCh1` weighs it, L4890–L4892), `w5r` (its reading), `n5` (the needle), `p5` (the
+    plate's dip), `t5` (the hatch's twitch lift, L4920), `h5` (`rh.h`, the hatch's height), `f5` (the SERVED flag),
+    `s5` (served). Every earlier field of every step is unchanged. Note: `setTimeout`s run at the start of the
+    recorder's per-step call, before it writes the previous step's line, so a timeout's effects (DL-05's pat) show on
+    the step before the one they first act in.
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).

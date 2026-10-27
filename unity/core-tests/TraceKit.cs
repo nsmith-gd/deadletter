@@ -41,6 +41,11 @@ namespace DeadLetter.Core.Tests
         // DL-03: the trolley's x, the weight's state, x (game.weight.x) and deck offset, game.load, the needle, the gate's y and fall speed.
         public double Tx, Wx, Wo, Ld, Nd, Gy, Gv;
         public string Ws;
+        // DL-05 (only while in DL-05 and on the step he leaves it; null before): the drum and the body (x, state), the
+        // weigh-in's W, reading, needle and plate dip, the hatch's twitch lift, the hatch's height, the flag, served.
+        public double? D5x, B5x, W5, N5, P5, T5, H5, F5;
+        public string D5s, B5s, W5r;
+        public bool? S5;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -169,6 +174,18 @@ namespace DeadLetter.Core.Tests
                 case "nd": s.Nd = v.GetDouble(); break;
                 case "gy": s.Gy = v.GetDouble(); break;
                 case "gv": s.Gv = v.GetDouble(); break;
+                case "d5x": s.D5x = N(v); break;
+                case "d5s": s.D5s = S(v); break;
+                case "b5x": s.B5x = N(v); break;
+                case "b5s": s.B5s = S(v); break;
+                case "w5": s.W5 = N(v); break;
+                case "w5r": s.W5r = S(v); break;
+                case "n5": s.N5 = N(v); break;
+                case "p5": s.P5 = N(v); break;
+                case "t5": s.T5 = N(v); break;
+                case "h5": s.H5 = N(v); break;
+                case "f5": s.F5 = N(v); break;
+                case "s5": s.S5 = B(v); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }
