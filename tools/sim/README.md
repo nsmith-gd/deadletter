@@ -143,4 +143,12 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     followed by its loads, the weight's index + 1 or 0, and whether its parcels are hidden). Re-recorded with these
     (U-21): every earlier field of every step is unchanged in both traces (checked step by step on the expanded
     records), and two recordings of each are byte-identical.
+  - DL-08 (`unity/core-tests/ChapterTrace/Dl08ChapterProbe.cs`), only while `sceneName()` is DL-08 and on the step he
+    leaves it (so steps 17677–20840 here): `tx8`/`tv8` (the goods trolley's x and `t.v`), `pn8` (`panLoad()`, recomputed
+    after the step), `ph8`/`pv8`/`la8`/`lu8` (the platform's h, fall speed, latched, lurch), `pw8`/`pd8` (the pawl's lever as
+    the act sets it, `pawlHold`, else 6 latched or −18, and `pawlDip`), `bs8`/`bt8`/`bn8` (`belt4.state`, `t`, `next`), `fl8`
+    (the turn flaps' swing), `cr8` (the crates as one JSON string, `[type, state, x, y, z, t, spin]` each), and `rs8` on the
+    step a crate spawns: the three LCG states its draws took (type, spin, next interval), found in a ring of the page's
+    last 2^18 draws (`INIT` keeps it; it changes no draw), since the clone's uuids and the scrape's noise draw between them.
+    Re-recorded with these (U-21): every earlier field of every step is unchanged, and two recordings are byte-identical.
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).

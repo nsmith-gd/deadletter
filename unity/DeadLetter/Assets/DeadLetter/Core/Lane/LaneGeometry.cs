@@ -14,9 +14,11 @@ namespace DeadLetter.Core.Lane
     /// (§0.3): each region is a static <see cref="LaneTable"/> plus the <see cref="ILaneContributor"/>s registered on it.
     /// Exactly one region is active (<see cref="Region"/>); the scene simulation switches it where the prototype changes
     /// <c>game.region</c>. Probes ignore <c>refY</c>: the height field has one answer per x, as in the prototype.</para>
+    /// <para>Ground that carries him (<see cref="ILaneConveyor"/>, DL-08's returns belt): the active region's contributors
+    /// that are conveyors too (<see cref="CarryAt"/>); none elsewhere, so the motor's carry is 0 there.</para>
     /// <para>Per probe: no allocation, no lookup (the active region is resolved when <see cref="Region"/> is set).</para>
     /// </summary>
-    public sealed class LaneGeometry : IMotorWorld
+    public sealed class LaneGeometry : IMotorWorld, ILaneConveyor
     {
         /// <summary><c>FOOT</c>: the support probe's half-spread, L310 (<c>supportAt</c>, L1737).</summary>
         public const double Foot = 0.08;
@@ -26,6 +28,7 @@ namespace DeadLetter.Core.Lane
             public readonly int Id;
             public readonly LaneTable Table;
             public readonly List<ILaneContributor> Contributors = new List<ILaneContributor>();
+            public readonly List<ILaneConveyor> Conveyors = new List<ILaneConveyor>();
             public RegionLane(int id, LaneTable table) { Id = id; Table = table; }
         }
 
@@ -49,6 +52,7 @@ namespace DeadLetter.Core.Lane
             if (contributor == null) throw new ArgumentNullException(nameof(contributor));
             var r = Find(region) ?? throw new ArgumentException("No lane for region " + region + ": add its table first.");
             r.Contributors.Add(contributor);
+            if (contributor is ILaneConveyor conveyor) r.Conveyors.Add(conveyor);
             return this;
         }
 
@@ -135,6 +139,19 @@ namespace DeadLetter.Core.Lane
             var z = Active.Table.Ramps;
             for (int i = 0; i < z.Length; i++) if (z[i].Contains(x)) return true;
             return false;
+        }
+
+        /// <summary>
+        /// <c>beltCarry4</c> (L3439): the lane speed (m/s, +x) of the ground under (x, y), summed over the active region's
+        /// contributors that are <see cref="ILaneConveyor"/>s (DL-08's returns belt); 0 where there are none. The motor
+        /// applies it while he walks grounded (L1998, L2006).
+        /// </summary>
+        public double CarryAt(double x, double y)
+        {
+            var c = Active.Conveyors;
+            double v = 0;
+            for (int i = 0; i < c.Count; i++) v += c[i].CarryAt(x, y);
+            return v;
         }
 
         // ---- IMotorWorld ----------------------------------------------------------------------------------------------

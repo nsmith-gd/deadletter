@@ -323,5 +323,30 @@ namespace DeadLetter.Core.Tests
             Assert.True(b.Held);
             Assert.Equal(27.6, b.X);
         }
+
+        /// <summary>
+        /// DL-08's goods trolley: its travel ends at the pan's buffer stop (84.5) until the pawl holds the platform, then at
+        /// the far landing's rail (88.22), read as the pawl is now (L2340); from <c>latched</c> it is parked there (L4123).
+        /// </summary>
+        [Fact]
+        public void GoodsTrolley_TravelEndsAtTheBuffer_UntilThePawlIsSet_ThenAtTheRail_L2340_L4123()
+        {
+            var pawl = new TestSource("dl08.pawl");
+            var t = new Pushable("dl08.trolley", PushableParams.Dl08Trolley());
+            Mech.Graph("goods", t, pawl);
+            Assert.Equal(82.5, t.X, 12);
+            Assert.Equal(81.95, t.Min, 12);
+            Assert.Equal(84.5, t.Max, 12);
+            pawl.Engaged = true;
+            Assert.Equal(88.22, t.Max, 12);
+            var parked = new Pushable("dl08.trolley", PushableParams.Dl08Trolley());
+            Mech.Graph("latched", parked, new TestSource("dl08.pawl") { Engaged = true });
+            Assert.Equal(88.22, parked.X, 12);
+            Assert.False(t.LetGoAtMax);
+            Assert.Equal(1.3, t.Accel);
+            var bad = PushableParams.Dl08Trolley();
+            bad.ExtendedBy = "dl08.nothing";
+            Assert.ThrowsAny<Exception>(() => Mech.Graph("goods", new Pushable("dl08.trolley", bad)));
+        }
     }
 }

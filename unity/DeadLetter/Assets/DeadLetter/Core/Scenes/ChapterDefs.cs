@@ -7,6 +7,7 @@ using DeadLetter.Core.Scenes.Dl04;
 using DeadLetter.Core.Scenes.Dl05;
 using DeadLetter.Core.Scenes.Dl06;
 using DeadLetter.Core.Scenes.Dl07;
+using DeadLetter.Core.Scenes.Dl08;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -42,8 +43,8 @@ namespace DeadLetter.Core.Scenes
             new CheckpointDef("scanned", Off3 + 30.3, region: 3, scene: "DL-06"),
             new CheckpointDef("landing", Off3 + 40.0, Deck, region: 3, scene: "DL-07"),                     // c.upper: on the deck (GALLERY.h, L8039)
             new CheckpointDef("gallery", Off3 + 42.3, Deck, region: 3, scene: "DL-07"),
-            new CheckpointDef("goods", Off3 + 48.9, region: 4, scene: "DL-08"),
-            new CheckpointDef("latched", Off3 + 56.2, region: 4, scene: "DL-08"),
+            new CheckpointDef("goods", Off3 + 48.9, Deck, region: 4, scene: "DL-08"),                       // c.upper: on the deck (L8039)
+            new CheckpointDef("latched", Off3 + 56.2, Deck, region: 4, scene: "DL-08"),
             new CheckpointDef("cage", Off3 + 67.8, CageTop, region: 4, scene: "DL-09"),                     // x ≥ CG.x0
             new CheckpointDef("landing8", Off3 + 70.3, Deck, region: 4, scene: "DL-09"),                    // CG.landing = DECK
             new CheckpointDef("tunnel", Off4 + 65.7, region: 4, scene: "DL-09"),
@@ -53,10 +54,11 @@ namespace DeadLetter.Core.Scenes
             new CheckpointDef("forwarded", Off5 + 113.1, region: 5, scene: "DL-11"));
 
         /// <summary>
-        /// The prologue as far as it is ported: DL-01 to DL-07 (regions 1–3), one world from the wake to the residential
-        /// doorway at the gallery's end, where DL-08 begins (region 4, <c>goods</c>). DL-07 shares DL-06's floor.
+        /// The prologue as far as it is ported: DL-01 to DL-08 (regions 1–4), one world from the wake to the end of the
+        /// returns belt (<c>CG.x0</c>), where DL-09 begins. DL-07 shares DL-06's floor.
         /// </summary>
         public static ChapterDef Prologue() => new ChapterDef(PrologueId, PrologueCheckpoints,
-            Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def(), Dl07Scene.Def());
+            Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def(), Dl07Scene.Def(),
+            Dl08Scene.Def());
     }
 }

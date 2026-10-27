@@ -384,17 +384,18 @@ namespace DeadLetter.Core.Scenes
         /// <c>die(how)</c>, L7432–L7442: unless he is already dying he lets go of everything, stops and plays the death
         /// (<see cref="D17Motor.Die"/>), which asks for the respawn at its cut; counted in <see cref="Deaths"/>. Returns
         /// whether he died. <paramref name="sinkRate"/> &gt; 0: he sinks meanwhile (DL-07's sump, <c>game.y −= dt · 0.8</c>,
-        /// L7375), which the motor's death cannot do (#28): a <see cref="DeathAct"/> plays it instead.
+        /// L7375), which the motor's death cannot do (#28): a <see cref="DeathAct"/> plays it instead. <paramref name="hold"/>:
+        /// seconds before the cut, when the prototype gives its own (<c>die(how, { hold })</c>; NaN = the kind's).
         /// </summary>
-        public bool Die(DeathKind how, double sinkRate = 0)
+        public bool Die(DeathKind how, double sinkRate = 0, double hold = double.NaN)
         {
             if (Motor.IsDead || _act is DeathAct) return false;
             Deaths++;
-            if (sinkRate > 0) { DeathAct.Begin(this, how, sinkRate); return true; }
+            if (sinkRate > 0) { DeathAct.Begin(this, how, sinkRate, hold); return true; }
             _act = null;
             var item = Motor.Hold == HoldKind.Item ? Motor.Carried as CarriedItem : null;
             double x = X, y = Y;
-            Motor.Die(DeathKinds.ToMotor(how));
+            Motor.Die(DeathKinds.ToMotor(how), hold);
             // releaseHolds puts what he carries on the floor at once, unanimated (L7425–L7428); the motor's drop is a
             // set-down applied at the next step, which Drop cancels.
             item?.Drop(x, Math.Max(0, y));

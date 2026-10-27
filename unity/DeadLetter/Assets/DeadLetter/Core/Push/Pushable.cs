@@ -70,6 +70,13 @@ namespace DeadLetter.Core.Push
         public bool LetGoAtMax = true;
         /// <summary>Its travel (for a pit, <see cref="Max"/> is the lip, <see cref="TipParams.LipX"/>).</summary>
         public double Min, Max;
+        /// <summary>
+        /// While this mechanism (an <see cref="IEngageable"/>) is engaged its travel ends at <see cref="ExtendedMax"/>
+        /// instead of <see cref="Max"/> (none: <see cref="MechanismId"/> default). DL-08's goods trolley: the pan's buffer
+        /// stop, or once the pawl holds the platform, on across it to the far landing's rail (L2340).
+        /// </summary>
+        public MechanismId ExtendedBy;
+        public double ExtendedMax = double.NaN;
         /// <summary>Bodies it stops against while they stand on the floor (DL-03's weight, L2343–L2346).</summary>
         public PushBlock[] Blocks = Array.Empty<PushBlock>();
         /// <summary>Ascending stops (<see cref="Push.Detents"/>); empty = none.</summary>
@@ -130,6 +137,26 @@ namespace DeadLetter.Core.Push
             DockAt = 44.5, DockTolerance = 0.01,                                  // L4724–L4727
             FloorY = 0, Z = 0.35, ForwardReach = 0.34, BackReach = 0.34,          // floor: 0, z: RK.courierZ; p.fwd/back ?? 0.34, L4254
         };
+
+        /// <summary>
+        /// DL-08: the goods trolley, loaded with ballast, grabbed at either end (<c>grab4L</c>, its twin <c>grab4R</c>), 0.7
+        /// from its centre; 0.34 m/s with accel 1.3 (the old holds' heavy one: it stays in his hands at the end of its
+        /// travel); from 81.95 to the pan's buffer stop 84.5, or once the pawl is set on across the platform to 0.02 short of
+        /// the far landing's rail (88.22), where a checkpoint past the pawl parks it; on the deck (1.6); solid to the top of
+        /// its ballast, 0.44 above the deck, within 0.32 of its centre (<c>T4_X</c>, <c>T4_HALF</c>, <c>T4_TOP</c>,
+        /// <c>PUSH_GAP4</c>, <c>PUSH_HEAVY</c>, <c>T4_MIN</c>, <c>T4_MAX</c> L3008–L3009; <c>RAIL7</c> L3897; L2329–L2347,
+        /// L1732, L3269–L3274, L4123, L8043).
+        /// </summary>
+        public static PushableParams Dl08Trolley() => new PushableParams
+        {
+            StartX = 33 + 49.5,                                                   // T4_X = OFF3 + 49.5
+            ParkedAfter = "latched", ParkedX = 33 + 55.6 - 0.36 - 0.02,           // resetCh1: RAIL7.x0 − T4_HALF − 0.02 (L4123)
+            Side = +1, Gap = 0.7, Speed = 0.34, Accel = 1.3, LetGoAtMax = false,  // grab4L; PUSH_GAP4, PUSH_HEAVY; acc 1.3, L2332
+            Min = 33 + 48.95, Max = 33 + 51.9 - 0.04 - 0.36,                      // T4_MIN, T4_MAX (the pan's buffer stop)
+            ExtendedBy = "dl08.pawl", ExtendedMax = 33 + 55.6 - 0.36 - 0.02,      // plat.latched ? RAIL7.x0 − T4_HALF − 0.02, L2340
+            FloorY = 1.6, Z = 0, ForwardReach = 0.34, BackReach = 0.34,           // y ≤ DECK + 0.05; |x − stand| < 0.34, L3267–L3273
+            Half = 0.36 - 0.04, Top = 1.6 + 0.44,                                 // |x − t.x| ≤ T4_HALF − 0.04 → DECK + T4_TOP, L1732
+        };
     }
 
     /// <summary>
@@ -150,6 +177,7 @@ namespace DeadLetter.Core.Push
         private readonly PushableParams _p;
         private readonly TipIntoPit _tip;
         private IPlateBody[] _riders = Array.Empty<IPlateBody>(), _blocks = Array.Empty<IPlateBody>();
+        private IEngageable _extendedBy;
         private bool _held, _moved, _lip, _tipNow, _dockNow;
         private double _from;
 
@@ -226,7 +254,7 @@ namespace DeadLetter.Core.Push
         /// </summary>
         public void Range(out double lo, out double hi)
         {
-            lo = _p.Min; hi = _p.Max;
+            lo = _p.Min; hi = _extendedBy != null && _extendedBy.Engaged ? _p.ExtendedMax : _p.Max;   // L2340
             if (!double.IsNaN(_p.StopAt) && X < _p.StopAt - StopSlack && hi > _p.StopAt) hi = _p.StopAt;   // L4277
             for (int i = 0; i < _blocks.Length; i++)
             {
@@ -273,6 +301,10 @@ namespace DeadLetter.Core.Push
             _blocks = new IPlateBody[_p.Blocks.Length];
             for (int i = 0; i < _blocks.Length; i++)
                 _blocks[i] = link.ReadAnyOrder<IPlateBody>(_p.Blocks[i].Body) ?? throw new InvalidOperationException(Id + ": a block needs a body.");
+            // Read when he pushes (#4), before the graph steps: last step's state, as the prototype's plat.latched there.
+            _extendedBy = _p.ExtendedBy.IsNone ? null : link.ReadAnyOrder<IEngageable>(_p.ExtendedBy)
+                ?? throw new InvalidOperationException(Id + ": ExtendedBy needs an IEngageable.");
+            if (_extendedBy != null && !(_p.ExtendedMax >= _p.Min)) throw new InvalidOperationException(Id + ": ExtendedMax < Min.");
         }
 
         /// <summary>Where the checkpoint puts it (<c>resetWorld</c>: TROLLEY_X, or parked on the plate, L8026).</summary>

@@ -110,6 +110,8 @@ namespace DeadLetter.Core.Mechanisms.Routes
         public bool Engaged => State == ReturnsBeltState.Run;
         public int Count => _count;
         public Crate At(int i) => _all[_live[i]];
+        /// <summary>Seconds into the warning (<c>b.t</c>; it stops at the klaxon).</summary>
+        public double T => _t;
         /// <summary>Seconds until the next crate may come (<c>b.next</c>).</summary>
         public double Next => _next;
         /// <summary>The turn flaps' swing, 0..1 (L3146–L3148).</summary>
@@ -129,6 +131,16 @@ namespace DeadLetter.Core.Mechanisms.Routes
             return h;
         }
 
+        /// <summary>
+        /// Tests only: where the crates' draws come from instead of the belt's own generator (null: its own). The prototype
+        /// draws them from the page's one <c>Math.random</c>, which everything else draws from too (the crate's clone's uuids
+        /// between the type and the spin, the scrape's noise between the spin and the next interval), so no seed reproduces
+        /// them; a trace replay feeds the recorded ones (the recorder's <c>rs8</c>), in the order <see cref="Spawn"/> draws them.
+        /// </summary>
+        internal Func<double> Draws;
+
+        private double Draw() => Draws != null ? Draws() : _rng.NextDouble();
+
         public override void Link(MechanismLinker link) => _trigger = link.Read<IEngageable>(_p.Trigger);
 
         /// <summary><c>game.belt4 = { state: c.belt4 ? 'run' : 'idle', t: 0, next: 0.5 }</c>, crates cleared (L8045–L8046).</summary>
@@ -146,7 +158,10 @@ namespace DeadLetter.Core.Mechanisms.Routes
         public override void Step(in StepContext ctx)
         {
             double dt = ctx.Dt;
-            if (State == ReturnsBeltState.Idle && _trigger != null && _trigger.Engaged && ctx.Player.X > _p.TriggerX && !ctx.Player.Busy)   // L3420
+            // updateTriggers4 (#4, L3412–L3420): only on a free step (no act, nothing in his hands; the mantle is the scene's
+            // to cover, PlayerPose has none), grounded, with the pawl set and him past the shaft.
+            var pl = ctx.Player;
+            if (State == ReturnsBeltState.Idle && _trigger != null && _trigger.Engaged && pl.X > _p.TriggerX && !pl.Busy && !pl.Holding && pl.Grounded)   // L3420
             {
                 Enter(ctx, (int)ReturnsBeltState.Warn);
                 _t = 0;
@@ -168,7 +183,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
                 if (_next <= 0 && clear && (last == null || (last.State != CrateState.Chute && last.X < _p.ChuteX - _p.BehindLast)))
                 {
                     Spawn(ctx);
-                    _next = _p.SpawnMin + _rng.NextDouble() * _p.SpawnSpread;
+                    _next = _p.SpawnMin + Draw() * _p.SpawnSpread;
                 }
             }
             double swing = 0;
@@ -219,7 +234,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
             int slot = -1;
             for (int i = 0; i < _all.Length; i++) if (!_all[i].Active) { slot = i; break; }
             if (slot < 0) throw new InvalidOperationException(Id + ": more than " + _all.Length + " crates.");
-            double r = _rng.NextDouble();
+            double r = Draw();
             int type = r < _p.CrateOdds[0] ? 0 : r < _p.CrateOdds[1] ? 1 : 2;
             var c = _all[slot];
             c.Active = true;
@@ -228,7 +243,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
             c.Height = _p.CrateHeight[type];
             c.X = _p.ChuteX; c.Y = _p.ChuteTopY; c.Z = _p.ChuteTopZ;
             c.State = CrateState.Chute; c.T = 0;
-            c.Spin = (_rng.NextDouble() - 0.5) * 0.4;
+            c.Spin = (Draw() - 0.5) * 0.4;
             _live[_count++] = slot;
             Emit(ctx, (int)ReturnsBeltEvent.CrateSpawned, type);
         }

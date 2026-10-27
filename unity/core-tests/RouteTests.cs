@@ -665,6 +665,8 @@ namespace DeadLetter.Core.Tests
             r.Pawl.Engaged = true;
             Mech.Run(r.G, 30, new PlayerPose(88.8, 1.6));                        // not yet past SHAFT.x1 + 0.6
             Mech.Run(r.G, 30, new PlayerPose(89.0, 1.6, busy: true));            // in an act
+            Mech.Run(r.G, 30, Mech.Pose(89.0, 1.9, grounded: false));            // in the air (L3418)
+            Mech.Run(r.G, 30, Mech.Pose(89.0, 1.6, holding: true));              // pushing the trolley (L3416)
             Assert.Equal(ReturnsBeltState.Idle, r.Belt.State);
             var bells = new List<int>();
             int klaxon = -1;
@@ -796,6 +798,31 @@ namespace DeadLetter.Core.Tests
                 Assert.Equal(Mech.Dump(a.G), Mech.Dump(b.G));
                 Assert.Equal(Mech.Events(a.G).Count, Mech.Events(b.G).Count);
             }
+        }
+
+        /// <summary>
+        /// A replay can feed the crates' draws (the prototype's come from the page's shared Math.random): a spawn takes the
+        /// type's, the spin's and the next interval's, in that order (L3130, L3134, L3144); the belt's own generator is untouched.
+        /// </summary>
+        [Fact]
+        public void Belt_Draws_CanBeFed_TypeSpinNext_L3130_L3134_L3144()
+        {
+            var r = new BeltRig("cage");
+            var fed = new Queue<double>(new[] { 0.9, 0.75, 0.5 });
+            r.Belt.Draws = () => fed.Dequeue();
+            int spawn = Mech.RunUntil(r.G, () => r.Emitted(ReturnsBeltEvent.CrateSpawned), 100, OnDeckAway);
+            Assert.True(spawn > 0);
+            Assert.Empty(fed);
+            var c = r.Belt.At(0);
+            Assert.Equal(2, c.Type);                                                // r ≥ 0.85: tall
+            Assert.Equal((0.75 - 0.5) * 0.4, c.Spin, 15);
+            Assert.Equal(2.9 + 0.5 * 1.3, r.Belt.Next, 15);
+            var own = new BeltRig("cage");
+            Mech.RunUntil(own.G, () => own.Emitted(ReturnsBeltEvent.CrateSpawned), 100, OnDeckAway);
+            r.Belt.Draws = null;                                                    // back to its own generator, unconsumed
+            Mech.RunUntil(r.G, () => r.Emitted(ReturnsBeltEvent.CrateSpawned), 400, OnDeckAway);
+            Assert.Equal(own.Belt.At(0).Type, r.Belt.At(1).Type);
+            Assert.Equal(own.Belt.At(0).Spin, r.Belt.At(1).Spin);
         }
     }
 }

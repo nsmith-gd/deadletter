@@ -251,5 +251,23 @@ namespace DeadLetter.Core.Tests
             Assert.True(new LaneSpan(1, 2, 0, SpanEdges.OpenClosed).Contains(2));
             Assert.Throws<ArgumentException>(() => new LaneSpan(2, 1, 0, SpanEdges.Closed));
         }
+
+        private sealed class Belt : LaneContributor, ILaneConveyor
+        {
+            public double V;
+            public double CarryAt(double x, double y) => x > 1 && x < 2 ? V : 0;
+        }
+
+        /// <summary>The lane carries him where a region's contributor is a conveyor (DL-08's belt, <c>beltCarry4</c>, L3439); only in that region.</summary>
+        [Fact]
+        public void Conveyor_IsTheActiveRegionsContributors_L3439()
+        {
+            var lane = new LaneGeometry().AddRegion(1, new LaneTable()).AddRegion(2, new LaneTable());
+            lane.AddContributor(2, new Belt { V = -0.32 }).AddContributor(2, new Belt { V = -0.1 });
+            Assert.Equal(0, lane.CarryAt(1.5, 0));
+            lane.Region = 2;
+            Assert.Equal(-0.42, lane.CarryAt(1.5, 0), 12);
+            Assert.Equal(0, lane.CarryAt(3, 0));
+        }
     }
 }
