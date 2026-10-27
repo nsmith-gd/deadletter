@@ -88,7 +88,7 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
   title screen never reaches the trace. Two recordings of the same seed are byte-identical. (DL-01's own state draws
   no random numbers; later scenes do: crates, carrier payloads, the White.)
 - **`unity/core-tests/Traces/prologue_mech_seed1.jsonl.gz`:** the whole prologue, mechanical, seed 1: 33,207 steps
-  (play from step 1768, `room` at 4082, the end card at 553 s), 391 KB.
+  (play from step 1768, `room` at 4082, DL-03 from 5228 to 6278, the end card at 553 s).
 - **`unity/core-tests/Traces/dl02_press_death_seed1.jsonl.gz`:** the same run with `BOT_OPTS='{"pressMistake":true}'`
   and `UNTIL=100`: identical to the prologue's up to DL-02's press, where the bot walks in on the slam (bot.js
   `passPress`), is crushed (#4106), respawns at `room` (#4185) and goes on into DL-03; 71 KB (`Dl02TraceTests`).
@@ -109,4 +109,8 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     press's face, from its model), `bx`/`bb`/`bs` (the box's x, base and state), `tl` (`letterState.tube`), `dn`
     (`game.deaths`), `ra` (`game.respawnAt`, 0 = none). Adding them left every line before the passage's stage 2
     (steps 0–3998) byte-identical and every earlier field of every step unchanged.
+  - DL-03 (`unity/core-tests/Dl03TraceTests.cs`): `tx` (the trolley's x), `ws`/`wx`/`wo` (the sort weight's state,
+    `x` and deck offset), `ld` (`game.load`, the plate with him), `nd` (the gauge's needle), `gy`/`gv` (the gate's
+    height and fall speed). Added after DL-01's: every DL-01 field is unchanged at every step (only step 0's line gains
+    the new keys, at their reset values).
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).

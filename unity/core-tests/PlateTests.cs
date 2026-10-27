@@ -115,7 +115,9 @@ namespace DeadLetter.Core.Tests
         [InlineData(28.79, 0.0, 27.55, BodySupport.Floor, 25.62, 1.0)]       // the plate ± 0.02
         [InlineData(28.78, 0.0, 27.55, BodySupport.Floor, 25.62, 0.0)]
         [InlineData(29.2, 0.24, 27.55, BodySupport.Floor, 25.62, 1.0)]
-        [InlineData(29.2, 0.25, 27.55, BodySupport.Floor, 25.62, 0.0)]
+        [InlineData(29.2, 0.25, 27.55, BodySupport.Floor, 25.62, 1.0)]          // standing (grounded) below 0.45 counts, L2232
+        [InlineData(29.2, 0.44, 27.55, BodySupport.Floor, 25.62, 1.0)]
+        [InlineData(29.2, 0.45, 27.55, BodySupport.Floor, 25.62, 0.0)]
         [InlineData(20.0, 0.0, 29.2, BodySupport.Floor, 25.62, 0.3)]          // trolley alone
         [InlineData(20.0, 0.0, 29.56, BodySupport.Floor, 25.62, 0.3)]
         [InlineData(20.0, 0.0, 29.58, BodySupport.Floor, 25.62, 0.0)]
@@ -133,6 +135,27 @@ namespace DeadLetter.Core.Tests
             if (ws == BodySupport.Carrier) { weight.X = tx - 0.12; weight.CarrierX = tx; } else weight.X = wx;
             g.Step(Mech.Dt, On(hx, hy));
             Assert.Equal(load, plate.Load, 12);
+        }
+
+        /// <summary>
+        /// In the air he counts only below 0.25; standing, below 0.45 (<c>y &lt; 0.45 &amp;&amp; (grounded || y &lt; 0.25)</c>,
+        /// L2232): on the weight on the trolley (0.38) he holds the gate fully open; jumping off he does not.
+        /// </summary>
+        [Theory]
+        [InlineData(0.38, true, 1.72)]
+        [InlineData(0.38, false, 0.72)]
+        [InlineData(0.24, false, 1.72)]
+        [InlineData(0.25, false, 0.72)]
+        [InlineData(0.449, true, 1.72)]
+        [InlineData(0.45, true, 0.72)]
+        public void Dl03_HeCountsBelow025_OrStandingBelow045_L2232(double hy, bool grounded, double load)
+        {
+            var (g, plate, trolley, weight) = Dl03();
+            trolley.X = 29.106;
+            weight.Support = BodySupport.Carrier; weight.CarrierX = 29.106; weight.X = 29.106 - 0.160833;
+            g.Step(Mech.Dt, new PlayerPose(29.045, hy, grounded: grounded));
+            Assert.Equal(load, plate.Load, 12);
+            Assert.Equal(0.72, plate.LoadWithoutPlayer, 12);
         }
 
         [Fact]
