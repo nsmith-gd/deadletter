@@ -1,6 +1,6 @@
 using System;
 
-namespace DeadLetter.Core.Settings
+namespace DeadLetter.Core.Options
 {
     /// <summary>The five mixer groups (U-16). Each has an AudioMixer exposed parameter named by <see cref="AudioLevels.ExposedParameter"/>.</summary>
     public enum AudioGroup

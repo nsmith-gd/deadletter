@@ -1,6 +1,6 @@
 using System;
 using DeadLetter.Core.Platform;
-using DeadLetter.Core.Settings;
+using DeadLetter.Core.Options;
 using DeadLetter.Runtime.Camera;
 using DeadLetter.Runtime.Settings;
 using UnityEngine;

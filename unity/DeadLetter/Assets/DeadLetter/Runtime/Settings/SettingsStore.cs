@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using DeadLetter.Core.Settings;
+using DeadLetter.Core.Options;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.InputSystem;

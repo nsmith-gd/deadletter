@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
-namespace DeadLetter.Core.Settings
+namespace DeadLetter.Core.Options
 {
     /// <summary>
     /// Reads and writes <see cref="GameSettings"/> as UTF-8 <c>key=value</c> lines:

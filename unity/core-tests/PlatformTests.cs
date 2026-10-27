@@ -1,6 +1,6 @@
 using System.Linq;
 using DeadLetter.Core.Platform;
-using DeadLetter.Core.Settings;
+using DeadLetter.Core.Options;
 using Xunit;
 
 namespace DeadLetter.Core.Tests

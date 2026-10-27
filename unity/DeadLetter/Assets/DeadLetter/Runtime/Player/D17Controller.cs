@@ -1,7 +1,7 @@
 using System;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Motor;
-using DeadLetter.Core.Settings;
+using DeadLetter.Core.Options;
 using DeadLetter.Core.Simulation;
 using DeadLetter.Runtime.Settings;
 using UnityEngine;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using DeadLetter.Core.Settings;
+using DeadLetter.Core.Options;
 using Xunit;
 
 namespace DeadLetter.Core.Tests

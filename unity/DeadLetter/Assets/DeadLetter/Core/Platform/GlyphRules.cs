@@ -1,5 +1,5 @@
 using System;
-using DeadLetter.Core.Settings;
+using DeadLetter.Core.Options;
 
 namespace DeadLetter.Core.Platform
 {

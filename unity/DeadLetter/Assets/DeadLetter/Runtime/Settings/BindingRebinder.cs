@@ -1,5 +1,5 @@
 using System;
-using DeadLetter.Core.Settings;
+using DeadLetter.Core.Options;
 using UnityEngine.InputSystem;
 
 namespace DeadLetter.Runtime.Settings

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DeadLetter.Core.Settings
+namespace DeadLetter.Core.Options
 {
     /// <summary>Subtitle and letter text size (port_architecture §4.29: "subtitles size").</summary>
     public enum TextSize

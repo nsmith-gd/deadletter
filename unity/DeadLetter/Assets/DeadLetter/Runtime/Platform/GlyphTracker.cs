@@ -1,6 +1,6 @@
 using System;
 using DeadLetter.Core.Platform;
-using DeadLetter.Core.Settings;
+using DeadLetter.Core.Options;
 using UnityEngine.InputSystem;
 
 namespace DeadLetter.Runtime.Platform
