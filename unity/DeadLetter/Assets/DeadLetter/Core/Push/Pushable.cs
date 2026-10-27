@@ -70,6 +70,17 @@ namespace DeadLetter.Core.Push
         public PushBlock[] Blocks = Array.Empty<PushBlock>();
         /// <summary>Ascending stops (<see cref="Push.Detents"/>); empty = none.</summary>
         public double[] Detents = Array.Empty<double>();
+        /// <summary>
+        /// A first stop short of <see cref="Max"/> (NaN = none): while it stands more than <see cref="Pushable.StopSlack"/>
+        /// short of it, its travel ends there; past that, at Max. Unlike a detent it is read from where it stands, not
+        /// where he took hold, and he keeps hold (DL-05's drum: <c>x &lt; drumPlate − 0.01 ? drumPlate : drumPark</c>, L4277).
+        /// </summary>
+        public double StopAt = double.NaN;
+        /// <summary>
+        /// Grabbable only while it can still move more than this toward its travel's end (NaN = always): DL-05's body,
+        /// <c>avail: max() − x &gt; 0.05</c> (L4281).
+        /// </summary>
+        public double MinRoom = double.NaN;
         /// <summary>The pit it tips into at <see cref="Max"/>; null = none.</summary>
         public TipParams Pit;
         /// <summary>Reaching the end of its travel within <see cref="DockTolerance"/> of this docks it (NaN = never).</summary>
@@ -129,6 +140,9 @@ namespace DeadLetter.Core.Push
     /// </summary>
     public sealed class Pushable : Mechanism, IPushable, IPlateBody, IPositionSource, IEngageable
     {
+        /// <summary><see cref="PushableParams.StopAt"/> holds while it stands more than this short of it (L4277).</summary>
+        public const double StopSlack = 0.01;
+
         private readonly PushableParams _p;
         private readonly TipIntoPit _tip;
         private IPlateBody[] _riders = Array.Empty<IPlateBody>(), _blocks = Array.Empty<IPlateBody>();
@@ -196,15 +210,18 @@ namespace DeadLetter.Core.Push
 
         /// <summary>Grabbable from the face <paramref name="side"/>: on the floor, and he can stand at its stand point.</summary>
         public bool IsAvailableFrom(int side, in InteractionQuery q)
-            => (State == PushableState.Free || State == PushableState.AtLip) && (CanStandAt == null || CanStandAt(X - side * _p.Gap));
+            => (State == PushableState.Free || State == PushableState.AtLip) && (CanStandAt == null || CanStandAt(X - side * _p.Gap))
+               && (double.IsNaN(_p.MinRoom) || Max - X > _p.MinRoom);
 
         /// <summary>
-        /// Its travel now: [Min, Max] narrowed by the <see cref="PushableParams.Blocks"/> standing on the floor (L2343–L2346:
-        /// stops gap short of a body ahead or behind) and the <see cref="Detents"/> either side of where he took hold.
+        /// Its travel now: [Min, Max] narrowed by its <see cref="PushableParams.StopAt"/> while short of it, the
+        /// <see cref="PushableParams.Blocks"/> standing on the floor (L2343–L2346: stops gap short of a body ahead or behind)
+        /// and the <see cref="Detents"/> either side of where he took hold.
         /// </summary>
         public void Range(out double lo, out double hi)
         {
             lo = _p.Min; hi = _p.Max;
+            if (!double.IsNaN(_p.StopAt) && X < _p.StopAt - StopSlack && hi > _p.StopAt) hi = _p.StopAt;   // L4277
             for (int i = 0; i < _blocks.Length; i++)
             {
                 var b = _blocks[i];

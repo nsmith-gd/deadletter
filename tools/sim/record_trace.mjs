@@ -1,6 +1,6 @@
 // Golden trace recorder (U-20): runs the simulated player (bot.js) through the prototype and writes one JSON line per
 // 60 Hz game step: the inputs the game consumed that step and D-17's and the scenes' state after it. The Core
-// parity tests (unity/core-tests/Dl01TraceTests.cs … Dl04TraceTests.cs) replay the inputs
+// parity tests (unity/core-tests/Dl01TraceTests.cs … Dl05TraceTests.cs) replay the inputs
 // through Core and compare. Format: tools/sim/README.md.
 //
 //   node record_trace.mjs <seed> <out.jsonl.gz> [mechanical]
@@ -91,6 +91,26 @@ const RECORDER = `window.__record = (rngSeed) => {
       bd4: G.ch1 ? r6(G.ch1.bayDoor) : null, bw4: p && p.userData.y0 != null ? r6((p.userData.y0 - p.position.y) / 0.01) : null,
     };
   }
+  // DL-05 (U-20): the drum and the body (x, state), the weigh-in (W as updateCh1 weighs it, L4890-L4892; its reading,
+  // needle, plate dip; the hatch's twitch lift, L4920), the hatch's height and the SERVED flag. Only while in DL-05
+  // (region 2, x >= RATION5.x0) and on the step he leaves it; names end in 5 so no other scene's fields collide.
+  const R5 = D.k2.RH5, X5 = D.k2.RATION5.x0;
+  let in05 = false;
+  function dl05() {
+    const now = G.region === 2 && G.x >= X5, emit = now || in05;
+    in05 = now;
+    const s = G.ch1;
+    if (!emit || !s || !s.drum) return {};
+    const dr = s.drum, bd = s.body, rh = s.rh, sc = s.weigh;
+    const on = (x, half) => Math.min(1, Math.max(0, (Math.min(x + half, R5.plate[1]) - Math.max(x - half, R5.plate[0])) / (2 * half)));
+    const meOn = G.region === 2 && G.y < 0.05 && G.x > R5.plate[0] && G.x < R5.plate[1];
+    const tw = rh.served ? 0 : Math.max(0, 1 - (G.clock - (sc.twitchAt ?? -9)) / 0.9);
+    return {
+      d5x: r6(dr.x), d5s: dr.state, b5x: r6(bd.x), b5s: bd.state,
+      w5: r6(on(bd.x, R5.bodyHalf) + 1.7 * on(dr.x, 0.225) + (meOn ? 0.2 : 0)), w5r: sc.reading, n5: r6(sc.needle), p5: r6(sc.dip),
+      t5: r6(tw > 0 ? 0.14 * Math.sin(Math.PI * (1 - tw)) : 0), h5: r6(rh.h), f5: r6(rh.flag), s5: b(rh.served),
+    };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -104,6 +124,7 @@ const RECORDER = `window.__record = (rngSeed) => {
       tx: r6(G.trolley.x), ws: G.weight.state, wx: r6(G.weight.x), wo: r6(G.weight.off), ld: r6(G.load), nd: r6(G.needle),
       gy: r6(G.gate.y), gv: r6(G.gate.v),
       ...dl04(),
+      ...dl05(),
     };
   }
   function flush() {
