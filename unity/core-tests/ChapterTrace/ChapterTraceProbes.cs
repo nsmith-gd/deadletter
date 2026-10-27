@@ -8,7 +8,7 @@ namespace DeadLetter.Core.Tests
     /// </summary>
     internal static class ChapterTraceProbes
     {
-        /// <summary>The prologue's, DL-01 to DL-09 (fresh instances: a probe holds one replay's samples).</summary>
+        /// <summary>The prologue's, DL-01 to DL-10 (fresh instances: a probe holds one replay's samples).</summary>
         public static IReadOnlyList<IChapterTraceProbe> Prologue() => new IChapterTraceProbe[]
         {
             new Dl01ChapterProbe(),
@@ -20,6 +20,7 @@ namespace DeadLetter.Core.Tests
             new Dl07ChapterProbe(),
             new Dl08ChapterProbe(),
             new Dl09ChapterProbe(),
+            new Dl10ChapterProbe(),
         };
     }
 }

@@ -31,7 +31,9 @@ and an `L` citation per value. Inputs are `MechanismId` fields; the "solved" fla
 - Time: accumulate `ctx.Dt`; compare clip frames with `ClipClock.Reached/Crossed`, time thresholds with a 1e-9 slack.
   Exception: a clock the prototype itself sums from 0 a step at a time (`c.t += dt`) and compares raw (`c.t > 1.0`) is
   the same double here: compare it raw too. Sixty steps of 1/60 sum to 1.0000000000000013, so with the slack the
-  threshold passes a step late (`SlippingCage`, found by the DL-09 trace at #22003; U-21).
+  threshold passes a step late (`SlippingCage`, found by the DL-09 trace at #22003; U-21). So is a clock the prototype
+  takes as a difference of game clocks (`game.clock − since > d`, the cue's `momentTime`): `RelocationLift` compares raw,
+  and a timed `Door` judges its delay on the bound game clock (`Door.BindClock`; DL-10's gate, #26061–#26062).
 - Per tick: no allocation, no LINQ, no lookups, no UnityEngine. Randomness: a `SimRng` field (`Core/Simulation`),
   `SimRng.Xorshift(_p.Seed)`; `Reseed` in `Reset`, `_rng.Write(w, "rng")` in the snapshot; `_rng.Chance(dt * rate)`
   for the prototype's `Math.random() < dt · rate`.
@@ -77,7 +79,7 @@ the original run bit for bit (test it).
 | `Catches/` | Latch, Pawl, CageCatch, CycleBrake | c | DL-01, 08, 09, 13, 16 |
 | `Actuators/` | Door, FollowerActuator, CrankActuator | d (a) | DL-01, 03, 10, 11, 12, 14a, 15, 17 |
 | `Drives/` | PulseSequencer, WindCrank, PairedBlindDrive | e, g | DL-01, 14, 14a, 17 |
-| `Lifts/` | Lift (base), CounterweightLift, SlippingCage, RelocationLift, PupilLift, CounterweightRack, Dumbwaiter | f | DL-08, 09, 10, 15, 16, 16a |
+| `Lifts/` | Lift (base), CounterweightLift, SlippingCage, RelocationLift, CallButton, PupilLift, CounterweightRack, Dumbwaiter | f | DL-08, 09, 10, 15, 16, 16a |
 | `Routes/` | CarrierLine (incl. the `dl06.dock`), PointsLever, ReturnsBelt, RoutePath | h | DL-06/07, 08 |
 | `Water/` | Flood, Sluice, SluiceValve, SluiceRig, FloatLatch (`dl17.latch`) | i (c) | DL-11, 17 |
 | `Bridges/` | TippingBridge | j | DL-01, 11 |

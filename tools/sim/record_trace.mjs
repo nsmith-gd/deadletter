@@ -225,6 +225,27 @@ const RECORDER = `window.__record = (rngSeed, until) => {
       dn9: G.deaths, ra9: r6(G.respawnAt || 0),
     };
   }
+  // DL-10 (U-21): the relocation lift (uo.phase, its rise uo.d, its clock uo.t, riding; L4613-L4636), the car plate
+  // (uo.loaded, the needle and the balance gauge, L4641-L4645), the gate (uo.gate, L4620-L4624), the service door's
+  // opening (uo.door, L4567), the last buzz's clock (uo.buzz, L4590), the suitcase (state, x, base; L4103, L4554), the
+  // ringc moment's clock and cut (L4588, L4606) and the light's switch-off (uo.lightOff), the crank act's strokes and the
+  // act's clock (game.act.t). Only while sceneName() is DL-10 and on the step he leaves it; names end in 10 so no other
+  // scene's fields collide.
+  let in10 = false;
+  function dl10() {
+    const now = /^DL-10/.test(D.scene()), emit = now || in10;
+    in10 = now;
+    const s = G.ch1;
+    if (!emit || !s || !s.uo) return {};
+    const uo = s.uo, cs = uo.case || {}, mt = D.Music.momentTime('ringc'), a = G.act;
+    return {
+      ph10: uo.phase, d10: r6(uo.d), t10: r6(uo.t), rd10: b(uo.riding), ld10: b(uo.loaded), g10: r6(uo.gate), dr10: r6(uo.door),
+      nd10: r6(uo.needle), gk10: r6(uo.gaugeK || 0), bz10: r6(uo.buzz),
+      cs10: cs.state ?? null, cx10: r6(cs.x ?? null), cb10: r6(cs.base ?? null),
+      mt10: mt == null ? null : r6(mt), mc10: b(G.momentCut), lo10: uo.lightOff == null ? null : r6(uo.lightOff),
+      sk10: a && a.kind === 'crank10' ? a.strokes : null, at10: a && typeof a.t === 'number' ? r6(a.t) : null,
+    };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -243,6 +264,7 @@ const RECORDER = `window.__record = (rngSeed, until) => {
       ...dl07(),
       ...dl08(),
       ...dl09(),
+      ...dl10(),
     };
   }
   window.__stopped = false;

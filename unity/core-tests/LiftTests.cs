@@ -4,6 +4,7 @@ using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Actuators;
 using DeadLetter.Core.Mechanisms.Catches;
 using DeadLetter.Core.Mechanisms.Lifts;
+using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Mechanisms.Plates;
 using Xunit;
 
@@ -557,11 +558,12 @@ namespace DeadLetter.Core.Tests
             s.G.Step(Dt, PlayerPose.Away);
             Assert.Equal(0, Find(s.G, "dl10.lift", RelocationLiftEvent.Go).Value.Index);
             Assert.True(Mech.Entered(s.G, "dl10.lift", RelocationLiftState.Up));
-            Assert.Equal(329, StepsUntilEntered(s.G, "dl10.lift", RelocationLiftState.Top));    // 330 steps = 5.5 s
+            // uo.t >= 5.5 compared raw (U-21): 330 sums of 1/60 are 5.49999…, so the run takes 331 steps, as the prototype's.
+            Assert.Equal(330, StepsUntilEntered(s.G, "dl10.lift", RelocationLiftState.Top));
             Assert.Equal(1.6, s.Lift.Position);
             Assert.Equal(0.12, Find(s.G, "dl10.lift", RelocationLiftEvent.Arrive).Value.Value);
             Assert.Equal(181, StepsUntilEntered(s.G, "dl10.lift", RelocationLiftState.Down));   // > 3 s
-            Assert.Equal(330, StepsUntilEntered(s.G, "dl10.lift", RelocationLiftState.Idle));
+            Assert.Equal(331, StepsUntilEntered(s.G, "dl10.lift", RelocationLiftState.Idle));
             Assert.Equal(0, s.Lift.Position);
             Assert.True(s.Lift.Ready);
             Assert.False(s.Lift.Riding);
@@ -577,25 +579,39 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(1.6 * 1.5 / 5.5, s.Lift.FloorVelocity * -1, 2);      // peak speed 1.5 · travel / T
         }
 
+        /// <summary>
+        /// From the counterweight's panel: the car goes for good and its climb follows the <c>ringc</c> cue, whose time is a
+        /// difference of game clocks (<c>Music.momentTime</c>, L4616–L4617): 0 on the press step (the moment starts at #4), and it
+        /// lands when the cue reads 5.5 or more, compared raw (here a clock from 433 s, where the cue reads 5.4999… on the
+        /// 331st step, as at the trace's #26904). He is never carried by ride sync: the scene's ride act stands him on it (L4600).
+        /// </summary>
         [Fact]
         public void Relocation_FromTheCounterweight_HeRidesItDown_Gone_L4585_L4600_L4631()
         {
             var s = new Dl10();
+            double clock = 433.0, t0 = clock;
             s.Lift.PressUp(true);
             s.G.Step(Dt, PlayerPose.Away);
             Assert.Equal(1, Find(s.G, "dl10.lift", RelocationLiftEvent.Go).Value.Index);
-            Assert.True(s.Lift.Riding && s.Lift.Carrying);
-            int gone = -1;
+            Assert.True(s.Lift.Riding);
+            Assert.False(s.Lift.Carrying);
+            Assert.Equal(0, s.Lift.T);                                                   // the cue's time on the press step
+            int gone = -1, want = -1;
             for (int i = 2; i <= 400 && gone < 0; i++)
             {
+                clock += Dt;
+                double cue = clock - t0;
+                if (want < 0 && cue >= 5.5) want = i;
+                s.Lift.FollowCue(cue);
                 s.G.Step(Dt, PlayerPose.Away);
                 Assert.Equal(1.6 - s.Lift.Position, s.Lift.FloorY, 12);
+                Assert.False(s.Lift.Carrying);
                 if (Mech.Entered(s.G, "dl10.lift", RelocationLiftState.Gone)) gone = i;
-                else Assert.True(s.Lift.Carrying);
+                else Assert.Equal(cue, s.Lift.T);
             }
-            Assert.Equal(330, gone);
+            Assert.Equal(want, gone);
+            Assert.InRange(gone, 331, 332);
             Assert.Equal(0.35, Find(s.G, "dl10.lift", RelocationLiftEvent.Arrive).Value.Value);
-            Assert.False(s.Lift.Carrying);
             Assert.Equal(0, s.Lift.CounterweightY, 12);
             Mech.Run(s.G, 600);
             Assert.Equal(RelocationLiftState.Gone, s.Lift.State);           // for good
@@ -610,14 +626,103 @@ namespace DeadLetter.Core.Tests
             var s = new Dl10();
             s.Lift.PressUp(true);
             s.G.Step(Dt, PlayerPose.Away);
-            for (int i = 0; i < 60; i++) { s.Lift.FollowCue(0); s.G.Step(Dt, PlayerPose.Away); }   // cue held: the car waits
-            Assert.Equal(1.6 * Maths.Smooth.Step(Dt / 5.5), s.Lift.Position, 12);
+            for (int i = 0; i < 60; i++) { s.Lift.FollowCue(0); s.G.Step(Dt, PlayerPose.Away); }   // cue held at 0: the car waits at the bottom
+            Assert.Equal(0, s.Lift.Position, 12);
             s.Lift.FollowCue(5.0);                                           // the cue jumps ahead: the car follows it
+            s.G.Step(Dt, PlayerPose.Away);
+            Assert.Equal(1.6 * Maths.Smooth.Step(5.0 / 5.5), s.Lift.Position, 12);
+            s.Lift.FollowCue(4.0);                                           // never backwards: it keeps its own step on
             s.G.Step(Dt, PlayerPose.Away);
             Assert.Equal(1.6 * Maths.Smooth.Step(5.0 / 5.5), s.Lift.Position, 12);
             s.Lift.FollowCue(5.5);
             s.G.Step(Dt, PlayerPose.Away);
             Assert.Equal(RelocationLiftState.Gone, s.Lift.State);
+        }
+
+        // ---- CallButton (dl10.upButton, dl10.serviceUp) -------------------------------------------------------------------
+
+        private sealed class Dl10Buttons
+        {
+            public readonly TestSource Plate = new TestSource("dl10.carPlate");
+            public readonly TestSource Gate = new TestSource("dl10.carGate");
+            public readonly CallButton Up = new CallButton("dl10.upButton", CallButtonParams.Dl10UpButton());
+            public readonly CallButton Service = new CallButton("dl10.serviceUp", CallButtonParams.Dl10ServiceUp());
+            public readonly RelocationLift Lift = new RelocationLift("dl10.lift", RelocationLiftParams.Dl10Lift());
+            public readonly MechanismGraph G;
+            public Dl10Buttons(bool loaded = true)
+            {
+                Plate.Load = loaded ? 1 : 0; Gate.Position = 1;
+                G = Mech.Graph("uponly", Plate, Gate, Up, Service, Lift);                       // the buttons step before the lift
+            }
+        }
+
+        private static bool Offers(CallButton b, double x, double y) => b.Offer(new InteractionQuery(x, y, 0, 1, true, false, HoldKind.None, null, null), out _);
+
+        /// <summary>
+        /// PressButtonHigh (L4579–L4593): pushed in from f13 to f22; at f16 it asks the lift, which goes (or buzzes) on that same
+        /// step (the prototype sets <c>uo.phase</c> at #4, before <c>updateUpOnly</c>); done at f34 (85 steps).
+        /// </summary>
+        [Theory]
+        [InlineData(false, true, 0)]
+        [InlineData(true, true, 1)]
+        [InlineData(false, false, -1)]
+        public void CallButton_PressesAtF16_TheLiftAnswersThatStep_DoneAtF34_L4580_L4593(bool service, bool loaded, int goIndex)
+        {
+            var s = new Dl10Buttons(loaded);
+            var b = service ? s.Service : s.Up;
+            int pressed = -1, answered = -1, inFrom = -1, inTo = -1;
+            int steps = Mech.PlayAct(s.G, b, onStep: (k, f) =>
+            {
+                if (Mech.Emitted(s.G, b.Id, CallButtonEvent.Press)) pressed = k;
+                if (Mech.Emitted(s.G, "dl10.lift", RelocationLiftEvent.Go) || Mech.Emitted(s.G, "dl10.lift", RelocationLiftEvent.Buzz)) answered = k;
+                if (b.Depressed && inFrom < 0) inFrom = k;
+                if (b.Depressed) inTo = k;
+            });
+            Assert.Equal(85, steps);                                                     // f34 at 0.4 frames a step
+            Assert.Equal(40, pressed);                                                   // f16
+            Assert.Equal(pressed, answered);
+            Assert.Equal((33, 54), (inFrom, inTo));                                      // 13 < f < 22
+            if (goIndex < 0)
+            {
+                Assert.Equal(RelocationLiftState.Idle, s.Lift.State);
+                Assert.False(s.Lift.Riding);
+            }
+            else
+            {
+                Assert.NotEqual(RelocationLiftState.Idle, s.Lift.State);
+                Assert.Equal(goIndex == 1, s.Lift.Riding);
+            }
+            Assert.Equal(CallButtonState.Pressing, b.State);
+            s.G.Step(Dt, PlayerPose.Away);
+            Assert.Equal(CallButtonState.Idle, b.State);
+            Assert.False(b.Depressed);
+        }
+
+        /// <summary>
+        /// Where they answer (L4233–L4236): the lobby's within 0.22 of <c>UO.upStand</c> on the deck while the lift is idle; the
+        /// counterweight's on its footplate (<c>UO.cw.x0 + 0.1</c> to <c>UO.cw.x1</c>) on the deck, only while the lift rests at
+        /// the bottom. He stands at <c>UO.upStand</c> and <c>UO.cw.stand</c>, facing +x.
+        /// </summary>
+        [Fact]
+        public void CallButton_AnswersOnTheDeck_InReach_OnlyWhileTheLiftIsIdle_L4233_L4236()
+        {
+            var s = new Dl10Buttons();
+            Assert.True(Offers(s.Up, 123.95, 1.6));
+            Assert.True(Offers(s.Up, 123.95 + 0.21, 1.6));
+            Assert.False(Offers(s.Up, 123.95 + 0.23, 1.6));
+            Assert.False(Offers(s.Up, 123.95, 1.3));                                     // off the deck
+            Assert.False(Offers(s.Service, 123.95, 1.6));
+            Assert.True(Offers(s.Service, 127.37, 1.6));
+            Assert.False(Offers(s.Service, 126.94, 1.6));                                // short of the footplate
+            Assert.False(Offers(s.Service, 127.37, 0));                                  // down the shaft
+            Assert.True(s.Up.Offer(new InteractionQuery(123.8, 1.6, 0, -1, true, false, HoldKind.None, null, null), out var pose));
+            Assert.Equal((54 + 69.95, 1), (pose.StandX, pose.Face));
+            Assert.True(s.Up.Profile.TurnIntoSet);                                       // he turns to the wall (L4535)
+            Assert.False(s.Service.Profile.TurnIntoSet);                                 // on the footplate: straight in (L4531)
+            s.Lift.PressUp(false);
+            s.G.Step(Dt, PlayerPose.Away);
+            Assert.False(Offers(s.Up, 123.95, 1.6));                                     // the car is away
+            Assert.False(Offers(s.Service, 127.37, 1.6));
         }
 
         [Theory]

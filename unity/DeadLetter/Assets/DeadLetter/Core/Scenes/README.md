@@ -10,9 +10,9 @@ respawn or continue anywhere rebuilds the whole world there. `Current` is the sc
 **Mechanism update order:** each scene's own order, scenes in lane order. The prototype updates by system (§3.1,
 L8511–L8518), which interleaves scenes, but a mechanism reads another scene's only when that scene comes first (DL-07's
 bucket and loading read DL-06's line and weights, from this step's log), so the two agree:
-`PrologueChapterTraceTests` replays DL-01 to DL-09 (#1768–#25182) in one sim at 1e-6.
+`PrologueChapterTraceTests` replays DL-01 to DL-10 (#1768–#27923) in one sim at 1e-6.
 
-## Adding a scene to the prologue (DL-10 next)
+## Adding a scene to the prologue (DL-11 next)
 
 The steps as DL-07 took them (U-21); DL-07's specifics are kept where they show the pattern.
 
@@ -53,6 +53,31 @@ The steps as DL-07 took them (U-21); DL-07's specifics are kept where they show 
    to the first step past the scene and derives the window, the seams and the checkpoint order (with the next scene's
    checkpoint if its first step reaches one, as DL-08's `goods`) from the probes. The chapter replay is the proof; a
    per-scene window only localises a failure. Nothing is compensated: every replay is strict (#30).
+
+## DL-10 as ported (U-21), and notes for DL-11
+
+- DL-10 (`Dl10/`, `Lane/Tables/Dl10Lane.cs`) is region 4 from `UPONLY.x0` 118.8 to `REGION5_X` 127.9, after DL-09. Its row
+  is `uponly` (119.4, y `Deck`), reached grounded past `UPONLY.x0 + 0.4` (L4937). Nothing kills here.
+- Mechanisms, in order: `dl10.case` (`CarriedItem`, heavy; in the car past `ringc`), `dl10.carPlate` (`LoadPlate`),
+  `dl10.carGate` (`Door` on the plate, its 0.8 s delay on the game clock: `Door.BindClock`, as `game.clock − uo.loadedAt`),
+  `dl10.upButton` and `dl10.serviceUp` (`Lifts/CallButton`: PressButtonHigh, the press at f16, done at f34), the crank and
+  `dl10.serviceDoor`, then `dl10.lift` (`RelocationLift`, which is also `dl10.counterweight`). The car loader
+  (`Dl10CarLoader`, an `IPlaceTarget`) steps him 0.5 into the doorway. Lane: the counterweight's floor in its shaft, the
+  service door's wall until 0.98, the open shaft's edge, its far wall, ring C's landing at 0 past `UO.cw.x1`.
+- Rules (`UpOnly10`): the buzz (Pips `car10` while empty; the first ever startles him 0.2 s after the act, a motor quirk from
+  `BeforeMotor`), the ride, the `ringc` moment (`UpOnly10.Moment`, started on the car's `Go` from the footplate; the car
+  follows its clock), the cold light (`ColdLight`, `LightOff`), shakes, and region 5 past `REGION5_X` on free movement.
+- Scene act (#32): `Dl10RideAct` (he stands on the counterweight as it was at the step's start, `game.y = DECK − uo.d` at #4;
+  the moment lets him go). `RelocationLift` never carries him by ride sync (the prototype has none for it).
+- Proven in the chapter replay (`Dl10ChapterProbe`, #25182–#27923, DL-11's first step, strict); no scene replay of its own.
+- **DL-11 starts at #27923** (x 127.917, y 0, vx 1.6, region 5, checkpoint still `uponly`, no act or hold). Region 5 has no
+  lane in Core yet: `SetRegion(5)` leaves the lane on region 4 until DL-11's def adds region 5's table (X0 `REGION5_X`;
+  `leftLimit0` there is `UO.cw.x0 + HALF`, L1758; `floorCh1`'s counterweight/0 floor also holds in region 5, L4137). The way
+  back (region 5 → 4 at `x < REGION5_X − 0.2`, L2048) is DL-11's to add. Handed over: the car gone for good with the suitcase
+  (`Gone`, d 1.6, the counterweight at 0), the gate shut, the service door up, `ringc` playing on (t ≈ 22.48 at #27923,
+  let go at 22.0167, not cut). Past `ringc` the mechanisms reset to that state themselves.
+- Not ported: `card_lastcar`, `tan_relocation`, the ambience's `order` → `heaps` once riding (L8154), the camera's framings
+  and the `car10`/`ringc10` shot, the lobby's lights, lamps, gauges and ropes (view), hints.
 
 ## DL-09 as ported (U-21)
 

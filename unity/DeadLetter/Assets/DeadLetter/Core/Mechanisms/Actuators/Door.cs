@@ -92,8 +92,9 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         private IEngageable _trigger;
         private IPersistFlagReader _flags;
         private int _flag = -1;
-        private double _held = -1, _t;
+        private double _held = -1, _t, _since = double.NaN;
         private bool _cued;
+        private Func<double> _clock;
 
         public Door(MechanismId id, DoorParams p) : base(id) { _p = p; }
 
@@ -102,6 +103,14 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         public bool Engaged => State == DoorState.Open;
         /// <summary>Seconds since it started opening, held at Duration once open (drives <see cref="ShutterCounterweightY"/> in the DL-01 view).</summary>
         public double Elapsed => _t;
+
+        /// <summary>
+        /// Timed mode: judge the delay on the game clock, as the prototype's <c>game.clock − since &gt; delay</c> does (DL-10's
+        /// gate: <c>game.clock − uo.loadedAt &gt; 0.8</c>, L4621), rather than on a sum of steps: the difference of two large
+        /// clock values is not the sum of the steps between them, and the two pass 0.8 on different steps (#26061). Null: the
+        /// sum (tests, and the doors whose delays no trace has checked yet).
+        /// </summary>
+        public void BindClock(Func<double> seconds) => _clock = seconds;
 
         public override void Link(MechanismLinker link)
         {
@@ -120,6 +129,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         public override void Reset(in Checkpoint cp)
         {
             _held = -1;
+            _since = double.NaN;
             if (_follow != null) { Position = _follow.Position * _p.Travel; Init((int)FollowState(_follow.Position)); return; }
             bool open = _trigger.Engaged && Allowed;
             Init((int)(open ? DoorState.Open : DoorState.Closed));
@@ -134,9 +144,11 @@ namespace DeadLetter.Core.Mechanisms.Actuators
 
             if (State == DoorState.Closed)
             {
-                if (!_trigger.Engaged) { _held = -1; return; }
+                if (!_trigger.Engaged) { _held = -1; _since = double.NaN; return; }
                 _held = _held < 0 ? 0 : _held + ctx.Dt;
-                if (!(_p.Delay <= 0 || _held > _p.Delay)) return;
+                if (_clock != null && double.IsNaN(_since)) _since = _clock();                     // uo.loadedAt = game.clock
+                double held = _clock != null ? _clock() - _since : _held;
+                if (!(_p.Delay <= 0 || held > _p.Delay)) return;
                 if (!Allowed) return;
                 Enter(ctx, (int)DoorState.Opening);
                 _t = _p.CountTriggerStep ? ctx.Dt : 0;
@@ -183,6 +195,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         {
             w.WriteDouble("pos", Position);
             w.WriteDouble("held", _held);
+            w.WriteDouble("since", _since);
             w.WriteDouble("t", _t);
             w.WriteBool("cued", _cued);
         }
@@ -191,6 +204,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         {
             Position = r.ReadDouble("pos");
             _held = r.ReadDouble("held");
+            _since = r.ReadDouble("since");
             _t = r.ReadDouble("t");
             _cued = r.ReadBool("cued");
         }

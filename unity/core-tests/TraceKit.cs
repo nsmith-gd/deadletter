@@ -77,6 +77,13 @@ namespace DeadLetter.Core.Tests
         public double? Cy9, Cv9, Ct9, Ry9, Nd9, P0x9, P0b9, P1x9, P1b9, Ta9, Mt9, At9, Ra9;
         public int? P0q9, P1q9, Cw9, Sk9, Dn9;
         public bool? Th9, Co9, Ne9, Dg9, So9, Hp9, Aw9, Mc9;
+        // DL-10 (U-21): the relocation lift (phase, rise, clock, riding), the car plate (loaded, needle, balance gauge), the gate,
+        // the service door's opening, the last buzz's clock, the suitcase (state, x, base), the ringc moment's clock and cut, the
+        // cold light's switch-off, the crank act's strokes and the act's clock (tools/sim/record_trace.mjs).
+        public string Ph10, Cs10;
+        public double? D10, T10, G10, Dr10, Nd10, Gk10, Bz10, Cx10, Cb10, Mt10, Lo10, At10;
+        public bool? Rd10, Ld10, Mc10;
+        public int? Sk10;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -295,6 +302,24 @@ namespace DeadLetter.Core.Tests
                 case "hp9": s.Hp9 = B(v); break;
                 case "aw9": s.Aw9 = B(v); break;
                 case "mc9": s.Mc9 = B(v); break;
+                case "ph10": s.Ph10 = S(v); break;
+                case "cs10": s.Cs10 = S(v); break;
+                case "d10": s.D10 = N(v); break;
+                case "t10": s.T10 = N(v); break;
+                case "g10": s.G10 = N(v); break;
+                case "dr10": s.Dr10 = N(v); break;
+                case "nd10": s.Nd10 = N(v); break;
+                case "gk10": s.Gk10 = N(v); break;
+                case "bz10": s.Bz10 = N(v); break;
+                case "cx10": s.Cx10 = N(v); break;
+                case "cb10": s.Cb10 = N(v); break;
+                case "mt10": s.Mt10 = N(v); break;
+                case "lo10": s.Lo10 = N(v); break;
+                case "at10": s.At10 = N(v); break;
+                case "rd10": s.Rd10 = B(v); break;
+                case "ld10": s.Ld10 = B(v); break;
+                case "mc10": s.Mc10 = B(v); break;
+                case "sk10": s.Sk10 = I(v); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }

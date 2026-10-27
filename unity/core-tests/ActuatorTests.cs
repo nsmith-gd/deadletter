@@ -546,6 +546,35 @@ namespace DeadLetter.Core.Tests
 
         // ---- DL-10: the service door (L3459, L4565–L4577, L4654) --------------------------------------------------------------
 
+        /// <summary>DL-10's crank answers on the deck (<c>|y − DECK| &lt; 0.05</c>, L4235) within 0.25 of <c>UO.crankStand</c>, until the door is up.</summary>
+        [Fact]
+        public void Crank_Dl10_AnswersOnTheDeck_L4235()
+        {
+            var crank = new CrankActuator("dl10.serviceCrank", CrankParams.Dl10ServiceCrank());
+            Mech.Graph("uponly", crank);
+            bool At(double x, double y) => crank.Offer(new InteractionQuery(x, y, 0, 1, true, false, HoldKind.None, null, null), out _);
+            Assert.True(At(126.45, 1.6));
+            Assert.True(At(126.45 + 0.24, 1.6));
+            Assert.False(At(126.45 + 0.26, 1.6));
+            Assert.False(At(126.45, 1.66));
+        }
+
+        /// <summary>The service door is up past <c>ringc</c> (<c>uo.door</c>, L4102): DL-11's respawns find it wound open, the crank spent.</summary>
+        [Theory]
+        [InlineData("tunnel", 0.0)]
+        [InlineData("uponly", 0.0)]
+        [InlineData("ringc", 1.0)]
+        [InlineData("school", 1.0)]
+        public void Crank_Dl10_ResetFromCheckpoint_L4102(string cp, double open)
+        {
+            var (g, crank, door) = Dl10();
+            g.Reset(Mech.Cp(cp));
+            Assert.Equal(open, crank.Position);
+            Assert.Equal(open * 1.45, door.Position, 12);
+            Assert.Equal(open == 1, crank.State == CrankState.Done);
+            Assert.Equal(open < 1, crank.Offer(new InteractionQuery(126.45, 1.6, 0, 1, true, false, HoldKind.None, null, null), out _));
+        }
+
         private static (MechanismGraph g, CrankActuator crank, Door door) Dl10()
         {
             var crank = new CrankActuator("dl10.serviceCrank", CrankParams.Dl10ServiceCrank());

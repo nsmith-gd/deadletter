@@ -312,6 +312,37 @@ namespace DeadLetter.Core.Tests
             Assert.True(plate.SillLampLit(0) && plate.SillLampLit(1) && plate.SillLampLit(2));
         }
 
+        /// <summary>
+        /// Bound to the game clock (as DL-10's rules bind it), the gate's delay is the prototype's <c>game.clock − uo.loadedAt &gt;
+        /// 0.8</c> (L4621): a difference of two large clock values, which here (the trace's clock at the loading step, #26013)
+        /// reads 0.79999… 48 steps on and passes 0.8 only on the 49th (#26062), a step after the sum of steps does (U-21).
+        /// </summary>
+        [Fact]
+        public void Dl10_GateDelay_OnTheGameClock_IsTheDifferenceOfClocks_L4621()
+        {
+            var (g, suitcase, _, gate) = Dl10("uponly");
+            double clock = 433.566666666601;                                                     // trace #26013 (game.clock)
+            gate.BindClock(() => clock);
+            suitcase.Support = BodySupport.Placed;
+            g.Step(Mech.Dt, PlayerPose.Away);                                                   // loaded: uo.loadedAt = clock
+            double loadedAt = clock;
+            int want = -1;
+            for (int k = 1; k <= 60 && gate.State == DoorState.Closed; k++)
+            {
+                clock += Mech.Dt;
+                if (want < 0 && clock - loadedAt > 0.8) want = k;
+                g.Step(Mech.Dt, PlayerPose.Away);
+                if (gate.State != DoorState.Closed) Assert.Equal(want, k);
+            }
+            Assert.Equal(49, want);
+            Assert.Equal(1 / 60.0 / 1.4, gate.Position, 12);
+
+            var (g2, suitcase2, _, gate2) = Dl10("uponly");                                       // unbound: the sum of steps
+            suitcase2.Support = BodySupport.Placed;
+            g2.Step(Mech.Dt, PlayerPose.Away);
+            Assert.Equal(48, Mech.RunUntil(g2, () => gate2.State == DoorState.Opening));
+        }
+
         [Fact]
         public void Dl10_SillLampsLightOneByOne_L4647()
         {

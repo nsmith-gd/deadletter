@@ -163,4 +163,14 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
   - DL-08's and DL-09's fields were added in parallel and merged (U-21): the trace was re-recorded once with both, and
     every field of every step of each side's trace is unchanged in it (checked on the expanded records), two recordings
     byte-identical. `dl02_press_death_seed1.jsonl.gz` re-recorded with the merged recorder is byte-identical to its own.
+  - DL-10 (`unity/core-tests/ChapterTrace/Dl10ChapterProbe.cs`), only while `sceneName()` is DL-10 and on the step he
+    leaves it (so steps 25182–27923 here, DL-11's first): `ph10`/`d10`/`t10`/`rd10` (the relocation lift's `uo.phase`,
+    `uo.d`, `uo.t`, `uo.riding`), `ld10`/`nd10`/`gk10` (`uo.loaded`, the load needle, the balance gauge's `uo.gaugeK`),
+    `g10` (the car gate, `uo.gate`), `dr10` (the service door's opening, `uo.door`), `bz10` (the last buzz's clock,
+    `uo.buzz`), `cs10`/`cx10`/`cb10` (the suitcase's state, x and base), `mt10`/`mc10` (the `ringc` moment's time, null
+    outside it, and `game.momentCut`), `lo10` (`uo.lightOff`, null until he is let go), `sk10` (the crank act's
+    `a.strokes`, null outside it), `at10` (`game.act.t`, null outside an act). Re-recorded with these (U-21): every
+    earlier field of all 33,207 steps is unchanged (each delta line's old keys and the expanded records, checked step by
+    step), new keys appear only on steps 25182–27923, and two recordings are byte-identical;
+    `dl02_press_death_seed1.jsonl.gz` re-recorded with this recorder is byte-identical to its own.
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).

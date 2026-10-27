@@ -61,10 +61,17 @@ namespace DeadLetter.Core.Mechanisms.Lifts
     /// sent from the lobby it rises over 5.5 s, waits 3 s and comes down; sent from the counterweight's own panel it
     /// leaves for good and he rides the counterweight down the shaft to ring C.
     /// Signals: <see cref="Position"/> = the car's rise d, metres (0 … 1.6); <see cref="ILiftRide"/>: the counterweight,
-    /// FloorY = Deck − d, carrying him while it moves with him on it (<c>game.y = DECK − uo.d</c>, L4600).
+    /// FloorY = Deck − d. It never carries him by ride sync (<see cref="Lift.Carrying"/> stays false): the prototype's #9
+    /// places him only on carriers (<c>syncRide</c>, L2961); on the ride the scene's act stands him on the counterweight
+    /// at #4 (<c>game.y = DECK − uo.d</c>, L4600, before <c>updateUpOnly</c> moves it: a step behind it), and before the ride
+    /// (PressButtonHigh f16 to f34) he stays at the deck as it sinks under him.
     /// Inputs: <see cref="PressUp"/> from the button acts at PressButtonHigh f16 (L4582); <see cref="FollowCue"/> from the
-    /// cue clock while he rides (the car's climb is the <c>ringc</c> cue's, L4616–L4617).
+    /// cue clock while he rides (the car's climb is the <c>ringc</c> cue's, L4616–L4617). The cue starts with the press
+    /// (<c>startMoment('ringc')</c> at #4, L4588), so on the press step its time is 0 without a <see cref="FollowCue"/>.
     /// The random squeak (L4637) draws from its own <see cref="SimRng"/>. The gauges, lamps and ropes (L4638–L4665) are view.
+    /// <para>Its clock is compared raw (<c>uo.t &gt;= T</c>, <c>uo.t &gt; 3</c>), without <see cref="Lift.Slack"/>: the prototype sums it
+    /// a step at a time (the lobby's run) or takes it from the cue's clock, a difference of game clocks (the ride, L4617), and
+    /// with the slack the ride lands a step early (#26904, where the cue reads 5.4999999…; U-21).</para>
     /// </summary>
     public sealed class RelocationLift : Lift
     {
@@ -84,6 +91,8 @@ namespace DeadLetter.Core.Mechanisms.Lifts
         /// <summary>The car's rise, metres (<c>uo.d</c>).</summary>
         public override double Position => D;
         public double D { get; private set; }
+        /// <summary>The run's clock, seconds (<c>uo.t</c>): from the press, then from the top, then from the start down.</summary>
+        public double T => _t;
         public double CarY => _p.Deck + D;
         public double CounterweightY => _p.Deck - D;
         /// <summary>He was sent down on the counterweight (<c>uo.riding</c>).</summary>
@@ -131,6 +140,7 @@ namespace DeadLetter.Core.Mechanisms.Lifts
                 {
                     Enter(ctx, (int)RelocationLiftState.Up); _t = 0;
                     _riding = _press == PressCounterweight;
+                    if (_riding) { _cue = 0; _hasCue = true; }                                    // the ringc cue starts now: momentTime 0 at #7 (L4588, L4616)
                     Emit(ctx, (int)RelocationLiftEvent.Go, _riding ? 1 : 0);
                 }
                 else Emit(ctx, (int)RelocationLiftEvent.Buzz, Loaded ? 1 : 0);                    // L4590
@@ -146,24 +156,23 @@ namespace DeadLetter.Core.Mechanisms.Lifts
             {
                 case RelocationLiftState.Up:
                     D = _p.Travel * Smooth.Step(Math.Min(1, _t / T));                             // L4630
-                    if (Reached(_t, T))
+                    if (_t >= T)                                                                  // raw, as uo.t >= T (see the summary)
                     {
                         Enter(ctx, (int)(_riding ? RelocationLiftState.Gone : RelocationLiftState.Top)); _t = 0;
                         Emit(ctx, (int)RelocationLiftEvent.Arrive, 0, _riding ? 0.35 : 0.12);      // L4631
                     }
                     break;
                 case RelocationLiftState.Top:
-                    if (After(_t, _p.TopHold)) { Enter(ctx, (int)RelocationLiftState.Down); _t = 0; }   // L4632
+                    if (_t > _p.TopHold) { Enter(ctx, (int)RelocationLiftState.Down); _t = 0; }      // L4632
                     break;
                 case RelocationLiftState.Down:
                     D = _p.Travel * (1 - Smooth.Step(Math.Min(1, _t / T)));                       // L4634
-                    if (Reached(_t, T)) { Enter(ctx, (int)RelocationLiftState.Idle); D = 0; Emit(ctx, (int)RelocationLiftEvent.Arrive); }   // L4635
+                    if (_t >= T) { Enter(ctx, (int)RelocationLiftState.Idle); D = 0; Emit(ctx, (int)RelocationLiftEvent.Arrive); }   // L4635
                     break;
             }
             if ((State == RelocationLiftState.Up || State == RelocationLiftState.Down) && _rng.Chance(dt * _p.SqueakRate))
                 Emit(ctx, (int)RelocationLiftEvent.Squeak);                                      // L4637
-            MoveFloor(ctx, CounterweightY);
-            Carrying = _riding && State == RelocationLiftState.Up;
+            MoveFloor(ctx, CounterweightY);                                                       // never Carrying: no ride sync (L2961)
         }
 
         protected override void WriteLift(ISnapshotWriter w)

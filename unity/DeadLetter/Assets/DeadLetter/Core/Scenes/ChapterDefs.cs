@@ -9,6 +9,7 @@ using DeadLetter.Core.Scenes.Dl06;
 using DeadLetter.Core.Scenes.Dl07;
 using DeadLetter.Core.Scenes.Dl08;
 using DeadLetter.Core.Scenes.Dl09;
+using DeadLetter.Core.Scenes.Dl10;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -55,11 +56,11 @@ namespace DeadLetter.Core.Scenes
             new CheckpointDef("forwarded", Off5 + 113.1, region: 5, scene: "DL-11"));
 
         /// <summary>
-        /// The prologue as far as it is ported: DL-01 to DL-09 (regions 1–4), one world from the wake to the slipping cage's
-        /// far side (<c>UPONLY.x0</c>), where DL-10 begins. DL-07 shares DL-06's floor.
+        /// The prologue as far as it is ported: DL-01 to DL-10 (regions 1–4), one world from the wake to the foot of the
+        /// counterweight's shaft (<c>REGION5_X</c>), where region 5 and DL-11 begin. DL-07 shares DL-06's floor.
         /// </summary>
         public static ChapterDef Prologue() => new ChapterDef(PrologueId, PrologueCheckpoints,
             Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def(), Dl07Scene.Def(),
-            Dl08Scene.Def(), Dl09Scene.Def());
+            Dl08Scene.Def(), Dl09Scene.Def(), Dl10Scene.Def());
     }
 }

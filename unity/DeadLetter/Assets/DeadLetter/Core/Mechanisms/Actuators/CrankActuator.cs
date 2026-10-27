@@ -44,15 +44,16 @@ namespace DeadLetter.Core.Mechanisms.Actuators
 
         /// <summary>
         /// DL-10: the service door's crank, 4 strokes (<c>UO.strokes</c>, L3459, L4565–L4577). He stands at
-        /// <c>UO.crankStand</c> = OFF5 + 72.45 (reach 0.25 on the deck, L4235) facing +x (L4318). Moving the stick after
-        /// 0.5 s lets go; the door holds where left and the next act resumes from it.
+        /// <c>UO.crankStand</c> = OFF5 + 72.45 (reach 0.25 on the deck, <c>|y − DECK| &lt; 0.05</c>, L4235) facing +x (L4318).
+        /// Moving the stick after 0.5 s lets go; the door holds where left and the next act resumes from it.
         /// </summary>
         public static CrankParams Dl10ServiceCrank() => new CrankParams
         {
-            Station = new Station(standX: 54 + 72.45, reach: 0.25, face: 1),   // OFF5 = 54, L274
+            Station = new Station(standX: 54 + 72.45, reach: 0.25, face: 1, floorY: 1.6),   // OFF5 = 54, L274; on the deck (DECK 1.6, L4233)
             Strokes = 4,
             CancelAfter = 0.5, CancelMove = 0.3,                                // a.t > 0.5 && |move| > 0.3, L4575
             ResumeFromOpening = true,
+            DoneAfter = "ringc",                                                // uo.door = past(cp, 'ringc') ? 1 : 0, L4102
         };
     }
 
@@ -75,6 +76,8 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         public double Position { get; private set; }
         /// <summary>Wheel angle, degrees (<c>game.wheelAngle</c>).</summary>
         public double WheelDeg { get; private set; }
+        /// <summary>Strokes counted by the act now cranking, with those it resumed from (<c>a.strokes</c>, L4318, L4568); the last act's otherwise.</summary>
+        public int Strokes => _actStrokes;
 
         public override ActProfile Profile => _p.Profile;
 
