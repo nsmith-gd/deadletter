@@ -23,6 +23,8 @@ namespace DeadLetter.Core.Mechanisms.Catches
         /// <summary>Pull f39 ends the act: the prototype then plays Flinch for 1.6 s (L1875–L1876).</summary>
         public double EndFrame = ClipTimings.PullEvents.Flinch;
         public double CreakFrame = 20;
+        /// <summary>The Pull clip's frame rate (<c>FPS</c>, L268): after the act the lever runs on with the clip to its last key.</summary>
+        public double ClipFps = 24;
         /// <summary>Lever angle once released (L8022).</summary>
         public double ReleasedLeverDeg = 72;
         /// <summary>Checkpoint from which it starts released (§4.28).</summary>
@@ -58,6 +60,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
         private IPositionSource _trigger;
         private ActInput _act;
         private double _armedFor = -1;
+        private double _leverFrame = -1;
 
         public Latch(MechanismId id, LatchParams p) : base(id, p.Station) { _p = p; }
 
@@ -76,6 +79,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
             Init((int)(released ? LatchState.Released : LatchState.Locked));
             LeverDeg = released ? _p.ReleasedLeverDeg : 0;
             _armedFor = -1;
+            _leverFrame = -1;
             _act.Clear();
         }
 
@@ -93,9 +97,17 @@ namespace DeadLetter.Core.Mechanisms.Catches
             if (_act.Active)
             {
                 double f = _act.Frame;
+                _leverFrame = f;
                 LeverDeg = LeverAngleAt(f < 40 ? f : 40);                                       // L1872
                 if (_act.PrevFrame <= _p.CreakFrame && f > _p.CreakFrame) Emit(ctx, (int)LatchEvent.Creak);   // L1873
                 if (State == LatchState.Locked && ClipClock.Reached(f, _p.ReleaseFrame)) Enter(ctx, (int)LatchState.Released);   // L1874
+            }
+            else if (_leverFrame >= 0 && _leverFrame < 40)
+            {
+                // The act ends at Pull f39 (Flinch starts), but the prototype's latch branch still sets the lever from the
+                // Pull clip's time while the Flinch plays (L1871–L1872), so it runs on to its last key, 72° at f40.
+                _leverFrame += ctx.Dt * _p.ClipFps;
+                LeverDeg = LeverAngleAt(_leverFrame < 40 ? _leverFrame : 40);
             }
 
             if (_trigger != null && State == LatchState.Locked)
@@ -120,6 +132,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
         {
             w.WriteDouble("lever", LeverDeg);
             w.WriteDouble("armedFor", _armedFor);
+            w.WriteDouble("leverF", _leverFrame);
             _act.Write(w);
         }
 
@@ -127,6 +140,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
         {
             LeverDeg = r.ReadDouble("lever");
             _armedFor = r.ReadDouble("armedFor");
+            _leverFrame = r.ReadDouble("leverF");
             _act.Read(r);
         }
     }

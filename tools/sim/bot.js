@@ -88,7 +88,8 @@ window.__startBot = function (seed, opts = {}) {
     if (G.region !== 2 || G.x > PR.x1) return;
     yield* goTo(PR.x0 - 0.3, 'to the press', { hop: false });
     if (tries === 0) yield* wait(look(2.5));
-    if (mistakes && tries === 0 && chance(0.45 - 0.35 * P.skill)) note('walks under the press');
+    // opts.pressMistake: walk in on the first try even when mechanical (a recorded death, record_trace.mjs BOT_OPTS).
+    if (tries === 0 && (opts.pressMistake || (mistakes && chance(0.45 - 0.35 * P.skill)))) note('walks under the press');
     else yield* until(() => { const t = D.pressT(); return t > 1.45 && t < 1.75; }, 10, 'press up');
     yield* walk(1, () => G.x > PR.x1 + 0.05 || dying(), 'under the press', { hop: false, max: 10 });
     if (dying()) { note('crushed by the press'); yield* respawned('after the press'); yield* wait(think(3)); yield* passPress(tries + 1); }
