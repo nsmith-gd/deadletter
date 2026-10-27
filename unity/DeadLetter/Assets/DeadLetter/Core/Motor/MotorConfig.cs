@@ -57,7 +57,7 @@ namespace DeadLetter.Core.Motor
         public double StickGain = 1.15;
         /// <summary>Heavy carry acceleration, L2332.</summary>
         public double AccelCarry = 3.0;
-        /// <summary>Chapter 1 pushables, L4690.</summary>
+        /// <summary>Chapter 1 pushables, L4690: the default of <c>IPushable.Accel</c> (the motor reads each pushable's own).</summary>
         public double AccelPush = 1.4;
 
         // ---- Input (L1266, L1927) --------------------------------------------------------------------------------
@@ -190,6 +190,45 @@ namespace DeadLetter.Core.Motor
         public double SitIdleAfter = 0.66;
         public double SitCanStandAfter = 1.0;
         public double SitUpTime = 0.6;
+
+        // ---- Hop: board, alight, a station's chained hop (hopTo, L2884–L2894) -----------------------------------
+        /// <summary>The hop's arc height, metres (<c>0.38·sin(π·k)</c>, L2888).</summary>
+        public double HopArc = 0.38;
+
+        // ---- Hide (DL-14b, L6111–L6125) ---------------------------------------------------------------------------
+        /// <summary>Backing into the recess, m/s (<c>z − 0.6·dt</c>, L6115), and stepping out (<c>z + 0.7·dt</c>, L6122).</summary>
+        public double HideInSpeed = 0.6, HideOutSpeed = 0.7;
+        /// <summary>The Walk clip's speed while backing in / out (±0.5 / CLIP_SPEED.Walk, L6115, L6122).</summary>
+        public double HideWalkSpeed = 0.5;
+        /// <summary>Any input after this long hidden brings him out (L6120).</summary>
+        public double HideLeaveAfter = 0.3;
+
+        // ---- Escorted (DL-14b, L6126–L6134) ---------------------------------------------------------------------
+        /// <summary>His z eases back to the lane at rate 4 (<c>z += (0 − z)·min(1, dt·4)</c>, L6129).</summary>
+        public double EscortZRate = 4;
+
+        // ---- Stuck, death, quirks (L4519–L4521, L7421–L7453, L3841–L3856) ---------------------------------------
+        /// <summary>The stuck act flinches after 0.2 s and calls <c>respawn()</c> after 2.0 s (L4520–L4521).</summary>
+        public double StuckFlinchAfter = 0.2, StuckRespawnAfter = 2.0;
+        /// <summary><c>respawn()</c>: the fade, then the reload 1.3 s later (L2998).</summary>
+        public double RespawnFade = 1.3;
+        /// <summary>The death cut: black, the reload 0.6 s later (L7451).</summary>
+        public double DeathCut = 0.6;
+        /// <summary>Death holds before the cut: crush 0.7, shock 1.0, grabbed 1.15, fall 0.9 s (<c>DEATH</c>, L7421–L7424).</summary>
+        public double DeathHoldCrush = 0.7, DeathHoldShock = 1.0, DeathHoldGrabbed = 1.15, DeathHoldFall = 0.9;
+        /// <summary>The death shake: crush 0.9, fall 0.7, else 0.45 (L7441).</summary>
+        public double DeathShakeCrush = 0.9, DeathShakeFall = 0.7, DeathShakeOther = 0.45;
+        /// <summary>A quirk is cancelled by a move only once its clip is past 0.3 s (L3851); it ends 0.05 s before the clip's end (L3852).</summary>
+        public double QuirkCancelAfter = 0.3, QuirkEndEarly = 0.05;
+        /// <summary>CheckLabel holds this long after its clip, so the label can be read (<c>a.holdFor ?? 0.8</c>, L3853).</summary>
+        public double CheckLabelHold = 0.8;
+
+        /// <summary>The death act's hold for <paramref name="how"/>.</summary>
+        public double DeathHold(DeathKind how) => how == DeathKind.Crush ? DeathHoldCrush : how == DeathKind.Shock ? DeathHoldShock
+            : how == DeathKind.Grabbed ? DeathHoldGrabbed : DeathHoldFall;
+
+        /// <summary>The death act's camera shake for <paramref name="how"/>.</summary>
+        public double DeathShake(DeathKind how) => how == DeathKind.Crush ? DeathShakeCrush : how == DeathKind.Fall ? DeathShakeFall : DeathShakeOther;
 
         // ---- Set-down search (L4342–L4353) ---------------------------------------------------------------------
         /// <summary>Offsets from GRIP_FWD tried in front, then behind: +0, +0.08, +0.16, −0.05, L4344.</summary>

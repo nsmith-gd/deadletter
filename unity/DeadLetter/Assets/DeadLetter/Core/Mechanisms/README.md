@@ -13,12 +13,19 @@ after its §5 ID (`LatchParams.Dl01Latch()`), with resolved values (`OFF3 + 52.4
 and an `L` citation per value. Inputs are `MechanismId` fields; the "solved" flag is a checkpoint name
 (`ReleasedAfter = "shutter"`). Instance quirks are params (`CountTriggerStep`, `CancelAfter`), never subclasses.
 
-**The class.** Derive from `Mechanism`, or from `StationMechanism` if D-17 uses it (it implements U-11's `IUsable`).
+**The class.** Derive from `Mechanism`, or from `StationMechanism` if D-17 uses it (it implements `IUsable`).
 - `public XState State => (XState)StateCode;`. Change state only in `Step`, via `Enter(ctx, (int)XState.Y)` (logged
   once per change); one-shots (sounds, shakes, cues) via `Emit(ctx, (int)XEvent.Z, index, value)`.
-- Interaction callbacks (`OnActFrame`, `Throw()`...) only record input; `Step` applies it. Stations keep a
-  `private ActInput _act;`: `OnActFrame` calls `_act.Receive(f)` and returns "act over" from the frame alone;
-  `Step` starts with `_act.Take()` and uses `_act.Started/Active/Frame/Time`.
+- Interaction callbacks (`OnActFrame`, `OnLifted`, `Throw()`...) only record input; `Step` applies it. Stations keep a
+  `private ActInput _act;`: `OnActFrame` calls `_act.Receive(f)` and answers an `ActStep` from the frame alone
+  (`Continue`, `Done`, `Then(clip, fade)` for a follow-up clip, `HopBy(dx)`/`HopTo(x, y, z)` for a hop the motor plays);
+  `Step` starts with `_act.Take()` and uses `_act.Started/Active/Frame/Time/Part` (frames restart in each `Part`).
+- **The station contract** (#22). The resolver asks `Offer(in InteractionQuery q, out StationPose pose)`: the station
+  says whether it answers from his pose (reach, floor, state) and where he stands (`StandX`, `StandZ`), which way he
+  faces (`Face`: fixed, 0 = keep his, or toward it from his side with `Station(faceTowards: true)`, the DL-01 crank) and
+  where it is (`AnchorX`). A `Station`'s reach may be centred off its stand point (`reachX`, the DL-13 brake). The
+  motor asks `ProfileFor(q)` when Use starts (turn, crouch) and again once he has stepped in (the clip: the DL-08 pawl
+  picks LeverPull/LeverStuck there, L3305); `ActFrame.Clip` tells the station which one it got.
 - `Reset(in Checkpoint cp)`: derive everything from `cp.Past(_p.XAfter)` and from sources (already reset); `Init(...)`,
   not `Enter`. Clear pending input.
 - Time: accumulate `ctx.Dt`; compare clip frames with `ClipClock.Reached/Crossed`, time thresholds with a 1e-9 slack.
@@ -32,17 +39,22 @@ first, so it sees this tick's value. Use `link.ReadAnyOrder<T>` for reads from a
 graph) or to break a cycle with a one-tick lag (pawl ↔ platform: pawl first). `None` returns null (optional input).
 
 **Shared signals** (`Signals.cs`, namespace `DeadLetter.Core.Mechanisms`): `ILoad` (load shares), `IPositionSource`
-(per producer), `IEngageable`; `IPlateBody` + `BodySupport` (items and pushables a plate weighs); `ILiftRide` (floor y,
-its velocity, Carrying: what ride sync #9 reads); `ISweptVolume` + `SweptBox` (space a folding leaf sweeps).
+(per producer), `IEngageable`; `IPlateBody` + `BodySupport` (items and pushables a plate weighs: `Loose/Carryable`,
+`Loose/Pushable`); `ILiftRide` (floor y, its velocity, Carrying: the scene runner's ride sync #9 snaps him to every
+carrying lift in the graph); `ISweptVolume` + `SweptBox` (space a folding leaf sweeps; `Scenes.SweptVolumeLane` puts
+it in the lane). Contracts with the motor are in `Interaction/Contracts.cs`: `IRide` (carriers: `CarrierLine.Rider`),
+`IEscort` (the escort trolley), `IHideSpot` (`Beings/HideSpot`), `IPlaceTarget` (`CarrierLine.Loader`, `Pushable.DeckTarget`).
 
 **Persist flags** (U-14, §4.28): story state that outlives a reload (`StoryFlags`: the DL-17 drawer read, letters,
 curios...) lives in `MechanismGraph.Flags`. A mechanism that depends on one resolves it once in `Link`
 (`_h = link.Flags.Resolve(_p.RequiresFlag)`) and reads `link.Flags.Get(_h)` in Reset/Step (see `Door.RequiresFlag`).
 State a mechanism keeps itself (`WhiteBrain.Warned`) is joined by `CheckpointService.BindFlag`, not read from here.
 
-**D-17's pose** (`StepContext.Player`, built from the motor after #4): x, y, z, `Vx`, `Crouched`, `Busy` (in an act),
-`Grounded`, `Holding` (`Hold != None`), `Hiding` (hide act; not from the motor yet). Rules that need his footing or
-hands read it here, never through a side call. World state (alive, region, upper) stays in `Beings/BeingSenses`.
+**D-17's pose** (`StepContext.Player`, built from the motor after #4 by `PlayerPose.Of(motor)`, the one way to fill
+it: the runner, Runtime's `D17Controller`, tests' `Mech.Pose(motor)`): x, y, z, `Vx`, `Crouched`, `Busy` (in an act),
+`Grounded`, `Holding` (`Hold != None`), `Hiding` (the hide act), `Escorted` (the escorted act). Rules that need his
+footing or hands read it here, never through a side call. World state (alive, region, upper) stays in
+`Beings/BeingSenses`.
 
 **Snapshot.** `WriteFields`/`ReadFields`: every field that changes over time, including pending input and `_act`
 (`_act.Write(w)`). Short, stable keys; the graph prefixes `id/`. Not params, not links. Restore then step must equal
@@ -68,9 +80,11 @@ the original run bit for bit (test it).
 | `Bridges/` | TippingBridge | j | DL-01, 11 |
 | `Cycles/` | CycleClock, CycleTimeline | k | DL-13, 14a, 21, 23 |
 | `Folding/` | FoldingLeaf, LeafBox | (DL-18 spec) | DL-18 |
-| `../Beings/` | WhiteBrain, EscortTrolley, NoiseBus, BeingSenses | §4.15, §4.16 | DL-06/07, 11, 14b |
+| `Loose/` | Carryable (ICarryable), Pushable (IPushable + twin + deck), PushableDeck | §4.10, §4.11 | DL-02, 03, 08 (and every carried or pushed thing without a special rule) |
+| `../Beings/` | WhiteBrain, EscortTrolley, HideSpot, NoiseBus, BeingSenses | §4.15, §4.16 | DL-06/07, 11, 14b |
 
-Scene tests with the real motor: `Dl01`, `Dl03`, `Dl09`, `Dl11White`, `Dl14`, `Dl17`, `Dl18SceneTests`.
+Scene tests with the real motor: `Dl01`, `Dl03`, `Dl09`, `Dl11White`, `Dl14`, `Dl17`, `Dl18SceneTests`; the acts and
+contracts above: `MotorActTests`, `RideAndLaneTests`, `LooseTests`.
 
 **Citing index.html.** Never open it whole: `sed -n '3290,3324p' game/undelivered/index.html`. XML summary cites the
 ranges; ported lines carry `// L1874`. Deliberate deviations say so (see `CrankActuator.WheelDeg`).
@@ -97,8 +111,9 @@ public sealed class Bell : Mechanism
 // var g = Mech.Graph("start", new TestSource("t.plate"), new Bell("t.bell", new BellParams { Source = "t.plate" }));
 ```
 
-**U-11 contract gaps** (worked around here): `IUsable.Profile` is read when Use starts, but the DL-08 pawl picks
-LeverPull/LeverStuck at the end of step-in (L3305); a station cannot chain a follow-up clip (latch Pull → Flinch 1.6 s,
-L1875); `IStation.Face` cannot face him toward the control from his side (DL-01 crank, L1835); reach is centred on
-`StandX` (the DL-13 brake stands 0.2 off its reach centre: `Station.ReachX` widens `Reach` and tests in `IsAvailable`);
-the motor has no hide act (`PlayerPose.Hiding`, DL-14b, L5973) and no escorted walk (`EscortTrolley.HeroEscortX`).
+**Acts and holds the motor owns** (#22, U-11b): the latch's Flinch is a chained clip (`Then`), DL-18's strap a chained
+hop (`HopBy`); boarding/riding/alighting a carrier is `IRide` (ride sync is the motor's `SyncRide`, called by the
+runner at #9); the escorted walk is the motor's act (`IEscort.WantsEscort` → `D17Motor.BeginEscort`; the trolley
+follows `PlayerPose.X` and stops when `Escorted` ends); the hide act is `IHideSpot`; a pushable's push acceleration is
+its own (`IPushable.Accel`) and whether he lets go at Max (`LetGoAtMax`). A mechanism that strands or kills him emits
+an event and the scene rule calls `SceneRunner.Stuck()`/`Die(kind)`; the motor's act asks for the respawn.

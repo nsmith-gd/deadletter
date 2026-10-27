@@ -437,6 +437,8 @@ and hooks.
 
 **Unity:** Core `CarriedItem` with `ItemState { Floor, Carried, Placed(slot), InCarrier, Gone, Tumble }`, `PlaceSearch`;
 Runtime attaches the item's transform between the wrist bones `ik_handL/ik_handR` (L1423) minus `below`.
+*Built (#22):* `Mechanisms/Loose/Carryable` (`Rest`, `Carried`, `OnDeck`, `Placed`; an `IPlateBody`), decks via
+`Loose/PushableDeck`; carriers keep their own load codes. Tumble and Gone are not ported yet.
 
 ### 4.11 Push, pull, drag, tip
 
@@ -473,6 +475,8 @@ body → plate (+pat quirk after 1.6 s).
 
 **Unity:** Core `Pushable` (data: side, gap, speed, min, max delegate, detents, tipsIntoPit) + `PushTwin`; the hold
 motor is part of `KinematicMotor`. Clips `Grab`, `PushIdle`, `PushWalk` (signed timeScale for pulling).
+*Built (#22):* `Mechanisms/Loose/Pushable` (twin, deck, blockers, loaded speed, `Accel`, `LetGoAtMax`, done at max);
+the pit-tippers stay `Bridges/TippingBridge`.
 
 ### 4.12 Other verbs: present, sit, hide, knock, levers, cranks, buttons
 
@@ -497,6 +501,10 @@ hopscotch, look-back, awe), L3601–3670 (present, toy, knock), L4527–4608 (DL
 | Hide (DL-14b) | step back to z −0.62, crouch; any input after 0.3 s steps out | L6111–6125 |
 
 **Unity:** one `IAct` per verb in Core (`Acts/`), parameterised by a `VerbProfile` asset (clip, event frames, stand z).
+*Built (#22):* the acts live in `D17Motor`; a station answers `Offer(query) → StationPose` and `ProfileFor(query)`
+(asked again after step-in) and each frame an `ActStep` (continue, done, a chained clip, a hop). Hide is `IHideSpot`,
+the escorted walk `IEscort`, board/alight `IRide`; stuck, death and quirks (CheckLabel, Flinch) are motor acts the
+scene runner starts.
 
 ### 4.13 Mechanisms
 

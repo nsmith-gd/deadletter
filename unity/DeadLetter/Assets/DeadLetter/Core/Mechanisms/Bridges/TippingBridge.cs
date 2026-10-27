@@ -37,6 +37,8 @@ namespace DeadLetter.Core.Mechanisms.Bridges
     {
         /// <summary>Push: start x (= Min), grip gap, speed, back reach (L4274, L4285).</summary>
         public double StartX, Gap, Speed = 0.55, BackReach = 0.34, ForwardReach = 0.34;
+        /// <summary>How fast he gets it going (<c>acc = 1.4</c>, L4690).</summary>
+        public double Accel = 1.4;
         public int Side = +1;
         /// <summary>Half-length and height of the thing.</summary>
         public double Half, Height;
@@ -117,6 +119,8 @@ namespace DeadLetter.Core.Mechanisms.Bridges
         public int Side => _p.Side;
         public double Gap => _p.Gap;
         public double Speed => _p.Speed;
+        /// <summary>Chapter 1 pushables, 1.4 m/s² (L4690).</summary>
+        public double Accel => _p.Accel;
         public double Min => _p.StartX;
         public double Max => _p.MaxX;
         public double FloorY => 0;
@@ -125,6 +129,7 @@ namespace DeadLetter.Core.Mechanisms.Bridges
         public double BackReach => _p.BackReach;
         public bool TipsIntoPit => true;
         public bool HasDetents => false;
+        public bool LetGoAtMax => false;
 
         /// <summary>Only while on the floor (<c>p.state().state !== 'free'</c> skips it, L4296).</summary>
         public bool IsAvailable(in InteractionQuery q) => State == TippingBridgeState.Free || State == TippingBridgeState.AtLip;

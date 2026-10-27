@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DeadLetter.Core.Camera;
 using DeadLetter.Core.Cues;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Maths;
@@ -8,6 +9,7 @@ using DeadLetter.Core.Mechanisms.Bridges;
 using DeadLetter.Core.Mechanisms.Catches;
 using DeadLetter.Core.Mechanisms.Drives;
 using DeadLetter.Core.Mechanisms.Plates;
+using DeadLetter.Core.Motor;
 
 namespace DeadLetter.Core.Scenes.Prologue
 {
@@ -16,9 +18,11 @@ namespace DeadLetter.Core.Scenes.Prologue
     /// He wakes in the cradle at 1.0, crouches under the fallen shutter to pull its latch (3.0), hops the fallen
     /// conveyor (3.6–4.4, 0.22), pushes the depot cart into the drain trench (6.6–8.0, −0.8) to bridge it, cranks the
     /// bulkhead door (9.62, five strokes) and walks out through it (10.15–10.65) into the passage to DL-02.
-    /// Values are index.html at 7b3c123, cited per line. Not ported here (no Core system yet): the cord lamp and the
-    /// curios' acts (cord, scale <c>WeighSelf</c>, dispatch <c>ReadRoute</c>), the <c>labelWake</c> CheckLabel quirk and
-    /// its shot, hints and glints, the tannoy, lights; the passage transit belongs to the DL-01 → DL-02 seam (§7).
+    /// When the opening hands over he checks his label (<c>labelWake</c>: CheckLabel held 3.2 s, the label shot, the
+    /// <c>dispatch_item</c> voice; once per game, L8105–L8109); walking into the trench with no bridge he is stuck and
+    /// respawns (L4764–L4766). Values are index.html at 7b3c123, cited per line. Not ported here (no Core system yet): the
+    /// cord lamp and the curios' acts (cord, scale <c>WeighSelf</c>, dispatch <c>ReadRoute</c>), the crank's Proud quirk
+    /// (L1895), hints and glints, the tannoy, lights; the passage transit belongs to the DL-01 → DL-02 seam (§7).
     /// </summary>
     public sealed class Dl01Wake : SceneDefinition
     {
@@ -47,6 +51,11 @@ namespace DeadLetter.Core.Scenes.Prologue
         /// L8071). Peak 12.5 s: the pull-back lands at f300 (L7777–L7786).
         /// </summary>
         public static readonly DirectedMoment Wake = new DirectedMoment("wake", 20, 20, 20, 12.5);
+
+        /// <summary>The <c>seen</c> key of the wake's label check (§4.5, L8107).</summary>
+        public const string LabelWake = "labelWake";
+        /// <summary>The wake's label check holds 3.2 s after the clip and may be cut by a move only after 2.5 s (L8108).</summary>
+        public const double LabelWakeHold = 3.2, LabelWakeCancelAfter = 2.5;
 
         private readonly SpawnPoint[] _spawns =
         {
@@ -165,7 +174,22 @@ namespace DeadLetter.Core.Scenes.Prologue
         /// <summary>The relay's opening sets play from frame 0 (<c>sceneTime = 0</c>, L8061; <c>RELAY_SETS</c>, L332).</summary>
         public override void OnOpeningStart(SceneRunner runner) => runner.Graph.Get<PulseSequencer>(RelayId).SetClock(0);
 
-        /// <summary>Shakes from mechanism one-shots, and the trench's stuck respawn.</summary>
+        /// <summary>
+        /// <c>startPlay</c> from the opening at <c>start</c> (natural end or skip): the label check, once per game
+        /// (<c>labelWake</c>, L8105–L8109), with the <c>dispatch_item</c> voice.
+        /// </summary>
+        public override void OnControlReturned(SceneRunner runner, bool fromOpening)
+        {
+            if (!fromOpening || runner.Checkpoint != FirstCheckpoint || runner.HasSeen(LabelWake)) return;
+            if (!runner.Motor.PlayQuirk(ClipNames.CheckLabel, cancel: false, holdFor: LabelWakeHold, cancelAfter: LabelWakeCancelAfter)) return;
+            runner.MarkSeen(LabelWake);
+            runner.Cue("dispatch_item");                                                            // Voice.play(dispatch_item), L8109
+        }
+
+        /// <summary>The label shot while he checks his label (L3735–L3741).</summary>
+        public override ShotRequest? Shot(SceneRunner runner) => runner.LabelShot();
+
+        /// <summary>Shakes from mechanism one-shots, and the trench's stuck act.</summary>
         public override void AfterMechanisms(SceneRunner runner)
         {
             MechanismLog log = runner.Graph.Log;
@@ -176,12 +200,11 @@ namespace DeadLetter.Core.Scenes.Prologue
                 if (e.Id == ShutterId && e.Code == (int)DoorEvent.Cue) runner.Shake(0.9);                       // the counterweight's thud, L1679
                 else if (e.Id == CrankId && e.Code == (int)CrankEvent.Stroke) runner.Shake(0.18);               // L1888
                 else if (e.Id == CartId && e.Code == (int)TippingBridgeEvent.Land) runner.Shake(e.Value);       // L4757
-                else if (e.Id == CartId && e.Code == (int)TippingBridgeEvent.Stranded)
-                    runner.RequestRespawn(TrenchStuckSeconds + RespawnFadeSeconds);
+                else if (e.Id == CartId && e.Code == (int)TippingBridgeEvent.Stranded) runner.Stuck();   // trenchStuck, L4765
             }
         }
 
-        /// <summary>In the trench with no bridge: <c>trenchStuck</c> flinches and calls <c>respawn()</c> after 2.0 s (L4765, L4519–L4521).</summary>
+        /// <summary>In the trench with no bridge: <c>trenchStuck</c> flinches and calls <c>respawn()</c> after 2.0 s (L4765, L4519–L4521; the motor's stuck act).</summary>
         public const double TrenchStuckSeconds = 2.0;
         /// <summary><c>respawn()</c>: the fade, then <c>startPlay</c> 1.3 s later on the game clock (L2997–L2999).</summary>
         public const double RespawnFadeSeconds = 1.3;

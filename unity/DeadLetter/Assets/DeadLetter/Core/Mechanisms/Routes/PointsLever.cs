@@ -76,7 +76,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         private readonly PointsLeverParams _p;
         private IEngageable _lock, _start;
         private ActInput _act;
-        private bool _stuck, _thrown, _ended, _startWas;
+        private bool _stuck, _clipStuck, _thrown, _ended, _startWas;
         private double _from;
 
         public PointsLever(MechanismId id, PointsLeverParams p) : base(id, p.Station) { _p = p; }
@@ -87,7 +87,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         public double LeverDeg { get; private set; }
         public bool Locked => _lock != null && _lock.Engaged;
 
-        /// <summary>Read by the motor when Use starts (the README's U-11 note: the prototype decides at the end of step-in).</summary>
+        /// <summary>Asked when Use starts and again at the end of step-in, which decides the clip (<c>stuck = points && belt running</c>, L2910).</summary>
         public override ActProfile Profile => Locked ? _p.StuckProfile : _p.PullProfile;
 
         public override void Link(MechanismLinker link)
@@ -101,7 +101,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
             bool on = cp.Past(_p.OnAfter) && !cp.Past(_p.OnUntil);
             Init((int)(on ? PointsLeverState.On : PointsLeverState.Off));
             LeverDeg = RestDeg;
-            _stuck = _thrown = _ended = false;
+            _stuck = _clipStuck = _thrown = _ended = false;
             _from = LeverDeg;
             _startWas = _start != null && _start.Engaged;
             _act.Clear();
@@ -111,11 +111,12 @@ namespace DeadLetter.Core.Mechanisms.Routes
 
         protected override bool CanUse(in InteractionQuery q) => _start == null || _start.Engaged;   // scan.phase === 'done', L2867
 
-        public override bool OnActFrame(in ActFrame f)
+        /// <summary>The clip the motor chose at the end of step-in says which it is (LeverStuck or LeverPull, L2910–L2912).</summary>
+        public override ActStep OnActFrame(in ActFrame f)
         {
             _act.Receive(f);
-            bool stuck = _act.Active ? _stuck : Locked;            // before Step has seen the first frame, judge now
-            return ClipClock.Reached(f.Frame, stuck ? _p.StuckOutFrame : _p.OutFrame);
+            _clipStuck = f.Clip != null ? f.Clip == _p.StuckProfile.Clip : Locked;
+            return ActStep.DoneIf(ClipClock.Reached(f.Frame, _clipStuck ? _p.StuckOutFrame : _p.OutFrame));
         }
 
         public override void Step(in StepContext ctx)
@@ -129,7 +130,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
 
             _act.Take();
             if (!_act.Active) { LeverDeg = RestDeg; return; }
-            if (_act.Started) { _stuck = Locked; _thrown = _ended = false; _from = RestDeg; }    // L2910–L2911
+            if (_act.Started) { _stuck = _clipStuck; _thrown = _ended = false; _from = RestDeg; }    // L2910–L2911
             double f = _act.Frame, prev = _act.PrevFrame;
             if (_stuck)
             {
@@ -160,7 +161,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         {
             w.WriteDouble("lever", LeverDeg);
             w.WriteDouble("from", _from);
-            w.WriteBool("stuck", _stuck); w.WriteBool("thrown", _thrown); w.WriteBool("ended", _ended);
+            w.WriteBool("stuck", _stuck); w.WriteBool("clipStuck", _clipStuck); w.WriteBool("thrown", _thrown); w.WriteBool("ended", _ended);
             w.WriteBool("startWas", _startWas);
             _act.Write(w);
         }
@@ -169,7 +170,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
         {
             LeverDeg = r.ReadDouble("lever");
             _from = r.ReadDouble("from");
-            _stuck = r.ReadBool("stuck"); _thrown = r.ReadBool("thrown"); _ended = r.ReadBool("ended");
+            _stuck = r.ReadBool("stuck"); _clipStuck = r.ReadBool("clipStuck"); _thrown = r.ReadBool("thrown"); _ended = r.ReadBool("ended");
             _startWas = r.ReadBool("startWas");
             _act.Read(r);
         }

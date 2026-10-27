@@ -113,7 +113,7 @@ namespace DeadLetter.Runtime.Camera
             D17Motor m = player.Motor;
             CameraPush push = CameraPush.None;
             if (m.IsMantling) push = CameraPush.Mantle;
-            else if (m.IsActing && m.ActPhase != ActPhase.Approach && m.ActVerb != Verb.Grab) push = CameraPush.Act;
+            else if (m.IsActing && m.ActPhase != ActPhase.Approach && m.ActVerb != Verb.Grab && m.ActVerb != Verb.Quirk) push = CameraPush.Act;   // quirks do not push in (L7788)
             else if (Realising) push = CameraPush.Realise;
             else if (TransitStage0) push = CameraPush.Transit;
             return new CameraRigInput

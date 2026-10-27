@@ -36,9 +36,8 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         /// <summary>DL-01: the exit door's crank, 5 strokes (L299, L1877–L1897).</summary>
         public static CrankParams Dl01Crank() => new CrankParams
         {
-            // CRANK_X 9.62, reach 0.36 (L1813). The prototype faces him toward the crank from his side (L1835);
-            // IStation.Face cannot depend on his side, so 0 keeps his facing (he turns into the set either way).
-            Station = new Station(standX: 9.62, reach: 0.36, face: 0),
+            // CRANK_X 9.62, reach 0.36 (L1813); he faces the crank from his side (x < CRANK_X ? 1 : −1, L1835).
+            Station = new Station(standX: 9.62, reach: 0.36, face: 0, faceTowards: true),
             Strokes = 5,
             DoneAfter = "door",                       // CHECKPOINTS.door.door = 1, L7979
         };
@@ -91,13 +90,13 @@ namespace DeadLetter.Core.Mechanisms.Actuators
 
         protected override bool CanUse(in InteractionQuery q) => Position < 1;   // L1813
 
-        public override bool OnActFrame(in ActFrame f)
+        public override ActStep OnActFrame(in ActFrame f)
         {
             if (!_act.Active || f.Frame < _act.Frame)                            // the first frame of an act (as ActInput.Take)
                 _base = _p.ResumeFromOpening ? Math.Min(_p.Strokes - 1, (int)Math.Floor(Position * _p.Strokes + 0.5)) : 0;   // L4318
             _act.Receive(f);
-            if (StrokesAt(f.Frame) >= _p.Strokes) return true;                   // L1889
-            return _p.CancelAfter >= 0 && f.Time > _p.CancelAfter && Math.Abs(f.Input.Move) > _p.CancelMove;   // L4575
+            if (StrokesAt(f.Frame) >= _p.Strokes) return ActStep.Done;           // L1889
+            return ActStep.DoneIf(_p.CancelAfter >= 0 && f.Time > _p.CancelAfter && Math.Abs(f.Input.Move) > _p.CancelMove);   // L4575
         }
 
         public override void Step(in StepContext ctx)

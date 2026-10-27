@@ -20,8 +20,11 @@ namespace DeadLetter.Core.Mechanisms.Catches
         public ActProfile Profile = new ActProfile("Pull", crouch: true);
         /// <summary>Pull f31 releases it (L1874).</summary>
         public double ReleaseFrame = ClipTimings.PullEvents.Release;
-        /// <summary>Pull f39 ends the act: the prototype then plays Flinch for 1.6 s (L1875–L1876).</summary>
+        /// <summary>Pull f39 ends the pull: the act then plays <see cref="FlinchClip"/> for <see cref="FlinchSeconds"/> (L1875–L1876).</summary>
         public double EndFrame = ClipTimings.PullEvents.Flinch;
+        /// <summary>The follow-up clip (crossfade 0.06, L1875); null = the act ends at <see cref="EndFrame"/>.</summary>
+        public string FlinchClip = ClipNames.Flinch;
+        public double FlinchFade = 0.06, FlinchSeconds = ClipTimings.FlinchEvents.End / 24;
         public double CreakFrame = 20;
         /// <summary>Lever angle once released (L8022).</summary>
         public double ReleasedLeverDeg = 72;
@@ -44,7 +47,7 @@ namespace DeadLetter.Core.Mechanisms.Catches
 
     /// <summary>
     /// A one-way catch: Locked → Released (§4.13c, "Brakes and catches", full_game_plan §5). Released by the Pull act
-    /// at <see cref="LatchParams.ReleaseFrame"/> (DL-01, L1870–L1876) or by a threshold on another mechanism
+    /// at <see cref="LatchParams.ReleaseFrame"/>, then a Flinch chained to the pull (DL-01, L1870–L1876) or by a threshold on another mechanism
     /// (<c>dl17.latch</c> bed ≥ 0.95, L6258, now a <see cref="Water.FloatLatch"/>; <c>dl16.latch</c> 1.2 s after the rack is full, L5764).
     /// Signals: <see cref="Engaged"/> = released.
     /// </summary>
@@ -81,16 +84,22 @@ namespace DeadLetter.Core.Mechanisms.Catches
 
         protected override bool CanUse(in InteractionQuery q) => Station.Reach > 0 && State == LatchState.Locked;
 
-        public override bool OnActFrame(in ActFrame f)
+        /// <summary>Pull, then (at f39) Flinch for 1.6 s, crouched throughout (L1874–L1876).</summary>
+        public override ActStep OnActFrame(in ActFrame f)
         {
             _act.Receive(f);
-            return ClipClock.Reached(f.Frame, _p.EndFrame);
+            if (f.Part == 0)
+            {
+                if (!ClipClock.Reached(f.Frame, _p.EndFrame)) return ActStep.Continue;
+                return _p.FlinchClip != null ? ActStep.Then(_p.FlinchClip, _p.FlinchFade) : ActStep.Done;
+            }
+            return ActStep.DoneIf(ClipClock.Reached(f.Frame, _p.FlinchSeconds * 24));            // actions.Flinch.time >= 1.6, L1876
         }
 
         public override void Step(in StepContext ctx)
         {
             _act.Take();
-            if (_act.Active)
+            if (_act.Active && _act.Part == 0)                                                   // the Flinch that follows leaves the lever be
             {
                 double f = _act.Frame;
                 LeverDeg = LeverAngleAt(f < 40 ? f : 40);                                       // L1872

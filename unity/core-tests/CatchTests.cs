@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Catches;
+using DeadLetter.Core.Motor;
 using DeadLetter.Core.Save;
 using Xunit;
 
@@ -23,22 +24,33 @@ namespace DeadLetter.Core.Tests
             double releasedAt = -1;
             Mech.PlayAct(g, latch, onStep: (k, f) =>
             {
-                if (Mech.Entered(g, "dl01.latch", LatchState.Released)) releasedAt = f;
-                if (f < 31 - 1e-6) Assert.Equal(LatchState.Locked, latch.State);
+                double pull = k * Mech.FramesPerStep;                  // the Pull clip's frame (the Flinch restarts f)
+                if (Mech.Entered(g, "dl01.latch", LatchState.Released)) releasedAt = pull;
+                if (pull < 31 - 1e-6) Assert.Equal(LatchState.Locked, latch.State);
             });
             Assert.InRange(releasedAt, 31 - 1e-6, 31.4);
             Assert.True(latch.Engaged);
         }
 
         [Fact]
-        public void Latch_ActEndsAtF39_ThenFlinch_L1875()
+        public void Latch_PullEndsAtF39_ThenChainsFlinchFor16s_L1875_L1876()
         {
             var latch = new Latch("dl01.latch", LatchParams.Dl01Latch());
-            var g = Mech.Graph(latch);
-            int steps = Mech.PlayAct(g, latch);
-            Assert.InRange(steps * Mech.FramesPerStep, 39 - 1e-6, 39.4);
+            Mech.Graph(latch);
             Assert.Equal("Pull", latch.Profile.Clip);
             Assert.True(latch.Profile.Crouch);
+            var none = new MotorInput();
+            Assert.Equal(ActStepKind.Continue, latch.OnActFrame(new ActFrame(38.4, 38.8, 0, none, "Pull", 0)).Kind);
+            var then = latch.OnActFrame(new ActFrame(38.8, 39.2, 0, none, "Pull", 0));
+            Assert.Equal(ActStepKind.Then, then.Kind);                 // the same act plays on (#22)
+            Assert.Equal(ClipNames.Flinch, then.Clip);
+            Assert.Equal(0.06, then.Fade);                             // setClip('Flinch', 0.06), L1875
+            Assert.Equal(ActStepKind.Continue, latch.OnActFrame(new ActFrame(37.6, 38.0, 95 * Mech.Dt, none, "Flinch", 1)).Kind);
+            Assert.True(latch.OnActFrame(new ActFrame(38.0, 38.4, 96 * Mech.Dt, none, "Flinch", 1)).IsDone);   // Flinch f38.4 = 1.6 s, L1876
+
+            var g = Mech.Graph(new Latch("dl01.latch", LatchParams.Dl01Latch()));
+            int steps = Mech.PlayAct(g, (Latch)g[0]);
+            Assert.Equal(98 + 96, steps);                              // to Pull f39.2, then 1.6 s of Flinch
         }
 
         [Theory]
@@ -56,7 +68,8 @@ namespace DeadLetter.Core.Tests
             int creaks = 0;
             Mech.PlayAct(g, latch, onStep: (k, f) =>
             {
-                Assert.Equal(Latch.LeverAngleAt(Math.Min(f, 40)), latch.LeverDeg, 12);
+                double pull = Math.Min(k * Mech.FramesPerStep, 39.2);  // through the Flinch the lever stays where the pull left it
+                Assert.Equal(Latch.LeverAngleAt(Math.Min(pull, 40)), latch.LeverDeg, 12);
                 if (Mech.Emitted(g, "dl01.latch", LatchEvent.Creak)) { creaks++; Assert.InRange(f, 20, 20.41); }
             });
             Assert.Equal(1, creaks);
@@ -196,7 +209,7 @@ namespace DeadLetter.Core.Tests
             Assert.True(pawl.IsAvailable(At(85.45 + 0.35, 1.6)));
             Assert.False(pawl.IsAvailable(At(85.45 + 0.37, 1.6)));
             Assert.False(pawl.IsAvailable(At(85.45, 1.66)));
-            Assert.Equal(0.04, pawl.StandZ, 12);                  // PAWL_Z + 0.26 negated (§0.2)
+            Assert.Equal(0.04, pawl.Station.StandZ, 12);                  // PAWL_Z + 0.26 negated (§0.2)
             Mech.PlayAct(g, pawl);
             Assert.False(pawl.IsAvailable(At(85.45, 1.6)));
         }
@@ -368,11 +381,12 @@ namespace DeadLetter.Core.Tests
         public void CycleBrake_StandsOffThePawl_ReachIsFromThePawl_L5290_L5298()
         {
             var (_, b, _) = Dl13(true);
-            Assert.Equal(220.4, b.StandX, 12);
-            Assert.Equal(220.6, b.AnchorX, 12);
-            Assert.True(b.IsAvailable(At(220.6 + 0.39)));
+            Assert.Equal(220.4, b.Station.StandX, 12);
+            Assert.True(b.Offer(At(220.6 + 0.39), out var pose));   // 0.59 from the stand point: the reach is the pawl's (#22)
+            Assert.Equal(220.4, pose.StandX, 12);
+            Assert.Equal(220.6, pose.AnchorX, 12);
+            Assert.Equal(+1, pose.Face);
             Assert.False(b.IsAvailable(At(220.6 - 0.41)));        // 0.21 from the stand point, 0.41 from the pawl
-            Assert.Equal(0.6, b.Reach, 9);                        // the resolver's stand-point test never refuses first
         }
 
         [Theory]

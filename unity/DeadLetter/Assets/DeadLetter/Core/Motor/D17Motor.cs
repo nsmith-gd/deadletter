@@ -34,15 +34,36 @@ namespace DeadLetter.Core.Motor
             public int Face;
             public bool Turn, Crouch;
             public string ClipName;
+            /// <summary>Seconds since the act started, or since its current clip started (EnterClip resets it).</summary>
             public double T, PrevFrame;
+            /// <summary>Seconds since the act started (never reset).</summary>
+            public double Total;
             public double TargetX, BaseY;
             public bool Done1, Seated;
+            /// <summary>0 = the profile's clip; +1 per chained clip or hop.</summary>
+            public int Part;
+            // Hop (board, alight, a station's chained hop): from, to, tracking a ride's pose.
+            public double FromX, FromY, FromZ, ToX, ToY, ToZ;
+            public bool TrackRide, TookOff, Landed;
+            public int Token;
+            // Quirk / flinch.
+            public bool Cancel;
+            public double HoldFor, CancelAfter, EndAfter, EndAt;
+            // Stuck / death.
+            public DeathKind Death;
+            public double Hold;
+            public bool Flinched, Cut;
+            // Escorted.
+            public EscortWalk Walk;
 
             public void Reset()
             {
                 Verb = Verb.None; Shove = false; Phase = ActPhase.None; Target = null;
                 StandX = ApproachZ = InZ = 0; Face = 0; Turn = Crouch = false; ClipName = null;
-                T = PrevFrame = 0; TargetX = BaseY = 0; Done1 = Seated = false;
+                T = PrevFrame = Total = 0; TargetX = BaseY = 0; Done1 = Seated = false; Part = 0;
+                FromX = FromY = FromZ = ToX = ToY = ToZ = 0; TrackRide = TookOff = Landed = false; Token = 0;
+                Cancel = false; HoldFor = CancelAfter = EndAfter = EndAt = double.NaN;
+                Death = DeathKind.Fall; Hold = 0; Flinched = Cut = false; Walk = default;
             }
 
             public bool Active => Verb != Verb.None || Shove;
@@ -51,6 +72,7 @@ namespace DeadLetter.Core.Motor
         private readonly MotorConfig _c;
         private readonly IMotorWorld _w;
         private readonly InteractionResolver _r;
+        private readonly ILaneConveyor _conveyor;
         private readonly List<MotorEvent> _events = new List<MotorEvent>(16);
         private readonly Act _act = new Act();
 
@@ -68,11 +90,17 @@ namespace DeadLetter.Core.Motor
         private double _yawOverride;
         private double _lastStepPhase;
 
+        // Riding (board / ride / alight)
+        private int _rideToken;
+        /// <summary>How many of <see cref="_events"/> the last Step emitted (the rest came from calls since).</summary>
+        private int _stepEvents;
+
         public D17Motor(MotorConfig config, IMotorWorld world, InteractionResolver resolver = null)
         {
             _c = config ?? throw new ArgumentNullException(nameof(config));
             _w = world ?? throw new ArgumentNullException(nameof(world));
             _r = resolver;
+            _conveyor = world as ILaneConveyor;
             Clip = ClipNames.Idle;
             ClipTimeScale = 1;
         }
@@ -116,9 +144,26 @@ namespace DeadLetter.Core.Motor
         public long StepCount { get; private set; }
         public Verb ActVerb => _act.Shove ? Verb.None : _act.Verb;
         public ActPhase ActPhase => _act.Phase;
+        /// <summary>0 for the act's first clip, +1 per follow-up clip or hop a station chained (<see cref="ActStep"/>).</summary>
+        public int ActPart => _act.Part;
         public bool IsMantling => _mantling;
         public bool IsActing => _act.Active;
-        /// <summary>Events of the last step only (cleared at the start of each step).</summary>
+        /// <summary>In the hide act (<c>game.act.what === 'hide'</c>, any phase; L5973): <c>PlayerPose.Hiding</c>.</summary>
+        public bool IsHiding => _act.Verb == Verb.Hide;
+        /// <summary>In the escorted act (L6126–L6134): <c>PlayerPose.Escorted</c>.</summary>
+        public bool IsEscorted => _act.Verb == Verb.Escorted;
+        /// <summary>In the death act (the clip holds, then the cut).</summary>
+        public bool IsDead => _act.Verb == Verb.Death;
+        /// <summary>What he rides (<c>game.riding</c>), or null.</summary>
+        public IRide Ride { get; private set; }
+        public int RideToken => _rideToken;
+        /// <summary>A quirk's own hold after its clip (<c>a.holdFor</c>; NaN = the default), for the label shot's ease (L3740).</summary>
+        public double QuirkHoldFor => _act.Verb == Verb.Quirk ? _act.HoldFor : double.NaN;
+        /// <summary>
+        /// Events of the last step, followed by any emitted since by calls between steps (a scene rule's
+        /// <see cref="BeginStuck"/>, <see cref="Die"/>, <see cref="PlayQuirk"/>, <see cref="BeginEscort"/>); those are also
+        /// reported with the next step. Cleared at the start of each step.
+        /// </summary>
         public IReadOnlyList<MotorEvent> Events => _events;
 
         // ---- Settings other systems change ---------------------------------------------------------------------------
@@ -138,8 +183,10 @@ namespace DeadLetter.Core.Motor
                 {
                     if (_act.Verb == Verb.Present) return MotorState.Presenting;
                     if (_act.Verb == Verb.Sit) return MotorState.Sitting;
+                    if (_act.Verb == Verb.Death) return MotorState.Dead;
                     return MotorState.Acting;
                 }
+                if (Ride != null) return MotorState.Riding;
                 if (Hold == HoldKind.Push) return MotorState.Pushing;
                 if (Hold == HoldKind.Item && Carried != null && !Carried.IsLight) return MotorState.Carrying;
                 if (!Grounded) return MotorState.Airborne;
@@ -157,8 +204,10 @@ namespace DeadLetter.Core.Motor
             Coyote = JumpBuffer = LandTimer = 0; PeakY = y;
             Hold = HoldKind.None; Carried = null; Pushed = null; CarryBlend = 0;
             _mantling = false; _act.Reset(); _hasYawOverride = false; _shove = 0; _atLip = false;
+            Ride = null; _rideToken = 0;
             SetClip(ClipNames.Idle, 0, 1);
             _events.Clear();
+            _stepEvents = 0;
         }
 
         /// <summary>What Use would do now, without doing it (for glints and hints, §4.19).</summary>
@@ -169,14 +218,14 @@ namespace DeadLetter.Core.Motor
         }
 
         public InteractionQuery Query()
-            => new InteractionQuery(X, Y, Z, Facing, Grounded, _mantling || _act.Active, Hold, Carried, Pushed);
+            => new InteractionQuery(X, Y, Z, Facing, Grounded, _mantling || _act.Active || Ride != null, Hold, Carried, Pushed);
 
         // ---- The step -------------------------------------------------------------------------------------------------------
         /// <summary>Advances one fixed step (the pipeline's step 4, port_architecture §3.1).</summary>
         public void Step(in MotorInput input, double dt)
         {
             if (!(dt > 0) || double.IsInfinity(dt)) throw new ArgumentOutOfRangeException(nameof(dt));
-            _events.Clear();
+            _events.RemoveRange(0, _stepEvents);                                    // keep what calls since the last step emitted
             StepCount++;
 
             double move = double.IsNaN(input.Move) ? 0 : Smooth.Clamp(input.Move, -1, 1);
@@ -185,6 +234,7 @@ namespace DeadLetter.Core.Motor
 
             if (_mantling) StepMantle(dt);
             else if (_act.Active) StepAct(input, move, dt);
+            else if (Ride != null) StepRide(input);
             else StepFree(input, move, dt);
 
             // updateCharacter (L7579–L7583): yaw turns toward ±π/2 or the act's override.
@@ -193,6 +243,7 @@ namespace DeadLetter.Core.Motor
 
             // The mixer advances after the step; acts read this clock on the next step (actions.X.time * FPS).
             ClipTime += dt * ClipTimeScale;
+            _stepEvents = _events.Count;
         }
 
         // ---- Free movement: updatePlayer L1950–L2067 ----------------------------------------------------------------------
@@ -204,6 +255,14 @@ namespace DeadLetter.Core.Motor
             if (input.UsePressed && _r != null && _r.Resolve(Query(), out var use))   // L1956–L1957
             {
                 BeginUse(use);
+                return;
+            }
+
+            // A standing jump beside something he can board hops him on (L1964–L1966).
+            if (input.JumpPressed && move == 0 && Grounded && Hold == HoldKind.None && _r != null && _r.ResolveBoard(Query(), out var board))
+            {
+                JumpBuffer = 0;
+                BeginUse(board);
                 return;
             }
 
@@ -245,7 +304,8 @@ namespace DeadLetter.Core.Motor
                 Emit(MotorEventKind.Jump, null, Vy);
             }
 
-            // Integrate and collide along x (L1998–L2010).
+            // Integrate and collide along x (L1998–L2010); on a belt he is carried while he walks (L1998, L2006).
+            double carry = Grounded && _conveyor != null ? _conveyor.CarryAt(X, Y) * dt : 0;
             _w.Limits(X, Y, out double left, out double right);
             double nx = Smooth.Clamp(X + Vx * dt, left, right);
             int dir = Smooth.Sign(nx - X);
@@ -254,6 +314,8 @@ namespace DeadLetter.Core.Motor
                 double lead = nx + dir * _c.Half;
                 if (_w.SurfaceAt(lead, Y) > Y + (_w.IsRamp(lead) ? _c.StepUpRamp : _c.StepUp)) { nx = X; Vx = 0; }
             }
+            if (carry != 0 && _w.SurfaceAt(nx + carry + Smooth.Sign(carry) * _c.Half, Y) <= Y + _c.StepUp)   // L2006
+                nx = Smooth.Clamp(nx + carry, left, right);                                                   // (the walls hold: a port guard)
             if (!Grounded || Crouched)
             {
                 if (LaneProbe.MinCeiling(_w, nx - _c.CeilingBlockProbe, nx + _c.CeilingBlockProbe, Y) - Y < _c.CrouchHeight) nx = X;
@@ -386,7 +448,7 @@ namespace DeadLetter.Core.Motor
 
             Facing = _holdSide;
             double target = Smooth.Sign(move) * p.Speed * Math.Min(1, Math.Abs(move) * _c.StickGain);
-            Vx = Smooth.MoveTowards(Vx, target, _c.AccelPush * dt);
+            Vx = Smooth.MoveTowards(Vx, target, p.Accel * dt);                         // L4690 (1.4), L2332 (3, 1.3)
             if (move == 0) Vx *= Smooth.DecayFactor(_c.ReleaseFriction, dt);
             _w.Limits(X, Y, out double left, out double right);
             double nx = Smooth.Clamp(X + Vx * dt, left, right);
@@ -428,7 +490,7 @@ namespace DeadLetter.Core.Motor
                 }
                 return;
             }
-            if (Math.Abs(p.X - max) < _c.PushLipTolerance)
+            if (p.LetGoAtMax && Math.Abs(p.X - max) < _c.PushLipTolerance)
             {
                 Vx = 0;
                 ReleaseTo(p, false, 0.3);
@@ -449,6 +511,31 @@ namespace DeadLetter.Core.Motor
             SetClip(ClipNames.Idle, fade, 1);
             p.OnReleased(tip);
             Emit(MotorEventKind.Released, null, tip ? 1 : 0);
+        }
+
+        /// <summary>
+        /// He lets go of everything (<c>releaseHolds</c>, L7428–L7433; the escort's drop, L6399–L6400): a pushed thing is
+        /// released where it is, a carried one rests at his feet on <paramref name="baseY"/>, a ride is left, a mantle ends.
+        /// </summary>
+        private void DropAll(double baseY)
+        {
+            if (Hold == HoldKind.Push && Pushed != null)
+            {
+                var p = Pushed;
+                Hold = HoldKind.None; Pushed = null; _shove = 0; _atLip = false;
+                p.OnReleased(false);
+                Emit(MotorEventKind.Released, "drop", 0);
+            }
+            if (Hold == HoldKind.Item && Carried != null)
+            {
+                var it = Carried;
+                Hold = HoldKind.None; Carried = null; CarryBlend = 0;
+                it.OnSetDown(X, baseY);
+                Emit(MotorEventKind.SetDown, "drop", 0);
+            }
+            Hold = HoldKind.None;
+            if (Ride != null) LeaveRide("gone");
+            _mantling = false;
         }
 
         // ---- Acts: beginUse / beginCh1 / updateActCh1 ------------------------------------------------------------------
@@ -495,8 +582,21 @@ namespace DeadLetter.Core.Motor
                 }
                 case Verb.Use:
                 {
-                    var prof = ((IUsable)c.Target).Profile;
+                    var prof = ((IUsable)c.Target).ProfileFor(Query());                // turn and crouch from the first answer
                     _act.Turn = prof.TurnIntoSet; _act.Crouch = prof.Crouch; _act.InZ = c.StandZ; _act.ClipName = prof.Clip;
+                    break;
+                }
+                case Verb.Hide:
+                    _act.InZ = ((IHideSpot)c.Target).HideZ;                             // L6011: his own facing, the niche's centre
+                    break;
+                case Verb.Board:
+                {
+                    // Straight in: he turns to the rail as he hops (beginUse3 'board', L2875–L2880).
+                    var ride = (IRide)c.Target;
+                    _act.Token = c.Token;
+                    ride.OnBoarding(c.Token);
+                    _hasYawOverride = true; _yawOverride = Math.PI;
+                    StartHop(X, Y, Z, true);
                     break;
                 }
             }
@@ -507,18 +607,32 @@ namespace DeadLetter.Core.Motor
             _act.Phase = ActPhase.Clip;
             _act.T = 0;
             _act.PrevFrame = 0;
-            SetClip(clip, fade, 1);
+            SetClip(clip, fade, 1, restart: true);
         }
 
         private void StepAct(in MotorInput input, double move, double dt)
         {
             var a = _act;
             a.T += dt;
+            a.Total += dt;
 
             if (a.Shove)
             {
                 if (a.T > _c.ShoveActTime) EndAct(false);                              // L4518
                 return;
+            }
+
+            switch (a.Verb)
+            {
+                case Verb.Hide: StepHide(input, move, dt); return;
+                case Verb.Escorted: StepEscorted(dt); return;
+                case Verb.Stuck: StepStuck(); return;
+                case Verb.Death: StepDeath(); return;
+                case Verb.Quirk: StepQuirk(input, move); return;
+                case Verb.Alight when a.Phase == ActPhase.Turn:
+                    if (Math.Abs(Yaw) < _c.TurnTolerance) StartHop(X, Ride != null ? Ride.AlightY(_rideToken) : Y, 0, false);   // L2952
+                    else SetClip(ClipNames.Ride, 0.2, 1);
+                    return;
             }
 
             switch (a.Phase)
@@ -531,7 +645,13 @@ namespace DeadLetter.Core.Motor
                 case ActPhase.StepIn:
                 {
                     double dz = a.InZ - Z;
-                    if (Math.Abs(dz) < _c.ArriveZ) { Z = a.InZ; EnterClip(a.ClipName, 0.2); return; }   // L3609–L3613
+                    if (Math.Abs(dz) < _c.ArriveZ)                                             // L3609–L3613
+                    {
+                        Z = a.InZ;
+                        if (a.Verb == Verb.Use) a.ClipName = ((IUsable)a.Target).ProfileFor(Query()).Clip;   // asked again here (L3305, L2910)
+                        EnterClip(a.ClipName, 0.2);
+                        return;
+                    }
                     Z += Smooth.Sign(dz) * Math.Min(Math.Abs(dz), _c.StepInSpeed * dt);
                     SetClip(ClipNames.Walk, 0.2, _c.StepInSpeed / _c.ClipSpeedWalk);
                     return;
@@ -546,6 +666,9 @@ namespace DeadLetter.Core.Motor
                 }
                 case ActPhase.SitUp:
                     if (a.T > _c.SitUpTime) EndAct(false);                             // L5681
+                    return;
+                case ActPhase.Hop:
+                    StepHop();
                     return;
                 case ActPhase.Clip:
                     break;
@@ -568,7 +691,25 @@ namespace DeadLetter.Core.Motor
                 case Verb.Use:
                 {
                     var u = (IUsable)a.Target;
-                    if (u.OnActFrame(new ActFrame(prev, f, a.T, input))) FinishClip();
+                    var step = u.OnActFrame(new ActFrame(prev, f, a.T, input, a.ClipName, a.Part));
+                    switch (step.Kind)
+                    {
+                        case ActStepKind.Done: FinishClip(); break;
+                        case ActStepKind.Then:                                         // e.g. latch Pull → Flinch (L1875)
+                            a.Part++;
+                            a.ClipName = step.Clip;
+                            EnterClip(step.Clip, step.Fade);
+                            Emit(MotorEventKind.ActEvent, step.Clip, f);
+                            break;
+                        case ActStepKind.Hop:                                          // e.g. DL-18's strap: a 0.4 m hop back
+                        {
+                            a.Part++;
+                            double tx = step.Relative ? X + step.X : step.X;
+                            double ty = double.IsNaN(step.Y) ? LaneProbe.SupportAt(_w, tx, Y, _c.Foot) : step.Y;
+                            StartHop(tx, ty, step.Z, false);
+                            break;
+                        }
+                    }
                     break;
                 }
                 default: EndAct(false); break;
@@ -606,11 +747,293 @@ namespace DeadLetter.Core.Motor
                     if (a.Face != 0) Facing = a.Face;
                     EnterClip(ClipNames.Sit, 0.2);                                       // L5659
                     return;
+                case Verb.Hide:
+                    _hasYawOverride = true; _yawOverride = 0;                            // backs in facing out, L6027
+                    a.Phase = ActPhase.StepIn;
+                    return;
                 default:
                     if (a.Turn) { _hasYawOverride = true; _yawOverride = Math.PI; a.Phase = ActPhase.Turn; }
                     else a.Phase = ActPhase.StepIn;
                     return;
             }
+        }
+
+        // ---- Hop: board, alight, a chained hop (hopTo, L2884–L2894) -------------------------------------------------
+        /// <summary>Starts the Hop clip from where he is toward (x, y, z); with <paramref name="trackRide"/> the target is the ride's pose each step.</summary>
+        private void StartHop(double x, double y, double z, bool trackRide)
+        {
+            var a = _act;
+            a.FromX = X; a.FromY = Y; a.FromZ = Z;
+            a.ToX = x; a.ToY = y; a.ToZ = z;
+            a.TrackRide = trackRide; a.TookOff = a.Landed = false;
+            Vx = Vy = 0;
+            EnterClip(ClipNames.Hop, 0.1);
+            a.Phase = ActPhase.Hop;
+        }
+
+        private void StepHop()
+        {
+            var a = _act;
+            double f = ClipTime * _c.Fps;
+            if (a.TrackRide && a.Target is IRide ride && ride.RidePose(a.Token, out double rx, out double ry, out double rz))
+            {
+                a.ToX = rx; a.ToY = ry; a.ToZ = rz;                                       // the carrier keeps moving, L2949
+            }
+            double u = Smooth.Clamp((f - ClipTimings.HopEvents.TakeOff) / (ClipTimings.HopEvents.Land - ClipTimings.HopEvents.TakeOff), 0, 1);
+            double k = Smooth.Step(u);
+            X = a.FromX + (a.ToX - a.FromX) * k;
+            Z = a.FromZ + (a.ToZ - a.FromZ) * k;
+            Y = a.FromY + (a.ToY - a.FromY) * k + _c.HopArc * Math.Sin(Math.PI * u);
+            if (!a.TookOff && ClipClock.Reached(f, ClipTimings.HopEvents.TakeOff)) { a.TookOff = true; Emit(MotorEventKind.ActEvent, "takeoff", f); }
+            if (!a.Landed && ClipClock.Reached(f, ClipTimings.HopEvents.Land)) { a.Landed = true; Emit(MotorEventKind.ActEvent, "land", f); }
+            if (!ClipClock.Reached(f, ClipTimings.HopEvents.Done)) return;
+
+            X = a.ToX; Y = a.ToY; Z = a.ToZ; PeakY = Y; Grounded = true;
+            switch (a.Verb)
+            {
+                case Verb.Board:                                                          // L2949–L2950
+                {
+                    var r = (IRide)a.Target;
+                    int token = a.Token;
+                    Ride = r; _rideToken = token;
+                    r.OnMounted(token);
+                    EndActKeepingClip();
+                    _hasYawOverride = true; _yawOverride = Math.PI / 2; Facing = 1;
+                    SetClip(ClipNames.Ride, 0.25, 1);
+                    Emit(MotorEventKind.Mounted, null, token);
+                    return;
+                }
+                case Verb.Alight:                                                         // L2953–L2957, L2973
+                {
+                    bool landing = Ride != null;
+                    if (Ride != null) LeaveRide("landing");
+                    EndActKeepingClip();
+                    Facing = 1;
+                    SetClip(ClipNames.Idle, 0.3, 1);
+                    if (!landing) Emit(MotorEventKind.Alighted, "hop", 0);
+                    return;
+                }
+                default:
+                    FinishClip();
+                    return;
+            }
+        }
+
+        // ---- Riding (updateRide, L2966–L2974; syncRide L2961–L2964) -------------------------------------------------
+        private void StepRide(in MotorInput input)
+        {
+            var r = Ride;
+            SyncRide();
+            RideStatus st = r.Status(_rideToken);
+            if (st == RideStatus.Gone) { LeaveRide("gone"); Grounded = false; Vy = 0; PeakY = Y; return; }
+            if (st == RideStatus.Unloading)                                               // turn to the landing, then hop (L2970)
+            {
+                _act.Reset(); _act.Verb = Verb.Alight; _act.Target = r; _act.Token = _rideToken; _act.Phase = ActPhase.Turn;
+                _hasYawOverride = true; _yawOverride = 0;
+                Emit(MotorEventKind.ActStart, Verb.Alight.ToString(), 0);
+                return;
+            }
+            if ((input.UsePressed || input.JumpPressed) && st == RideStatus.CanHopOff)    // out anywhere on the floor (L2971–L2974)
+            {
+                double y = LaneProbe.SupportAt(_w, X, Y, _c.Foot);
+                _act.Reset(); _act.Verb = Verb.Alight; _act.Target = r;
+                _hasYawOverride = true; _yawOverride = 0;
+                Emit(MotorEventKind.ActStart, Verb.Alight.ToString(), 0);
+                LeaveRide(null);
+                StartHop(X, y, 0, false);
+                return;
+            }
+            SetClip(ClipNames.Ride, 0.25, 1);
+        }
+
+        private void LeaveRide(string why)
+        {
+            var r = Ride;
+            Ride = null;
+            _rideToken = 0;
+            if (r == null) return;
+            r.OnAlighted();
+            if (why != null) Emit(MotorEventKind.Alighted, why, 0);
+            if (!_act.Active) _hasYawOverride = false;
+        }
+
+        /// <summary>
+        /// Ride sync (§3.1 step #9, <c>syncRide</c>, L2959–L2964): after the mechanisms have stepped, he is placed on what he
+        /// rides, so he never trails it by a frame. Not during an act: the board/alight hop moves him itself (the prototype
+        /// re-placed him on the carrier during its own alight hop, hiding the hop; a deliberate difference).
+        /// </summary>
+        public void SyncRide()
+        {
+            if (Ride == null || _act.Active) return;
+            if (!Ride.RidePose(_rideToken, out double x, out double y, out double z)) return;
+            X = x; Y = y; Z = z; Vx = Vy = 0; Grounded = true; PeakY = y;
+        }
+
+        /// <summary>
+        /// Ride sync for a lift that carries him (<c>ILiftRide.Carrying</c>, §3.1 step #9): his feet go to its floor
+        /// <paramref name="floorY"/>, grounded. Not while mantling (the climb owns his y).
+        /// </summary>
+        public void SnapToFloor(double floorY)
+        {
+            if (_mantling) return;
+            Y = floorY; Vy = 0; Grounded = true; PeakY = floorY;
+        }
+
+        // ---- Hide (DL-14b, L6111–L6125) --------------------------------------------------------------------------------
+        private void StepHide(in MotorInput input, double move, double dt)
+        {
+            var a = _act;
+            switch (a.Phase)
+            {
+                case ActPhase.Approach: StepApproach(dt); return;
+                case ActPhase.StepIn:                                                     // back into the recess, L6114–L6116
+                    Z = Math.Min(a.InZ, Z + _c.HideInSpeed * dt);
+                    SetClip(ClipNames.Walk, 0.2, -_c.HideWalkSpeed / _c.ClipSpeedWalk);
+                    if (Z >= a.InZ - 1e-3)
+                    {
+                        a.Phase = ActPhase.Clip; a.T = 0; Crouched = true;
+                        SetClip(ClipNames.CrouchIdle, 0.25, 1);
+                        Emit(MotorEventKind.ActEvent, "hidden", 0);
+                    }
+                    return;
+                case ActPhase.Clip:                                                       // any move after 0.3 s, L6118–L6120
+                {
+                    Crouched = true;
+                    bool moving = move != 0 || input.JumpPressed || input.UsePressed;
+                    if (moving && a.T > _c.HideLeaveAfter + 1e-9) { a.Phase = ActPhase.StepOut; Crouched = false; }
+                    return;
+                }
+                default:                                                                  // out again, L6122–L6123
+                    Z = Math.Max(0, Z - _c.HideOutSpeed * dt);
+                    SetClip(ClipNames.Walk, 0.2, _c.HideWalkSpeed / _c.ClipSpeedWalk);
+                    if (Z <= 1e-3) { Z = 0; EndAct(false, 0.2); }
+                    return;
+            }
+        }
+
+        // ---- Escorted (DL-14b, L6126–L6134) ------------------------------------------------------------------------
+        /// <summary>
+        /// The escort has him (the prototype's trolley sets <c>game.act</c>, L6399): he drops what he holds (L6399–L6400)
+        /// and is walked to <see cref="EscortWalk.ToX"/>. Ignored while already escorted.
+        /// </summary>
+        public void BeginEscort(in EscortWalk walk)
+        {
+            if (_act.Verb == Verb.Escorted || _act.Verb == Verb.Death) return;
+            DropAll(Y);
+            _act.Reset();
+            _act.Verb = Verb.Escorted; _act.Phase = ActPhase.Clip; _act.Walk = walk;
+            Vx = 0;
+            _hasYawOverride = false;
+            Emit(MotorEventKind.ActStart, Verb.Escorted.ToString(), 0);
+        }
+
+        private void StepEscorted(double dt)
+        {
+            var a = _act;
+            var w = a.Walk;
+            Facing = w.Facing; Crouched = false;
+            Z = Damp.Toward(Z, 0, _c.EscortZRate, dt);                                    // L6129
+            if (a.T < w.HoldSeconds) { SetClip(ClipNames.Idle, 0.2, 1); return; }        // L6130
+            X = Smooth.MoveTowards(X, w.ToX, w.Speed * dt);                               // L6131
+            SetClip(ClipNames.Walk, 0.2, w.Speed / _c.ClipSpeedWalk);
+            Footsteps();
+            if (w.Facing < 0 ? X <= w.ArriveX : X >= w.ArriveX)                           // L6133
+            {
+                Facing = w.EndFacing;
+                EndAct(false);
+            }
+        }
+
+        // ---- Stuck and death (L4519–L4521, L7425–L7453) -------------------------------------------------------------
+        /// <summary>
+        /// The stuck act (DL-01's trench, <c>trenchStuck</c>, L4764–L4766, L4519–L4521): he stops; Flinch from 0.2 s; at 2.0 s
+        /// <see cref="MotorEventKind.RespawnDue"/> (1.3 s, the fade). Ignored while stuck or dead.
+        /// </summary>
+        public void BeginStuck()
+        {
+            if (_act.Verb == Verb.Stuck || _act.Verb == Verb.Death) return;
+            _mantling = false;
+            _act.Reset();
+            _act.Verb = Verb.Stuck; _act.Phase = ActPhase.Clip;
+            Vx = 0;
+            Emit(MotorEventKind.ActStart, Verb.Stuck.ToString(), 0);
+        }
+
+        private void StepStuck()
+        {
+            var a = _act;
+            if (!a.Flinched && a.T > _c.StuckFlinchAfter + 1e-9) { a.Flinched = true; SetClip(ClipNames.Flinch, 0.2, 1); Emit(MotorEventKind.ActEvent, "flinch", 0); }
+            if (!a.Cut && a.T > _c.StuckRespawnAfter + 1e-9) { a.Cut = true; Emit(MotorEventKind.RespawnDue, "stuck", _c.RespawnFade); }
+        }
+
+        /// <summary>
+        /// <c>die(how)</c>, L7435–L7442: he lets go of everything, stops, plays the death clip and shakes the camera; after
+        /// the hold (<paramref name="hold"/>, NaN = the kind's) <see cref="MotorEventKind.RespawnDue"/> (0.6 s, the cut).
+        /// The sparks and the eye are presentation (Runtime reads <see cref="MotorEventKind.Death"/>). Ignored while dead.
+        /// </summary>
+        public void Die(DeathKind how, double hold = double.NaN)
+        {
+            if (_act.Verb == Verb.Death) return;
+            DropAll(Math.Max(0, Y));                                                      // releaseHolds, L7428–L7433
+            _act.Reset();
+            _act.Verb = Verb.Death; _act.Phase = ActPhase.Clip; _act.Death = how;
+            _act.Hold = double.IsNaN(hold) ? _c.DeathHold(how) : hold;
+            Vx = Vy = 0;
+            _hasYawOverride = false;
+            string clip = how == DeathKind.Crush ? ClipNames.DeathCrush : how == DeathKind.Shock ? ClipNames.DeathShock
+                : how == DeathKind.Grabbed ? ClipNames.DeathGrabbed : ClipNames.DeathFall;
+            SetClip(clip, 0.05, 1, restart: true);
+            Emit(MotorEventKind.ActStart, Verb.Death.ToString(), 0);
+            Emit(MotorEventKind.Death, how.ToString(), _act.Hold);
+            Emit(MotorEventKind.Shake, null, _c.DeathShake(how));
+        }
+
+        private void StepDeath()
+        {
+            var a = _act;
+            if (!a.Cut && a.T >= a.Hold - 1e-9) { a.Cut = true; Emit(MotorEventKind.RespawnDue, "death", _c.DeathCut); }   // L7448–L7451
+        }
+
+        // ---- Quirks (playQuirk / updateQuirk, L3841–L3856) ---------------------------------------------------------
+        /// <summary>
+        /// <c>playQuirk(clip, cancel)</c>: a short reaction (CheckLabel, Flinch, Proud, PeekDown, Startle...). Refused (false)
+        /// while in an act, holding, riding, mantling or in the air (L3842). <paramref name="cancel"/>: any move after 0.3 s
+        /// of the clip ends it; <paramref name="cancelAfter"/> allows that only after so many seconds (the wake's label, 2.5 s,
+        /// L8108). It ends 0.05 s before the clip's end, or after <paramref name="endAfter"/> seconds; CheckLabel then holds
+        /// <paramref name="holdFor"/> (NaN = 0.8 s, L3853).
+        /// </summary>
+        public bool PlayQuirk(string clip, bool cancel = true, double holdFor = double.NaN, double cancelAfter = double.NaN, double endAfter = double.NaN)
+        {
+            if (clip == null) throw new ArgumentNullException(nameof(clip));
+            if (_act.Active || Hold != HoldKind.None || Ride != null || _mantling || !Grounded) return false;
+            if (double.IsNaN(endAfter) && !ClipTimings.TryGet(clip, out _)) return false;          // !actions[clip]
+            _act.Reset();
+            _act.Verb = Verb.Quirk; _act.Phase = ActPhase.Clip; _act.ClipName = clip;
+            _act.Cancel = cancel; _act.HoldFor = holdFor; _act.CancelAfter = cancelAfter; _act.EndAfter = endAfter;
+            Vx = 0;
+            SetClip(clip, 0.15, 1, restart: true);
+            Emit(MotorEventKind.ActStart, Verb.Quirk.ToString(), 0);
+            return true;
+        }
+
+        /// <summary>A flinch (Flinch for 1.6 s, as after the latch, L1875–L1876): a quirk nothing cancels.</summary>
+        public bool Flinch(double seconds = ClipTimings.FlinchEvents.End / 24) => PlayQuirk(ClipNames.Flinch, false, endAfter: seconds);
+
+        private void StepQuirk(in MotorInput input, double move)
+        {
+            var a = _act;
+            bool moving = move != 0 || input.JumpPressed;
+            bool cancel = a.Cancel || (!double.IsNaN(a.CancelAfter) && a.Total > a.CancelAfter);
+            if (cancel && moving && ClipTime > _c.QuirkCancelAfter) { EndActKeepingClip(); return; }   // L3851
+            double end = !double.IsNaN(a.EndAfter) ? a.EndAfter
+                : (ClipTimings.TryGet(a.ClipName, out var info) ? info.Seconds(_c.Fps) : 0) - _c.QuirkEndEarly;
+            if (ClipTime + 1e-9 < end) return;                                            // act.time: the mixer's, a step behind (as L3852)
+            if (a.ClipName == ClipNames.CheckLabel)                                       // held a beat, L3853
+            {
+                if (double.IsNaN(a.EndAt)) a.EndAt = a.Total;
+                if (a.Total - a.EndAt + 1e-9 < (double.IsNaN(a.HoldFor) ? _c.CheckLabelHold : a.HoldFor)) return;
+            }
+            EndAct(false, 0.35);
         }
 
         private void ClipLift(double f, double prev)
@@ -658,7 +1081,9 @@ namespace DeadLetter.Core.Motor
             if (ClipClock.Reached(f, ClipTimings.SetDownEvents.Release) && !_act.Done1)
             {
                 _act.Done1 = true;
-                pt.OnPlaced(Carried);
+                var it = Carried;
+                pt.OnPlaced(it);
+                it?.OnPlaced(pt);
                 CarryBlend = 0;
                 Emit(MotorEventKind.Placed, "release", f);
             }
@@ -725,13 +1150,13 @@ namespace DeadLetter.Core.Motor
             else { Z = 0; EndAct(true); }
         }
 
-        private void EndAct(bool restoreFacing)
+        private void EndAct(bool restoreFacing, double fade = 0.3)
         {
             var a = _act;
             if (restoreFacing && a.Face != 0) Facing = a.Face;
-            if (a.Crouch) Crouched = false;
+            if (a.Crouch || a.Verb == Verb.Hide) Crouched = false;
             EndActKeepingClip();
-            SetClip(ClipNames.Idle, 0.3, 1);
+            SetClip(ClipNames.Idle, fade, 1);
         }
 
         private void EndActKeepingClip()
@@ -743,10 +1168,10 @@ namespace DeadLetter.Core.Motor
         }
 
         // ---- Animation clock --------------------------------------------------------------------------------------------
-        /// <summary>The prototype's <c>setClip</c>, L1597–L1605: same clip → only the speed changes.</summary>
-        private void SetClip(string name, double fade, double timeScale)
+        /// <summary>The prototype's <c>setClip</c>, L1597–L1605: same clip → only the speed changes (unless <paramref name="restart"/>: an act's clip starts over).</summary>
+        private void SetClip(string name, double fade, double timeScale, bool restart = false)
         {
-            if (Clip == name) { ClipTimeScale = timeScale; return; }
+            if (Clip == name && !restart) { ClipTimeScale = timeScale; return; }
             Clip = name; ClipFade = fade; ClipTimeScale = timeScale; ClipTime = 0;
             ClipSerial++;
             _lastStepPhase = 0;

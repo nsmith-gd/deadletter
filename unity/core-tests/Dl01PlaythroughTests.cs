@@ -133,8 +133,12 @@ namespace DeadLetter.Core.Tests
                 if (R.RespawnedThisStep) Beats.Add((Steps, "respawn"));
                 if (R.ExitedThisStep) Beats.Add((Steps, "exit"));
                 foreach (var e in R.Motor.Events)
+                {
                     if (e.Kind == MotorEventKind.Jump || e.Kind == MotorEventKind.MantleStart || e.Kind == MotorEventKind.Released)
                         Beats.Add((Steps, "motor " + e.Kind));
+                    if (e.Kind == MotorEventKind.ActStart && (e.Name == "Quirk" || e.Name == "Stuck")) Beats.Add((Steps, "act " + e.Name + " " + R.Motor.Clip));
+                }
+                if (R.Motor.ActVerb == Verb.Stuck && R.Motor.Clip == ClipNames.Flinch && !Beats.Exists(b => b.beat == "stuck flinch")) Beats.Add((Steps, "stuck flinch"));
                 for (int i = 0; i < R.Graph.Log.Count; i++)
                 {
                     var e = R.Graph.Log[i];
@@ -181,9 +185,24 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(1, p.At("cue wake"));                                        // Music.play('wake'), L8068
             Assert.Equal(opening, p.At("control"));
             Assert.Equal(Dl01Wake.StartX, p.R.Motor.X);                               // the gate held him at the cradle
-            p.Beats.Clear();
             var relay = p.R.Graph.Get<PulseSequencer>(Dl01Wake.RelayId);
             Assert.True(relay.Units >= 480 - 1e-6 && relay.Units < 481, "the relay ran the opening's sets from frame 0 (L8061)");
+            // startPlay's last beat: he checks his label, held 3.2 s, with dispatch's voice; once per game (L8105–L8109).
+            Assert.Equal(opening, p.At("act Quirk CheckLabel"));
+            Assert.Equal(opening, p.At("cue dispatch_item"));
+            Assert.True(p.R.HasSeen(Dl01Wake.LabelWake));
+            Assert.Contains(Dl01Wake.LabelWake, p.R.Checkpoints.ToModel().Seen);
+            Assert.Null(p.R.Definition.Shot(p.R));                                   // from CheckLabel f2 (L3736)
+            int shot = p.Until(() => p.R.Definition.Shot(p.R) != null, 10);
+            Assert.InRange(shot, 5, 6);
+            var label = p.R.Definition.Shot(p.R).Value;
+            Assert.Equal("label", label.Name);
+            Assert.Equal(50, label.Focal);
+            Assert.Equal(1.1, label.Ease);                                            // the wake's held check (L3740)
+            int check = p.Until(() => !p.R.Motor.IsActing, 600) + shot;               // the bot waits it out
+            Assert.InRange(check * SceneRunner.StepSeconds, 84 / 24.0 - 0.05 + 3.2 - 0.02, 84 / 24.0 - 0.05 + 3.2 + 0.04);
+            Assert.Null(p.R.Definition.Shot(p.R));
+            p.Beats.Clear();
 
             // Play: the latch, the shutter, the step, the cart, the trench, the crank, the door.
             int play = p.Until(() => p.R.Exited);
@@ -312,22 +331,27 @@ namespace DeadLetter.Core.Tests
                 stillSteps = still ? stillSteps + 1 : 0;
                 p.Step(stillSteps > Dl01Bot.HopAfter ? Sim.Jump(1) : Sim.Move(1));
                 if (stillSteps > Dl01Bot.HopAfter) stillSteps = 0;
-                if (p.R.RespawnPending) stuck = p.Steps;
+                if (p.R.Motor.ActVerb == Verb.Stuck) stuck = p.Steps;                  // the motor's stuck act (#22)
             }
             Assert.True(stuck > 0, "he never got stuck in the trench");
+            Assert.Equal(stuck, p.Beats.Find(b => b.beat.StartsWith("act Stuck")).step);   // TippingBridge's Stranded → runner.Stuck()
+            Assert.False(p.R.RespawnPending);                                         // not yet: the act calls respawn() at 2.0 s
             Assert.True(p.R.Motor.Y < Dl01Wake.PitY + 0.05);
             Assert.Equal(TippingBridgeState.Free, p.R.Graph.Get<TippingBridge>(Dl01Wake.CartId).State);
             Assert.True(p.At("motor MantleStart") > 0, "he climbed the cart (0.55)");
 
             double x = p.R.Motor.X;
-            int respawn = -1;
+            int respawn = -1, pending = -1;
             for (int i = 0; i < 400 && respawn < 0; i++)
             {
                 p.Step(Sim.Move(1));
+                if (pending < 0 && p.R.RespawnPending) pending = p.Steps;
                 if (p.R.RespawnedThisStep) respawn = p.Steps;
                 else Assert.Equal(x, p.R.Motor.X);                                   // no control while stuck (the act)
             }
-            Assert.Equal(198, respawn - stuck);                                       // 2.0 s stuck + 1.3 s fade = 3.3 s
+            Assert.Equal(13, p.At("stuck flinch") - stuck);                          // Flinch once t > 0.2 (L4520)
+            Assert.Equal(121, pending - stuck);                                       // respawn() once t > 2.0 (L4521)
+            Assert.Equal(199, respawn - stuck);                                       // then the 1.3 s fade (L2998)
             Assert.Equal("shutter", p.R.Checkpoint);
             Assert.InRange(p.R.Motor.X, 2.9, 2.9 + 1.6 / 60);                       // CHECKPOINTS.shutter (L7977), then that step's move (L8494)
             Assert.Equal(LatchState.Released, p.R.Graph.Get<Latch>(Dl01Wake.LatchId).State);
@@ -337,7 +361,7 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
-        public void SkippingTheOpening_HandsControlOverAtOnce_L8071()
+        public void SkippingTheOpening_JumpsToItsControlReturn_ThenTheLabelCheck_L8071_L8107()
         {
             var p = new Play();
             p.NewGame(opening: true);
@@ -345,8 +369,81 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(Dl01Wake.StartX, p.R.Motor.X);
             p.R.SkipOpening();
             Assert.False(p.R.InOpening);
+            Assert.True(p.R.Moments.Skipped);
+            Assert.Equal("wake", p.R.Moments.Current.Name);                          // the wake plays on (startPlay, L8086)
+            Assert.Null(p.R.Moments.ShotTime("wake", p.R.Clock));                    // the shot has let go
+            Assert.False(p.R.Moments.Holding);
+            p.Step(Sim.Move(1));
+            Assert.True(p.R.ControlReturnedThisStep);                                // reported on the next step, as a natural return
+            Assert.Equal(Dl01Wake.StartX, p.R.Motor.X);                              // that step's input is consumed
+            Assert.Equal(Verb.Quirk, p.R.Motor.ActVerb);                             // fromOpening: the label check (L8107)
+            Assert.Equal(ClipNames.CheckLabel, p.R.Motor.Clip);
+            // A move cuts the check only after 2.5 s (cancelAfter, L8108).
+            int moved = 0;
+            while (!(p.R.Motor.X > Dl01Wake.StartX + 1e-6) && moved < 400) { p.Step(Sim.Move(1)); moved++; }   // holding right
+            Assert.InRange(moved * SceneRunner.StepSeconds, 2.5, 2.5 + 3.0 / 60);
             for (int i = 0; i < 30; i++) p.Step(Sim.Move(1));
             Assert.True(p.R.Motor.X > Dl01Wake.StartX + 0.1);
+        }
+
+        [Fact]
+        public void TheLabelCheck_IsOncePerGame_SavedWithTheSlot_AndStartOverClearsIt_L8107()
+        {
+            var p = new Play();
+            p.NewGame(opening: true);
+            p.R.SkipOpening();
+            p.Step(Sim.Move(0));
+            Assert.Single(p.Beats.FindAll(b => b.beat == "act Quirk CheckLabel"));
+            Assert.True(SaveCodec.TryLoad(p.Fs.Files["slot0.dls"], out var saved, out _));
+            Assert.Contains(Dl01Wake.LabelWake, saved.Seen);                         // saved when it played
+
+            var fs = new MemoryFileSystem();
+            fs.Files["slot0.dls"] = (byte[])p.Fs.Files["slot0.dls"].Clone();
+            var q = new Play(fs);
+            Assert.True(q.R.Continue());
+            Assert.True(q.R.HasSeen(Dl01Wake.LabelWake));
+            q.R.NewGame(playOpening: true);                                           // Start over: seen is cleared
+            Assert.False(q.R.HasSeen(Dl01Wake.LabelWake));
+            q.R.SkipOpening();
+            q.Step(Sim.Move(0));
+            Assert.Equal(ClipNames.CheckLabel, q.R.Motor.Clip);
+            Assert.True(q.R.HasSeen(Dl01Wake.LabelWake));
+
+            // Seen, the opening's end no longer plays it (a replay of the opening would not either).
+            var r = new Play();
+            r.NewGame(opening: true);
+            r.R.MarkSeen(Dl01Wake.LabelWake);
+            r.R.SkipOpening();
+            r.Step(Sim.Move(0));
+            Assert.False(r.R.Motor.IsActing);
+        }
+
+        [Fact]
+        public void Death_HoldsThenCuts_AndTheRunnerRespawnsAtTheCheckpoint_L7435_L7451()
+        {
+            var p = new Play();
+            p.NewGame(opening: false);
+            p.Until(() => p.R.Checkpoint == "shutter" && !p.R.Motor.IsActing);
+            for (int i = 0; i < 30; i++) p.Step(Sim.Move(1));
+            p.R.Die(DeathKind.Fall);
+            Assert.True(p.R.Motor.IsDead);
+            Assert.Equal(MotorState.Dead, p.R.Motor.State);
+            Assert.Equal(ClipNames.DeathFall, p.R.Motor.Clip);
+            Assert.Contains(p.R.Motor.Events, e => e.Kind == MotorEventKind.Death && e.Name == "Fall" && e.Value == 0.9);
+            Assert.Contains(p.R.Motor.Events, e => e.Kind == MotorEventKind.Shake && e.Value == 0.7);
+            double x = p.R.Motor.X;
+            int pending = -1, respawn = -1;
+            for (int i = 1; i <= 200 && respawn < 0; i++)
+            {
+                p.Step(Sim.Move(1));
+                if (pending < 0 && p.R.RespawnPending) pending = i;
+                if (p.R.RespawnedThisStep) respawn = i;
+                else Assert.Equal(x, p.R.Motor.X);
+            }
+            Assert.Equal(54, pending);                                                // the 0.9 s hold, then the cut (L7448)
+            Assert.Equal(54 + 36, respawn);                                           // respawn 0.6 s later (L7451)
+            Assert.Equal("shutter", p.R.Checkpoint);
+            Assert.False(p.R.Motor.IsDead);
         }
 
         [Fact]

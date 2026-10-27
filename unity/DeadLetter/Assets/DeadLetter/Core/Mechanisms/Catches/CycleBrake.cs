@@ -70,10 +70,10 @@ namespace DeadLetter.Core.Mechanisms.Catches
 
         protected override bool CanUse(in InteractionQuery q) => true;
 
-        public override bool OnActFrame(in ActFrame f)
+        public override ActStep OnActFrame(in ActFrame f)
         {
             _act.Receive(f);
-            return f.Time > _p.DoneAfter;
+            return ActStep.DoneIf(f.Time > _p.DoneAfter);
         }
 
         public override void Step(in StepContext ctx)

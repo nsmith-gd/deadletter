@@ -71,7 +71,11 @@ namespace DeadLetter.Core.Scenes
         public DirectedMoment Moment;
         public double AfterX = double.NaN;
         public MechanismId WhenEngaged;
+        /// <summary>The <c>seen</c> key (§4.5: <c>realise</c>, <c>awe</c>...); null = the moment's name. Saved (<c>SaveModel.Seen</c>).</summary>
+        public string Key;
         public string Cite;
+
+        public string SeenKey => Key ?? Moment.Name;
     }
 
     /// <summary>
@@ -203,13 +207,21 @@ namespace DeadLetter.Core.Scenes
         public abstract IReadOnlyList<MechanismViewDef> Views { get; }
 
         /// <summary>
-        /// The scene's bespoke rules, once per step after the mechanisms (§3.1 #6–#9): shakes and respawns from mechanism
-        /// events, ride sync, act-triggered moments. Must not allocate. Read <c>runner.Graph.Log</c> for this step's events.
+        /// The scene's bespoke rules, once per step after the mechanisms (§3.1 #6–#8): shakes from mechanism events, the
+        /// stuck and death acts (<see cref="SceneRunner.Stuck"/>, <see cref="SceneRunner.Die"/>), act-triggered moments.
+        /// Ride sync (#9) is the runner's. Must not allocate. Read <c>runner.Graph.Log</c> for this step's events.
         /// </summary>
         public virtual void AfterMechanisms(SceneRunner runner) { }
 
         /// <summary>The opening starts (a new game, after the reset): rewind scene clocks to the opening's (DL-01: the relay, L8061).</summary>
         public virtual void OnOpeningStart(SceneRunner runner) { }
+
+        /// <summary>
+        /// Control has come back from a moment or the opening (natural end, cut or skip), before this step's motor update:
+        /// <c>startPlay</c>'s beats (DL-01: the label check, <c>labelWake</c>, L8105–L8109). <paramref name="fromOpening"/>:
+        /// the opening ended. Use <see cref="SceneRunner.HasSeen"/>/<see cref="SceneRunner.MarkSeen"/> for once-only beats.
+        /// </summary>
+        public virtual void OnControlReturned(SceneRunner runner, bool fromOpening) { }
 
         /// <summary>An authored shot for this step (label checks, moment shots; <c>currentShot</c>, L3698–L3809), or null.</summary>
         public virtual ShotRequest? Shot(SceneRunner runner) => null;

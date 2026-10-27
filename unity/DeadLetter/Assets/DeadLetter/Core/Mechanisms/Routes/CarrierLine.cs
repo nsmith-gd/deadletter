@@ -78,6 +78,10 @@ namespace DeadLetter.Core.Mechanisms.Routes
         public double Floor = 0.14, RailZ = 0.55;
         /// <summary>Boarding: a carrier on the floor (y ≤ 0.2) within 0.5 of him (L2854–L2862).</summary>
         public double BoardReach = 0.5, OnFloorY = 0.2;
+        /// <summary>Optional: boarding is offered only while this holds (<c>game.scan.phase === 'done'</c>, L2855).</summary>
+        public Func<bool> BoardWhen;
+        /// <summary>The gallery he alights onto at the landing (<c>GALLERY.h</c>, L2953).</summary>
+        public double LandingY = 1.6;
         /// <summary>Loading: the docked carrier within 0.7 of the dock, or, belt stopped, a moving one within 0.6 (L4985).</summary>
         public double LoadReachDock = 0.7, LoadReachMoving = 0.6;
         /// <summary>The bang startles him if he is on the floor (y below this) past this x (L2735).</summary>
@@ -188,8 +192,10 @@ namespace DeadLetter.Core.Mechanisms.Routes
     /// nothing is in the first 1.4 m, wait 3.4 s at the dock, run at 0.6 m/s keeping 0.8 apart, take the points at the
     /// junction, and either tip into the chute (then back to the return lift and down) or climb the ramp to the
     /// landing (ridden ones stop there; loaded ones tip their weight toward the gallery bucket) and sink at the return.
-    /// D-17 boards, rides and alights through <see cref="BeginBoard"/>, <see cref="Mount"/>, <see cref="Alight"/>
-    /// (his hop acts are the motor's); ride sync reads <see cref="Ride"/> after the graph has stepped (§3.1 step 9).
+    /// D-17 boards, rides and alights through <see cref="Rider"/> (an <see cref="IRide"/>: the motor's hop acts call
+    /// <see cref="BeginBoard"/>, <see cref="Mount"/>, <see cref="Alight"/>); ride sync places him on the carrier after the
+    /// graph has stepped (§3.1 step 9, <c>D17Motor.SyncRide</c>). Carriers run on a rail off the lane (z 0.55), so they
+    /// add nothing to the lane's surface: he is on one only by riding it.
     /// Weights are set in through <see cref="Loader"/>. The dock, the chute and the route board are this mechanism's
     /// outputs (<see cref="DockLit"/>, <see cref="CarrierLineEvent.Tip"/>, <see cref="Route"/>/<see cref="Running"/>):
     /// §5's <c>dl06.dock</c> (§4.13 "carriers wait at the dock 3.4 s while the belt runs; held while he boards") is the
@@ -223,6 +229,7 @@ namespace DeadLetter.Core.Mechanisms.Routes
             for (int i = 0; i < _all.Length; i++) _all[i] = new Carrier();
             _live = new int[p.Capacity];
             Loader = new CarrierLoader(this);
+            Rider = new CarrierRide(this, p);
         }
 
         public CarrierLineState State => (CarrierLineState)StateCode;
@@ -247,6 +254,10 @@ namespace DeadLetter.Core.Mechanisms.Routes
 
         /// <summary>The weights' place target: the docked carrier, or a stopped one beside him (L4979–L4989).</summary>
         public CarrierLoader Loader { get; }
+        /// <summary>The line as a ride for the motor's board / ride / alight acts (register it with the resolver).</summary>
+        public CarrierRide Rider { get; }
+        /// <summary>A mount is recorded and not yet applied (the motor mounted at #4, the line applies it at #6).</summary>
+        internal bool MountPending => _mount >= 0;
 
         /// <summary>The items a carrier accepts as loads (DL-07's two weights); load code = index + 1.</summary>
         public void SetLoadItems(params ICarryable[] items) => _loads = items ?? new ICarryable[0];
@@ -584,36 +595,81 @@ namespace DeadLetter.Core.Mechanisms.Routes
     /// <summary>
     /// The weights' context set-down into a carrier (DL-07, L4359–L4361, L4441–L4456, L4979–L4989): the docked carrier
     /// (stand at the dock) or, with the belt stopped, a carrier standing on the floor line beside him (stand at it).
-    /// SetDownHigh, turned into the set. The stand point is the carrier chosen by the latest <see cref="IsAvailable"/>.
+    /// SetDownHigh, turned into the set. The carrier is the one the latest <see cref="Offer"/> answered with.
     /// </summary>
     public sealed class CarrierLoader : IPlaceTarget
     {
         private readonly CarrierLine _line;
         private int _seq = -1;
-        private double _stand, _reach;
 
         internal CarrierLoader(CarrierLine line) { _line = line; }
 
         public InteractionCategory Category => InteractionCategory.Item;
-        public double StandX => _stand;
-        public double Reach => _reach;
-        public double StandZ => 0;
-        public int Face => +1;
-        public double AnchorX => _stand;
         public string Clip => "SetDownHigh";
         public bool TurnIntoSet => true;
 
-        public bool IsAvailable(in InteractionQuery q)
+        public bool Offer(in InteractionQuery q, out StationPose pose)
         {
+            pose = default;
             var c = _line.Loadable(q.X, q.Y);
-            if (c == null) { _seq = -1; return false; }
-            _seq = c.Seq; _stand = _line.StandFor(c); _reach = _line.ReachFor(c);
+            if (c == null || !(Math.Abs(q.X - _line.StandFor(c)) < _line.ReachFor(c))) { _seq = -1; return false; }
+            _seq = c.Seq;
+            pose = new StationPose(_line.StandFor(c), +1);
             return true;
         }
+
+        public bool IsAvailable(in InteractionQuery q) => Offer(q, out _);
 
         public bool Accepts(ICarryable item) => _line.LoadCodeOf(item) != 0;
 
         /// <summary>SetDown f14: recorded; the line takes it (or refuses it, if the carrier has gone) on its next step.</summary>
         public void OnPlaced(ICarryable item) => _line.Place(_seq, _line.LoadCodeOf(item));
+    }
+
+    /// <summary>
+    /// The line as something he boards and rides (<see cref="IRide"/>; DL-06, L2854–L2994): a standing jump or Use next
+    /// to a carrier on the floor hops him on (<see cref="CarrierLine.FindBoardable"/>); he rides at its floor on the rail
+    /// (<see cref="Carrier.RideY"/>, z <see cref="CarrierLineParams.RailZ"/>); docked or moving on the floor he can hop
+    /// off; at the landing it unloads him onto the gallery. Token = the carrier's Seq. Category Fixed (<c>nearUse3</c>).
+    /// </summary>
+    public sealed class CarrierRide : IRide
+    {
+        private readonly CarrierLine _line;
+        private readonly CarrierLineParams _p;
+
+        internal CarrierRide(CarrierLine line, CarrierLineParams p) { _line = line; _p = p; }
+
+        public InteractionCategory Category => InteractionCategory.Fixed;
+        /// <summary>Not from the gallery (<c>game.upper</c>, L2855): from the floor line only.</summary>
+        public bool IsAvailable(in InteractionQuery q) => q.Y <= _p.OnFloorY && (_p.BoardWhen == null || _p.BoardWhen());
+
+        public bool OfferBoard(in InteractionQuery q, out int token, out double distance)
+        {
+            var c = _line.FindBoardable(q.X);
+            token = c?.Seq ?? -1;
+            distance = c != null ? Math.Abs(c.Position - q.X) : 0;
+            return c != null;
+        }
+
+        public bool RidePose(int token, out double x, out double y, out double z)
+        {
+            var c = _line.FindBySeq(token);
+            x = c?.Position ?? 0; y = c?.RideY ?? 0; z = _p.RailZ;
+            return c != null;
+        }
+
+        public RideStatus Status(int token)
+        {
+            var c = _line.FindBySeq(token);
+            if (c == null || (!c.Ridden && !_line.MountPending)) return RideStatus.Gone;                // sank, or tipped him out (L2733)
+            if (c.State == CarrierState.Unload) return RideStatus.Unloading;                            // L2970
+            if ((c.State == CarrierState.Dock || c.State == CarrierState.Move) && c.Y < _p.OnFloorY) return RideStatus.CanHopOff;   // L2971
+            return RideStatus.Riding;
+        }
+
+        public double AlightY(int token) => _p.LandingY;
+        public void OnBoarding(int token) => _line.BeginBoard(_line.FindBySeq(token));
+        public void OnMounted(int token) => _line.Mount(_line.FindBySeq(token));
+        public void OnAlighted() => _line.Alight();
     }
 }

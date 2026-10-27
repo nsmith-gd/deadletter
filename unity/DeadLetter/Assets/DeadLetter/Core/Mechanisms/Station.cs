@@ -4,12 +4,16 @@ using DeadLetter.Core.Save;
 
 namespace DeadLetter.Core.Mechanisms
 {
-    /// <summary>Where D-17 stands to use a fixed control, and from where it answers (§4.9, §4.12).</summary>
+    /// <summary>
+    /// Where D-17 stands to use a fixed control, and from where it answers (§4.9, §4.12). <see cref="Pose"/> turns it
+    /// into the <see cref="StationPose"/> for one query; <see cref="Answers"/> is its reach and floor test.
+    /// </summary>
     public readonly struct Station
     {
         public readonly double StandX;
         /// <summary>Use answers when |x − <see cref="ReachX"/>| &lt; Reach.</summary>
         public readonly double Reach;
+        /// <summary>Facing during the act: +1 / −1, or 0 to keep his facing (ignored with <see cref="FaceTowards"/>).</summary>
         public readonly int Face;
         /// <summary>Unity z he steps to (+ into the set; the prototype's z negated, §0.2).</summary>
         public readonly double StandZ;
@@ -17,18 +21,34 @@ namespace DeadLetter.Core.Mechanisms
         public readonly double FloorY;
         /// <summary>Centre of the reach test; the prototype sometimes stands off it (DL-13 brake: stand pawlX − 0.2, reach from pawlX, L5290/L5298).</summary>
         public readonly double ReachX;
+        /// <summary>
+        /// Face toward the control from whichever side he comes (DL-01's crank: <c>face = x &lt; CRANK_X ? 1 : −1</c>,
+        /// L1835): +1 when he is left of <see cref="ReachX"/>, else −1.
+        /// </summary>
+        public readonly bool FaceTowards;
 
-        public Station(double standX, double reach, int face, double standZ = 0, double floorY = 0, double reachX = double.NaN)
+        public Station(double standX, double reach, int face, double standZ = 0, double floorY = 0, double reachX = double.NaN,
+            bool faceTowards = false)
         {
             StandX = standX; Reach = reach; Face = face; StandZ = standZ; FloorY = floorY;
             ReachX = double.IsNaN(reachX) ? standX : reachX;
+            FaceTowards = faceTowards;
         }
+
+        /// <summary>He is in reach and on its floor.</summary>
+        public bool Answers(in InteractionQuery q)
+            => q.Y <= FloorY + StationMechanism.FloorTolerance && Math.Abs(q.X - ReachX) < Reach;
+
+        /// <summary>The stand point, depth and facing for <paramref name="q"/>; the anchor is the reach centre.</summary>
+        public StationPose Pose(in InteractionQuery q)
+            => new StationPose(StandX, FaceTowards ? (q.X < ReachX ? 1 : -1) : Face, StandZ, ReachX);
     }
 
     /// <summary>
     /// A mechanism D-17 operates with Use (latch, pawl lever, crank, brake): implements the U-11 <see cref="IUsable"/>
     /// station contract from a <see cref="Station"/>. Derived types add <see cref="CanUse"/> (state conditions),
-    /// <see cref="Profile"/> and <see cref="OnActFrame"/>, which must only record the frame (see <see cref="ActInput"/>).
+    /// <see cref="Profile"/> (asked when Use starts and again once he has stepped in) and <see cref="OnActFrame"/>, which
+    /// must only record the frame (see <see cref="ActInput"/>) and answers Continue, Done, a follow-up clip or a hop.
     /// </summary>
     public abstract class StationMechanism : Mechanism, IUsable
     {
@@ -39,23 +59,26 @@ namespace DeadLetter.Core.Mechanisms
         public Station Station { get; }
 
         public InteractionCategory Category => InteractionCategory.Fixed;
-        public double StandX => Station.StandX;
-        /// <summary>The resolver tests |x − StandX| &lt; Reach; widened so it never refuses what <see cref="IsAvailable"/> accepts.</summary>
-        public double Reach => Math.Abs(Station.ReachX - Station.StandX) + Station.Reach;
-        public double StandZ => Station.StandZ;
-        public int Face => Station.Face;
-        public double AnchorX => Station.ReachX;
 
-        public bool IsAvailable(in InteractionQuery q)
-            => q.Y <= Station.FloorY + FloorTolerance && Math.Abs(q.X - Station.ReachX) < Station.Reach && CanUse(q);
+        public bool Offer(in InteractionQuery q, out StationPose pose)
+        {
+            if (Station.Answers(q) && CanUse(q)) { pose = Station.Pose(q); return true; }
+            pose = default;
+            return false;
+        }
+
+        public bool IsAvailable(in InteractionQuery q) => Offer(q, out _);
 
         /// <summary>State conditions (e.g. not already released).</summary>
         protected abstract bool CanUse(in InteractionQuery q);
 
+        /// <summary>The act's clip and manner as the mechanism's state is now (re-read once he has stepped in).</summary>
         public abstract ActProfile Profile { get; }
 
-        /// <summary>Record the frame with <c>_act.Receive(f)</c>; return true when the act is over (a pure function of the frame and state).</summary>
-        public abstract bool OnActFrame(in ActFrame f);
+        public ActProfile ProfileFor(in InteractionQuery q) => Profile;
+
+        /// <summary>Record the frame with <c>_act.Receive(f)</c>; answer from the frame alone (a pure function of the frame and state).</summary>
+        public abstract ActStep OnActFrame(in ActFrame f);
     }
 
     /// <summary>
@@ -71,19 +94,23 @@ namespace DeadLetter.Core.Mechanisms
         public bool Started;
         /// <summary>Clip frame (24 fps, unwrapped for loops), previous frame, seconds since the clip started, stick.</summary>
         public double Frame, PrevFrame, Time, Move;
+        /// <summary>Which clip of the act (0 = the profile's; then the follow-ups the station chained). Frames restart per part.</summary>
+        public int Part;
         private bool _fed;
         private double _lastTaken;
+        private int _lastPart;
 
         public void Receive(in ActFrame f)
         {
-            _fed = true; Frame = f.Frame; PrevFrame = f.PrevFrame; Time = f.Time; Move = f.Input.Move;
+            _fed = true; Frame = f.Frame; PrevFrame = f.PrevFrame; Time = f.Time; Move = f.Input.Move; Part = f.Part;
         }
 
         public void Take()
         {
-            Started = _fed && (!Active || Frame < _lastTaken);   // a new act, or a new clip straight after the last
+            // A new act, or a new act straight after the last (its first clip's frames start over); a chained part is not.
+            Started = _fed && Part == 0 && (!Active || _lastPart != 0 || Frame < _lastTaken);
             Active = _fed;
-            if (_fed) _lastTaken = Frame;
+            if (_fed) { _lastTaken = Frame; _lastPart = Part; }
             _fed = false;
         }
 
@@ -94,6 +121,7 @@ namespace DeadLetter.Core.Mechanisms
             w.WriteBool("act.fed", _fed); w.WriteBool("act.active", Active);
             w.WriteDouble("act.frame", Frame); w.WriteDouble("act.prev", PrevFrame);
             w.WriteDouble("act.time", Time); w.WriteDouble("act.move", Move); w.WriteDouble("act.last", _lastTaken);
+            w.WriteLong("act.part", Part); w.WriteLong("act.lastPart", _lastPart);
         }
 
         public void Read(ISnapshotReader r)
@@ -101,6 +129,7 @@ namespace DeadLetter.Core.Mechanisms
             _fed = r.ReadBool("act.fed"); Active = r.ReadBool("act.active");
             Frame = r.ReadDouble("act.frame"); PrevFrame = r.ReadDouble("act.prev");
             Time = r.ReadDouble("act.time"); Move = r.ReadDouble("act.move"); _lastTaken = r.ReadDouble("act.last");
+            Part = (int)r.ReadLong("act.part"); _lastPart = (int)r.ReadLong("act.lastPart");
             Started = false;
         }
     }

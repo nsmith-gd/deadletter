@@ -36,7 +36,9 @@ namespace DeadLetter.Core.Scenes
 
     /// <summary>
     /// Collision a mechanism owns and changes (§4.6: "dynamic contributors owned by mechanisms"): a cart that is a
-    /// block and then a bridge, a shutter whose underside swings, a wall that opens with a latch. Each call folds this
+    /// block and then a bridge, a shutter whose underside swings, a wall that opens with a latch, crates on a belt, a
+    /// folding leaf's swept volume. A contributor that is also an <see cref="ILaneConveyor"/> (a running belt) carries
+    /// whoever stands on it. Each call folds this
     /// contributor into the value the static boxes (and earlier contributors) gave. Must be cheap, deterministic and
     /// allocation-free: the motor probes the lane dozens of times per step.
     /// </summary>
@@ -57,7 +59,7 @@ namespace DeadLetter.Core.Scenes
     /// chapter 1 overrides (L4135–L4201). Runtime uses this too: no Unity physics for the hero (§4.6).
     /// Behaves exactly like <see cref="BoxWorld"/> for the static parts, so motor tests carry over.
     /// </summary>
-    public sealed class LaneGeometry : IMotorWorld
+    public sealed class LaneGeometry : IMotorWorld, ILaneConveyor
     {
         /// <summary>How far below a board's top his feet may be and still stand on an <see cref="LaneBox.OnlyFromAbove"/> box.</summary>
         public const double OnlyFromAboveTolerance = 0.05;
@@ -139,5 +141,13 @@ namespace DeadLetter.Core.Scenes
 
         public bool LedgeAhead(double x, double y, int dir, double range, double stepUp, out Ledge ledge)
             => LaneProbe.ScanLedge(this, x, y, dir, range, stepUp, out ledge);
+
+        /// <summary>The sum of the contributors that carry (<see cref="ILaneConveyor"/>: a running belt), m/s.</summary>
+        public double CarryAt(double x, double y)
+        {
+            double v = 0;
+            for (int i = 0; i < _contributors.Count; i++) if (_contributors[i] is ILaneConveyor c) v += c.CarryAt(x, y);
+            return v;
+        }
     }
 }

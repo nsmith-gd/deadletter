@@ -305,9 +305,10 @@ namespace DeadLetter.Core.Tests
         {
             var (r, w0, w1) = Loaded(false);
             var loader = r.Line.Loader;
-            Assert.True(loader.IsAvailable(At(64.5)));
-            Assert.Equal(64.0, loader.StandX);
-            Assert.Equal(0.7, loader.Reach);
+            Assert.True(loader.Offer(At(64.5), out var pose));
+            Assert.Equal(64.0, pose.StandX);
+            Assert.True(loader.IsAvailable(At(64.0 + 0.69)));                    // reach 0.7 at the dock
+            Assert.False(loader.IsAvailable(At(64.0 - 0.71)));
             Assert.False(loader.IsAvailable(At(64.75)));
             Assert.False(loader.IsAvailable(At(64.0, 1.6)));                     // up on the gallery
             Assert.True(loader.Accepts(w0));
@@ -335,9 +336,9 @@ namespace DeadLetter.Core.Tests
             Assert.False(r.Line.Loader.IsAvailable(At(c.Position)));            // moving with the belt on
             r.Belt.Engaged = false;
             Mech.Run(r.G, 1);
-            Assert.True(r.Line.Loader.IsAvailable(At(c.Position + 0.5)));
-            Assert.Equal(c.Position, r.Line.Loader.StandX);
-            Assert.Equal(0.6, r.Line.Loader.Reach);
+            Assert.True(r.Line.Loader.Offer(At(c.Position + 0.5), out var pose));
+            Assert.Equal(c.Position, pose.StandX);
+            Assert.True(r.Line.Loader.IsAvailable(At(c.Position - 0.59)));        // reach 0.6 beside a moving one
             Assert.False(r.Line.Loader.IsAvailable(At(c.Position + 0.65)));
         }
 
@@ -501,7 +502,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(PointsLeverState.On, r.Stop.State);
             Assert.Equal(PointsLeverState.Off, r.Points.State);
             Assert.True(r.Stop.IsAvailable(q));
-            Assert.Equal(-0.11, r.Stop.StandZ, 12);
+            Assert.Equal(-0.11, r.Stop.Station.StandZ, 12);
             Mech.Run(r.G, 10);
             Assert.False(Mech.Emitted(r.G, "dl06.stopLever", PointsLeverEvent.AutoStart));
         }

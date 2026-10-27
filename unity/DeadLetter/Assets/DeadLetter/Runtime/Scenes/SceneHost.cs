@@ -1,5 +1,6 @@
 using System;
 using DeadLetter.Core.Maths;
+using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Save;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Simulation;
@@ -34,7 +35,7 @@ namespace DeadLetter.Runtime.Scenes
         [SerializeField] private D17Controller player;
         [SerializeField] private LaneCameraDriver cameraDriver;
         [SerializeField] private DirectedMomentPlayer moments;
-        [Tooltip("Optional: the parcel label on D-17 (the opening camera starts on its centre, captureChest L7649).")]
+        [Tooltip("Optional: the parcel label on D-17 (the opening camera starts on its centre, captureChest L7649; the label shot frames it, L3735).")]
         [SerializeField] private Transform openingChest;
         [SerializeField] private int saveSlot;
         [Tooltip("Continue from the save slot when it holds this scene; otherwise a new game.")]
@@ -47,6 +48,9 @@ namespace DeadLetter.Runtime.Scenes
 
         /// <summary>The running scene; null before Awake or when the id is not ported.</summary>
         public SceneRunner Runner { get; private set; }
+
+        /// <summary>D-17 as the scene's mechanisms saw him on the last step (<see cref="PlayerPose.Of"/> the runner's motor).</summary>
+        public PlayerPose Pose => Runner != null ? Runner.Pose() : PlayerPose.Away;
 
         /// <summary>Cues fired by a Core step (music, voice); U-16's audio director subscribes.</summary>
         public event Action<string> CueRequested;
@@ -69,6 +73,11 @@ namespace DeadLetter.Runtime.Scenes
             AudioDspMusicClock clock = moments != null && moments.MusicClock ? moments.MusicClock : null;
             Runner = new SceneRunner(def, store, saveSlot, clock);
             Runner.Graph.Calm = calm;
+            if (openingChest != null)
+            {
+                Transform label = openingChest;
+                Runner.LabelCentre = () => { Vector3 c = label.position; return new Vec3(c.x, c.y, -c.z); };   // the label shot's target
+            }
             _tick = new FixedTick(SceneRunner.StepSeconds, 4);
 
             if (player != null) player.AttachToHost(Runner.Motor, Runner.Resolver, () => (float)_tick.Alpha);

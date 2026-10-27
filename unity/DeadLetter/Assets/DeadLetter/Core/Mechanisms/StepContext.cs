@@ -1,3 +1,6 @@
+using DeadLetter.Core.Interaction;
+using DeadLetter.Core.Motor;
+
 namespace DeadLetter.Core.Mechanisms
 {
     /// <summary>
@@ -16,15 +19,24 @@ namespace DeadLetter.Core.Mechanisms
         public readonly bool Grounded;
         /// <summary>His hands are full (<c>game.hold</c>; the motor's <c>Hold != HoldKind.None</c>).</summary>
         public readonly bool Holding;
-        /// <summary>In DL-14b's hide act (<c>game.act.what === 'hide'</c>, L5973). The motor has no hide act yet (U-11).</summary>
+        /// <summary>In DL-14b's hide act (<c>game.act.what === 'hide'</c>, any phase, L5973; the motor's <c>IsHiding</c>).</summary>
         public readonly bool Hiding;
+        /// <summary>In the escorted act (<c>game.act.what === 'escorted'</c>, L6413; the motor's <c>IsEscorted</c>).</summary>
+        public readonly bool Escorted;
 
         public PlayerPose(double x, double y, double z = 0, bool crouched = false, bool busy = false,
-            double vx = 0, bool grounded = true, bool holding = false, bool hiding = false)
+            double vx = 0, bool grounded = true, bool holding = false, bool hiding = false, bool escorted = false)
         {
             X = x; Y = y; Z = z; Crouched = crouched; Busy = busy;
-            Vx = vx; Grounded = grounded; Holding = holding; Hiding = hiding;
+            Vx = vx; Grounded = grounded; Holding = holding; Hiding = hiding; Escorted = escorted;
         }
+
+        /// <summary>
+        /// The pose the step pipeline builds from the motor after #4: the one way to fill it (SceneRunner, the Runtime
+        /// D17Controller in standalone mode, the tests' <c>Mech.Pose(motor)</c>).
+        /// </summary>
+        public static PlayerPose Of(D17Motor m)
+            => new PlayerPose(m.X, m.Y, m.Z, m.Crouched, m.IsActing, m.Vx, m.Grounded, m.Hold != HoldKind.None, m.IsHiding, m.IsEscorted);
 
         /// <summary>Nobody in the lane (tests of a mechanism on its own).</summary>
         public static PlayerPose Away => new PlayerPose(-1e6, 0);

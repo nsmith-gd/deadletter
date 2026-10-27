@@ -1,6 +1,7 @@
 # Porting a scene to Unity (U-20/21/22)
 
-**Status:** 27 October 2026, from the DL-01 vertical slice (issue #16). DL-01 is the worked example; copy it.
+**Status:** 27 October 2026, from the DL-01 vertical slice (issue #16), with the motor acts and generic loose things
+of U-11b (#22). DL-01 is the worked example; copy it.
 **Reference files:** `Core/Scenes/SceneDefinition.cs`, `SceneRunner.cs`, `LaneGeometry.cs`, `LaneContributors.cs`,
 `MechanismReadout.cs`, `Prologue/Dl01Wake.cs`; `unity/core-tests/Dl01PlaythroughTests.cs`; Runtime `Scenes/SceneHost.cs`,
 `Scenes/MechanismView.cs`; Editor `Builders/SceneBuilder.cs`.
@@ -11,8 +12,9 @@
 SceneDefinition (Core, plain C# data, L-cited)  ──►  SceneRunner (Core)  ──►  SceneHost (Runtime)  ──►  adapters
   mechanisms in update order, resolver set,          one 60 Hz step in §3.1      FixedTick, input,        D17Controller (hosted)
   LaneGeometry, spawns, checkpoint/cue/moment         order: gate → motor →       presents cues and         LaneCameraDriver (bound)
-  rules, opening, exit, views                         graph → rules → checkpoints moments                   DirectedMomentPlayer (hosted)
-                                                      → camera                                              MechanismView per MECH_ node
+  rules, opening, exit, views, control-return         graph → rules → escorts →   moments                   DirectedMomentPlayer (hosted)
+  beats                                               ride sync (#9) → checkpoints                          MechanismView per MECH_ node
+                                                      → camera
 SceneBuilder (Editor) writes Assets/Scenes/<Chapter>/DLnn.unity from the same definition.
 ```
 
@@ -44,7 +46,8 @@ Core owns every outcome. Runtime only reads `SceneRunner` state. Nothing in the 
 | New mechanism types, if the §5 row needs one Core lacks | One class per **type** under `Core/Mechanisms/<Family>/`, per its README. Never scene logic in a mechanism. |
 
 Do not edit the framework files (`Mechanism.cs`, `MechanismGraph.cs`, `Signals.cs`, `Station.cs`, `StepContext.cs`)
-or the Motor/Interaction contracts. If you need a change there, work around it in the scene and write it down.
+or the Motor/Interaction contracts. If you need a change there, work around it in the scene and write it down (as
+U-10 did; #22 then replaced those workarounds with the contracts in §4a).
 
 ## 4. Writing the definition, member by member
 
@@ -54,21 +57,56 @@ or the Motor/Interaction contracts. If you need a change there, work around it i
   (`OFF3 + 52.45` → `85.45`) and negate three.js z for Unity (§0.2).
 - **`AddMechanisms`**: in the prototype's update order (relays #5, `updateMechanisms`/`updateDLxx` #6, `updateCh1`
   etc. #7). A mechanism that reads another (`link.Read`) must be added after it.
-- **`RegisterInteractables`**: every station (`IUsable`), pushable and carryable D-17 can use here.
+- **`RegisterInteractables`**: everything D-17 can use here: stations (`IUsable`), place targets, pushables (a
+  two-sided `Pushable` also registers its `Twin`; one with a deck its `DeckTarget`), carryables, hide spots
+  (`HideSpot`) and rides (`CarrierLine.Rider`).
 - **`BuildLane`**: floor as boxes (a pit is a lower box between two floor boxes); `PLATFORMS`-style blocks; ceilings;
   `LeftLimit/RightLimit`. Anything that changes with a mechanism is an `ILaneContributor`: reuse `WallUntilEngaged`,
-  `HingedCeiling`, `TippingBridgeLane`, or add a small one to `LaneContributors.cs` (no allocation in it).
+  `HingedCeiling`, `TippingBridgeLane`, `CarryableLane` (a weight or box resting in the lane), `PushableLane` (a
+  trolley's deck or ballast), `ReturnsBeltLane` (crates are ground; it is also an `ILaneConveyor`, so the motor is
+  carried while he stands on the running belt), `SweptVolumeLane` (a folding leaf: ground when down, a ceiling while
+  it moves or is propped), or add a small one to `LaneContributors.cs` (no allocation in it).
 - **`Spawns`**: one per checkpoint in this scene (`CHECKPOINTS[cp].x/y`).
 - **`CheckpointRules`**: `Past(cp, x, minY)` for place triggers, `When(cp, id)` for state triggers.
-- **`Cues`, `Moments`**: place/state-triggered music cues and directed moments. Act-triggered ones (DL-04 `kin`,
-  DL-10 `ringc`) call `runner.StartMoment` from `AfterMechanisms` and set `runner.MomentActReady`.
-- **`Opening`**: DL-01 only. **`Exit`**: the walk-through seam to the next scene (§7) and its `NextScene`.
-- **`AfterMechanisms`**: read `runner.Graph.Log` for this step's one-shots: shakes, `RequestRespawn` (deaths,
-  stuck), ride sync (#9: place D-17 on a lift's `FloorY`), framing signals (`runner.FramingSignals.Set`). No allocation.
-- **`Shot`**: authored shots (label checks, moment shots via `MomentShots`) for the camera, else null.
+- **`Cues`, `Moments`**: place/state-triggered music cues and directed moments. A moment plays once per game: its
+  `seen` key (`MomentRule.Key`, default the moment's name; §4.5's `realise`, `awe`...) is saved with the slot
+  (`SaveModel.Seen`, v3) and cleared by Start over. Act-triggered ones (DL-04 `kin`, DL-10 `ringc`) call
+  `runner.StartMoment` from `AfterMechanisms`, mark `runner.MarkSeen(key)` and set `runner.MomentActReady`.
+- **`Opening`**: DL-01 only (its Skip is `runner.SkipOpening`: `MomentDirector.Skip` jumps to the control-return
+  state). **`Exit`**: the walk-through seam to the next scene (§7) and its `NextScene`.
+- **`OnControlReturned(runner, fromOpening)`**: `startPlay`'s beats when a moment or the opening hands control back
+  (natural end, cut or skip), before that step's motor update: DL-01's `labelWake` label check
+  (`runner.Motor.PlayQuirk(ClipNames.CheckLabel, …)`, once per game with `HasSeen`/`MarkSeen`).
+- **`AfterMechanisms`**: read `runner.Graph.Log` for this step's one-shots: shakes, failures (`runner.Stuck()` for a
+  stuck act, `runner.Die(DeathKind.X)` for a death: the motor's act asks for the respawn itself; `RequestRespawn(delay)`
+  only for a reload with no act of his), framing signals (`runner.FramingSignals.Set`). No allocation. Ride sync is
+  the runner's (#9): every `ILiftRide` in the graph that is `Carrying`, and whatever he rides (`D17Motor.SyncRide`);
+  an `IEscort` in the graph that wants him starts the escorted act. Do not move him from here.
+- **`Shot`**: authored shots (the label check: `runner.LabelShot()`; moment shots via `MomentShots`) for the camera,
+  else null. Runtime's `SceneHost` gives the runner the label's measured centre (`LabelCentre`).
 - **`Views`**: one `MechanismViewDef` per moving art node and value: `On(type, id, part, channel, motion, cite)`, then
   `.About(pivot)` (Unity axes), `.Scaled(scale, offset)` (offset so the art's built pose reads 0), `.Reading(other)`
   when a node rides another mechanism. Rotations about z keep the three.js sign.
+
+## 4a. What D-17 can do for a scene (motor acts and contracts, #22)
+
+| Need | Use | Reference |
+|---|---|---|
+| A control he works (lever, crank, cord, valve) | `StationMechanism` + `Station(standX, reach, face, standZ, floorY, reachX, faceTowards)`; `Profile`; `OnActFrame` → `ActStep` | `Latch`, `Pawl`, `CrankActuator`, `CycleBrake` |
+| A follow-up clip in the same act (latch Pull → Flinch 1.6 s) | `ActStep.Then("Flinch", 0.06)`; `ActFrame.Part` says which clip | `Latch` (L1875) |
+| A hop after the clip (DL-18 strap: 0.4 m back) | `ActStep.HopBy(-0.4)` / `HopTo(x, y, z)`: Hop f8–f18, 0.38 arc, done f23 | `FoldingLeafParams.Dl18Bench` |
+| The clip decided once he has stepped in | the motor asks `ProfileFor` again before the clip; read `ActFrame.Clip` | `Pawl` (L3305), `PointsLever` |
+| Something he lifts and sets down; plates weigh it | `Loose/Carryable` (+ `CarryableLane`); decks via `CarryableParams.Decks` | `Dl03Weight`, `Dl02Box`; `LooseTests` |
+| Something he pushes/pulls; plates weigh it | `Loose/Pushable` (twin, deck, blockers, loaded speed, `Accel`, `LetGoAtMax`) (+ `PushableLane`) | `Dl03Trolley`, `Dl08Trolley` |
+| Something that tips into a pit | `Bridges/TippingBridge` (+ `TippingBridgeLane`) | `Dl01Cart` |
+| A carrier he boards and rides | `IRide` (`CarrierLine.Rider`); Use or a standing jump boards; ride sync at #9 | `RideAndLaneTests` |
+| A lift that carries him | `Lifts/Lift` (`ILiftRide.Carrying`): the runner snaps him to `FloorY` at #9 | `SlippingCage`, `Dl09SceneTests` |
+| A belt that carries him | `ReturnsBeltLane` in the lane (`ILaneConveyor`) | `RideAndLaneTests` |
+| A recess he hides in from a beam | `Beings/HideSpot` (`IHideSpot`); `PlayerPose.Hiding` and his z | `MotorActTests` |
+| A being that walks him back | `IEscort` (`WantsEscort`, `Walk`): the runner starts `BeginEscort`; follow `PlayerPose.X`, stop when `Escorted` ends | `EscortTrolley` |
+| Stuck (a dead end he cannot leave) | `runner.Stuck()`: Flinch from 0.2 s, reload 2.0 + 1.3 s later | DL-01 trench (L4519–L4521) |
+| A death | `runner.Die(DeathKind.Crush/Shock/Grabbed/Fall)`: holds dropped, clip, shake, cut after 0.7–1.15 s, reload 0.6 s later | L7419–L7453 |
+| A reaction or a held look (CheckLabel, Proud, PeekDown, Flinch) | `runner.Motor.PlayQuirk(clip, cancel, holdFor, cancelAfter)`, `Flinch()` | DL-01 `labelWake` (L8107) |
 
 ## 5. Test checklist (`DlNnPlaythroughTests.cs`)
 
@@ -81,7 +119,12 @@ presses Use when `Motor.PreviewUse` offers the target it wants, and hops after 8
 - [ ] **Save and continue at every checkpoint**: keep each save's bytes and `SaveKit.Dump(CheckpointSnapshot)`;
       a fresh runner on a copy continues, matches the dump, stands at the spawn, and the bot still reaches the exit.
 - [ ] **Determinism**: two full runs; motor snapshot + `Mech.Dump` + camera pose + cues equal at every step.
-- [ ] **Each failure path**: walk into the hazard or dead end; assert the stuck/death timing and the respawn checkpoint.
+- [ ] **Each failure path**: walk into the hazard or dead end; assert the act (`Motor.ActVerb == Verb.Stuck`,
+      `Motor.IsDead`), its timing (`RespawnPending` 2.0 s after the stuck act starts; the reload 1.3 s later; a death's
+      hold, then 0.6 s) and the respawn checkpoint.
+- [ ] **Once-only beats**: moments and label checks play once per game, are in the save's `Seen`, survive a respawn
+      and a continue, and come back after Start over; the opening's Skip hands control over at once and still plays
+      the control-return beats.
 - [ ] **Allocation**: `GC.GetAllocatedBytesForCurrentThread()` is unchanged over 240 steps of ordinary play.
 - [ ] **Definition**: lane spot checks against index.html values (theory rows); every view names an art node
       (from name_map.csv) whose Core class equals `Type` and answers its channel; views read 0 at rest.

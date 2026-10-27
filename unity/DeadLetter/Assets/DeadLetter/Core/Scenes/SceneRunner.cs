@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DeadLetter.Core.Camera;
 using DeadLetter.Core.Cues;
 using DeadLetter.Core.Interaction;
+using DeadLetter.Core.Maths;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Save;
@@ -15,9 +16,12 @@ namespace DeadLetter.Core.Scenes
     /// <list type="number">
     /// <item>#1 clock; a pending respawn reloads the checkpoint (L8493–L8494).</item>
     /// <item>#3 input gate: a directed moment (or the opening) withholds control (<see cref="MomentDirector"/>); a pending
-    /// respawn does too (the stuck act).</item>
-    /// <item>#4 motor (acts feed their stations here).</item>
-    /// <item>#5–#7 mechanisms, then the scene's own rules (<see cref="SceneDefinition.AfterMechanisms"/>, incl. #9 ride sync).</item>
+    /// respawn does too. When control comes back, <see cref="SceneDefinition.OnControlReturned"/> (DL-01's label check).</item>
+    /// <item>#4 motor (acts feed their stations here); its <see cref="MotorEventKind.RespawnDue"/> (the stuck and death
+    /// acts) schedules the reload, its shakes shake the camera.</item>
+    /// <item>#5–#7 mechanisms (with <see cref="PlayerPose.Of"/> the motor), then the scene's own rules
+    /// (<see cref="SceneDefinition.AfterMechanisms"/>); an <see cref="IEscort"/> that wants him starts the escorted act;
+    /// #9 ride sync (<see cref="D17Motor.SyncRide"/>, and each <see cref="ILiftRide"/> that carries him).</item>
     /// <item>checkpoints (they are set inside the prototype's player and act updates, i.e. before the camera), cues,
     /// moment triggers, the exit.</item>
     /// <item>#10 camera (the opening move, then the lane rig).</item>
@@ -39,7 +43,9 @@ namespace DeadLetter.Core.Scenes
         private readonly bool[] _cueHeard;
         private readonly MomentRule[] _momentRules;
         private readonly IEngageable[] _momentWhen;
-        private readonly bool[] _momentSeen;
+        private readonly int[] _momentSeen;
+        private readonly ILiftRide[] _lifts;
+        private readonly IEscort[] _escorts;
         private readonly IEngageable _exitOpen;
         private readonly List<string> _cues = new List<string>(8);
         private readonly IMusicClock _music;
@@ -47,7 +53,7 @@ namespace DeadLetter.Core.Scenes
         private int _cpIndex;
         private bool _inStep, _carry;
         private double _respawnAt = double.NaN;
-        private bool _opening;
+        private bool _opening, _skippedOpening;
         private double _openingStart;
 
         public SceneRunner(SceneDefinition definition, ISaveStore store, int slot = 0, IMusicClock music = null,
@@ -96,12 +102,23 @@ namespace DeadLetter.Core.Scenes
             var moments = definition.Moments;
             _momentRules = new MomentRule[moments.Count];
             _momentWhen = new IEngageable[moments.Count];
-            _momentSeen = new bool[moments.Count];
+            _momentSeen = new int[moments.Count];
             for (int i = 0; i < moments.Count; i++)
             {
                 _momentRules[i] = moments[i];
                 _momentWhen[i] = moments[i].WhenEngaged.IsNone ? null : Engageable(moments[i].WhenEngaged, "moment " + moments[i].Moment.Name);
+                _momentSeen[i] = Checkpoints.Seen.Resolve(moments[i].SeenKey);
             }
+
+            var lifts = new List<ILiftRide>();
+            var escorts = new List<IEscort>();
+            for (int i = 0; i < Graph.Count; i++)
+            {
+                if (Graph[i] is ILiftRide lift) lifts.Add(lift);
+                if (Graph[i] is IEscort escort) escorts.Add(escort);
+            }
+            _lifts = lifts.ToArray();
+            _escorts = escorts.ToArray();
 
             SceneExit exit = definition.Exit;
             _exitOpen = exit == null || exit.OpenWhen.IsNone ? null : Engageable(exit.OpenWhen, "exit");
@@ -152,6 +169,11 @@ namespace DeadLetter.Core.Scenes
         public double Aspect { get; set; }
         /// <summary>The act condition of the current moment before control may return (see <see cref="MomentDirector.GateInput"/>).</summary>
         public Func<bool> MomentActReady { get; set; }
+        /// <summary>
+        /// The parcel label's centre, prototype axes (for the label shot, L3735–L3741). Runtime sets it from the label's
+        /// transform (SceneHost); null = an estimate on his chest from the motor (<see cref="EstimatedLabel"/>).
+        /// </summary>
+        public Func<Vec3> LabelCentre { get; set; }
 
         // ---- Lifecycle -------------------------------------------------------------------------------------------------
         /// <summary>
@@ -160,8 +182,7 @@ namespace DeadLetter.Core.Scenes
         /// </summary>
         public void NewGame(bool playOpening = true)
         {
-            Array.Clear(_momentSeen, 0, _momentSeen.Length);
-            Checkpoints.NewGame();
+            Checkpoints.NewGame();                                   // clears the seen moments too (clearLetters, L4133)
             if (playOpening && Definition.Opening != null) BeginOpening();
         }
 
@@ -172,24 +193,41 @@ namespace DeadLetter.Core.Scenes
         public void Respawn() => Checkpoints.Reload();
 
         /// <summary>
-        /// Respawn after <paramref name="delay"/> s on the sim clock; control is withheld until then (L2998, L4519–L4521).
-        /// With <paramref name="stopHim"/> he stops where he stands (the stuck act's <c>game.vx = 0</c>, L4765). The motor has
-        /// no stuck/death act yet (U-11), so his clip goes to Idle rather than Flinch.
+        /// Respawn after <paramref name="delay"/> s on the sim clock; control is withheld until then (L2998, L7451). The
+        /// motor's stuck and death acts ask for this themselves (<see cref="MotorEventKind.RespawnDue"/>); call it directly
+        /// only for a reload with no act of his (a fall onto the heap's fade, say). A pending respawn is not moved.
         /// </summary>
-        public void RequestRespawn(double delay, bool stopHim = true)
+        public void RequestRespawn(double delay)
         {
             if (RespawnPending) return;
             _respawnAt = Clock + delay;
-            if (stopHim && Motor.Grounded && !Motor.IsMantling) Motor.Place(Motor.X, Motor.Y, Motor.Facing);
         }
 
-        /// <summary>The opening's skip button (L8071): control now.</summary>
+        /// <summary>
+        /// He is stuck (DL-01's trench, <c>trenchStuck</c>, L4764–L4766): the motor's stuck act (Flinch from 0.2 s), then
+        /// at 2.0 s the 1.3 s fade and the reload at the checkpoint (L4521, L2997–L2999). Idempotent while stuck.
+        /// </summary>
+        public void Stuck() => Motor.BeginStuck();
+
+        /// <summary><c>die(how)</c> (L7435–L7453): the death act (clip, shake, holds dropped), the cut after its hold, the reload 0.6 s later.</summary>
+        public void Die(DeathKind how, double hold = double.NaN) => Motor.Die(how, hold);
+
+        /// <summary>
+        /// The opening's skip button (L8070–L8071): control now. The opening's moment jumps to its control-return state
+        /// (<see cref="MomentDirector.Skip"/>): the wake plays on, and the next step reports
+        /// <see cref="ControlReturnedThisStep"/> with <see cref="SceneDefinition.OnControlReturned"/> as from the opening.
+        /// </summary>
         public void SkipOpening()
         {
             if (!_opening) return;
-            Moments.End();
+            Moments.Skip(Clock);
+            _skippedOpening = true;
             EndOpening();
         }
+
+        /// <summary>A once-only beat (a moment, <c>labelWake</c>) has played: kept in the save (<see cref="CheckpointService.Seen"/>).</summary>
+        public void MarkSeen(string key) => Checkpoints.MarkSeen(key);
+        public bool HasSeen(string key) => Checkpoints.HasSeen(key);
 
         /// <summary>Start a directed moment now (act-triggered moments call this from the scene's rules).</summary>
         public void StartMoment(DirectedMoment moment)
@@ -232,22 +270,36 @@ namespace DeadLetter.Core.Scenes
             Tick++;
             if (RespawnPending && Clock >= _respawnAt - 1e-9) { Respawn(); RespawnedThisStep = true; }
 
-            // #3 the gate: a pending respawn (the stuck act), then the opening or a moment
+            // #3 the gate: a pending respawn, then the opening or a moment
             MotorInput input = RespawnPending ? MotorInput.None : raw;
             input = Moments.GateInput(input, Clock, MomentActReady == null || MomentActReady());
             if (Moments.ControlReturned)
             {
                 ControlReturnedThisStep = true;
+                bool fromOpening = _opening || _skippedOpening;
+                _skippedOpening = false;
                 if (_opening) EndOpening();
+                Definition.OnControlReturned(this, fromOpening);
             }
             GatedInput = input;
 
-            // #4 motor, #5–#7 mechanisms, then the scene's rules (#6–#9)
+            // #4 motor (its shakes, and the stuck and death acts' respawn), #5–#7 mechanisms, then the scene's rules
             Motor.Step(input, StepSeconds);
-            Graph.Step(StepSeconds, Pose());
             for (int i = 0; i < Motor.Events.Count; i++)
-                if (Motor.Events[i].Kind == MotorEventKind.Shake) Shake(Motor.Events[i].Value);
+            {
+                MotorEvent e = Motor.Events[i];
+                if (e.Kind == MotorEventKind.Shake) Shake(e.Value);
+                else if (e.Kind == MotorEventKind.RespawnDue) RequestRespawn(e.Value);
+            }
+            Graph.Step(StepSeconds, Pose());
             Definition.AfterMechanisms(this);
+
+            // An escort that has caught him walks him (the trolley's game.act, L6399), then #9 ride sync (L2959–L2964).
+            for (int i = 0; i < _escorts.Length; i++)
+                if (_escorts[i].WantsEscort && !Motor.IsEscorted) Motor.BeginEscort(_escorts[i].Walk);
+            Motor.SyncRide();
+            for (int i = 0; i < _lifts.Length; i++)
+                if (_lifts[i].Carrying) Motor.SnapToFloor(_lifts[i].FloorY);
 
             if (!_opening)
             {
@@ -263,9 +315,28 @@ namespace DeadLetter.Core.Scenes
             _inStep = false;
         }
 
-        /// <summary>D-17 as mechanisms see him (built from the motor after #4; <c>Mech.Pose</c> in the tests).</summary>
-        public PlayerPose Pose()
-            => new PlayerPose(Motor.X, Motor.Y, Motor.Z, Motor.Crouched, Motor.IsActing, Motor.Vx, Motor.Grounded, Motor.Hold != HoldKind.None);
+        /// <summary>D-17 as mechanisms see him (built from the motor after #4: <see cref="PlayerPose.Of"/>).</summary>
+        public PlayerPose Pose() => PlayerPose.Of(Motor);
+
+        /// <summary>The label's centre (<see cref="LabelCentre"/>, else <see cref="EstimatedLabel"/>), prototype axes.</summary>
+        public Vec3 Label() => LabelCentre != null ? LabelCentre() : EstimatedLabel(Motor);
+
+        /// <summary>The parcel label on his chest, estimated from the motor: 0.06 ahead of his centre at 0.42 (prototype z = −Unity z).</summary>
+        public static Vec3 EstimatedLabel(D17Motor m) => new Vec3(m.X + m.Facing * 0.06, m.Y + 0.42, -m.Z);
+
+        /// <summary>
+        /// The label shot while he checks his label (<c>currentShot</c>, L3735–L3741): from f2 of CheckLabel, 0.27 in front
+        /// of the label, 0.15 up and 0.05 toward the camera, 50 mm, ease 1.1 for a held check (the wake's) or 3.0. Null otherwise.
+        /// </summary>
+        public ShotRequest? LabelShot()
+        {
+            D17Motor m = Motor;
+            if (m.ActVerb != Verb.Quirk || m.Clip != ClipNames.CheckLabel || !(m.ClipTime * Fps > 2)) return null;
+            Vec3 l = Label();
+            double fx = Math.Sin(m.Yaw), fz = Math.Cos(m.Yaw);
+            var pos = new Vec3(l.X + fx * 0.27, l.Y + 0.15, l.Z + fz * 0.27 + 0.05);
+            return new ShotRequest("label", pos, l, 50, double.IsNaN(m.QuirkHoldFor) ? 3.0 : 1.1);
+        }
 
         /// <summary>The camera rig's input from Core state (L7668, L7787–L7804).</summary>
         public CameraRigInput CameraInput()
@@ -273,8 +344,9 @@ namespace DeadLetter.Core.Scenes
             D17Motor m = Motor;
             CameraPush push = CameraPush.None;
             if (m.IsMantling) push = CameraPush.Mantle;
-            // Acts push in once past their approach, except grab and the latch pull (L7788's exclusions).
-            else if (m.IsActing && m.ActPhase != ActPhase.Approach && m.ActVerb != Verb.Grab && m.Clip != PullClip) push = CameraPush.Act;
+            // Acts push in once past their approach, except grab, the latch (its pull and flinch) and quirks (L7788's exclusions).
+            else if (m.IsActing && m.ActPhase != ActPhase.Approach && m.ActVerb != Verb.Grab && m.ActVerb != Verb.Quirk
+                && !(m.ActVerb == Verb.Use && (m.Clip == ClipNames.Pull || m.Clip == ClipNames.Flinch))) push = CameraPush.Act;
             return new CameraRigInput
             {
                 X = m.X, Y = m.Y, Vx = m.Vx, Facing = m.Facing,
@@ -285,8 +357,6 @@ namespace DeadLetter.Core.Scenes
                 Shot = Definition.Shot(this),
             };
         }
-
-        private const string PullClip = "Pull";
 
         private void StepCheckpoints()
         {
@@ -323,11 +393,11 @@ namespace DeadLetter.Core.Scenes
         {
             for (int i = 0; i < _momentRules.Length; i++)
             {
-                if (_momentSeen[i]) continue;
+                if (Checkpoints.Seen.Get(_momentSeen[i])) continue;
                 MomentRule m = _momentRules[i];
                 if (!double.IsNaN(m.AfterX) && !(Motor.X > m.AfterX)) continue;
                 if (_momentWhen[i] != null && !_momentWhen[i].Engaged) continue;
-                _momentSeen[i] = true;
+                Checkpoints.MarkSeen(m.SeenKey);                              // once per game, kept in the save (L945–L950)
                 StartMoment(m.Moment);
             }
         }
@@ -367,6 +437,7 @@ namespace DeadLetter.Core.Scenes
             Motor.Place(s.X, s.Y, s.Facing);
             Moments.End();
             _opening = false;
+            _skippedOpening = false;
             _respawnAt = double.NaN;
             Exited = false;
             _cpIndex = Checkpoints.IndexOf(cp.Name);
