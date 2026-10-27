@@ -114,6 +114,8 @@ namespace DeadLetter.Core.Tests
                 case "coat": return "dl12.coat:" + (phase == "approach" ? "Approach" : "Lift");
                 case "hang": return "dl12.peg:" + (phase == "approach" ? "Approach" : "SetDownHigh");
                 case "reachpeg": return "dl12.reachPeg:Present";
+                case "pawl": case "pawlIdle": return "dl13.brake:" + (phase == "approach" ? "Approach" : "Clip");
+                case "crank": return "dl14.crank:" + (phase == "approach" ? "Approach" : "Clip");
                 default: return "att." + p.Aw + ":" + phase;
             }
         }

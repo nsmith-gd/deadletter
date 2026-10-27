@@ -13,7 +13,7 @@ namespace DeadLetter.Core.Lane
     /// <para>The lane is split into regions, as the prototype's <c>game.region</c> selects its collision code
     /// (§0.3): each region is a static <see cref="LaneTable"/> plus the <see cref="ILaneContributor"/>s registered on it.
     /// Exactly one region is active (<see cref="Region"/>); the scene simulation switches it where the prototype changes
-    /// <c>game.region</c>. Probes ignore <c>refY</c>: the height field has one answer per x, as in the prototype.</para>
+    /// <c>game.region</c>. Probes ignore <c>refY</c> (the height field has one answer per x, as in the prototype), except an <see cref="ILaneHeightContributor"/>'s surface (chapter 1's boards in the air).</para>
     /// <para>Per probe: no allocation, no lookup (the active region is resolved when <see cref="Region"/> is set).</para>
     /// </summary>
     public sealed class LaneGeometry : IMotorWorld
@@ -83,7 +83,13 @@ namespace DeadLetter.Core.Lane
         }
 
         /// <summary><c>surfaceAt</c> (L1719–L1735, with <c>surfaceCh1</c> L4143–L4163 as contributors): the surface under one point.</summary>
-        public double SurfaceAt(double x)
+        public double SurfaceAt(double x) => SurfaceAt(x, double.NaN);
+
+        /// <summary>
+        /// <see cref="SurfaceAt(double)"/> for someone with feet at <paramref name="refY"/>: what an
+        /// <see cref="ILaneHeightContributor"/> answers depends on it (NaN: nothing height-dependent answers).
+        /// </summary>
+        public double SurfaceAt(double x, double refY)
         {
             var r = Active;
             var t = r.Table;
@@ -91,7 +97,7 @@ namespace DeadLetter.Core.Lane
             for (int i = 0; i < t.Platforms.Length; i++)
                 if (t.Platforms[i].Contains(x)) h = Math.Max(h, t.Platforms[i].Y);
             var c = r.Contributors;
-            for (int i = 0; i < c.Count; i++) h = c[i].Surface(x, h);
+            for (int i = 0; i < c.Count; i++) h = c[i] is ILaneHeightContributor hc ? hc.Surface(x, refY, h) : c[i].Surface(x, h);
             return h;
         }
 
@@ -138,7 +144,7 @@ namespace DeadLetter.Core.Lane
         }
 
         // ---- IMotorWorld ----------------------------------------------------------------------------------------------
-        double IMotorWorld.SurfaceAt(double x, double refY) => SurfaceAt(x);
+        double IMotorWorld.SurfaceAt(double x, double refY) => SurfaceAt(x, refY);
         double IMotorWorld.CeilingAt(double x, double refY) => CeilingAt(x);
 
         /// <summary><c>ledgeAhead</c>, L1738–L1748, sampled as <see cref="LaneProbe.ScanLedge"/> does.</summary>

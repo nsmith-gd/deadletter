@@ -23,6 +23,7 @@ namespace DeadLetter.Core.Tests
         public static IReadOnlyList<IChapterTraceProbe> Attendance() => new IChapterTraceProbe[]
         {
             new Dl12ChapterProbe(),
+            new Dl13ChapterProbe(),
         };
     }
 }
