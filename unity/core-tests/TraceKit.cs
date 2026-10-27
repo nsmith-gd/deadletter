@@ -41,6 +41,10 @@ namespace DeadLetter.Core.Tests
         // DL-03: the trolley's x, the weight's state, x (game.weight.x) and deck offset, game.load, the needle, the gate's y and fall speed.
         public double Tx, Wx, Wo, Ld, Nd, Gy, Gv;
         public string Ws;
+        // DL-04 (only while in DL-04, else carried forward; null before): the fallen courier's x and state, the cradle's
+        // arms (rotation.x), the bay door (0..1) and what the bay wants (him on the plate, or the courier seated).
+        public double? Kx4, Ka4, Bd4, Bw4;
+        public string Ks4;
 
         public TraceStep Clone() => (TraceStep)MemberwiseClone();
 
@@ -169,6 +173,11 @@ namespace DeadLetter.Core.Tests
                 case "nd": s.Nd = v.GetDouble(); break;
                 case "gy": s.Gy = v.GetDouble(); break;
                 case "gv": s.Gv = v.GetDouble(); break;
+                case "kx4": s.Kx4 = N(v); break;
+                case "ks4": s.Ks4 = S(v); break;
+                case "ka4": s.Ka4 = N(v); break;
+                case "bd4": s.Bd4 = N(v); break;
+                case "bw4": s.Bw4 = N(v); break;
                 default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
             }
         }

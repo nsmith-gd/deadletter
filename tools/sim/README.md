@@ -113,4 +113,9 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     `x` and deck offset), `ld` (`game.load`, the plate with him), `nd` (the gauge's needle), `gy`/`gv` (the gate's
     height and fall speed). Added after DL-01's: every DL-01 field is unchanged at every step (only step 0's line gains
     the new keys, at their reset values).
+  - DL-04 (`unity/core-tests/Dl04TraceTests.cs`), only while `r` is 2 and 30.6 ≤ x < `RATION5.x0` + 1 (so its exit
+    step too; `null` before, carried forward after): `kx4`/`ks4` (the fallen courier's x and state: free, drawn,
+    cradle, seated), `ka4` (the cradle's arms, `rotation.x`), `bd4` (`ch1.bayDoor`, 0..1), `bw4` (what the bay wants:
+    him on the plate or the courier seated, read back from the plate's 1 cm dip). Adding them left every line outside
+    DL-04 byte-identical and every earlier field of every step unchanged.
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).
