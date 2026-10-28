@@ -49,6 +49,11 @@ namespace DeadLetter.Core.Save
         public int Slot { get; }
         /// <summary>The scene the graph belongs to; a saved snapshot is only applied to the same scene.</summary>
         public string Scene { get; set; }
+        /// <summary>
+        /// The chapter the graph belongs to (<c>ChapterDef.Id</c>), saved as <see cref="SaveModel.ChapterId"/>; empty: the
+        /// chapter of the current checkpoint (<see cref="SaveMigrations.ChapterOf"/>).
+        /// </summary>
+        public string Chapter { get; set; } = "";
         public Checkpoint Current { get; private set; }
         public PersistFlags Flags => _graph.Flags;
         /// <summary>
@@ -316,6 +321,7 @@ namespace DeadLetter.Core.Save
             return new SaveModel
             {
                 Checkpoint = Current.Name,
+                ChapterId = string.IsNullOrEmpty(Chapter) ? SaveMigrations.ChapterOf(Current.Name) : Chapter,
                 Scene = Scene,
                 PlayTime = PlayTime,
                 Flags = Flags.SetNames(),

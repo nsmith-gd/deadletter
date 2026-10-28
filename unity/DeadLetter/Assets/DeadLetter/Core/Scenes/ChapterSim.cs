@@ -105,6 +105,7 @@ namespace DeadLetter.Core.Scenes
             Sync = new MotorSync(Graph);
             _store = store ?? new NoStore();
             Checkpoints = new CheckpointService(Graph, def.Checkpoints.Order, _store, 0, def.Id);
+            Checkpoints.Chapter = def.Id;
             _rules = new SceneRules[n];
             for (int i = 0; i < n; i++) _rules[i] = _scenes[i].Rules?.Invoke() ?? new SceneRules();
             Tick = new FixedTick(StepSeconds);
@@ -294,6 +295,29 @@ namespace DeadLetter.Core.Scenes
             KeepGame();
             Checkpoints.Restart(checkpoint);
             Start(cp, fromOpening);
+        }
+
+        /// <summary>
+        /// The arrival from the chapter before (<see cref="ChapterHandover.Carry"/>, #51): the world built at
+        /// <paramref name="checkpoint"/> (the seam's entry, one of this chapter's scenes'), as <see cref="Begin"/> does, but with
+        /// <paramref name="game"/> (the last chapter's flags, seen moments, play time and options) instead of the slot's, and
+        /// D-17 put in <paramref name="pose"/> (this chapter's lane coordinates) rather than at the checkpoint: he walks on
+        /// from where he was. Nothing is written (the handover saves the entry).
+        /// </summary>
+        public void Arrive(SaveModel game, string checkpoint, in MotorSnapshot pose)
+        {
+            if (game == null) throw new ArgumentNullException(nameof(game));
+            if (!CanContinueAt(checkpoint, out var cp))
+                throw new ArgumentException(Def.Id + " has no checkpoint '" + checkpoint + "' in its scenes.", nameof(checkpoint));
+            Checkpoints.Adopt(game);
+            _hasGame = true;
+            Checkpoints.Restart(checkpoint);
+            Steps = 0;
+            _pendingOpening = false;
+            Place(pose.X, pose.Y, pose.Facing, RegionOf(cp));
+            Motor.SetState(pose);
+            OnBegin(cp.Name, false);
+            Commit(placed: true);
         }
 
         /// <summary>

@@ -19,7 +19,7 @@ namespace DeadLetter.Core.Streaming
         public const string BootstrapPath = Root + "/" + BootstrapName + ".unity";
 
         /// <summary>The chapter IDs the runtime can build (<see cref="Create"/>).</summary>
-        public static readonly string[] Ids = { ChapterDefs.PrologueId };
+        public static readonly string[] Ids = ChapterDefs.Ids;
 
         /// <summary>The chapter's folder under <see cref="Root"/>: its ID with a capital ("prologue" → "Prologue").</summary>
         public static string Folder(string chapterId)
@@ -39,13 +39,6 @@ namespace DeadLetter.Core.Streaming
         public static string SceneName(string sceneId) => sceneId;
 
         /// <summary>A new definition of chapter <paramref name="chapterId"/> (each call builds fresh factories), or null.</summary>
-        public static ChapterDef Create(string chapterId)
-        {
-            switch (chapterId)
-            {
-                case ChapterDefs.PrologueId: return ChapterDefs.Prologue();
-                default: return null;
-            }
-        }
+        public static ChapterDef Create(string chapterId) => ChapterDefs.Create(chapterId);
     }
 }

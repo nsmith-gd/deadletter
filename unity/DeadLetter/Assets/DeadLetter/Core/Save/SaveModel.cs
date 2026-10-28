@@ -9,18 +9,23 @@ namespace DeadLetter.Core.Save
     /// settings. The world is rebuilt from the checkpoint and the flags (derived); the snapshot then puts every
     /// mechanism back exactly as it was when the checkpoint was reached (the plan's "Recovery": braked platforms,
     /// docked routes, inserted parts stay as left). A snapshot that no longer fits the scene is skipped.
-    /// <para>Keys (version 4): <c>cp</c>, <c>scene</c>, <c>playTime</c>, <c>flag/&lt;name&gt;</c> (true),
+    /// <para>Keys (version 5): <c>cp</c>, <c>chapter</c>, <c>scene</c>, <c>playTime</c>, <c>flag/&lt;name&gt;</c> (true),
     /// <c>seen/&lt;moment&gt;</c> (true), <c>mech/&lt;id&gt;/&lt;field&gt;</c> (the graph snapshot), <c>opt/&lt;name&gt;</c>
-    /// (<see cref="Settings"/>). Version 3 added the seen moments, version 4 the clock timers' elapsed time
-    /// (<see cref="SaveMigrations"/>).</para>
+    /// (<see cref="Settings"/>). Version 3 added the seen moments, version 4 the clock timers' elapsed time, version 5 the
+    /// chapter (<see cref="SaveMigrations"/>).</para>
     /// </summary>
     public sealed class SaveModel
     {
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;
 
         private const string FlagPrefix = "flag/", SeenPrefix = "seen/", MechPrefix = "mech/";
 
         public string Checkpoint = "start";
+        /// <summary>
+        /// The chapter the checkpoint is in ("attendance"; <c>ChapterDef.Id</c>): the one Continue builds (#51). Empty for a
+        /// checkpoint outside <see cref="DeadLetter.Core.Mechanisms.Checkpoint.GameOrder"/>.
+        /// </summary>
+        public string ChapterId = "";
         /// <summary>The scene the checkpoint is in (the title card's "Continue: …").</summary>
         public string Scene = "";
         public double PlayTime;
@@ -45,6 +50,7 @@ namespace DeadLetter.Core.Save
         {
             var d = new SaveDocument(CurrentVersion);
             d.SetString("cp", Checkpoint ?? throw new InvalidOperationException("A save needs a checkpoint."));
+            d.SetString("chapter", ChapterId ?? "");
             d.SetString("scene", Scene ?? "");
             d.SetDouble("playTime", PlayTime);
             if (OptionsOnly) d.SetBool("optionsOnly", true);
@@ -62,6 +68,7 @@ namespace DeadLetter.Core.Save
             var m = new SaveModel
             {
                 Checkpoint = d.GetString("cp", null) ?? throw new FormatException("The save has no checkpoint."),
+                ChapterId = d.GetString("chapter", ""),
                 Scene = d.GetString("scene", ""),
                 PlayTime = d.GetDouble("playTime", 0),
                 OptionsOnly = d.GetBool("optionsOnly", false),

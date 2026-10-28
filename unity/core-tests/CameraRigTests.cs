@@ -320,5 +320,38 @@ namespace DeadLetter.Core.Tests
                 Assert.Equal(a[n].Fog, b[n].Fog);
             }
         }
+
+        // ---- A chapter seam (#51) ---------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// At a seam the rig takes the next chapter's track and origin without a jump: the pose in the world is where it was,
+        /// and from then on the rig follows the new chapter's coordinates (here 3.24 lower, drawn 3.24 higher).
+        /// </summary>
+        [Fact]
+        public void UseTrack_KeepsThePoseInTheWorld_AndFollowsTheNewChaptersCoordinates()
+        {
+            var rig = new CameraRig(C, PrologueFraming.Build());
+            var at = new CameraRigInput { X = 8.0, Y = 3.24, Facing = 1, Aspect = Aspect };
+            rig.SnapToFrame(at);
+            for (int i = 0; i < 120; i++) rig.Step(at, Dt);
+            CameraPose before = rig.Pose;
+            Assert.Equal(new Vec3(0, 0, 0), rig.Origin);
+
+            var origin = new Vec3(0, 3.24, 0);
+            rig.UseTrack(PrologueFraming.Build(), origin);
+            Assert.Equal(origin, rig.Origin);
+            Assert.Equal(before.Position, rig.Pose.Position);
+            var there = new CameraRigInput { X = 8.0, Y = 0, Facing = 1, Aspect = Aspect };
+            CameraPose next = rig.Step(there, Dt);
+            Assert.True((next.Position - before.Position).Length < 0.05, "moved " + (next.Position - before.Position).Length);
+
+            var fresh = new CameraRig(C, PrologueFraming.Build());
+            fresh.UseTrack(fresh.Track, origin);                                        // a chapter booted at its origin (GameHost.Awake)
+            fresh.SnapToFrame(there);                                                   // then placed (AfterPlacement)
+            fresh.Step(there, 0);
+            for (int i = 0; i < 600; i++) { rig.Step(there, Dt); fresh.Step(there, Dt); }
+            Assert.True((rig.Pose.Position - fresh.Pose.Position).Length < 1e-4, "apart " + (rig.Pose.Position - fresh.Pose.Position).Length);
+            Assert.True(Math.Abs(fresh.Pose.Position.Y - fresh.Height - origin.Y) < 1e-9, "y " + fresh.Pose.Position.Y + " height " + fresh.Height);  // drawn at the origin
+        }
     }
 }

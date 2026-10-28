@@ -63,6 +63,20 @@ namespace DeadLetter.Editor.Builders
             StartAt(ChapterDefs.AttendanceId, AttendanceStart);
         }
 
+        /// <summary>Chapter 2's first checkpoint, where Play starts in the editor.</summary>
+        public const string SomeoneHomeStart = "ring_a";
+
+        /// <summary>
+        /// Chapter 2 Someone Home, as <see cref="BuildAttendance"/>. Its view scenes stay in the build list when chapter 1 is
+        /// built after it, so the bootstrap then plays chapter 1 on into chapter 2 across the seam (#51).
+        /// </summary>
+        [MenuItem("Dead Letter/Build/Scenes/Someone Home")]
+        public static void BuildSomeoneHome()
+        {
+            BuildChapter(ChapterDefs.SomeoneHomeId);
+            StartAt(ChapterDefs.SomeoneHomeId, SomeoneHomeStart);
+        }
+
         /// <summary>Sets the open bootstrap's <c>startAt</c>, if it is <paramref name="chapterId"/>'s (a cancelled build leaves another).</summary>
         private static void StartAt(string chapterId, string checkpoint)
         {
@@ -132,6 +146,8 @@ namespace DeadLetter.Editor.Builders
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var root = new GameObject(def.Id);
             root.AddComponent<SceneView>().Configure(chapterId, def.Id);
+            ChapterSeams.Origin(chapterId, out double originX, out double originY);           // the chapter's datum in the world (#51)
+            root.transform.position = new Vector3((float)originX, (float)originY, 0f);
 
             string line = def.Id + ": ";
             ArtIndexEntry entry = ArtFor(index, def.Id);
