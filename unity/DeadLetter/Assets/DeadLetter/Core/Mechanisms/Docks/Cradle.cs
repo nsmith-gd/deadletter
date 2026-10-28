@@ -123,8 +123,16 @@ namespace DeadLetter.Core.Mechanisms.Docks
         }
 
         /// <summary>The seated lamps <paramref name="t"/> s after seating: flicker for 2.2 s, then hold 0.55 (L4818–L4819).</summary>
-        public static double SeatedLamp(double t)
+        public static double SeatedLamp(double t) => SeatedLamp(t, false);
+
+        /// <summary>
+        /// The seated lamps with calm mode: the prototype flickers them at 4.9 Hz whatever <c>game.calm</c> says (L4819);
+        /// calm instead eases them up to the same 0.55 over the same 2.2 s (port_architecture §4.29: calm is honoured by
+        /// every flicker; docs/unity/accessibility.md).
+        /// </summary>
+        public static double SeatedLamp(double t, bool calm)
         {
+            if (calm) return t < 0 ? 0 : 0.55 * Smooth.Step(t / 2.2);
             if (t < 0) return 0;
             if (t < 2.2) return (Math.Sin(t * 31) > 0.2 ? 0.6 : 0.05) * (0.4 + 0.6 * Smooth.Step(t / 2.2));
             return 0.55;

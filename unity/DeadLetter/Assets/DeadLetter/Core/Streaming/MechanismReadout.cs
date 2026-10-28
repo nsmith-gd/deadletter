@@ -125,6 +125,7 @@ namespace DeadLetter.Core.Streaming
                         case PulseSequencer q when index >= 0 && index < q.LampCount: return () => q.Value(index);
                         case PeriodicCrusher p when index == 0: return () => p.Lamp(calm != null && calm());
                         case LoadPlate l when index >= 0: return () => l.SillLampLit(index) ? 1 : 0;
+                        case Cradle c when index == 0: return () => Cradle.SeatedLamp(c.SeatedFor, calm != null && calm());
                     }
                     return null;
                 default:

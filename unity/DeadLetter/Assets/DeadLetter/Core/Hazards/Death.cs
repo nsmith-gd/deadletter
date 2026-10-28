@@ -63,6 +63,17 @@ namespace DeadLetter.Core.Hazards
         }
 
         /// <summary>The eye's level <paramref name="t"/> seconds into a death: a stutter, then dark (<c>game.eyeLevel</c>, L7447).</summary>
-        public static double EyeLevel(double t) => t < EyeOut ? (Math.Sin(t * 70) > 0 ? 1 - t / EyeOut : 0.1) : 0;
+        public static double EyeLevel(double t) => EyeLevel(t, false);
+
+        /// <summary>
+        /// The eye with calm mode: the prototype stutters it at 11 Hz whatever <c>game.calm</c> says (L7447); calm fades
+        /// it out over the same <see cref="EyeOut"/> instead (port_architecture §4.29; docs/unity/accessibility.md).
+        /// </summary>
+        public static double EyeLevel(double t, bool calm)
+        {
+            if (t >= EyeOut) return 0;
+            if (calm) return 1 - t / EyeOut;
+            return Math.Sin(t * 70) > 0 ? 1 - t / EyeOut : 0.1;
+        }
     }
 }

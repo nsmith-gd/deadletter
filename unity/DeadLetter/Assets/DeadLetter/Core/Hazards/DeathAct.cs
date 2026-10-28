@@ -60,6 +60,8 @@ namespace DeadLetter.Core.Hazards
         public bool Cut { get; private set; }
         /// <summary>D-17's eye (<c>game.eyeLevel</c>): a stutter, then dark.</summary>
         public double EyeLevel => DeathProfile.EyeLevel(T);
+        /// <summary>The eye with calm mode: a plain fade, no stutter (<see cref="DeathProfile.EyeLevel(double, bool)"/>).</summary>
+        public double EyeLevelFor(bool calm) => DeathProfile.EyeLevel(T, calm);
 
         public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
