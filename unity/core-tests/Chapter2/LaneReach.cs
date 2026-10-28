@@ -18,19 +18,22 @@ namespace DeadLetter.Core.Tests
         private readonly double _x0;
         private readonly ChapterSim _s;
         private readonly MotorConfig _c;
-        private readonly Func<double, double, bool> _standable;
+        private readonly Func<double, double, double> _settle;
         private readonly int _n;
         private readonly double[] _y;
         private readonly List<int>[] _next;
 
         /// <param name="x0">The west end of the stretch searched; <paramref name="x1"/> its east end.</param>
-        /// <param name="standable">Whether he stays standing at (x, y) (a plate that hops him off does not); null: everywhere.</param>
-        public LaneReach(ChapterSim s, double x0, double x1, Func<double, double, bool> standable = null)
+        /// <param name="settle">
+        /// Where he comes to rest after arriving at (x, y): x itself, or where a scene act puts him (the propped bench slides
+        /// him back to the strap, an unpinned half landing hops him off); null: he stays wherever he arrives.
+        /// </param>
+        public LaneReach(ChapterSim s, double x0, double x1, Func<double, double, double> settle = null)
         {
             _s = s;
             _c = s.Config;
             _x0 = x0;
-            _standable = standable;
+            _settle = settle;
             _n = (int)Math.Round((x1 - x0) / Step) + 1;
             _y = new double[_n];
             _next = new List<int>[_n];
@@ -43,13 +46,13 @@ namespace DeadLetter.Core.Tests
                 foreach (int dir in new[] { -1, 1 })
                 {
                     int j = i + dir;
-                    if (j >= 0 && j < _n && CanWalk(i, j, dir) && Stays(j)) to.Add(j);
+                    if (j >= 0 && j < _n && CanWalk(i, j, dir)) Add(to, j);
                     if (lane.LedgeAhead(X(i), _y[i], dir, _c.MantleScanStanding, _c.StepUp, out var l)
                         && l.Top - _y[i] > _c.MantleMin && l.Top - _y[i] <= _c.MantleMax && l.Distance < _c.FaceDistance + _c.MantleReachExtra)
                     {
                         double end = X(i) + dir * (MotorConfig.MantleKeys[MotorConfig.MantleKeys.GetLength(0) - 1, 1] + Math.Max(0, l.Distance - _c.FaceDistance));
                         int k = Index(end);
-                        if (k >= 0 && k < _n && Stays(k)) to.Add(k);
+                        if (k >= 0 && k < _n) Add(to, k);
                     }
                 }
             }
@@ -58,7 +61,14 @@ namespace DeadLetter.Core.Tests
         public double X(int i) => _x0 + i * Step;
         public double Y(int i) => _y[i];
         private int Index(double x) => (int)Math.Round((x - _x0) / Step);
-        private bool Stays(int i) => _standable == null || _standable(X(i), _y[i]);
+        private bool Stays(int i) => _settle == null || Index(_settle(X(i), _y[i])) == i;
+
+        /// <summary>An edge to where he comes to rest from node j.</summary>
+        private void Add(List<int> to, int j)
+        {
+            int k = _settle == null ? j : Index(_settle(X(j), _y[j]));
+            if (k >= 0 && k < _n) to.Add(k);
+        }
 
         private bool CanWalk(int i, int j, int dir)
         {
@@ -74,7 +84,7 @@ namespace DeadLetter.Core.Tests
         {
             double y = _s.Lane.SupportAt(x);
             return _s.Lane.SurfaceAt(x - _c.Half + 1e-6) <= y + _c.StepUp && _s.Lane.SurfaceAt(x + _c.Half - 1e-6) <= y + _c.StepUp
-                && (_standable == null || _standable(x, y));
+                && (_settle == null || Math.Abs(_settle(x, y) - x) < 1e-9);
         }
 
         /// <summary>Every node reachable from x.</summary>

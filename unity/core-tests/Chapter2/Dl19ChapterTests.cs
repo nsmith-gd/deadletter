@@ -423,9 +423,9 @@ namespace DeadLetter.Core.Tests
 
         // ---- Every action of the solution has a stand point, with the jack in either detent -----------------------------
 
-        /// <summary>D-17 stays standing at (x, y): anywhere but an unpinned half landing (it hops him off).</summary>
-        private static Func<double, double, bool> Stays(ChapterSim s)
-            => (x, y) => Landing(s).Standable || double.IsNaN(Landing(s).TopAt(x)) || Math.Abs(y - Landing(s).TopAt(x)) > 0.06;
+        /// <summary>Where D-17 comes to rest from (x, y): there, but on an unpinned half landing the lurch hops him back off it.</summary>
+        private static Func<double, double, double> Stays(ChapterSim s)
+            => (x, y) => Landing(s).Standable || double.IsNaN(Landing(s).TopAt(x)) || Math.Abs(y - Landing(s).TopAt(x)) > 0.06 ? x : Dl19LurchAct.BackX;
 
         public static IEnumerable<object[]> JackStates() => new[]
         {

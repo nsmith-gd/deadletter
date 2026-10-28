@@ -57,7 +57,7 @@ namespace DeadLetter.Core.Lane.Tables
     /// A folding leaf in the lane (DL-18 §3 "The two leaves", §11): while it is down on its stop (<see cref="FoldingLeaf.Engaged"/>)
     /// the top of its first <c>standableBoxes</c> boxes is ground (<see cref="SweptVolumeProbe.Surface"/> in D-17's depth
     /// band); folding, unfolding, waiting or propped it is not, so he never lands on a propped leaf (§4: "it was never
-    /// level"). The fold bed's second box, the quilt heaped at its foot to 0.7, is what the bench meets (§11 <c>Quilt</c>),
+    /// level"); touching the propped bench plays DL-18's slide-off instead (<c>Dl18Rules</c>, <c>Dl18SlideAct</c>). The fold bed's second box, the quilt heaped at its foot to 0.7, is what the bench meets (§11 <c>Quilt</c>),
     /// not a step: it is soft, and as a step it would put the sill (1.2) within a 0.5 mantle of it.
     /// <para>No ceiling: <see cref="ILaneContributor.Ceiling"/> has no reference height (the lane ignores it), and
     /// <see cref="SweptVolumeProbe.Ceiling"/> needs one; a leaf that meets him stops and waits instead (it never crushes).</para>

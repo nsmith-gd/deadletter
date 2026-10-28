@@ -239,7 +239,7 @@ namespace DeadLetter.Core.Tests
         // ---- Wrong paths (§4, §10) -----------------------------------------------------------------------------------------
 
         [Fact]
-        public void WrongPath_BenchPulledWithTheBedDown_PropsOnTheQuilt_AndAHopAtItLandsHimBackOnTheBed()
+        public void WrongPath_BenchPulledWithTheBedDown_PropsOnTheQuilt_AndAJumpOntoItSlidesHimBackOntoTheBedWithin1s()
         {
             var s = Begin();
             s.Motor.Place(353.45, 0.45);                                                           // on the bed, at the strap
@@ -257,14 +257,43 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(0.45, s.Y, 9);                                                            // the hop put him back on the bed
             Assert.Equal(353.45 - 0.4, s.X, 9);
 
-            // He goes for it: a hop at the tilted bench lands him back on the mattress, never on the bench.
-            Until(s, Right, x => x.X >= 353.3);
-            s.Step(new MotorInput { JumpPressed = true });
-            Assert.False(s.Grounded);
-            int back = Until(s, default, x => x.Grounded);
-            Assert.InRange(back * Dt, 0, 1.0);
-            Assert.Equal(0.45, s.Y, 9);
             for (double x = 353.4; x <= 353.8; x += 0.05) Assert.Equal(0.45, s.Lane.SurfaceAt(x), 9);   // never ground while propped
+
+            // He goes for it (§4): a jump at the tilted bench from the bed. It rocks and he slides back onto the mattress.
+            var slid = SlideOff(s, new MotorInput { Move = 1, JumpPressed = true }, Right);
+            Assert.Equal(new[] { "dl18.bench.rock", "dl18.bench.slide" }, slid);
+
+            // So does a walk into it; a hop clear of it is only a hop.
+            Assert.Equal(new[] { "dl18.bench.rock", "dl18.bench.slide" }, SlideOff(s, Right, Right));
+            s.Step(new MotorInput { JumpPressed = true });
+            Until(s, default, x => x.Grounded);
+            Assert.True(s.SceneActKind.IsNone);
+            Assert.Equal((Dl18SlideAct.BackX, 0.45), (s.X, s.Y));
+        }
+
+        /// <summary>
+        /// From where the slide-off leaves him (or the strap's hop), <paramref name="first"/> then <paramref name="then"/> until
+        /// his body meets the propped bench: the slide-off plays, and within 1 s of the contact he is at rest on the bed. Returns its cues.
+        /// </summary>
+        private static List<string> SlideOff(ChapterSim s, MotorInput first, MotorInput then)
+        {
+            var cues = new List<string>();
+            s.Step(first);
+            Until(s, then, x => x.SceneActKind == Dl18SlideAct.SlideKind, 120);
+            int contact = 0;
+            Until(s, default, x =>
+            {
+                contact++;
+                foreach (var c in x.Cues) cues.Add(c.ToString());
+                if (x.SceneActPhase == Dl18SlideAct.Rock) Assert.True(x.Y > 0.7, "up on its raised edge: " + x.Y);
+                return !x.Busy;
+            }, 120);
+            Assert.InRange((contact + 1) * Dt, 0, 1.0);                                            // the act starts the step after the contact
+            Assert.Equal((Dl18SlideAct.BackX, 0.45), (s.X, s.Y));
+            Assert.True(s.Grounded);
+            Assert.Equal(FoldingLeafState.Propped, Bench(s).State);
+            Assert.True(s.Motor.PreviewUse(out var c2) && ReferenceEquals(c2.Target, Bench(s)));   // he is at the strap
+            return cues;
         }
 
         /// <summary>
@@ -354,7 +383,7 @@ namespace DeadLetter.Core.Tests
         public void NoTraps_FromEveryStandingPlace_EachLeafHasAReachableStation_AndOneUseReturnsIt(string config)
         {
             var s = Configure(config);
-            var reach = new LaneReach(s, 347.2, 357.0);
+            var reach = new LaneReach(s, 347.2, 357.0, (x, y) => Dl18Rules.MeetsPropped(Bench(s), x, y, false) ? Dl18SlideAct.BackX : x);   // the slide-off
             var bed = Bed(s);
             var bench = Bench(s);
             int starts = 0;
@@ -366,9 +395,10 @@ namespace DeadLetter.Core.Tests
                 var r = reach.From(x);
                 Assert.True(reach.Any(r, n => reach.X(n) < Dl18Lane.RoomDoorX), config + ": no way back to the gallery from " + x);
                 Assert.True(reach.Any(r, n => reach.Answers(n, bench)), config + ": the strap is out of reach from " + x);
-                // The foot rail too, except under the seat, where the folded bed is out of the way and the strap frees it.
+                // The foot rail too, except under the seat (the folded bed is out of the way) and behind the propped bench
+                // (it slides him back to the strap): there the strap frees it.
                 if (!reach.Any(r, n => reach.Answers(n, bed)))
-                    Assert.True(config == "solved", config + ": the foot rail is out of reach from " + x);
+                    Assert.True(config == "solved" || config == "benchPropped", config + ": the foot rail is out of reach from " + x);
                 if (config == "solved")
                     Assert.True(reach.Any(r, n => reach.X(n) >= Dl18Scene.TerraceX && reach.Y(n) == Dl18Lane.LandingY), "no way out from " + x);
             }

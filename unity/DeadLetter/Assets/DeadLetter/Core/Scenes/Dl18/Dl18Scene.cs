@@ -57,8 +57,12 @@ namespace DeadLetter.Core.Scenes.Dl18
     /// <item>the alarm clock (§6 curiosities, §11 <c>AlarmClock</c>): it rings 2 s; he startles, then stills it with a pat;</item>
     /// <item>the sketch (§6, §11 <c>Sketch</c>): a close look in the side view, 3 s, from the bench seat or the bed.</item>
     /// </list>
-    /// No slide-off rule: a propped leaf is never ground in the lane (<see cref="FoldingLeafLane"/>), so a mantle or a jump
-    /// onto it lands him on whatever is under it (the bed, §4).
+    /// The slide-off (§4, §10, §11 <c>FoldBench</c>: "not standable: any landing on it plays the slide-off"): a propped
+    /// leaf is never ground in the lane (<see cref="FoldingLeafLane"/>), so he never lands on it; instead, whenever his body
+    /// meets the propped bench's swept box while he moves freely (a jump or a mantle attempt at it from the bed, a fall,
+    /// walking into it), <see cref="Dl18SlideAct"/> puts him up on its raised edge, rocks (cue <c>dl18.bench.rock</c>) and
+    /// slides him back onto the bed with a soft bump (cue <c>dl18.bench.slide</c>), at rest at the strap within 1 s. No
+    /// <c>Teeter</c>: nothing has given way, it was never level.
     /// </summary>
     public sealed class Dl18Rules : SceneRules
     {
@@ -96,10 +100,27 @@ namespace DeadLetter.Core.Scenes.Dl18
 
         private static readonly BeatAct.Beat[] SketchBeats = { new BeatAct.Beat(Look, LookSeconds, SketchLook, 0) };
 
+        /// <summary>D-17's body as the leaves see it (<see cref="FoldingLeafParams"/>: half-width, heights, depth band).</summary>
+        private static readonly FoldingLeafParams Body = FoldingLeafParams.Dl18Bench();
+        /// <summary>Overlap beyond this is a contact.</summary>
+        public const double ContactMargin = 1e-4;
+
         private bool _ringA, _terrace;
+        private FoldingLeaf _bench;
+
+        /// <summary>His body meets the propped bench's swept box at (x, y).</summary>
+        public static bool MeetsPropped(FoldingLeaf bench, double x, double y, bool crouched)
+        {
+            if (bench.State != FoldingLeafState.Propped) return false;
+            var body = SweptBox.Aligned(x - Body.BodyHalf, x + Body.BodyHalf, Body.BodyD0, Body.BodyD1, y, y + (crouched ? Body.CrouchHeight : Body.StandHeight));
+            for (int i = 0, n = bench.VolumeCount; i < n; i++)
+                if (SweptBox.Overlap(bench.Volume(i), body, ContactMargin)) return true;
+            return false;
+        }
 
         public override void OnBegin(ChapterSim sim, string checkpoint, bool fromOpening)
         {
+            _bench = sim.Graph.Get<FoldingLeaf>(Dl18Scene.Bench);
             var cp = sim.Checkpoints.Current;
             _ringA = cp.Past("ring_a");
             _terrace = cp.Past("terrace");
@@ -123,11 +144,17 @@ namespace DeadLetter.Core.Scenes.Dl18
             sim.StartAct(new BeatAct(kind, beats));
         }
 
-        /// <summary>The checkpoints, by position after the step (§9).</summary>
+        /// <summary>The slide-off off the propped bench; the checkpoints, by position after the step (§9).</summary>
         public override void AfterGraph(ChapterSim sim)
         {
             if (sim.Region != Dl18Lane.Region) return;
             double x = sim.X;
+            if (!sim.Busy && MeetsPropped(_bench, x, sim.Y, sim.Motor.Crouched))
+            {
+                double back = Dl18SlideAct.BackX;
+                sim.StartAct(new Dl18SlideAct(x, sim.Y, sim.Yaw, _bench, back, sim.Lane.SupportAt(back)));
+                return;
+            }
             if (!_ringA && x >= Dl18Scene.RingAX)
             {
                 _ringA = true;
@@ -138,6 +165,62 @@ namespace DeadLetter.Core.Scenes.Dl18
                 _terrace = _ringA = true;
                 sim.Checkpoints.Reach("terrace");
             }
+        }
+    }
+
+    /// <summary>
+    /// The slide-off (§4: "He mantles onto it; it rocks on the quilt and he slides back off onto the mattress with a soft
+    /// bump"): up onto the propped bench's raised free edge (0.25 s), a rock there (0.3 s, cue <c>dl18.bench.rock</c>),
+    /// then a slide back onto the bed with a soft bump (0.35 s, cue <c>dl18.bench.slide</c> as he slides). It owns his
+    /// pose and hands him back at rest on the bed at <see cref="BackX"/>, where his body is clear of the bench and the
+    /// strap answers, 0.9 s after the contact (§10: "within 1 s").
+    /// </summary>
+    public sealed class Dl18SlideAct : SceneAct
+    {
+        public const double ClimbSeconds = 0.25, RockSeconds = 0.3, SlideSeconds = 0.35;
+        /// <summary>Where it leaves him: on the bed, his front 5 cm short of the bench (353.4) and within the strap's reach (353.15–353.75).</summary>
+        public const double BackX = 353.18;
+
+        public static readonly ActId SlideKind = ActId.Of(Dl18Scene.Bench), Climb = ActId.Of("Climb"), Rock = ActId.Of("Rock"), Slide = ActId.Of("Slide");
+        public static readonly CueId RockCue = CueId.Of("dl18.bench.rock"), SlideCue = CueId.Of("dl18.bench.slide");
+
+        private readonly double _x0, _y0, _ex, _ey, _bx, _by;
+        private bool _rocked, _slid;
+
+        public Dl18SlideAct(double x, double y, double yaw, FoldingLeaf bench, double backX, double backY) : base(SlideKind, Climb)
+        {
+            X = _x0 = x; Y = _y0 = y; Yaw = yaw;
+            bench.FreeEdge(out _, out double edge);
+            _ex = Math.Max(353.45, Math.Min(354.15, x));                                       // on the bench's length (353.4–354.2)
+            _ey = edge;
+            _bx = backX; _by = backY;
+        }
+
+        public override bool OwnsPose => true;
+
+        public override bool Step(ChapterSim sim, in MotorInput input, double dt)
+        {
+            T += dt;
+            if (T < ClimbSeconds)
+            {
+                double u = T / ClimbSeconds;
+                X = _x0 + (_ex - _x0) * u;
+                Y = _y0 + (_ey - _y0) * u;
+                return true;
+            }
+            if (T < ClimbSeconds + RockSeconds)
+            {
+                X = _ex; Y = _ey;
+                if (!_rocked) { _rocked = true; Phase = Rock; sim.Cue(RockCue); }
+                return true;
+            }
+            if (!_slid) { _slid = true; Phase = Slide; sim.Cue(SlideCue); }
+            double v = Math.Min(1, (T - ClimbSeconds - RockSeconds) / SlideSeconds);
+            X = _ex + (_bx - _ex) * v;
+            Y = _ey + (_by - _ey) * v;
+            if (v < 1 - 1e-9) return true;
+            sim.Motor.Place(_bx, _by, +1);
+            return false;
         }
     }
 }
