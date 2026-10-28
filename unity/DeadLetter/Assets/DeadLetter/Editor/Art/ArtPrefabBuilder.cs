@@ -30,6 +30,8 @@ namespace DeadLetter.Editor.Art
         /// <summary>Used for a region with no markers to measure from (the backdrop): the last measured turn.</summary>
         private static float _lastTurnY = 180f;
         private static bool _turnMeasured;
+        /// <summary>glTFs already force-reimported once this session because they had no GameObject (no reimport loop).</summary>
+        private static readonly HashSet<string> _reimported = new HashSet<string>();
 
         [MenuItem("Dead Letter/Art/Build Region Prefabs")]
         public static void BuildAll()
@@ -42,13 +44,26 @@ namespace DeadLetter.Editor.Art
             }
             var names = new List<string>();
             foreach (ArtIndexEntry e in index.regions) if (e.IsSet) names.Add(e.name);
-            Build(names);
+            if (names.Count == 0)
+            {
+                Debug.LogError("[Art] " + ArtIndex.IndexPath + " lists " + index.regions.Length + " entries but none with kind \"set\": no region prefab to build.");
+                return;
+            }
+            int built = Build(names);
+            if (built == 0)
+                EditorUtility.DisplayDialog("Dead Letter: region prefabs", "No region prefab was built. The Console says why for each region " +
+                                            "(usually: glTFast failed to import the .gltf; select it and read its Inspector).", "OK");
         }
 
-        public static void Build(IList<string> regionNames)
+        /// <summary>Builds the named regions' prefabs; returns how many were written. Always logs a summary.</summary>
+        public static int Build(IList<string> regionNames)
         {
             ArtIndex index = ArtIndex.Load();
-            if (index == null || index.regions == null) return;
+            if (index == null || index.regions == null)
+            {
+                Debug.LogError("[Art] " + ArtIndex.IndexPath + " not found or unreadable (cwd " + System.IO.Directory.GetCurrentDirectory() + "): no region prefab built.");
+                return 0;
+            }
 
             // Material definitions from every sidecar (one Blender material can appear in several regions).
             var defs = new Dictionary<string, ArtMaterialDef>();
@@ -69,12 +84,15 @@ namespace DeadLetter.Editor.Art
             entries.Sort((a, b) => Count(sidecars[b.name]).CompareTo(Count(sidecars[a.name])));
 
             var cache = new Dictionary<string, Material>();
+            var failed = new List<string>();
+            int built = 0;
             try
             {
                 for (int i = 0; i < entries.Count; i++)
                 {
                     EditorUtility.DisplayProgressBar("Dead Letter: region prefabs", entries[i].name, (float)i / entries.Count);
-                    BuildOne(entries[i], sidecars[entries[i].name], defs, cache);
+                    if (BuildOne(entries[i], sidecars[entries[i].name], defs, cache)) built++;
+                    else failed.Add(entries[i].name);
                 }
             }
             finally
@@ -82,17 +100,33 @@ namespace DeadLetter.Editor.Art
                 EditorUtility.ClearProgressBar();
             }
             AssetDatabase.SaveAssets();
+            string summary = "[Art] Region prefabs: " + built + " of " + regionNames.Count + " requested built" +
+                             (failed.Count > 0 ? "; FAILED: " + string.Join(", ", failed) : "") +
+                             (entries.Count < regionNames.Count ? "; " + (regionNames.Count - entries.Count) + " not in " + ArtIndex.IndexPath + " as a set with a sidecar" : "") + ".";
+            if (built == 0 || failed.Count > 0) Debug.LogError(summary);
+            else Debug.Log(summary);
+            return built;
         }
 
         private static int Count(ArtSidecar sc) => sc.markers == null ? 0 : sc.markers.Length;
 
-        private static void BuildOne(ArtIndexEntry e, ArtSidecar sc, Dictionary<string, ArtMaterialDef> defs, Dictionary<string, Material> cache)
+        private static bool BuildOne(ArtIndexEntry e, ArtSidecar sc, Dictionary<string, ArtMaterialDef> defs, Dictionary<string, Material> cache)
         {
             var source = AssetDatabase.LoadAssetAtPath<GameObject>(e.AssetPath);
+            if (source == null && System.IO.File.Exists(e.AssetPath) && _reimported.Add(e.AssetPath))
+            {
+                // glTFast aborts the whole import when one external texture is not loadable yet (GltfImport.WaitForTextureDownloads
+                // returns false on the first TextureDownloadFailed), which happens when the .gltf imports before or alongside
+                // Assets/Art/Textures/. It only declares DependsOnSourceAsset on them, so nothing re-imports it later. Once, now.
+                Debug.LogWarning("[Art] " + e.AssetPath + " has no imported GameObject (" + GltfImportReport(e.AssetPath) + "); re-importing it once.");
+                AssetDatabase.ImportAsset(e.AssetPath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+                source = AssetDatabase.LoadAssetAtPath<GameObject>(e.AssetPath);
+            }
             if (source == null)
             {
-                Debug.LogError("[Art] " + e.AssetPath + " has no imported GameObject (is glTFast installed and the import done?).");
-                return;
+                Debug.LogError("[Art] " + e.AssetPath + " has no imported GameObject: " + GltfImportReport(e.AssetPath) +
+                               ". Select it and read glTFast's report in the Inspector; Reimport it once Assets/Art/Textures/ has imported.");
+                return false;
             }
             var root = new GameObject(e.name);
             var gltf = (GameObject)Object.Instantiate(source);
@@ -113,11 +147,56 @@ namespace DeadLetter.Editor.Art
                 else
                     Debug.Log("[Art] " + e.PrefabPath + ": " + markers + " markers (" + colliders + " colliders), " + swapped +
                               " material slots → URP Lit" + (unmatched > 0 ? ", " + unmatched + " slots kept glTFast's material" : "") + ".");
+                return ok;
             }
             finally
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        /// <summary>
+        /// Re-imports, once per session, every region glTF that has no GameObject (glTFast gave up on it, usually because a
+        /// shared texture was not loadable yet). Their re-import rebuilds their prefabs (<see cref="ArtImportSettings"/>).
+        /// Returns how many were queued.
+        /// </summary>
+        public static int ReimportFailedRegions()
+        {
+            ArtIndex index = ArtIndex.Load();
+            if (index?.regions == null) return 0;
+            var paths = new List<string>();
+            foreach (ArtIndexEntry e in index.regions)
+                if (e.IsSet && System.IO.File.Exists(e.AssetPath) && AssetDatabase.LoadAssetAtPath<GameObject>(e.AssetPath) == null && _reimported.Add(e.AssetPath))
+                    paths.Add(e.AssetPath);
+            if (paths.Count == 0) return 0;
+            Debug.LogWarning("[Art] " + paths.Count + " region glTF(s) have no imported GameObject (" + GltfImportReport(paths[0]) +
+                             "); re-importing them now that the textures are in: " + string.Join(", ", paths));
+            AssetDatabase.StartAssetEditing();
+            try { foreach (string p in paths) AssetDatabase.ImportAsset(p, ImportAssetOptions.ForceUpdate); }
+            finally { AssetDatabase.StopAssetEditing(); }
+            return paths.Count;
+        }
+
+        /// <summary>glTFast's own import report for <paramref name="assetPath"/> (its importer's serialized <c>reportItems</c>): the errors, else "no report".</summary>
+        public static string GltfImportReport(string assetPath)
+        {
+            AssetImporter importer = AssetImporter.GetAtPath(assetPath);
+            if (importer == null) return "no importer (is the file in the project?)";
+            if (importer.GetType().FullName != "GLTFast.Editor.GltfImporter") return "imported by " + importer.GetType().FullName + ", not glTFast";
+            SerializedProperty items = new SerializedObject(importer).FindProperty("reportItems");
+            if (items == null || !items.isArray || items.arraySize == 0) return "glTFast reported nothing";
+            var errors = new List<string>();
+            for (int i = 0; i < items.arraySize; i++)
+            {
+                SerializedProperty it = items.GetArrayElementAtIndex(i);
+                SerializedProperty type = it.FindPropertyRelative("type");
+                if (type == null || (type.intValue != (int)LogType.Error && type.intValue != (int)LogType.Exception)) continue;
+                SerializedProperty msgs = it.FindPropertyRelative("messages");
+                string text = msgs != null && msgs.isArray && msgs.arraySize > 0 ? msgs.GetArrayElementAtIndex(0).stringValue : "";
+                SerializedProperty code = it.FindPropertyRelative("code");
+                errors.Add("glTFast error " + (code != null ? code.intValue.ToString() : "?") + (text.Length > 0 ? ": " + text : ""));
+            }
+            return errors.Count > 0 ? string.Join("; ", errors) : "glTFast reported no error";
         }
 
         // ---- Axes ------------------------------------------------------------------------------------------------------
@@ -235,7 +314,9 @@ namespace DeadLetter.Editor.Art
                     string name = mats[i].name;
                     if (!cache.TryGetValue(name, out Material urp))
                     {
-                        urp = defs.TryGetValue(name, out ArtMaterialDef d) ? ArtMaterials.GetOrCreate(d) : null;
+                        if (defs.TryGetValue(name, out ArtMaterialDef d)) urp = ArtMaterials.GetOrCreate(d);
+                        else if (PrototypeMaterials.Lookup(name, out _)) urp = ArtMaterials.GetOrCreate(new ArtMaterialDef { name = PrototypeMaterials.BaseName(name) });
+                        else urp = null;
                         cache[name] = urp;
                     }
                     if (urp == null) { unmatched++; continue; }

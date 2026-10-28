@@ -1,4 +1,5 @@
 using System.IO;
+using DeadLetter.Core.Art;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -73,6 +74,7 @@ namespace DeadLetter.Editor.Art
 
         public static void Apply(Material m, ArtMaterialDef d)
         {
+            d = WithPrototype(d);
             Color baseLinear = d.baseColor != null && d.baseColor.Length >= 4
                 ? new Color(d.baseColor[0], d.baseColor[1], d.baseColor[2], d.baseColor[3]) : Color.white;
             m.SetColor(BaseColor, baseLinear.gamma);
@@ -137,6 +139,53 @@ namespace DeadLetter.Editor.Art
                 m.SetShaderPassEnabled("DepthOnly", true);
                 m.renderQueue = clip ? (int)RenderQueue.AlphaTest : (int)RenderQueue.Geometry;
             }
+        }
+
+        /// <summary>
+        /// <paramref name="d"/> with the prototype's look for its name (<see cref="PrototypeMaterials"/>: <c>materialFor</c>,
+        /// index.html L526–L556, which takes WORN / PLAIN / GLASSY / EMIT over the glTF's own factors and maps). The Blender
+        /// export leaves those factors white, so without this the sets render white and D-17 grey. EMIT names with intensity 0
+        /// are lamps the game drives at runtime (no EmissiveDriver yet): they keep the export's values so they still read.
+        /// </summary>
+        public static ArtMaterialDef WithPrototype(ArtMaterialDef d)
+        {
+            if (d == null || !PrototypeMaterials.Lookup(d.name, out PrototypeMaterial p)) return d;
+            if (p.Surface == PrototypeSurface.Emissive && p.Amount <= 0) return d;
+            ArtMaterialDef o = d.Clone();
+            float r = (float)p.R, g = (float)p.G, b = (float)p.B;
+            switch (p.Surface)
+            {
+                case PrototypeSurface.Worn:
+                case PrototypeSurface.Plain:
+                    o.baseColor = new[] { r, g, b, 1f };
+                    o.baseColorTexture = null;
+                    o.metallic = (float)p.Metalness;
+                    o.roughness = (float)p.Roughness;
+                    if (PrototypeMaterials.BaseName(d.name) == "Water")   // L535: a little see-through, so something pale under it reads
+                    {
+                        o.baseColor = new[] { 0.03f, 0.05f, 0.052f, 0.66f };
+                        o.roughness = 0.24f;
+                        o.metallic = 0.04f;
+                        o.alphaMode = "BLEND";
+                    }
+                    break;
+                case PrototypeSurface.Glassy:
+                    o.baseColor = new[] { r, g, b, (float)p.Amount };
+                    o.baseColorTexture = null;
+                    o.metallic = (float)p.Metalness;
+                    o.roughness = (float)p.Roughness;
+                    o.alphaMode = "BLEND";
+                    break;
+                case PrototypeSurface.Emissive:
+                    o.baseColor = new[] { 0f, 0f, 0f, 1f };
+                    o.baseColorTexture = null;
+                    o.metallic = 0f;
+                    o.roughness = (float)p.Roughness;
+                    o.emissive = new[] { r, g, b };
+                    o.emissiveStrength = (float)p.Amount;
+                    break;
+            }
+            return o;
         }
 
         private static Texture2D LoadTexture(string file)
