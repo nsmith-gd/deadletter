@@ -20,9 +20,23 @@ namespace DeadLetter.Core.Presentation
             Presenter = presenter ?? new ChapterPresenter(sim);
             Sounds = new ChapterSounds(sim, seed);
             Ambience = new AmbienceWorld(sim, Presenter, null, seed + 18);
-            Lighting = new PrologueLighting(sim, Presenter, Sounds, budget);
+            Lighting = new PrologueLighting(sim, Presenter, Sounds, budget, LightsFor(sim.Def.Id, budget != null && budget.Touch));
             Mix = new MixState();
             if (sim.Graph.TryGet("dl06.line", out CarrierLine line)) Carriers = new CarrierViews(line);
+        }
+
+        /// <summary>
+        /// The chapter's light proxies: the prologue's (<see cref="PrologueLights"/>), or for chapter 1 the prologue's
+        /// always-on ones (hemisphere, rim, kick) and <see cref="AttendanceLights"/>.
+        /// </summary>
+        public static LightDef[] LightsFor(string chapterId, bool touch)
+        {
+            LightDef[] prologue = PrologueLights.Build(touch);
+            if (chapterId != ChapterDefs.AttendanceId) return prologue;
+            var all = new System.Collections.Generic.List<LightDef>();
+            foreach (LightDef d in prologue) if (d.Group == LightGroup.Always) all.Add(d);
+            all.AddRange(AttendanceLights.Build(touch));
+            return all.ToArray();
         }
 
         public ChapterSim Sim { get; }

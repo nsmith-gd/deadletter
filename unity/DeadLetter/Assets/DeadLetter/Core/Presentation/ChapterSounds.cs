@@ -38,6 +38,7 @@ namespace DeadLetter.Core.Presentation
     /// volume, lane x for the pan) and sets each layer to <see cref="Loop"/>. Random choices (squeaks, drips, crackles,
     /// distant clanks) are seeded (<see cref="AudioRng"/>), so a replay hears the same. A step allocates nothing.
     /// <para>Where the prototype's <c>setTimeout</c> delays a sound it is queued on the game clock (<see cref="SfxQueue.PlayAfter"/>).</para>
+    /// <para>Chapter 1 (region 6) adds its own mechanisms, acts and polls through <see cref="AttendanceSounds"/>, on the same queue and seed.</para>
     /// </summary>
     public sealed class ChapterSounds
     {
@@ -130,6 +131,8 @@ namespace DeadLetter.Core.Presentation
         private readonly Pushable _trolley, _courier, _drum, _body;
         private readonly Door _hatch;
         private readonly CarrierLine _line;
+        /// <summary>Chapter 1's sounds (null in the prologue).</summary>
+        private readonly AttendanceSounds _att;
         // Atmosphere (updateAtmosphere, L7895–L7966): per drop its timer, interval and fall clock (−1 = waiting).
         private readonly double[] _dripT = new double[4], _dripEvery = new double[4], _dripFall = new double[4];
         private double _nextSpark = FirstCrackle, _puffNext = 1.5, _puffUntil;
@@ -155,6 +158,7 @@ namespace DeadLetter.Core.Presentation
             _hatch = Mech<Door>("dl05.hatch");
             _line = Mech<CarrierLine>("dl06.line");
             _reveal = sim.Def.Scene(Dl03Scene.Id) != null || sim.Def.Scene(Dl04Scene.Id) != null ? sim.Shared<RacksReveal>() : null;
+            if (sim.Def.Id == ChapterDefs.AttendanceId) _att = new AttendanceSounds(sim, _q, _rng);
             for (int i = 0; i < DripX.Length; i++)
             {
                 _dripEvery[i] = DripEvery[i];
@@ -188,6 +192,7 @@ namespace DeadLetter.Core.Presentation
             _q.Release(now);
             ReadCues(sim.Cues);
             ReadLog(sim.Graph.Log, now);
+            _att?.Step(now, dt);
             ReadMotor(sim.Motor, now);
             ReadSceneAct();
             Poll(now, dt, calm);
@@ -202,6 +207,7 @@ namespace DeadLetter.Core.Presentation
             _lastActPhase = ActId.None;
             _lastActKind = ActId.None;
             _lastClock = double.NaN;
+            _att?.OnPlaced();
         }
 
         // ---- The scenes' cues ----------------------------------------------------------------------------------------------
@@ -210,7 +216,7 @@ namespace DeadLetter.Core.Presentation
             for (int i = 0; i < cues.Count; i++)
             {
                 CueRoute r = _routes.Resolve(cues[i].Id);
-                if (r.Kind == CueKind.Sound) _q.Play(r.Key);
+                if (r.Kind == CueKind.Sound && !(_att != null && AttendanceSounds.OwnsCue(r.Key))) _q.Play(r.Key);
             }
         }
 
@@ -536,6 +542,7 @@ namespace DeadLetter.Core.Presentation
                 _loops[(int)SfxLoop.Belt] = region == 3 && _line != null && _line.Running ? Math.Max(BeltFloor, 1 - Math.Abs(x - BeltX) / BeltOver) : 0;
             bool dragging = (_courier != null && _courier.Held) || (_body != null && _body.Held);
             _loops[(int)SfxLoop.Drag] = dragging ? Math.Min(1, Math.Abs(sim.Motor.Vx) / DragSpeed) : 0;   // L4703
+            if (_att != null) _loops[(int)SfxLoop.Drag] = Math.Max(_loops[(int)SfxLoop.Drag], _att.Drag);   // DL-17's drawer, L5696
         }
     }
 
