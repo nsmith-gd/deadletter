@@ -426,6 +426,7 @@ namespace DeadLetter.Core.Scenes
             }
 
             if (!Exited || _act != null) StepPlayer(input, dt);                             // #4 (past the chapter, only the act that carries him out)
+            Graph.Clock = Clock;                                                            // the prototype's game.clock timers
             Graph.Step(dt, Pose);                                                           // #5–#7
             for (int i = 0; i < _rules.Length; i++) if (InPlay(i)) _rules[i].AfterGraph(this);
             if (_act == null || !_act.OwnsPose) Sync.AfterMechanisms(Motor);                // escort start, #9 ride sync (L6399, L2959)

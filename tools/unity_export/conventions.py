@@ -147,12 +147,71 @@ MECHANISMS = [
     ('Facade', 'dl11.facade', 'C114Facade', []),
     ('Draggable', 'dl11.desk', 'ChildDesk', []),
     ('Terminal', 'dl11.terminal', 'ForwardTerminal', []),
+    # Chapter 1 (#18): <Type> is the Core class each ID is built as (Core/Scenes/DlNN, ChapterDefs.Attendance), and the
+    # objects are the ones buildAtt moves (L5139-L5148). Scene-local types (Dl12Peg ...) are Core classes too.
+    # DL-12 (L5381-L5408)
+    ('CarriedItem', 'dl12.coat', 'AttCoat', []),
+    ('Dl12Peg', 'dl12.peg', None, ['AttPegLamp']),
+    ('Pushable', 'dl12.figure', 'AttFigure', []),
+    ('PresenceStrip', 'dl12.strip', None, ['AttLampPresent', 'AttLampCoat']),
+    ('FollowerActuator', 'dl12.gate', 'AttGate', []),
+    # DL-13 (L5409-L5435)
+    ('Pushable', 'dl13.figure', 'AttFigure2', []),
+    ('CycleBrake', 'dl13.brake', 'AttPawl', []),
+    ('CycleClock', 'dl13.lesson', None, ['AttStep1', 'AttStep2', 'AttStep3', 'AttDialHand', 'AttLessonLamp', 'AttTreeTrunk',
+                                         'AttTreeBranch1', 'AttTreeBranch2', 'AttTreeBranch3', 'AttTreeLeaves']),
+    # DL-14 (L5437-L5476)
+    ('CarriedItem', 'dl14.pole', 'AttPole', []),
+    ('WindCrank', 'dl14.crank', 'AttCrank', []),
+    ('PairedBlindDrive', 'dl14.blinds', None, ['AttBlindA', 'AttBlindB', 'AttLedgeA', 'AttLedgeB', 'AttChain', 'AttWheelA',
+                                               'AttClutch', 'AttPanelPeel']),
+    # DL-14a (L6219-L6230, L6327-L6345)
+    ('CarriedItem', 'dl14a.gown', 'Att14aGown', []),
+    ('CarriedItem', 'dl14a.bag', 'Att14aBag', []),
+    ('CycleBrake', 'dl14a.brake', 'Att14aPawl', []),
+    ('WindCrank', 'dl14a.crank', 'Att14aCrank', []),
+    ('PairedBlindDrive', 'dl14a.blinds', None, ['Att14aBlindW1', 'Att14aHemW1', 'Att14aBlindW2', 'Att14aCord', 'Att14aCordHook']),
+    ('CycleClock', 'dl14a.nightLight', None, ['Att14aDialHand', 'Att14aSunLamp', 'Att14aEyeSun', 'Att14aEyeW1', 'Att14aEyeW2',
+                                              'Att14aEyeDark']),
+    ('Door', 'dl14a.door', 'Att14aDoor', []),
+    # DL-14b (L6352-L6434)
+    ('Dl14bFigure', 'dl14b.figure', 'Att14bFig', []),
+    ('EscortTrolley', 'dl14b.trolley', 'Att14bTrolley', ['Att14bCone']),
+    # DL-15 (L5709-L5736, L5806-L5835)
+    ('Dl15Figure', 'dl15.figA', 'Att15FigA', []),
+    ('Dl15Figure', 'dl15.figB', 'Att15FigB', []),
+    ('PupilLift', 'dl15.lift', 'Att15Lift', ['Att15LiftGate', 'Att15LiftCW', 'Att15LampPupil', 'Att15LampEscort']),
+    ('SeatRow', 'dl15.seats', None, ['Att15Lamp1', 'Att15Lamp2', 'Att15Lamp3']),
+    ('Door', 'dl15.classDoor', 'Att15Door', []),
+    # DL-16 (L5737-L5770, L5836-L5839)
+    ('Dl16Lever', 'dl16.lever', 'Att16Lever', []),
+    ('Dl16Bridge', 'dl16.bridge', 'Att16Bridge', []),
+    ('Latch', 'dl16.latch', 'Att16Latch', []),
+    ('CounterweightRack', 'dl16.rackCW', 'Att16CW', []),
+    # DL-16a (L6233-L6246)
+    ('Dumbwaiter', 'dl16a.car', 'Att16aCar', ['Att16aCW', 'Att16aLoad1', 'Att16aLoadOver']),
+    ('Dl16aTin', 'dl16a.tin1', 'Att16aTin1', []),
+    ('Dl16aTin', 'dl16a.tin2', 'Att16aTin2', []),
+    # DL-17 (L5785-L5794, L6247-L6259, L6302-L6315)
+    ('CarriedItem', 'dl17.tray', 'Att17Tray', []),
+    ('Dl17Drawer', 'dl17.drawer', 'Att17Drawer', []),
+    ('SluiceValve', 'dl17.valve', 'Att17Valve', []),
+    ('Sluice', 'dl17.sluiceA', 'Att17SluiceA', []),
+    ('Sluice', 'dl17.sluiceB', 'Att17SluiceB', []),
+    ('Sluice', 'dl17.sluiceC', 'Att17SluiceC', []),
+    ('SluiceRig', 'dl17.rig', None, ['Att17TankWater', 'Att17Water1', 'Att17Water2', 'Att17Water3', 'Att17Stream1',
+                                     'Att17Stream2', 'Att17Stream3', 'Att17PipeFlowA', 'Att17PipeFlowB', 'Att17PipeFlowC',
+                                     'Att17Float']),
+    ('FloatLatch', 'dl17.latch', 'Att17Latch', []),
+    ('Door', 'dl17.stairDoor', 'Att17Door', []),
 ]
 
 # The region a mechanism's scene belongs to: a mechanism's objects export with their scene, whatever their centre x.
 SCENE_REGION = {
     'dl01': 'DL-01', 'dl02': 'DL-02', 'dl03': 'DL-03', 'dl04': 'DL-04', 'dl05': 'DL-05', 'dl06': 'DL-06_07',
     'dl07': 'DL-06_07', 'dl08': 'DL-08', 'dl09': 'DL-09', 'dl10': 'DL-10', 'dl11': 'DL-11',
+    'dl12': 'DL-12', 'dl13': 'DL-13', 'dl14': 'DL-14', 'dl14a': 'DL-14a', 'dl14b': 'DL-14b', 'dl15': 'DL-15', 'dl16': 'DL-16',
+    'dl16a': 'DL-16a', 'dl17': 'DL-17',
 }
 
 

@@ -22,7 +22,7 @@
  "axes": "unity = (blender.x, blender.z, blender.y), port_architecture 0.2",
  "gltf": "DL-14.gltf",
  "counts": {
-  "nodes": 18,
+  "nodes": 19,
   "meshes": 16,
   "primitives": 38,
   "triangles": 20089,
@@ -30,6 +30,364 @@
   "textures": 4
  },
  "markers": [
+  {
+   "name": "MECH_PairedBlindDrive_dl14_blinds__AttChain",
+   "prefix": "MECH",
+   "source": "AttChain",
+   "position": [
+    239.4,
+    2.0,
+    0.68
+   ],
+   "center": [
+    238.675,
+    1.945,
+    0.68
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.blinds"
+    },
+    {
+     "key": "name",
+     "value": "AttChain"
+    },
+    {
+     "key": "part",
+     "value": "AttChain"
+    },
+    {
+     "key": "type",
+     "value": "PairedBlindDrive"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PairedBlindDrive_dl14_blinds__AttBlindA",
+   "prefix": "MECH",
+   "source": "AttBlindA",
+   "position": [
+    237.02,
+    3.15,
+    0.76
+   ],
+   "center": [
+    237.02,
+    2.149,
+    0.719
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.blinds"
+    },
+    {
+     "key": "name",
+     "value": "AttBlindA"
+    },
+    {
+     "key": "part",
+     "value": "AttBlindA"
+    },
+    {
+     "key": "type",
+     "value": "PairedBlindDrive"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PairedBlindDrive_dl14_blinds__AttBlindB",
+   "prefix": "MECH",
+   "source": "AttBlindB",
+   "position": [
+    238.375,
+    3.15,
+    0.76
+   ],
+   "center": [
+    238.375,
+    2.399,
+    0.719
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.blinds"
+    },
+    {
+     "key": "name",
+     "value": "AttBlindB"
+    },
+    {
+     "key": "part",
+     "value": "AttBlindB"
+    },
+    {
+     "key": "type",
+     "value": "PairedBlindDrive"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PairedBlindDrive_dl14_blinds__AttLedgeA",
+   "prefix": "MECH",
+   "source": "AttLedgeA",
+   "position": [
+    237.0,
+    1.1,
+    0.9
+   ],
+   "center": [
+    237.0,
+    0.982,
+    0.301
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.blinds"
+    },
+    {
+     "key": "name",
+     "value": "AttLedgeA"
+    },
+    {
+     "key": "part",
+     "value": "AttLedgeA"
+    },
+    {
+     "key": "type",
+     "value": "PairedBlindDrive"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PairedBlindDrive_dl14_blinds__AttLedgeB",
+   "prefix": "MECH",
+   "source": "AttLedgeB",
+   "position": [
+    238.4,
+    1.6,
+    0.9
+   ],
+   "center": [
+    238.4,
+    1.482,
+    0.301
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.blinds"
+    },
+    {
+     "key": "name",
+     "value": "AttLedgeB"
+    },
+    {
+     "key": "part",
+     "value": "AttLedgeB"
+    },
+    {
+     "key": "type",
+     "value": "PairedBlindDrive"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PairedBlindDrive_dl14_blinds__AttPanelPeel",
+   "prefix": "MECH",
+   "source": "AttPanelPeel",
+   "position": [
+    238.67,
+    0.905,
+    1.17
+   ],
+   "center": [
+    238.67,
+    0.905,
+    1.173
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.blinds"
+    },
+    {
+     "key": "name",
+     "value": "AttPanelPeel"
+    },
+    {
+     "key": "part",
+     "value": "AttPanelPeel"
+    },
+    {
+     "key": "type",
+     "value": "PairedBlindDrive"
+    }
+   ]
+  },
+  {
+   "name": "MECH_WindCrank_dl14_crank",
+   "prefix": "MECH",
+   "source": "AttCrank",
+   "position": [
+    242.4,
+    0.5,
+    0.32
+   ],
+   "center": [
+    242.4,
+    0.5,
+    0.4405
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.crank"
+    },
+    {
+     "key": "name",
+     "value": "AttCrank"
+    },
+    {
+     "key": "type",
+     "value": "WindCrank"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PairedBlindDrive_dl14_blinds__AttWheelA",
+   "prefix": "MECH",
+   "source": "AttWheelA",
+   "position": [
+    235.0,
+    0.32,
+    0.68
+   ],
+   "center": [
+    235.0,
+    0.32,
+    0.66
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.blinds"
+    },
+    {
+     "key": "name",
+     "value": "AttWheelA"
+    },
+    {
+     "key": "part",
+     "value": "AttWheelA"
+    },
+    {
+     "key": "type",
+     "value": "PairedBlindDrive"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PairedBlindDrive_dl14_blinds__AttClutch",
+   "prefix": "MECH",
+   "source": "AttClutch",
+   "position": [
+    235.0,
+    0.32,
+    0.722
+   ],
+   "center": [
+    235.0,
+    0.32,
+    0.716
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.blinds"
+    },
+    {
+     "key": "name",
+     "value": "AttClutch"
+    },
+    {
+     "key": "part",
+     "value": "AttClutch"
+    },
+    {
+     "key": "type",
+     "value": "PairedBlindDrive"
+    }
+   ]
+  },
+  {
+   "name": "MECH_CarriedItem_dl14_pole",
+   "prefix": "MECH",
+   "source": "AttPole",
+   "position": [
+    234.4,
+    1.025,
+    -0.3
+   ],
+   "center": [
+    234.4163,
+    1.048,
+    -0.3
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.pole"
+    },
+    {
+     "key": "name",
+     "value": "AttPole"
+    },
+    {
+     "key": "type",
+     "value": "CarriedItem"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PairedBlindDrive_dl14_blinds",
+   "prefix": "MECH",
+   "source": "",
+   "position": [
+    238.675,
+    1.945,
+    0.438
+   ],
+   "center": [
+    238.675,
+    1.945,
+    0.438
+   ],
+   "hasMesh": false,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14.blinds"
+    },
+    {
+     "key": "type",
+     "value": "PairedBlindDrive"
+    }
+   ]
+  },
   {
    "name": "CHK_window",
    "prefix": "CHK",
@@ -93,141 +451,6 @@
  ],
  "materials": [
   {
-   "name": "WinAtlas",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 0.8500000238418579,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "dl14_atlas.png",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "WinChain",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 0.4000000059604645,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "dl14_chain.png",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "WornIron",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0.6000000238418579,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "WinDrive",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 0.6000000238418579,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "dl14_drive.png",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "HandledBrass",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0.8500000238418579,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
    "name": "WinPlaster",
    "baseColor": [
     1,
@@ -275,6 +498,33 @@
    "alphaCutoff": 0.5,
    "doubleSided": true,
    "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WinAtlas",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.8500000238418579,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "dl14_atlas.png",
    "emissiveTexture": "",
    "normalTexture": "",
    "normalScale": 1.0,
@@ -417,6 +667,33 @@
    "occlusionTexture": ""
   },
   {
+   "name": "HandledBrass",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.8500000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
    "name": "AttCupboardLamp",
    "baseColor": [
     1,
@@ -471,7 +748,7 @@
    "occlusionTexture": ""
   },
   {
-   "name": "WinPanel",
+   "name": "WinDrive",
    "baseColor": [
     1,
     1,
@@ -479,7 +756,7 @@
     1
    ],
    "metallic": 0,
-   "roughness": 0.44999998807907104,
+   "roughness": 0.6000000238418579,
    "emissive": [
     0,
     0,
@@ -490,7 +767,7 @@
    "alphaMode": "OPAQUE",
    "alphaCutoff": 0.5,
    "doubleSided": true,
-   "baseColorTexture": "dl14_panels.png",
+   "baseColorTexture": "dl14_drive.png",
    "emissiveTexture": "",
    "normalTexture": "",
    "normalScale": 1.0,
@@ -507,6 +784,33 @@
    ],
    "metallic": 1.0,
    "roughness": 0.3499999940395355,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WornIron",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
    "emissive": [
     0,
     0,
@@ -604,6 +908,60 @@
    "normalScale": 1.0,
    "metallicRoughnessTexture": "",
    "occlusionTexture": ""
+  },
+  {
+   "name": "WinPanel",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.44999998807907104,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "dl14_panels.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WinChain",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.4000000059604645,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "dl14_chain.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
   }
  ],
  "textures": [
@@ -611,12 +969,6 @@
    "file": "dl14_atlas.png",
    "width": 1024,
    "height": 1024,
-   "use": "color"
-  },
-  {
-   "file": "dl14_chain.png",
-   "width": 64,
-   "height": 256,
    "use": "color"
   },
   {
@@ -629,6 +981,12 @@
    "file": "dl14_panels.png",
    "width": 1024,
    "height": 1024,
+   "use": "color"
+  },
+  {
+   "file": "dl14_chain.png",
+   "width": 64,
+   "height": 256,
    "use": "color"
   }
  ],

@@ -36,6 +36,9 @@ namespace DeadLetter.Core.Carry
     {
         /// <summary>Where it rests at the start: lane x and the height it stands on.</summary>
         public double HomeX, HomeBaseY;
+        /// <summary>How it rests at the start: on the floor, or already in a receiver's slot (DL-12's coat on the lost-property bin, L5229).</summary>
+        public ItemState HomeState = ItemState.Floor;
+        public int HomeSlot = -1;
         /// <summary>Half-width for the set-down flatness test (<c>it.r</c>, L4342).</summary>
         public double Radius;
         /// <summary>It is standable on the floor where |x − X| ≤ <see cref="Half"/>, to BaseY + <see cref="Height"/> (<c>surfaceCh1</c>, L4143–L4163).</summary>
@@ -156,10 +159,11 @@ namespace DeadLetter.Core.Carry
         public override void Reset(in Checkpoint cp)
         {
             bool moved = cp.Past(_p.MovedAfter);
-            Init((int)(moved ? _p.MovedState : ItemState.Floor));
+            var state = moved ? _p.MovedState : _p.HomeState;
+            Init((int)state);
             X = moved ? _p.MovedX : _p.HomeX;
             BaseY = moved ? _p.MovedBaseY : _p.HomeBaseY;
-            Slot = moved && _p.MovedState == ItemState.Placed ? _p.MovedSlot : -1;
+            Slot = state == ItemState.Placed ? (moved ? _p.MovedSlot : _p.HomeSlot) : -1;
             SinceSetDown = DropSeconds;
             _lift = _down = _move = false;
         }

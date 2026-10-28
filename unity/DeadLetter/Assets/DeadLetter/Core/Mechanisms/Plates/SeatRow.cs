@@ -47,6 +47,7 @@ namespace DeadLetter.Core.Mechanisms.Plates
         private IEngageable _sitter;
         private readonly bool[] _lit;
         private double _allFor = -1;
+        private ClockMark _allSince = ClockMark.None;
 
         public SeatRow(MechanismId id, SeatRowParams p) : base(id)
         {
@@ -72,7 +73,7 @@ namespace DeadLetter.Core.Mechanisms.Plates
             bool dismissed = cp.Past(_p.DismissedAfter);
             for (int i = 0; i < _lit.Length; i++) _lit[i] = false;
             if (!dismissed) for (int i = 0; i < _p.Seats.Length; i++) _lit[i] = Docked(_p.Seats[i]);
-            _allFor = -1;
+            _allFor = -1; _allSince.Clear();
             Init((int)(dismissed ? SeatRowState.Dismissed : SeatRowState.Waiting));
         }
 
@@ -88,7 +89,12 @@ namespace DeadLetter.Core.Mechanisms.Plates
             }
             if (dismissed) return;
             _allFor = all ? (_allFor < 0 ? 0 : _allFor + ctx.Dt) : -1;                                    // L5728
-            if (_allFor > _p.HoldFor)                                                                       // L5729
+            // allSince is a clock time (L5728): with the game clock, time the hold on it as the prototype does (a sum of dt
+            // from 0 rounds below 1.6 on the step clock − allSince first passes it at a clock of ~240 s, DL-15).
+            if (!all) _allSince.Clear();
+            else if (_allFor == 0) _allSince.Mark(ctx);
+            double since = all ? _allSince.Since(ctx) : double.NaN, held = double.IsNaN(since) ? _allFor : since;
+            if (_allFor >= 0 && held > _p.HoldFor)                                                          // L5729
             {
                 Enter(ctx, (int)SeatRowState.Dismissed);
                 Emit(ctx, (int)SeatRowEvent.Bell, 0, _p.SecondBell);
@@ -111,12 +117,14 @@ namespace DeadLetter.Core.Mechanisms.Plates
         {
             for (int i = 0; i < _lit.Length; i++) w.WriteBool(LitKeys[i], _lit[i]);
             w.WriteDouble("allFor", _allFor);
+            _allSince.Write(w, "allElapsed");
         }
 
         protected override void ReadFields(ISnapshotReader r)
         {
             for (int i = 0; i < _lit.Length; i++) _lit[i] = r.ReadBool(LitKeys[i]);
             _allFor = r.ReadDouble("allFor");
+            _allSince.Read(r, "allElapsed");
         }
 
         private static readonly string[] LitKeys = { "lit0", "lit1", "lit2", "lit3", "lit4", "lit5", "lit6", "lit7" };

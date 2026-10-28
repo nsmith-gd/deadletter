@@ -127,7 +127,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(12.5, m.PlayTime);
             Assert.Equal(0.25, m.Mechanisms.ReadDouble("dl04.cradle/t"));
             byte[] again = SaveCodec.Encode(m);
-            Assert.Equal(3, again[4]);
+            Assert.Equal(SaveModel.CurrentVersion, again[4]);
             Assert.True(SaveCodec.TryLoad(again, out var m3, out _));
             Assert.Equal(m.Seen, m3.Seen);
             Assert.Equal(again, SaveCodec.Encode(m3));
