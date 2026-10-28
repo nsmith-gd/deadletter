@@ -92,7 +92,8 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         private IEngageable _trigger;
         private IPersistFlagReader _flags;
         private int _flag = -1;
-        private double _held = -1, _heldSince = double.NaN, _t;
+        private double _held = -1, _t;
+        private ClockMark _heldSince = ClockMark.None;
         private bool _cued;
 
         public Door(MechanismId id, DoorParams p) : base(id) { _p = p; }
@@ -119,7 +120,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         /// <summary>Derived from its source, which is already reset: open if the trigger is engaged (no replay of the swing).</summary>
         public override void Reset(in Checkpoint cp)
         {
-            _held = -1; _heldSince = double.NaN;
+            _held = -1; _heldSince.Clear();
             if (_follow != null) { Position = _follow.Position * _p.Travel; Init((int)FollowState(_follow.Position)); return; }
             bool open = _trigger.Engaged && Allowed;
             Init((int)(open ? DoorState.Open : DoorState.Closed));
@@ -134,11 +135,11 @@ namespace DeadLetter.Core.Mechanisms.Actuators
 
             if (State == DoorState.Closed)
             {
-                if (!_trigger.Engaged) { _held = -1; _heldSince = double.NaN; return; }
-                if (_held < 0) { _held = 0; _heldSince = ctx.Clock; } else _held += ctx.Dt;
+                if (!_trigger.Engaged) { _held = -1; _heldSince.Clear(); return; }
+                if (_held < 0) { _held = 0; _heldSince.Mark(ctx); } else _held += ctx.Dt;
                 // The delay is a clock difference in the prototype (game.clock − darkSince, L6225; − latchAt, L5789): with
                 // the game clock, time it so (a sum of dt rounds differently at a clock of 200-300 s).
-                double held = double.IsNaN(ctx.Clock) || double.IsNaN(_heldSince) ? _held : ctx.Clock - _heldSince;
+                double since = _heldSince.Since(ctx), held = double.IsNaN(since) ? _held : since;
                 if (!(_p.Delay <= 0 || held > _p.Delay)) return;
                 if (!Allowed) return;
                 Enter(ctx, (int)DoorState.Opening);
@@ -186,7 +187,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         {
             w.WriteDouble("pos", Position);
             w.WriteDouble("held", _held);
-            w.WriteDouble("heldSince", _heldSince);
+            _heldSince.Write(w, "heldElapsed");
             w.WriteDouble("t", _t);
             w.WriteBool("cued", _cued);
         }
@@ -195,7 +196,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
         {
             Position = r.ReadDouble("pos");
             _held = r.ReadDouble("held");
-            _heldSince = r.ReadDouble("heldSince");
+            _heldSince.Read(r, "heldElapsed");
             _t = r.ReadDouble("t");
             _cued = r.ReadBool("cued");
         }

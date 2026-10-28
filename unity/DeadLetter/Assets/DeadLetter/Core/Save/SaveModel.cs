@@ -9,13 +9,14 @@ namespace DeadLetter.Core.Save
     /// settings. The world is rebuilt from the checkpoint and the flags (derived); the snapshot then puts every
     /// mechanism back exactly as it was when the checkpoint was reached (the plan's "Recovery": braked platforms,
     /// docked routes, inserted parts stay as left). A snapshot that no longer fits the scene is skipped.
-    /// <para>Keys (version 3): <c>cp</c>, <c>scene</c>, <c>playTime</c>, <c>flag/&lt;name&gt;</c> (true),
+    /// <para>Keys (version 4): <c>cp</c>, <c>scene</c>, <c>playTime</c>, <c>flag/&lt;name&gt;</c> (true),
     /// <c>seen/&lt;moment&gt;</c> (true), <c>mech/&lt;id&gt;/&lt;field&gt;</c> (the graph snapshot), <c>opt/&lt;name&gt;</c>
-    /// (<see cref="Settings"/>). Version 3 added the seen moments (<see cref="SaveMigrations"/>).</para>
+    /// (<see cref="Settings"/>). Version 3 added the seen moments, version 4 the clock timers' elapsed time
+    /// (<see cref="SaveMigrations"/>).</para>
     /// </summary>
     public sealed class SaveModel
     {
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
 
         private const string FlagPrefix = "flag/", SeenPrefix = "seen/", MechPrefix = "mech/";
 

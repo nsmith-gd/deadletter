@@ -170,7 +170,8 @@ namespace DeadLetter.Core.Scenes.Dl16
         private Dl15Figure _a, _b;
         private readonly Dl15Figure[] _order = new Dl15Figure[2];
         private bool _begun;
-        private double _since, _at = double.NaN;
+        private double _since;
+        private ClockMark _at = ClockMark.None;
 
         public Dl16Procession(MechanismId id) : base(id) { }
 
@@ -190,15 +191,15 @@ namespace DeadLetter.Core.Scenes.Dl16
         public override void Reset(in Checkpoint cp)
         {
             _begun = cp.Past("dismissed");
-            _since = double.PositiveInfinity; _at = double.NaN;                                                  // dismissedAt undefined
+            _since = double.PositiveInfinity; _at.Clear();                                                       // dismissedAt undefined
             Init(0);
         }
 
         public override void Step(in StepContext ctx)
         {
             double dt = ctx.Dt;
-            if (!_begun && _dismissed.Engaged) { _begun = true; _since = 0; _at = ctx.Clock; _a.BeginProcession(); _b.BeginProcession(); }   // L5731
-            else if (_begun) _since = double.IsNaN(_at) ? _since + dt : ctx.Clock - _at;                          // game.clock − dismissedAt
+            if (!_begun && _dismissed.Engaged) { _begun = true; _since = 0; _at.Mark(ctx); _a.BeginProcession(); _b.BeginProcession(); }   // L5731
+            else if (_begun) { double s = _at.Since(ctx); _since = double.IsNaN(s) ? _since + dt : s; }                         // game.clock − dismissedAt
             // The figures in procession, front first (sort by x descending; a tie keeps A before B, L5743).
             int n = 0;
             if (Rolling(_a)) _order[n++] = _a;
@@ -218,8 +219,8 @@ namespace DeadLetter.Core.Scenes.Dl16
             Enter(ctx, Engaged ? 1 : 0);
         }
 
-        protected override void WriteFields(ISnapshotWriter w) { w.WriteBool("begun", _begun); w.WriteDouble("since", _since); w.WriteDouble("at", _at); }
-        protected override void ReadFields(ISnapshotReader r) { _begun = r.ReadBool("begun"); _since = r.ReadDouble("since"); _at = r.ReadDouble("at"); }
+        protected override void WriteFields(ISnapshotWriter w) { w.WriteBool("begun", _begun); w.WriteDouble("since", _since); _at.Write(w, "atElapsed"); }
+        protected override void ReadFields(ISnapshotReader r) { _begun = r.ReadBool("begun"); _since = r.ReadDouble("since"); _at.Read(r, "atElapsed"); }
     }
 
     /// <summary>
