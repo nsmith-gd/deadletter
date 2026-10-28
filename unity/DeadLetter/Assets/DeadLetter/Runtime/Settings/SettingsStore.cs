@@ -198,6 +198,9 @@ namespace DeadLetter.Runtime.Settings
         private void ApplyAudio(Options s)
         {
             if (mixer == null) return;
+            // U-23: while the mix director drives this mixer it writes the levels (options + the moment duck) every frame.
+            Audio.AudioMixDirector director = Audio.AudioMixDirector.Current;
+            if (director != null && director.Driving && director.Mixer == mixer) { director.Refresh(); return; }
             for (int i = 0; i < AudioLevels.All.Length; i++)
             {
                 AudioGroup g = AudioLevels.All[i];
@@ -213,7 +216,7 @@ namespace DeadLetter.Runtime.Settings
             VolumeProfile profile = postVolume.profile;   // instance copy; the asset on disk is untouched
             if (profile == null) return;
             if (profile.TryGet(out ColorAdjustments colour))
-                colour.postExposure.Override((float)(Math.Log(s.Brightness) / Math.Log(2.0)));
+                colour.postExposure.Override((float)(Math.Log(DeadLetter.Core.Camera.PostLook.ExposureFor(s.Brightness)) / Math.Log(2.0)));   // the page's 1.4 x brightness
             if (profile.TryGet(out Bloom bloom))
             {
                 if (_authoredBloom < 0f) _authoredBloom = bloom.intensity.value;

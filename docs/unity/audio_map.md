@@ -31,6 +31,27 @@ mapped to its clip (an `SfxBank` key or a music key) and to the call that plays 
 | Moments | `MomentDirector`/`CueClock` (U-13) + `MusicDirectorModel.Moment` | `DirectedMomentPlayer.Trigger(name)` → `MusicDirector.StartMoment` |
 | Voices and tannoys | `VoiceRules` (one at a time, chime lead, subtitles, end, positional fade, duck), `TannoyRules`, `VoiceCardAct`, `VoiceCatalog` | `VoicePlayer` (tannoys run on their own from `AudioWorld`; cards: `PlayCard(id)`; others: `Play(id, options)`) → **Voice** |
 
+### U-23: what plays the prologue's sounds now (#34)
+
+The scene ports' "one call at the line cited" is done in Core, not in scene code. `Core/Presentation` reads each Core
+step and decides; GameHost hands the result to the thin adapters.
+
+| What | Core (decides) | Runtime (plays) |
+|---|---|---|
+| One-shots of DL-01 to DL-06 | `ChapterSounds`: the mechanisms' log (`Mechanism.Emit`/`Enter`), the motor's events (footsteps, jumps, landings, clip changes, act frames, deaths), the scenes' `sound:` cues, the per-frame polls (racks' rows, squeaks, the hatch winding, the relay pulse, drips, the live cable, distant machinery); `setTimeout` delays on the game clock (`SfxQueue`) | `GameHost.PlaySounds` → `SfxPlayer.PlayPanned`, panned by the source's on-screen x (±0.4) |
+| Continuous layers | `ChapterSounds.Loop` (hum, buzz, hiss, roll, tubes, belt, drag) | `SfxPlayer.SetLoop`, every frame |
+| Emitters and conditions | `AmbienceWorld` (every `PrologueEmitters` row; `released`, `revealed` from the sim; the bed's context) | `AudioWorld.Present` on pooled sources (hand-placed `AmbientEmitter`s go quiet while it runs) |
+| Mix | `MixState` (`MixRules`: a snapshot per place; under a moment's shot SFX −6 dB, Ambience −9 dB) | `AudioMixDirector` (snapshot blend; group level = options + offset) |
+
+The rows each trigger covers, and the rows not ported yet (the opening, the cord lamp, letters, curios, voice cards,
+DL-03's nudge), are listed in `unity/core-tests/ChapterSoundsTests.cs` (`Rows`, `NotPorted`).
+
+On first open (after step 3 below): on `DL_Persistent`, add an `AudioMixDirector` (mixer = `DeadLetter`; snapshots named
+`Depot`, `Halls`, `RationHall`, `SortingFloor`, each made by hand in the mixer, any left empty are skipped) and a
+`LightPoolView`. Give `AudioWorld` the `SfxBank` and the Ambience group, and assign all three, plus `SfxPlayer`, on
+`GameHost`. In DL-06's view scene add a `CarrierLineView` with the carrier prefab (children `Pivot`, `Parcel0..2`,
+`Load0..1`).
+
 **Status legend**
 - **Auto:** plays from Core's tables once `AudioWorld` has his x, region, deck and the named condition. No scene code is needed.
 - **Ready:** the clip, the Core rule and the Runtime call all exist. The scene port (U-20 to U-22) adds the one call at the line cited.
@@ -272,7 +293,9 @@ play dry (see the questions).
    differently (about 25 ms), which would shift the moments' cue clock and the trimmed loop points. Measure once on a
    moment with a clap test, or re-export the music as WAV/OGG?
 4. **Mixer snapshots per region.** The issue mentions them, but the web build has no per-region mix beyond the ambience
-   map. Should we add snapshots, and if so what should change between regions?
+   map. Should we add snapshots, and if so what should change between regions? *U-23:* Core now picks a snapshot per
+   place (`MixRules`), with every trim at 0 dB for parity, so what changes between places is the director's to author in
+   the mixer.
 5. **The audit's gaps.** These were planned but never built:
    - the cord chain's walk-past tinkle;
    - the pigeonholes;

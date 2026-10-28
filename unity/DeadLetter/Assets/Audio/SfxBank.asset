@@ -1,0 +1,653 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06d8c6579b49dc04385bc9b1f87bd7b8, type: 3}
+  m_Name: SfxBank
+  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Audio.SfxBank
+  sounds:
+  - key: amb_buzz_loop
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: ca7168de6faeea607d996561d76586f0, type: 3}
+  - key: amb_drip
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: a49c826b4a817bedf61a85950e9b7d2a, type: 3}
+    - {fileID: 8300000, guid: d3bc4d34949e9d3049e21123e1bca17e, type: 3}
+    - {fileID: 8300000, guid: 0f0ef128e535c8d86b0cd9b37256429c, type: 3}
+  - key: amb_fan
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: b9ac4adc5c13cd4efa65906f1c4d99d6, type: 3}
+    - {fileID: 8300000, guid: 5b8960e6f677009178983f3db3f5b200, type: 3}
+    - {fileID: 8300000, guid: a31b5a2c5775f0dcf4685841cba6e5d1, type: 3}
+  - key: amb_hum_loop
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 8289d8e2520f8d69fb25f74768306e80, type: 3}
+  - key: amb_lap_loop
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 9f075b2be348d18daccfc5bc5431f266, type: 3}
+  - key: amb_machine_loop
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 709306b1471a72e639671431904ea862, type: 3}
+  - key: amb_musicbox_loop
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 124b22baa6ef30983cadee2a108262d3, type: 3}
+  - key: amb_static_loop
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: e78257e678fc25d540a8b66b578b4ee6, type: 3}
+  - key: amb_tick
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: b248546898f22cc3c8f62590548fb571, type: 3}
+  - key: amb_wind_loop
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 3b20279f2490f6131c60e1f5783ad876, type: 3}
+  - key: curio_coin
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: a30e1cf33417049de833c6057e67d56d, type: 3}
+  - key: curio_found
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: cb09e91cdd5d32d5e2ae2bebaf7dde2b, type: 3}
+  - key: curio_mug
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 01efd1b28b4f1cad6406cf7d4c9e0298, type: 3}
+  - key: curio_mug_down
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 470c6e5893672bdf6bffb4b884df5684, type: 3}
+  - key: curio_paper
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: a34e81da3989044652b67abcb3403738, type: 3}
+  - key: curio_radio
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 43af2b5a41d9c86d2a89968ed54e7184, type: 3}
+  - key: curio_scale
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 2fde8f7ce4b3401bbf858ae3f2cc3837, type: 3}
+  - key: curio_sit
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 1695f31523b9147d4cbacfadcbf05e3e, type: 3}
+  - key: curio_stamp
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: e44e125826030f632f2bca3a6f3d5133, type: 3}
+  - key: curio_switch
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 8a6f33f568fe5ca6aa5632b7c6a32d39, type: 3}
+  - key: curio_wind
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 5f1e4262b576ac356f06008338c1c444, type: 3}
+  - key: d17_bonk
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: a1f3e5ae74e088ee6ca916413152dfa7, type: 3}
+  - key: d17_chirp
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 9e9b5cde755c6b9913048f9ba6ab019a, type: 3}
+  - key: d17_jump
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 67727170a6ce91647123b00f0c7b1002, type: 3}
+  - key: d17_knock
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 6571d225bcb83099d71a3de1114ad0d6, type: 3}
+  - key: d17_land
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 855de24ee0229508f33ab9f29de0b245, type: 3}
+  - key: d17_lift
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 31a71e0b62ed2a7c7fffaaa916ce2113, type: 3}
+  - key: d17_setdown_deck
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: bf315375418e352f92e933c36c2fe896, type: 3}
+  - key: d17_setdown_floor
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: e4bcbef28ae9e66b4a27594fd8f56c9b, type: 3}
+  - key: d17_step
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: c97da1aa60d75de355ac818655978ee0, type: 3}
+    - {fileID: 8300000, guid: b426a7cb6200387b166e631bb6cf035c, type: 3}
+    - {fileID: 8300000, guid: e2e314f874821387454ca47ac7c63a12, type: 3}
+    - {fileID: 8300000, guid: 2b93b9135d78a30118d4d783f3f5f2cf, type: 3}
+  - key: d17_strain
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: fe44f1455ad797ea6a85b34e54705531, type: 3}
+  - key: d17_tap
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 5c01c2eed80379c65b09fa688656da3a, type: 3}
+  - key: d17_worried
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 446350ac2eac91a3867c7a72d0e91c40, type: 3}
+  - key: death_crush
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 7ed1fa6c565356600b4642083208e7c5, type: 3}
+    - {fileID: 8300000, guid: d6f721f9e84e19636989c2c8786e77db, type: 3}
+  - key: death_fall
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 8b40844ca9f21448757d9249c5518de0, type: 3}
+    - {fileID: 8300000, guid: 655003292bc814a375119e8031290417, type: 3}
+  - key: death_grabbed
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 798dbae7fff5a00917fda0398bb7ea71, type: 3}
+    - {fileID: 8300000, guid: b246022eefa549acd78062b7723b6215, type: 3}
+  - key: death_shock
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: f51538cd94d60704e3298a2d174bd7c9, type: 3}
+    - {fileID: 8300000, guid: 09a3f0dca43801c77c5c3353f989b031, type: 3}
+  - key: elec_buzz_short
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 47d06e8897430161843907eae3fdfe67, type: 3}
+  - key: elec_crackle
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 610e2e745adb921237bd3e6de8d288f0, type: 3}
+    - {fileID: 8300000, guid: a85acf717bfa47e8918cf26e04a31498, type: 3}
+    - {fileID: 8300000, guid: aa7ed850c2a44591c381c58b01deb732, type: 3}
+  - key: elec_zap
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: e62056453ca7784f6cd3bea978bc3a93, type: 3}
+    - {fileID: 8300000, guid: 7a5061c77ecfdd22160526e2fe7e8572, type: 3}
+    - {fileID: 8300000, guid: 3e7665518225b00a69ba461c436920aa, type: 3}
+  - key: env_distant
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 93973ce45ccb839bfaa90fd5b19aeeda, type: 3}
+  - key: env_drip
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 4558d99df1d8ed6aa6e4651b8c8372f3, type: 3}
+    - {fileID: 8300000, guid: a640719cf01570a19d42be70cdf14036, type: 3}
+    - {fileID: 8300000, guid: 5be13961842d762af35372f5c62ff2df, type: 3}
+  - key: env_groan
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: eac8306f9768bc3d2ecc9678805e1b97, type: 3}
+  - key: env_splash
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 90f977c3e1c62470420be80322e1cbc2, type: 3}
+  - key: loop_air
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 1b3bf8e253f151e1a7451f4a5dfc5787, type: 3}
+  - key: loop_belt
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: dbb2fe3e999800d6ababa60c0ccdc146, type: 3}
+  - key: loop_buzz
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 16bf29367712237899eb7b736116da49, type: 3}
+  - key: loop_drag
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: aadf81b45d1904fb84fd5fbd5c81ef96, type: 3}
+  - key: loop_drum
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 06a09dcb7080f21c6db0ad20af982fa7, type: 3}
+  - key: loop_hiss
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 1b8c0e417c7c54c58478a203b55f86ad, type: 3}
+  - key: loop_hum
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 5bf8a639c1a268037adab6db35c4a0b5, type: 3}
+  - key: loop_roll
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 60088ebdd462e65647d9ef64208a37a6, type: 3}
+  - key: loop_tubes
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 37665f5773b5f1e27f11c3f987677468, type: 3}
+  - key: mech_alarm_bell
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: ce7f31814da0fe57bab02cf81a6ad33b, type: 3}
+  - key: mech_answer_0
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 3449a2af1b27501555b5906f57488eb6, type: 3}
+  - key: mech_answer_1
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: db2a16f33a50cdb67956a7e517c52ca8, type: 3}
+  - key: mech_answer_2
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 76cb95d7f5be07591e7e9cb70e9edaef, type: 3}
+  - key: mech_bell
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 5c8a65868a8c60b8c20bb7938385aa4e, type: 3}
+  - key: mech_belt_stop
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 4dd44498707d2be419d554a04192f858, type: 3}
+  - key: mech_chain_1000
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 7c2ac8e877408d03c5f9067bbfea2b9a, type: 3}
+  - key: mech_chain_1200
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 9ffac295d9966326e2a62afb735d7ce5, type: 3}
+  - key: mech_chain_1500
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: c0ef5eb60d21531e2adfd904813e0f05, type: 3}
+  - key: mech_chain_2000
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: fa9cf1a81758b079d0c49e736fc2f4f4, type: 3}
+  - key: mech_chain_2200
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: ce51464279a638ba38d7d81a7690c1bb, type: 3}
+  - key: mech_chain_2500
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: d92c69806d76664a71d910ab9be31fdb, type: 3}
+  - key: mech_chain_300
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: c899da9868647d772a849294edbc5411, type: 3}
+  - key: mech_chain_3000
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 58021fc46211709b72f51a9f36625612, type: 3}
+  - key: mech_chain_500
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: d56652d04137bf8a23ce0b3af9e648ba, type: 3}
+  - key: mech_chain_550
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: e437ebf7eb2c54f76f3e85b070f090c3, type: 3}
+  - key: mech_chain_600
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: c24bf5beae732b65f143fdc715642ade, type: 3}
+  - key: mech_clack
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 6184b4ebf4f72e1209593a6ea0857410, type: 3}
+  - key: mech_clank
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 6024012cd42d4c192b3a92dad7368ed9, type: 3}
+  - key: mech_click
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 7b28ea5fc888691c77957c718989e450, type: 3}
+  - key: mech_clunk
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 33eeda3f0eeec8119d806ce34dced7be, type: 3}
+  - key: mech_crate_land
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 6594c92ddd7b891187fbc13bab7db6c8, type: 3}
+  - key: mech_creak_300
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: a49a694e6ce1fea756e716f860f14261, type: 3}
+  - key: mech_creak_400
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 1a7d8ab08a5d764783d5cce559fb501d, type: 3}
+  - key: mech_creak_500
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: dc80f021bdb4d157c6eac4e918a26914, type: 3}
+  - key: mech_creak_600
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: de968e17fb7f1facb669711b75a06ad0, type: 3}
+  - key: mech_creak_700
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: b6153c08acca55c330f6d9f371516b4e, type: 3}
+  - key: mech_creak_800
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: b71b7069b35ed10d2ba41b27bae70733, type: 3}
+  - key: mech_door_open
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 1173d5be516fee9667e419607d5e7193, type: 3}
+  - key: mech_door_rumble
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: f51fed1d6626da68ffff4e461627b74d, type: 3}
+  - key: mech_gate_slam
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 86be77f588082508196d09d36185903f, type: 3}
+  - key: mech_gate_tick
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 65823a110603c8c3dca7a68bc03b806d, type: 3}
+    - {fileID: 8300000, guid: 1381202581115a6262e7689350b27f7f, type: 3}
+    - {fileID: 8300000, guid: 49f56d31996cd6adb5a148118d48ea3e, type: 3}
+  - key: mech_grit
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 35cabdf7bb16adbf5de99c2494b40a40, type: 3}
+    - {fileID: 8300000, guid: 1be61d21b129ea8d4aa7fd692c6a55b3, type: 3}
+  - key: mech_hatch_lift
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: f813f0f2a898d711ad0ce8bf6f6c1eeb, type: 3}
+  - key: mech_klaxon
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: b5df8f18809581ae02bda0af3b51175a, type: 3}
+  - key: mech_lamp_click
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: c9929afdb2cc537684de3fa58323020a, type: 3}
+  - key: mech_lift_crash
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 0fb80de128a3c220f6bec5c1d93841ae, type: 3}
+  - key: mech_lift_crash_v040
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: d29d69de605d7082993a1c2b4edb2c57, type: 3}
+  - key: mech_lurch
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 2b2b5ff45d7b50aa421851b0b38b0c3a, type: 3}
+  - key: mech_pawl_clatter
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 01b614303edfef5d6b87fffa57522228, type: 3}
+    - {fileID: 8300000, guid: a085f12cc9d2ee5a0f3de1b68ebac303, type: 3}
+    - {fileID: 8300000, guid: 3862a23adf4fefd903120554c6c6e9a4, type: 3}
+  - key: mech_pawl_click
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: fdefda30b3c77f8d1f7f7736032b8604, type: 3}
+  - key: mech_plate
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: b3e0a64cd15e176c774d35addbd2c67d, type: 3}
+  - key: mech_ratchet
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: de089071788fc96680b352f48b3130df, type: 3}
+  - key: mech_rattle_500
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 29c8d9268b8ad05530191b419a16285a, type: 3}
+  - key: mech_rattle_900
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 28f299d665f8ba50541bf096dec011c8, type: 3}
+  - key: mech_reject
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 1c2c330fb5cbc53554ad010571d4b340, type: 3}
+  - key: mech_relay_0
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 1cf025af4a4b806a67a9fe51aa327d1c, type: 3}
+  - key: mech_relay_1
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: dbd58a2076dccf701dc669b36c9d5a0a, type: 3}
+  - key: mech_relay_2
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 23864a6b101c0f851b962672ad9e19dc, type: 3}
+  - key: mech_relay_pulse
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: dd5ee4a24b2a4047f21ee83d78cb878b, type: 3}
+  - key: mech_row_on_0
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 4a50a0cb3ec00c5ebbfc67f5cd7c58a1, type: 3}
+  - key: mech_row_on_1
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 4cbfbe4f1186b39a49f201d59082eef1, type: 3}
+  - key: mech_row_on_2
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 98f62b4fd6f3682a060763c75d1cb22e, type: 3}
+  - key: mech_row_on_3
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 4e6388c37abb0d3a6e5043d75f068358, type: 3}
+  - key: mech_row_on_4
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 4831ba54370e389ed86d6d31f04fbc6e, type: 3}
+  - key: mech_row_on_5
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 45ecf80e877ad6f50a9e57ae9ef83bbf, type: 3}
+  - key: mech_scan_sweep
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 5267eefc1c1bd47aba0a9c32ac5b920b, type: 3}
+  - key: mech_scrape
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 5bf6c62025884294ccf4eda3c6d1002d, type: 3}
+  - key: mech_servo_120_500_900
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: cda15146bfd296b79ad92a2993eaea91, type: 3}
+  - key: mech_servo_120_900_1300
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 7b05abe993e319cb27b90c2eeec3bc3b, type: 3}
+  - key: mech_servo_150_400_700
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: ee09cee760aa95f87fedf1d12a7d3343, type: 3}
+  - key: mech_servo_2000_180_420
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: bc6028bb65b63af85de9b594c00f8fef, type: 3}
+  - key: mech_servo_200_120_160
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: c96ecdf760d8196bdd1aeb56a847dfad, type: 3}
+  - key: mech_servo_200_400_520
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 296dec160dbee3a73b7be6deb0c5dee4, type: 3}
+  - key: mech_servo_200_500_900
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: a613314efa4b5bfa2c3e55a7daeea516, type: 3}
+  - key: mech_servo_220_300_520
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 4f2cec95bc962bc7242028aa94527afa, type: 3}
+  - key: mech_servo_220_320_560
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: ad104ce32a7799f2c0b9a21228fe6102, type: 3}
+  - key: mech_servo_220_700_1250
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 0af30b33a0001c90b0cecec501c590d8, type: 3}
+  - key: mech_servo_240_340_620
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: ac6de02f76b78e0de97134cd04b593aa, type: 3}
+  - key: mech_servo_250_500_820
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 455cb073e57bd9a6c54a11de2ddeaf9b, type: 3}
+  - key: mech_servo_300_300_420
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: e8c201bad9d4325995421a175c886ca1, type: 3}
+  - key: mech_servo_300_300_500
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 2ec57faad6fe90e4b6694894b55275a6, type: 3}
+  - key: mech_servo_350_900_1500
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: bc30c37d1c7a0d92167aa7deba3d0a51, type: 3}
+  - key: mech_servo_400_400_1600
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: dd332ea2df585583ff06888fa7347931, type: 3}
+  - key: mech_servo_500_260_520
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 86557a37b2c5ecaaa743cda802556cdb, type: 3}
+  - key: mech_servo_600_300_700
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: eb452d54b909b267775635899663f191, type: 3}
+  - key: mech_spark
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 85cd50c0a753d45f638e0b25cd9b5f2b, type: 3}
+    - {fileID: 8300000, guid: 12465a4ae6ce614c28c6630f3a7a9a1f, type: 3}
+    - {fileID: 8300000, guid: 5fe8e8bb7eb7a7340a7ac9057e02aeeb, type: 3}
+  - key: mech_squeak
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 80d34d57da761d6a71472b6ec9561a8b, type: 3}
+    - {fileID: 8300000, guid: 56601be55dbe5caacb3eccbf6dd728cb, type: 3}
+    - {fileID: 8300000, guid: 62d9ffdcba2690a717e0ace3bc0a7c24, type: 3}
+  - key: mech_thud
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: c5a5dabd4bf3b799189403fd2b0b2136, type: 3}
+  - key: mech_tick
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: c7705b6e3a227085094fc431e5e9e454, type: 3}
+  - key: mech_tumble
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: 2f127a7f5509f07f2395aa4741ebee3c, type: 3}
+    - {fileID: 8300000, guid: d396bbebf650f35baeca9b9c83183bcc, type: 3}
+  - key: voice_crackle_card
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: e4bc81ed2253920e0bb5741e58ffcb8c, type: 3}
+  - key: voice_crackle_card_worn
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 26f13045a1ec3b7ea658388c0311cd01, type: 3}
+  - key: voice_crackle_child
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 1262122411a84ed255e6494777f4ef0f, type: 3}
+  - key: voice_crackle_dispatch
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: 87d8fa998a4797770ee1512f3bec7543, type: 3}
+  - key: voice_crackle_elder
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: a837c6c7c453277633695ac3ed0e9d9f, type: 3}
+  - key: voice_crackle_machine
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: e319d5aab7672fb23d859d58eac9a88d, type: 3}
+  - key: voice_crackle_radio
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: ac64bfee21bfcc3c761956ab74b33d62, type: 3}
+  - key: voice_crackle_tannoy
+    loop: 1
+    takes:
+    - {fileID: 8300000, guid: def15fe79c20db8e05979fd35477dc3c, type: 3}
+  - key: voice_tannoy_chime
+    loop: 0
+    takes:
+    - {fileID: 8300000, guid: ae6b3ecf040684d6b7315ccc05576b44, type: 3}
+  music:
+  - key: wake
+    clip: {fileID: 8300000, guid: 12fc1a0ddb8e3f6c713dac228f9c1c23, type: 3}
+  - key: hall
+    clip: {fileID: 8300000, guid: 356410ceb51bd4ac7568961aa66faa73, type: 3}
+  - key: threshold
+    clip: {fileID: 8300000, guid: 7c6aa77b74d3d530961b0d91e0d759c3, type: 3}
+  - key: racks
+    clip: {fileID: 8300000, guid: dbd3a8fc384a5db4d87c1d9f4d79e0e3, type: 3}
+  - key: kin
+    clip: {fileID: 8300000, guid: fb1e0a838c183eb11927c7cc17a130ff, type: 3}
+  - key: dead
+    clip: {fileID: 8300000, guid: 9be2e4fd38c6808f9e902be3e3938771, type: 3}
+  - key: latch
+    clip: {fileID: 8300000, guid: dae0d65cbcdead15223db55075e5478e, type: 3}
+  - key: refuge
+    clip: {fileID: 8300000, guid: 4d89ee1356f9bbe76280634f82855d69, type: 3}
+  - key: ringc
+    clip: {fileID: 8300000, guid: 1d0f38c35c7a30f6a0f8072dc1c93b5e, type: 3}
+  - key: childP
+    clip: {fileID: 8300000, guid: 2f00b8a8c7d0c134c1e517f0a3b74549, type: 3}
+  - key: window
+    clip: {fileID: 8300000, guid: e388882ba8bbdfef98bc5a5f06aeecd4, type: 3}
+  - key: end
+    clip: {fileID: 8300000, guid: 98df3a275696a664ac83258832b11355, type: 3}
+  - key: child
+    clip: {fileID: 8300000, guid: 6a3c85a2eb1cd8f5ad1438668fe488bb, type: 3}
+  - key: endAtt
+    clip: {fileID: 8300000, guid: 068e7fcb67af87f2f13c1e2d1e6554c4, type: 3}
+  - key: bed
+    clip: {fileID: 8300000, guid: 839517f1bb41d7738b0db218c884820f, type: 3}
+  - key: lower_works
+    clip: {fileID: 8300000, guid: 418068ded44dd025110fd326fa56fb0a, type: 3}
+  - key: order
+    clip: {fileID: 8300000, guid: cba1afbc1ed6bae155e0372e611af40c, type: 3}
+  - key: heaps
+    clip: {fileID: 8300000, guid: ce2a255b788e1be7fe92ffef997ef435, type: 3}
+  - key: failure
+    clip: {fileID: 8300000, guid: 81a0f3329ad6105fb6b9e8ba8760ec4f, type: 3}

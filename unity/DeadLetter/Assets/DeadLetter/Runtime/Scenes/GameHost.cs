@@ -6,12 +6,14 @@ using DeadLetter.Core.Cues;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Platform;
+using DeadLetter.Core.Presentation;
 using DeadLetter.Core.Save;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Simulation;
 using DeadLetter.Core.Streaming;
 using DeadLetter.Runtime.Audio;
 using DeadLetter.Runtime.Camera;
+using DeadLetter.Runtime.Lighting;
 using DeadLetter.Runtime.Platform;
 using DeadLetter.Runtime.Save;
 using DeadLetter.Runtime.Settings;
@@ -33,7 +35,10 @@ namespace DeadLetter.Runtime.Scenes
     /// the sim places him (<see cref="ChapterSim.Continue"/>, <see cref="ChapterSim.NewGame"/>).</item>
     /// <item><b>Each frame</b>: the scene views stream (<see cref="StreamingPlanner"/> from
     /// <see cref="ChapterSim.DistanceToSeam"/>); then each step: D-17's input → <see cref="ChapterSim.Step"/> → the camera rig →
-    /// D-17's transform endpoints → the step's cues (music, voices, sounds, moments, shakes) → the mechanism views' samples.
+    /// D-17's transform endpoints → the step's cues (music, voices, moments, shakes) → Core's presentation of the step
+    /// (<see cref="ChapterPresentation"/>: its sounds to <see cref="SfxPlayer"/>, the carriers' poses) → the mechanism views'
+    /// samples. After the steps, once per frame: the emitters and beds (<see cref="AudioWorld"/>, <see cref="MusicDirector"/>),
+    /// the continuous layers, the mix (<see cref="AudioMixDirector"/>) and the light pool (<see cref="LightPoolView"/>).
     /// A respawn into a scene that is not loaded holds the step behind the fade until it is.</item>
     /// <item><b>Pause</b> (<see cref="PauseGate"/>, through <see cref="PlatformServicesHost"/>): no steps, the moment player
     /// paused; play time stops.</item>
@@ -66,6 +71,10 @@ namespace DeadLetter.Runtime.Scenes
         [SerializeField] private MusicDirector score;
         [SerializeField] private VoicePlayer voices;
         [SerializeField] private AudioWorld audioWorld;
+        [Tooltip("Empty = SfxPlayer.Current.")]
+        [SerializeField] private SfxPlayer sfx;
+        [SerializeField] private AudioMixDirector mix;
+        [SerializeField] private LightPoolView lights;
         [SerializeField] private ScreenFade fade;
         [Tooltip("Empty = PlatformServicesHost.Instance.")]
         [SerializeField] private PlatformServicesHost platformHost;
@@ -91,6 +100,8 @@ namespace DeadLetter.Runtime.Scenes
         /// <summary>The chapter's Core world (null before Awake or when the chapter is unknown).</summary>
         public ChapterSim Sim { get; private set; }
         public ChapterPresenter Presenter { get; private set; }
+        /// <summary>Core's sounds, emitters, carriers, lights and mix for the sim (U-23).</summary>
+        public ChapterPresentation Presentation { get; private set; }
         public StreamingPlanner Planner { get; private set; }
         public SceneStreamer Streamer { get; private set; }
         /// <summary>The lane camera's rig, stepped here once per Core step (§3.1 #10) and rendered by the driver.</summary>
@@ -141,6 +152,11 @@ namespace DeadLetter.Runtime.Scenes
             CheckpointTrigger.Service = Sim.Checkpoints;
 
             Presenter = new ChapterPresenter(Sim);
+            Presentation = new ChapterPresentation(Sim, Presenter, LightPoolBudget.For(services.Kind));
+            if (audioWorld != null) audioWorld.Bind(Presentation.Ambience);
+            if (mix != null) mix.Bind(Presentation.Mix);
+            if (lights != null) lights.Bind(Presentation.Lighting.Pool);
+            if (CarrierLineView.Current != null) CarrierLineView.Current.Bind(Presentation.Carriers);
             Planner = new StreamingPlanner(def, streamingRadius > 0 ? streamingRadius : StreamingRadii.For(services.Kind));
             var ids = new string[Planner.Count];
             var paths = new string[Planner.Count];
@@ -197,6 +213,10 @@ namespace DeadLetter.Runtime.Scenes
                 if (CheckpointTrigger.Service == Sim.Checkpoints) CheckpointTrigger.Service = null;
             }
             if (_pause != null) _pause.Changed -= OnPauseChanged;
+            if (audioWorld != null) audioWorld.Bind(null);
+            if (mix != null) mix.Bind(null);
+            if (lights != null) lights.Bind(null);
+            if (CarrierLineView.Current != null) CarrierLineView.Current.Bind(null);
             MechanismViewRegistry.Detach();
             Instance = null;
         }
@@ -289,6 +309,7 @@ namespace DeadLetter.Runtime.Scenes
             if (cameraDriver != null) cameraDriver.Snap();
             MechanismViewRegistry.Sample();
             MechanismViewRegistry.Snap();
+            Presentation.OnPlaced();
             if (score != null) MusicCues.CheckpointStart(score.Model, score.Now, fromOpening);
             CommitViews();
             if (fade != null) fade.FadeIn();
@@ -341,7 +362,10 @@ namespace DeadLetter.Runtime.Scenes
         private void LateUpdate()
         {
             if (Sim == null || _phase == Phase.Off || _phase == Phase.Entering) return;
-            MechanismViewRegistry.Apply(player != null ? player.RenderAlpha : Mathf.Clamp01((float)_tick.Alpha));
+            float alpha = player != null ? player.RenderAlpha : Mathf.Clamp01((float)_tick.Alpha);
+            MechanismViewRegistry.Apply(alpha);
+            CarrierLineView carriers = CarrierLineView.Current;
+            if (carriers != null && carriers.Bound) carriers.Apply(alpha);
         }
 
         /// <summary>One Core step and what reads it (§3.1: #2 input in, #4–#9 Core, #10–#11 presentation, #12 input consumed).</summary>
@@ -353,15 +377,29 @@ namespace DeadLetter.Runtime.Scenes
             Rig.Step(Presenter.CameraInput(Aspect, _signals), ChapterSim.StepSeconds);   // before D-17's Stepped: the driver reads the rig there
             if (player != null) player.OnHostStepped(ChapterSim.StepSeconds);
             Dispatch(Sim.Cues);
+            Presentation.AfterStep(voicePlaying: voices != null && voices.Playing != null, calm: SettingsStore.Calm);
+            PlaySounds(Presentation.Sounds.Sounds);
             MechanismViewRegistry.Sample();
             if (_reloaded) AfterPlacement(fromOpening: false);              // a respawn this step
         }
 
-        /// <summary>Per frame, after the steps: the audio world, the ambience, and D-17's clip while a scene act holds him.</summary>
+        /// <summary>
+        /// Per frame, after the steps: Core's frame (emitters, lights, mix) and its adapters, the ambience bed, the continuous
+        /// layers, and D-17's clip while a scene act holds him.
+        /// </summary>
         private void PresentFrame()
         {
-            if (audioWorld != null) audioWorld.region = Sim.Region;
-            if (score != null) AmbienceRules.Apply(score.Model, Presenter.Ambience(), score.Now);
+            double now = Time.timeAsDouble;
+            bool calm = SettingsStore.Calm;
+            Presentation.Frame(now, Time.deltaTime, Rig.Pose.Position.X, calm);
+            if (audioWorld != null) audioWorld.Present(now);
+            if (score != null) AmbienceRules.Apply(score.Model, Presentation.Ambience.Context, score.Now);
+            SfxPlayer player0 = sfx != null ? sfx : SfxPlayer.Current;
+            if (player0 != null)
+                for (int i = 0; i < SfxLoopMixer.Count; i++)
+                    if ((SfxLoop)i != SfxLoop.WhiteHiss) player0.SetLoop((SfxLoop)i, (float)Presentation.Sounds.Loop((SfxLoop)i));
+            if (mix != null) mix.Present();
+            if (lights != null) lights.Apply(Presentation.Lighting.SearchTarget);
             if (player != null)
             {
                 string clip = Presenter.ActClip(out double seconds);
@@ -441,13 +479,7 @@ namespace DeadLetter.Runtime.Scenes
                         }
                         break;
                     case CueKind.Sound:
-                        SfxPlayer sfx = SfxPlayer.Current;
-                        if (sfx != null)
-                        {
-                            AudioWorld world = AudioWorld.Current;
-                            sfx.PlayPanned(r.Key, 1f, world != null ? world.PanForX(Sim.X) : 0f);
-                        }
-                        break;
+                        break;                                                           // queued by ChapterSounds with the step's others (PlaySounds)
                     case CueKind.Shake:
                         if (cameraDriver != null) cameraDriver.Shake(cue.Arg / 100f);       // calm mode drops it there
                         break;
@@ -459,6 +491,26 @@ namespace DeadLetter.Runtime.Scenes
                 }
                 CueRaised?.Invoke(cue);
             }
+        }
+
+        /// <summary>The step's one-shots (<see cref="ChapterSounds"/>), each panned by where it is on screen (±0.4, <see cref="PanLaw"/>).</summary>
+        private void PlaySounds(SfxQueue sounds)
+        {
+            SfxPlayer player0 = sfx != null ? sfx : SfxPlayer.Current;
+            if (player0 == null || sounds.Count == 0) return;
+            AudioWorld world = AudioWorld.Current;
+            for (int i = 0; i < sounds.Count; i++)
+            {
+                SfxRequest r = sounds[i];
+                double x = double.IsNaN(r.X) ? Sim.X : r.X;
+                player0.PlayPanned(r.Key, (float)r.Volume, world != null ? world.PanForX(x) : 0f);
+            }
+        }
+
+        /// <summary>DL-06's carrier view scene loaded (its view's OnEnable): its pool follows Core's line.</summary>
+        internal void OnCarrierViewLoaded(CarrierLineView view)
+        {
+            if (Presentation != null) view.Bind(Presentation.Carriers);
         }
 
         /// <summary>
