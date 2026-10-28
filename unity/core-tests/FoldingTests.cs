@@ -15,7 +15,7 @@ namespace DeadLetter.Core.Tests
     public class FoldingTests
     {
         private const double Dt = Mech.Dt;
-        internal static readonly string[] Ch2 = { "ring_a", "terrace" };
+        internal static readonly string[] Ch2 = Checkpoint.GameOrder;
 
         private static InteractionQuery At(double x, double y = 0) => new InteractionQuery(x, y, 0, 1, true, false, HoldKind.None, null, null);
 

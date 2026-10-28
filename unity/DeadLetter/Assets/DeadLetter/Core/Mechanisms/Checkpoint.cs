@@ -20,6 +20,15 @@ namespace DeadLetter.Core.Mechanisms
             "crossing", "store", "kitchen", "workshop",
         };
 
+        /// <summary>
+        /// The game's checkpoint order: <see cref="PrototypeOrder"/> (the prologue and chapter 1, unchanged, so their saves
+        /// keep their meaning), then chapter 2's in play order (docs/chapter2_plan.md §4 and the scene docs' checkpoint
+        /// sections: DL-18 §9 <c>ring_a</c>, <c>terrace</c>; DL-19 §9 <c>half_landing</c>, <c>repaired</c>; then DL-22's and
+        /// DL-23's). No prototype: chapter 2 is new.
+        /// </summary>
+        public static readonly string[] GameOrder = Concat(PrototypeOrder,
+            "ring_a", "terrace", "half_landing", "repaired", "service", "dispatched", "courtyard", "second_place", "balcony");
+
         private readonly IReadOnlyList<string> _order;
         private readonly int _index;
 
@@ -40,6 +49,14 @@ namespace DeadLetter.Core.Mechanisms
         /// checkpoint" and returns false. An unknown name throws (catches typos in params).
         /// </summary>
         public bool Past(string name) => name != null && _index >= IndexIn(_order, name);
+
+        private static string[] Concat(string[] head, params string[] tail)
+        {
+            var all = new string[head.Length + tail.Length];
+            head.CopyTo(all, 0);
+            tail.CopyTo(all, head.Length);
+            return all;
+        }
 
         private static int IndexIn(IReadOnlyList<string> order, string name)
         {
