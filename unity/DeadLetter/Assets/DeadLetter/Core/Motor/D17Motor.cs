@@ -275,6 +275,22 @@ namespace DeadLetter.Core.Motor
         }
 
         /// <summary>
+        /// He holds <paramref name="item"/> now, as Lift f39 leaves him (L4420): Hold Item, Carried, CarryBlend 1, clip
+        /// CarryIdle (fade 0.2). For a scene act that lifted the item its own way (L5303): call it after
+        /// <see cref="Place"/> at the act's end. Only from rest (no act, mantle, hold or ride); the item's OnLifted is
+        /// the scene's to have called.
+        /// </summary>
+        public void TakeItem(ICarryable item)
+        {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+            if (_act.Active || _mantling || Hold != HoldKind.None || Ride != null)
+                throw new InvalidOperationException("D17Motor.TakeItem: only from rest (he is " + State
+                    + (Hold != HoldKind.None ? " holding " + Hold : "") + ").");
+            Hold = HoldKind.Item; Carried = item; CarryBlend = 1;
+            SetClip(ClipNames.CarryIdle, 0.2, 1);
+        }
+
+        /// <summary>
         /// He stops dead where he is (<c>game.vx = 0</c>): a scene rule's quirk (<c>playQuirk</c>, L3843), a refused Use
         /// (L1821), the realisation. Nothing else changes: his yaw, clip, crouch and what he holds stay.
         /// </summary>
