@@ -133,6 +133,41 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
     each, from `root.position`, `pivot.rotation.z` and the payload's meshes). Every line is unchanged apart from these
     keys (checked line by line against the previous recording).
   - A later scene's port adds its own fields the same way (a new format version if a field changes meaning).
+- **Chapter 1 (`CHAPTER=att`, U-22):** `CHAPTER=att node record_trace.mjs 1 attendance_mech_seed1.jsonl.gz mechanical`
+  records Chapter 1 Attendance from `school`, as `sim.mjs` plays it. The school's set is loaded before the bot starts,
+  so the first step's `startAt('school')` runs synchronously and the run stays deterministic (two recordings are
+  byte-identical); the header has `chapter` and `start`. **In region 6 the prologue's DL-06 carrier line is held off**
+  (`game.belt.running = false`, no carriers): `resetWorld` starts its belt at every checkpoint past `scanned`, and each
+  chute tip startles him anywhere past x 67.8 on the floor (L2734 has no region test), every 6 s, drawing
+  `Math.random`. That is a leak of the prologue into the school, not chapter 1, so it stays out of the trace.
+  - **`unity/core-tests/Traces/attendance_mech_seed1.jsonl.gz`:** the whole of Chapter 1, mechanical, seed 1: 20,842
+    steps (DL-13 from #1313, DL-14 from #3042, the duct at #7886, DL-14a from #8265; the end at 347 s).
+  - Its fields, only while `r` is 6 (so no prologue line changes), named with the scene's number:
+    - The whole chapter: `aw` (`game.act.what` of an `att` act, as `beginAtt` names it: `coat`, `hang`, `pawl`, `crank`,
+      `duct`, …; null otherwise).
+    - DL-12: `c12x`/`c12b`/`c12s` (the coat's x, base, state), `f12x`/`f12v` (the stand-in figure), `g12y`/`g12v`
+      (the gate's height and fall speed), `p12` (someone on the strip), `pc12` (`presentCount`).
+    - DL-13: `f13x`/`f13v` (the second figure), `l13` (the lesson on), `t13` (its clock), `k13` (braked), `s13` (the
+      three steps, comma-separated), `tr13` (the tree).
+    - DL-14: `ba14`/`bb14` (the blinds), `ta14`/`tb14` (their targets), `w14` (winds), `j14` (jammed), `px14`/`pb14`/`ps14`
+      (the pole's x, base, state), `pe14`/`pd14` (the peel, peeled), `rt14` (the chain rattling on the pole), `du14`
+      (the duct taken).
+    - DL-14a: `nt14a`/`nk14a` (the night-light's clock, braked), `w1a`/`w2a`, `t1a`/`t2a` (the blinds and their
+      targets), `wn14a` (winds), `do14a`/`op14a` (the door, open), `gx14a`/`gb14a`/`gs14a` and `bx14a`/`bb14a`/`bs14a`
+      (the gown and the bag: x, base, state).
+    - DL-14b: `tx14b`/`td14b`/`tm14b`/`tt14b` (the escort trolley's x, direction, mode and its mode clock),
+      `fx14b`/`fs14b`/`fo14b`/`fk14b` (the figure in the bay: x, state, out, kept), `hd14b` (hiding).
+    - DL-15: `ax15`/`ab15`/`as15`/`al15` and `bx15`/`bb15`/`bs15`/`bl15` (figures A and B: x, base, state, lean),
+      `li15`/`lv15` (the pupil lift's height and speed), `lm15` (the seat lamps, comma-separated), `se15` (seated),
+      `di15` (dismissed), `do15` (the class door).
+    - DL-16: `br16` (the bridge), `la16` (latched), `he16` (the lever held), `sn16` (figures stored), `cw16` (the
+      rack's counterweight).
+    - DL-16a: `sx16a`/`ss16a` (the stool), `h16a`/`m16a`/`mt16a` (the dumbwaiter's height, mode and clock), `t1_16a`,
+      `t2_16a`, `bk16a` (the tins and the books, each "x,base,state").
+    - DL-17: `ty17` (the tray, "x,base,state"), `dr17` (the drawer), `rd17` (read), `ky17` (the T-key), `sl17` (the
+      sluices), `tk17`/`ru17` (the tank and its run), `be17` (the beds), `lt17`/`ld17` (the float latch, latched),
+      `do17` (the stair door), `en17` (the chapter ended).
+  - Adding DL-14a's to DL-17's fields left every earlier field of every line unchanged (checked line by line).
 
 ## The bot in Unity's Core (`ReplayTests`, U-18)
 

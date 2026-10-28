@@ -175,6 +175,44 @@ namespace DeadLetter.Core.Tests
         }
 
         /// <summary>
+        /// A v3 prologue slot (#48 review): saved before the clock timers kept their elapsed time, so its door, latch and
+        /// hatch snapshots lack <c>heldElapsed</c> and <c>armedElapsed</c>. The v4 migration fills them (NaN: the timer runs
+        /// on its sum of dt, as v3 did) and the snapshot restores, where reading the missing keys threw and the world was
+        /// rebuilt from the checkpoint alone: here the moved DL-02 box stays where it was left.
+        /// </summary>
+        [Fact]
+        public void Continue_AV3PrologueSlot_RestoresItsSnapshot_TheV4MigrationFillsTheClockTimers()
+        {
+            var store = new MemorySaveStore();
+            var a = new ChapterSim(ChapterDefs.Prologue(), store: store);
+            a.NewGame();
+            a.Begin("room");
+            a.Graph.Get<CarriedItem>("dl02.box").MoveTo(ItemState.Floor, 20.0, 0);
+            a.Step(default);
+            Assert.True(a.Checkpoints.Reach("weighroom"));
+
+            Assert.True(SaveCodec.TryDecode(store.Slots[0], out var doc, out string err), err);
+            Assert.Equal(SaveModel.CurrentVersion, doc.Version);
+            int dropped = 0;
+            foreach (var rest in doc.KeysUnder("mech/"))
+                if (rest.EndsWith("/heldElapsed", StringComparison.Ordinal) || rest.EndsWith("/armedElapsed", StringComparison.Ordinal)
+                    || rest.EndsWith("/allElapsed", StringComparison.Ordinal)) { doc.Remove("mech/" + rest); dropped++; }
+            Assert.True(dropped >= 5, "dropped " + dropped);                               // dl01.door, shutter, latch, dl05.hatch, servedFlag
+            doc.Version = 3;
+            var v3 = new MemorySaveStore();
+            v3.Slots[0] = SaveCodec.Encode(doc);
+            Assert.Equal(3, v3.Slots[0][4]);
+
+            var b = new ChapterSim(ChapterDefs.Prologue(), store: v3);
+            Assert.True(b.Continue());
+            Assert.True(b.Checkpoints.RestoredSnapshot);                                   // not the derived-world fallback
+            Assert.Equal(20.0, b.Graph.Get<CarriedItem>("dl02.box").X);
+            var c = new ChapterSim(ChapterDefs.Prologue(), store: store);
+            Assert.True(c.Continue());
+            Assert.Equal(SaveKit.Dump(c.Graph), SaveKit.Dump(b.Graph));                     // as v4 saved it
+        }
+
+        /// <summary>
         /// Continue at every checkpoint the prologue places (#31 review): each of DL-01 to DL-06's lands him in its own scene,
         /// region and lane; each of DL-07 to DL-11's (placed in the table, owned by scenes this chapter lacks) is refused,
         /// with nothing changed here or in the slot, where it used to return true with him exited and the lane on region 1.

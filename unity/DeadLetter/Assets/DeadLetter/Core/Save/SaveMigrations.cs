@@ -15,6 +15,7 @@ namespace DeadLetter.Core.Save
             null,
             V1ToV2,
             V2ToV3,
+            V3ToV4,
         };
 
         public static bool TryMigrate(SaveDocument d, out string error)
@@ -79,6 +80,27 @@ namespace DeadLetter.Core.Save
                     d.SetDouble(m + "pullF", d.GetBool(m + "act.active", false) ? d.GetDouble(m + "act.last", -1) : -1);
                 if (d.Contains(m + "stuck") && !d.Contains(m + "clipStuck"))            // Pawl, PointsLever
                     d.SetBool(m + "clipStuck", d.GetBool(m + "stuck", false));
+            }
+        }
+
+        /// <summary>
+        /// Version 4 added the clock timers' elapsed time (#48, <see cref="Mechanisms.ClockMark"/>): a door's delay
+        /// (<c>heldElapsed</c>), a latch's arming (<c>armedElapsed</c>) and a seat row's hold (<c>allElapsed</c>), each timed on
+        /// the game clock as the prototype does. A v3 snapshot has none, so each is filled NaN (no mark): the timer runs on its
+        /// own sum of dt (<c>held</c>, <c>armedFor</c>, <c>allFor</c>), as v3 timed it.
+        /// </summary>
+        private static void V3ToV4(SaveDocument d)
+        {
+            const string Mech = "mech/";
+            foreach (var rest in d.KeysUnder(Mech))
+            {
+                int slash = rest.LastIndexOf('/');
+                if (slash < 0) continue;
+                string m = Mech + rest.Substring(0, slash + 1), field = rest.Substring(slash + 1);     // "mech/<id>/", field
+                if (field == "cued" && d.Contains(m + "held") && d.Contains(m + "t") && d.Contains(m + "pos") && !d.Contains(m + "heldElapsed"))
+                    d.SetDouble(m + "heldElapsed", double.NaN);                                        // Door
+                if (field == "armedFor" && !d.Contains(m + "armedElapsed")) d.SetDouble(m + "armedElapsed", double.NaN);   // Latch
+                if (field == "allFor" && !d.Contains(m + "allElapsed")) d.SetDouble(m + "allElapsed", double.NaN);         // SeatRow
             }
         }
     }

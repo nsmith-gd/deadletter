@@ -21,10 +21,11 @@ namespace DeadLetter.Core.Scenes
     {
         public const double StepSeconds = ChapterSim.StepSeconds;
 
-        public SceneSim(SceneDef def, MotorConfig config = null, ISaveStore store = null)
+        /// <param name="checkpoints">The chapter's checkpoint table (null = the prologue's; chapter 1's scenes pass <see cref="ChapterDefs.AttendanceCheckpoints"/>).</param>
+        public SceneSim(SceneDef def, MotorConfig config = null, ISaveStore store = null, CheckpointTable checkpoints = null)
         {
             Def = def ?? throw new ArgumentNullException(nameof(def));
-            Chapter = new ChapterSim(new ChapterDef(def.Id, ChapterDefs.PrologueCheckpoints, def), config, store);
+            Chapter = new ChapterSim(new ChapterDef(def.Id, checkpoints ?? ChapterDefs.PrologueCheckpoints, def), config, store);
         }
 
         public ChapterSim Chapter { get; }

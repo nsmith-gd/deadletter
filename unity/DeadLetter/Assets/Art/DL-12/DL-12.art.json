@@ -22,7 +22,7 @@
  "axes": "unity = (blender.x, blender.z, blender.y), port_architecture 0.2",
  "gltf": "DL-12.gltf",
  "counts": {
-  "nodes": 10,
+  "nodes": 12,
   "meshes": 8,
   "primitives": 33,
   "triangles": 50182,
@@ -30,6 +30,250 @@
   "textures": 2
  },
  "markers": [
+  {
+   "name": "MECH_Dl12Peg_dl12_peg__AttPegLamp",
+   "prefix": "MECH",
+   "source": "AttPegLamp",
+   "position": [
+    205.4,
+    1.45,
+    0.4
+   ],
+   "center": [
+    205.4,
+    1.45,
+    0.4
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl12.peg"
+    },
+    {
+     "key": "name",
+     "value": "AttPegLamp"
+    },
+    {
+     "key": "part",
+     "value": "AttPegLamp"
+    },
+    {
+     "key": "type",
+     "value": "Dl12Peg"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PresenceStrip_dl12_strip__AttLampPresent",
+   "prefix": "MECH",
+   "source": "AttLampPresent",
+   "position": [
+    208.9,
+    1.6,
+    0.512
+   ],
+   "center": [
+    208.9,
+    1.6,
+    0.512
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl12.strip"
+    },
+    {
+     "key": "name",
+     "value": "AttLampPresent"
+    },
+    {
+     "key": "part",
+     "value": "AttLampPresent"
+    },
+    {
+     "key": "type",
+     "value": "PresenceStrip"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PresenceStrip_dl12_strip__AttLampCoat",
+   "prefix": "MECH",
+   "source": "AttLampCoat",
+   "position": [
+    208.9,
+    1.34,
+    0.512
+   ],
+   "center": [
+    208.9,
+    1.34,
+    0.512
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl12.strip"
+    },
+    {
+     "key": "name",
+     "value": "AttLampCoat"
+    },
+    {
+     "key": "part",
+     "value": "AttLampCoat"
+    },
+    {
+     "key": "type",
+     "value": "PresenceStrip"
+    }
+   ]
+  },
+  {
+   "name": "MECH_FollowerActuator_dl12_gate",
+   "prefix": "MECH",
+   "source": "AttGate",
+   "position": [
+    209.4,
+    0.0,
+    0.0
+   ],
+   "center": [
+    209.4,
+    0.8175,
+    0.24
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl12.gate"
+    },
+    {
+     "key": "name",
+     "value": "AttGate"
+    },
+    {
+     "key": "type",
+     "value": "FollowerActuator"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Pushable_dl12_figure",
+   "prefix": "MECH",
+   "source": "AttFigure",
+   "position": [
+    207.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    207.0,
+    0.4742,
+    0.0
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl12.figure"
+    },
+    {
+     "key": "name",
+     "value": "AttFigure"
+    },
+    {
+     "key": "type",
+     "value": "Pushable"
+    }
+   ]
+  },
+  {
+   "name": "MECH_CarriedItem_dl12_coat",
+   "prefix": "MECH",
+   "source": "AttCoat",
+   "position": [
+    202.92,
+    0.555,
+    0.59
+   ],
+   "center": [
+    202.6432,
+    0.5453,
+    0.59
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl12.coat"
+    },
+    {
+     "key": "name",
+     "value": "AttCoat"
+    },
+    {
+     "key": "type",
+     "value": "CarriedItem"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Dl12Peg_dl12_peg",
+   "prefix": "MECH",
+   "source": "",
+   "position": [
+    205.4,
+    1.45,
+    0.4
+   ],
+   "center": [
+    205.4,
+    1.45,
+    0.4
+   ],
+   "hasMesh": false,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl12.peg"
+    },
+    {
+     "key": "type",
+     "value": "Dl12Peg"
+    }
+   ]
+  },
+  {
+   "name": "MECH_PresenceStrip_dl12_strip",
+   "prefix": "MECH",
+   "source": "",
+   "position": [
+    208.9,
+    1.47,
+    0.512
+   ],
+   "center": [
+    208.9,
+    1.47,
+    0.512
+   ],
+   "hasMesh": false,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl12.strip"
+    },
+    {
+     "key": "type",
+     "value": "PresenceStrip"
+    }
+   ]
+  },
   {
    "name": "CHK_school",
    "prefix": "CHK",
@@ -741,15 +985,15 @@
    "occlusionTexture": ""
   },
   {
-   "name": "HandledSteel",
+   "name": "AttPegLamp",
    "baseColor": [
     1,
-    1,
-    1,
+    0.6800000071525574,
+    0.2800000011920929,
     1
    ],
-   "metallic": 0.6000000238418579,
-   "roughness": 1.0,
+   "metallic": 0,
+   "roughness": 0.5,
    "emissive": [
     0,
     0,
@@ -822,15 +1066,15 @@
    "occlusionTexture": ""
   },
   {
-   "name": "AttPegLamp",
+   "name": "HandledSteel",
    "baseColor": [
     1,
-    0.6800000071525574,
-    0.2800000011920929,
+    1,
+    1,
     1
    ],
-   "metallic": 0,
-   "roughness": 0.5,
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
    "emissive": [
     0,
     0,

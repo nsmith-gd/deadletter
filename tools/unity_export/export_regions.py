@@ -143,13 +143,16 @@ def driven_names():
     return set(re.findall(r"""['"]([A-Za-z][A-Za-z0-9_.]{2,})['"]""", text))
 
 
-def apply_mechanisms(bpy, objs, marker_coll):
-    """Renames the mapped mechanism objects; returns (records, forced top-level regions, anchors, problems)."""
+def apply_mechanisms(bpy, objs, marker_coll, regions):
+    """Renames the mapped mechanism objects of the given regions; returns (records, forced top-level regions, anchors,
+    problems)."""
     by_name = {o.name: o for o in objs}
     inside = set(objs)
     records, forced, anchors, problems = [], {}, [], []
     for type_, mid, root, parts in C.MECHANISMS:
         region = C.SCENE_REGION[mid.split('.')[0]]
+        if region not in regions:
+            continue
         srcs = ([(root, None)] if root else []) + [(p, p) for p in parts]
         found = [(by_name[s], part) for s, part in srcs if s in by_name]
         for s, _ in srcs:
@@ -287,7 +290,7 @@ def sha(path):
 def export_set(bpy, set_objs, table, backdrop, out, wanted, mech, written_textures, index, driven):
     marker_coll = bpy.data.collections.new('UnityMarkers')
     bpy.context.scene.collection.children.link(marker_coll)
-    records, forced, anchors, problems = apply_mechanisms(bpy, set_objs, marker_coll) if mech else ([], {}, [], [])
+    records, forced, anchors, problems = apply_mechanisms(bpy, set_objs, marker_coll, {r[0] for r in table}) if mech else ([], {}, [], [])
     for p in problems:
         log('mechanism map:', p)
     checkpoints = add_checkpoints(bpy, table, marker_coll)
@@ -434,7 +437,7 @@ def main():
         import build_attendance
         cap = run_captured(dl01, build_attendance.main, ['build_attendance.py', '--out', scratch], check_dir)
         log('chapter 1 built:', {k: len(v) for k, v in cap.items()})
-        records += export_set(bpy, cap['attendance'], C.CHAPTER1, None, out, wanted, False,
+        records += export_set(bpy, cap['attendance'], C.CHAPTER1, None, out, wanted, True,
                               written_textures, index, driven)
 
     # Driven names per region, from the sidecars just written.
