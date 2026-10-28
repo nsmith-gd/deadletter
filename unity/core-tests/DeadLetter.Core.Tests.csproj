@@ -16,6 +16,13 @@
     <IsTestProject>true</IsTestProject>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <RootNamespace>DeadLetter.Core.Tests</RootNamespace>
+    <!--
+      The zero-allocation tests measure GC.GetAllocatedBytesForCurrentThread over a window. Tiered JIT can
+      re-compile a hot method (tier-up, OSR) inside that window on a slow CI runner and charge its allocations
+      to the test thread, which made StreamingTests.PresenterReads_AllocateNothing flaky (#27). Compile fully
+      up front instead, so the measured window only sees the code under test.
+    -->
+    <TieredCompilation>false</TieredCompilation>
   </PropertyGroup>
 
   <ItemGroup>

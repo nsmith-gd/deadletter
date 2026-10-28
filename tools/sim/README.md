@@ -168,3 +168,30 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
       sluices), `tk17`/`ru17` (the tank and its run), `be17` (the beds), `lt17`/`ld17` (the float latch, latched),
       `do17` (the stair door), `en17` (the chapter ended).
   - Adding DL-14a's to DL-17's fields left every earlier field of every line unchanged (checked line by line).
+
+## The bot in Unity's Core (`ReplayTests`, U-18)
+
+`unity/DeadLetter/Assets/DeadLetter/Core/Simulation/Replay` is a C# port of `bot.js` that plays the prologue live on
+Core's `ChapterSim`, through the `ISimTarget` adapter `ChapterSimTarget`. The golden traces above replay the
+prototype's own inputs; the C# bot picks its own, so it can play scenes with no prototype trace (DL-18 onwards) and give
+first-playthrough distributions.
+
+- **Same players:** `PlayerModel` is `bot.js`'s mulberry32, so a seed draws the same skill and curiosity as here.
+- **Same choices:** `Scripts/PrologueScript` ports `opening()` to `returnToSender()` (DL-01 to DL-06, as far as Core
+  has ported the prologue). Playing live, it presses what `bot.js` pressed in `prologue_mech_seed1` at every one of the
+  12,250 steps from play to the belt running for the exit, and each scene starts on the prototype's step.
+- **First playthroughs** drift from the prototype's seed by seed after the first curiosity: curiosities, the cord and
+  the letters aren't in Core yet, so the random draws they spend here are skipped there (the script still draws each
+  chance and notes the skipped beat). The ride into the pile (DL-06) is skipped likewise. Compare them as distributions.
+- **Results:** `DL_SIM_OUT=<dir> dotnet test unity/core-tests --filter Prologue_Batch` writes
+  `results_core_prologue_mechanical.jsonl` and `results_core_prologue_first_playthrough.jsonl` (seeds 201 to 220, or
+  `DL_SIM_SEEDS=2,3,6`) in this format, with `"engine": "core"` and the chapter's cues under `"cues"`.
+  `summarise.py` reads both kinds. The run ends where the ported prologue does, so DL-06 has no column of its own
+  (no DL-07 mark); it is in `total`.
+- **Comparing first playthroughs with the prototype's: use `total` only.** Core's start at clock 0 with control after
+  one step, so `opening` and `with opening` read 0:00 (the prototype's ~29 s are its title and opening). Core's runs
+  also leave out the ride into the pile in DL-06, which about half of the prototype's players take, so their `total`
+  runs short of the prototype's by that ride.
+- **A new scene:** port its `bot.js` function into the script (or a new `ScriptedPlayer` under `Replay/Scripts/` for
+  another chapter), extend the parity test's window, and play it with
+  `SimRun.Play(new ChapterSimTarget(new ChapterSim(def)).NewGame(fromOpening: true), script)`.
