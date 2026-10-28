@@ -41,7 +41,7 @@ small. Textures, sidecars and the glTF JSON are stable. The web build has the sa
 | `<region>/<region>.gltf` + `.bin` | the region's objects, with the web exporter's settings plus `export_extras` (custom properties → glTF `extras`) |
 | `<region>/<region>.art.json` | sidecar: scenes, game region, lane x-range, bounds, counts, markers, materials, textures, driven names, TODO |
 | `<region>/<region>.prefab` | generated in Unity by `ArtPrefabBuilder` (commit it like `D17.controller`) |
-| `Textures/*.png` + `textures.json` | every set texture once, with its source size and use (color / normal / linear) |
+| `Textures/*.png` + `textures.json` | every set texture once, with its source size and use (color / normal / linear). No two file names are equal ignoring case (below). |
 | `Materials/*.mat` | URP Lit materials, one per Blender material name, generated in Unity |
 | `regions.json` | index of regions and characters |
 | `White/white.glb`, `Couriers/couriers.glb` | web exporter settings, rebuilt by the tool |
@@ -50,6 +50,17 @@ small. Textures, sidecars and the glTF JSON are stable. The web build has the sa
 New outputs get minimal `.meta` files with stable GUIDs (MD5 of the asset path, the same scheme as Core `StableGuid` and
 the audio importer), so references survive a delete and re-export.
 
+**Texture file names are unique ignoring case (U-24, #41).** Windows and macOS ignore case, and every region shares
+`Textures/`. The exporter names a PNG after its source file, so two source images can claim one name. `ring_C.png`
+(art/dl04, DL-08) and `ring_c.png` (art/pass4, DL-01 to DL-10) differ only by case. `ration_sign.png` (art/pass3 and
+art/dl05) and `residential_sign.png` (art/dl03 and art/cage) are exactly equal, so the later region overwrote the
+earlier one's texture on every OS. Before anything exports, the tool groups the set's images by file name ignoring
+case. In each group, the image whose first region comes first keeps the name, and each other image is renamed
+`<name>_<its first region>`: `ring_C_DL-08.png`, `ration_sign_DL-11.png`, `residential_sign_DL-09.png`. The choice
+uses the whole set, so a `--regions` run picks the same names. The export fails if two names in `textures.json` are
+equal ignoring case, or if a region writes a different image over a texture an earlier region wrote. Core
+`ArtExportTests` checks `textures.json` and the glTF image URIs too.
+
 **Why glTF + shared PNGs rather than GLB:** a texture embedded in a GLB is a sub-asset of glTFast's importer. It has no
 `TextureImporter`, so it can take no per-platform max size or format. External PNGs get one. Sharing the folder also
 stores each texture once. It is still one exporter (Blender's glTF), as the issue asked.
@@ -57,8 +68,19 @@ stores each texture once. It is still one exporter (Blender's glTF), as the issu
 ## Regions
 
 An object goes to the region its hierarchy's bounding-box centre x falls in, with the cuts taken from index.html's
-`sceneName` (L8135–8144). There are two exceptions. An object wider than 30 m goes to the backdrop. A mechanism's objects
-always go to their scene's region.
+`sceneName` (L8135–8144). There are three exceptions:
+
+- **Lane geometry is cut per region (U-25, #42).** An object wider than 30 m is lane geometry when its depth range
+  (Blender y, Unity z) contains the lane plane (y 0, where D-17 walks) and stays within y −10 to 15 (`conventions.py`
+  `LANE_DEPTH`, `is_lane_geometry`). The export cuts its copy with `bmesh.ops.bisect_plane` at each region cut inside
+  it, and each piece goes to its region under the source name (`Floor` in each glTF, with extras `dl_name` and
+  `dl_region`). The cut faces stay open; the next piece continues them. The web build exports the uncut object as before.
+  In the prologue this is `Floor` (x −5 to 43: pieces in DL-01, DL-02, DL-03 and DL-04) and `D5Street` (x 133.5 to
+  174.9, all in DL-11). Chapter 1 has nothing wider than 30 m. A lane object with children is not cut (the export logs
+  it) and goes to the backdrop.
+- **Any other object wider than 30 m goes to the backdrop.** That is the atrium's scenery (it reaches y 100 and more)
+  and `D5FarTiers`, which starts behind the lane (y 2.4).
+- **A mechanism's objects always go to their scene's region.**
 
 | Region | Scenes | Game region | Lane x | Size MB | Meshes | Prims | Tris | Mats | Tex | PC MB | Switch MB | MECH | CHK |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|

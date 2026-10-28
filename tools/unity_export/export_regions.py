@@ -11,7 +11,9 @@ Runs under bpy-as-module (pip install bpy==5.2.x, Python 3.13), the same as the 
 generators: it runs art/dl01/build_dl01.py's main() (and art/ch1/build_attendance.py's) with their export functions
 swapped for one that records which objects each web GLB would hold, then, in that throwaway Blender session:
 
-1. splits the set into regions (conventions.py: by bounding-box centre x; >30 m wide meshes go to the backdrop),
+1. splits the set into regions (conventions.py: by bounding-box centre x; >30 m wide meshes go to the backdrop, except
+   lane geometry, which is cut at the region cuts), and gives textures whose file names are equal ignoring case
+   distinct names,
 2. renames the mechanism objects to MECH_<Type>_<scene>_<name>[__<part>] (their source name kept as the custom
    property dl_name, exported as glTF extras) and adds the CHK_ checkpoint empties and the anchors of part-only
    mechanisms,
@@ -44,6 +46,7 @@ INDEX_HTML = os.path.join(REPO, 'game', 'undelivered', 'index.html')
 UNITY_PROJECT = os.path.join(REPO, 'unity', 'DeadLetter')
 DEFAULT_OUT = os.path.join(UNITY_PROJECT, 'Assets', 'Art')
 TEXTURES = 'Textures'
+REGION_ORDER = [r[0] for r in C.PROLOGUE] + [C.BACKDROP] + [r[0] for r in C.CHAPTER1]   # the export order
 
 
 def log(*a):
@@ -118,19 +121,134 @@ def world_bounds(objs):
     return lo, hi
 
 
-def split(objs, table, backdrop, forced):
-    """region name -> objects. forced: top-level object -> region (mechanisms export with their scene)."""
+def split(bpy, objs, table, backdrop, forced):
+    """region name -> objects. forced: top-level object -> region (mechanisms export with their scene). Lane geometry
+    wider than BACKDROP_WIDTH is cut at the region cuts (conventions.is_lane_geometry); its pieces replace it."""
     out = {}
     for top, members in hierarchy_groups(objs).items():
         lo, hi = world_bounds(members)
+        wide = hi[0] - lo[0] > C.BACKDROP_WIDTH
         if top in forced:
             region = forced[top]
-        elif backdrop and hi[0] - lo[0] > C.BACKDROP_WIDTH:
+        elif wide and C.is_lane_geometry(lo, hi):
+            if len(members) == 1 and top.type == 'MESH':
+                for region, piece in cut_by_region(bpy, top, table, lo, hi):
+                    out.setdefault(region, []).append(piece)
+                continue
+            log(f'lane geometry {top.name} has children or is not a mesh: not cut')
+            region = backdrop[0] if backdrop else C.region_for_x(table, (lo[0] + hi[0]) / 2) or table[-1][0]
+        elif backdrop and wide:
             region = backdrop[0]
         else:
             region = C.region_for_x(table, (lo[0] + hi[0]) / 2) or table[-1][0]
         out.setdefault(region, []).extend(members)
     return out
+
+
+def cut_by_region(bpy, ob, table, lo, hi):
+    """Cuts a copy of mesh ob at each region cut inside its x range (bmesh bisect, the cut faces left open: the next
+    piece continues them). Returns [(region, piece)]. A piece is named <name>@<region> in Blender, exported as <name>
+    (export_set swaps the names), and carries dl_name <name> and dl_region. ob itself is renamed <name>__uncut and is
+    exported nowhere. The web GLBs are written before this runs, from the uncut object."""
+    import bmesh
+    from mathutils import Vector
+    src = ob.name
+    ob.name = src + '__uncut'
+    world_to_local = ob.matrix_world.inverted()
+    normal = (ob.matrix_world.to_3x3().transposed() @ Vector((1.0, 0.0, 0.0))).normalized()
+    pieces = []
+    for name, _scenes, _r, x0, x1 in table:
+        if min(x1, hi[0]) <= max(x0, lo[0]):
+            continue
+        bm = bmesh.new()
+        bm.from_mesh(ob.data)
+        for x, keep_above in ((x0, True), (x1, False)):
+            if lo[0] < x < hi[0]:
+                bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], dist=1e-5,
+                                       plane_co=world_to_local @ Vector((x, 0.0, 0.0)), plane_no=normal,
+                                       clear_inner=keep_above, clear_outer=not keep_above)
+        if not bm.faces:
+            bm.free()
+            continue
+        me = bpy.data.meshes.new(f'{src}@{name}')
+        bm.to_mesh(me)
+        bm.free()
+        piece = ob.copy()
+        piece.data = me
+        piece.name = f'{src}@{name}'
+        piece['dl_name'], piece['dl_region'] = src, name
+        for coll in ob.users_collection:
+            coll.objects.link(piece)
+        pieces.append((name, piece))
+    bpy.context.view_layer.update()
+    log(f'lane geometry {src} (x {lo[0]:.2f}..{hi[0]:.2f}) cut into', ', '.join(
+        f'{r} ({len(p.data.polygons)} faces)' for r, p in pieces))
+    if lo[0] < table[0][3] or hi[0] > table[-1][4]:
+        log(f'lane geometry {src}: the part outside the regions\' lane range is dropped')
+    return pieces
+
+
+# ---- Texture file names -------------------------------------------------------------------------------------------
+
+def material_images(o):
+    """The images o's materials sample (through node groups too)."""
+    out = []
+
+    def walk(tree):
+        for n in tree.nodes:
+            if n.type == 'TEX_IMAGE' and n.image is not None and n.image not in out:
+                out.append(n.image)
+            elif n.type == 'GROUP' and n.node_tree is not None:
+                walk(n.node_tree)
+
+    for slot in getattr(o, 'material_slots', []):
+        if slot.material is not None and slot.material.node_tree is not None:
+            walk(slot.material.node_tree)
+    return out
+
+
+def texture_stem(img):
+    """The file name (without .png) Blender's glTF exporter gives img: its file's name, else its own name
+    (io_scene_gltf2 blender/exp/material/image.py __gather_name). The final check catches a wrong guess."""
+    stem, ext = os.path.splitext(os.path.basename(img.filepath))
+    if ext.lower() in ('.png', '.jpg', '.jpeg') and stem:
+        return stem
+    return os.path.splitext(img.name)[0]
+
+
+def texture_renames(regions, table, claimed, scratch):
+    """Gives each set image whose file name equals another one's ignoring case (exactly equal included: art/dl05 and art/pass3
+    each have a ration_sign.png) a distinct name, conventions.case_unique_name, before anything exports.
+    The image is pointed at a renamed copy of its PNG in scratch, so the exporter writes the new name. regions: region
+    -> objects for the whole set, whatever --regions asks for, so the choice is the same in every run. claimed: stems
+    other sets already use; they come first. Returns {image name: new stem}."""
+    import bpy
+    order = {r[0]: i for i, r in enumerate(table)}
+    first = {}
+    for region in sorted(regions, key=lambda r: order.get(r, len(order))):
+        for o in regions[region]:
+            for img in material_images(o):
+                first.setdefault(img, region)
+    renames, taken = {}, {s.lower() for s in claimed}
+    for img, region in sorted(first.items(), key=lambda kv: (order.get(kv[1], len(order)), texture_stem(kv[0]), kv[0].name)):
+        stem = texture_stem(img)
+        new, k = stem, 1
+        while new.lower() in taken:
+            new = C.case_unique_name(stem, region) + ('' if k == 1 else f'_{k}')
+            k += 1
+        taken.add(new.lower())
+        if new == stem:
+            continue
+        src = bpy.path.abspath(img.filepath)
+        if not os.path.isfile(src):
+            sys.exit(f'texture {img.name} must be renamed to {new} but has no file to copy')
+        dst = os.path.join(scratch, 'renamed_textures', new + os.path.splitext(src)[1])
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copyfile(src, dst)
+        renames[img.name] = new
+        img.filepath = dst
+        img.name = new + os.path.splitext(src)[1]
+    return renames
 
 
 # ---- Conventions applied to the export copy -----------------------------------------------------------------------
@@ -284,14 +402,17 @@ def sha(path):
 
 # ---- One build (prologue or chapter 1) --------------------------------------------------------------------------
 
-def export_set(bpy, set_objs, table, backdrop, out, wanted, mech, written_textures, index, driven):
+def export_set(bpy, set_objs, table, backdrop, out, wanted, mech, written_textures, index, driven, claimed, scratch):
     marker_coll = bpy.data.collections.new('UnityMarkers')
     bpy.context.scene.collection.children.link(marker_coll)
     records, forced, anchors, problems = apply_mechanisms(bpy, set_objs, marker_coll) if mech else ([], {}, [], [])
     for p in problems:
         log('mechanism map:', p)
     checkpoints = add_checkpoints(bpy, table, marker_coll)
-    regions = split(set_objs, table, backdrop, forced)
+    regions = split(bpy, set_objs, table, backdrop, forced)
+    renames = texture_renames(regions, table + ([backdrop] if backdrop else []), claimed, scratch)
+    for src, new in sorted(renames.items()):
+        log(f'texture {src} exports as {new}.png: its file name equals another one ignoring case')
     for e, region in anchors + checkpoints:
         regions.setdefault(region, []).append(e)
     meta = {r[0]: r for r in table + ([backdrop] if backdrop else [])}
@@ -307,7 +428,14 @@ def export_set(bpy, set_objs, table, backdrop, out, wanted, mech, written_textur
         os.makedirs(folder, exist_ok=True)
         path = os.path.join(folder, name + '.gltf')
         log('export', name, len(objs), 'objects')
+        pieces = [o for o in objs if o.get('dl_region') == name]
+        for o in pieces:
+            o.name = o['dl_name']        # each region's piece of a cut object exports under the source name
+            if o.name != o['dl_name']:
+                sys.exit(f"{name}: a piece of {o['dl_name']} could not take its name (got {o.name})")
         export_gltf(bpy, path, objs, separate=True)
+        for o in pieces:
+            o.name = f"{o['dl_name']}@{name}"
         s = report.stats(path)
         j = s['json']
         mats = material_records(j)
@@ -316,7 +444,11 @@ def export_set(bpy, set_objs, table, backdrop, out, wanted, mech, written_textur
         for im in s['images']:
             textures.append({'file': im['file'], 'width': im['width'], 'height': im['height'],
                              'use': uses.get(im['file'], 'color')})
-            entry = written_textures.setdefault(im['file'], dict(textures[-1], regions=[]))
+            digest = sha(os.path.join(out, TEXTURES, im['file']))
+            entry = written_textures.setdefault(im['file'], dict(textures[-1], regions=[], sha=digest))
+            if entry['sha'] != digest:
+                # Two different images exported under one file name: the later one overwrote the earlier.
+                sys.exit(f"{name}: Textures/{im['file']} differs from the one {entry['regions']} exported")
             entry['regions'].append(name)
         lo, hi = world_bounds(objs)
         _, scenes, game_region, x0, x1 = meta[name]
@@ -397,12 +529,20 @@ def main():
     scratch = tempfile.mkdtemp(prefix='dl_unity_export_')
     index_path = os.path.join(out, 'regions.json')
     old_index = json.load(open(index_path))['regions'] if os.path.exists(index_path) else []
+    manifest_path = os.path.join(out, TEXTURES, 'textures.json')
+    old_manifest = json.load(open(manifest_path))['textures'] if os.path.exists(manifest_path) else []
+
+    def claimed(table, backdrop):
+        """Texture stems another set uses (written this run, or in textures.json): they keep their names."""
+        mine = {r[0] for r in table} | ({backdrop[0]} if backdrop else set())
+        stems = set(written_textures) | {t['file'] for t in old_manifest if not mine.intersection(t['regions'])}
+        return {os.path.splitext(f)[0] for f in stems}
 
     if not args.no_prologue:
         cap = run_captured(dl01, dl01.main, ['build_dl01.py', '--out', scratch], check_dir)
         log('prologue built:', {k: len(v) for k, v in cap.items()})
         records += export_set(bpy, cap['set'], C.PROLOGUE, C.PROLOGUE_BACKDROP, out, wanted, True,
-                              written_textures, index, driven)
+                              written_textures, index, driven, claimed(C.PROLOGUE, C.PROLOGUE_BACKDROP), scratch)
         if not args.no_characters:
             for key, folder, fname in (('white', 'White', 'white.glb'), ('couriers', 'Couriers', 'couriers.glb')):
                 dst = os.path.join(out, folder, fname)
@@ -435,7 +575,7 @@ def main():
         cap = run_captured(dl01, build_attendance.main, ['build_attendance.py', '--out', scratch], check_dir)
         log('chapter 1 built:', {k: len(v) for k, v in cap.items()})
         records += export_set(bpy, cap['attendance'], C.CHAPTER1, None, out, wanted, False,
-                              written_textures, index, driven)
+                              written_textures, index, driven, claimed(C.CHAPTER1, None), scratch)
 
     # Driven names per region, from the sidecars just written.
     for r in index:
@@ -447,15 +587,32 @@ def main():
 
     # The shared textures: manifest, metas, and (after a full export) no stale files.
     tex_dir = os.path.join(out, TEXTURES)
-    full = wanted is None and not args.no_prologue
+    full = wanted is None and not args.no_prologue and args.chapter1   # every set ran: stale textures can go
     if full:
         for f in os.listdir(tex_dir):
             stem = f[:-5] if f.endswith('.meta') else f
             if stem.endswith('.png') and stem not in written_textures:
                 os.remove(os.path.join(tex_dir, f))
-    manifest_path = os.path.join(tex_dir, 'textures.json')
-    manifest = {} if full or not os.path.exists(manifest_path) else {t['file']: t for t in json.load(open(manifest_path))['textures']}
-    manifest.update(written_textures)
+    # A partial run keeps the other regions' entries: each old entry loses the regions exported now, and goes (with its
+    # PNG) once no region uses it.
+    exported = {r['name'] for r in index if r['kind'] == 'set'}
+    manifest = {}
+    for t in [] if full else old_manifest:
+        kept = [r for r in t['regions'] if r not in exported]
+        if kept:
+            manifest[t['file']] = dict(t, regions=kept)
+        elif t['file'] not in written_textures:
+            for f in (t['file'], t['file'] + '.meta'):
+                if os.path.exists(os.path.join(tex_dir, f)):
+                    os.remove(os.path.join(tex_dir, f))
+            log('texture', t['file'], 'is no longer used: removed')
+    for f, t in written_textures.items():
+        old = manifest.get(f, {}).get('regions', [])
+        manifest[f] = {k: v for k, v in t.items() if k != 'sha'}
+        manifest[f]['regions'] = sorted(set(old) | set(t['regions']), key=REGION_ORDER.index)
+    clashes = C.case_collisions(manifest)
+    if clashes:
+        sys.exit(f'texture names equal ignoring case (they collide on Windows and macOS): {clashes}')
     write_text(manifest_path, json.dumps({'format': 1, 'textures': [manifest[k] for k in sorted(manifest)]}, indent=1) + '\n')
     ensure_meta(UNITY_PROJECT, tex_dir, folder=True)
     for f in os.listdir(tex_dir):

@@ -9,7 +9,7 @@ import hashlib
 # ---- Regions -----------------------------------------------------------------------------------------------------
 # One Unity export per scene (port_architecture §6.1: "split the current monolithic set.glb by scene"; §7 streams scenes).
 # A top-level object goes to the region its bounding-box centre x falls in (the rule §5's counts were measured with);
-# an object wider than BACKDROP_WIDTH goes to the backdrop instead. Boundaries are index.html's own scene cuts
+# an object wider than BACKDROP_WIDTH goes to the backdrop instead, unless it is lane geometry (below). Boundaries are index.html's own scene cuts
 # (sceneName, L8135-L8144): SH.x0 12.0, SH.x1 25.0 (L3887), GATE_X = OFF2 + 17.6 = 30.6 (L323), RATION5 47.9 / 59.8
 # (L3447), REGION4_X = OFF3 + 47.75 = 80.75 (L3007), CG.x0 = OFF3 + 64.6 = 97.6 (L3899), UPONLY.x0 = OFF4 + 76.8 = 118.8
 # (L3455), REGION5_X = OFF5 + 73.9 = 127.9 (L3446). DL-06 and DL-07 share one floor, one carrier line and one builder
@@ -52,6 +52,37 @@ def region_for_x(table, x):
         if x0 <= x < x1:
             return name
     return None
+
+
+# ---- Lane geometry (U-25, #42) -----------------------------------------------------------------------------------
+# An object wider than BACKDROP_WIDTH is lane geometry, not backdrop, when its depth range (Blender y, Unity z) contains
+# the lane plane (y 0, where D-17 walks) and stays inside LANE_DEPTH. The export cuts lane geometry at the region cuts
+# (on its own copy) and gives each piece its region. In the prologue that is Floor (x -5..43, y -4..12: DL-01..04) and
+# D5Street (x 133.5..174.9, y -8.4..5.9: DL-11). The atrium's scenery reaches y 100+, and D5FarTiers starts behind the
+# lane (y 2.4), so they stay backdrop. Chapter 1 has nothing wider than 30 m.
+LANE_DEPTH = (-10.0, 15.0)
+
+
+def is_lane_geometry(lo, hi):
+    """lo, hi: Blender world bounds of an object wider than BACKDROP_WIDTH."""
+    return LANE_DEPTH[0] <= lo[1] <= 0.0 <= hi[1] <= LANE_DEPTH[1]
+
+
+# ---- Texture file names (U-24, #41) ------------------------------------------------------------------------------
+# All textures share Art/Textures/, and Windows and macOS file systems ignore case, so no two texture files may have
+# names equal ignoring case (ring_c.png, DL-01..05, and ring_C.png, DL-08, did). Among names equal ignoring case, the one
+# whose first region comes first in the table keeps its name, and each other one gets its first region as a suffix:
+# ring_C.png -> ring_C_DL-08.png.
+def case_unique_name(stem, region):
+    return f'{stem}_{region}'
+
+
+def case_collisions(names):
+    """Groups of names that are equal ignoring case (each group sorted), for the export's final check."""
+    groups = {}
+    for n in names:
+        groups.setdefault(n.lower(), set()).add(n)
+    return [sorted(g) for _k, g in sorted(groups.items()) if len(g) > 1]
 
 
 # ---- Checkpoints -------------------------------------------------------------------------------------------------
