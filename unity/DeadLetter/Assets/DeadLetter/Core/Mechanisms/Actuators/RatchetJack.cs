@@ -69,8 +69,11 @@ namespace DeadLetter.Core.Mechanisms.Actuators
             const double low = 1.38;                                              // under the cup on the stops (1.4046)
             return new RatchetJackParams
             {
-                // Behind the crank post (363.35) on the terrace landing (1.2), facing it; just left of the bracket's stand.
-                Station = new Station(standX: 363.1, reach: 0.1, face: +1, floorY: 1.2),
+                // Behind the crank post (363.35) on the terrace landing (1.2), facing it. With the jack in its pocket the floor
+                // ends at 363.18 (its column, Dl19Lane), and three uses share 0.6 m left of it, each in its own reach so none
+                // outranks another (DL-19 §3 "The mantle spot", §4 solution): the bracket against the jack (363.08–363.45), the
+                // crank behind it (362.85–363.08), and the push bar behind that (BackReach, below: 362.55–362.85).
+                Station = new Station(standX: 362.98, reach: 0.115, face: +1, floorY: 1.2, reachX: 362.965),
                 BayX = 362.85, PocketX = 363.7,                                   // §11 Jack parked 362.85; JackPocket 363.7
                 Half = 0.35, Height = 0.25, PostHeight = 0.65,                    // §3 "The jack": chassis 0.7 long, 0.25 tall; post 0.65
                 SaddleOffset = 363.9 - 363.7,                                     // §3 "Pocket": the saddle cup at 363.9
@@ -78,6 +81,7 @@ namespace DeadLetter.Core.Mechanisms.Actuators
                 Travel = landing.CupY(1.85) - low,                                // §3: top of travel, left end at 1.85
                 WindSpeed = 0.1, ClickStep = 0.02,                                // §3: one click per 0.02 m, 0.1 m/s
                 Side = +1, Gap = 0.35 + 0.2,                                      // he pushes from behind the crank post
+                BackReach = 0.6,                                                  // he takes the push bar from up to 0.6 behind his stand (see Station)
                 Speed = 0.35, Accel = 1.3,                                        // grey-box: a heavy hold (cf. L2332's 1.3)
                 FloorY = 1.2,                                                     // §3: terrace landing 1.2
                 Platform = "dl19.landing", Pins = "dl19.pins",

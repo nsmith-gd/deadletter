@@ -68,12 +68,12 @@ namespace DeadLetter.Core.Mechanisms.Catches
         /// <summary>
         /// DL-19: the bracket at 363.65 (post 1.2–1.65): the bent pin through fork and lug at 1.62, the spare in its clip on
         /// the post's left face (363.6, 1.42), the tin cup under the fork (363.7, 1.3). He stands left of the post, facing
-        /// it; with the jack in its pocket (its crank post at 363.35) he reaches over from 363.05–363.45 (a scene decision:
-        /// the crank's stand is just left of this one).
+        /// it, from 363.08 to the mantle spot (363.45); with the jack in its pocket (its crank post at 363.35) he reaches over
+        /// it from 363.08–363.18, against the jack. The crank's reach ends where this one begins (RatchetJackParams.Dl19Jack).
         /// </summary>
         public static BracketPinsParams Dl19Pins() => new BracketPinsParams
         {
-            Station = new Station(standX: 363.25, reach: 0.2, face: +1, floorY: 1.2, reachX: 363.25),   // §3 "Bracket", terrace landing 1.2
+            Station = new Station(standX: 363.15, reach: 0.185, face: +1, floorY: 1.2, reachX: 363.265),   // §3 "Bracket", terrace landing 1.2
             BentHoldY = 1.55, SpareHoldY = 1.75,                    // §3 states: drooping 1.55; pinned on the spare 1.75
             LevelY = 1.75, LevelTolerance = 0.02, StopsY = 1.45,    // §3 states: level 1.75 ± 0.02; the stops 1.45
             Platform = "dl19.landing",

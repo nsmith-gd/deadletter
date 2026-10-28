@@ -20,7 +20,7 @@ namespace DeadLetter.Core.Tests
     public class Dl19MechanismTests
     {
         private const double Dt = Mech.Dt;
-        internal static readonly string[] Ch2 = { "ring_a", "terrace", "half_landing", "repaired" };
+        internal static readonly string[] Ch2 = Checkpoint.GameOrder;
 
         private sealed class Rig
         {
@@ -209,7 +209,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(PinPlace.Fork, r.Pins.BentPin);
             Assert.Equal(PinPlace.Clip, r.Pins.SparePin);
             Assert.Equal(PinSound.Creak, r.Pins.Sound);
-            Assert.False(r.Jack.Offer(InteractionQuery.At(363.1, 1.2), out _));  // the crank works only in the pocket
+            Assert.False(r.Jack.Offer(InteractionQuery.At(362.98, 1.2), out _)); // the crank works only in the pocket
             r.Idle(300);
             Assert.Equal(1.55, r.Landing.Position, 12);                          // it hangs there
         }
@@ -228,7 +228,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(363.7, r.Jack.X, 12);
             Assert.Equal(363.9, r.Jack.SaddleX, 12);
             Assert.Equal(1, r.Count("dl19.jack", RatchetJackEvent.Clunk));
-            Assert.True(r.Jack.Offer(InteractionQuery.At(363.1, 1.2), out var pose));
+            Assert.True(r.Jack.Offer(InteractionQuery.At(362.98, 1.2), out var pose));
             Assert.Equal(+1, pose.Face);
 
             // 2. Crank: the saddle meets the cup, lifts it off the pin, levels it; the creak stops and the rattle starts.
