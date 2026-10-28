@@ -31,6 +31,100 @@
  },
  "markers": [
   {
+   "name": "MECH_EscortTrolley_dl14b_trolley",
+   "prefix": "MECH",
+   "source": "Att14bTrolley",
+   "position": [
+    266.0,
+    0.03,
+    0.55
+   ],
+   "center": [
+    266.0263,
+    0.6265,
+    0.55
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14b.trolley"
+    },
+    {
+     "key": "name",
+     "value": "Att14bTrolley"
+    },
+    {
+     "key": "type",
+     "value": "EscortTrolley"
+    }
+   ]
+  },
+  {
+   "name": "MECH_EscortTrolley_dl14b_trolley__Att14bCone",
+   "prefix": "MECH",
+   "source": "Att14bCone",
+   "position": [
+    266.35,
+    1.0,
+    0.55
+   ],
+   "center": [
+    267.65,
+    0.55,
+    0.55
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14b.trolley"
+    },
+    {
+     "key": "name",
+     "value": "Att14bCone"
+    },
+    {
+     "key": "part",
+     "value": "Att14bCone"
+    },
+    {
+     "key": "type",
+     "value": "EscortTrolley"
+    }
+   ]
+  },
+  {
+   "name": "MECH_Dl14bFigure_dl14b_figure",
+   "prefix": "MECH",
+   "source": "Att14bFig",
+   "position": [
+    269.9,
+    0.03,
+    0.85
+   ],
+   "center": [
+    269.9,
+    0.5005,
+    0.847
+   ],
+   "hasMesh": true,
+   "props": [
+    {
+     "key": "mech",
+     "value": "dl14b.figure"
+    },
+    {
+     "key": "name",
+     "value": "Att14bFig"
+    },
+    {
+     "key": "type",
+     "value": "Dl14bFigure"
+    }
+   ]
+  },
+  {
    "name": "CHK_corridor",
    "prefix": "CHK",
    "source": "",
@@ -62,141 +156,6 @@
   }
  ],
  "materials": [
-  {
-   "name": "Att14bBeam",
-   "baseColor": [
-    1,
-    0.8500000238418579,
-    0.6000000238418579,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 0.5,
-   "emissive": [
-    1,
-    0.8500000238418579,
-    0.6000000238418579
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "PupilWood",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "CrateWood",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "WornIron",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0.6000000238418579,
-   "roughness": 1.0,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
-  {
-   "name": "Att14bAtlas",
-   "baseColor": [
-    1,
-    1,
-    1,
-    1
-   ],
-   "metallic": 0,
-   "roughness": 0.800000011920929,
-   "emissive": [
-    0,
-    0,
-    0
-   ],
-   "emissiveStrength": 1.0,
-   "transmission": 0.0,
-   "alphaMode": "OPAQUE",
-   "alphaCutoff": 0.5,
-   "doubleSided": true,
-   "baseColorTexture": "dl14b_atlas.png",
-   "emissiveTexture": "",
-   "normalTexture": "",
-   "normalScale": 1.0,
-   "metallicRoughnessTexture": "",
-   "occlusionTexture": ""
-  },
   {
    "name": "AttGlobeLamp",
    "baseColor": [
@@ -360,6 +319,87 @@
    "occlusionTexture": ""
   },
   {
+   "name": "CrateWood",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "WornIron",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6000000238418579,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Att14bAtlas",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.800000011920929,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "dl14b_atlas.png",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
    "name": "CastIron",
    "baseColor": [
     1,
@@ -495,6 +535,33 @@
    "occlusionTexture": ""
   },
   {
+   "name": "PupilWood",
+   "baseColor": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 1.0,
+   "emissive": [
+    0,
+    0,
+    0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
    "name": "CreamPaint",
    "baseColor": [
     1,
@@ -589,6 +656,33 @@
     0,
     0,
     0
+   ],
+   "emissiveStrength": 1.0,
+   "transmission": 0.0,
+   "alphaMode": "OPAQUE",
+   "alphaCutoff": 0.5,
+   "doubleSided": true,
+   "baseColorTexture": "",
+   "emissiveTexture": "",
+   "normalTexture": "",
+   "normalScale": 1.0,
+   "metallicRoughnessTexture": "",
+   "occlusionTexture": ""
+  },
+  {
+   "name": "Att14bBeam",
+   "baseColor": [
+    1,
+    0.8500000238418579,
+    0.6000000238418579,
+    1
+   ],
+   "metallic": 0,
+   "roughness": 0.5,
+   "emissive": [
+    1,
+    0.8500000238418579,
+    0.6000000238418579
    ],
    "emissiveStrength": 1.0,
    "transmission": 0.0,

@@ -28,6 +28,20 @@ namespace DeadLetter.Core.Lane
         void Limits(double x, double y, ref double left, ref double right);
     }
 
+    /// <summary>
+    /// Optional, on a contributor: a surface that depends on where he is standing as well as on x. Chapter 1's boards in
+    /// the air (DL-13's steps, DL-14's ledges, DL-15's balcony) are solid only to someone already up at the level below
+    /// them (<c>surfaceAtt</c> reads <c>game.y</c>, L5258–L5264). <see cref="LaneGeometry"/> passes the probe's reference
+    /// height, the motor's feet as they are at that point of its step (<see cref="Motor.IMotorWorld.SurfaceAt"/>), which
+    /// is the prototype's <c>game.y</c> at the same point; a probe with no reference height passes NaN (then nothing
+    /// height-dependent answers). <see cref="ILaneContributor.Surface"/> is not called on such a contributor.
+    /// </summary>
+    public interface ILaneHeightContributor : ILaneContributor
+    {
+        /// <summary>The standable top at x for someone with feet at <paramref name="refY"/> (NaN: unknown).</summary>
+        double Surface(double x, double refY, double surface);
+    }
+
     /// <summary>Base for contributors: every probe passes through unchanged.</summary>
     public abstract class LaneContributor : ILaneContributor
     {

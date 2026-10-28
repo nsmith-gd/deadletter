@@ -18,5 +18,19 @@ namespace DeadLetter.Core.Tests
             new Dl05ChapterProbe(),
             new Dl06ChapterProbe(),
         };
+
+        /// <summary>Chapter 1's, DL-12 on (<see cref="AttendanceChapterTraceTests"/>).</summary>
+        public static IReadOnlyList<IChapterTraceProbe> Attendance() => new IChapterTraceProbe[]
+        {
+            new Dl12ChapterProbe(),
+            new Dl13ChapterProbe(),
+            new Dl14ChapterProbe(),
+            new Dl14aChapterProbe(),
+            new Dl14bChapterProbe(),
+            new Dl15ChapterProbe(),
+            new Dl16ChapterProbe(),
+            new Dl16aChapterProbe(),
+            new Dl17ChapterProbe(),
+        };
     }
 }

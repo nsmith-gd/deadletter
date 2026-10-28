@@ -35,6 +35,13 @@ namespace DeadLetter.Core.Mechanisms
         /// <summary>The calm accessibility option, passed to every step.</summary>
         public bool Calm { get; set; }
 
+        /// <summary>
+        /// The game clock this step (<c>game.clock</c>, seconds), passed to every step; NaN when the driver has none (unit
+        /// tests). A mechanism that times something as the prototype does with <c>game.clock − since</c> reads it: a sum of
+        /// dt from 0 rounds differently from a difference of clock values (DL-15's dismissal, <see cref="Plates.SeatRow"/>).
+        /// </summary>
+        public double Clock { get; set; } = double.NaN;
+
         public int Count => _order.Count;
         public IMechanism this[int i] => _order[i];
 
@@ -86,7 +93,7 @@ namespace DeadLetter.Core.Mechanisms
         {
             RequireBuilt();
             Log.Clear();
-            var ctx = new StepContext(dt, Tick, player, Calm, Log);
+            var ctx = new StepContext(dt, Tick, player, Calm, Log, Clock);
             for (int i = 0; i < _order.Count; i++) _order[i].Step(ctx);
             Tick++;
         }

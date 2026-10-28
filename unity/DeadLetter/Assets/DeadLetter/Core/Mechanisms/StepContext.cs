@@ -57,10 +57,12 @@ namespace DeadLetter.Core.Mechanisms
         /// <summary>The "calm" accessibility option (<c>game.calm</c>): softer flicker and no shutter jitter (L1541, L1695).</summary>
         public readonly bool Calm;
         public readonly MechanismLog Log;
+        /// <summary>The game clock this step, seconds (<see cref="MechanismGraph.Clock"/>); NaN when the driver has none.</summary>
+        public readonly double Clock;
 
-        public StepContext(double dt, long tick, in PlayerPose player, bool calm, MechanismLog log)
+        public StepContext(double dt, long tick, in PlayerPose player, bool calm, MechanismLog log, double clock = double.NaN)
         {
-            Dt = dt; Tick = tick; Player = player; Calm = calm; Log = log;
+            Dt = dt; Tick = tick; Player = player; Calm = calm; Log = log; Clock = clock;
         }
     }
 }

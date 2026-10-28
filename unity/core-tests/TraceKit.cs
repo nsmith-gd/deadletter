@@ -13,7 +13,7 @@ namespace DeadLetter.Core.Tests
     /// tools/sim/README.md): the input the game consumed that step and the state after it. Lines are deltas; the loader
     /// carries unchanged fields forward. Three.js z is kept as recorded (− into the set).
     /// </summary>
-    internal sealed class TraceStep
+    internal sealed partial class TraceStep
     {
         public int I;
         // Input (index.html L1215): left/right keys, axis, edges and holds, the walk modifier.
@@ -209,13 +209,13 @@ namespace DeadLetter.Core.Tests
                 case "pl6": s.Pl6 = N(v); break;
                 case "rd6": s.Rd6 = N(v); break;
                 case "cr6": s.Cr6 = S(v); break;
-                default: throw new InvalidDataException("Unknown trace field '" + k + "'.");
+                default: if (!s.ApplyChapter1(k, v)) throw new InvalidDataException("Unknown trace field '" + k + "'."); break;
             }
         }
 
-        private static bool B(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetInt32() != 0 : v.ValueKind == JsonValueKind.True;
-        private static string S(JsonElement v) => v.ValueKind == JsonValueKind.String ? v.GetString() : null;
-        private static double? N(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetDouble() : (double?)null;
+        internal static bool B(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetInt32() != 0 : v.ValueKind == JsonValueKind.True;
+        internal static string S(JsonElement v) => v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        internal static double? N(JsonElement v) => v.ValueKind == JsonValueKind.Number ? v.GetDouble() : (double?)null;
 
         /// <summary>Index of the first step in <paramref name="mode"/> (e.g. the first step of play).</summary>
         public int FirstIndex(Func<TraceStep, bool> pred)
