@@ -49,7 +49,7 @@ namespace DeadLetter.Core.Presentation
         AttBlindW1, AttBlindW2,
         /// <summary>DL-14b's trolley beam: its base, riding 1.1 m ahead of the trolley (L6429).</summary>
         AttBeam,
-        /// <summary>DL-14's jam lamp: <c>1.2 · (0.6 + 0.4 · sin 31t)</c> while the chain grinds against the pole, else 0 (L5465–L5466; its 0.1 s ease left out).</summary>
+        /// <summary>DL-14's jam lamp: <c>1.2 · (0.6 + 0.4 · sin 31t)</c> while the chain grinds against the pole, else 0 (L5465–L5466; its 0.1 s ease left out); calm: a steady 1.2 · 0.6 (FlashEffects' <c>dl14.clutchLight</c>).</summary>
         AttJam,
     }
 
@@ -258,7 +258,7 @@ namespace DeadLetter.Core.Presentation
                 case LightDriver.AttBlindW1: return d.Intensity * (1 - (_blinds14a != null ? _blinds14a.A : 0));
                 case LightDriver.AttBlindW2: return d.Intensity * (1 - (_blinds14a != null ? _blinds14a.B : 0));
                 case LightDriver.AttBeam: return d.Intensity;
-                case LightDriver.AttJam: return _blinds14 != null && _blinds14.Slipping ? 1.2 * (0.6 + 0.4 * Math.Sin(t * 31)) : 0;
+                case LightDriver.AttJam: return _blinds14 != null && _blinds14.Slipping ? 1.2 * (calm ? 0.6 : 0.6 + 0.4 * Math.Sin(t * 31)) : 0;
                 default: return d.Intensity;
             }
         }
