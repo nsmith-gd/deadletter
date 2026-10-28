@@ -5,11 +5,15 @@ using DeadLetter.Core.Cues;
 using DeadLetter.Core.Hazards;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Maths;
+using DeadLetter.Core.Mechanisms.Actuators;
+using DeadLetter.Core.Mechanisms.Cycles;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Scenes;
+using DeadLetter.Core.Scenes.Attendance;
 using DeadLetter.Core.Scenes.Dl03;
 using DeadLetter.Core.Scenes.Dl04;
 using DeadLetter.Core.Scenes.Dl06;
+using DeadLetter.Core.Scenes.Dl14;
 
 namespace DeadLetter.Core.Streaming
 {
@@ -30,6 +34,11 @@ namespace DeadLetter.Core.Streaming
         private readonly Dl04Rules _dl04;
         private readonly Dl06Scanner _scanner;
         private readonly RacksReveal _reveal;
+        // Chapter 1 (null elsewhere): the eased camera state, and what its signals read.
+        private readonly AttendanceFramingState _att;
+        private readonly CycleClock _lesson;
+        private readonly Door _stairDoor;
+        private double _attClock = double.NaN;
         private readonly System.Collections.Generic.Dictionary<int, string> _deathClips = new System.Collections.Generic.Dictionary<int, string>();
 
         static ChapterPresenter()
@@ -44,6 +53,20 @@ namespace DeadLetter.Core.Streaming
             _dl04 = dl04 != null ? sim.RulesOf(dl04) as Dl04Rules : null;
             sim.Graph.TryGet("dl06.scanner", out _scanner);
             _reveal = sim.Def.Scene(Dl03Scene.Id) != null || dl04 != null ? sim.Shared<RacksReveal>() : null;
+            if (sim.Def.Id == ChapterDefs.AttendanceId)
+            {
+                _att = new AttendanceFramingState();
+                sim.Graph.TryGet("dl13.lesson", out _lesson);
+                sim.Graph.TryGet("dl17.stairDoor", out _stairDoor);
+                sim.Checkpoints.Reloaded += OnAttReloaded;
+            }
+        }
+
+        /// <summary><c>resetAtt</c> at every checkpoint start and respawn (L8018): the eased state starts over, and eases from the next step.</summary>
+        private void OnAttReloaded(Mechanisms.Checkpoint _)
+        {
+            _att.Reset();
+            _attClock = _sim.Clock;
         }
 
         public ChapterSim Sim => _sim;
@@ -74,6 +97,48 @@ namespace DeadLetter.Core.Streaming
             signals.Set(PrologueFraming.Dl02Reveal, reveal);
             signals.Set(PrologueFraming.Dl02Realised, _dl04 != null && _dl04.Realised && _sim.Region == 2 ? 1 : 0);
             signals.Set(PrologueFraming.Dl06Pit, _scanner != null ? PrologueFraming.PitSignal(InPitPhase, _scanner.T) : 0);
+            if (_att != null) UpdateAttendanceSignals(signals);
+        }
+
+        /// <summary>
+        /// Chapter 1's framing signals (<see cref="AttendanceFraming"/>). <c>k13</c> and <c>k15</c> ease once per sim step
+        /// (keyed on the clock, so a second call in the same step, e.g. after a placement, changes nothing).
+        /// </summary>
+        private void UpdateAttendanceSignals(FramingSignalTable signals)
+        {
+            if (_sim.Clock != _attClock)
+            {
+                _att.Step(_lesson != null && _lesson.On, _sim.X, _sim.Y, ChapterSim.StepSeconds);
+                _attClock = _sim.Clock;
+            }
+            _att.Publish(signals);
+            signals.Set(AttendanceFraming.Gallery, AttendanceFraming.GallerySignal(_sim.Y));
+            signals.Set(AttendanceFraming.Duct, _sim.SceneActKind == DuctAct.Hatch ? 1 : 0);
+            signals.Set(AttendanceFraming.Door17, _stairDoor != null ? Smooth.Step(_stairDoor.Position) : 0);
+        }
+
+        /// <summary>
+        /// Chapter 1's push from the motor (L7788): mantling pushes in fully, and every act past its approach but a quirk
+        /// pushes in. Of the kinds the prototype leaves out, only <c>'quirk'</c> happens here: <c>'grab'</c> is the
+        /// trolleys' and DL-05's desk (chapter 1's pushables are <c>'grabPush'</c>, which pushes) and <c>'latch'</c> is
+        /// DL-01's lever, so <see cref="D17Framing.Push"/>'s grab and Pull/Flinch exclusions are the prologue's, not these.
+        /// </summary>
+        private static CameraPush AttendanceMotorPush(D17Motor m)
+        {
+            if (m.IsMantling) return CameraPush.Mantle;
+            if (m.IsActing && m.ActPhase != ActPhase.Approach && m.ActVerb != Verb.Quirk) return CameraPush.Act;
+            return CameraPush.None;
+        }
+
+        /// <summary>
+        /// Chapter 1's push during a scene act (L7788): every act there is the prototype's <c>att</c> or a motor act Core
+        /// runs as a scene act, so it pushes in once past its approach; quirks never do.
+        /// </summary>
+        private CameraPush AttendanceActPush()
+        {
+            var kind = _sim.SceneActKind;
+            if (kind == ActIds.Quirk || _sim.SceneActPhase == AttAct.Approach) return CameraPush.None;
+            return CameraPush.Act;
         }
 
         private bool InPitPhase => _scanner != null && (_scanner.Phase == Dl06ScanPhase.Reveal || _scanner.Phase == Dl06ScanPhase.Check);
@@ -89,9 +154,10 @@ namespace DeadLetter.Core.Streaming
             var m = _sim.Motor;
             int leg = TransitLeg;
             CameraPush push;
-            if (_sim.Act == null) push = D17Framing.Push(m);
+            if (_sim.Act == null) push = _att != null ? AttendanceMotorPush(m) : D17Framing.Push(m);
             else if (leg == 0) push = CameraPush.Transit;
             else if (_sim.SceneActKind == RealiseAct.Realise) push = CameraPush.Realise;
+            else if (_att != null) push = AttendanceActPush();
             else push = CameraPush.None;
             ShotRequest? shot = MomentShot();
             if (!shot.HasValue) shot = LabelShot();

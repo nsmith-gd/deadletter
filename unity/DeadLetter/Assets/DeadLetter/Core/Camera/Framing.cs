@@ -78,6 +78,12 @@ namespace DeadLetter.Core.Camera
         public double LeadK = 1, Pivot, Gain = 1, Offset;
         /// <summary>Extra factor on the weight for cx only (DL-04's among-the-couriers frame uses 0.6, L7689).</summary>
         public double CxWeightScale = 1;
+        /// <summary>
+        /// Moves <see cref="CxMax"/> by <see cref="CxMaxGain"/> × this signal (null: fixed). DL-17's workshop frame reaches
+        /// 2.2 m further right as the stair door opens, <c>clamp(…, 328.2, 336.8 + 2.2·open17)</c>, L5877.
+        /// </summary>
+        public string CxMaxSignal;
+        public double CxMaxGain;
 
         // ---- Volume and fog --------------------------------------------------------------------------------
         public bool HasVolume;
@@ -101,6 +107,8 @@ namespace DeadLetter.Core.Camera
 
         public FramingZone WithVolume(double d, double h, double look, double fitWidth = 0)
         { HasVolume = true; Volume = new FramingVolume(d, h, look); FitWidth = fitWidth; return this; }
+
+        public FramingZone WithCxMaxSignal(string signal, double gain) { CxMaxSignal = signal; CxMaxGain = gain; return this; }
 
         public FramingZone WithFog(double fog) { Fog = fog; return this; }
         public FramingZone In(double x, double blend) { XIn = x; XInBlend = blend; return this; }
@@ -154,7 +162,7 @@ namespace DeadLetter.Core.Camera
                 if (Zones[i].LeadSoften != 0) lead *= 1 - Zones[i].LeadSoften * Zones[i].Weight(x, y, signals);
             var f = new Frame
             {
-                Cx = CxTarget(Base, x, lead),
+                Cx = CxTarget(Base, x, lead, signals),
                 Volume = Fit(Base, config, aspect),
                 Fog = Base.Fog,
             };
@@ -172,7 +180,7 @@ namespace DeadLetter.Core.Camera
                 if (!(w > 0)) continue;
                 var t = new Frame
                 {
-                    Cx = z.HasCx ? CxTarget(z, x, lead) : f.Cx,
+                    Cx = z.HasCx ? CxTarget(z, x, lead, s) : f.Cx,
                     Volume = z.HasVolume ? Fit(z, c, aspect) : f.Volume,
                     Fog = double.IsNaN(z.Fog) ? f.Fog : z.Fog,
                 };
@@ -184,8 +192,9 @@ namespace DeadLetter.Core.Camera
             return f;
         }
 
-        private static double CxTarget(FramingZone z, double x, double lead) =>
-            Smooth.Clamp(z.Pivot + z.Offset + z.Gain * (x - z.Pivot) + z.LeadK * lead, z.CxMin, z.CxMax);
+        private static double CxTarget(FramingZone z, double x, double lead, IFramingSignals s) =>
+            Smooth.Clamp(z.Pivot + z.Offset + z.Gain * (x - z.Pivot) + z.LeadK * lead, z.CxMin,
+                z.CxMaxSignal == null ? z.CxMax : z.CxMax + z.CxMaxGain * FramingZone.Read(s, z.CxMaxSignal));
 
         /// <summary><c>fit(vol, width)</c>, L7666: widen the distance so <c>width</c> metres fit the 35 mm frame.</summary>
         private static FramingVolume Fit(FramingZone z, CameraConfig c, double aspect)

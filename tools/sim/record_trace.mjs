@@ -204,6 +204,16 @@ const RECORDER = `window.__record = (rngSeed, startCp) => {
     return { ty17: [r6(t.x), r6(t.base), t.state].join(','), dr17: r6(d.drawer), rd17: b(d.read), ky17: b(d.key), sl17: d.sluice.join(','), tk17: r6(d.tank),
       ru17: r6(d.run), be17: J(d.beds), lt17: r6(d.latch), ld17: b(d.latched), do17: r6(d.door17 || 0), en17: b(s.ended) };
   }
+  // Chapter 1's camera (U-22b), only in region 6 (so no prologue line changes): the side view after the framing step
+  // (updateCamera's cam, L7787-L7804: frameAtt/frameAtt2, the push, the lag), before applyShots blends in an authored
+  // shot. Position (cam.x, cam.y, cam.dist), look target (cam.x, cam.look, 0), the vertical fov three.js gives the 35 mm
+  // base focal at the page's aspect, and the frame's fog density.
+  const CAM = D.cam, CAMERA = D.camera;
+  function cam6() {
+    if (G.region !== 6) return {};
+    return { camx6: r6(CAM.x), camy6: r6(CAM.y), camz6: r6(CAM.dist), lookx6: r6(CAM.x), looky6: r6(CAM.look), lookz6: 0,
+      fov6: r6(2 * Math.atan(0.5 * CAMERA.getFilmHeight() / 35) * 180 / Math.PI), fog6: r6(D.world.fog.density) };
+  }
   function state() {
     const c = G.ch1 && G.ch1.cart;
     return {
@@ -228,6 +238,7 @@ const RECORDER = `window.__record = (rngSeed, startCp) => {
       ...dl16(),
       ...dl16a(),
       ...dl17(),
+      ...cam6(),
     };
   }
   function flush() {

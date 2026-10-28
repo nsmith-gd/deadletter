@@ -168,6 +168,13 @@ same inputs and be compared step by step (`unity/core-tests/Dl01TraceTests.cs`).
       sluices), `tk17`/`ru17` (the tank and its run), `be17` (the beds), `lt17`/`ld17` (the float latch, latched),
       `do17` (the stair door), `en17` (the chapter ended).
   - Adding DL-14a's to DL-17's fields left every earlier field of every line unchanged (checked line by line).
+  - The camera (U-22b, `unity/core-tests/AttendanceCameraTraceTests.cs`), also only while `r` is 6: the side view after
+    `updateCamera`'s framing step (`frameAtt`/`frameAtt2`, the push, the lag; L7787–L7804), before `applyShots` blends
+    in an authored shot (DL-15's seat, DL-17's drawer, a label check). `camx6`/`camy6`/`camz6` (position: `cam.x`,
+    `cam.y`, `cam.dist`), `lookx6`/`looky6`/`lookz6` (look target: `cam.x`, `cam.look`, 0), `fov6` (the vertical fov
+    three.js gives the 35 mm base focal at the page's 16:9, film gauge 36) and `fog6` (the frame's fog density). Adding
+    them left every other field of every line byte-identical (each line with the camera keys taken out is the line
+    before them, checked line by line); the file grew from 460 KB to 840 KB.
 
 ## The bot in Unity's Core (`ReplayTests`, U-18)
 
