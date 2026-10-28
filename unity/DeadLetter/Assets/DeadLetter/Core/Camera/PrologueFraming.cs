@@ -7,8 +7,8 @@ namespace DeadLetter.Core.Camera
     /// from <c>frameFor</c> (index.html L7667–L7726) with OFF2/OFF3 resolved (L274). It is the reference the scene
     /// definitions' <c>CAM_</c> data is checked against, and the parity fixture for the tests. Not yet transcribed (they
     /// arrive with their scene ports, U-20/21/22): DL-07's <c>watchLoad</c> wide frame (its centre and width follow x,
-    /// L7713–L7720), DL-08–DL-10 (<c>k4</c>, L7728–L7753), DL-11 (<c>k5</c>, L7755–L7772) and chapter 1 (<c>frameAtt</c>,
-    /// L6470–L6489; <c>frameAtt2</c>, L5855–L5879).
+    /// L7713–L7720), DL-08–DL-10 (<c>k4</c>, L7728–L7753) and DL-11 (<c>k5</c>, L7755–L7772). Chapter 1's
+    /// (<c>frameAtt</c>, <c>frameAtt2</c>) is <see cref="AttendanceFraming"/>; <see cref="ChapterFraming"/> picks the track.
     /// </summary>
     public static class PrologueFraming
     {

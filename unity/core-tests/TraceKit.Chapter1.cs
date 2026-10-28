@@ -51,6 +51,9 @@ namespace DeadLetter.Core.Tests
         public string Ty17, Sl17, Be17;
         public double? Dr17, Tk17, Ru17, Lt17, Do17;
         public bool? Rd17, Ky17, Ld17, En17;
+        // The camera (U-22b): the side view after the framing step, before an authored shot blends in (updateCamera's cam,
+        // L7787–L7804): position, look target, the vertical fov of the 35 mm base focal, the frame's fog (prototype axes).
+        public double? CamX6, CamY6, CamZ6, LookX6, LookY6, LookZ6, Fov6, Fog6;
 
         /// <summary>DL-13's three steps (<c>s13</c>, comma-separated).</summary>
         public double[] Steps13() => Numbers(S13);
@@ -165,6 +168,14 @@ namespace DeadLetter.Core.Tests
                 case "ld17": Ld17 = Trace.B(v); return true;
                 case "do17": Do17 = Trace.N(v); return true;
                 case "en17": En17 = Trace.B(v); return true;
+                case "camx6": CamX6 = Trace.N(v); return true;
+                case "camy6": CamY6 = Trace.N(v); return true;
+                case "camz6": CamZ6 = Trace.N(v); return true;
+                case "lookx6": LookX6 = Trace.N(v); return true;
+                case "looky6": LookY6 = Trace.N(v); return true;
+                case "lookz6": LookZ6 = Trace.N(v); return true;
+                case "fov6": Fov6 = Trace.N(v); return true;
+                case "fog6": Fog6 = Trace.N(v); return true;
                 default: return false;
             }
         }

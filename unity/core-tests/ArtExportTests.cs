@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using DeadLetter.Core.Art;
+using DeadLetter.Core.Mechanisms;
+using DeadLetter.Core.Scenes;
+using DeadLetter.Core.Streaming;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -146,6 +149,90 @@ namespace DeadLetter.Core.Tests
             }
             // conventions.py maps 41 of the chapter's mechanisms to art (the rest have no object of their own).
             Assert.Equal(41, seen.Count);
+        }
+
+        /// <summary>Chapter 1 nodes with a mesh that nothing moves in the prototype either, and why.</summary>
+        internal static readonly Dictionary<string, string> Chapter1Static = new Dictionary<string, string>
+        {
+            ["MECH_PairedBlindDrive_dl14_blinds__AttChain"] = "only its texture scrolls while the blinds move (chainMap.offset, L5448), not its transform",
+        };
+
+        /// <summary>
+        /// Chapter 1 nodes the prototype changes that no binding reads yet, and why (follow-ups). The lamps are emission, not
+        /// motion; each needs a value its own mechanism does not hold.
+        /// </summary>
+        internal static readonly Dictionary<string, string> Chapter1Unbound = new Dictionary<string, string>
+        {
+            ["MECH_Dl12Peg_dl12_peg__AttPegLamp"] = "lamp: reads the strip's presence and the reach's clock (L5398-L5399), which the peg does not hold",
+            ["MECH_CycleClock_dl14a_nightLight__Att14aEyeSun"] = "lamp: the eye reads the blinds and the door, not the night-light alone (L6280-L6282)",
+            ["MECH_CycleClock_dl14a_nightLight__Att14aEyeW1"] = "lamp: as Att14aEyeSun",
+            ["MECH_CycleClock_dl14a_nightLight__Att14aEyeW2"] = "lamp: as Att14aEyeSun",
+            ["MECH_CycleClock_dl14a_nightLight__Att14aEyeDark"] = "lamp: as Att14aEyeSun",
+            ["MECH_PupilLift_dl15_lift__Att15LampPupil"] = "lamp: who is on the lift is the figures', not the lift's (L5826)",
+            ["MECH_PupilLift_dl15_lift__Att15LampEscort"] = "lamp: as Att15LampPupil, plus a clock blink (L5827)",
+            ["MECH_Dumbwaiter_dl16a_car__Att16aLoad1"] = "lamp: the load count is the car's plate's (dl16a.carLoad), with a flash (L6300)",
+            ["MECH_Dumbwaiter_dl16a_car__Att16aLoadOver"] = "lamp: as Att16aLoad1 (L6301)",
+            ["MECH_PairedBlindDrive_dl14_blinds__AttPanelPeel"] = "turns about a diagonal hinge (PEEL_AXIS, L5476, L5493): no view motion takes an arbitrary axis yet",
+            ["MECH_SluiceValve_dl17_valve"] = "spins while the rig's water runs (d.run > 0, L6304): the rig's state, not the valve's",
+            ["MECH_Dl16aTin_dl16a_tin1"] = "Core keeps no position (nothing offers the tins, L5983); from workshop it sits in the car (L6296), not placed yet",
+            ["MECH_Dl16aTin_dl16a_tin2"] = "Core keeps no position (nothing offers the tins, L5983)",
+        };
+
+        /// <summary>
+        /// Issue #50: every chapter 1 <c>MECH_</c> node with a mesh resolves to bindings (<see cref="MechanismViewBindings.For(string, string, string)"/>)
+        /// that its Core mechanism can read, in a chapter sim at <c>school</c>, or is listed above with a reason. Anchor empties
+        /// (no mesh) move nothing and have no bindings.
+        /// </summary>
+        [Fact]
+        public void Chapter1_mechanism_nodes_resolve_to_bindings_their_mechanisms_read()
+        {
+            var sim = new ChapterSim(ChapterDefs.Attendance());
+            sim.Begin("school");
+            var names = new HashSet<string>();
+            var problems = new List<string>();
+            int bound = 0;
+            foreach (string region in Chapter1Regions)
+            {
+                foreach (JsonElement m in Load(Art + region + "/" + region + ".art.json").GetProperty("markers").EnumerateArray())
+                {
+                    string name = m.GetProperty("name").GetString();
+                    ArtName n = ArtNames.Parse(name);
+                    if (n.Prefix != ArtPrefix.Mechanism) continue;
+                    names.Add(name);
+                    ViewBinding[] b = MechanismViewBindings.For(n.Type, n.Id, n.Part ?? "");
+                    bool listed = Chapter1Static.ContainsKey(name) || Chapter1Unbound.ContainsKey(name);
+                    if (!m.GetProperty("hasMesh").GetBoolean() || listed)
+                    {
+                        if (b.Length > 0) problems.Add(name + ": " + (listed ? "listed" : "an anchor") + " but bound to " + string.Join(", ", b));
+                        continue;
+                    }
+                    if (b.Length == 0) { problems.Add(name + ": no binding and not listed"); continue; }
+                    if (!sim.Graph.TryGet(n.Id, out IMechanism mech)) { problems.Add(name + ": no mechanism " + n.Id); continue; }
+                    foreach (ViewBinding v in b)
+                    {
+                        Func<double> read = MechanismReadout.Reader(mech, v.Channel, v.Index, () => false);
+                        if (read == null) problems.Add(name + ": " + mech.GetType().Name + " cannot read " + v);
+                        else if (double.IsNaN(read()) || double.IsInfinity(read())) problems.Add(name + ": " + v + " reads " + read());
+                    }
+                    bound++;
+                }
+            }
+            foreach (string k in Chapter1Static.Keys.Concat(Chapter1Unbound.Keys))
+                if (!names.Contains(k)) problems.Add(k + ": listed but not exported");
+            Assert.True(problems.Count == 0, string.Join("\n", problems));
+            Assert.Equal(95, names.Count);                                                   // conventions.py's 95 MECH_ nodes
+            Assert.Equal(95 - 8 - Chapter1Static.Count - Chapter1Unbound.Count, bound);       // 8 anchor empties
+        }
+
+        /// <summary>The prologue's bindings are unchanged by the id overload, except that no prologue node is a chapter 1 id.</summary>
+        [Fact]
+        public void The_id_overload_only_differs_for_chapter1_doors_and_DL16s_latch()
+        {
+            Assert.Equal(MechanismViewBindings.For("Door", ""), MechanismViewBindings.For("Door", "dl01.door", ""));
+            Assert.Equal(MechanismViewBindings.For("Latch", ""), MechanismViewBindings.For("Latch", "dl01.latch", ""));
+            Assert.Equal(ViewMotion.RotateY, MechanismViewBindings.For("Door", "dl17.stairDoor", "")[0].Motion);
+            Assert.Equal(95.0 / 90.0, MechanismViewBindings.For("Door", "dl15.classDoor", "")[0].Scale);
+            Assert.Equal(1, MechanismViewBindings.For("Latch", "dl16.latch", "")[0].Index);
         }
     }
 }

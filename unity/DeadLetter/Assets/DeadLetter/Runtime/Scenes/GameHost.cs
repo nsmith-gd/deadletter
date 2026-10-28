@@ -168,7 +168,7 @@ namespace DeadLetter.Runtime.Scenes
             Streamer = new SceneStreamer(ids, paths);
             _tick = new FixedTick(ChapterSim.StepSeconds, 4);
 
-            Rig = new CameraRig(CameraConfig.Prototype, PrologueFraming.Build());
+            Rig = new CameraRig(CameraConfig.Prototype, ChapterFraming.For(chapterId) ?? ChapterFraming.Fallback(chapterId, m => Debug.LogError("GameHost: " + m, this)));
             if (cameraDriver != null) cameraDriver.BindRig(Rig);
             if (player != null) player.AttachToHost(Sim.Motor, Sim.Resolver, () => (float)_tick.Alpha, () => Sim.Clock, this);
             if (player != null && SettingsStore.Loaded) Sim.Motor.AutoRun = SettingsStore.Current.AutoRun;

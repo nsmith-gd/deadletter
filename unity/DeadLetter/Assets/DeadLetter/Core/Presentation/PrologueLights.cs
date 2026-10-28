@@ -1,6 +1,8 @@
 using System;
+using DeadLetter.Core.Beings;
 using DeadLetter.Core.Maths;
 using DeadLetter.Core.Mechanisms.Actuators;
+using DeadLetter.Core.Mechanisms.Cycles;
 using DeadLetter.Core.Mechanisms.Drives;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Scenes.Dl06;
@@ -41,6 +43,14 @@ namespace DeadLetter.Core.Presentation
         SortingFloor, SortingSky,
         /// <summary>The Ration Hall's strip <c>14 · fl</c> and fill <c>2.2 · fl</c>, fl flickering unless calm (L4927–L4929); the candles (L4930).</summary>
         RationStrip, RationFill, Candles,
+        /// <summary>DL-14a's sun: <c>base · (0.06 + 0.94 · sun)</c>, the night-light's sun track (L6274).</summary>
+        AttSun,
+        /// <summary>DL-14a's light through W1 / W2: <c>base · (1 − w)</c> (L6275–L6276).</summary>
+        AttBlindW1, AttBlindW2,
+        /// <summary>DL-14b's trolley beam: its base, riding 1.1 m ahead of the trolley (L6429).</summary>
+        AttBeam,
+        /// <summary>DL-14's jam lamp: <c>1.2 · (0.6 + 0.4 · sin 31t)</c> while the chain grinds against the pole, else 0 (L5465–L5466; its 0.1 s ease left out); calm: a steady 1.2 · 0.6 (FlashEffects' <c>dl14.clutchLight</c>).</summary>
+        AttJam,
     }
 
     /// <summary>
@@ -150,6 +160,10 @@ namespace DeadLetter.Core.Presentation
         private readonly PulseSequencer _relay;
         private readonly CrankActuator _crank;
         private readonly Dl06Scanner _scanner;
+        // Chapter 1's driven lights (null elsewhere).
+        private readonly CycleClock _nightLight;
+        private readonly PairedBlindDrive _blinds14, _blinds14a;
+        private readonly EscortTrolley _trolley;
 
         public PrologueLighting(ChapterSim sim, ChapterPresenter presenter, ChapterSounds sounds, LightPoolBudget budget = null, LightDef[] defs = null)
         {
@@ -160,6 +174,10 @@ namespace DeadLetter.Core.Presentation
             sim.Graph.TryGet("dl01.relay", out _relay);
             sim.Graph.TryGet("dl01.crank", out _crank);
             sim.Graph.TryGet("dl06.scanner", out _scanner);
+            sim.Graph.TryGet("dl14a.nightLight", out _nightLight);
+            sim.Graph.TryGet("dl14.blinds", out _blinds14);
+            sim.Graph.TryGet("dl14a.blinds", out _blinds14a);
+            sim.Graph.TryGet("dl14b.trolley", out _trolley);
         }
 
         public LightPool Pool => _pool;
@@ -189,7 +207,11 @@ namespace DeadLetter.Core.Presentation
                 _pool.SetLevel(i, Level(d, i, t, calm, r));
             }
             for (int i = 0; i < _pool.Count; i++)
+            {
                 if (_pool[i].Kick) _pool.SetPosition(i, new Vec3(x + KickDx, sim.Y + KickDy, KickZ));
+                else if (_pool[i].Driver == LightDriver.AttBeam && _trolley != null)
+                    _pool.SetPosition(i, new Vec3(_trolley.X + (_trolley.Dir > 0 ? 1 : -1) * AttendanceLights.BeamAhead, AttendanceLights.BeamY, AttendanceLights.BeamZ));
+            }
             double a = t * 0.12;
             SearchTarget = new Vec3(10 + Math.Sin(a) * 5, 2.2 + Math.Sin(a * 1.7) * 1.2, -6);
             _pool.Assign(cameraX);
@@ -228,6 +250,11 @@ namespace DeadLetter.Core.Presentation
                 case LightDriver.RationStrip: return 14 * RationFlicker(t, calm);
                 case LightDriver.RationFill: return 2.2 * RationFlicker(t, calm);
                 case LightDriver.Candles: return CandlesLevel(t);
+                case LightDriver.AttSun: return d.Intensity * (0.06 + 0.94 * (_nightLight != null && _nightLight.TrackCount > 0 ? _nightLight.Value(0) : 1));
+                case LightDriver.AttBlindW1: return d.Intensity * (1 - (_blinds14a != null ? _blinds14a.A : 0));
+                case LightDriver.AttBlindW2: return d.Intensity * (1 - (_blinds14a != null ? _blinds14a.B : 0));
+                case LightDriver.AttBeam: return d.Intensity;
+                case LightDriver.AttJam: return _blinds14 != null && _blinds14.Slipping ? 1.2 * (calm ? 0.6 : 0.6 + 0.4 * Math.Sin(t * 31)) : 0;
                 default: return d.Intensity;
             }
         }

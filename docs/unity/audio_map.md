@@ -204,6 +204,15 @@ On first open (after step 3 below): on `DL_Persistent`, add an `AudioMixDirector
 
 ### Chapter 1 Attendance
 
+**In Core (U-22b, #50).** `ChapterSounds` reads chapter 1 through `AttendanceSounds`: the mechanisms' events (the strip, the
+gate, the lesson's bells and steps, the brakes, the cranks and blinds, the pupil lift, the seats, the rack and its latch, the
+car, the sluices, the rig, the float latch, the doors, the escort trolley), the acts (reach servos, lifts at f13, set-downs,
+the duct's turn, the drawer's drag layer, the servery's pushes) and the random polls (taps, splashes) on the seeded RNG. The
+DL-14a rules' `sound:door` cue is played as its three sounds (clank, bell, door), not as a key. `AmbienceWorld` answers
+`lessonRunning`, `restDoorShut` and `dismissed`. Not yet: the school's relay boxes (L6318–L6324), DL-17's stamp and T-key
+(L5705, L5779), the lever's clunk while figures wait (L5691), the stored figures' squeaks (L5753), the spindle without its
+key (L6212). `AttendancePresentationTests` checks them against the prototype's trace.
+
 | Audit item | Clip | Trigger in Unity (prototype line) | Status |
 |---|---|---|---|
 | DL-12 T `att_gate_1` to `att_gate_3` (the register) | tannoy crackle + chime | `VoicePlayer.Play(id, VoicePlayOptions.Flat(0.8))` (L5391, L5393) | Placeholder |

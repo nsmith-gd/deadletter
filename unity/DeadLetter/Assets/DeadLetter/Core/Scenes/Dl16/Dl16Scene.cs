@@ -82,6 +82,8 @@ namespace DeadLetter.Core.Scenes.Dl16
         public Dl16Lever(MechanismId id) : base(id, new Station(Dl16Scene.LeverStand, Dl16Scene.LeverReach, +1, reachX: Dl16Scene.LeverX)) { }
 
         public bool Engaged => _held;
+        /// <summary>The bridge's latch has dropped (the lever stays down for good, L5837).</summary>
+        public bool Latched => _latched != null && _latched.Engaged;
         public override ActProfile Profile => Pull;
 
         public override void Link(MechanismLinker link)

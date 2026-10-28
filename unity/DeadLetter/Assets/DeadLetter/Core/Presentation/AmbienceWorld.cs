@@ -1,6 +1,9 @@
 using System;
 using DeadLetter.Core.Audio;
+using DeadLetter.Core.Mechanisms.Actuators;
 using DeadLetter.Core.Mechanisms.Catches;
+using DeadLetter.Core.Mechanisms.Cycles;
+using DeadLetter.Core.Mechanisms.Plates;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Scenes.Dl03;
 using DeadLetter.Core.Scenes.Dl04;
@@ -28,6 +31,11 @@ namespace DeadLetter.Core.Presentation
         private readonly EmitterStep[] _steps;
         private readonly Latch _latch;
         private readonly RacksReveal _reveal;
+        // Chapter 1's conditions (null elsewhere).
+        private readonly CycleClock _lesson;
+        private readonly CycleBrake _lessonBrake;
+        private readonly Door _restDoor;
+        private readonly SeatRow _seats;
 
         public AmbienceWorld(ChapterSim sim, ChapterPresenter presenter = null, EmitterDef[] emitters = null, uint seed = 41)
         {
@@ -38,6 +46,10 @@ namespace DeadLetter.Core.Presentation
             _steps = new EmitterStep[_defs.Length];
             for (int i = 0; i < _defs.Length; i++) _states[i] = new EmitterState(seed + (uint)i * 7919u);
             sim.Graph.TryGet("dl01.latch", out _latch);
+            sim.Graph.TryGet("dl13.lesson", out _lesson);
+            sim.Graph.TryGet("dl13.brake", out _lessonBrake);
+            sim.Graph.TryGet("dl14a.door", out _restDoor);
+            sim.Graph.TryGet("dl15.seats", out _seats);
             _reveal = sim.Def.Scene(Dl03Scene.Id) != null || sim.Def.Scene(Dl04Scene.Id) != null ? sim.Shared<RacksReveal>() : null;
         }
 
@@ -59,7 +71,12 @@ namespace DeadLetter.Core.Presentation
             {
                 case Released: return _latch != null && _latch.Engaged;
                 case PrologueEmitters.Revealed: return _reveal != null && _reveal.Revealed;
-                default: return false;                                                      // lessonRunning, restDoorShut, dismissed: chapter one's
+                // Chapter 1: the lesson's clockwork runs while the lesson does and is not braked (L6595–L6596); rest hour's
+                // tannoy until DL-14a's door opens (!f14a.open, L6569); the bell once the class is dismissed (L6570).
+                case PrologueEmitters.LessonRunning: return _lesson != null && _lesson.On && !(_lessonBrake != null && _lessonBrake.Engaged);
+                case VoiceCatalog.RestDoorShut: return _restDoor != null && _restDoor.State == DoorState.Closed;
+                case VoiceCatalog.Dismissed: return _seats != null && _seats.Engaged;
+                default: return false;
             }
         }
 
