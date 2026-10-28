@@ -119,81 +119,34 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!114 &27431512
+--- !u!114 &105166787
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691962}
+  m_GameObject: {fileID: 135600016}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.MechanismView
   mechanismId: dl01.relay
-  part: RelayLamp1
+  part: RelayLamp0
   channels:
   - channel: 5
-    index: 1
+    index: 0
     motion: 5
     scale: 1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
---- !u!1 &119318916
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 119318918}
-  - component: {fileID: 119318917}
-  m_Layer: 0
-  m_Name: DL-01
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &119318917
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 119318916}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 624b70f315f77c7459b87189fffcd3ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.SceneView
-  chapterId: prologue
-  sceneId: DL-01
---- !u!4 &119318918
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 119318916}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 340691957}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &340691956
+--- !u!1001 &135600009
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 119318918}
+    m_TransformParent: {fileID: 1732812159}
     m_Modifications:
     - target: {fileID: 153616942763439000, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -513,105 +466,105 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 3099540580716893361, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 340691973}
+      addedObject: {fileID: 135600026}
     - targetCorrespondingSourceObject: {fileID: 8992685138854424683, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 340691972}
+      addedObject: {fileID: 135600025}
     - targetCorrespondingSourceObject: {fileID: 7185086495835229006, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 340691971}
+      addedObject: {fileID: 135600024}
     - targetCorrespondingSourceObject: {fileID: 2819630860480335158, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 340691970}
+      addedObject: {fileID: 135600023}
     - targetCorrespondingSourceObject: {fileID: 4728965926422900390, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 340691969}
+      addedObject: {fileID: 135600022}
     - targetCorrespondingSourceObject: {fileID: 5956670926590534783, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1924836798}
+      addedObject: {fileID: 105166787}
     - targetCorrespondingSourceObject: {fileID: 5160211631958537305, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 27431512}
+      addedObject: {fileID: 1771937972}
     - targetCorrespondingSourceObject: {fileID: 2585167996740973503, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 713595850}
+      addedObject: {fileID: 1666766903}
     - targetCorrespondingSourceObject: {fileID: 1561518926791322256, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1211784128}
+      addedObject: {fileID: 1087899172}
     - targetCorrespondingSourceObject: {fileID: 8677196672124597047, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 676033558}
+      addedObject: {fileID: 1624370408}
     - targetCorrespondingSourceObject: {fileID: 4113347673399284695, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1953234254}
+      addedObject: {fileID: 601170771}
   m_SourcePrefab: {fileID: 100100000, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
---- !u!4 &340691957 stripped
+--- !u!4 &135600010 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7010949087039370322, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691958 stripped
+--- !u!1 &135600011 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4113347673399284695, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691959 stripped
+--- !u!1 &135600012 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8677196672124597047, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691960 stripped
+--- !u!1 &135600013 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1561518926791322256, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691961 stripped
+--- !u!1 &135600014 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2585167996740973503, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691962 stripped
+--- !u!1 &135600015 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5160211631958537305, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691963 stripped
+--- !u!1 &135600016 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5956670926590534783, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691964 stripped
+--- !u!1 &135600017 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4728965926422900390, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691965 stripped
+--- !u!1 &135600018 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2819630860480335158, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691966 stripped
+--- !u!1 &135600019 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7185086495835229006, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691967 stripped
+--- !u!1 &135600020 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8992685138854424683, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &340691968 stripped
+--- !u!1 &135600021 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3099540580716893361, guid: 303cbeeae6c71154095e80ffea819a22, type: 3}
-  m_PrefabInstance: {fileID: 340691956}
+  m_PrefabInstance: {fileID: 135600009}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &340691969
+--- !u!114 &135600022
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691964}
+  m_GameObject: {fileID: 135600017}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
@@ -634,13 +587,13 @@ MonoBehaviour:
     scale: 1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
---- !u!114 &340691970
+--- !u!114 &135600023
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691965}
+  m_GameObject: {fileID: 135600018}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
@@ -655,13 +608,13 @@ MonoBehaviour:
     scale: 1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
---- !u!114 &340691971
+--- !u!114 &135600024
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691966}
+  m_GameObject: {fileID: 135600019}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
@@ -676,13 +629,13 @@ MonoBehaviour:
     scale: 1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
---- !u!114 &340691972
+--- !u!114 &135600025
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691967}
+  m_GameObject: {fileID: 135600020}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
@@ -697,13 +650,13 @@ MonoBehaviour:
     scale: 1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
---- !u!114 &340691973
+--- !u!114 &135600026
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691968}
+  m_GameObject: {fileID: 135600021}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
@@ -718,97 +671,13 @@ MonoBehaviour:
     scale: 1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
---- !u!114 &676033558
+--- !u!114 &601170771
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691959}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.MechanismView
-  mechanismId: dl01.shutter
-  part: Counterweight
-  channels:
-  - channel: 1
-    index: 0
-    motion: 2
-    scale: -1
-  hasPivot: 0
-  pivot: {x: 0, y: 0, z: 0}
---- !u!114 &713595850
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.MechanismView
-  mechanismId: dl01.relay
-  part: RelayLamp2
-  channels:
-  - channel: 5
-    index: 2
-    motion: 5
-    scale: 1
-  hasPivot: 0
-  pivot: {x: 0, y: 0, z: 0}
---- !u!114 &1211784128
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691960}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.MechanismView
-  mechanismId: dl01.shutter
-  part: 
-  channels:
-  - channel: 1
-    index: 0
-    motion: 2
-    scale: 1
-  hasPivot: 0
-  pivot: {x: 0, y: 0, z: 0}
---- !u!114 &1924836798
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691963}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.MechanismView
-  mechanismId: dl01.relay
-  part: RelayLamp0
-  channels:
-  - channel: 5
-    index: 0
-    motion: 5
-    scale: 1
-  hasPivot: 0
-  pivot: {x: 0, y: 0, z: 0}
---- !u!114 &1953234254
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340691958}
+  m_GameObject: {fileID: 135600011}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
@@ -823,8 +692,139 @@ MonoBehaviour:
     scale: -1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
+--- !u!114 &1087899172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 135600013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.MechanismView
+  mechanismId: dl01.shutter
+  part: 
+  channels:
+  - channel: 1
+    index: 0
+    motion: 2
+    scale: 1
+  hasPivot: 0
+  pivot: {x: 0, y: 0, z: 0}
+--- !u!114 &1624370408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 135600012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.MechanismView
+  mechanismId: dl01.shutter
+  part: Counterweight
+  channels:
+  - channel: 1
+    index: 0
+    motion: 2
+    scale: -1
+  hasPivot: 0
+  pivot: {x: 0, y: 0, z: 0}
+--- !u!114 &1666766903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 135600014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.MechanismView
+  mechanismId: dl01.relay
+  part: RelayLamp2
+  channels:
+  - channel: 5
+    index: 2
+    motion: 5
+    scale: 1
+  hasPivot: 0
+  pivot: {x: 0, y: 0, z: 0}
+--- !u!1 &1732812157
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1732812159}
+  - component: {fileID: 1732812158}
+  m_Layer: 0
+  m_Name: DL-01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1732812158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1732812157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 624b70f315f77c7459b87189fffcd3ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.SceneView
+  chapterId: prologue
+  sceneId: DL-01
+--- !u!4 &1732812159
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1732812157}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 135600010}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1771937972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 135600015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.MechanismView
+  mechanismId: dl01.relay
+  part: RelayLamp1
+  channels:
+  - channel: 5
+    index: 1
+    motion: 5
+    scale: 1
+  hasPivot: 0
+  pivot: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 119318918}
+  - {fileID: 1732812159}
