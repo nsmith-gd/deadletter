@@ -65,6 +65,11 @@ namespace DeadLetter.Runtime.Audio
         {
             AudioWorld world = AudioWorld.Current;
             if (world == null || bank == null) return;
+            if (world.DrivesEmitters)                                 // Core's table plays through AudioWorld (U-23): no double
+            {
+                if (_source.isPlaying) _source.Stop();
+                return;
+            }
             if (_def == null)
                 _def = new EmitterDef(region, useTransformX ? transform.position.x : x, kind, level, reach, deck, period,
                     string.IsNullOrEmpty(condition) ? null : condition);

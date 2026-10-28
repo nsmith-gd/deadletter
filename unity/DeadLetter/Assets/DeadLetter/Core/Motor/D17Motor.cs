@@ -94,7 +94,7 @@ namespace DeadLetter.Core.Motor
         // Riding (board / ride / alight)
         private int _rideToken;
         /// <summary>How many of <see cref="_events"/> the last Step emitted (the rest came from calls since).</summary>
-        private int _stepEvents;
+        private int _stepEvents, _stepFrom;
 
         public D17Motor(MotorConfig config, IMotorWorld world, InteractionResolver resolver = null)
         {
@@ -168,6 +168,12 @@ namespace DeadLetter.Core.Motor
         /// reported with the next step. Cleared at the start of each step.
         /// </summary>
         public IReadOnlyList<MotorEvent> Events => _events;
+        /// <summary>
+        /// The index in <see cref="Events"/> where the last step's own events begin (those before it were emitted by calls
+        /// between steps and reported already). A reader that reads after every step and wants each event once reads from
+        /// here when <see cref="StepCount"/> has moved on, and from where it stopped when it has not (a scene act held him).
+        /// </summary>
+        public int StepEventsStart => _stepFrom;
 
         // ---- Settings other systems change ---------------------------------------------------------------------------
         /// <summary>Auto-run (default on, L8283). The Run input inverts it.</summary>
@@ -260,6 +266,7 @@ namespace DeadLetter.Core.Motor
             else SetClip(s.Grounded ? ClipNames.Idle : ClipNames.JumpAir, 0, 1, restart: true);
             _events.Clear();
             _stepEvents = 0;
+            _stepFrom = 0;
         }
 
         /// <summary>
@@ -284,6 +291,7 @@ namespace DeadLetter.Core.Motor
         {
             if (!(dt > 0) || double.IsInfinity(dt)) throw new ArgumentOutOfRangeException(nameof(dt));
             _events.RemoveRange(0, _stepEvents);                                    // keep what calls since the last step emitted
+            _stepFrom = _events.Count;
             StepCount++;
 
             double move = double.IsNaN(input.Move) ? 0 : Smooth.Clamp(input.Move, -1, 1);

@@ -198,6 +198,9 @@ namespace DeadLetter.Runtime.Settings
         private void ApplyAudio(Options s)
         {
             if (mixer == null) return;
+            // U-23: while the mix director drives this mixer it writes the levels (options + the moment duck) every frame.
+            Audio.AudioMixDirector director = Audio.AudioMixDirector.Current;
+            if (director != null && director.Driving && director.Mixer == mixer) { director.Refresh(); return; }
             for (int i = 0; i < AudioLevels.All.Length; i++)
             {
                 AudioGroup g = AudioLevels.All[i];
