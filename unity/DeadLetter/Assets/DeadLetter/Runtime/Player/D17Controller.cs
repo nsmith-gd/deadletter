@@ -120,6 +120,12 @@ namespace DeadLetter.Runtime
         /// </summary>
         public Func<MotorInput, MotorInput> InputFilter { get; set; }
 
+        /// <summary>
+        /// Replaces the device input of every step (a scripted player: <c>PlaythroughCapture</c> runs Core's bot through it).
+        /// Called once per Core step, before the step. Null = the Input System actions.
+        /// </summary>
+        public Func<MotorInput> InputSource { get; set; }
+
         /// <summary>Raised after each Core step with the step length (camera rig, cue-driven systems).</summary>
         public event Action<double> Stepped;
 
@@ -301,6 +307,7 @@ namespace DeadLetter.Runtime
 
         private MotorInput ReadInput()
         {
+            if (InputSource != null) return InputSource();
             var input = new MotorInput();
             if (_map == null) return input;
 

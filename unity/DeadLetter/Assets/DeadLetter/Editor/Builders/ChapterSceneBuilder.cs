@@ -194,7 +194,7 @@ namespace DeadLetter.Editor.Builders
             RenderSettings.skybox = null;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = Color.black;
+            RenderSettings.fogColor = Color.black;                           // LookVolume sets the page's 0x040505 at runtime
 
             Object inputActions = AssetDatabase.LoadAssetAtPath<Object>(InputActions);   // an InputActionAsset (the Editor asmdef has no Input System reference)
             if (inputActions == null) problems.Add("No input actions at " + InputActions + ": D-17 will not respond to input.");
@@ -226,6 +226,8 @@ namespace DeadLetter.Editor.Builders
                 problems.Add("No " + D17Glb + " (glTFast import): D-17 is an empty placeholder.");
             }
             d17.name = "D17";
+            int d17Slots = ArtMaterials.ApplyToHierarchy(d17);   // the prototype's paint, not glTFast's grey (L527)
+            if (d17Slots == 0 && d17Asset != null) problems.Add("D-17: no material matched the prototype's tables (ArtMaterials.ForSource).");
             d17.transform.SetPositionAndRotation(Vector3.zero, Quaternion.Euler(0f, 90f, 0f));
             var animator = d17.GetComponentInChildren<Animator>();
             if (animator == null) animator = d17.AddComponent<Animator>();
@@ -243,6 +245,7 @@ namespace DeadLetter.Editor.Builders
             cam.backgroundColor = Color.black;
             camGo.AddComponent<AudioListener>();
             var driver = camGo.AddComponent<LaneCameraDriver>();
+            var look = camGo.AddComponent<LookVolume>();   // adds the global Volume it fills (the prototype's post, PostLook)
 
             // A temporary key light so the sets read before U-15's light pool exists.
             var keyGo = new GameObject("Temporary Key Light (U-15 replaces)");
@@ -255,6 +258,8 @@ namespace DeadLetter.Editor.Builders
             Set(platform, "player", player);
             Set(platform, "moments", moments);
             Set(settings, "actions", inputActions);
+            Set(settings, "postVolume", camGo.GetComponent("Volume"));   // brightness and calm bloom on LookVolume's profile
+            Set(look, "volume", camGo.GetComponent("Volume"));
             Set(host, "chapterId", chapterId);
             Set(host, "player", player);
             Set(host, "cameraDriver", driver);

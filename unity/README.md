@@ -345,12 +345,22 @@ to the views (`SceneView.Current`) instead.
 
 1. **Dead Letter → Build → D17 Animator** (needs `Assets/Art/D17/d17.glb` imported by glTFast with Mecanim animation).
 2. **Dead Letter → Audio → Import Audio** (writes `Assets/Audio/` and `SfxBank.asset`; without it the game is silent).
-3. **Dead Letter → Art → Build Region Prefabs** (after glTFast has imported the region glTFs).
+3. **Dead Letter → Art → Build Region Prefabs** (after glTFast has imported the region glTFs). If it writes no
+   prefab, run **Dead Letter → Art → Re-import Art** first: it re-imports the textures and then the glTFs (glTFast
+   doesn't declare its textures as dependencies, so a glTF imported before its textures stays failed), and logs each
+   glTF's import errors to the Console (glTFast itself only says "see inspector for details").
 4. **Dead Letter → Build → Scenes → Prologue.** It writes the scenes above, puts them in the build profile's scene
    list (bootstrap first) and opens `DL_Persistent`. The Console lists, per scene, the art used and the views added; a
    scene whose art is not imported is still written (empty) and named in a warning. Re-run after any art or Core
    change: hand edits to these scenes are lost by design (§6.2).
 5. **Press Play** in `DL_Persistent`.
+
+Headless, each step is `Unity.exe -batchmode -projectPath unity/DeadLetter -logFile <log> -executeMethod <method> -quit`
+with, in order: `DeadLetter.Editor.Diagnostics.ImportReport.ReimportArt` (only when needed),
+`DeadLetter.Editor.Builders.D17AnimatorBuilder.BuildMenu`, `DeadLetter.Editor.Audio.AudioImporter.ImportAudio`,
+`DeadLetter.Editor.Art.ArtPrefabBuilder.BuildAll`, `DeadLetter.Editor.Builders.ChapterSceneBuilder.BuildPrologue`.
+**Dead Letter → Capture → Prologue Playthrough** plays the prologue with Core's bot and saves screenshots, for checking
+the look against the prototype at the same moments (tools/capture/README.md).
 
 **Verification checklist for the director (first open):**
 

@@ -116,6 +116,13 @@ namespace DeadLetter.Core.Simulation.Replay
             _started = true;
         }
 
+        /// <summary>
+        /// A host stepped <see cref="Sim"/> itself (Unity's <c>GameHost</c> owns the step and takes the bot's input from
+        /// <see cref="ScriptedPlayer.Tick"/>): the same bookkeeping as <see cref="Step"/>, without stepping. The host's own
+        /// <see cref="ChapterSim.NewGame"/> stands in for <see cref="NewGame"/>.
+        /// </summary>
+        public void HostStepped() => _started = true;
+
         private static string[] BuildVerbNames()
         {
             var values = (Verb[])System.Enum.GetValues(typeof(Verb));

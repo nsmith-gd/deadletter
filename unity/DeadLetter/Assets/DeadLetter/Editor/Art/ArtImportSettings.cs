@@ -37,7 +37,8 @@ namespace DeadLetter.Editor.Art
         private static DateTime _manifestTime;
         private static bool _warnedSwitch;
 
-        public override uint GetVersion() => 1;
+        // 2: the shape is set (first-open imports made every texture a cubemap, which glTFast cannot load as a Texture2D).
+        public override uint GetVersion() => 2;
 
         private static bool Owned(string path) =>
             path.StartsWith(Root, StringComparison.Ordinal) && !path.StartsWith(D17ImportSettings.Folder, StringComparison.Ordinal);
@@ -55,6 +56,7 @@ namespace DeadLetter.Editor.Art
             TextureUse budgetUse = def != null && def.width > 0 ? TextureBudget.Classify(def.width, def.height) : TextureUse.Default;
 
             ti.textureType = use == "normal" ? TextureImporterType.NormalMap : TextureImporterType.Default;
+            ti.textureShape = TextureImporterShape.Texture2D;
             ti.sRGBTexture = use == "color";
             ti.mipmapEnabled = true;
             ti.npotScale = TextureImporterNPOTScale.None;
