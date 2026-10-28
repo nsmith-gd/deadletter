@@ -210,14 +210,10 @@ namespace DeadLetter.Core.Presentation
                 case LightDriver.WorkBulb: return WorkLevel;
                 case LightDriver.Kick: return KickLevel;
                 case LightDriver.Cable:
-                {
-                    bool arcing = _sounds != null && t < _sounds.SparkUntil;
-                    if (!arcing) return 0;
-                    return calm ? 0.4 : 2.5 * (Math.Sin(t * 90) > 0 ? 1 : 0.3);
-                }
+                    return CableLevel(_sounds != null && t < _sounds.SparkUntil, t, calm);
                 case LightDriver.Search: return 140;
                 case LightDriver.Door: return 1.2 * door;
-                case LightDriver.Crank: return 9 * (1 - 0.7 * door) * (0.9 + 0.1 * Math.Sin(t * 1.7));
+                case LightDriver.Crank: return CrankLevel(t, door);
                 case LightDriver.PlateLamp: return 16 * PlateLamp();
                 case LightDriver.RoomFill: return 3.2 * PlateLamp();
                 case LightDriver.Passage: return 0.6 * Smooth.Step(door * 1.5);
@@ -225,13 +221,13 @@ namespace DeadLetter.Core.Presentation
                 case LightDriver.RackFar: return 0.1 + 1.6 * RacksLit(t, calm);
                 case LightDriver.Scanner:
                     if (_scanner == null) return 0;
-                    if (_scanner.Phase == Dl06ScanPhase.Idle) return 1.6 * (0.5 + 0.5 * Math.Sin(t * 2.2));
+                    if (_scanner.Phase == Dl06ScanPhase.Idle) return ScannerIdle(t);
                     return _scanner.Rejected ? 1.4 : 0.4;
                 case LightDriver.SortingFloor: return d.Intensity * (lightRegion == 3 ? 1 : 0);
                 case LightDriver.SortingSky: return d.Intensity * (lightRegion == 3 ? 1 : 0) * (0.85 + 0.15 * Math.Sin(t * 0.3));
                 case LightDriver.RationStrip: return 14 * RationFlicker(t, calm);
                 case LightDriver.RationFill: return 2.2 * RationFlicker(t, calm);
-                case LightDriver.Candles: return 1.2 * (0.88 + 0.12 * Math.Sin(t * 7.3) * Math.Sin(t * 3.1));
+                case LightDriver.Candles: return CandlesLevel(t);
                 default: return d.Intensity;
             }
         }
@@ -244,6 +240,22 @@ namespace DeadLetter.Core.Presentation
             if (_sounds != null) return _sounds.RacksLit;
             return 0;
         }
+
+        /// <summary>The live cable's light (L7939–L7941): while it arcs, a 14.3 Hz stutter between 2.5 and 0.75; calm: a steady 0.4.</summary>
+        public static double CableLevel(bool arcing, double t, bool calm)
+        {
+            if (!arcing) return 0;
+            return calm ? 0.4 : 2.5 * (Math.Sin(t * 90) > 0 ? 1 : 0.3);
+        }
+
+        /// <summary>The crank's lamp (L7962): <c>9 · (1 − 0.7 · doorOpen) · (0.9 + 0.1 · sin 1.7t)</c>, a slow ±10 % breath (the same in calm).</summary>
+        public static double CrankLevel(double t, double door) => 9 * (1 - 0.7 * door) * (0.9 + 0.1 * Math.Sin(t * 1.7));
+
+        /// <summary>The scanner's light while it waits (L2430–L2431): <c>1.6 · (0.5 + 0.5 · sin 2.2t)</c>, a 0.35 Hz sine (the same in calm).</summary>
+        public static double ScannerIdle(double t) => 1.6 * (0.5 + 0.5 * Math.Sin(t * 2.2));
+
+        /// <summary>The Ration Hall's candles (L4930): <c>1.2 · (0.88 + 0.12 · sin 7.3t · sin 3.1t)</c> (the same in calm).</summary>
+        public static double CandlesLevel(double t) => 1.2 * (0.88 + 0.12 * Math.Sin(t * 7.3) * Math.Sin(t * 3.1));
 
         /// <summary>The Ration Hall's strip (L4927): a stutter when sin(0.7t) &gt; 0.93, else a faint shimmer; calm: steady 1.</summary>
         public static double RationFlicker(double t, bool calm)

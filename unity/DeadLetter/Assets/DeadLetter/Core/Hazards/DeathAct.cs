@@ -17,6 +17,7 @@ namespace DeadLetter.Core.Hazards
         private readonly double _sink, _yawRate;
         private readonly int _facing;
         private readonly bool _grounded;
+        private bool _calm;
 
         public DeathAct(DeathProfile profile, double x, double y, double z, double yaw, int facing, bool grounded, double sinkRate, double yawRate)
             : base(ActIds.Death, PhaseOf(profile.Kind))
@@ -42,7 +43,7 @@ namespace DeadLetter.Core.Hazards
                 else m.Carried.OnSetDown(x, System.Math.Max(0, y));
             }
             m.Place(x, y, facing);                                                              // the motor has no "let go of everything" (#28)
-            sim.StartAct(new DeathAct(DeathProfile.Of(how), x, y, z, yaw, facing, grounded, sinkRate, sim.Config.YawRate));
+            sim.StartAct(new DeathAct(DeathProfile.Of(how), x, y, z, yaw, facing, grounded, sinkRate, sim.Config.YawRate) { _calm = sim.Graph.Calm });
         }
 
         private static readonly ActId[] Phases =
@@ -58,11 +59,24 @@ namespace DeadLetter.Core.Hazards
         public override bool PoseGrounded => _grounded;
         /// <summary>The cut to black has happened (<c>a.cut</c>).</summary>
         public bool Cut { get; private set; }
-        /// <summary>D-17's eye (<c>game.eyeLevel</c>): a stutter, then dark.</summary>
-        public double EyeLevel => DeathProfile.EyeLevel(T);
+        /// <summary>
+        /// Calm mode as the act last saw it (<see cref="Mechanisms.MechanismGraph.Calm"/>, which the checkpoint service sets
+        /// from <c>Settings.Calm</c>): read when the death starts and at every step, so the eye and sparks follow the option.
+        /// </summary>
+        public bool Calm => _calm;
+        /// <summary>
+        /// D-17's eye (<c>game.eyeLevel</c>, L7447) with calm mode applied: a stutter then dark, or in calm a plain fade
+        /// (<see cref="DeathProfile.EyeLevel(double, bool)"/>). The only eye a presentation reads.
+        /// </summary>
+        public double EyeLevel => DeathProfile.EyeLevel(T, _calm);
+        /// <summary>The sparks burst as he dies (<c>burstSparks(…, d.sparks)</c>, L7440): none in calm (<see cref="DeathProfile.SparksFor"/>).</summary>
+        public int Sparks => Profile.SparksFor(_calm);
+        /// <summary>Shock's extra bursts per second while the death plays (L7448): none in calm or after the cut.</summary>
+        public double SparkRate => T < Profile.Hold ? Profile.SparkRateFor(_calm) : 0;
 
         public override bool Step(ChapterSim sim, in MotorInput input, double dt)
         {
+            _calm = sim.Graph.Calm;
             T += dt;                                                                            // updateActCh1, a.t += dt
             Y -= dt * _sink;                                                                    // a.follow(a, dt)
             if (T >= Profile.Hold && !Cut)                                                      // L7449–L7453

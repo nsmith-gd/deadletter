@@ -23,8 +23,9 @@ namespace DeadLetter.Core.Hazards
 
     /// <summary>
     /// One kind of death as the prototype stages it (<c>DEATH</c>, L7421–L7424; <c>die</c>, L7429–L7442): the clip, how
-    /// long it holds before the cut, the sparks and the shake. Presentation reads <see cref="Clip"/>, <see cref="Sparks"/>,
-    /// <see cref="SparkSpeed"/> and <see cref="Shake"/>; Core uses <see cref="Hold"/>.
+    /// long it holds before the cut, the sparks and the shake. Presentation reads <see cref="Clip"/>, <see cref="SparksFor"/>,
+    /// <see cref="SparkRateFor"/>, <see cref="SparkSpeed"/>, <see cref="EyeLevel(double, bool)"/> and <see cref="Shake"/>, all
+    /// with calm mode (§4.29); Core uses <see cref="Hold"/>.
     /// </summary>
     public readonly struct DeathProfile
     {
@@ -62,7 +63,24 @@ namespace DeadLetter.Core.Hazards
             }
         }
 
-        /// <summary>The eye's level <paramref name="t"/> seconds into a death: a stutter, then dark (<c>game.eyeLevel</c>, L7447).</summary>
-        public static double EyeLevel(double t) => t < EyeOut ? (Math.Sin(t * 70) > 0 ? 1 - t / EyeOut : 0.1) : 0;
+        /// <summary>Shock's extra spark bursts per second while it plays (<c>Math.random() &lt; dt · 14</c>, L7448).</summary>
+        public const double ShockSparkRate = 14;
+
+        /// <summary>The sparks burst as he dies: <see cref="Sparks"/>, none in calm (<c>if (!game.calm) burstSparks</c>, L7440).</summary>
+        public int SparksFor(bool calm) => calm ? 0 : Sparks;
+
+        /// <summary>Extra bursts per second while the death plays: <see cref="ShockSparkRate"/> for a shock, none in calm (L7448).</summary>
+        public double SparkRateFor(bool calm) => !calm && Kind == DeathKind.Shock ? ShockSparkRate : 0;
+
+        /// <summary>
+        /// The eye's level <paramref name="t"/> seconds into a death (<c>game.eyeLevel</c>, L7447), with calm mode: the prototype stutters it at 11 Hz whatever <c>game.calm</c> says (L7447); calm fades
+        /// it out over the same <see cref="EyeOut"/> instead (port_architecture §4.29; docs/unity/accessibility.md).
+        /// </summary>
+        public static double EyeLevel(double t, bool calm)
+        {
+            if (t >= EyeOut) return 0;
+            if (calm) return 1 - t / EyeOut;
+            return Math.Sin(t * 70) > 0 ? 1 - t / EyeOut : 0.1;
+        }
     }
 }
