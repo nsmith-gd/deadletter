@@ -151,6 +151,11 @@ namespace DeadLetter.Core.Motor
         public int ActPart => _act.Part;
         public bool IsMantling => _mantling;
         public bool IsActing => _act.Active;
+        /// <summary>
+        /// In a quirk whose <c>cancel</c> flag is set (<c>G.act.cancel</c>, the flag <see cref="PlayQuirk"/> was given): the
+        /// static flag only, not <c>cancelAfter</c>'s timing (#16 item 5; the bot reads it as bot.js does). False outside a quirk.
+        /// </summary>
+        public bool QuirkCancel => _act.Active && _act.Verb == Verb.Quirk && _act.Cancel;
         /// <summary>In the hide act (<c>game.act.what === 'hide'</c>, any phase; L5973): <c>PlayerPose.Hiding</c>.</summary>
         public bool IsHiding => _act.Verb == Verb.Hide;
         /// <summary>In the escorted act (L6126–L6134): <c>PlayerPose.Escorted</c>.</summary>

@@ -186,6 +186,25 @@ namespace DeadLetter.Core.Tests
             Assert.True(held.PlayQuirk(ClipNames.CheckLabel));
         }
 
+        /// <summary><see cref="D17Motor.QuirkCancel"/> is the static flag (<c>G.act.cancel</c>), not cancelAfter's timing (#16 item 5).</summary>
+        [Fact]
+        public void QuirkCancel_ReportsTheStaticFlagOnly()
+        {
+            var m = Sim.Make(BoxWorld.Flat());
+            Assert.False(m.QuirkCancel);                                             // no act
+            m.PlayQuirk(ClipNames.Proud);                                            // cancel defaults to true
+            Assert.True(m.QuirkCancel);
+            var label = Sim.Make(BoxWorld.Flat());
+            label.PlayQuirk(ClipNames.CheckLabel, cancel: false, cancelAfter: 2.5);  // the wake's label (L8108)
+            Assert.False(label.QuirkCancel);
+            Sim.Run(label, Sim.Move(0), (int)(3 / Dt));                              // past cancelAfter: still the flag
+            Assert.True(label.IsActing);
+            Assert.False(label.QuirkCancel);
+            var f = Sim.Make(BoxWorld.Flat());
+            f.Flinch();
+            Assert.False(f.QuirkCancel);                                             // nothing cancels a flinch
+        }
+
         [Fact]
         public void Quirk_AMoveCancelsIt_OnlyPast0_3sOfTheClip_OrAfterCancelAfter_L3851_L8108()
         {
