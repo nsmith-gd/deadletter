@@ -100,7 +100,7 @@ MECHANISMS = [
     # DL-04
     ('Pushable', 'dl04.courier', 'FallenCourier', []),
     ('LoadPlate', 'dl04.bayPlate', 'BayPlate', []),
-    ('Cradle', 'dl04.cradle', None, ['CradleArmL', 'CradleArmR']),
+    ('Cradle', 'dl04.cradle', None, ['CradleArmL', 'CradleArmR', 'SeatedLamps']),  # the lamps: Cradle.SeatedLamp (calm), U-17b
     ('PlateDoor', 'dl04.bayDoor', 'BayDoor', []),
     # DL-05 (L4011-L4012, L4921: the shutter is the hatch the crawl passes under)
     ('Pushable', 'dl05.drum', 'RationDrum', []),

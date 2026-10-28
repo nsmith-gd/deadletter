@@ -269,6 +269,12 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(shutter.Position, MechanismReadout.Reader((IMechanism)shutter, ViewChannel.Position, 0, null)());
             Assert.Equal(new[] { new ViewBinding(ViewChannel.Lamp, ViewMotion.Emission, 1, 1) }, MechanismViewBindings.For("PulseSequencer", "RelayLamp1"));
             Assert.Equal(-1, MechanismViewBindings.For("Door", "Counterweight")[0].Scale);
+            Assert.Equal(new[] { new ViewBinding(ViewChannel.Lamp, ViewMotion.Emission, MechanismViewBindings.SeatedLampGain, 0) },
+                MechanismViewBindings.For("Cradle", "SeatedLamps"));                                      // U-17b: the seated lamps, calm or not
+            Assert.Empty(MechanismViewBindings.For("Cradle", "SeatedCourier"));
+            var cradle = sim.Graph.Get<IMechanism>("dl04.cradle");
+            Assert.True(MechanismReadout.Supports(cradle, ViewChannel.Lamp, 0));
+            Assert.Equal(0, MechanismReadout.Reader(cradle, ViewChannel.Lamp, 0, () => true)());               // not seated: dark
             Assert.Empty(MechanismViewBindings.For("Nonesuch", null));
         }
 

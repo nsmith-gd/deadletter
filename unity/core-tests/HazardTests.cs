@@ -148,7 +148,7 @@ namespace DeadLetter.Core.Tests
             Assert.Equal(("DeathGrabbed", 1.15, 18, 0.45), Tuple(DeathProfile.Of(DeathKind.Grabbed)));
             Assert.Equal(("DeathFall", 0.9, 20, 0.7), Tuple(DeathProfile.Of(DeathKind.Fall)));
             Assert.Equal(1.6, DeathProfile.Of(DeathKind.Shock).SparkSpeed);
-            Assert.Equal(0, DeathProfile.EyeLevel(0.45));
+            Assert.Equal(0, DeathProfile.EyeLevel(0.45, calm: false));
         }
 
         private static (string, double, int, double) Tuple(DeathProfile p) => (p.Clip, p.Hold, p.Sparks, p.Shake);

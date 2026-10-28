@@ -96,7 +96,10 @@ namespace DeadLetter.Core.Hazards
         public double Position => Face;
         public bool Engaged => Face < _p.Lethal;
         /// <summary>The lamp's glow: a blink during the tell (steady when calm), lit while it is down (L7347).</summary>
-        public double Lamp(bool calm) => Phase < _p.TellEnd && !calm ? (Math.Sin(Phase * 25) > -0.2 ? 6 : 0.4) : Phase < _p.DownEnd ? 2 : 0;
+        public double Lamp(bool calm) => LampAt(_p, Phase, calm);
+        /// <summary>The lamp at <paramref name="phase"/> s into the cycle: a 4 Hz blink (6 / 0.4) for the tell's 0.5 s, unless calm; 2 while down; else 0 (L7347).</summary>
+        public static double LampAt(PeriodicCrusherParams p, double phase, bool calm)
+            => phase < p.TellEnd && !calm ? (Math.Sin(phase * 25) > -0.2 ? 6 : 0.4) : phase < p.DownEnd ? 2 : 0;
         /// <summary>The flywheel: one turn per stroke, radians about the lane's z (L7348).</summary>
         public double WheelRad => -(Time() / _p.Period) * Math.PI * 2;
 
