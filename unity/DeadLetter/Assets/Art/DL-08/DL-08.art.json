@@ -833,7 +833,7 @@
    "alphaMode": "BLEND",
    "alphaCutoff": 0.5,
    "doubleSided": true,
-   "baseColorTexture": "ring_C.png",
+   "baseColorTexture": "ring_C_DL-08.png",
    "emissiveTexture": "",
    "normalTexture": "",
    "normalScale": 1.0,
@@ -2112,7 +2112,7 @@
  ],
  "textures": [
   {
-   "file": "ring_C.png",
+   "file": "ring_C_DL-08.png",
    "width": 512,
    "height": 512,
    "use": "color"

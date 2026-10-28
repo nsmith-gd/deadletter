@@ -12,7 +12,7 @@
  "boundsMin": [
   127.4864,
   -5.8,
-  -4.0529
+  -8.4
  ],
  "boundsMax": [
   180.4,
@@ -22,10 +22,10 @@
  "axes": "unity = (blender.x, blender.z, blender.y), port_architecture 0.2",
  "gltf": "DL-11.gltf",
  "counts": {
-  "nodes": 100,
-  "meshes": 94,
-  "primitives": 221,
-  "triangles": 85262,
+  "nodes": 101,
+  "meshes": 95,
+  "primitives": 248,
+  "triangles": 137942,
   "materials": 95,
   "textures": 34
  },
@@ -2020,7 +2020,7 @@
    "alphaMode": "OPAQUE",
    "alphaCutoff": 0.5,
    "doubleSided": true,
-   "baseColorTexture": "ration_sign.png",
+   "baseColorTexture": "ration_sign_DL-11.png",
    "emissiveTexture": "",
    "normalTexture": "",
    "normalScale": 1.0,
@@ -3140,7 +3140,7 @@
    "use": "color"
   },
   {
-   "file": "ration_sign.png",
+   "file": "ration_sign_DL-11.png",
    "width": 480,
    "height": 400,
    "use": "color"

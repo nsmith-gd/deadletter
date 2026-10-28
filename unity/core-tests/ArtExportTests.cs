@@ -73,6 +73,38 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
+        public void Texture_names_are_unique_ignoring_case()
+        {
+            // Windows and macOS ignore case, and every region shares Textures/ (#41: ring_C.png and ring_c.png).
+            var files = Load(Art + "Textures/textures.json").GetProperty("textures").EnumerateArray()
+                .Select(t => t.GetProperty("file").GetString()).ToList();
+            var clashes = files.GroupBy(f => f, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => string.Join("/", g));
+            Assert.Empty(clashes);
+            var known = new HashSet<string>(files, StringComparer.Ordinal);
+            foreach (JsonElement r in Regions)
+            {
+                string gltf = Art + r.GetProperty("folder").GetString() + "/" + r.GetProperty("file").GetString();
+                var doc = Load(gltf);
+                foreach (JsonElement im in doc.TryGetProperty("images", out JsonElement ims) ? ims.EnumerateArray() : Enumerable.Empty<JsonElement>())
+                    Assert.Contains(Path.GetFileName(im.GetProperty("uri").GetString()), known);
+            }
+        }
+
+        [Fact]
+        public void Lane_geometry_is_cut_per_region_not_left_in_the_backdrop()
+        {
+            // #42: the prologue Floor (x -5..43) is cut at the region cuts; the atrium keeps only backdrop scenery.
+            static List<string> Nodes(string region) => Load(Art + region + "/" + region + ".gltf").GetProperty("nodes")
+                .EnumerateArray().Select(n => n.TryGetProperty("name", out JsonElement s) ? s.GetString() : "").ToList();
+            foreach (string region in new[] { "DL-01", "DL-02", "DL-03", "DL-04" })
+                Assert.Contains("Floor", Nodes(region));
+            Assert.Contains("D5Street", Nodes("DL-11"));
+            var atrium = Nodes("DL-09_Atrium");
+            Assert.DoesNotContain("Floor", atrium);
+            Assert.DoesNotContain("D5Street", atrium);
+        }
+
+        [Fact]
         public void Markers_follow_the_conventions_and_sit_in_their_region()
         {
             var checkpoints = new List<string>();

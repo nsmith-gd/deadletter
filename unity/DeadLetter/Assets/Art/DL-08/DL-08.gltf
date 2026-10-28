@@ -2983,8 +2983,8 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"ring_C",
-			"uri":"../Textures/ring_C.png"
+			"name":"ring_C_DL-08",
+			"uri":"../Textures/ring_C_DL-08.png"
 		},
 		{
 			"mimeType":"image/png",

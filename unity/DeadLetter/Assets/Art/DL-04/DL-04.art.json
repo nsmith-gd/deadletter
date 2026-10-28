@@ -22,10 +22,10 @@
  "axes": "unity = (blender.x, blender.z, blender.y), port_architecture 0.2",
  "gltf": "DL-04.gltf",
  "counts": {
-  "nodes": 62,
-  "meshes": 60,
-  "primitives": 94,
-  "triangles": 31606,
+  "nodes": 63,
+  "meshes": 61,
+  "primitives": 95,
+  "triangles": 31618,
   "materials": 41,
   "textures": 6
  },

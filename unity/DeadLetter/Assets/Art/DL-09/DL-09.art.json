@@ -1093,7 +1093,7 @@
    "alphaMode": "OPAQUE",
    "alphaCutoff": 0.5,
    "doubleSided": true,
-   "baseColorTexture": "residential_sign.png",
+   "baseColorTexture": "residential_sign_DL-09.png",
    "emissiveTexture": "",
    "normalTexture": "",
    "normalScale": 1.0,
@@ -2153,7 +2153,7 @@
    "use": "color"
   },
   {
-   "file": "residential_sign.png",
+   "file": "residential_sign_DL-09.png",
    "width": 768,
    "height": 224,
    "use": "color"

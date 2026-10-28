@@ -41,7 +41,7 @@ small. Textures, sidecars and the glTF JSON are stable. The web build has the sa
 | `<region>/<region>.gltf` + `.bin` | the region's objects, with the web exporter's settings plus `export_extras` (custom properties → glTF `extras`) |
 | `<region>/<region>.art.json` | sidecar: scenes, game region, lane x-range, bounds, counts, markers, materials, textures, driven names, TODO |
 | `<region>/<region>.prefab` | generated in Unity by `ArtPrefabBuilder` (commit it like `D17.controller`) |
-| `Textures/*.png` + `textures.json` | every set texture once, with its source size and use (color / normal / linear) |
+| `Textures/*.png` + `textures.json` | every set texture once, with its source size and use (color / normal / linear). No two file names are equal ignoring case (below). |
 | `Materials/*.mat` | URP Lit materials, one per Blender material name, generated in Unity |
 | `regions.json` | index of regions and characters |
 | `White/white.glb`, `Couriers/couriers.glb` | web exporter settings, rebuilt by the tool |
@@ -50,6 +50,17 @@ small. Textures, sidecars and the glTF JSON are stable. The web build has the sa
 New outputs get minimal `.meta` files with stable GUIDs (MD5 of the asset path, the same scheme as Core `StableGuid` and
 the audio importer), so references survive a delete and re-export.
 
+**Texture file names are unique ignoring case (U-24, #41).** Windows and macOS ignore case, and every region shares
+`Textures/`. The exporter names a PNG after its source file, so two source images can claim one name. `ring_C.png`
+(art/dl04, DL-08) and `ring_c.png` (art/pass4, DL-01 to DL-10) differ only by case. `ration_sign.png` (art/pass3 and
+art/dl05) and `residential_sign.png` (art/dl03 and art/cage) are exactly equal, so the later region overwrote the
+earlier one's texture on every OS. Before anything exports, the tool groups the set's images by file name ignoring
+case. In each group, the image whose first region comes first keeps the name, and each other image is renamed
+`<name>_<its first region>`: `ring_C_DL-08.png`, `ration_sign_DL-11.png`, `residential_sign_DL-09.png`. The choice
+uses the whole set, so a `--regions` run picks the same names. The export fails if two names in `textures.json` are
+equal ignoring case, or if a region writes a different image over a texture an earlier region wrote. Core
+`ArtExportTests` checks `textures.json` and the glTF image URIs too.
+
 **Why glTF + shared PNGs rather than GLB:** a texture embedded in a GLB is a sub-asset of glTFast's importer. It has no
 `TextureImporter`, so it can take no per-platform max size or format. External PNGs get one. Sharing the folder also
 stores each texture once. It is still one exporter (Blender's glTF), as the issue asked.
@@ -57,22 +68,33 @@ stores each texture once. It is still one exporter (Blender's glTF), as the issu
 ## Regions
 
 An object goes to the region its hierarchy's bounding-box centre x falls in, with the cuts taken from index.html's
-`sceneName` (L8135–8144). There are two exceptions. An object wider than 30 m goes to the backdrop. A mechanism's objects
-always go to their scene's region.
+`sceneName` (L8135–8144). There are three exceptions:
+
+- **Lane geometry is cut per region (U-25, #42).** An object wider than 30 m is lane geometry when its depth range
+  (Blender y, Unity z) contains the lane plane (y 0, where D-17 walks) and stays within y −10 to 15 (`conventions.py`
+  `LANE_DEPTH`, `is_lane_geometry`). The export cuts its copy with `bmesh.ops.bisect_plane` at each region cut inside
+  it, and each piece goes to its region under the source name (`Floor` in each glTF, with extras `dl_name` and
+  `dl_region`). The cut faces stay open; the next piece continues them. The web build exports the uncut object as before.
+  In the prologue this is `Floor` (x −5 to 43: pieces in DL-01, DL-02, DL-03 and DL-04) and `D5Street` (x 133.5 to
+  174.9, all in DL-11). Chapter 1 has nothing wider than 30 m. A lane object with children is not cut (the export logs
+  it) and goes to the backdrop.
+- **Any other object wider than 30 m goes to the backdrop.** That is the atrium's scenery (it reaches y 100 and more)
+  and `D5FarTiers`, which starts behind the lane (y 2.4).
+- **A mechanism's objects always go to their scene's region.**
 
 | Region | Scenes | Game region | Lane x | Size MB | Meshes | Prims | Tris | Mats | Tex | PC MB | Switch MB | MECH | CHK |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| DL-01 | DL-01 | 1 | < 12.0 | 1.07 | 85 | 104 | 37,328 | 44 | 11 | 4.46 | 2.00 | 16 | 4 |
-| DL-02 | DL-02 | 2 | 12.0–25.0 | 2.31 | 75 | 115 | 46,174 | 44 | 10 | 4.81 | 1.92 | 3 | 1 |
-| DL-03 | DL-03 | 2 | 25.0–30.6 | 0.31 | 34 | 36 | 10,776 | 22 | 7 | 2.65 | 1.06 | 11 | 2 |
-| DL-04 | DL-04 | 2 | 30.6–47.9 | 1.38 | 60 | 94 | 31,606 | 41 | 6 | 1.37 | 0.62 | 6 | 1 |
+| DL-01 | DL-01 | 1 | < 12.0 | 1.07 | 86 | 105 | 37,410 | 44 | 11 | 4.46 | 2.00 | 16 | 4 |
+| DL-02 | DL-02 | 2 | 12.0–25.0 | 2.31 | 76 | 116 | 46,182 | 44 | 10 | 4.81 | 1.92 | 3 | 1 |
+| DL-03 | DL-03 | 2 | 25.0–30.6 | 0.31 | 35 | 37 | 10,784 | 22 | 7 | 2.65 | 1.06 | 11 | 2 |
+| DL-04 | DL-04 | 2 | 30.6–47.9 | 1.38 | 61 | 95 | 31,618 | 41 | 6 | 1.37 | 0.62 | 6 | 1 |
 | DL-05 | DL-05 | 2 | 47.9–59.8 | 2.38 | 53 | 67 | 62,393 | 50 | 14 | 8.30 | 3.22 | 6 | 2 |
 | DL-06_07 | DL-06, DL-07 | 3 | 59.8–80.75 | 2.30 | 121 | 166 | 52,988 | 63 | 16 | 6.95 | 2.85 | 20 | 3 |
 | DL-08 | DL-08 | 4 | 80.75–97.6 | 0.78 | 91 | 113 | 15,798 | 49 | 17 | 3.71 | 1.53 | 21 | 2 |
 | DL-09 | DL-09 | 4 | 97.6–118.8 | 1.43 | 83 | 164 | 33,026 | 66 | 16 | 8.59 | 3.42 | 7 | 3 |
 | DL-10 | DL-10 | 4 | 118.8–127.9 | 3.65 | 49 | 155 | 71,820 | 53 | 6 | 4.50 | 2.02 | 17 | 1 |
-| DL-11 | DL-11 | 5 | ≥ 127.9 | 4.28 | 94 | 221 | 85,262 | 95 | 34 | 9.44 | 4.25 | 10 | 3 |
-| DL-09_Atrium | DL-09–11 (backdrop) | 4 | > 30 m wide | 6.04 | 25 | 59 | 132,919 | 43 | 1 | 0.67 | 0.30 | 0 | 0 |
+| DL-11 | DL-11 | 5 | ≥ 127.9 | 6.87 | 95 | 248 | 137,942 | 95 | 34 | 9.44 | 4.25 | 10 | 3 |
+| DL-09_Atrium | DL-09–11 (backdrop) | 4 | > 30 m wide, not lane | 3.45 | 23 | 31 | 80,155 | 19 | 1 | 0.67 | 0.30 | 0 | 0 |
 | DL-12 | DL-12 | 6 | 199.0–216.0 | 2.32 | — | — | — | — | — | — | — | 0 | 2 |
 | DL-13 | DL-13 | 6 | 216.0–232.0 | 2.15 | — | — | — | — | — | — | — | 0 | 2 |
 | DL-14 | DL-14 | 6 | 232.0–248.0 | 1.05 | — | — | — | — | — | — | — | 0 | 2 |
@@ -91,7 +113,8 @@ and 18 textures, with its 15 checkpoints; its mesh and texture columns are not m
 
 - DL-06 and DL-07 export together. They share one floor, one carrier line and one builder, and the game tells them apart
   by state, not by x (§5).
-- The backdrop rule works on whole hierarchies, so it holds 132,919 triangles. §5 counted 88,923, measured per mesh.
+- The backdrop rule works on whole hierarchies. Without the lane geometry (`Floor`, `D5Street`, #42) it holds 80,155
+  triangles. §5 counted 88,923, measured per mesh, with the floor and the street in it.
 
 ## Naming conventions
 
