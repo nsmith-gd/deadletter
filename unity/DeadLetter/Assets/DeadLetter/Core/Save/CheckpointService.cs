@@ -143,6 +143,19 @@ namespace DeadLetter.Core.Save
             return true;
         }
 
+        /// <summary>
+        /// The current checkpoint's snapshot taken again from the world as it is now, and saved: for a scene whose progress
+        /// persists at its checkpoint (DL-19 §9: at <c>half_landing</c> the jack's position and every pin persist). Call after
+        /// the step, as <see cref="Reach"/>. Nothing happens before a game has started.
+        /// </summary>
+        public void Recapture()
+        {
+            if (!Started) return;
+            PullBindings();
+            _snapshot = Capture();
+            Save();
+        }
+
         /// <summary>Set (or clear) a story flag and save it, keeping the checkpoint and its snapshot.</summary>
         public void SetFlag(string name, bool value = true)
         {

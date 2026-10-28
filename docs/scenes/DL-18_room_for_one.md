@@ -36,7 +36,7 @@
 
 ```
 x: 347.0 stair head   347.4-348.6 Works door (sealed)   347.6 ring_a   348.6-351.4 gallery
-   351.4 box room door   351.6-354.2 box room   351.9-353.9 fold bed   353.4-354.2 fold bench
+   351.4 box room door   351.6-354.2 box room   351.9-353.8 fold bed   353.4-354.2 fold bench
    354.2-355.0 landing doorway (sill 1.2)   355.0-361.0 terrace landing (1.2)   355.8 terrace
 ```
 
@@ -50,10 +50,10 @@ x: 347.0 stair head   347.4-348.6 Works door (sealed)   347.6 ring_a   348.6-351
 | Hook, mug, overalls, boots | 351.8 | hook 1.0 | Boots on the floor beneath |
 | Alarm clock | 351.95 | 0.5 | On a bracket at the bed's head; a pipe clamp for its broken leg |
 | Common frame | 351.9–354.2 | 0.0–1.5 | Steel, bolted to the back wall, both hinge rails plain to see |
-| Fold bed | 351.9–353.9 | top 0.45 | Down at start. Folds toward the wall into its recess (0.0–0.6). Quilt heaped at the foot to 0.7 |
-| Foot rail | 353.9 | 0.55 | Worn bright; in a light pool. Use from the floor at 353.6–354.15 |
+| Fold bed | 351.9–353.8 | top 0.45 | Down at start. Folds toward the wall into its recess (0.0–0.6). Quilt heaped at the foot to 0.7 (its last 0.6). Port: foot moved in from 353.9, see below |
+| Foot rail | 353.8 | 0.55 | Worn bright; in a light pool. Use from the floor at 353.6–354.15, standing at 354.0 |
 | Fold bench | 353.4–354.2 | seat 0.6 (stop) | Folded up at start: a vertical leaf on the frame, 0.6–1.05. Hinged along its back edge at 0.6 |
-| Strap | 353.45 | loop at 0.75 | On the bench's free edge; worn leather; in a light pool. Use from the floor or the bed |
+| Strap | 353.45 | loop at 0.75 | On the bench's free edge; worn leather; in a light pool. Use from the floor or the bed. The bench is let go at the hop (Tug f43) |
 | Painted sky | 353.4–354.2 | 0.62–1.02 | On the back wall behind the folded bench, above the bed's recess |
 | Sketch | 353.5–354.0 | 1.1–1.45 | Pinned to the frame's top rail, over the bench |
 | Landing doorway | 354.2–355.0 | sill 1.2 | A deep doorway through the back wall's end; its sill lip at 354.2 |
@@ -75,6 +75,15 @@ x: 347.0 stair head   347.4-348.6 Works door (sealed)   347.6 ring_a   348.6-351
 - **Stepping clear:** Use at the strap is a tug, then a 0.4 m hop back to the left as the bench comes down, so he is
   never under it. Use at the foot rail is taken from beyond the bed's foot, outside its swing.
 - **Nothing else to climb:** no hooks or ledges within reach of the sill; the hook by the door (1.0) is too far from it.
+- **Port deviations (U-26, #45):** the bed's foot is at 353.8, not 353.9: at 353.9 the gap to the sill's face (354.2)
+  was 0.30 m for D-17's 0.34 m body, so at the foot rail he stood inside the bed's swing and it waited for ever. The
+  bench is let go as the hop starts (Tug f43), not at the tug's click (f19), where it swung onto him and waited; so he is
+  never under it, and it props on the quilt within 1.5 s. The heaped quilt is soft, not a step.
+- **Port: the slide-off (#47 review).** A propped leaf is never ground. Whenever D-17's body meets the propped bench's
+  swept box while he moves freely (a jump or mantle attempt at it from the bed, a fall, or walking into it along the
+  bed), a scene act puts him up on its raised edge (0.25 s), rocks it (0.3 s, cue `dl18.bench.rock`) and slides him back
+  onto the bed with a soft bump (0.35 s, cue `dl18.bench.slide`), at rest at 353.18 (the strap within reach), 0.9 s after
+  the contact. So with the bench propped, the bed's foot and the floor beyond it are out of reach; the strap folds it.
 
 ## 4. The puzzle
 
@@ -162,8 +171,13 @@ No authored shots (the brief allows none). The sky panel is seen in the side vie
 - **Goal in frame:** on entering the room, the landing door, both leaves, the frame and both light pools are in one
   frame.
 - **Wrong path, bench:** a first-time player who pulls the bench with the bed down sees it stop on the quilt, tilted,
-  within 1.5 s of the Use; if they mantle onto it, they slide back onto the bed within 1 s.
+  within 1.5 s of the Use; if they mantle onto it, they slide back onto the bed within 1 s. *Port:* the slide-off
+  plays on any contact with the propped bench (§3 port notes) and ends 0.9 s after it.
 - **Wrong path, reach:** from the bed, a jump at the sill falls short and lands him back on the bed within 1 s.
+  *Pending #46:* the port's mid-air catch reaches about 1.09 m above takeoff, so with the bench folded a running jump
+  right from the bed (takeoff 353.05–353.85; walking, 353.40–353.85) catches the sill (0.75 up). `Dl18SkipSearchTests`
+  asserts this is the only skip and that it exists, until #46 is decided. With the bench propped the slide-off meets him
+  first.
 - **Reverse case:** with the bench down, pulling the bed down stops it propped against the bench within 1.5 s.
 - **No traps:** in every combination of leaf states, and with D-17 at every x in the room, every leaf can be returned
   with one Use and D-17 can reach the gallery and the sill route.
@@ -185,11 +199,11 @@ spots.
 | `WorksDoor` | dressing | bottom centre | 348.0, 0.0 | Sealed only. Use on its chain plays a tug; no state change |
 | `LitWindow` | dressing | centre | far background, high | Lit always |
 | `CommonFrame` | Paired outputs (shared space) | bottom left | 351.9, 0.0 | Static; parents both leaves |
-| `FoldBed` | Paired outputs (shared space); Movable access | hinge rail, floor, back edge | 351.9–353.9, 0.0 | `down` ⇄ `folded` (1.4 s). While moving down: if its swept volume meets `FoldBench` (down), it stops as `propped` (about 20°); Use returns it to `folded`. Stops and waits if it meets D-17 |
-| `FootRail` | use point of `FoldBed` | centre | 353.9, 0.55 | Use from floor at 353.6–354.15 toggles `FoldBed` |
+| `FoldBed` | Paired outputs (shared space); Movable access | hinge rail, floor, back edge | 351.9–353.8, 0.0 | `down` ⇄ `folded` (1.4 s). While moving down: if its swept volume meets `FoldBench` (down), it stops as `propped` (about 20°); Use returns it to `folded`. Stops and waits if it meets D-17 |
+| `FootRail` | use point of `FoldBed` | centre | 353.8, 0.55 | Use from floor at 353.6–354.15 (standing at 354.0, clear of its swing) toggles `FoldBed` |
 | `Quilt` | part of `FoldBed` | | heaped at the foot to 0.7 | The collider that the bench meets; strapped flat when the bed is folded |
-| `FoldBench` | Paired outputs (shared space); Movable access | hinge rail at 0.6, back edge | 353.4–354.2, 0.6 | `folded` ⇄ `down` (1.2 s). While moving down: if it meets `Quilt`, it stops as `propped` (about 30°; not standable: any landing on it plays the slide-off); Use returns it to `folded`. Stops and waits if it meets D-17 |
-| `Strap` | use point of `FoldBench` | loop | 353.45, 0.75 | Use from floor or bed toggles `FoldBench`; plays the tug and 0.4 m hop back |
+| `FoldBench` | Paired outputs (shared space); Movable access | hinge rail at 0.6, back edge | 353.4–354.2, 0.6 | `folded` ⇄ `down` (1.2 s). While moving down: if it meets `Quilt`, it stops as `propped` (about 30°; not standable: any landing on it plays the slide-off; port: any contact with it, see §3); Use returns it to `folded`. Stops and waits if it meets D-17 |
+| `Strap` | use point of `FoldBench` | loop | 353.45, 0.75 | Use from floor or bed toggles `FoldBench`; plays the tug and 0.4 m hop back. The bench is let go as the hop starts (Tug f43), not at the tug's click (f19) |
 | `SkyPanel` | dressing | centre | 353.8, 0.82 | Hidden behind `FoldBench` when folded |
 | `LandingDoor` | goal | sill lip | 354.2, 1.2 | Open always; sill is a mantle edge |
 | `AlarmClock` | curiosity | base | 351.95, 0.5 | Use or contact: rings 2 s, then idle |

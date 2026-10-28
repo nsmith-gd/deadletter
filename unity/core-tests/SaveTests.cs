@@ -655,6 +655,31 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
+        public void Recapture_TakesTheCheckpointsSnapshotAgain_SoAReloadAndTheSlotFindTheWorldAsItWasThen()
+        {
+            var src = new TestSource("t.a");
+            var g = Mech.Graph("start", src);
+            var store = new MemorySaveStore();
+            var svc = new CheckpointService(g, Checkpoint.PrototypeOrder, store);
+            svc.Recapture();                                           // no game yet: nothing taken, nothing written
+            Assert.Equal(0, store.Writes);
+            Assert.True(svc.Reach("hall"));
+            src.Position = 0.5;
+            svc.Recapture();                                           // DL-19 §9: progress that persists at its checkpoint
+            src.Position = 0.9;
+            svc.Reload();
+            Assert.Equal(0.5, src.Position);
+            Assert.Equal("hall", svc.Current.Name);
+            svc.Flush();
+            Assert.True(store.TryLoad(0, out var m));
+            Assert.Equal("hall", m.Checkpoint);
+            var g2 = Mech.Graph("start", new TestSource("t.a"));
+            var svc2 = new CheckpointService(g2, Checkpoint.PrototypeOrder, store);
+            Assert.True(svc2.TryContinue());
+            Assert.Equal(0.5, g2.Get<TestSource>("t.a").Position);
+        }
+
+        [Fact]
         public void Reach_RateLimited_HoldsTheWriteUntilUpdate_Switch2s()
         {
             var g = Mech.Graph("start", new TestSource("t.a"));
