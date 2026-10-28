@@ -6,6 +6,7 @@ using DeadLetter.Core.Scenes.Dl03;
 using DeadLetter.Core.Scenes.Dl04;
 using DeadLetter.Core.Scenes.Dl05;
 using DeadLetter.Core.Scenes.Dl06;
+using DeadLetter.Core.Scenes.Dl18;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -57,5 +58,24 @@ namespace DeadLetter.Core.Scenes
         /// </summary>
         public static ChapterDef Prologue() => new ChapterDef(PrologueId, PrologueCheckpoints,
             Dl01Scene.Def(), Dl02Scene.Def(), Dl03Scene.Def(), Dl04Scene.Def(), Dl05Scene.Def(), Dl06Scene.Def());
+
+        // ---- Chapter 2, "Someone Home" (docs/chapter2_plan.md) --------------------------------------------------------
+
+        /// <summary>Chapter 2's ID (the save's scene key).</summary>
+        public const string SomeoneHomeId = "someone_home";
+
+        /// <summary>
+        /// Chapter 2's checkpoints, in the game's order (<see cref="Checkpoint.GameOrder"/>): region 7, game x from DL-17's
+        /// stair head at 347.0, heights above the ring A datum (chapter2_plan §4 "Fixed across scenes"). DL-18's from its
+        /// doc's §9 and §11. A chapter-2 game is begun or continued at one of these: <c>start</c>, the order's first, is the
+        /// prologue's, so <see cref="ChapterSim.NewGame"/> is the prologue's alone.
+        /// </summary>
+        public static CheckpointTable SomeoneHomeCheckpoints { get; } = new CheckpointTable(Checkpoint.GameOrder,
+            new CheckpointDef("ring_a", Dl18Scene.RingAX, 0, region: Dl18Lane.Region, scene: Dl18Scene.Id),                 // DL-18 §9
+            new CheckpointDef("terrace", Dl18Scene.TerraceX, Dl18Lane.LandingY, region: Dl18Lane.Region, scene: Dl18Scene.Id));
+            // DL-19's rows (half_landing, repaired; its doc's §9) are added with its scene.
+
+        /// <summary>Chapter 2 as far as it is ported: DL-18.</summary>
+        public static ChapterDef SomeoneHome() => new ChapterDef(SomeoneHomeId, SomeoneHomeCheckpoints, Dl18Scene.Def());
     }
 }

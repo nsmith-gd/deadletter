@@ -11,7 +11,7 @@ namespace DeadLetter.Core.Scenes
 {
     /// <summary>
     /// Test shim: one scene simulated on its own, as a <see cref="ChapterSim"/> over a one-scene <see cref="ChapterDef"/>
-    /// (the prologue's checkpoint table), with the per-scene view the scene tests and trace replays were written against:
+    /// (the prologue's checkpoint table, or the one given), with the per-scene view the scene tests and trace replays were written against:
     /// the scene's rules, the act as text (<see cref="ActKind"/>:<see cref="ActPhase"/>), cue names, and
     /// <see cref="Handover"/> (he walks in at rest from the scene before). Everything else is the chapter's. A game is a
     /// <see cref="ChapterSim"/> over <see cref="ChapterDefs.Prologue"/>; this exists so each scene's parity stays provable
@@ -22,9 +22,13 @@ namespace DeadLetter.Core.Scenes
         public const double StepSeconds = ChapterSim.StepSeconds;
 
         public SceneSim(SceneDef def, MotorConfig config = null, ISaveStore store = null)
+            : this(def, ChapterDefs.PrologueCheckpoints, config, store) { }
+
+        /// <summary>A scene of another chapter, with that chapter's checkpoint table (chapter 2's <see cref="ChapterDefs.SomeoneHomeCheckpoints"/>).</summary>
+        public SceneSim(SceneDef def, CheckpointTable checkpoints, MotorConfig config = null, ISaveStore store = null)
         {
             Def = def ?? throw new ArgumentNullException(nameof(def));
-            Chapter = new ChapterSim(new ChapterDef(def.Id, ChapterDefs.PrologueCheckpoints, def), config, store);
+            Chapter = new ChapterSim(new ChapterDef(def.Id, checkpoints, def), config, store);
         }
 
         public ChapterSim Chapter { get; }
