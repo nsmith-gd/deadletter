@@ -1,2 +1,73 @@
 fileFormatVersion: 2
 guid: 279a5940f581e148d11a6f2b0a8c5789
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 715df9372183c47e389bb6e19fbc3b52, type: 3}
+  editorImportSettings:
+    generateSecondaryUVSet: 0
+  importSettings:
+    nodeNameMethod: 1
+    animationMethod: 2
+    generateMipMaps: 1
+    texturesReadable: 0
+    defaultMinFilterMode: 9729
+    defaultMagFilterMode: 9729
+    anisotropicFilterLevel: 1
+  instantiationSettings:
+    mask: -1
+    layer: 0
+    skinUpdateWhenOffscreen: 1
+    lightIntensityFactor: 1
+    sceneObjectCreation: 2
+  assetDependencies:
+  - type: 0
+    originalUri: Assets\Art\DL-01\DL-01.bin
+    assetPath: Assets\Art\DL-01\DL-01.bin
+  - type: 1
+    originalUri: Assets\Art\Textures\dispatch_board.png
+    assetPath: Assets\Art\Textures\dispatch_board.png
+  - type: 1
+    originalUri: Assets\Art\Textures\lore_grade_chart.png
+    assetPath: Assets\Art\Textures\lore_grade_chart.png
+  - type: 1
+    originalUri: Assets\Art\Textures\lore_roster.png
+    assetPath: Assets\Art\Textures\lore_roster.png
+  - type: 1
+    originalUri: Assets\Art\Textures\lore_tally.png
+    assetPath: Assets\Art\Textures\lore_tally.png
+  - type: 1
+    originalUri: Assets\Art\Textures\order_motto.png
+    assetPath: Assets\Art\Textures\order_motto.png
+  - type: 1
+    originalUri: Assets\Art\Textures\depot_pictogram.png
+    assetPath: Assets\Art\Textures\depot_pictogram.png
+  - type: 1
+    originalUri: Assets\Art\Textures\route_card_d17.png
+    assetPath: Assets\Art\Textures\route_card_d17.png
+  - type: 1
+    originalUri: Assets\Art\Textures\route_map.png
+    assetPath: Assets\Art\Textures\route_map.png
+  - type: 1
+    originalUri: Assets\Art\Textures\scale_dial.png
+    assetPath: Assets\Art\Textures\scale_dial.png
+  - type: 1
+    originalUri: Assets\Art\Textures\scale_ticket.png
+    assetPath: Assets\Art\Textures\scale_ticket.png
+  - type: 1
+    originalUri: Assets\Art\Textures\ring_c.png
+    assetPath: Assets\Art\Textures\ring_c.png
+  reportItems:
+  - type: 2
+    code: 20
+    messages:
+    - KHR_materials_emissive_strength
+  - type: 0
+    code: 43
+    messages:
+    - Couldn't load texture at Assets\Art\Textures\dispatch_board.png
+    - 0
