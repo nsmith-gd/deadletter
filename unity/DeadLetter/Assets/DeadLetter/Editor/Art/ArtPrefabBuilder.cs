@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DeadLetter.Core.Art;
 using DeadLetter.Runtime.Art;
+using ArtMarker = DeadLetter.Runtime.Art.ArtMarker;
 using UnityEditor;
 using UnityEngine;
 

@@ -1,2 +1,142 @@
 fileFormatVersion: 2
 guid: cfa6356d6b3bb9f27d1cbea809b7262c
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 715df9372183c47e389bb6e19fbc3b52, type: 3}
+  editorImportSettings:
+    generateSecondaryUVSet: 0
+  importSettings:
+    nodeNameMethod: 1
+    animationMethod: 2
+    generateMipMaps: 1
+    texturesReadable: 0
+    defaultMinFilterMode: 9729
+    defaultMagFilterMode: 9729
+    anisotropicFilterLevel: 1
+  instantiationSettings:
+    mask: -1
+    layer: 0
+    skinUpdateWhenOffscreen: 1
+    lightIntensityFactor: 1
+    sceneObjectCreation: 2
+  assetDependencies:
+  - type: 0
+    originalUri: Assets\Art\DL-11\DL-11.bin
+    assetPath: Assets\Art\DL-11\DL-11.bin
+  - type: 1
+    originalUri: Assets\Art\Textures\letter_c110.png
+    assetPath: Assets\Art\Textures\letter_c110.png
+  - type: 1
+    originalUri: Assets\Art\Textures\quilt.png
+    assetPath: Assets\Art\Textures\quilt.png
+  - type: 1
+    originalUri: Assets\Art\Textures\child_drawing.png
+    assetPath: Assets\Art\Textures\child_drawing.png
+  - type: 1
+    originalUri: Assets\Art\Textures\rug.png
+    assetPath: Assets\Art\Textures\rug.png
+  - type: 1
+    originalUri: Assets\Art\Textures\photo.png
+    assetPath: Assets\Art\Textures\photo.png
+  - type: 1
+    originalUri: Assets\Art\Textures\ringc_sealed.png
+    assetPath: Assets\Art\Textures\ringc_sealed.png
+  - type: 1
+    originalUri: Assets\Art\Textures\tape.png
+    assetPath: Assets\Art\Textures\tape.png
+  - type: 1
+    originalUri: Assets\Art\Textures\drop_mark.png
+    assetPath: Assets\Art\Textures\drop_mark.png
+  - type: 1
+    originalUri: Assets\Art\Textures\goneup.png
+    assetPath: Assets\Art\Textures\goneup.png
+  - type: 1
+    originalUri: Assets\Art\Textures\grade4.png
+    assetPath: Assets\Art\Textures\grade4.png
+  - type: 1
+    originalUri: Assets\Art\Textures\graffiti.png
+    assetPath: Assets\Art\Textures\graffiti.png
+  - type: 1
+    originalUri: Assets\Art\Textures\highwater.png
+    assetPath: Assets\Art\Textures\highwater.png
+  - type: 1
+    originalUri: Assets\Art\Textures\remains_atlas.png
+    assetPath: Assets\Art\Textures\remains_atlas.png
+  - type: 1
+    originalUri: Assets\Art\Textures\growth_marks.png
+    assetPath: Assets\Art\Textures\growth_marks.png
+  - type: 1
+    originalUri: Assets\Art\Textures\noticeboard.png
+    assetPath: Assets\Art\Textures\noticeboard.png
+  - type: 1
+    originalUri: Assets\Art\Textures\plate_c102.png
+    assetPath: Assets\Art\Textures\plate_c102.png
+  - type: 1
+    originalUri: Assets\Art\Textures\plate_c104.png
+    assetPath: Assets\Art\Textures\plate_c104.png
+  - type: 1
+    originalUri: Assets\Art\Textures\plate_c104a.png
+    assetPath: Assets\Art\Textures\plate_c104a.png
+  - type: 1
+    originalUri: Assets\Art\Textures\plate_c106.png
+    assetPath: Assets\Art\Textures\plate_c106.png
+  - type: 1
+    originalUri: Assets\Art\Textures\plate_c108.png
+    assetPath: Assets\Art\Textures\plate_c108.png
+  - type: 1
+    originalUri: Assets\Art\Textures\plate_c110.png
+    assetPath: Assets\Art\Textures\plate_c110.png
+  - type: 1
+    originalUri: Assets\Art\Textures\plate_c112.png
+    assetPath: Assets\Art\Textures\plate_c112.png
+  - type: 1
+    originalUri: Assets\Art\Textures\queue_marks.png
+    assetPath: Assets\Art\Textures\queue_marks.png
+  - type: 1
+    originalUri: Assets\Art\Textures\ration_sign.png
+    assetPath: Assets\Art\Textures\ration_sign.png
+  - type: 1
+    originalUri: Assets\Art\Textures\school_sign.png
+    assetPath: Assets\Art\Textures\school_sign.png
+  - type: 1
+    originalUri: Assets\Art\Textures\tap_sign.png
+    assetPath: Assets\Art\Textures\tap_sign.png
+  - type: 1
+    originalUri: Assets\Art\Textures\depot_pictogram.png
+    assetPath: Assets\Art\Textures\depot_pictogram.png
+  - type: 1
+    originalUri: Assets\Art\Textures\white_drawing.png
+    assetPath: Assets\Art\Textures\white_drawing.png
+  - type: 1
+    originalUri: Assets\Art\Textures\window_paint.png
+    assetPath: Assets\Art\Textures\window_paint.png
+  - type: 1
+    originalUri: Assets\Art\Textures\namecard114.png
+    assetPath: Assets\Art\Textures\namecard114.png
+  - type: 1
+    originalUri: Assets\Art\Textures\plate_c114.png
+    assetPath: Assets\Art\Textures\plate_c114.png
+  - type: 1
+    originalUri: Assets\Art\Textures\tideline.png
+    assetPath: Assets\Art\Textures\tideline.png
+  - type: 1
+    originalUri: Assets\Art\Textures\uponly_atlas.png
+    assetPath: Assets\Art\Textures\uponly_atlas.png
+  - type: 1
+    originalUri: Assets\Art\Textures\ringc_story.png
+    assetPath: Assets\Art\Textures\ringc_story.png
+  reportItems:
+  - type: 2
+    code: 20
+    messages:
+    - KHR_materials_emissive_strength
+  - type: 0
+    code: 43
+    messages:
+    - Couldn't load texture at Assets\Art\Textures\letter_c110.png
+    - 0

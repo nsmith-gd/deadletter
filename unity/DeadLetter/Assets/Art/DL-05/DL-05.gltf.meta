@@ -1,2 +1,82 @@
 fileFormatVersion: 2
 guid: 8cb4eb3cfda25cc28aee8489cb54fe6c
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 715df9372183c47e389bb6e19fbc3b52, type: 3}
+  editorImportSettings:
+    generateSecondaryUVSet: 0
+  importSettings:
+    nodeNameMethod: 1
+    animationMethod: 2
+    generateMipMaps: 1
+    texturesReadable: 0
+    defaultMinFilterMode: 9729
+    defaultMagFilterMode: 9729
+    anisotropicFilterLevel: 1
+  instantiationSettings:
+    mask: -1
+    layer: 0
+    skinUpdateWhenOffscreen: 1
+    lightIntensityFactor: 1
+    sceneObjectCreation: 2
+  assetDependencies:
+  - type: 0
+    originalUri: Assets\Art\DL-05\DL-05.bin
+    assetPath: Assets\Art\DL-05\DL-05.bin
+  - type: 1
+    originalUri: Assets\Art\Textures\remains_atlas.png
+    assetPath: Assets\Art\Textures\remains_atlas.png
+  - type: 1
+    originalUri: Assets\Art\Textures\weighin.png
+    assetPath: Assets\Art\Textures\weighin.png
+  - type: 1
+    originalUri: Assets\Art\Textures\drum_stencil.png
+    assetPath: Assets\Art\Textures\drum_stencil.png
+  - type: 1
+    originalUri: Assets\Art\Textures\ration_board.png
+    assetPath: Assets\Art\Textures\ration_board.png
+  - type: 1
+    originalUri: Assets\Art\Textures\crayon_drawing.png
+    assetPath: Assets\Art\Textures\crayon_drawing.png
+  - type: 1
+    originalUri: Assets\Art\Textures\drum_ring.png
+    assetPath: Assets\Art\Textures\drum_ring.png
+  - type: 1
+    originalUri: Assets\Art\Textures\grade_notice.png
+    assetPath: Assets\Art\Textures\grade_notice.png
+  - type: 1
+    originalUri: Assets\Art\Textures\sky_mural.png
+    assetPath: Assets\Art\Textures\sky_mural.png
+  - type: 1
+    originalUri: Assets\Art\Textures\shrine_names.png
+    assetPath: Assets\Art\Textures\shrine_names.png
+  - type: 1
+    originalUri: Assets\Art\Textures\ration_sign.png
+    assetPath: Assets\Art\Textures\ration_sign.png
+  - type: 1
+    originalUri: Assets\Art\Textures\chalk_tally.png
+    assetPath: Assets\Art\Textures\chalk_tally.png
+  - type: 1
+    originalUri: Assets\Art\Textures\steward_portrait.png
+    assetPath: Assets\Art\Textures\steward_portrait.png
+  - type: 1
+    originalUri: Assets\Art\Textures\scratched_tally.png
+    assetPath: Assets\Art\Textures\scratched_tally.png
+  - type: 1
+    originalUri: Assets\Art\Textures\ring_c.png
+    assetPath: Assets\Art\Textures\ring_c.png
+  reportItems:
+  - type: 2
+    code: 20
+    messages:
+    - KHR_materials_emissive_strength
+  - type: 0
+    code: 43
+    messages:
+    - Couldn't load texture at Assets\Art\Textures\remains_atlas.png
+    - 0
