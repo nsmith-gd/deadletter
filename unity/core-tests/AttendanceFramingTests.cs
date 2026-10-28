@@ -21,7 +21,7 @@ namespace DeadLetter.Core.Tests
             Assert.NotNull(ChapterFraming.For(ChapterDefs.AttendanceId));
             Assert.Equal("dl01.alcove", ChapterFraming.For(ChapterDefs.PrologueId).Base.Name);
             Assert.Equal("dl12.register", ChapterFraming.For(ChapterDefs.AttendanceId).Base.Name);
-            Assert.Null(ChapterFraming.For("someone_home"));
+            Assert.Null(ChapterFraming.For(ChapterDefs.SomeoneHomeId));                 // chapter 2: no framing data yet
             Assert.Null(ChapterFraming.For(null));
         }
 
@@ -92,7 +92,7 @@ namespace DeadLetter.Core.Tests
             string said = null;
             FramingTrack t = ChapterFraming.Fallback("someone_home", m => said = m);
             Assert.Equal("dl01.alcove", t.Base.Name);
-            Assert.Contains("someone_home", said);
+            Assert.Contains("'someone_home' has no framing yet", said);
             Assert.NotNull(ChapterFraming.Fallback("x", null));
         }
 
