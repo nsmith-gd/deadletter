@@ -306,6 +306,64 @@ namespace DeadLetter.Core.Tests
             Assert.Throws<InvalidOperationException>(() => carry.Capture());
         }
 
+        // ---- TakeItem: a scene act's own lift hands him the item (#35, L4420, L5303) -----------------------------------
+
+        [Fact]
+        public void TakeItem_HoldsItAsLiftF39Leaves_UseSetsItDown_CaptureRefuses()
+        {
+            var item = new TestItem { X = 3.0, IsLight = true };
+            var r = new InteractionResolver();
+            r.Register(item);
+            var m = Sim.Make(BoxWorld.Flat(), 1.0, 0, r);
+            m.Place(2.0, 0, -1);
+            item.Carried = true;                                                       // the scene's act lifted it (its OnLifted)
+            m.TakeItem(item);
+
+            Assert.Equal(HoldKind.Item, m.Hold);
+            Assert.Same(item, m.Carried);
+            Assert.Equal(1, m.CarryBlend);
+            Assert.Equal(ClipNames.CarryIdle, m.Clip);
+            Assert.False(m.IsActing);
+            Assert.False(m.CanCapture);
+            Assert.Throws<InvalidOperationException>(() => m.Capture());
+
+            m.Step(Sim.Move(0), Dt);
+            var q = m.Query();
+            Assert.Equal(HoldKind.Item, q.Hold);
+            Assert.Same(item, q.Carried);
+            Assert.True(m.PreviewUse(out var c));
+            Assert.Equal(Verb.SetDown, c.Verb);
+            Assert.Same(item, c.Target);
+
+            m.Step(Sim.Use(), Dt);                                                     // and the set-down plays as after a Lift
+            Sim.RunUntil(m, Sim.Move(0), mm => !mm.IsActing, 600);
+            Assert.Equal(HoldKind.None, m.Hold);
+            Assert.False(item.Carried);
+        }
+
+        [Fact]
+        public void TakeItem_OnlyFromRest()
+        {
+            var item = new TestItem { IsLight = true };
+            Assert.Throws<ArgumentNullException>(() => Sim.Make(BoxWorld.Flat(), 1.0).TakeItem(null));
+
+            var holding = Sim.Make(BoxWorld.Flat(), 1.0);
+            holding.TakeItem(item);
+            Assert.Throws<InvalidOperationException>(() => holding.TakeItem(new TestItem()));
+            Assert.Same(item, holding.Carried);
+
+            var acting = Sim.Make(BoxWorld.Flat(), 1.0);
+            Assert.True(acting.PlayQuirk(ClipNames.Idle, holdFor: 2));
+            Assert.Throws<InvalidOperationException>(() => acting.TakeItem(item));
+            Assert.Equal(HoldKind.None, acting.Hold);
+
+            var mantle = Sim.Make(BoxWorld.Flat().AddSolid(1.3, 3.0, 0.4), 1.0);
+            mantle.Step(Sim.Jump(), Dt);
+            Assert.True(mantle.IsMantling);
+            Assert.Throws<InvalidOperationException>(() => mantle.TakeItem(item));
+            Assert.Equal(HoldKind.None, mantle.Hold);
+        }
+
         // ---- A trace hand-over's peakY ----------------------------------------------------------------------------------
 
         [Fact]
