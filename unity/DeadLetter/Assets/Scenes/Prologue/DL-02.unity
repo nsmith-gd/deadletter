@@ -119,13 +119,60 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1001 &1309506918
+--- !u!1 &119318916
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 119318918}
+  - component: {fileID: 119318917}
+  m_Layer: 0
+  m_Name: DL-02
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &119318917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 119318916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 624b70f315f77c7459b87189fffcd3ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.SceneView
+  chapterId: prologue
+  sceneId: DL-02
+--- !u!4 &119318918
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 119318916}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 340691957}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &340691956
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1902751879}
+    m_TransformParent: {fileID: 119318918}
     m_Modifications:
     - target: {fileID: 97016297905870605, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -419,6 +466,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 8404341460521832590, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 8581442861949419553, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 4
@@ -461,41 +512,41 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 2942726752474408779, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1309506925}
+      addedObject: {fileID: 340691963}
     - targetCorrespondingSourceObject: {fileID: 2940598471229494369, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1309506924}
+      addedObject: {fileID: 340691962}
     - targetCorrespondingSourceObject: {fileID: 1716791776931287823, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1309506923}
+      addedObject: {fileID: 340691961}
   m_SourcePrefab: {fileID: 100100000, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
---- !u!4 &1309506919 stripped
+--- !u!4 &340691957 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3610676731751699157, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
-  m_PrefabInstance: {fileID: 1309506918}
+  m_PrefabInstance: {fileID: 340691956}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1309506920 stripped
+--- !u!1 &340691958 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1716791776931287823, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
-  m_PrefabInstance: {fileID: 1309506918}
+  m_PrefabInstance: {fileID: 340691956}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1309506921 stripped
+--- !u!1 &340691959 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2940598471229494369, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
-  m_PrefabInstance: {fileID: 1309506918}
+  m_PrefabInstance: {fileID: 340691956}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1309506922 stripped
+--- !u!1 &340691960 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2942726752474408779, guid: 3ad8bd78502b9aa4b85c0d86470e905c, type: 3}
-  m_PrefabInstance: {fileID: 1309506918}
+  m_PrefabInstance: {fileID: 340691956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1309506923
+--- !u!114 &340691961
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1309506920}
+  m_GameObject: {fileID: 340691958}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
@@ -510,13 +561,13 @@ MonoBehaviour:
     scale: 1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
---- !u!114 &1309506924
+--- !u!114 &340691962
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1309506921}
+  m_GameObject: {fileID: 340691959}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
@@ -531,13 +582,13 @@ MonoBehaviour:
     scale: 1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
---- !u!114 &1309506925
+--- !u!114 &340691963
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1309506922}
+  m_GameObject: {fileID: 340691960}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 096f4ecb4f02d0145b12b6c881ab59d3, type: 3}
@@ -556,55 +607,8 @@ MonoBehaviour:
     scale: 1
   hasPivot: 0
   pivot: {x: 0, y: 0, z: 0}
---- !u!1 &1902751877
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1902751879}
-  - component: {fileID: 1902751878}
-  m_Layer: 0
-  m_Name: DL-02
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1902751878
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1902751877}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 624b70f315f77c7459b87189fffcd3ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DeadLetter.Runtime::DeadLetter.Runtime.Scenes.SceneView
-  chapterId: prologue
-  sceneId: DL-02
---- !u!4 &1902751879
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1902751877}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1309506919}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1902751879}
+  - {fileID: 119318918}

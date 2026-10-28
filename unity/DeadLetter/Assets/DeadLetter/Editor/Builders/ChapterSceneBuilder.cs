@@ -226,6 +226,8 @@ namespace DeadLetter.Editor.Builders
                 problems.Add("No " + D17Glb + " (glTFast import): D-17 is an empty placeholder.");
             }
             d17.name = "D17";
+            int d17Slots = ArtMaterials.ApplyToHierarchy(d17);   // the prototype's paint, not glTFast's grey (L527)
+            if (d17Slots == 0 && d17Asset != null) problems.Add("D-17: no material matched the prototype's tables (ArtMaterials.ForSource).");
             d17.transform.SetPositionAndRotation(Vector3.zero, Quaternion.Euler(0f, 90f, 0f));
             var animator = d17.GetComponentInChildren<Animator>();
             if (animator == null) animator = d17.AddComponent<Animator>();
