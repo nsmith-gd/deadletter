@@ -23,7 +23,8 @@ namespace DeadLetter.Editor.Art
     /// <see cref="SerializedObject"/> because glTFast's importer class is internal (same field paths as
     /// <see cref="D17ImportSettings"/>, glTFast 6.8).</item>
     /// </list>
-    /// After a region's glTF imports, <see cref="ArtPrefabBuilder"/> rebuilds that region's prefab.
+    /// After a region's glTF imports, <see cref="ArtPrefabBuilder"/> rebuilds that region's prefab; after textures import, the
+    /// region glTFs glTFast gave up on are re-imported once (<see cref="ArtPrefabBuilder.ReimportFailedRegions"/>).
     /// </summary>
     public sealed class ArtImportSettings : AssetPostprocessor
     {
@@ -130,9 +131,16 @@ namespace DeadLetter.Editor.Art
         private static void OnPostprocessAllAssets(string[] imported, string[] deleted, string[] moved, string[] movedFrom)
         {
             var regions = new List<string>();
+            bool textures = false;
             foreach (string p in imported)
-                if (Owned(p) && p.EndsWith(".gltf", StringComparison.Ordinal) && !p.StartsWith(TextureFolder, StringComparison.Ordinal))
+            {
+                if (p.StartsWith(TextureFolder, StringComparison.Ordinal) && p.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) textures = true;
+                else if (Owned(p) && p.EndsWith(".gltf", StringComparison.Ordinal))
                     regions.Add(Path.GetFileNameWithoutExtension(p));
+            }
+            // glTFast fails a whole region when one of its textures is not loadable yet and never retries by itself (it only
+            // depends on the textures' source files): once textures have imported, re-import the regions it gave up on.
+            if (textures) EditorApplication.delayCall += () => ArtPrefabBuilder.ReimportFailedRegions();
             if (regions.Count == 0) return;
             // After the import finishes: building prefabs and materials inside an import callback is not allowed.
             EditorApplication.delayCall += () => ArtPrefabBuilder.Build(regions);

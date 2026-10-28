@@ -125,6 +125,8 @@ namespace DeadLetter.Editor.Art
         public float normalScale;
         public string metallicRoughnessTexture;
         public string occlusionTexture;
+
+        public ArtMaterialDef Clone() => (ArtMaterialDef)MemberwiseClone();
     }
 
     [Serializable]

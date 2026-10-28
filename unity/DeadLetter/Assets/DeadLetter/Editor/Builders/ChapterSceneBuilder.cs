@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using DeadLetter.Core.Art;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Streaming;
 using DeadLetter.Editor.Art;
@@ -123,8 +124,11 @@ namespace DeadLetter.Editor.Builders
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath);
                 if (prefab == null)
                 {
-                    problems.Add(def.Id + ": art for this scene isn't imported: no " + entry.PrefabPath + ". Import " + entry.AssetPath +
-                                 " (glTFast) and run Dead Letter → Art → Build Region Prefabs, then build the scenes again.");
+                    string why = def.Id + ": art for this scene isn't imported: no " + entry.PrefabPath + " (" +
+                                 ArtPrefabBuilder.GltfImportReport(entry.AssetPath) + "). Import " + entry.AssetPath +
+                                 " (glTFast) and run Dead Letter → Art → Build Region Prefabs, then build the scenes again.";
+                    problems.Add(why);
+                    Debug.LogError("[Scenes] " + why);   // an empty world is not a warning
                     line += "ART NOT IMPORTED (" + entry.PrefabPath + ")";
                 }
                 else
@@ -187,14 +191,20 @@ namespace DeadLetter.Editor.Builders
         private static void BuildBootstrap(string chapterId, List<string> problems)
         {
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            // The bootstrap stays the active scene, so its lighting settings are the game's: no ambient (U-15's light pool
-            // lights the sets), fog driven by the camera rig each frame.
-            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.06f, 0.06f, 0.07f);
+            // The bootstrap stays the active scene, so its lighting settings are the game's. The prototype's (buildLights,
+            // L1460–L1463; scene L350–L351): a hemisphere light 0x26332f / 0x0b0b0a at 0.45, a rim light 0x8db4c8 at 0.35, a
+            // 0x030404 background and 0x040505 exp² fog whose density the camera rig drives each frame; the sets' real light is
+            // the LGT_ light pool (~160 lights in code, U-15, not ported yet). Until then the hemisphere stands in as a
+            // trilight ambient, a little brighter than the prototype's so the sets read without the pool and AgX at 1.4.
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = Hex(0x26332f) * 1.6f;
+            RenderSettings.ambientEquatorColor = Color.Lerp(Hex(0x26332f), Hex(0x0b0b0a), 0.5f) * 1.6f;
+            RenderSettings.ambientGroundColor = Hex(0x0b0b0a) * 1.6f;
+            RenderSettings.ambientIntensity = 1f;
             RenderSettings.skybox = null;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = Color.black;
+            RenderSettings.fogColor = Hex(0x040505);
 
             Object inputActions = AssetDatabase.LoadAssetAtPath<Object>(InputActions);   // an InputActionAsset (the Editor asmdef has no Input System reference)
             if (inputActions == null) problems.Add("No input actions at " + InputActions + ": D-17 will not respond to input.");
@@ -226,6 +236,8 @@ namespace DeadLetter.Editor.Builders
                 problems.Add("No " + D17Glb + " (glTFast import): D-17 is an empty placeholder.");
             }
             d17.name = "D17";
+            int recoloured = ApplyPrototypeMaterials(d17);   // D-17's GLB has no colours of its own (materialFor's tables do)
+            if (d17Asset != null && recoloured == 0) problems.Add("D-17: no material matched PrototypeMaterials; he stays glTFast's untinted white/grey.");
             d17.transform.SetPositionAndRotation(Vector3.zero, Quaternion.Euler(0f, 90f, 0f));
             var animator = d17.GetComponentInChildren<Animator>();
             if (animator == null) animator = d17.AddComponent<Animator>();
@@ -240,7 +252,7 @@ namespace DeadLetter.Editor.Builders
             cam.nearClipPlane = 0.05f;
             cam.farClipPlane = 80f;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = Color.black;
+            cam.backgroundColor = Hex(0x030404);                               // scene.background, L350
             camGo.AddComponent<AudioListener>();
             var driver = camGo.AddComponent<LaneCameraDriver>();
 
@@ -250,6 +262,13 @@ namespace DeadLetter.Editor.Builders
             key.type = LightType.Directional;
             key.intensity = 0.6f;
             keyGo.transform.rotation = Quaternion.Euler(35f, 20f, 0f);
+            // The prototype's rim light (L1462): from (5, 3, −8) toward (3, 0, 0) in its axes; Unity z = −z (§0.2).
+            var rimGo = new GameObject("Rim Light (index.html L1462)");
+            var rim = rimGo.AddComponent<Light>();
+            rim.type = LightType.Directional;
+            rim.color = Hex(0x8db4c8);
+            rim.intensity = 0.35f;
+            rimGo.transform.rotation = Quaternion.LookRotation(new Vector3(3f, 0f, 0f) - new Vector3(5f, 3f, 8f));
 
             // Wiring (serialized fields by name; a renamed field is an error in the log).
             Set(platform, "player", player);
@@ -286,6 +305,37 @@ namespace DeadLetter.Editor.Builders
 
             EditorSceneManager.SaveScene(scene, ChapterScenes.BootstrapPath);
         }
+
+        /// <summary>
+        /// Swaps every material of <paramref name="go"/> whose name the prototype's tables know (<see cref="PrototypeMaterials"/>;
+        /// D-17's are <c>Name.003</c>) for the shared URP Lit asset of <see cref="ArtMaterials"/>. glTFast's own materials stay
+        /// for the rest (the decals with their textures: the mug, the claw stamp, the parcel label). Returns the slots swapped.
+        /// </summary>
+        private static int ApplyPrototypeMaterials(GameObject go)
+        {
+            int swapped = 0;
+            var cache = new Dictionary<string, Material>();
+            foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] mats = r.sharedMaterials;
+                bool changed = false;
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    if (mats[i] == null || !PrototypeMaterials.Lookup(mats[i].name, out _)) continue;
+                    string name = PrototypeMaterials.BaseName(mats[i].name);
+                    if (!cache.TryGetValue(name, out Material urp))
+                        cache[name] = urp = ArtMaterials.GetOrCreate(new ArtMaterialDef { name = name });
+                    if (urp == null) continue;
+                    mats[i] = urp;
+                    changed = true;
+                    swapped++;
+                }
+                if (changed) r.sharedMaterials = mats;
+            }
+            return swapped;
+        }
+
+        private static Color Hex(int rgb) => new Color(((rgb >> 16) & 255) / 255f, ((rgb >> 8) & 255) / 255f, (rgb & 255) / 255f);
 
         // ---- Helpers -----------------------------------------------------------------------------------------------------
 
