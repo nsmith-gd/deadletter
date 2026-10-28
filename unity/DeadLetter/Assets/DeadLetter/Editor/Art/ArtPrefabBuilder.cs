@@ -27,6 +27,18 @@ namespace DeadLetter.Editor.Art
     /// </summary>
     public static class ArtPrefabBuilder
     {
+        /// <summary>The far backdrop region (tools/unity_export/conventions.py <c>BACKDROP</c>): objects over 30 m wide.</summary>
+        public const string Backdrop = "DL-09_Atrium";
+
+        /// <summary>
+        /// Backdrop objects that are lane geometry, not scenery: the prologue's <c>Floor</c> (art/dl01/build_dl01.py
+        /// <c>build_set</c>, x −5 to 43) is wider than 30 m, so the export puts it in the backdrop, which only DL-09 to DL-11
+        /// load, and DL-01 to DL-04 had no floor. Until the export cuts it per region (#42), each set region whose lane range
+        /// it overlaps gets a copy, and the backdrop drops it when it overlaps none of the backdrop's scenes. The copies are
+        /// the same mesh at the same place, so two loaded neighbours draw it to the same depth and colour.
+        /// </summary>
+        public static readonly string[] LaneSpanning = { "Floor" };
+
         /// <summary>Used for a region with no markers to measure from (the backdrop): the last measured turn.</summary>
         private static float _lastTurnY = 180f;
         private static bool _turnMeasured;
@@ -68,13 +80,15 @@ namespace DeadLetter.Editor.Art
             // Regions with markers first, so the backdrop reuses a measured turn.
             entries.Sort((a, b) => Count(sidecars[b.name]).CompareTo(Count(sidecars[a.name])));
 
+            ArtIndexEntry backdrop = null;
+            foreach (ArtIndexEntry e in index.regions) if (e.IsSet && e.name == Backdrop) backdrop = e;
             var cache = new Dictionary<string, Material>();
             try
             {
                 for (int i = 0; i < entries.Count; i++)
                 {
                     EditorUtility.DisplayProgressBar("Dead Letter: region prefabs", entries[i].name, (float)i / entries.Count);
-                    BuildOne(entries[i], sidecars[entries[i].name], defs, cache);
+                    BuildOne(entries[i], sidecars[entries[i].name], defs, cache, index, backdrop);
                 }
             }
             finally
@@ -86,7 +100,8 @@ namespace DeadLetter.Editor.Art
 
         private static int Count(ArtSidecar sc) => sc.markers == null ? 0 : sc.markers.Length;
 
-        private static void BuildOne(ArtIndexEntry e, ArtSidecar sc, Dictionary<string, ArtMaterialDef> defs, Dictionary<string, Material> cache)
+        private static void BuildOne(ArtIndexEntry e, ArtSidecar sc, Dictionary<string, ArtMaterialDef> defs, Dictionary<string, Material> cache,
+            ArtIndex index, ArtIndexEntry backdrop)
         {
             var source = AssetDatabase.LoadAssetAtPath<GameObject>(e.AssetPath);
             if (source == null)
@@ -105,6 +120,7 @@ namespace DeadLetter.Editor.Art
                     if (!byName.ContainsKey(t.name)) byName[t.name] = t;
 
                 gltf.transform.localRotation = Quaternion.Euler(0f, MeasureTurn(e.name, sc, byName), 0f);
+                int lane = backdrop == null ? 0 : e == backdrop ? DropLaneSpanning(gltf, index, backdrop) : CopyLaneSpanning(e, gltf, backdrop);
                 int markers = ApplyMarkers(sc, byName, out int colliders);
                 int swapped = ApplyMaterials(gltf, defs, cache, out int unmatched);
 
@@ -112,12 +128,77 @@ namespace DeadLetter.Editor.Art
                 if (!ok) Debug.LogError("[Art] Could not save " + e.PrefabPath);
                 else
                     Debug.Log("[Art] " + e.PrefabPath + ": " + markers + " markers (" + colliders + " colliders), " + swapped +
-                              " material slots → URP Lit" + (unmatched > 0 ? ", " + unmatched + " slots kept glTFast's material" : "") + ".");
+                              " material slots → URP Lit" + (unmatched > 0 ? ", " + unmatched + " slots kept glTFast's material" : "") +
+                              (lane != 0 ? ", lane-spanning backdrop nodes " + (lane > 0 ? "copied in: " + lane : "dropped: " + -lane) : "") + ".");
             }
             finally
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        // ---- Lane-spanning backdrop nodes --------------------------------------------------------------------------------
+
+        /// <summary>Copies each <see cref="LaneSpanning"/> node of the backdrop that overlaps <paramref name="e"/>'s lane range. Returns the count.</summary>
+        private static int CopyLaneSpanning(ArtIndexEntry e, GameObject gltf, ArtIndexEntry backdrop)
+        {
+            if (e.laneRange == null || e.laneRange.Length < 2) return 0;
+            var source = AssetDatabase.LoadAssetAtPath<GameObject>(backdrop.AssetPath);
+            if (source == null) return 0;
+            int copied = 0;
+            foreach (string name in LaneSpanning)
+            {
+                Transform node = Find(source.transform, name);
+                if (node == null) continue;
+                var copy = (GameObject)Object.Instantiate(node.gameObject, gltf.transform, false);
+                copy.name = name;
+                copy.transform.localPosition = node.localPosition;
+                copy.transform.localRotation = node.localRotation;
+                copy.transform.localScale = node.localScale;
+                if (Overlaps(copy, e.laneRange[0], e.laneRange[1])) copied++;
+                else Object.DestroyImmediate(copy);
+            }
+            return copied;
+        }
+
+        /// <summary>Removes the <see cref="LaneSpanning"/> nodes that overlap none of the backdrop's own scenes. Returns minus the count.</summary>
+        private static int DropLaneSpanning(GameObject gltf, ArtIndex index, ArtIndexEntry backdrop)
+        {
+            int dropped = 0;
+            foreach (string name in LaneSpanning)
+            {
+                Transform node = Find(gltf.transform, name);
+                if (node == null) continue;
+                bool used = false;
+                foreach (ArtIndexEntry r in index.regions)
+                {
+                    if (!r.IsSet || r == backdrop || r.laneRange == null || r.laneRange.Length < 2 || r.scenes == null) continue;
+                    bool backdropScene = false;
+                    foreach (string sc in r.scenes) if (System.Array.IndexOf(backdrop.scenes ?? new string[0], sc) >= 0) backdropScene = true;
+                    if (backdropScene && Overlaps(node.gameObject, r.laneRange[0], r.laneRange[1])) used = true;
+                }
+                if (used) continue;
+                Object.DestroyImmediate(node.gameObject);
+                dropped++;
+            }
+            return -dropped;
+        }
+
+        private static Transform Find(Transform root, string name)
+        {
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true)) if (t.name == name) return t;
+            return null;
+        }
+
+        /// <summary>Whether the node's renderers reach into lane x [x0, x1) (world space: the prefab root sits at the origin).</summary>
+        private static bool Overlaps(GameObject go, float x0, float x1)
+        {
+            foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                Bounds b = r.bounds;
+                if (b.max.x > x0 && b.min.x < x1) return true;
+            }
+            return false;
         }
 
         // ---- Axes ------------------------------------------------------------------------------------------------------

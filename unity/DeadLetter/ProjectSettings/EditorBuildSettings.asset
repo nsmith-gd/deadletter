@@ -4,5 +4,26 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/DL_Persistent.unity
+    guid: 287d858c9e463ab4fb0a29e38144fded
+  - enabled: 1
+    path: Assets/Scenes/Prologue/DL-01.unity
+    guid: eae30dfd515f7c24ebf45d725261154f
+  - enabled: 1
+    path: Assets/Scenes/Prologue/DL-02.unity
+    guid: ad25c437685aabb4bbcecf2c9171adfc
+  - enabled: 1
+    path: Assets/Scenes/Prologue/DL-03.unity
+    guid: c9e6403dffbb47249bf3275900b77df0
+  - enabled: 1
+    path: Assets/Scenes/Prologue/DL-04.unity
+    guid: 4e555f95d68428a4c8700b613a9ed2cb
+  - enabled: 1
+    path: Assets/Scenes/Prologue/DL-05.unity
+    guid: 26925c9785769ff4ab2c393d968626b2
+  - enabled: 1
+    path: Assets/Scenes/Prologue/DL-06.unity
+    guid: 1725f2b9f279cfc4b9ba08f478b1ac07
   m_configObjects: {}

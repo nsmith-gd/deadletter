@@ -216,7 +216,7 @@ namespace DeadLetter.Runtime.Settings
             VolumeProfile profile = postVolume.profile;   // instance copy; the asset on disk is untouched
             if (profile == null) return;
             if (profile.TryGet(out ColorAdjustments colour))
-                colour.postExposure.Override((float)(Math.Log(s.Brightness) / Math.Log(2.0)));
+                colour.postExposure.Override((float)(Math.Log(DeadLetter.Core.Camera.PostLook.ExposureFor(s.Brightness)) / Math.Log(2.0)));   // the page's 1.4 x brightness
             if (profile.TryGet(out Bloom bloom))
             {
                 if (_authoredBloom < 0f) _authoredBloom = bloom.intensity.value;
