@@ -29,6 +29,9 @@ and an `L` citation per value. Inputs are `MechanismId` fields; the "solved" fla
 - `Reset(in Checkpoint cp)`: derive everything from `cp.Past(_p.XAfter)` and from sources (already reset); `Init(...)`,
   not `Enter`. Clear pending input.
 - Time: accumulate `ctx.Dt`; compare clip frames with `ClipClock.Reached/Crossed`, time thresholds with a 1e-9 slack.
+  Never snapshot an absolute clock (`ctx.Clock`, `sim.Clock`): a Continue starts a new session at clock 0, so a saved
+  start time would read as the future. Snapshot the time elapsed instead (#48 review). Rules' own timers, which are
+  re-derived in `OnBegin` and never saved, may use the clock.
 - Per tick: no allocation, no LINQ, no lookups, no UnityEngine. Randomness: a `SimRng` field (`Core/Simulation`),
   `SimRng.Xorshift(_p.Seed)`; `Reseed` in `Reset`, `_rng.Write(w, "rng")` in the snapshot; `_rng.Chance(dt * rate)`
   for the prototype's `Math.random() < dt · rate`.
