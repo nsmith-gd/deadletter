@@ -405,6 +405,36 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
+        public void AJackWoundUpRollsInUnderTheStops_ItLiftsThePlateSmoothly_NeverInOneStep()
+        {
+            // #47 review: wound up under the drooping plate (not touching it), drawn out, the pin pulled (onto the stops),
+            // pushed back in: the saddle is above the cup now. It rides the cup up; the plate never jumps.
+            var r = new Rig();
+            Assert.True(r.Push(+1) > 0);
+            var lp = r.Landing.Params;
+            double clear = lp.CupY(lp.StartY) - 0.005;                            // just under the drooping plate's cup
+            r.Crank(false, () => r.Jack.Position >= clear);
+            Assert.False(r.Jack.Loaded);
+            Assert.True(r.Push(-1) > 0);
+            Assert.Equal(RatchetJackState.Parked, r.Jack.State);
+            r.UsePins();
+            r.Idle(60);
+            Assert.Equal(HalfLandingState.OnStops, r.Landing.State);
+            Assert.True(r.Jack.Position > lp.CupY(lp.StopsY) + 0.05);            // the saddle is well above the cup now
+
+            double prev = r.Landing.Position, maxRise = 0;
+            r.Check = x => { maxRise = Math.Max(maxRise, x.Landing.Position - prev); prev = x.Landing.Position; };
+            Assert.True(r.Push(+1) > 0);
+            r.Idle(60);
+            Assert.Equal(RatchetJackState.InPocket, r.Jack.State);
+            Assert.InRange(maxRise, 0, lp.LiftSpeed * Dt + 1e-12);                 // never a jump
+            Assert.Equal(lp.LeftTopForSaddle(r.Jack.Position), r.Landing.Position, 12);   // it ends on the saddle
+            Assert.True(r.Jack.Loaded);
+            r.Check = null;
+            r.Solve();                                                           // and the solution still works from there
+        }
+
+        [Fact]
         public void LoadedJack_CannotBePushed_HeHeaves_ItRollsOnceWoundDown()
         {
             var r = new Rig();

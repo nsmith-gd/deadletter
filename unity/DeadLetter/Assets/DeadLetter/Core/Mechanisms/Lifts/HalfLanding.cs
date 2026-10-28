@@ -41,6 +41,12 @@ namespace DeadLetter.Core.Mechanisms.Lifts
         public double CupX, Depth;
         /// <summary>It falls under gravity (m/s²); a landing at <see cref="BangSpeed"/> or faster is a <see cref="HalfLandingEvent.Drop"/>.</summary>
         public double Gravity = 9.81, BangSpeed = 0.4;
+        /// <summary>
+        /// The fastest the saddle lifts the left end, m/s. Cranking stays under it (0.1 m/s at the cup); it matters when a
+        /// jack already wound up rolls in under a lower plate: the saddle rides up the cup's chamfer and lifts it smoothly
+        /// instead of in one step (#47 review).
+        /// </summary>
+        public double LiftSpeed = 0.2;
         /// <summary>D-17 is on it when grounded within this of its top; the lurch dips this far (view).</summary>
         public double StandTolerance = 0.06, LurchDip = 0.03, RockDip = 0.05;
         /// <summary>The jack (<see cref="IPositionSource"/>: saddle top y; <see cref="IEngageable"/>: in its pocket, under the cup).</summary>
@@ -160,7 +166,7 @@ namespace DeadLetter.Core.Mechanisms.Lifts
                 double other = Math.Max(_p.StopsY, pinY);
                 if (jackY > other + Eps && (jackY >= Position - Eps || _onJack))
                 {
-                    Position = jackY;                                          // the saddle lifts it, or it rides the saddle down
+                    Position = Math.Min(jackY, Position + _p.LiftSpeed * ctx.Dt); // the saddle lifts it, or it rides the saddle down
                     _v = 0;
                     _onJack = true;
                 }

@@ -540,6 +540,22 @@ namespace DeadLetter.Core.Tests
         // ---- Curiosities (§6) ---------------------------------------------------------------------------------------------
 
         [Fact]
+        public void TheDrip_AfterLingeringInDl18_TicksOnce_NotInABurst()
+        {
+            // #47 review: the drip's clock starts when the world is built, but DL-19's rules run only while it holds him.
+            var s = Begin("terrace");
+            for (int i = 0; i < 60 * 185; i++) s.Step(default);
+            var at = new List<long>();
+            for (int i = 0; i < 60 * 130 && at.Count < 3; i++)
+            {
+                s.Step(s.X < 362.5 ? Right : default);
+                foreach (var c in s.Cues) if (c.Id == Dl19Rules.Drip) at.Add(s.Steps);
+            }
+            Assert.True(at.Count >= 2, "drips: " + at.Count);
+            for (int i = 1; i < at.Count; i++) Assert.True((at[i] - at[i - 1]) * Dt >= Dl19Rules.DripSeconds - 1e-9, "drips at " + string.Join(",", at));
+        }
+
+        [Fact]
         public void Curiosities_TheDripTicksEveryMinute_ThePotACloseLookFromThePinnedHalfLanding()
         {
             var s = Begin("repaired");

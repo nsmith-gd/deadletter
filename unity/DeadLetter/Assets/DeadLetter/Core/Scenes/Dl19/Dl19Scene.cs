@@ -89,7 +89,7 @@ namespace DeadLetter.Core.Scenes.Dl19
         private bool _halfLanding, _repaired;
         private double _nextDrip, _startleUntil = double.NaN;
         private int _witness;
-        private (RatchetJackState, double, double, BracketPinsState, HalfLandingState) _kept;
+        private Kept _kept;
 
         public RatchetJack Jack => _jack;
         public BracketPins Pins => _pins;
@@ -153,7 +153,9 @@ namespace DeadLetter.Core.Scenes.Dl19
                 sim.Cue(Held);
                 if (!sim.Checkpoints.Seen.Get(_witness)) { sim.Cue(Witness); sim.Checkpoints.MarkSeen(SeenWitness); }
             }
-            if (sim.Clock >= _nextDrip) { _nextDrip += DripSeconds; sim.Cue(Drip); }
+            // From now, not from the last due time: AfterGraph runs only while DL-19 holds him, so a lingering start would
+            // otherwise catch up one drip per step (#47 review).
+            if (sim.Clock >= _nextDrip) { _nextDrip = sim.Clock + DripSeconds; sim.Cue(Drip); }
 
             if (sim.Region != Dl19Lane.Region) return;
             double x = sim.X;
@@ -174,7 +176,7 @@ namespace DeadLetter.Core.Scenes.Dl19
                 && _pins.State != BracketPinsState.SpareCarried)
             {
                 var now = Progress();
-                if (!now.Equals(_kept) && sim.Checkpoints.Current.Name == "half_landing")
+                if (!now.Same(_kept) && sim.Checkpoints.Current.Name == "half_landing")
                 {
                     _kept = now;
                     sim.Checkpoints.Recapture();
@@ -182,8 +184,19 @@ namespace DeadLetter.Core.Scenes.Dl19
             }
         }
 
-        private (RatchetJackState, double, double, BracketPinsState, HalfLandingState) Progress()
-            => (_jack.State, _jack.X, _jack.Extension, _pins.State, _landing.State);
+        private Kept Progress()
+            => new Kept { Jack = _jack.State, X = _jack.X, Extension = _jack.Extension, Pins = _pins.State, Landing = _landing.State };
+
+        /// <summary>What persists at <c>half_landing</c>, compared field by field (no boxing on Mono/IL2CPP, #47 review).</summary>
+        private struct Kept
+        {
+            public RatchetJackState Jack;
+            public double X, Extension;
+            public BracketPinsState Pins;
+            public HalfLandingState Landing;
+
+            public bool Same(in Kept o) => Jack == o.Jack && X == o.X && Extension == o.Extension && Pins == o.Pins && Landing == o.Landing;
+        }
     }
 
     /// <summary>
