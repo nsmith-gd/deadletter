@@ -35,7 +35,7 @@ namespace DeadLetter.Runtime.Save
         /// </summary>
         public static event Action<CheckpointService> ServiceChanged;
 
-        [Tooltip("A name in the checkpoint order (Checkpoint.PrototypeOrder), e.g. \"hall\".")]
+        [Tooltip("A name in the checkpoint order (Checkpoint.GameOrder), e.g. \"hall\" or \"terrace\".")]
         [SerializeField] private string checkpoint;
 
         public string Checkpoint => checkpoint;
