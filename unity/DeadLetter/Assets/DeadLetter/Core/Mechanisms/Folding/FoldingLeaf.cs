@@ -68,10 +68,17 @@ namespace DeadLetter.Core.Mechanisms.Folding
 
         // DL-18 Room for One: docs/scenes/DL-18_room_for_one.md §3 (layout, "The two leaves"), §11 (grey-box). No prototype.
 
+        /// <summary>DL-18: the fold bed's foot (see <see cref="Dl18Bed"/>: §3's 353.9, moved in 0.1 so he fits at the foot rail).</summary>
+        public const double Dl18BedFootX = 353.8;
+        private const double FootX = Dl18BedFootX;
+
         /// <summary>
-        /// DL-18: the fold bed, 351.9–353.9, 0.55 deep and 0.45 high, hinged on the floor at its back edge, folding up into its
-        /// recess in 1.4 s; the quilt heaped at its foot to 0.7. Down at the start, folded once past <c>terrace</c>. Use at
-        /// the foot rail (353.9) from the floor at 353.6–354.15, from beyond the bed's foot.
+        /// DL-18: the fold bed, 0.55 deep and 0.45 high, hinged on the floor at its back edge, folding up into its recess in
+        /// 1.4 s; the quilt heaped at its foot to 0.7. Down at the start, folded once past <c>terrace</c>. Use at the foot rail
+        /// from the floor at 353.6–354.15, standing at 354.0, "from beyond the bed's foot, outside its swing" (§3).
+        /// <para>Deviation: §3 puts the foot at 353.9, which leaves 0.30 m between it and the sill's face (354.2) for a body
+        /// 0.34 wide, so at the foot rail he stood 7 cm inside the bed's swing and it waited on him for ever. The foot is at
+        /// 353.8 (the bed 1.9 m, the quilt the last 0.6 of it): at 354.0 he clears it and the sill by 3 cm each.</para>
         /// </summary>
         public static FoldingLeafParams Dl18Bed() => new FoldingLeafParams
         {
@@ -80,8 +87,8 @@ namespace DeadLetter.Core.Mechanisms.Folding
             HingeD = 0, HingeY = 0,
             Boxes = new[]
             {
-                new LeafBox(351.9, 353.9, 0, 0.55, 0, 0.45),      // the bed
-                new LeafBox(353.3, 353.9, 0.25, 0.55, 0.45, 0.7), // the quilt heaped at the foot, to 0.7, on the bed's front half
+                new LeafBox(351.9, FootX, 0, 0.55, 0, 0.45),            // the bed
+                new LeafBox(FootX - 0.6, FootX, 0.25, 0.55, 0.45, 0.7), // the quilt heaped at the foot, to 0.7, on the bed's front half
             },
             EdgeU = 0.55, EdgeV = 0.45,
             Blockers = new MechanismId[] { "dl18.bench" },
@@ -90,15 +97,16 @@ namespace DeadLetter.Core.Mechanisms.Folding
 
         /// <summary>
         /// DL-18: the fold bench, 353.4–354.2, a 0.45 leaf hinged along its back edge at 0.6: folded vertical (0.6–1.05),
-        /// down to its stop as a seat at 0.6 in 1.2 s. Use at the strap (353.45) from the floor or the bed: a tug (Tug f19,
-        /// the clip over at f43), then a 0.4 m hop back to the left so he is never under it (§3 "Stepping clear"). Folded at
-        /// the start, down once past <c>terrace</c>.
+        /// down to its stop as a seat at 0.6 in 1.2 s. Use at the strap (353.45) from the floor or the bed: a tug (Tug, over
+        /// at f43), then a 0.4 m hop back to the left "as the bench comes down, so he is never under it" (§3 "Stepping
+        /// clear"): it is let go at the hop (f43), not at the tug's click (f19), where it swung onto him and waited a second
+        /// for the hop. Folded at the start, down once past <c>terrace</c>.
         /// </summary>
         public static FoldingLeafParams Dl18Bench() => new FoldingLeafParams
         {
             Station = new Station(standX: 353.45, reach: 0.3, face: +1, floorY: 0.45),
             Profile = new ActProfile("Tug"),
-            ToggleFrame = ClipTimings.TugEvents.Click, EndFrame = ClipTimings.TugEvents.Done,
+            ToggleFrame = ClipTimings.TugEvents.Done, EndFrame = ClipTimings.TugEvents.Done,
             HopAfter = -0.4,                                                 // "a tug, then a 0.4 m hop back to the left" (§3)
             Travel = 1.2,
             HingeD = 0, HingeY = 0.6,

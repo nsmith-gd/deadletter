@@ -33,6 +33,7 @@ namespace DeadLetter.Core.Tests
             {
                 Mech.PlayAct(G, leaf, pose: pose);
                 Mech.RunUntil(G, () => !Moving(Bed) && !Moving(Bench), 600, pose);
+                Mech.RunUntil(G, () => !Moving(Bed) && !Moving(Bench), 600, pose);   // a leaf the other held resumes a step later
             }
 
             private static bool Moving(FoldingLeaf l) => l.State == FoldingLeafState.Unfolding || l.State == FoldingLeafState.Folding;

@@ -201,7 +201,7 @@ namespace DeadLetter.Core.Tests
         {
             var p = FoldingLeafParams.Dl18Bench();
             Assert.Equal("Tug", p.Profile.Clip);
-            Assert.Equal(ClipTimings.TugEvents.Click, p.ToggleFrame);
+            Assert.Equal(ClipTimings.TugEvents.Done, p.ToggleFrame);                           // let go at the hop (DL-18 §3 "Stepping clear")
             Assert.Equal(ClipTimings.TugEvents.Done, p.EndFrame);
         }
     }
