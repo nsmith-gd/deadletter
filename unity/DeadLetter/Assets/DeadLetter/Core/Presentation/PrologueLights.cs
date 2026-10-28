@@ -55,12 +55,13 @@ namespace DeadLetter.Core.Presentation
         public const double Off2 = 13, Off3 = 33, CrankX = 9.62, ScannerX = Off3 + 28.9, TubeX = 14.6, BayX = 44.5;
         private const double Deg = Math.PI / 180;
 
-        public static LightDef[] Build() => new[]
+        /// <param name="touch">The prototype's <c>touch</c> (handheld tier): the relay casts no shadow (<c>castShadow = !touch</c>, L1466).</param>
+        public static LightDef[] Build(bool touch = false) => new[]
         {
             // buildLights (L1460–L1478)
             new LightDef { Name = "hemi", Kind = LightKind.Hemisphere, Group = LightGroup.Always, Color = Rgb.Hex(0x26332f), Ground = Rgb.Hex(0x0b0b0a), Intensity = 0.45 },
             new LightDef { Name = "rim", Kind = LightKind.Directional, Group = LightGroup.Always, Color = Rgb.Hex(0x8db4c8), Intensity = 0.35, Position = new Vec3(5, 3, -8), Target = new Vec3(3, 0, 0) },
-            Spot("relay", LightGroup.Relay, 0xbfffd0, 0, 7, 70, 0.8, 2, 2.0, 1.46, -0.8, 1.2, 0.2, 0.3, shadow: 512, driver: LightDriver.Relay),
+            Spot("relay", LightGroup.Relay, 0xbfffd0, 0, 7, 70, 0.8, 2, 2.0, 1.46, -0.8, 1.2, 0.2, 0.3, shadow: touch ? 0 : 512, driver: LightDriver.Relay),
             Spot("work", LightGroup.Work, 0xffe8cc, 0, 9, 58, 0.65, 2, 1.7, 2.05, -0.25, 1.9, 0, 0.1, shadow: 1024, driver: LightDriver.WorkBulb),
             new LightDef { Name = "kick", Kind = LightKind.Point, Group = LightGroup.Always, Color = Rgb.Hex(0xffe2c4), Distance = 2.6, Decay = 2, Kick = true, Driver = LightDriver.Kick },
             // the atmosphere's (L7872–L7885)
@@ -155,7 +156,7 @@ namespace DeadLetter.Core.Presentation
             _sim = sim ?? throw new ArgumentNullException(nameof(sim));
             _presenter = presenter ?? new ChapterPresenter(sim);
             _sounds = sounds;
-            _pool = new LightPool(defs ?? PrologueLights.Build(), budget);
+            _pool = new LightPool(defs ?? PrologueLights.Build(budget != null && budget.Touch), budget);
             sim.Graph.TryGet("dl01.relay", out _relay);
             sim.Graph.TryGet("dl01.crank", out _crank);
             sim.Graph.TryGet("dl06.scanner", out _scanner);

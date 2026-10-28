@@ -85,7 +85,7 @@ namespace DeadLetter.Runtime.Lighting
                 light.spotAngle = outer;
                 light.innerSpotAngle = outer * Mathf.Clamp01(1f - (float)d.Penumbra);
             }
-            if (light.shadows != LightShadows.None) light.shadowCustomResolution = d.ShadowMap;
+            // No per-light map size: URP ignores Light.shadowCustomResolution, so the tier's shadow atlas settings apply.
         }
 
         private Light[] Make(string label, int n, LightType type, bool shadow)

@@ -532,7 +532,8 @@ namespace DeadLetter.Core.Presentation
             if (region == 3 && ride != null) roll = _line.Running && ride.State == CarrierState.Move ? RideRoll : 0;   // updateRide, L2969
             _loops[(int)SfxLoop.Roll] = roll;
             _loops[(int)SfxLoop.Tubes] = region == 2 ? RacksLit * Math.Max(TubesFloor, 1 - Math.Abs(x - TubesX) / TubesOver) : 0;   // L2428
-            _loops[(int)SfxLoop.Belt] = region == 3 && _line != null && _line.Running ? Math.Max(BeltFloor, 1 - Math.Abs(x - BeltX) / BeltOver) : 0;   // L2830
+            if (region != 4)                                                                            // L2830: region 4 keeps the last level
+                _loops[(int)SfxLoop.Belt] = region == 3 && _line != null && _line.Running ? Math.Max(BeltFloor, 1 - Math.Abs(x - BeltX) / BeltOver) : 0;
             bool dragging = (_courier != null && _courier.Held) || (_body != null && _body.Held);
             _loops[(int)SfxLoop.Drag] = dragging ? Math.Min(1, Math.Abs(sim.Motor.Vx) / DragSpeed) : 0;   // L4703
         }

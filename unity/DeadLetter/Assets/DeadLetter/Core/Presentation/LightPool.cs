@@ -57,11 +57,13 @@ namespace DeadLetter.Core.Presentation
     public sealed class LightPoolBudget
     {
         public int Point, Spot, SpotShadow, Directional, Hemisphere;
+        /// <summary>The prototype's <c>touch</c>: lamps that cast shadows only off touch devices (the relay, L1466) don't on this tier.</summary>
+        public bool Touch;
 
         /// <summary><c>LIGHT_POOL</c> = point 10, spot 4, spotShadow 2, dir 2, hemi 2 (L8542); the PC tier (§8.2).</summary>
         public static LightPoolBudget Prototype => new LightPoolBudget { Point = 10, Spot = 4, SpotShadow = 2, Directional = 2, Hemisphere = 2 };
         /// <summary>§8.2 Switch handheld: 6 point, 3 spot, 1 shadowed spot, 1 directional; hemisphere → ambient.</summary>
-        public static LightPoolBudget SwitchHandheld => new LightPoolBudget { Point = 6, Spot = 3, SpotShadow = 1, Directional = 1, Hemisphere = 2 };
+        public static LightPoolBudget SwitchHandheld => new LightPoolBudget { Point = 6, Spot = 3, SpotShadow = 1, Directional = 1, Hemisphere = 2, Touch = true };
         /// <summary>§8.2 Switch docked: 8 point, 4 spot, 2 shadowed spots, 1 directional.</summary>
         public static LightPoolBudget SwitchDocked => new LightPoolBudget { Point = 8, Spot = 4, SpotShadow = 2, Directional = 1, Hemisphere = 2 };
 

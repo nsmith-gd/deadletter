@@ -16,6 +16,18 @@ namespace DeadLetter.Core.Tests
     /// </summary>
     public class PresentationTests
     {
+        /// <summary>The relay lamp casts a shadow only off touch devices (<c>castShadow = !touch</c>, L1466): not on Switch handheld.</summary>
+        [Fact]
+        public void RelayShadow_OnlyOffTouchDevices_L1466()
+        {
+            LightDef Relay(bool touch) => PrologueLights.Build(touch).Single(d => d.Name == "relay");
+            Assert.True(Relay(false).Shadow);
+            Assert.False(Relay(true).Shadow);
+            Assert.True(LightPoolBudget.SwitchHandheld.Touch);
+            Assert.False(LightPoolBudget.SwitchDocked.Touch);
+            Assert.False(LightPoolBudget.Prototype.Touch);
+        }
+
         // ---- Light regions and zones ---------------------------------------------------------------------------------------
 
         private static string[] VisibleNames(int r, LightZone zone)
