@@ -83,6 +83,23 @@ x: 361.0 terrace landing (1.2)   362.0 half_landing   362.5-363.2 jack bay   363
   and otherwise it chatters against the lug and he keeps it. Every pin is always in the fork, the cup, the clip or his
   hands; on a respawn a carried spare returns to its clip.
 - **Lowering with no pin:** the platform settles back onto the safety stops. Re-jack in a few seconds.
+- **Port notes (U-26, #45):**
+  - *Stand points.* With the jack in its pocket the floor ends 0.17 short of its crank post (363.18), and three Uses share
+    the 0.6 m before it, each in its own reach so none outranks another: the bracket against the jack (363.08–363.45,
+    standing at 363.15; with the jack in its bay the same reach is open floor), the crank behind it (362.85–363.08,
+    standing at 362.98), and the jack's push bar behind that (taken from up to 0.6 behind its stand: 362.55–362.85).
+  - *The jack is a column.* Out of its bay, the jack's chassis left of the plate is a column in the lane: D-17 can't step,
+    mantle or catch it. The motor mantles onto a face up to 0.47 m ahead, so "the mantle spot is the jack's" alone would
+    not block the climb; the column does, at any jack height (§10 "Blocked spot").
+  - *The skirt is never a step.* A fixed 1.67 top would stand proud of a plate drooping to 1.60 at 364.3; the lane is the
+    plate's top over 363.6–366.2 in every state.
+  - *The upper flight* is the hinge tread at 1.75 (366.2–366.6), then risers of 0.183 at 366.6, 367.0 and 367.4, walked as
+    a ramp.
+  - *Step on:* the plate's top is ground in every state; unpinned, he teeters 0.6 s, hops back to 363.38 in 0.45 s and
+    settles 0.3 s, then stands at rest (his next jump is unchanged).
+  - *Persistence at `half_landing`:* the checkpoint's snapshot is taken again whenever the jack and the pins come to rest
+    somewhere new with his hands free, except while he holds the spare (it returns to its clip).
+  - *Pin first:* the drop happens during his tug, so `Startle` plays when the tug ends (within 1.5 s of the drop).
 
 ## 4. The puzzle
 
@@ -172,6 +189,8 @@ legible, 3 s). Neither is needed.
 - **No lost pin:** in every state, every pin is in the fork, the cup, the clip or his hands.
 - **Recovery:** from the stops, a player can re-jack to level in under 8 s.
 - **Mechanical floor:** about 35 s from `half_landing` to `repaired`, and about 45 s to 377.0.
+  *Port (U-26):* the scripted solve takes 28.5 s to `repaired` and 32.2 s to 377.0: the upper terrace's 6 m take about
+  4 s at a run, so the 45 s figure holds only for first play's slower walk.
 - **First play:** median about 4.0 minutes; at least 80% of first-time players reach `repaired` within 5 minutes of
   `half_landing`, with no hint.
 
@@ -182,7 +201,7 @@ bracket and the jack.
 
 | Object | Rule | Pivot | Position (x, height) | States and transitions |
 |---|---|---|---|---|
-| `Jack` | Support transfer; Brakes and catches (ratchet hold); Movable access | chassis bottom centre | parked 362.85, 1.2 (bay) | `parked` → pushed/pulled freely → `in_pocket` when its wheels drop into `JackPocket`. In pocket: crank raises/lowers `JackSaddle`; won't roll while loaded |
+| `Jack` | Support transfer; Brakes and catches (ratchet hold); Movable access | chassis bottom centre | parked 362.85, 1.2 (bay); crank used from 362.85–363.08, push bar from behind (§3 port notes) | `parked` → pushed/pulled freely → `in_pocket` when its wheels drop into `JackPocket`. In pocket: crank raises/lowers `JackSaddle`; won't roll while loaded |
 | `JackSaddle` | part of `Jack` | top of saddle | 363.9 | Height 0 to travel; holds any height (ratchet) |
 | `JackPocket` | Support transfer | centre | 363.7, 1.2 | Snap target; blocks the mantle spot while the jack is in it |
 | `HalfLanding` | Support transfer | hinge at its right end | 366.2, 1.75 | `drooping` → `on_stops` (bent pin drawn while loaded) → `held` (saddle in contact) → `level` (1.75 ± 0.02) → `pinned` (spare seated and jack lowered). Standable only when `pinned` |
@@ -191,7 +210,7 @@ bracket and the jack.
 | `SparePin` | Brakes and catches | centre | 363.6, 1.42 | `in_clip` ⇄ `carried` → `seated` (only when `level`). Respawn: `carried` → `in_clip` |
 | `SafetyStops` | Brakes and catches | top | 363.65, 1.38 | Static; catch `HalfLanding` |
 | `AlignmentMarks` | readability | | 363.65, 1.62 | Meet when `level` |
-| `Barnaby`, `DripTube` | curiosity | pot base | 363.5, 2.0 | Tick every 60 s |
+| `Barnaby`, `DripTube` | curiosity | pot base | 363.5, 2.0 | Tick every 60 s. Pot: Use from the pinned half landing's left end (363.6–363.9) |
 | `CP_half_landing` | checkpoint | floor | 362.0, 1.2 | |
 | `CP_repaired` | checkpoint | floor | 371.0, 2.3 | |
 

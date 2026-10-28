@@ -15,7 +15,7 @@ namespace DeadLetter.Core.Tests
     public class FoldingTests
     {
         private const double Dt = Mech.Dt;
-        internal static readonly string[] Ch2 = { "ring_a", "terrace" };
+        internal static readonly string[] Ch2 = Checkpoint.GameOrder;
 
         private static InteractionQuery At(double x, double y = 0) => new InteractionQuery(x, y, 0, 1, true, false, HoldKind.None, null, null);
 
@@ -201,7 +201,7 @@ namespace DeadLetter.Core.Tests
         {
             var p = FoldingLeafParams.Dl18Bench();
             Assert.Equal("Tug", p.Profile.Clip);
-            Assert.Equal(ClipTimings.TugEvents.Click, p.ToggleFrame);
+            Assert.Equal(ClipTimings.TugEvents.Done, p.ToggleFrame);                           // let go at the hop (DL-18 §3 "Stepping clear")
             Assert.Equal(ClipTimings.TugEvents.Done, p.EndFrame);
         }
     }

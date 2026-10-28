@@ -46,3 +46,12 @@ L8511–L8518), which interleaves scenes, but no mechanism reads another scene's
    `ChapterTraceProbes.Prologue()`. `PrologueChapterTraceTests` then runs to the first step past DL-07 and derives the
    window, the seams and the checkpoint order from the probes; nothing else in it changes. The chapter replay is the proof; a per-scene window only localises a failure. Nothing is
    compensated: every replay is strict (#30).
+
+## Chapter 2 ("Someone Home")
+
+`ChapterDefs.SomeoneHome()`: region 7, game x from DL-17's stair head (347.0), heights above the ring A datum
+(docs/chapter2_plan.md §4). Its checkpoints are `ChapterDefs.SomeoneHomeCheckpoints`, over `Checkpoint.GameOrder` (the
+prototype's order, then chapter 2's). A scene is added as above (steps 1–5, citing its doc's sections where the prologue
+cites `L` lines), but there is no prototype and no trace: its doc's acceptance checks are the tests, in
+`core-tests/Chapter2/` (`Dl18ChapterTests`: a `ChapterSim` over the chapter driven by scripted `MotorInput`). A chapter-2
+game begins or continues at one of its checkpoints; `NewGame` is the prologue's (`start` is the order's first).

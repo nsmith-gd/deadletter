@@ -71,10 +71,10 @@ the original run bit for bit (test it).
 |---|---|---|---|
 | `Plates/` | LoadPlate, PlateSensor, WeighScale, PlateDoor, PresenceStrip, SeatRow, PlateOutputs | a | DL-01/03/04/05/08/09/10/12/15/16a |
 | `Docks/` | Cradle, Rack, RailDetents | b | DL-04, 15, 16 |
-| `Catches/` | Latch, Pawl, CageCatch, CycleBrake | c | DL-01, 08, 09, 13, 16 |
-| `Actuators/` | Door, FollowerActuator, CrankActuator | d (a) | DL-01, 03, 10, 11, 12, 14a, 15, 17 |
+| `Catches/` | Latch, Pawl, CageCatch, CycleBrake, BracketPins | c | DL-01, 08, 09, 13, 16, 19 |
+| `Actuators/` | Door, FollowerActuator, CrankActuator, RatchetJack (+ its push face) | d (a) | DL-01, 03, 10, 11, 12, 14a, 15, 17, 19 |
 | `Drives/` | PulseSequencer, WindCrank, PairedBlindDrive | e, g | DL-01, 14, 14a, 17 |
-| `Lifts/` | Lift (base), CounterweightLift, SlippingCage, RelocationLift, PupilLift, CounterweightRack, Dumbwaiter | f | DL-08, 09, 10, 15, 16, 16a |
+| `Lifts/` | Lift (base), CounterweightLift, SlippingCage, RelocationLift, PupilLift, CounterweightRack, Dumbwaiter, HalfLanding | f | DL-08, 09, 10, 15, 16, 16a, 19 |
 | `Routes/` | CarrierLine (incl. the `dl06.dock`), PointsLever, ReturnsBelt, RoutePath | h | DL-06/07, 08 |
 | `Water/` | Flood, Sluice, SluiceValve, SluiceRig, FloatLatch (`dl17.latch`) | i (c) | DL-11, 17 |
 | `Bridges/` | TippingBridge | j | DL-01, 11 |
