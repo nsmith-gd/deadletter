@@ -1,3 +1,4 @@
+using System;
 using DeadLetter.Core.Camera;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Streaming;
@@ -83,6 +84,47 @@ namespace DeadLetter.Core.Tests
             a.Reset();
             Assert.Equal(0, a.K13);
             Assert.Equal(1, a.K15);
+        }
+
+        [Fact]
+        public void Fallback_LogsAndGivesTheProloguesTrack()
+        {
+            string said = null;
+            FramingTrack t = ChapterFraming.Fallback("someone_home", m => said = m);
+            Assert.Equal("dl01.alcove", t.Base.Name);
+            Assert.Contains("someone_home", said);
+            Assert.NotNull(ChapterFraming.Fallback("x", null));
+        }
+
+        /// <summary>
+        /// GameHost's <c>startAt</c> (issue #50: the editor reaches each chapter 1 checkpoint): every one begins in its
+        /// scene, steps, and frames on chapter 1's track as GameHost places the rig.
+        /// </summary>
+        [Fact]
+        public void EveryChapter1Checkpoint_Begins_Steps_AndFrames()
+        {
+            foreach (CheckpointDef cp in ChapterDefs.AttendanceCheckpoints.All)
+            {
+                var sim = new ChapterSim(ChapterDefs.Attendance());
+                Assert.True(sim.CanContinueAt(cp.Name), cp.Name);
+                sim.Begin(cp.Name);
+                Assert.Equal(cp.Scene, sim.Current.Id);
+                var presenter = new ChapterPresenter(sim);
+                var signals = new FramingSignalTable();
+                var rig = new CameraRig(C, ChapterFraming.For(ChapterDefs.AttendanceId));
+                presenter.UpdateSignals(signals);
+                rig.SnapToFrame(presenter.CameraInput(0, signals));
+                CameraPose p = default;
+                for (int i = 0; i < 360; i++)
+                {
+                    sim.Step(default);
+                    presenter.UpdateSignals(signals);
+                    p = rig.Step(presenter.CameraInput(0, signals), ChapterSim.StepSeconds);
+                    Assert.True(double.IsFinite(p.Position.X) && p.Position.Z > 4 && p.Position.Z < 14, cp.Name + " " + p.Position);
+                }
+                // Settled on him. (At dismissed it starts on the balcony, 11 m back: resetAtt leaves k15 at 1, `?? 1`, as the prototype.)
+                Assert.True(Math.Abs(p.Position.X - sim.X) < 8, cp.Name + " " + p.Position + " for x " + sim.X);
+            }
         }
 
         [Fact]

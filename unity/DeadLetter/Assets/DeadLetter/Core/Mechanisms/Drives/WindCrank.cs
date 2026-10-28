@@ -47,12 +47,20 @@ namespace DeadLetter.Core.Mechanisms.Drives
         private bool _wound, _ratcheted;
         private int _winds;
 
+        /// <summary>The view's spin while winding, rad/s (L5447).</summary>
+        public const double SpinRate = 4;
+
         public WindCrank(MechanismId id, WindCrankParams p) : base(id, p.Station) { _p = p; }
 
         public WindCrankState State => (WindCrankState)StateCode;
         /// <summary>Winds since the last reset (<c>b.winds</c> is the drive's own count; this one only counts acts).</summary>
         public double Position => _winds;
         public int Winds => _winds;
+        /// <summary>
+        /// The crank's turn for its view, radians: it spins at 4 rad/s while an act winds it (<c>rotateZ(dt · 4)</c>, L5447).
+        /// Presentation only: not saved, and kept across a reset (the art turns on from where it was).
+        /// </summary>
+        public double SpinRad { get; private set; }
 
         public override ActProfile Profile => _p.Profile;
 
@@ -75,6 +83,7 @@ namespace DeadLetter.Core.Mechanisms.Drives
         public override void Step(in StepContext ctx)
         {
             _act.Take();
+            if (_act.Active) SpinRad += ctx.Dt * SpinRate;
             if (!_act.Active)
             {
                 Enter(ctx, (int)WindCrankState.Idle);

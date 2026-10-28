@@ -22,9 +22,9 @@ using SceneView = DeadLetter.Runtime.Scenes.SceneView;
 namespace DeadLetter.Editor.Builders
 {
     /// <summary>
-    /// <c>Dead Letter → Build → Scenes → Prologue</c> (U-20, issue #16): generates a chapter's Unity scenes from Core's
-    /// <see cref="ChapterDef"/> (port_architecture §6.2: nothing in a generated <c>.unity</c> is hand-placed; hand edits are
-    /// lost on the next build, by design):
+    /// <c>Dead Letter → Build → Scenes → Prologue</c> (U-20, issue #16) and <c>→ Attendance</c> (U-22b, #50): generates a
+    /// chapter's Unity scenes from Core's <see cref="ChapterDef"/> (port_architecture §6.2: nothing in a generated
+    /// <c>.unity</c> is hand-placed; hand edits are lost on the next build, by design):
     /// <list type="bullet">
     /// <item><c>Assets/Scenes/DL_Persistent.unity</c> (§7): the <see cref="GameHost"/> and the boot systems
     /// (<see cref="PlatformServicesHost"/>, <see cref="SettingsStore"/>, the fade), D-17 from <c>Assets/Art/D17/d17.glb</c> with
@@ -48,6 +48,32 @@ namespace DeadLetter.Editor.Builders
 
         [MenuItem("Dead Letter/Build/Scenes/Prologue")]
         public static void BuildPrologue() => BuildChapter(ChapterDefs.PrologueId);
+
+        /// <summary>Chapter 1's first checkpoint, where Play starts in the editor (docs/unity/chapter1_editor_check.md).</summary>
+        public const string AttendanceStart = "school";
+
+        /// <summary>
+        /// Chapter 1 Attendance: its scenes as <see cref="BuildChapter"/> builds any chapter's, and Play starts at
+        /// <see cref="AttendanceStart"/> (the host's <c>startAt</c>; set it to any chapter 1 checkpoint to start there).
+        /// </summary>
+        [MenuItem("Dead Letter/Build/Scenes/Attendance")]
+        public static void BuildAttendance()
+        {
+            BuildChapter(ChapterDefs.AttendanceId);
+            StartAt(ChapterDefs.AttendanceId, AttendanceStart);
+        }
+
+        /// <summary>Sets the open bootstrap's <c>startAt</c>, if it is <paramref name="chapterId"/>'s (a cancelled build leaves another).</summary>
+        private static void StartAt(string chapterId, string checkpoint)
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            var host = Object.FindFirstObjectByType<GameHost>();
+            if (scene.path != ChapterScenes.BootstrapPath || host == null) return;
+            if (new SerializedObject(host).FindProperty("chapterId")?.stringValue != chapterId) return;
+            Set(host, "startAt", checkpoint);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("[Scenes] " + chapterId + ": Play starts at '" + checkpoint + "' (GameHost.startAt).");
+        }
 
         /// <summary>Builds every scene of chapter <paramref name="chapterId"/> and opens its bootstrap. Returns the problems found.</summary>
         public static List<string> BuildChapter(string chapterId)
@@ -151,7 +177,7 @@ namespace DeadLetter.Editor.Builders
                 if (marker.prefix != "MECH") continue;
                 foreach (Transform t in marker.GetComponentsInChildren<Transform>(true)) moved.Add(t);   // never batched: Core may move it
                 if (!mechanismIds.Contains(marker.id)) { notSimulated++; continue; }
-                var bindings = MechanismViewBindings.For(marker.type, marker.part);
+                var bindings = MechanismViewBindings.For(marker.type, marker.id, marker.part);
                 if (bindings.Length == 0) { unbound++; continue; }
                 var channels = new MechanismView.Channel[bindings.Length];
                 for (int i = 0; i < bindings.Length; i++) channels[i] = MechanismView.From(bindings[i]);

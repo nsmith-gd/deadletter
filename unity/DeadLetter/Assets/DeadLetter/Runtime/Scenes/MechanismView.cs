@@ -17,8 +17,9 @@ namespace DeadLetter.Runtime.Scenes
     /// <para><b>Pose:</b> the art is authored in the state the chapter starts in. Each channel moves the node by the change of
     /// its value from that state (read once from a reference sim at the chapter's first checkpoint) × its scale: rotations
     /// first, about <see cref="pivot"/> (default: the centre of the node's renderers, since the export's meshes mostly sit at
-    /// the origin), then translations; emission scales the renderers' rest emission. Values are sampled after every Core step
-    /// and interpolated by the host's render alpha, like D-17 and the camera.</para>
+    /// the origin), then translations; emission scales the renderers' rest emission. Scale and visibility are absolute (like
+    /// emission): the value, not its change, sets the node's scale or whether its renderers show. Values are sampled after
+    /// every Core step and interpolated by the host's render alpha, like D-17 and the camera.</para>
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MechanismView : MonoBehaviour
@@ -48,7 +49,7 @@ namespace DeadLetter.Runtime.Scenes
         private Func<double>[] _readers;
         private double[] _rest, _prev, _curr;
         private bool _bound, _failed, _emissive;
-        private Vector3 _restPos, _pivot;
+        private Vector3 _restPos, _restScale, _pivot;
         private Quaternion _restRot;
         private Renderer[] _renderers;
         private Color[] _restEmission;
@@ -75,7 +76,7 @@ namespace DeadLetter.Runtime.Scenes
         private void OnDisable()
         {
             MechanismViewRegistry.Remove(this);
-            if (_bound) { transform.SetPositionAndRotation(_restPos, _restRot); SetEmission(1f); }
+            if (_bound) { transform.SetPositionAndRotation(_restPos, _restRot); transform.localScale = _restScale; SetEmission(1f); SetVisible(true); }
             _bound = false;
         }
 
@@ -102,11 +103,12 @@ namespace DeadLetter.Runtime.Scenes
                     _failed = true;
                     return false;
                 }
-                _rest[i] = c.motion == ViewMotion.Emission ? 0 : restReader();   // emission is a gain, not a change
+                _rest[i] = Absolute(c.motion) ? 0 : restReader();               // emission, scale and visibility are absolute, not a change
                 if (c.motion == ViewMotion.Emission) _emissive = true;
             }
             _restPos = transform.position;
             _restRot = transform.rotation;
+            _restScale = transform.localScale;
             _renderers = GetComponentsInChildren<Renderer>(true);
             _pivot = hasPivot ? pivot : Centre(_renderers, _restPos);
             if (_emissive)
@@ -146,7 +148,9 @@ namespace DeadLetter.Runtime.Scenes
         {
             Vector3 pos = _restPos;
             Quaternion rot = _restRot;
+            Vector3 scale = _restScale;
             float emission = -1f;
+            int visible = -1;
             for (int i = 0; i < channels.Length; i++)
             {
                 float v = (float)(_prev[i] + (_curr[i] - _prev[i]) * alpha) * channels[i].scale;
@@ -157,8 +161,24 @@ namespace DeadLetter.Runtime.Scenes
                         pos = _pivot + q * (pos - _pivot);
                         rot = q * rot;
                         break;
+                    case ViewMotion.RotateX:
+                    case ViewMotion.RotateY:
+                        // three.js's rotateX/rotateY sign: with Unity's z = −three z, the same turn is the negative angle.
+                        Quaternion r = Quaternion.AngleAxis(-v, channels[i].motion == ViewMotion.RotateX ? Vector3.right : Vector3.up);
+                        pos = _pivot + r * (pos - _pivot);
+                        rot = r * rot;
+                        break;
                     case ViewMotion.Emission:
                         emission = Mathf.Max(0f, (float)(_prev[i] + (_curr[i] - _prev[i]) * alpha) * channels[i].scale);
+                        break;
+                    case ViewMotion.ScaleY:
+                        scale.y = _restScale.y * v;
+                        break;
+                    case ViewMotion.ScaleAll:
+                        scale = _restScale * v;
+                        break;
+                    case ViewMotion.Visible:
+                        visible = v > 0.5f ? 1 : 0;
                         break;
                 }
             }
@@ -171,7 +191,20 @@ namespace DeadLetter.Runtime.Scenes
                 else pos.z += v;
             }
             transform.SetPositionAndRotation(pos, rot);
+            transform.localScale = scale;
             if (emission >= 0f) SetEmission(emission);
+            if (visible >= 0) SetVisible(visible == 1);
+        }
+
+        /// <summary>Motions set by the value itself rather than by its change from the authored state.</summary>
+        private static bool Absolute(ViewMotion m) =>
+            m == ViewMotion.Emission || m == ViewMotion.ScaleY || m == ViewMotion.ScaleAll || m == ViewMotion.Visible;
+
+        /// <summary>Shows or hides the node's renderers (<c>visible</c> in the prototype); its transform still moves.</summary>
+        private void SetVisible(bool on)
+        {
+            if (_renderers == null) return;
+            for (int i = 0; i < _renderers.Length; i++) if (_renderers[i] != null && _renderers[i].enabled != on) _renderers[i].enabled = on;
         }
 
         /// <summary>
