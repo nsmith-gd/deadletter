@@ -180,6 +180,19 @@ namespace DeadLetter.Core.Tests
         }
 
         [Fact]
+        public void TakeItem_RefusedWhileHeRides_35()
+        {
+            var s = new LineScene(exit: false, x: 64.2);
+            s.Until(Sim.Move(0), () => s.First != null && s.First.State == CarrierState.Dock);
+            s.Step(Sim.Jump(0));
+            s.Until(Sim.Move(0), () => s.M.Ride != null && !s.M.IsActing, 400);
+            Assert.NotNull(s.M.Ride);
+            Assert.False(s.M.IsActing);
+            Assert.Throws<InvalidOperationException>(() => s.M.TakeItem(new TestItem { IsLight = true }));
+            Assert.Equal(HoldKind.None, s.M.Hold);
+        }
+
+        [Fact]
         public void Ride_ToTheChute_TipsHimOut_TheRideIsGone_L2733()
         {
             var s = new LineScene(exit: false, x: 64.3);

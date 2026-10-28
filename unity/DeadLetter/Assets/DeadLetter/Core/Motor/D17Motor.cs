@@ -151,6 +151,11 @@ namespace DeadLetter.Core.Motor
         public int ActPart => _act.Part;
         public bool IsMantling => _mantling;
         public bool IsActing => _act.Active;
+        /// <summary>
+        /// In a quirk whose <c>cancel</c> flag is set (<c>G.act.cancel</c>, the flag <see cref="PlayQuirk"/> was given): the
+        /// static flag only, not <c>cancelAfter</c>'s timing (#16 item 5; the bot reads it as bot.js does). False outside a quirk.
+        /// </summary>
+        public bool QuirkCancel => _act.Active && _act.Verb == Verb.Quirk && _act.Cancel;
         /// <summary>In the hide act (<c>game.act.what === 'hide'</c>, any phase; L5973): <c>PlayerPose.Hiding</c>.</summary>
         public bool IsHiding => _act.Verb == Verb.Hide;
         /// <summary>In the escorted act (L6126–L6134): <c>PlayerPose.Escorted</c>.</summary>
@@ -267,6 +272,22 @@ namespace DeadLetter.Core.Motor
             _events.Clear();
             _stepEvents = 0;
             _stepFrom = 0;
+        }
+
+        /// <summary>
+        /// He holds <paramref name="item"/> now, as Lift f39 leaves him (L4420): Hold Item, Carried, CarryBlend 1, clip
+        /// CarryIdle (fade 0.2). For a scene act that lifted the item its own way (L5303): call it after
+        /// <see cref="Place"/> at the act's end. Only from rest (no act, mantle, hold or ride); the item's OnLifted is
+        /// the scene's to have called.
+        /// </summary>
+        public void TakeItem(ICarryable item)
+        {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+            if (_act.Active || _mantling || Hold != HoldKind.None || Ride != null)
+                throw new InvalidOperationException("D17Motor.TakeItem: only from rest (he is " + State
+                    + (Hold != HoldKind.None ? " holding " + Hold : "") + ").");
+            Hold = HoldKind.Item; Carried = item; CarryBlend = 1;
+            SetClip(ClipNames.CarryIdle, 0.2, 1);
         }
 
         /// <summary>
