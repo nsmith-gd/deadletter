@@ -31,13 +31,12 @@ namespace DeadLetter.Editor.Art
         public const string Backdrop = "DL-09_Atrium";
 
         /// <summary>
-        /// Backdrop objects that are lane geometry, not scenery: the prologue's <c>Floor</c> (art/dl01/build_dl01.py
-        /// <c>build_set</c>, x −5 to 43) is wider than 30 m, so the export puts it in the backdrop, which only DL-09 to DL-11
-        /// load, and DL-01 to DL-04 had no floor. Until the export cuts it per region (#42), each set region whose lane range
-        /// it overlaps gets a copy, and the backdrop drops it when it overlaps none of the backdrop's scenes. The copies are
-        /// the same mesh at the same place, so two loaded neighbours draw it to the same depth and colour.
+        /// Backdrop objects that are lane geometry, not scenery: each set region whose lane range one overlaps gets a copy,
+        /// and the backdrop drops it when it overlaps none of the backdrop's scenes. Empty since #42: the export now cuts
+        /// lane geometry at the region cuts (tools/unity_export/conventions.py <c>is_lane_geometry</c>), so the prologue's
+        /// <c>Floor</c> arrives as one piece in each of DL-01 to DL-04. Kept as a stopgap for a future case.
         /// </summary>
-        public static readonly string[] LaneSpanning = { "Floor" };
+        public static readonly string[] LaneSpanning = { };
 
         /// <summary>Used for a region with no markers to measure from (the backdrop): the last measured turn.</summary>
         private static float _lastTurnY = 180f;

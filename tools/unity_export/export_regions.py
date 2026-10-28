@@ -619,9 +619,9 @@ def main():
         if not f.endswith('.meta'):
             ensure_meta(UNITY_PROJECT, os.path.join(tex_dir, f))
 
-    # The index keeps regions this run did not touch.
-    names = {r['name'] for r in index}
-    index = [r for r in old_index if r['name'] not in names] + index
+    # The index keeps regions this run did not touch, and the re-exported ones keep their place.
+    new = {r['name']: r for r in index}
+    index = [new.pop(r['name'], r) for r in old_index] + [r for r in index if r['name'] in new]
     write_text(index_path, json.dumps({'format': 1, 'regions': index}, indent=1) + '\n')
     ensure_meta(UNITY_PROJECT, index_path)
     if records or full:

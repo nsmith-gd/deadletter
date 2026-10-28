@@ -11,21 +11,21 @@
  ],
  "boundsMin": [
   24.97,
-  -0.026,
-  -1.6678
+  -0.1,
+  -4.0
  ],
  "boundsMax": [
   30.7564,
   4.65,
-  1.25
+  12.0
  ],
  "axes": "unity = (blender.x, blender.z, blender.y), port_architecture 0.2",
  "gltf": "DL-03.gltf",
  "counts": {
-  "nodes": 36,
-  "meshes": 34,
-  "primitives": 36,
-  "triangles": 10776,
+  "nodes": 37,
+  "meshes": 35,
+  "primitives": 37,
+  "triangles": 10784,
   "materials": 22,
   "textures": 7
  },

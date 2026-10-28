@@ -84,17 +84,17 @@ An object goes to the region its hierarchy's bounding-box centre x falls in, wit
 
 | Region | Scenes | Game region | Lane x | Size MB | Meshes | Prims | Tris | Mats | Tex | PC MB | Switch MB | MECH | CHK |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| DL-01 | DL-01 | 1 | < 12.0 | 1.07 | 85 | 104 | 37,328 | 44 | 11 | 4.46 | 2.00 | 16 | 4 |
-| DL-02 | DL-02 | 2 | 12.0–25.0 | 2.31 | 75 | 115 | 46,174 | 44 | 10 | 4.81 | 1.92 | 3 | 1 |
-| DL-03 | DL-03 | 2 | 25.0–30.6 | 0.31 | 34 | 36 | 10,776 | 22 | 7 | 2.65 | 1.06 | 11 | 2 |
-| DL-04 | DL-04 | 2 | 30.6–47.9 | 1.38 | 60 | 94 | 31,606 | 41 | 6 | 1.37 | 0.62 | 6 | 1 |
+| DL-01 | DL-01 | 1 | < 12.0 | 1.07 | 86 | 105 | 37,410 | 44 | 11 | 4.46 | 2.00 | 16 | 4 |
+| DL-02 | DL-02 | 2 | 12.0–25.0 | 2.31 | 76 | 116 | 46,182 | 44 | 10 | 4.81 | 1.92 | 3 | 1 |
+| DL-03 | DL-03 | 2 | 25.0–30.6 | 0.31 | 35 | 37 | 10,784 | 22 | 7 | 2.65 | 1.06 | 11 | 2 |
+| DL-04 | DL-04 | 2 | 30.6–47.9 | 1.38 | 61 | 95 | 31,618 | 41 | 6 | 1.37 | 0.62 | 6 | 1 |
 | DL-05 | DL-05 | 2 | 47.9–59.8 | 2.38 | 53 | 67 | 62,393 | 50 | 14 | 8.30 | 3.22 | 6 | 2 |
 | DL-06_07 | DL-06, DL-07 | 3 | 59.8–80.75 | 2.30 | 121 | 166 | 52,988 | 63 | 16 | 6.95 | 2.85 | 20 | 3 |
 | DL-08 | DL-08 | 4 | 80.75–97.6 | 0.78 | 91 | 113 | 15,798 | 49 | 17 | 3.71 | 1.53 | 21 | 2 |
 | DL-09 | DL-09 | 4 | 97.6–118.8 | 1.43 | 83 | 164 | 33,026 | 66 | 16 | 8.59 | 3.42 | 7 | 3 |
 | DL-10 | DL-10 | 4 | 118.8–127.9 | 3.65 | 49 | 155 | 71,820 | 53 | 6 | 4.50 | 2.02 | 17 | 1 |
-| DL-11 | DL-11 | 5 | ≥ 127.9 | 4.28 | 94 | 221 | 85,262 | 95 | 34 | 9.44 | 4.25 | 10 | 3 |
-| DL-09_Atrium | DL-09–11 (backdrop) | 4 | > 30 m wide | 6.04 | 25 | 59 | 132,919 | 43 | 1 | 0.67 | 0.30 | 0 | 0 |
+| DL-11 | DL-11 | 5 | ≥ 127.9 | 6.87 | 95 | 248 | 137,942 | 95 | 34 | 9.44 | 4.25 | 10 | 3 |
+| DL-09_Atrium | DL-09–11 (backdrop) | 4 | > 30 m wide, not lane | 3.45 | 23 | 31 | 80,155 | 19 | 1 | 0.67 | 0.30 | 0 | 0 |
 | DL-12 | DL-12 | 6 | 199.0–216.0 | 2.32 | — | — | — | — | — | — | — | 0 | 2 |
 | DL-13 | DL-13 | 6 | 216.0–232.0 | 2.15 | — | — | — | — | — | — | — | 0 | 2 |
 | DL-14 | DL-14 | 6 | 232.0–248.0 | 1.05 | — | — | — | — | — | — | — | 0 | 2 |
@@ -113,7 +113,8 @@ and 18 textures, with its 15 checkpoints; its mesh and texture columns are not m
 
 - DL-06 and DL-07 export together. They share one floor, one carrier line and one builder, and the game tells them apart
   by state, not by x (§5).
-- The backdrop rule works on whole hierarchies, so it holds 132,919 triangles. §5 counted 88,923, measured per mesh.
+- The backdrop rule works on whole hierarchies. Without the lane geometry (`Floor`, `D5Street`, #42) it holds 80,155
+  triangles. §5 counted 88,923, measured per mesh, with the floor and the street in it.
 
 ## Naming conventions
 
