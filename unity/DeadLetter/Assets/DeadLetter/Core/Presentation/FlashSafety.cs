@@ -3,7 +3,7 @@ using System;
 namespace DeadLetter.Core.Presentation
 {
     /// <summary>
-    /// What a flash measurement found (<see cref="FlashSafety.Count(double[], double, double)"/>).
+    /// What a flash measurement found (<see cref="FlashSafety.Count(double[], double, double, bool)"/>).
     /// </summary>
     public readonly struct FlashCount
     {
@@ -35,7 +35,8 @@ namespace DeadLetter.Core.Presentation
     /// Threshold" (the same three-per-second rule as ITU-R BT.1702 and Ofcom's guidance): a <b>flash</b> is a pair of
     /// opposing changes in relative luminance of <see cref="LuminanceStep"/> or more of the maximum, where the darker state
     /// is below <see cref="DarkerBelow"/>; content may not flash more than <see cref="MaxFlashesPerSecond"/> times in any
-    /// one second unless the flashing area stays under the general and red flash thresholds (<see cref="SmallAreaFraction"/>).
+    /// one second unless the combined flashing area stays under the general and red flash thresholds (<see cref="SmallAreaFraction"/>).
+    /// A saturated-red source is held to the red flash rule as well (<see cref="Passes(double[], double, Rgb, double, double)"/>).
     /// <para>The counter is conservative: it takes a light's level relative to its own peak as the relative luminance of
     /// what it lights (the real change on screen is smaller: ambient, fog, tone mapping and the light's falloff all
     /// dilute it), and it counts each change once it has moved <see cref="LuminanceStep"/> from the last extreme.</para>
@@ -70,17 +71,33 @@ namespace DeadLetter.Core.Presentation
             return sum > 0 && c.R / sum >= SaturatedRedRatio;
         }
 
-        /// <summary>An effect passes when it is within the flash limit, or its flashing area is under the thresholds.</summary>
-        public static bool Passes(in FlashCount count, double screenFraction) => count.WithinLimit || screenFraction <= SmallAreaFraction;
+        /// <summary>
+        /// The threshold test for one count: within the flash limit, or the <b>combined</b> area of everything flashing with
+        /// it (<paramref name="combinedArea"/>, as a fraction of the screen) is under the thresholds. The combined area is
+        /// the caller's to sum (<see cref="FlashEffects.CombinedArea"/>); a lone effect passes its own area.
+        /// </summary>
+        public static bool Passes(in FlashCount count, double combinedArea) => count.WithinLimit || combinedArea <= SmallAreaFraction;
+
+        /// <summary>
+        /// WCAG 2.3.1 for one curve: the general flash rule, and when <paramref name="colour"/> is saturated red
+        /// (<see cref="IsSaturatedRed"/>) the red flash rule too, in which any pair of opposing transitions into or out
+        /// of the red counts, bright or not (<see cref="Count(double[], double, double, bool)"/> with <c>red</c>). Both
+        /// use the same area threshold (<see cref="SmallAreaFraction"/>) against <paramref name="combinedArea"/>.
+        /// </summary>
+        public static bool Passes(double[] samples, double sampleRate, Rgb colour, double combinedArea, double peak = 0)
+        {
+            if (!Passes(Count(samples, sampleRate, peak), combinedArea)) return false;
+            return !IsSaturatedRed(colour) || Passes(Count(samples, sampleRate, peak, red: true), combinedArea);
+        }
 
         /// <summary>
         /// Samples <paramref name="level"/> from <paramref name="from"/> for <paramref name="seconds"/> at
-        /// <paramref name="sampleRate"/> and counts its flashes (<see cref="Count(double[], double, double)"/>).
+        /// <paramref name="sampleRate"/> and counts its flashes (<see cref="Count(double[], double, double, bool)"/>).
         /// <paramref name="followRate"/> &gt; 0 passes the curve through the prototype's per-frame follow
         /// (<c>v += (target − v) · min(1, dt · rate)</c>) first, as a light that eases toward its target is seen.
         /// </summary>
         public static FlashCount Count(Func<double, double> level, double from, double seconds, double peak = 0,
-            double sampleRate = FrameRate, double followRate = 0)
+            double sampleRate = FrameRate, double followRate = 0, bool red = false)
         {
             if (level == null) throw new ArgumentNullException(nameof(level));
             if (!(sampleRate > 0) || !(seconds > 0)) throw new ArgumentException("Need a positive sample rate and span.");
@@ -93,7 +110,7 @@ namespace DeadLetter.Core.Presentation
                 v = followRate > 0 && i > 0 ? v + (target - v) * Math.Min(1, dt * followRate) : target;
                 s[i] = v;
             }
-            return Count(s, sampleRate, peak);
+            return Count(s, sampleRate, peak, red);
         }
 
         /// <summary>
@@ -102,8 +119,11 @@ namespace DeadLetter.Core.Presentation
         /// <see cref="LuminanceStep"/> away from the extreme since the last transition, in the opposite direction; it
         /// qualifies when the dark side of it (the trough before a rise, or the trough after a fall) is below
         /// <see cref="DarkerBelow"/>. Returns the qualifying transitions and the most of them in any <see cref="Window"/>.
+        /// <para><paramref name="red"/>: the red flash rule for a saturated-red source. Every registered transition counts
+        /// (any opposing transition into or out of the red), with no darker-state condition; the
+        /// <see cref="LuminanceStep"/> hysteresis still decides what registers as a transition, so noise is not a flash.</para>
         /// </summary>
-        public static FlashCount Count(double[] samples, double sampleRate, double peak = 0)
+        public static FlashCount Count(double[] samples, double sampleRate, double peak = 0, bool red = false)
         {
             if (samples == null) throw new ArgumentNullException(nameof(samples));
             if (samples.Length == 0) return new FlashCount(0, 0, 0);
@@ -142,7 +162,7 @@ namespace DeadLetter.Core.Presentation
             double largest = 0;
             for (int k = 0; k < raw; k++)
             {
-                if (!(trough[k] < DarkerBelow)) continue;
+                if (!red && !(trough[k] < DarkerBelow)) continue;
                 t[count++] = at[k] / sampleRate;
                 largest = Math.Max(largest, size[k]);
             }

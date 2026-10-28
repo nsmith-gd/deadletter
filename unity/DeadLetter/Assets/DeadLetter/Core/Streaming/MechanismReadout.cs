@@ -146,6 +146,9 @@ namespace DeadLetter.Core.Streaming
     {
         private static readonly ViewBinding[] None = new ViewBinding[0];
 
+        /// <summary>The seated lamps' emissive gain per unit of <see cref="Cradle.SeatedLamp(double, bool)"/> (<c>glow('SeatedLamp', 6 · flick)</c>, L4820).</summary>
+        public const double SeatedLampGain = 6;
+
         /// <summary>The bindings for a node of art type <paramref name="type"/> and part <paramref name="part"/> ("" for the root).</summary>
         public static ViewBinding[] For(string type, string part)
         {
@@ -181,8 +184,10 @@ namespace DeadLetter.Core.Streaming
                 case "Draggable":
                     return One(ViewChannel.X, ViewMotion.TranslateX);
                 case "Cradle":
+                    // SeatedLamps: Cradle.SeatedLamp with calm (the readout's lamp 0), as glow('SeatedLamp', 6 · flick), L4820.
                     return part == "CradleArmL" ? One(ViewChannel.Angle, ViewMotion.RotateZ)
-                        : part == "CradleArmR" ? One(ViewChannel.Angle, ViewMotion.RotateZ, -1) : None;
+                        : part == "CradleArmR" ? One(ViewChannel.Angle, ViewMotion.RotateZ, -1)
+                        : part == "SeatedLamps" ? new[] { new ViewBinding(ViewChannel.Lamp, ViewMotion.Emission, SeatedLampGain, 0) } : None;
                 case "WeighScale":
                     return part.Length == 0 ? One(ViewChannel.Y, ViewMotion.TranslateY) : One(ViewChannel.Angle, ViewMotion.RotateZ);
                 default:
