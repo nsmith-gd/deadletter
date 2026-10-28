@@ -354,7 +354,7 @@ namespace DeadLetter.Core.Tests
         public void NoTraps_FromEveryStandingPlace_EachLeafHasAReachableStation_AndOneUseReturnsIt(string config)
         {
             var s = Configure(config);
-            var reach = new Reach(s);
+            var reach = new LaneReach(s, 347.2, 357.0);
             var bed = Bed(s);
             var bench = Bench(s);
             int starts = 0;
@@ -395,111 +395,6 @@ namespace DeadLetter.Core.Tests
                 }
                 else if (before == FoldingLeafState.Propped || before == FoldingLeafState.Down) Assert.Equal(FoldingLeafState.Folded, l.State);
                 else Assert.True(l.State == FoldingLeafState.Down || l.State == FoldingLeafState.Propped, config + " " + leaf.Id + " " + l.State);
-            }
-        }
-
-        /// <summary>
-        /// Where D-17 can get to on the lane as it is now, on foot: walking (a step up of at most STEP_UP, any drop) and
-        /// standing mantles (MantleMin to MantleMax, within the standing scan), as <see cref="D17Motor"/> moves him. No jumps:
-        /// none is needed (chapter2_plan §4: "none relies on a jump-catch"). Nodes every centimetre, at his support.
-        /// </summary>
-        private sealed class Reach
-        {
-            private const double X0 = 347.2, X1 = 357.0, Step = 0.01;
-            private readonly ChapterSim _s;
-            private readonly MotorConfig _c;
-            private readonly int _n;
-            private readonly double[] _y;
-            private readonly List<int>[] _next;
-
-            public Reach(ChapterSim s)
-            {
-                _s = s;
-                _c = s.Config;
-                _n = (int)Math.Round((X1 - X0) / Step) + 1;
-                _y = new double[_n];
-                _next = new List<int>[_n];
-                for (int i = 0; i < _n; i++) _y[i] = s.Lane.SupportAt(X(i));
-                for (int i = 0; i < _n; i++)
-                {
-                    var to = _next[i] = new List<int>();
-                    foreach (int dir in new[] { -1, 1 })
-                    {
-                        int j = i + dir;
-                        if (j >= 0 && j < _n && CanWalk(i, j, dir)) to.Add(j);
-                        var lane = (IMotorWorld)s.Lane;
-                        if (lane.LedgeAhead(X(i), _y[i], dir, _c.MantleScanStanding, _c.StepUp, out var l)
-                            && l.Top - _y[i] > _c.MantleMin && l.Top - _y[i] <= _c.MantleMax && l.Distance < _c.FaceDistance + _c.MantleReachExtra)
-                        {
-                            double end = X(i) + dir * (MotorConfig.MantleKeys[MotorConfig.MantleKeys.GetLength(0) - 1, 1] + Math.Max(0, l.Distance - _c.FaceDistance));
-                            int k = Index(end);
-                            if (k >= 0 && k < _n) to.Add(k);
-                        }
-                    }
-                }
-            }
-
-            public double X(int i) => X0 + i * Step;
-            public double Y(int i) => _y[i];
-            private int Index(double x) => (int)Math.Round((x - X0) / Step);
-
-            private bool CanWalk(int i, int j, int dir)
-            {
-                double x = X(j);
-                _s.Lane.Limits(X(i), _y[i], out double left, out double right);
-                if (x < left - 1e-9 || x > right + 1e-9) return false;
-                return _s.Lane.SurfaceAt(x + dir * _c.Half) <= _y[i] + _c.StepUp + 1e-9;
-            }
-
-            /// <summary>He can stand at x: on his support, his body clear of any face higher than a step.</summary>
-            public bool CanStand(double x)
-            {
-                double y = _s.Lane.SupportAt(x);
-                return _s.Lane.SurfaceAt(x - _c.Half + 1e-6) <= y + _c.StepUp && _s.Lane.SurfaceAt(x + _c.Half - 1e-6) <= y + _c.StepUp;
-            }
-
-            public bool[] From(double x)
-            {
-                var seen = new bool[_n];
-                var q = new Queue<int>();
-                int s = Index(x);
-                seen[s] = true;
-                q.Enqueue(s);
-                while (q.Count > 0)
-                {
-                    int i = q.Dequeue();
-                    foreach (int j in _next[i]) if (!seen[j]) { seen[j] = true; q.Enqueue(j); }
-                }
-                return seen;
-            }
-
-            public bool Any(bool[] r, Func<int, bool> f)
-            {
-                for (int i = 0; i < _n; i++) if (r[i] && f(i)) return true;
-                return false;
-            }
-
-            public bool Answers(int i, IInteractable leaf) => Facing(i, leaf) != 0;
-
-            /// <summary>The facing at node i from which Use resolves to <paramref name="leaf"/> (0: none).</summary>
-            public int Facing(int i, IInteractable leaf)
-            {
-                foreach (int f in new[] { 1, -1 })
-                    if (_s.Resolver.Resolve(InteractionQuery.At(X(i), _y[i], f), out var c) && ReferenceEquals(c.Target, leaf)) return f;
-                return 0;
-            }
-
-            /// <summary>A node where Use resolves to <paramref name="leaf"/>.</summary>
-            public int Station(IInteractable leaf)
-            {
-                for (int i = 0; i < _n; i++) if (CanStand(X(i)) && Answers(i, leaf)) return i;
-                throw new Xunit.Sdk.XunitException("no station for " + leaf);
-            }
-
-            public bool HasStation(IInteractable leaf)
-            {
-                for (int i = 0; i < _n; i++) if (CanStand(X(i)) && Answers(i, leaf)) return true;
-                return false;
             }
         }
 

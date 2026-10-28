@@ -7,6 +7,7 @@ using DeadLetter.Core.Scenes.Dl04;
 using DeadLetter.Core.Scenes.Dl05;
 using DeadLetter.Core.Scenes.Dl06;
 using DeadLetter.Core.Scenes.Dl18;
+using DeadLetter.Core.Scenes.Dl19;
 
 namespace DeadLetter.Core.Scenes
 {
@@ -72,10 +73,11 @@ namespace DeadLetter.Core.Scenes
         /// </summary>
         public static CheckpointTable SomeoneHomeCheckpoints { get; } = new CheckpointTable(Checkpoint.GameOrder,
             new CheckpointDef("ring_a", Dl18Scene.RingAX, 0, region: Dl18Lane.Region, scene: Dl18Scene.Id),                 // DL-18 §9
-            new CheckpointDef("terrace", Dl18Scene.TerraceX, Dl18Lane.LandingY, region: Dl18Lane.Region, scene: Dl18Scene.Id));
-            // DL-19's rows (half_landing, repaired; its doc's §9) are added with its scene.
+            new CheckpointDef("terrace", Dl18Scene.TerraceX, Dl18Lane.LandingY, region: Dl18Lane.Region, scene: Dl18Scene.Id),
+            new CheckpointDef("half_landing", Dl19Scene.HalfLandingX, Dl19Lane.FloorY, region: Dl19Lane.Region, scene: Dl19Scene.Id),   // DL-19 §9
+            new CheckpointDef("repaired", Dl19Scene.RepairedX, Dl19Lane.TerraceY, region: Dl19Lane.Region, scene: Dl19Scene.Id));
 
-        /// <summary>Chapter 2 as far as it is ported: DL-18.</summary>
-        public static ChapterDef SomeoneHome() => new ChapterDef(SomeoneHomeId, SomeoneHomeCheckpoints, Dl18Scene.Def());
+        /// <summary>Chapter 2 as far as it is ported: DL-18 and DL-19 (region 7, 347.0 to 377.0).</summary>
+        public static ChapterDef SomeoneHome() => new ChapterDef(SomeoneHomeId, SomeoneHomeCheckpoints, Dl18Scene.Def(), Dl19Scene.Def());
     }
 }

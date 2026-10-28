@@ -51,7 +51,7 @@ namespace DeadLetter.Core.Scenes.Dl18
     /// <summary>
     /// DL-18's rules. The checkpoints by position (§9): <c>ring_a</c> on the gallery floor from 347.6, <c>terrace</c> on the
     /// landing (1.2) from 355.8. Three things he can use that change nothing, each a <see cref="Station"/> the rules answer
-    /// at Use when no mechanism does (the leaves always win), playing a <see cref="Dl18BeatAct"/> and its cues:
+    /// at Use when no mechanism does (the leaves always win), playing a <see cref="BeatAct"/> and its cues:
     /// <list type="bullet">
     /// <item>the Works door's chain (§2 "The sealed door", §11 <c>WorksDoor</c>): two tugs, a clank at each, nothing gives;</item>
     /// <item>the alarm clock (§6 curiosities, §11 <c>AlarmClock</c>): it rings 2 s; he startles, then stills it with a pat;</item>
@@ -82,19 +82,19 @@ namespace DeadLetter.Core.Scenes.Dl18
         /// <summary>The clock rings 2 s (§6); the sketch's look lasts 3 s (§6).</summary>
         public const double RingSeconds = 2.0, LookSeconds = 3.0;
 
-        private static readonly Dl18BeatAct.Beat[] ChainBeats =
+        private static readonly BeatAct.Beat[] ChainBeats =
         {
-            new Dl18BeatAct.Beat(Tug, QuirkAct.ClipSeconds(ClipNames.Tug), ChainClank, ClipTimings.TugEvents.Click / 24.0),
-            new Dl18BeatAct.Beat(Tug, QuirkAct.ClipSeconds(ClipNames.Tug), ChainClank, ClipTimings.TugEvents.Click / 24.0),
+            new BeatAct.Beat(Tug, QuirkAct.ClipSeconds(ClipNames.Tug), ChainClank, ClipTimings.TugEvents.Click / 24.0),
+            new BeatAct.Beat(Tug, QuirkAct.ClipSeconds(ClipNames.Tug), ChainClank, ClipTimings.TugEvents.Click / 24.0),
         };
 
-        private static readonly Dl18BeatAct.Beat[] ClockBeats =
+        private static readonly BeatAct.Beat[] ClockBeats =
         {
-            new Dl18BeatAct.Beat(Startle, QuirkAct.ClipSeconds(ClipNames.Startle), ClockRing, 0),
-            new Dl18BeatAct.Beat(Pat, QuirkAct.ClipSeconds("Pat"), ClockStill, RingSeconds - QuirkAct.ClipSeconds(ClipNames.Startle)),
+            new BeatAct.Beat(Startle, QuirkAct.ClipSeconds(ClipNames.Startle), ClockRing, 0),
+            new BeatAct.Beat(Pat, QuirkAct.ClipSeconds("Pat"), ClockStill, RingSeconds - QuirkAct.ClipSeconds(ClipNames.Startle)),
         };
 
-        private static readonly Dl18BeatAct.Beat[] SketchBeats = { new Dl18BeatAct.Beat(Look, LookSeconds, SketchLook, 0) };
+        private static readonly BeatAct.Beat[] SketchBeats = { new BeatAct.Beat(Look, LookSeconds, SketchLook, 0) };
 
         private bool _ringA, _terrace;
 
@@ -112,7 +112,7 @@ namespace DeadLetter.Core.Scenes.Dl18
             var m = sim.Motor;
             if (m.IsActing || m.IsMantling || m.Hold != HoldKind.None || m.Ride != null || !m.Grounded || m.PreviewUse(out _)) return;
             var q = m.Query();
-            Dl18BeatAct.Beat[] beats;
+            BeatAct.Beat[] beats;
             ActId kind;
             if (Chain.Answers(q)) { kind = WorksDoor; beats = ChainBeats; }
             else if (Clock.Answers(q)) { kind = AlarmClock; beats = ClockBeats; }
@@ -120,7 +120,7 @@ namespace DeadLetter.Core.Scenes.Dl18
             else return;
             input.UsePressed = false;
             m.Stop();
-            sim.StartAct(new Dl18BeatAct(kind, beats));
+            sim.StartAct(new BeatAct(kind, beats));
         }
 
         /// <summary>The checkpoints, by position after the step (§9).</summary>
@@ -138,55 +138,6 @@ namespace DeadLetter.Core.Scenes.Dl18
                 _terrace = _ringA = true;
                 sim.Checkpoints.Reach("terrace");
             }
-        }
-    }
-
-    /// <summary>
-    /// He plays a few clips where he stands, raising a cue in each (DL-18's chain, clock and sketch: no state changes). Its
-    /// phase is the beat's clip or look, which the view plays (<see cref="ChapterSim.SceneActPhase"/>); the motor stands
-    /// meanwhile. Not cancellable: each lasts a few seconds.
-    /// </summary>
-    public sealed class Dl18BeatAct : SceneAct
-    {
-        /// <summary>One clip: its phase, how long it plays, and the cue it raises <c>CueAt</c> seconds in (none: <see cref="CueId.None"/>).</summary>
-        public readonly struct Beat
-        {
-            public readonly ActId Phase;
-            public readonly double Seconds, CueAt;
-            public readonly CueId Cue;
-
-            public Beat(ActId phase, double seconds, CueId cue, double cueAt)
-            {
-                if (!(seconds > 0)) throw new ArgumentOutOfRangeException(nameof(seconds));
-                Phase = phase; Seconds = seconds; Cue = cue; CueAt = cueAt;
-            }
-        }
-
-        private readonly Beat[] _beats;
-        private int _i;
-        private double _t;
-        private bool _cued;
-
-        public Dl18BeatAct(ActId kind, Beat[] beats) : base(kind, beats != null && beats.Length > 0 ? beats[0].Phase : throw new ArgumentException("No beats.", nameof(beats)))
-        {
-            _beats = beats;
-        }
-
-        /// <summary>Which beat is playing (0 first).</summary>
-        public int Index => _i;
-
-        public override bool Step(ChapterSim sim, in MotorInput input, double dt)
-        {
-            T += dt;
-            _t += dt;
-            var b = _beats[_i];
-            if (!_cued && !b.Cue.IsNone && _t >= b.CueAt - 1e-9) { _cued = true; sim.Cue(b.Cue); }
-            if (_t < b.Seconds - 1e-9) return true;
-            if (++_i >= _beats.Length) return false;
-            _t = 0;
-            _cued = false;
-            Phase = _beats[_i].Phase;
-            return true;
         }
     }
 }
