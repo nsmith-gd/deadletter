@@ -363,5 +363,68 @@ namespace DeadLetter.Core.Tests
             sim.Step(default);
             Assert.Same(a, view.ActClip(out _));
         }
+
+        // ---- Across a seam (#51) ---------------------------------------------------------------------------------------------
+
+        private static StreamingPlanner Seam(double radius = StreamingRadii.Desktop)
+            => new StreamingPlanner(new[] { ChapterDefs.Attendance(), ChapterDefs.SomeoneHome() }, radius);
+
+        [Fact]
+        public void PlannerAcrossTheSeam_ListsBothChaptersScenes_InPlayOrder_EachWithItsChaptersPath()
+        {
+            var p = Seam();
+            int i17 = p.IndexOf("DL-17"), i18 = p.IndexOf("DL-18"), i19 = p.IndexOf("DL-19");
+            Assert.Equal(ChapterDefs.Attendance().Scenes.Count + 2, p.Count);
+            Assert.Equal((i17 + 1, i17 + 2), (i18, i19));
+            Assert.Equal(p.SlotOf(i17) + 1, p.SlotOf(i18));
+            Assert.Equal(ChapterDefs.AttendanceId, p.ChapterOf(i17));
+            Assert.Equal(ChapterDefs.SomeoneHomeId, p.ChapterOf(i18));
+            Assert.Equal("Assets/Scenes/Someone_home/DL-18.unity", ChapterScenes.ScenePath(p.ChapterOf(i18), p[i18].Id));
+            Assert.Equal("Assets/Scenes/Attendance/DL-17.unity", ChapterScenes.ScenePath(p.ChapterOf(i17), p[i17].Id));
+            Assert.Null(Shared().ChapterOf(0));                                          // built from scenes alone
+            Assert.Throws<ArgumentException>(() => new StreamingPlanner(new[] { ChapterDefs.Attendance(), ChapterDefs.Attendance() }, 9));
+        }
+
+        /// <summary>
+        /// The streamer spans the seam: walking DL-17 toward its end loads DL-18 (chapter 2's) once he is within the radius of
+        /// DL-17's end; after the handover, in DL-18, DL-17 stays loaded until he is in DL-19, two slots on.
+        /// </summary>
+        [Fact]
+        public void Plan_LoadsDl18NearDl17sEnd_AndKeepsDl17AfterTheHandover_UntilDl19()
+        {
+            var p = Seam();
+            int i16a = p.IndexOf("DL-16a"), i17 = p.IndexOf("DL-17"), i18 = p.IndexOf("DL-18"), i19 = p.IndexOf("DL-19");
+            var load = new List<int>();
+            var unload = new List<int>();
+
+            var a = new ChapterSim(ChapterDefs.Attendance());
+            a.Begin("workshop");                                                         // 325: 17.4 m from DL-17's end
+            p.Plan(p.IndexOf(a.Current), a.DistanceToSeam(ExitDir.Left), a.DistanceToSeam(ExitDir.Right), Resident(p.Count, i16a, i17), load, unload);
+            Assert.DoesNotContain(i18, load);
+            for (int i = 0; i < 60 * 30 && a.DistanceToSeam(ExitDir.Right) >= p.Radius; i++) a.Step(Right);
+            Assert.Equal("DL-17", a.Current.Id);
+            p.Plan(p.IndexOf(a.Current), a.DistanceToSeam(ExitDir.Left), a.DistanceToSeam(ExitDir.Right), Resident(p.Count, i16a, i17), load, unload);
+            Assert.Equal(new[] { i18 }, load);                                           // chapter 2's first scene, before the seam
+
+            var b = new ChapterSim(ChapterDefs.SomeoneHome());
+            b.Begin("ring_a");
+            Assert.Equal(i18, p.IndexOf(b.Current));                                     // by ID: another sim's SceneDef
+            p.Plan(i18, b.DistanceToSeam(ExitDir.Left), b.DistanceToSeam(ExitDir.Right), Resident(p.Count, i16a, i17, i18), load, unload);
+            Assert.Empty(load);
+            Assert.Equal(new[] { i16a }, unload);                                        // DL-17 stays: one slot back
+            p.Plan(i19, 0, double.PositiveInfinity, Resident(p.Count, i17, i18, i19), load, unload);
+            Assert.Equal(new[] { i17 }, unload);
+
+            var required = new List<int>();
+            p.Placement(i18, required);                                                  // a Continue at ring_a
+            Assert.Equal(new[] { i17, i18, i19 }, required);
+        }
+
+        [Fact]
+        public void ChapterScenes_KnowsEveryChapter()
+        {
+            Assert.Equal(new[] { ChapterDefs.PrologueId, ChapterDefs.AttendanceId, ChapterDefs.SomeoneHomeId }, ChapterScenes.Ids);
+            foreach (var id in ChapterScenes.Ids) Assert.Equal(id, ChapterScenes.Create(id).Id);
+        }
     }
 }

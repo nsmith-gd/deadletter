@@ -15,6 +15,17 @@ namespace DeadLetter.Core.Lane.Tables
         /// <summary><c>ATT2.door17.x</c> (L5530): a wall for his centre HALF short of it while it is less than 0.7 open (L5612).</summary>
         public const double DoorX = 339.8, DoorOpenAt = 0.7;
 
+        /// <summary>
+        /// The stair up to ring A beyond the door (<c>ATT2.door17</c> L5530; dl17.py's 18 treads): from the landing at 341.1,
+        /// 0.18 up for every 0.26 along (the prototype's way out walks it, L2094) to its top, 3.24, then the upper landing on
+        /// to the stair head at 347.0, where chapter 2's set and its datum begin (chapter2_plan §4: the top of DL-17's stair is
+        /// ring A's 0). Not in the lane: he only goes up it in <see cref="Scenes.Dl17.Dl17StairAct"/>, after the chapter's end.
+        /// </summary>
+        public const double StairX0 = 341.1, Tread = 0.26, Rise = 0.18, StairTop = 18 * Rise, StairHeadX = 347.0;
+
+        /// <summary>His feet on the stair at <paramref name="x"/> (L2094, capped at the flight's top: the upper landing).</summary>
+        public static double StairY(double x) => Math.Min(StairTop, Math.Max(0, x - StairX0) * Rise / Tread);
+
         public static LaneTable Table() => new LaneTable
         {
             Name = "DL-17 (region 6)",

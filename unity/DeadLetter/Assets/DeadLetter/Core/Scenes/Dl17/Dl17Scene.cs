@@ -3,6 +3,7 @@ using DeadLetter.Core.Carry;
 using DeadLetter.Core.Cues;
 using DeadLetter.Core.Interaction;
 using DeadLetter.Core.Lane.Tables;
+using DeadLetter.Core.Maths;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Actuators;
 using DeadLetter.Core.Mechanisms.Water;
@@ -121,20 +122,22 @@ namespace DeadLetter.Core.Scenes.Dl17
 
         private CarriedItem _tray;
         private Dl17Drawer _drawer;
-        private bool _read, _checked, _ended;
+        private bool _read, _checked, _ended, _climbing;
         private double _readDone;
 
         /// <summary>Her drawing read (<c>d.read</c>, reset with the chapter's state, L5553), the T-key his (<c>d.key</c>).</summary>
         public bool Read => _read;
         /// <summary>He has left the school by the stair (<c>s.ended</c>).</summary>
         public bool Ended => _ended;
+        /// <summary>He has been sent up the stair (<see cref="Dl17StairAct"/>, from the step after <see cref="Ended"/>).</summary>
+        public bool Climbing => _climbing;
 
         public override bool Always => true;
 
         public override void OnBegin(ChapterSim sim, string checkpoint, bool fromOpening)
         {
             _tray = sim.Graph.Get<CarriedItem>("dl17.tray"); _drawer = sim.Graph.Get<Dl17Drawer>("dl17.drawer");
-            _read = _checked = _ended = false; _readDone = double.NaN;
+            _read = _checked = _ended = _climbing = false; _readDone = double.NaN;
         }
 
         public override void BeforeMotor(ChapterSim sim, ref MotorInput input)
@@ -170,6 +173,7 @@ namespace DeadLetter.Core.Scenes.Dl17
             // Put down in front of the drawer, it is set aside by the bench leg once it has landed (L5858).
             if (_tray.State == ItemState.Floor && _tray.X > Dl17Scene.KeepOutX0 && _tray.X < Dl17Scene.KeepOutX1 && _tray.SinceSetDown >= CarriedItem.DropSeconds)
                 _tray.MoveTo(ItemState.Floor, Dl17Scene.TrayPark, _tray.BaseY);
+            if (_ended && !_climbing) { _climbing = true; sim.StartAct(new Dl17StairAct(sim)); }                  // game.exit, the next step (L2086)
             if (_read && !_ended)                                                                                  // L5776–L5794
             {
                 double t = sim.Clock - _readDone;
@@ -188,6 +192,61 @@ namespace DeadLetter.Core.Scenes.Dl17
         }
 
         public override bool HasLeft(ChapterSim sim) => _ended;
+    }
+
+    /// <summary>
+    /// Up the stair to ring A: the prototype's way out (<c>game.exit</c>, <c>updateExit</c> L2086–L2097, which
+    /// <c>finishAtt</c> starts, L6461). Facing +x he walks on at <c>WALK · 0.8</c> on the Walk clip, his feet on the flight
+    /// (L2094, <see cref="Dl17Lane.StairY"/>). The prototype cut to its end card 0.9 s in; here he walks on over the upper
+    /// landing to the stair head (<see cref="EndX"/>), where chapter 2 takes him on (<see cref="ChapterSeams"/>), and the act
+    /// hands the motor a D-17 walking at that speed, holding what he held. The chapter is exited by then, so nothing steps
+    /// the motor again until the handover. It starts the step after the end (the prototype's next <c>updatePlayer</c>); the
+    /// stair's height where he stands (0.08 m: he ends 0.12 past the landing, L5792) is eased in over
+    /// <see cref="EaseOver"/> so his feet never jump.
+    /// </summary>
+    public sealed class Dl17StairAct : SceneAct
+    {
+        public static readonly ActId Stair = ActId.Of("dl17.stair"), Walk = ActIds.Clip(ClipNames.Walk);
+        /// <summary><c>v = WALK · 0.8</c> outside region 4 (L2091).</summary>
+        public const double SpeedOfWalk = 0.8;
+        /// <summary>Metres over which the flight's height at his start is eased in.</summary>
+        public const double EaseOver = 0.5;
+        /// <summary>The stair head, his centre HALF in from it: where chapter 2's lane begins (<c>Dl18Lane</c>'s left).</summary>
+        public const double EndX = Dl17Lane.StairHeadX + Dl12Lane.Half;
+
+        private readonly double _x0, _dy, _speed, _yawRate, _clipScale;
+
+        public Dl17StairAct(ChapterSim sim) : base(Stair, Walk)
+        {
+            var m = sim.Motor;
+            X = _x0 = m.X; Y = m.Y; Z = m.Z; Yaw = m.Yaw;
+            _dy = Dl17Lane.StairY(X) - Y;
+            _speed = sim.Config.Walk * SpeedOfWalk;
+            _yawRate = sim.Config.YawRate;
+            _clipScale = _speed / sim.Config.ClipSpeedWalk;                              // setClip('Walk', 0.2, v / CLIP_SPEED.Walk)
+        }
+
+        public override bool OwnsPose => true;
+        /// <summary>His speed up the stair, m/s.</summary>
+        public double Speed => _speed;
+
+        public override bool Step(ChapterSim sim, in MotorInput input, double dt)
+        {
+            T += dt;
+            X = Math.Min(EndX, X + _speed * dt);                                          // L2092
+            Y = Dl17Lane.StairY(X) - _dy * Math.Max(0, 1 - (X - _x0) / EaseOver);          // L2094
+            Yaw = Smooth.MoveTowards(Yaw, Math.PI / 2, _yawRate * dt);                      // facing = 1 (L2089)
+            if (X < EndX) return true;
+            var m = sim.Motor;
+            var item = m.Hold == HoldKind.Item ? m.Carried : null;
+            m.SetState(new MotorSnapshot
+            {
+                X = X, Y = Y, Z = Z, Vx = _speed, Facing = 1, Yaw = Yaw, Grounded = true, PeakY = double.NaN,
+                Clip = ClipNames.Walk, ClipTime = T * _clipScale, ClipTimeScale = _clipScale,
+            });
+            if (item != null) m.TakeItem(item);
+            return false;
+        }
     }
 
     /// <summary>The tray off the plan chest (<c>'att:tray'</c>, L5657–L5671): 0.15 short of it facing +1, Lift turned into the set; f22 it comes off at his x, f39 in his hands.</summary>

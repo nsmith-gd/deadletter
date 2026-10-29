@@ -5,6 +5,7 @@ using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Mechanisms.Catches;
 using DeadLetter.Core.Mechanisms.Routes;
 using DeadLetter.Core.Save;
+using DeadLetter.Core.Scenes;
 using Xunit;
 
 namespace DeadLetter.Core.Tests
@@ -913,6 +914,71 @@ namespace DeadLetter.Core.Tests
             Mech.Run(g, 50);
             svc.Reload();
             Assert.Equal(60, g.Tick);
+        }
+
+        /// <summary>
+        /// Version 5 names the chapter (#51). A v4 slot has none: the migration resolves it from the checkpoint through
+        /// <see cref="Checkpoint.GameOrder"/>, and a slot from each chapter continues in that chapter.
+        /// </summary>
+        [Theory]
+        [InlineData("hall", ChapterDefs.PrologueId)]
+        [InlineData("forwarded", ChapterDefs.PrologueId)]
+        [InlineData("school", ChapterDefs.AttendanceId)]
+        [InlineData("workshop", ChapterDefs.AttendanceId)]
+        [InlineData("ring_a", ChapterDefs.SomeoneHomeId)]
+        [InlineData("repaired", ChapterDefs.SomeoneHomeId)]
+        [InlineData("nowhere", "")]
+        public void Migration_V4Slot_ResolvesItsChapterFromTheCheckpoint_V5(string checkpoint, string chapter)
+        {
+            var v4 = new SaveDocument(4);
+            v4.SetString("cp", checkpoint); v4.SetString("scene", "DL-03"); v4.SetDouble("playTime", 3.5);
+            v4.SetBool("flag/curio.scale", true);
+            byte[] bytes = SaveCodec.Encode(v4);
+            Assert.Equal(4, bytes[4]);
+            Assert.True(SaveCodec.TryLoad(bytes, out var m, out string err), err);
+            Assert.Equal(chapter, m.ChapterId);
+            Assert.Equal((checkpoint, "DL-03", 3.5), (m.Checkpoint, m.Scene, m.PlayTime));
+            Assert.Equal(new[] { "curio.scale" }, m.Flags);
+            byte[] again = SaveCodec.Encode(m);
+            Assert.Equal(5, again[4]);
+            Assert.True(SaveCodec.TryLoad(again, out var m5, out _));
+            Assert.Equal(chapter, m5.ChapterId);
+        }
+
+        [Fact]
+        public void ChapterOf_AgreesWithEveryChaptersCheckpointTable_AndTheV1FixtureIsThePrologues()
+        {
+            foreach (var id in ChapterDefs.Ids)
+                foreach (var cp in ChapterDefs.Create(id).Checkpoints.All) Assert.Equal(id, SaveMigrations.ChapterOf(cp.Name));
+            foreach (var name in Checkpoint.GameOrder) Assert.NotEqual("", SaveMigrations.ChapterOf(name));
+            Assert.True(SaveCodec.TryLoad(Convert.FromBase64String(V1Fixture), out var m1, out _));
+            Assert.Equal(ChapterDefs.PrologueId, m1.ChapterId);
+        }
+
+        /// <summary>A v4 chapter 1 slot (saved at <c>workshop</c> before v5) continues in chapter 1, and is re-saved as v5 there.</summary>
+        [Fact]
+        public void Continue_AV4Chapter1Slot_PicksAttendance_AndSavesV5()
+        {
+            var store = new MemorySaveStore();
+            var a = new ChapterSim(ChapterDefs.Attendance(), store: store);
+            a.Begin("kitchen");
+            Assert.True(a.Checkpoints.Reach("workshop"));
+            Assert.True(SaveCodec.TryDecode(store.Slots[0], out var doc, out string err), err);
+            Assert.Equal(ChapterDefs.AttendanceId, doc.GetString("chapter", null));
+            doc.Remove("chapter");
+            doc.Version = 4;
+            var v4 = new MemorySaveStore();
+            v4.Slots[0] = SaveCodec.Encode(doc);
+            Assert.Equal(4, v4.Slots[0][4]);
+            Assert.Equal(ChapterDefs.AttendanceId, GameSession.ContinueChapter(v4));
+            var b = new ChapterSim(ChapterDefs.Attendance(), store: v4);
+            Assert.True(b.Continue());
+            Assert.Equal("workshop", b.Checkpoints.Current.Name);
+            Assert.True(b.Checkpoints.RestoredSnapshot);
+            b.Checkpoints.SetFlag("seam.test");
+            Assert.Equal(5, v4.Slots[0][4]);
+            Assert.True(v4.TryLoad(0, out var saved));
+            Assert.Equal(ChapterDefs.AttendanceId, saved.ChapterId);
         }
     }
 }

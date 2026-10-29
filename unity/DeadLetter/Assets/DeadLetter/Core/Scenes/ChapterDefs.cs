@@ -122,5 +122,22 @@ namespace DeadLetter.Core.Scenes
 
         /// <summary>Chapter 2 as far as it is ported: DL-18 and DL-19 (region 7, 347.0 to 377.0).</summary>
         public static ChapterDef SomeoneHome() => new ChapterDef(SomeoneHomeId, SomeoneHomeCheckpoints, Dl18Scene.Def(), Dl19Scene.Def());
+
+        // ---- By ID ------------------------------------------------------------------------------------------------------
+
+        /// <summary>Every chapter's ID, in play order.</summary>
+        public static readonly string[] Ids = { PrologueId, AttendanceId, SomeoneHomeId };
+
+        /// <summary>A new definition of chapter <paramref name="chapterId"/> (each call builds fresh factories), or null.</summary>
+        public static ChapterDef Create(string chapterId)
+        {
+            switch (chapterId)
+            {
+                case PrologueId: return Prologue();
+                case AttendanceId: return Attendance();
+                case SomeoneHomeId: return SomeoneHome();
+                default: return null;
+            }
+        }
     }
 }

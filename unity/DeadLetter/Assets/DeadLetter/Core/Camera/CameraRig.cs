@@ -77,7 +77,7 @@ namespace DeadLetter.Core.Camera
     public sealed class CameraRig
     {
         private readonly CameraConfig _c;
-        private readonly FramingTrack _track;
+        private FramingTrack _track;
 
         // cam (L7647)
         private double _x, _dist, _y, _look, _push, _fogK;
@@ -98,6 +98,12 @@ namespace DeadLetter.Core.Camera
 
         public CameraConfig Config => _c;
         public FramingTrack Track => _track;
+        /// <summary>
+        /// Where the chapter's lane coordinates are in the game's world (<c>ChapterSeams.Origin</c>; #51): added to
+        /// <see cref="Pose"/>, which is in world coordinates. The rig's own state and its input are the chapter's.
+        /// </summary>
+        public Vec3 Origin { get; private set; }
+        /// <summary>The rendered pose, in world coordinates (the chapter's plus <see cref="Origin"/>).</summary>
         public CameraPose Pose { get; private set; }
         public double X => _x;
         public double Distance => _dist;
@@ -106,6 +112,22 @@ namespace DeadLetter.Core.Camera
         public double PushAmount => _push;
         public double ShotWeightRaw => _shotW;
         public double ShakeAmount => _shake;
+
+        /// <summary>
+        /// The next chapter's framing (#51, at a seam): <paramref name="track"/> from the next step on, with the chapter's
+        /// lane coordinates at <paramref name="origin"/> in the world. Nothing jumps: the rig's state is moved into the new
+        /// chapter's coordinates, so <see cref="Pose"/> stays where it is, and the next steps ease toward the new track's frame.
+        /// </summary>
+        public void UseTrack(FramingTrack track, Vec3 origin)
+        {
+            _track = track ?? throw new ArgumentNullException(nameof(track));
+            Vec3 d = origin - Origin;                                // the old chapter's coordinates − the new one's
+            _x -= d.X; _y -= d.Y;
+            _look -= d.Y;
+            _shotPos = _shotPos - d; _shotLook = _shotLook - d;
+            _lastPosition = _lastPosition - d;
+            Origin = origin;
+        }
 
         /// <summary>Back to <c>cam</c>'s initial values (L7647), no shot, no shake.</summary>
         public void Reset()
@@ -116,7 +138,7 @@ namespace DeadLetter.Core.Camera
             _shotFocal = _c.BaseFocal;
             _lastPosition = new Vec3(_x, _y, _dist);
             _shotPos = _lastPosition; _shotLook = new Vec3(_x, _look, 0);
-            Pose = new CameraPose { Position = _lastPosition, Look = _shotLook, Focal = _c.BaseFocal };
+            Pose = InWorld(new CameraPose { Position = _lastPosition, Look = _shotLook, Focal = _c.BaseFocal });
         }
 
         /// <summary>The look-ahead, L7668.</summary>
@@ -190,7 +212,7 @@ namespace DeadLetter.Core.Camera
 
             CameraPose pose = ApplyShots(i.Shot, dt, new Vec3(_x, _y, _dist), new Vec3(_x, _look, 0), _c.BaseFocal);
             pose.Fog = fog;
-            Pose = pose;
+            Pose = pose = InWorld(pose);
             return pose;
         }
 
@@ -249,7 +271,14 @@ namespace DeadLetter.Core.Camera
         {
             CameraPose p = OpeningPose(_c, frame, chest, aspect <= 0 ? _c.Aspect : aspect);
             _lastPosition = p.Position;
-            Pose = p;
+            Pose = p = InWorld(p);
+            return p;
+        }
+
+        private CameraPose InWorld(CameraPose p)
+        {
+            p.Position = p.Position + Origin;
+            p.Look = p.Look + Origin;
             return p;
         }
 

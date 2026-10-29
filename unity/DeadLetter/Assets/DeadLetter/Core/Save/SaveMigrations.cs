@@ -1,4 +1,6 @@
 using System;
+using DeadLetter.Core.Mechanisms;
+using DeadLetter.Core.Scenes;
 
 namespace DeadLetter.Core.Save
 {
@@ -16,6 +18,7 @@ namespace DeadLetter.Core.Save
             V1ToV2,
             V2ToV3,
             V3ToV4,
+            V4ToV5,
         };
 
         public static bool TryMigrate(SaveDocument d, out string error)
@@ -103,5 +106,36 @@ namespace DeadLetter.Core.Save
                 if (field == "allFor" && !d.Contains(m + "allElapsed")) d.SetDouble(m + "allElapsed", double.NaN);         // SeatRow
             }
         }
+
+        /// <summary>
+        /// Version 5 names the slot's chapter (<c>chapter</c>, <see cref="SaveModel.ChapterId"/>; #51): Continue builds that
+        /// chapter's sim. A v4 slot has none, so it is resolved from the checkpoint (<see cref="ChapterOf"/>).
+        /// </summary>
+        private static void V4ToV5(SaveDocument d)
+        {
+            if (!d.Contains("chapter")) d.SetString("chapter", ChapterOf(d.GetString("cp", "")));
+        }
+
+        /// <summary>
+        /// The chapter <paramref name="checkpoint"/> belongs to, by its place in <see cref="Checkpoint.GameOrder"/>: before
+        /// <c>school</c> the prologue's, from <c>school</c> chapter 1's, from <c>ring_a</c> chapter 2's (each chapter's
+        /// checkpoints are one run of the order: <c>ChapterDefs</c>' tables). Empty for a name outside the order.
+        /// </summary>
+        public static string ChapterOf(string checkpoint)
+        {
+            int at = Array.IndexOf(Checkpoint.GameOrder, checkpoint);
+            if (at < 0) return "";
+            string chapter = ChapterDefs.PrologueId;
+            for (int i = 0; i < ChapterStarts.Length; i++)
+                if (at >= Array.IndexOf(Checkpoint.GameOrder, ChapterStarts[i].first)) chapter = ChapterStarts[i].chapter;
+            return chapter;
+        }
+
+        /// <summary>Each chapter after the prologue and its first checkpoint, in play order.</summary>
+        private static readonly (string first, string chapter)[] ChapterStarts =
+        {
+            ("school", ChapterDefs.AttendanceId),
+            ("ring_a", ChapterDefs.SomeoneHomeId),
+        };
     }
 }

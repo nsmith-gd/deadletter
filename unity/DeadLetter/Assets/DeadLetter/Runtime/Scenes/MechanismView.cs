@@ -248,6 +248,7 @@ namespace DeadLetter.Runtime.Scenes
         private static readonly List<MechanismView> _views = new List<MechanismView>(64);
         private static Dictionary<string, IMechanism> _live, _rest;
         private static Func<bool> _calm;
+        private static string _chapter;
 
         /// <summary>The enabled views (bound or not).</summary>
         public static IReadOnlyList<MechanismView> Views => _views;
@@ -258,6 +259,7 @@ namespace DeadLetter.Runtime.Scenes
             _views.Clear();
             _live = _rest = null;
             _calm = null;
+            _chapter = null;
         }
 
         internal static void Add(MechanismView v)
@@ -269,11 +271,14 @@ namespace DeadLetter.Runtime.Scenes
         internal static void Remove(MechanismView v) => _views.Remove(v);
 
         /// <summary>
-        /// The chapter's mechanisms: <paramref name="live"/> (the running sim's) and <paramref name="rest"/> (a sim at the
-        /// chapter's first checkpoint, the authored state), both keyed by mechanism ID. Binds every waiting view.
+        /// Chapter <paramref name="chapterId"/>'s mechanisms: <paramref name="live"/> (the running sim's) and
+        /// <paramref name="rest"/> (a sim at the chapter's first checkpoint, the authored state), both keyed by mechanism ID.
+        /// Binds every waiting view of that chapter's scenes. A view of another chapter's scene (streamed in across a seam,
+        /// #51) waits unbound until its chapter is attached; one already bound to the chapter before keeps its last pose.
         /// </summary>
-        public static void Attach(Dictionary<string, IMechanism> live, Dictionary<string, IMechanism> rest, Func<bool> calm)
+        public static void Attach(string chapterId, Dictionary<string, IMechanism> live, Dictionary<string, IMechanism> rest, Func<bool> calm)
         {
+            _chapter = chapterId;
             _live = live;
             _rest = rest;
             _calm = calm;
@@ -283,11 +288,14 @@ namespace DeadLetter.Runtime.Scenes
         public static void Detach()
         {
             _live = _rest = null;
+            _chapter = null;
         }
 
         private static void Bind(MechanismView v)
         {
             if (v.Bound || v.Failed) return;
+            SceneView scene = v.GetComponentInParent<SceneView>();
+            if (scene != null && _chapter != null && scene.ChapterId != _chapter) return;      // another chapter's: not yet
             string id = v.MechanismId ?? "";
             if (!_live.TryGetValue(id, out IMechanism live) || !_rest.TryGetValue(id, out IMechanism rest))
             {

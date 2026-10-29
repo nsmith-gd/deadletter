@@ -32,6 +32,9 @@ namespace DeadLetter.Core.Streaming
     /// seam never unloads what he just left (hysteresis).</item>
     /// <item><b>Placement</b> (continue, respawn, begin): the checkpoint's slot and both neighbours, loaded before he is put
     /// there (behind a fade).</item>
+    /// <item><b>Across a seam</b> (#51): built over the chapters a seam joins (<see cref="ChapterSeams.Span"/>), their scenes
+    /// in play order, the next chapter's first slot is the neighbour of this one's last: within <see cref="Radius"/> of DL-17's
+    /// end DL-18 streams in, and after the handover DL-17 stays until he is two slots on.</item>
     /// </list>
     /// Allocation-free per call when the caller reuses its lists.
     /// </summary>
@@ -39,6 +42,7 @@ namespace DeadLetter.Core.Streaming
     {
         private readonly SceneDef[] _scenes;
         private readonly int[] _slot;
+        private readonly string[] _chapter;
 
         public StreamingPlanner(IReadOnlyList<SceneDef> scenes, double radius)
         {
@@ -58,13 +62,39 @@ namespace DeadLetter.Core.Streaming
             Radius = radius;
         }
 
-        public StreamingPlanner(ChapterDef chapter, double radius) : this((chapter ?? throw new ArgumentNullException(nameof(chapter))).Scenes, radius) { }
+        public StreamingPlanner(ChapterDef chapter, double radius) : this(new[] { chapter ?? throw new ArgumentNullException(nameof(chapter)) }, radius) { }
+
+        /// <summary>
+        /// Every scene of <paramref name="chapters"/> (in play order: a seam's span, <see cref="ChapterSeams.Span"/>), streamed as
+        /// one lane. Scene IDs must be unique across them (<see cref="IndexOf(string)"/> finds a scene of either sim by its ID).
+        /// </summary>
+        public StreamingPlanner(IReadOnlyList<ChapterDef> chapters, double radius) : this(ScenesOf(chapters), radius)
+        {
+            _chapter = new string[_scenes.Length];
+            for (int c = 0, i = 0; c < chapters.Count; c++)
+                for (int k = 0; k < chapters[c].Scenes.Count; k++) _chapter[i++] = chapters[c].Id;
+            for (int i = 0; i < _scenes.Length; i++)
+                for (int j = 0; j < i; j++)
+                    if (string.Equals(_scenes[i].Id, _scenes[j].Id, StringComparison.Ordinal))
+                        throw new ArgumentException("Scene " + _scenes[i].Id + " is in " + _chapter[j] + " and " + _chapter[i] + ".", nameof(chapters));
+        }
+
+        private static List<SceneDef> ScenesOf(IReadOnlyList<ChapterDef> chapters)
+        {
+            if (chapters == null || chapters.Count == 0) throw new ArgumentException("No chapters to stream.", nameof(chapters));
+            var all = new List<SceneDef>();
+            foreach (var c in chapters) all.AddRange((c ?? throw new ArgumentException("A chapter is null.", nameof(chapters))).Scenes);
+            return all;
+        }
 
         /// <summary>Metres from a seam at which the scene past it is loaded (<see cref="StreamingRadii"/>).</summary>
         public double Radius { get; set; }
         public int Count => _scenes.Length;
         public int SlotCount { get; }
         public SceneDef this[int i] => _scenes[i];
+
+        /// <summary>The chapter of scene <paramref name="i"/> (its view's folder, <see cref="ChapterScenes.ScenePath"/>); null when built from scenes alone.</summary>
+        public string ChapterOf(int i) => _chapter?[i];
 
         /// <summary>The slot (stretch of lane) of scene <paramref name="i"/>.</summary>
         public int SlotOf(int i) => _slot[i];

@@ -243,6 +243,7 @@ namespace DeadLetter.Core.Streaming
             if (kind == ActIds.Death) { seconds = act.T; return DeathClip(phase); }
             if (kind == RealiseAct.Realise) { seconds = act.T; return "Realise"; }
             if (kind == ActIds.Transit) return ClipNames.Walk;
+            if (kind == Scenes.Dl17.Dl17StairAct.Stair) { seconds = act.T; return ClipNames.Walk; }   // up the stair to ring A
             if (kind == Dl06ScanAct.Scanner) { if (phase == Dl06ScanAct.Check) { seconds = act.T; return ClipNames.CheckLabel; } return ClipNames.Idle; }
             if (kind == Dl06ChuteFallAct.ChuteKind) return phase == Dl06ChuteFallAct.Chute ? "Slide" : phase == Dl06ChuteFallAct.Air ? ClipNames.Fall : ClipNames.Land;
             return null;

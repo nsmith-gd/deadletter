@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DeadLetter.Core.Audio;
 using DeadLetter.Core.Camera;
 using DeadLetter.Core.Cues;
+using DeadLetter.Core.Maths;
 using DeadLetter.Core.Mechanisms;
 using DeadLetter.Core.Motor;
 using DeadLetter.Core.Platform;
@@ -42,6 +43,12 @@ namespace DeadLetter.Runtime.Scenes
     /// A respawn into a scene that is not loaded holds the step behind the fade until it is.</item>
     /// <item><b>Pause</b> (<see cref="PauseGate"/>, through <see cref="PlatformServicesHost"/>): no steps, the moment player
     /// paused; play time stops.</item>
+    /// <item><b>Chapter seams</b> (#51): the sim is the current chapter's, held by a Core <see cref="GameSession"/>. Continue
+    /// builds the slot's chapter (<see cref="GameSession.ContinueChapter"/>). The streamer spans the chapters a seam joins
+    /// (<see cref="ChapterSeams.Span"/>), so the next chapter's first scene loads near the seam. When the running sim reaches
+    /// its seam (<see cref="ChapterSeams.Due"/>), the session hands D-17 to the next chapter's sim (<see cref="ChapterHandover"/>)
+    /// and the host rebinds to it (<see cref="HandOver"/>): no fade, no snap. Each chapter is drawn at its datum's place in the
+    /// world (<see cref="ChapterSeams.Origin"/>): D-17's pose and the rig's are shifted by it.</item>
     /// </list>
     /// Scenes are views only: a view scene unloading or loading never touches the sim.
     /// </summary>
@@ -87,6 +94,10 @@ namespace DeadLetter.Runtime.Scenes
         private readonly CueRoutes _routes = new CueRoutes();
         private readonly HashSet<int> _unknownCues = new HashSet<int>();
         private ISaveStore _store;
+        private PlatformKind _platform;
+        private GameSession _session;
+        private string[] _span;
+        private double _originX, _originY;
         private FixedTick _tick;
         private PauseGate _pause;
         private Phase _phase;
@@ -114,12 +125,17 @@ namespace DeadLetter.Runtime.Scenes
         public event Action<Cue> CueRaised;
         /// <summary>The scene that holds him changed (<see cref="ChapterSim.SceneChanged"/>), after the views were committed.</summary>
         public event Action<SceneDef, SceneDef, ExitDir> SceneCommitted;
-        /// <summary>He walked past the chapter's last scene: the next chapter's turn (its loading card is the caller's).</summary>
+        /// <summary>He walked past the chapter's last scene (a seam's way out may still carry him on: <see cref="ChapterChanged"/>).</summary>
         public event Action ChapterExited;
+        /// <summary>A seam handed him to the next chapter (from, to), after the host was rebound to it (#51).</summary>
+        public event Action<ChapterSim, ChapterSim> ChapterChanged;
 
-        // ---- ID17HostPose: D-17 where the sim says (a scene act may own his pose) -----------------------------------------
-        double ID17HostPose.X => Sim.X;
-        double ID17HostPose.Y => Sim.Y;
+        /// <summary>The chapter being played (this host's <c>chapterId</c> until the sim is built).</summary>
+        public string ChapterId => Sim != null ? Sim.Def.Id : chapterId;
+
+        // ---- ID17HostPose: D-17 where the sim says (a scene act may own his pose), in the world (the chapter's origin) ----
+        double ID17HostPose.X => Sim.X + _originX;
+        double ID17HostPose.Y => Sim.Y + _originY;
         double ID17HostPose.Z => Sim.Z;
         double ID17HostPose.Yaw => Sim.Yaw;
 
@@ -134,48 +150,38 @@ namespace DeadLetter.Runtime.Scenes
                 enabled = false;
                 return;
             }
-            ChapterDef def = ChapterScenes.Create(chapterId);
+            IPlatformServices services = PlatformServices.Current;   // PlatformServicesHost (order −1000) has initialised it
+            _store = PlatformSaveStore.Create(services);
+            _platform = services.Kind;
+            string boot = BootChapter();
+            ChapterDef def = ChapterScenes.Create(boot);
             if (def == null)
             {
-                Debug.LogError("GameHost: no chapter '" + chapterId + "' (known: " + string.Join(", ", ChapterScenes.Ids) + ").", this);
+                Debug.LogError("GameHost: no chapter '" + boot + "' (known: " + string.Join(", ", ChapterScenes.Ids) + ").", this);
                 enabled = false;
                 return;
             }
             Instance = this;
+            _session = new GameSession(def, _store);
 
-            IPlatformServices services = PlatformServices.Current;   // PlatformServicesHost (order −1000) has initialised it
-            _store = PlatformSaveStore.Create(services);
-            Sim = new ChapterSim(def, null, _store);
-            Sim.Checkpoints.MinSecondsBetweenWrites = PlatformSaveStore.MinSecondsBetweenWrites(services.Kind);
-            // The service read the slot's options in its constructor: setting it now makes SettingsStore apply them (calm mode,
-            // volumes, bindings) before anything renders.
-            CheckpointTrigger.Service = Sim.Checkpoints;
-
-            Presenter = new ChapterPresenter(Sim);
-            Presentation = new ChapterPresentation(Sim, Presenter, LightPoolBudget.For(services.Kind));
-            if (audioWorld != null) audioWorld.Bind(Presentation.Ambience);
-            if (mix != null) mix.Bind(Presentation.Mix);
-            if (lights != null) lights.Bind(Presentation.Lighting.Pool);
-            if (CarrierLineView.Current != null) CarrierLineView.Current.Bind(Presentation.Carriers);
-            Planner = new StreamingPlanner(def, streamingRadius > 0 ? streamingRadius : StreamingRadii.For(services.Kind));
+            _span = ChapterSeams.Span(def.Id);
+            var chapters = new List<ChapterDef>(_span.Length);
+            foreach (string id in _span) chapters.Add(id == def.Id ? def : ChapterScenes.Create(id));
+            Planner = new StreamingPlanner(chapters, streamingRadius > 0 ? streamingRadius : StreamingRadii.For(services.Kind));
             var ids = new string[Planner.Count];
             var paths = new string[Planner.Count];
             for (int i = 0; i < ids.Length; i++)
             {
                 ids[i] = Planner[i].Id;
-                paths[i] = ChapterScenes.ScenePath(def.Id, Planner[i].Id);
+                paths[i] = ChapterScenes.ScenePath(Planner.ChapterOf(i), Planner[i].Id);
             }
             Streamer = new SceneStreamer(ids, paths);
             _tick = new FixedTick(ChapterSim.StepSeconds, 4);
 
-            Rig = new CameraRig(CameraConfig.Prototype, ChapterFraming.For(chapterId) ?? ChapterFraming.Fallback(chapterId, m => Debug.LogError("GameHost: " + m, this)));
+            Rig = new CameraRig(CameraConfig.Prototype, TrackFor(def.Id));
             if (cameraDriver != null) cameraDriver.BindRig(Rig);
-            if (player != null) player.AttachToHost(Sim.Motor, Sim.Resolver, () => (float)_tick.Alpha, () => Sim.Clock, this);
-            if (player != null && SettingsStore.Loaded) Sim.Motor.AutoRun = SettingsStore.Current.AutoRun;
-
-            Sim.SceneChanged += OnSceneChanged;
-            Sim.Checkpoints.Reloaded += OnReloaded;
-            MechanismViewRegistry.Attach(ById(Sim), ById(ReferenceSim(def.Id)), () => SettingsStore.Calm);
+            BindSim(_session.Sim);
+            Rig.UseTrack(Rig.Track, new Vec3(_originX, _originY, 0));
 
             PlatformServicesHost ph = platformHost != null ? platformHost : PlatformServicesHost.Instance;
             if (ph != null)
@@ -195,7 +201,7 @@ namespace DeadLetter.Runtime.Scenes
             if (!string.IsNullOrEmpty(startAt))
             {
                 if (Sim.CanContinueAt(startAt)) { Enter(Entry.Begin, startAt); return; }
-                Debug.LogWarning("GameHost: startAt '" + startAt + "' is not a checkpoint of " + chapterId + "'s scenes; continuing as usual.", this);
+                Debug.LogWarning("GameHost: startAt '" + startAt + "' is not a checkpoint of " + ChapterId + "'s scenes; continuing as usual.", this);
             }
             if (continueFromSave && _store.TryLoad(Sim.Checkpoints.Slot, out SaveModel m) && m != null && !m.OptionsOnly && Sim.CanContinueAt(m.Checkpoint))
                 Enter(Entry.Continue, m.Checkpoint);
@@ -223,6 +229,70 @@ namespace DeadLetter.Runtime.Scenes
 
         private void OnApplicationPause(bool paused) { if (paused) Sim?.Checkpoints.Flush(); }
         private void OnApplicationQuit() => Sim?.Checkpoints.Flush();
+
+        // ---- The chapter's sim, and the seam to the next (#51) ------------------------------------------------------------
+
+        /// <summary>The chapter to build: the slot's when continuing (Continue picks the chapter), else this host's <c>chapterId</c>.</summary>
+        private string BootChapter()
+        {
+            if (!continueFromSave || !string.IsNullOrEmpty(startAt)) return chapterId;
+            return GameSession.ContinueChapter(_store) ?? chapterId;
+        }
+
+        private FramingTrack TrackFor(string chapter)
+            => ChapterFraming.For(chapter) ?? ChapterFraming.Fallback(chapter, m => Debug.LogError("GameHost: " + m, this));
+
+        /// <summary>
+        /// Everything that reads one chapter's sim, bound to <paramref name="sim"/>: at boot, and again at a seam. Its checkpoint
+        /// service goes to <see cref="CheckpointTrigger.Service"/> at once: the service read the slot's options in its constructor,
+        /// so at boot SettingsStore applies them (calm mode, volumes, bindings) before anything renders.
+        /// </summary>
+        private void BindSim(ChapterSim sim)
+        {
+            Sim = sim;
+            ChapterSeams.Origin(sim.Def.Id, out _originX, out _originY);
+            Sim.Checkpoints.MinSecondsBetweenWrites = PlatformSaveStore.MinSecondsBetweenWrites(_platform);
+            CheckpointTrigger.Service = Sim.Checkpoints;
+
+            Presenter = new ChapterPresenter(Sim);
+            Presentation = new ChapterPresentation(Sim, Presenter, LightPoolBudget.For(_platform));
+            if (audioWorld != null) audioWorld.Bind(Presentation.Ambience);
+            if (mix != null) mix.Bind(Presentation.Mix);
+            if (lights != null) lights.Bind(Presentation.Lighting.Pool);
+            if (CarrierLineView.Current != null) CarrierLineView.Current.Bind(Presentation.Carriers);
+            if (player != null) player.AttachToHost(Sim.Motor, Sim.Resolver, () => (float)_tick.Alpha, () => Sim.Clock, this);
+            if (player != null && SettingsStore.Loaded) Sim.Motor.AutoRun = SettingsStore.Current.AutoRun;
+
+            Sim.SceneChanged += OnSceneChanged;
+            Sim.Checkpoints.Reloaded += OnReloaded;
+            MechanismViewRegistry.Attach(Sim.Def.Id, ById(Sim), ById(ReferenceSim(Sim.Def.Id)), () => SettingsStore.Calm);
+        }
+
+        /// <summary>
+        /// The seam (after the step that reached it): the session hands D-17 to the next chapter's sim, and the host rebinds to
+        /// it (service, presentation, views, D-17, the rig's track and origin). Nothing is snapped or faded: he walks on, the
+        /// camera eases toward the new chapter's framing, and the streamer, which spans both chapters, has the next scene in.
+        /// </summary>
+        private void HandOver()
+        {
+            ChapterSim from = Sim;
+            if (!_session.TryHandOver(out _)) return;
+            from.SceneChanged -= OnSceneChanged;
+            from.Checkpoints.Reloaded -= OnReloaded;
+            BindSim(_session.Sim);
+            Rig.UseTrack(TrackFor(Sim.Def.Id), new Vec3(_originX, _originY, 0));
+            _currentIndex = Planner.IndexOf(Sim.Current);
+            if (_currentIndex >= 0 && !Streamer.IsReady(_currentIndex))
+            {
+                Debug.LogWarning("GameHost: " + Sim.Current.Id + " is not loaded at the seam (raise the streaming radius?).", this);
+                Streamer.Load(_currentIndex);
+            }
+            Presenter.UpdateSignals(_signals);
+            Presentation.OnPlaced();
+            CommitViews();
+            Debug.Log("GameHost: " + from.Def.Id + " → " + Sim.Def.Id + " at '" + Sim.Checkpoints.Current.Name + "'.", this);
+            ChapterChanged?.Invoke(from, Sim);
+        }
 
         /// <summary>A sim at the chapter's first placed checkpoint: the state the art is authored in (the views' rest values).</summary>
         private static ChapterSim ReferenceSim(string chapterId)
@@ -262,7 +332,7 @@ namespace DeadLetter.Runtime.Scenes
                 case Entry.Continue:
                     if (!Sim.Continue())
                     {
-                        Debug.LogWarning("GameHost: the slot could not be continued in " + chapterId + "; starting a new game.", this);
+                        Debug.LogWarning("GameHost: the slot could not be continued in " + ChapterId + "; starting a new game.", this);
                         Enter(Entry.NewGame, Sim.Def.Checkpoints.Order[0]);
                         return;
                     }
@@ -381,6 +451,7 @@ namespace DeadLetter.Runtime.Scenes
             PlaySounds(Presentation.Sounds.Sounds);
             MechanismViewRegistry.Sample();
             if (_reloaded) AfterPlacement(fromOpening: false);              // a respawn this step
+            else if (_session.Seam != null) HandOver();                      // the seam: the next chapter takes him on (#51)
         }
 
         /// <summary>
@@ -391,7 +462,7 @@ namespace DeadLetter.Runtime.Scenes
         {
             double now = Time.timeAsDouble;
             bool calm = SettingsStore.Calm;
-            Presentation.Frame(now, Time.deltaTime, Rig.Pose.Position.X, calm);
+            Presentation.Frame(now, Time.deltaTime, Rig.Pose.Position.X - _originX, calm);
             if (audioWorld != null) audioWorld.Present(now);
             if (score != null) AmbienceRules.Apply(score.Model, Presentation.Ambience.Context, score.Now);
             SfxPlayer player0 = sfx != null ? sfx : SfxPlayer.Current;
@@ -428,7 +499,7 @@ namespace DeadLetter.Runtime.Scenes
             {
                 if (from != null && dir == ExitDir.Right)
                 {
-                    Debug.Log("GameHost: he has left " + chapterId + " past " + from.Id + ".", this);
+                    Debug.Log("GameHost: he has left " + ChapterId + " past " + from.Id + ".", this);
                     ChapterExited?.Invoke();
                 }
             }
@@ -451,8 +522,8 @@ namespace DeadLetter.Runtime.Scenes
         /// <summary>A view scene finished loading (its root's OnEnable).</summary>
         internal void OnViewLoaded(SceneView view)
         {
-            if (view.ChapterId != chapterId)
-                Debug.LogWarning("GameHost: view scene " + view.SceneId + " belongs to chapter '" + view.ChapterId + "', not " + chapterId + ".", view);
+            if (_span != null && Array.IndexOf(_span, view.ChapterId) < 0)
+                Debug.LogWarning("GameHost: view scene " + view.SceneId + " belongs to chapter '" + view.ChapterId + "', not " + string.Join(" or ", _span) + ".", view);
             view.Current = Sim != null && Sim.Current != null && Sim.Current.Id == view.SceneId;
         }
 
