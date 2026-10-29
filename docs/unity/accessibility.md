@@ -100,6 +100,7 @@ threshold passes with calm off on area alone, and only when its combined area (a
 | DL-14a window eyes (`dl14a.eyes`) | L6280–L6281 | 1.1 Hz square | 1.5 | 0.8 | <1 % | pass | pass (0) | none |
 | DL-16a load lamps (`dl16a.loadFlash`) | L6299–L6300 | `sin 14t` (2.2 Hz) for 2.4 s; not gated by calm | 3 (worst phase) | 0.99 | <1 % | pass (at the limit) | pass (3, at the limit) | none |
 | Service-line relays (`att.relays`) | L5160–L5166, L6316–L6325 | 0.25 s every 7 s per lamp; pump blink at 0.95 Hz while refilling | 1.5 | 1.0 | <1 % | pass | pass | none |
+| Chapter 2 relay pilots (`ch2.relayPilots`) | none (no prototype): chapter2_plan §4 "The new cable", DL-18 §3 | a 0.3 s sine bump from 0.55 to 1 every 7 s, with the relay's click (`SomeoneHomeLights.PilotLevel`) | 0.14 | 0.45 | ~2 % | pass | pass (0, steady 0.7) | none |
 | Glints and prompts pulse (`glints.pulse`) | L7009 | 0.41 Hz, ±15 % | 0.5 | 0.11 | <1 % | pass | pass (0) | none |
 | Death: the eye (`death.eye`) | L7445–L7447 | `sin 70t` (11 Hz) for 0.45 s; **not gated by calm** | 4 | 0.9 | <0.3 % (anywhere: its worst scene, DL-01, sums to 75–90 % by frame rate) | **fail** | pass (0.5, fade) | warning; **new calm curve**: `DeathProfile.EyeLevel(t, calm)`; `DeathAct.EyeLevel` reads calm from the graph |
 | Death: sparks (`death.sparks`) | L7440, L7448 | one burst, plus shock bursts at 14/s | n/a | — | <1 % | pass (area) | — (gated by calm) | gated in Core as in the prototype: `DeathProfile.SparksFor(calm)`, `SparkRateFor(calm)`, `DeathAct.Sparks` and `SparkRate` (0 in calm) |

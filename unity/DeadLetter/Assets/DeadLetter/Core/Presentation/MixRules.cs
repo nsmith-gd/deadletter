@@ -27,6 +27,8 @@ namespace DeadLetter.Core.Presentation
         RingC,
         /// <summary>Region 6, chapter one.</summary>
         School,
+        /// <summary>Region 7, chapter two: ring A (DL-18 on).</summary>
+        RingA,
     }
 
     /// <summary>The mix's decisions: the snapshot per region and zone, the per-group trims, and the duck under a directed moment.</summary>
@@ -52,6 +54,7 @@ namespace DeadLetter.Core.Presentation
                 case 3: return MixSnapshot.SortingFloor;
                 case 4: return zone == LightZone.UpOnly ? MixSnapshot.UpOnly : MixSnapshot.Lower;
                 case 5: return MixSnapshot.RingC;
+                case 7: return MixSnapshot.RingA;
                 default: return MixSnapshot.School;
             }
         }
@@ -59,7 +62,7 @@ namespace DeadLetter.Core.Presentation
         /// <summary>The AudioMixer snapshot's name (the enum's, e.g. "RationHall").</summary>
         public static string Name(MixSnapshot s) => Names[(int)s];
 
-        private static readonly string[] Names = { "Depot", "Halls", "RationHall", "SortingFloor", "Lower", "UpOnly", "RingC", "School" };
+        private static readonly string[] Names = { "Depot", "Halls", "RationHall", "SortingFloor", "Lower", "UpOnly", "RingC", "School", "RingA" };
 
         /// <summary>A snapshot's trim on group <paramref name="g"/>, dB: 0 everywhere (parity with the web build).</summary>
         public static double TrimDb(MixSnapshot s, AudioGroup g) => 0;

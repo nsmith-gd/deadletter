@@ -22,7 +22,7 @@ namespace DeadLetter.Core.Presentation
     }
 
     /// <summary>
-    /// One flashing or flickering effect of the prologue and chapter 1, as data for the photosensitivity check
+    /// One flashing or flickering effect of the prologue and chapters 1 and 2, as data for the photosensitivity check
     /// (port_architecture §4.29; docs/unity/accessibility.md): where the prototype makes it, how much of the screen it
     /// can light (a conservative estimate from the framing, §4.17), and its level over time with calm mode off and on.
     /// <see cref="Ported"/> effects evaluate Core's own curve (the one the presentation uses); the others carry the
@@ -338,6 +338,9 @@ namespace DeadLetter.Core.Presentation
                     (t, p, calm) => t < 2.4 ? (Math.Sin((t + p) * 14) > 0 ? 6 : 0.4) : 0.05, ported: false),
                 new FlashEffect("att.relays", "L5160–L5166, L6316–L6325", FlashKind.Emissive, 0.005, 0, 21,
                     (t, calm) => Math.Max(att.ValueAtUnits(3, t, calm), Math.Sin(t * 6) > 0 ? 1 : 0), ported: true, scene: Everywhere),   // the service line runs through chapter 1
+                // ---- Chapter 2 (DL-18, DL-19): no prototype, so "L—" and the doc sections --------------------------
+                new FlashEffect("ch2.relayPilots", "L— (no prototype): chapter2_plan §4 \"The new cable\", DL-18 §3", FlashKind.Light, 0.02, 0, 21,
+                    (t, calm) => SomeoneHomeLights.PilotLevel(t, calm), ported: true, colour: Rgb.Hex(0x7dff9a)),
                 // ---- Everywhere -------------------------------------------------------------------------------------
                 new FlashEffect("glints.pulse", "L7009", FlashKind.Emissive, 0.005, 0, 6,
                     (t, calm) => calm ? 1 : 0.85 + 0.15 * Math.Sin(t * 2.6), ported: false, scene: Everywhere),

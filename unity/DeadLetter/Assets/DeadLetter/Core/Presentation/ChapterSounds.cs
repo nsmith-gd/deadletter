@@ -39,6 +39,7 @@ namespace DeadLetter.Core.Presentation
     /// distant clanks) are seeded (<see cref="AudioRng"/>), so a replay hears the same. A step allocates nothing.
     /// <para>Where the prototype's <c>setTimeout</c> delays a sound it is queued on the game clock (<see cref="SfxQueue.PlayAfter"/>).</para>
     /// <para>Chapter 1 (region 6) adds its own mechanisms, acts and polls through <see cref="AttendanceSounds"/>, on the same queue and seed.</para>
+    /// <para>Chapter 2 (region 7) adds its cues, mechanisms and polls through <see cref="SomeoneHomeSounds"/>, the same way.</para>
     /// </summary>
     public sealed class ChapterSounds
     {
@@ -133,6 +134,8 @@ namespace DeadLetter.Core.Presentation
         private readonly CarrierLine _line;
         /// <summary>Chapter 1's sounds (null in the prologue).</summary>
         private readonly AttendanceSounds _att;
+        /// <summary>Chapter 2's sounds (null elsewhere).</summary>
+        private readonly SomeoneHomeSounds _home;
         // Atmosphere (updateAtmosphere, L7895–L7966): per drop its timer, interval and fall clock (−1 = waiting).
         private readonly double[] _dripT = new double[4], _dripEvery = new double[4], _dripFall = new double[4];
         private double _nextSpark = FirstCrackle, _puffNext = 1.5, _puffUntil;
@@ -159,6 +162,7 @@ namespace DeadLetter.Core.Presentation
             _line = Mech<CarrierLine>("dl06.line");
             _reveal = sim.Def.Scene(Dl03Scene.Id) != null || sim.Def.Scene(Dl04Scene.Id) != null ? sim.Shared<RacksReveal>() : null;
             if (sim.Def.Id == ChapterDefs.AttendanceId) _att = new AttendanceSounds(sim, _q, _rng);
+            if (sim.Def.Id == ChapterDefs.SomeoneHomeId) _home = new SomeoneHomeSounds(sim, _q, _rng);
             for (int i = 0; i < DripX.Length; i++)
             {
                 _dripEvery[i] = DripEvery[i];
@@ -193,6 +197,7 @@ namespace DeadLetter.Core.Presentation
             ReadCues(sim.Cues);
             ReadLog(sim.Graph.Log, now);
             _att?.Step(now, dt);
+            _home?.Step(now, dt);
             ReadMotor(sim.Motor, now);
             ReadSceneAct();
             Poll(now, dt, calm);
@@ -208,6 +213,7 @@ namespace DeadLetter.Core.Presentation
             _lastActKind = ActId.None;
             _lastClock = double.NaN;
             _att?.OnPlaced();
+            _home?.OnPlaced();
         }
 
         // ---- The scenes' cues ----------------------------------------------------------------------------------------------

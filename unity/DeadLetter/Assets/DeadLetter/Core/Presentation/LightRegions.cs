@@ -20,6 +20,7 @@ namespace DeadLetter.Core.Presentation
         SortingHall, Ration, Bay, Cage, RingC,
         Secret0, Secret1, End, RingCLook, Spill0, Spill1, Cot, Attendance,
         Voice0, Voice1, Voice2,
+        SomeoneHome,                              // r7, chapter 2
     }
 
     /// <summary>Which proxies a region and zone show (<c>setRegionLights</c>), and the zone's hysteresis (<c>lightZoneFor</c>).</summary>
@@ -72,6 +73,7 @@ namespace DeadLetter.Core.Presentation
                 case LightGroup.Voice0: return r == 2 && !ration;
                 case LightGroup.Voice1: return r == 3 && !upper;
                 case LightGroup.Voice2: return r == 5;
+                case LightGroup.SomeoneHome: return r == 7;
                 default: return false;
             }
         }
@@ -116,6 +118,7 @@ namespace DeadLetter.Core.Presentation
             if (gameRegion == 5 && r == 4 && x > LightRegions.Off5 + 79.6) r = 5;                        // L3560
             else if (r == 5 && (gameRegion != 5 || x < LightRegions.Off5 + 79.2)) r = 4;                 // L3561
             if (gameRegion == 6) r = 6;
+            if (gameRegion == 7) r = 7;                                                                  // chapter 2: no lag
             Region = r;
             Zone = LightRegions.ZoneFor(r, gameRegion, x, Zone);
             Changed = was != Region || wasZone != Zone;

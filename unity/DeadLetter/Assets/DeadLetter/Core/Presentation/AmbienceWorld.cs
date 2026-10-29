@@ -7,6 +7,7 @@ using DeadLetter.Core.Mechanisms.Plates;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Scenes.Dl03;
 using DeadLetter.Core.Scenes.Dl04;
+using DeadLetter.Core.Scenes.Dl18;
 using DeadLetter.Core.Streaming;
 
 namespace DeadLetter.Core.Presentation
@@ -76,6 +77,8 @@ namespace DeadLetter.Core.Presentation
                 case PrologueEmitters.LessonRunning: return _lesson != null && _lesson.On && !(_lessonBrake != null && _lessonBrake.Engaged);
                 case VoiceCatalog.RestDoorShut: return _restDoor != null && _restDoor.State == DoorState.Closed;
                 case VoiceCatalog.Dismissed: return _seats != null && _seats.Engaged;
+                // Chapter 2: DL-18's alarm clock ticks, except while it rings (its act, §6).
+                case SomeoneHomeEmitters.ClockTicking: return !(_sim.Act != null && _sim.Act.Kind == Dl18Rules.AlarmClock);
                 default: return false;
             }
         }
