@@ -5,10 +5,9 @@ namespace DeadLetter.Core.Camera
 {
     /// <summary>
     /// The framing track for a chapter (issue #50; the interface posted on #1): the prologue's
-    /// (<see cref="PrologueFraming"/>) or chapter 1's (<see cref="AttendanceFraming"/>). Null for a chapter whose framing
-    /// is not transcribed yet; <c>GameHost</c> then logs an error naming the chapter and stands the prologue's track in.
-    /// <para>Chapter 2 (<c>someone_home</c>, #47) has none yet: docs/scenes/DL-18 and DL-19 §7 give x ranges and focal lengths
-    /// (32, 40, 38, 30 mm), not framing volumes or <c>CAM_</c> data, and the rig frames at a fixed 35 mm.</para>
+    /// (<see cref="PrologueFraming"/>), chapter 1's (<see cref="AttendanceFraming"/>) or chapter 2's
+    /// (<see cref="SomeoneHomeFraming"/>, from DL-18's and DL-19's §7; #53). Null for a chapter whose framing is not
+    /// transcribed yet; <c>GameHost</c> then logs an error naming the chapter and stands the prologue's track in.
     /// </summary>
     public static class ChapterFraming
     {
@@ -18,7 +17,7 @@ namespace DeadLetter.Core.Camera
             {
                 case ChapterDefs.PrologueId: return PrologueFraming.Build();
                 case ChapterDefs.AttendanceId: return AttendanceFraming.Build();
-                case ChapterDefs.SomeoneHomeId: return null;                                    // no framing data yet (see above)
+                case ChapterDefs.SomeoneHomeId: return SomeoneHomeFraming.Build();
                 default: return null;
             }
         }

@@ -24,7 +24,7 @@ namespace DeadLetter.Core.Tests
         private static readonly MotorInput Use = new MotorInput { UsePressed = true };
         private static readonly MotorInput JumpRight = new MotorInput { Move = 1, JumpPressed = true };
 
-        private static ChapterSim Begin(string cp = "ring_a", ISaveStore store = null)
+        internal static ChapterSim Begin(string cp = "ring_a", ISaveStore store = null)
         {
             var s = new ChapterSim(ChapterDefs.SomeoneHome(), store: store);
             s.Begin(cp);
@@ -70,7 +70,7 @@ namespace DeadLetter.Core.Tests
         /// the bench (0.6) and the sill (1.2) and walk on to <c>terrace</c>. He waits for each leaf to settle before he walks
         /// into its swing (it would wait for him). Returns the steps from the start.
         /// </summary>
-        private static int Solve(ChapterSim s, Action<ChapterSim> each = null, Func<ChapterSim, bool> stopAt = null)
+        internal static int Solve(ChapterSim s, Action<ChapterSim> each = null, Func<ChapterSim, bool> stopAt = null)
         {
             bool Stop(ChapterSim x) => stopAt != null && stopAt(x);
             long n0 = s.Steps;
