@@ -81,6 +81,8 @@ namespace DeadLetter.Core.Camera
 
         // cam (L7647)
         private double _x, _dist, _y, _look, _push, _fogK;
+        // The side view's focal length, eased toward the frame's like the distance (#53; the prototype's stays at 35 mm).
+        private double _focal;
         // shotCam (L3697)
         private bool _shotLive;
         private Vec3 _shotPos, _shotLook;
@@ -109,6 +111,8 @@ namespace DeadLetter.Core.Camera
         public double Distance => _dist;
         public double Height => _y;
         public double LookHeight => _look;
+        /// <summary>The side view's focal length (mm) before any authored shot blends over it.</summary>
+        public double Focal => _focal;
         public double PushAmount => _push;
         public double ShotWeightRaw => _shotW;
         public double ShakeAmount => _shake;
@@ -133,7 +137,7 @@ namespace DeadLetter.Core.Camera
         public void Reset()
         {
             _x = _c.StartX; _dist = _c.StartDistance; _y = _c.StartHeight; _look = _c.StartLook;
-            _push = 0; _fogK = 0;
+            _push = 0; _fogK = 0; _focal = _c.BaseFocal;
             _shotLive = false; _shotW = 0; _shake = 0; _seed = 0; _shotClock = null; _shotName = null;
             _shotFocal = _c.BaseFocal;
             _lastPosition = new Vec3(_x, _y, _dist);
@@ -163,7 +167,7 @@ namespace DeadLetter.Core.Camera
         public void SnapToFrame(in CameraRigInput i)
         {
             Frame f = FrameFor(i);
-            _x = f.Cx; _dist = f.Volume.Distance; _y = f.Volume.Height; _look = f.Volume.Look;
+            _x = f.Cx; _dist = f.Volume.Distance; _y = f.Volume.Height; _look = f.Volume.Look; _focal = f.Focal;
             _lastPosition = new Vec3(_x, _y, _dist);
         }
 
@@ -194,8 +198,9 @@ namespace DeadLetter.Core.Camera
             _push = Damp.Toward(_push, PushWanted(i.Push), _c.PushRate, dt);
             double k = Damp.Factor(_c.FollowRate, dt);
             double rise = Math.Max(0, i.Y - _c.HeightFollowFrom);
-            double distWant = Math.Max(v.Distance, _c.WidthFit(_c.BaseFocal, v.Distance * _c.MinFitFraction, aspect)) * (1 - _c.PushDistance * _push);
+            double distWant = Math.Max(v.Distance, _c.WidthFit(frame.Focal, v.Distance * _c.MinFitFraction, aspect)) * (1 - _c.PushDistance * _push);
             _dist += (distWant - _dist) * k;
+            _focal += (frame.Focal - _focal) * k;
             _y += (v.Height - _c.PushHeight * _push + rise * _c.HeightFollow - _y) * k;
             _look += (v.Look - _c.PushLook * _push + rise * _c.LookFollow - _look) * k;
 
@@ -210,7 +215,7 @@ namespace DeadLetter.Core.Camera
             double ease = i.SlowFollow ? _c.FollowRateXSlow : _c.FollowRateX;
             _x = Damp.Toward(_x, frame.Cx, ease, dt);
 
-            CameraPose pose = ApplyShots(i.Shot, dt, new Vec3(_x, _y, _dist), new Vec3(_x, _look, 0), _c.BaseFocal);
+            CameraPose pose = ApplyShots(i.Shot, dt, new Vec3(_x, _y, _dist), new Vec3(_x, _look, 0), _focal);
             pose.Fog = fog;
             Pose = pose = InWorld(pose);
             return pose;

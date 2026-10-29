@@ -37,7 +37,7 @@ namespace DeadLetter.Core.Tests
         };
 
         /// <summary>The leaves in a configuration, played on the chapter's own graph (bed down / folded / propped; bench folded / down / propped).</summary>
-        private static ChapterSim Configure(string config)
+        internal static ChapterSim Configure(string config)
         {
             var s = new ChapterSim(ChapterDefs.SomeoneHome());
             s.Begin(config == "solved" || config == "bedPropped" ? "terrace" : "ring_a");

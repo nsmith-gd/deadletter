@@ -14,6 +14,7 @@ using DeadLetter.Core.Scenes.Dl03;
 using DeadLetter.Core.Scenes.Dl04;
 using DeadLetter.Core.Scenes.Dl06;
 using DeadLetter.Core.Scenes.Dl14;
+using DeadLetter.Core.Scenes.Dl17;
 
 namespace DeadLetter.Core.Streaming
 {
@@ -115,6 +116,9 @@ namespace DeadLetter.Core.Streaming
             signals.Set(AttendanceFraming.Gallery, AttendanceFraming.GallerySignal(_sim.Y));
             signals.Set(AttendanceFraming.Duct, _sim.SceneActKind == DuctAct.Hatch ? 1 : 0);
             signals.Set(AttendanceFraming.Door17, _stairDoor != null ? Smooth.Step(_stairDoor.Position) : 0);
+            var stair = _sim.Act as Dl17StairAct;
+            signals.Set(AttendanceFraming.Stair, AttendanceFraming.StairSignal(stair != null, stair != null ? stair.T : 0,
+                _sim.Exited && _sim.Act == null && _sim.X >= Dl17StairAct.EndX));
         }
 
         /// <summary>
@@ -132,10 +136,12 @@ namespace DeadLetter.Core.Streaming
 
         /// <summary>
         /// Chapter 1's push during a scene act (L7788): every act there is the prototype's <c>att</c> or a motor act Core
-        /// runs as a scene act, so it pushes in once past its approach; quirks never do.
+        /// runs as a scene act, so it pushes in once past its approach; quirks never do. The stair walk never does: the
+        /// prototype's is <c>game.exit</c>, not an act (<c>finishAtt</c> L6461, <c>updateExit</c> L2086), so L7788 sees none.
         /// </summary>
         private CameraPush AttendanceActPush()
         {
+            if (_sim.Act is Dl17StairAct) return CameraPush.None;
             var kind = _sim.SceneActKind;
             if (kind == ActIds.Quirk || _sim.SceneActPhase == AttAct.Approach) return CameraPush.None;
             return CameraPush.Act;
