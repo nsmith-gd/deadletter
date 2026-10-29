@@ -51,6 +51,10 @@ namespace DeadLetter.Core.Presentation
         AttBeam,
         /// <summary>DL-14's jam lamp: <c>1.2 · (0.6 + 0.4 · sin 31t)</c> while the chain grinds against the pole, else 0 (L5465–L5466; its 0.1 s ease left out); calm: a steady 1.2 · 0.6 (FlashEffects' <c>dl14.clutchLight</c>).</summary>
         AttJam,
+        /// <summary>Chapter 2's relay pilot lamps: <c>base · </c><see cref="SomeoneHomeLights.PilotLevel"/> (a blink every 7 s; calm: steady).</summary>
+        HomeRelayPilot,
+        /// <summary>DL-19's jack pool: its base, riding over the jack (<see cref="SomeoneHomeLights.JackY"/>).</summary>
+        HomeJack,
     }
 
     /// <summary>
@@ -164,6 +168,8 @@ namespace DeadLetter.Core.Presentation
         private readonly CycleClock _nightLight;
         private readonly PairedBlindDrive _blinds14, _blinds14a;
         private readonly EscortTrolley _trolley;
+        // Chapter 2's (null elsewhere).
+        private readonly RatchetJack _jack;
 
         public PrologueLighting(ChapterSim sim, ChapterPresenter presenter, ChapterSounds sounds, LightPoolBudget budget = null, LightDef[] defs = null)
         {
@@ -178,6 +184,7 @@ namespace DeadLetter.Core.Presentation
             sim.Graph.TryGet("dl14.blinds", out _blinds14);
             sim.Graph.TryGet("dl14a.blinds", out _blinds14a);
             sim.Graph.TryGet("dl14b.trolley", out _trolley);
+            sim.Graph.TryGet("dl19.jack", out _jack);
         }
 
         public LightPool Pool => _pool;
@@ -211,6 +218,8 @@ namespace DeadLetter.Core.Presentation
                 if (_pool[i].Kick) _pool.SetPosition(i, new Vec3(x + KickDx, sim.Y + KickDy, KickZ));
                 else if (_pool[i].Driver == LightDriver.AttBeam && _trolley != null)
                     _pool.SetPosition(i, new Vec3(_trolley.X + (_trolley.Dir > 0 ? 1 : -1) * AttendanceLights.BeamAhead, AttendanceLights.BeamY, AttendanceLights.BeamZ));
+                else if (_pool[i].Driver == LightDriver.HomeJack && _jack != null)
+                    _pool.SetPosition(i, new Vec3(_jack.X, _jack.Params.FloorY + SomeoneHomeLights.JackY, SomeoneHomeLights.JackZ));
             }
             double a = t * 0.12;
             SearchTarget = new Vec3(10 + Math.Sin(a) * 5, 2.2 + Math.Sin(a * 1.7) * 1.2, -6);
@@ -255,6 +264,8 @@ namespace DeadLetter.Core.Presentation
                 case LightDriver.AttBlindW2: return d.Intensity * (1 - (_blinds14a != null ? _blinds14a.B : 0));
                 case LightDriver.AttBeam: return d.Intensity;
                 case LightDriver.AttJam: return _blinds14 != null && _blinds14.Slipping ? 1.2 * (calm ? 0.6 : 0.6 + 0.4 * Math.Sin(t * 31)) : 0;
+                case LightDriver.HomeRelayPilot: return d.Intensity * SomeoneHomeLights.PilotLevel(t, calm);
+                case LightDriver.HomeJack: return d.Intensity;
                 default: return d.Intensity;
             }
         }

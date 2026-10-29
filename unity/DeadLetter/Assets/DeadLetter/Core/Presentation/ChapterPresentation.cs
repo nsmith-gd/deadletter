@@ -1,4 +1,5 @@
 using System;
+using DeadLetter.Core.Audio;
 using DeadLetter.Core.Mechanisms.Routes;
 using DeadLetter.Core.Scenes;
 using DeadLetter.Core.Streaming;
@@ -19,7 +20,7 @@ namespace DeadLetter.Core.Presentation
             Sim = sim ?? throw new ArgumentNullException(nameof(sim));
             Presenter = presenter ?? new ChapterPresenter(sim);
             Sounds = new ChapterSounds(sim, seed);
-            Ambience = new AmbienceWorld(sim, Presenter, null, seed + 18);
+            Ambience = new AmbienceWorld(sim, Presenter, EmittersFor(sim.Def.Id), seed + 18);
             Lighting = new PrologueLighting(sim, Presenter, Sounds, budget, LightsFor(sim.Def.Id, budget != null && budget.Touch));
             Mix = new MixState();
             if (sim.Graph.TryGet("dl06.line", out CarrierLine line)) Carriers = new CarrierViews(line);
@@ -27,17 +28,25 @@ namespace DeadLetter.Core.Presentation
 
         /// <summary>
         /// The chapter's light proxies: the prologue's (<see cref="PrologueLights"/>), or for chapter 1 the prologue's
-        /// always-on ones (hemisphere, rim, kick) and <see cref="AttendanceLights"/>.
+        /// always-on ones (hemisphere, rim, kick) and <see cref="AttendanceLights"/>, and for chapter 2 the always-on ones
+        /// and <see cref="SomeoneHomeLights"/>.
         /// </summary>
         public static LightDef[] LightsFor(string chapterId, bool touch)
         {
             LightDef[] prologue = PrologueLights.Build(touch);
-            if (chapterId != ChapterDefs.AttendanceId) return prologue;
+            LightDef[] own;
+            if (chapterId == ChapterDefs.AttendanceId) own = AttendanceLights.Build(touch);
+            else if (chapterId == ChapterDefs.SomeoneHomeId) own = SomeoneHomeLights.Build(touch);
+            else return prologue;
             var all = new System.Collections.Generic.List<LightDef>();
             foreach (LightDef d in prologue) if (d.Group == LightGroup.Always) all.Add(d);
-            all.AddRange(AttendanceLights.Build(touch));
+            all.AddRange(own);
             return all.ToArray();
         }
+
+        /// <summary>The chapter's emitters: chapter 2's own (<see cref="SomeoneHomeEmitters"/>), else the prologue's and chapter 1's (<see cref="PrologueEmitters"/>).</summary>
+        public static EmitterDef[] EmittersFor(string chapterId)
+            => chapterId == ChapterDefs.SomeoneHomeId ? SomeoneHomeEmitters.All : PrologueEmitters.All;
 
         public ChapterSim Sim { get; }
         public ChapterPresenter Presenter { get; }

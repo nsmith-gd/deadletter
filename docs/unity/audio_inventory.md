@@ -202,6 +202,18 @@ The placed emitters (`EMITTERS`, 6577–6598; all spatial, positional on x):
 | DL-13 | 224.0 | machine | 0.35 | 6 | the same | the apparatus running |
 | DL-14 | 238.0 | buzz | 0.25 | 6 | | school tubes |
 
+Chapter 2's emitters (`SomeoneHomeEmitters`, region 7; no prototype, from DL-18 §8 and DL-19 §3/§8). The relay boxes'
+click every 7 s is not an emitter: `SomeoneHomeSounds` plays it on the game clock, in step with their pilot lamps.
+
+| Scene | x | Kind | Level | Reach | Condition | Visual equivalent |
+|---|---|---|---|---|---|---|
+| DL-18 | 348.0 | buzz | 0.15 | 3 | | a gallery lamp (maintained, faint buzz) |
+| DL-18 | 350.4 | buzz | 0.15 | 3 | | the other gallery lamp |
+| DL-18 | 349.5 | wind | 0.3 | 5 | | the shaft's air below the gallery |
+| DL-18 | 351.95 | tick, period 1 | 0.5 | 3.5 | `clockTicking`: not while it rings | the alarm clock |
+| DL-18 | 358.0 | wind | 0.25 | 6 | | the shaft at the terrace landing |
+| DL-19 | 372.0 | wind | 0.3 | 6 | | the shaft beyond the upper terrace's rail |
+
 ## Voices (index.html 966–1143)
 
 **No recordings exist yet.** `game/undelivered/assets/voice/` is absent, so every voice plays its placeholder murmur.
@@ -375,6 +387,48 @@ During a moment's shot, voices are held off (`voicesHeld`), and `Voice.stop(1.0)
 **Files not referenced** by the game today: `dl01_dead`, `dl01_hall`, `dl01_kin`, `dl01_racks`, `dl01_threshold`,
 `dl01_wake`, `dl04_latch`, `dl04_refuge`, `prologue_lastcar` and `prologue_collapse`. These are the older score, and
 the two DL-10 cues that `ringc` replaced. Don't import them unless the director wants them.
+
+## Chapter 2 (DL-18, DL-19): sounds and wanted assets
+
+Chapter 2 has no prototype, so it has no `Sound.*` calls to port. `SomeoneHomeSounds` (issue #57) plays existing bank
+keys at the moments the scene docs' §8 name, read from the scenes' cues and the mechanisms' events:
+
+| Moment | Source | Plays now | Wanted asset (not made yet) |
+|---|---|---|---|
+| The bed folds or unfolds from rest | `dl18.bed` state | `mech_creak_800` | `mech_bed_springs`: a fold bed's coil springs, 1.4 s |
+| The bench folds or unfolds from rest | `dl18.bench` state | `mech_chain_1200` | (fits: "the bench's chains") |
+| A leaf reaches its stop | `dl18.bed`/`bench` Down, Folded | `mech_clunk` (0.7 / 0.6) | |
+| A leaf meets the heaped quilt | `FoldingLeafEvent.Met` index 0 | `mech_thud` at 0.35 | `env_quilt_thump`: a soft, muffled thump |
+| A leaf meets D-17 and waits | `Met` index 1 | `d17_tap` at 0.6 | |
+| The slide-off rocks | cue `dl18.bench.rock` | `mech_creak_500` | |
+| The slide-off's soft bump | cue `dl18.bench.slide` | `mech_scrape` 0.5, `d17_land` 0.5 | |
+| A tug at the Works door's chain | cue `dl18.chain.clank` | `mech_clank`, `mech_rattle_500` | |
+| The alarm clock rings, 2 s | cue `dl18.clock.ring` | `mech_alarm_bell` at 0, 0.55, 1.1, 1.65 s | `mech_clock_ring`: a wind-up alarm clock's bell, 2 s |
+| He pats it still | cue `dl18.clock.still` | `d17_tap` | |
+| The sketch's close look | cue `dl18.sketch.look` | `curio_paper` | |
+| The relay boxes, every 7 s | game clock, within 6 m of 349.4 or 370.4 | `mech_click` at 0.5·k | |
+| The jack's wheels drop into the pocket | `RatchetJackEvent.Clunk` | `mech_clunk` | |
+| A ratchet notch (0.02 m) | `RatchetJackEvent.Click` | `mech_gate_tick` (0.8 up, 0.6 down) | `mech_jack_click_v1..3`: one ratchet pawl click |
+| The jack binds at its top | `Bind` | `mech_clunk` 0.5, `d17_strain` 0.6 | |
+| He heaves at the loaded jack | `Heave` | `d17_strain` | |
+| The jack rolls | its velocity > 0.05 m/s, about 0.8 /s | `mech_squeak` | |
+| The loaded bent pin draws and bites | `BracketPinsEvent.Draw` | `mech_scrape` | |
+| Use on a biting pin | `Strain` | `d17_strain` | |
+| The slack pin drops into the tin cup | `Clink` | `mech_clack` at 0.4 | `mech_pin_clink`: a steel pin into a tin cup |
+| He takes the spare | `Taken` | `d17_tap` | |
+| The spare seats: a clean double click | `Seated` | `mech_click`, again 0.12 s later | |
+| The spare chatters against the lug | `Chatter` | `mech_pawl_clatter` | |
+| The bent pin under load, on a slow sway | `PinSound.Creak`, every 3.2 s within 6 m | `mech_creak_600` | `mech_pin_creak_v1..3`: a strained pin creaking with a sway |
+| The slack pin | `PinSound.Rattle`, the same | `mech_rattle_500` | `mech_pin_rattle`: a loose pin rattling in its fork |
+| The half landing drops onto the stops | `HalfLandingEvent.Drop` index 0 | `mech_clank`, `mech_thud` 0.5 (by speed) | |
+| It drops onto the bent pin, or the saddle | `Drop` index 1, 2 | `mech_clank`, `mech_clunk` | |
+| Step on: it lurches | cue `dl19.lurch` | `mech_lurch` | |
+| Step on: it rocks on the stops and clangs | cue `dl19.rock` | `mech_lurch`, `mech_clank` | |
+| `Settle`: the knee dip's servo whine | cue `dl19.settle` | `mech_servo_300_300_420` at 0.6 | `d17_servo_settle`: a quiet, short whine (never comic) |
+| The drip tube, once a minute | cue `dl19.drip`, within 6 m of 363.4 | `env_drip` | |
+
+Not sounds here: `held` (a low warm chord under the music box's three parcel notes, DL-19 §8: a music cue, still to
+score) and `witness` (a shot). The chapter's music bed (DL-18 §8) is the music director's.
 
 ## Totals
 
