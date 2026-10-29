@@ -340,10 +340,7 @@ namespace DeadLetter.Core.Tests
         /// walking right), filmed as GameHost films it: chapter 1's track, then <see cref="CameraRig.UseTrack"/> with chapter 2's
         /// at its origin. In the world, <see cref="CameraRig.UseTrack"/> moves nothing; every step after it is the rig's own
         /// easing toward chapter 2's frame (x at the follow rate, the lens at the distance's rate, nothing more than 0.1 m), and
-        /// it converges: the gap to the arrival frame is under a third of the handover's in 2 s, and D-17 is back inside the
-        /// frame's inner 90% within 1 s and stays there.
-        /// <para>He is out of frame at the handover itself: chapter 1's DL-17 frame holds cx at most 339.0 (L5877) while the
-        /// stair walk takes him to 347.0. That is chapter 1's framing past the prototype's end, not chapter 2's.</para>
+        /// at the handover it is already on chapter 2's arrival frame (the stair walk eased it there).
         /// </summary>
         [Fact]
         public void C_AcrossTheSeam_ThePoseEasesOntoChapter2sFrame_WithNoJump()
@@ -371,30 +368,58 @@ namespace DeadLetter.Core.Tests
                 Assert.True(Math.Abs(b.Focal - a.Focal) <= k * Math.Abs(r.Frames[i].Focal - a.Focal) + 1e-9, row + "focal " + a.Focal + " → " + b.Focal);
             }
 
-            // The lens: chapter 1's 35 mm up to the handover, then easing toward the arrival's 32 mm (and on toward the
-            // gallery's 35 as he walks past 349.5), each step nearer the frame's and never past it.
-            Assert.Equal(C.BaseFocal, before.Focal);
+            // The lens: chapter 1's 35 mm until the stair, then easing toward the stair head's 32 mm (chapter 2's arrival
+            // lens), across the handover, and on toward the gallery's 35 as he walks past 349.5: each step nearer the frame's
+            // lens and never past it.
+            Assert.Equal(C.BaseFocal, r.Frames[r.ExitRow - 1].Focal);                                // the stair act starts as he leaves DL-17
+            Assert.Equal(C.BaseFocal, r.Poses[r.ExitRow - 1].Focal, 9);                              // (a label shot's blend-out leaves ~1e-13)
             Assert.Equal(SomeoneHomeFraming.ArrivalFocal, r.Frames[h].Focal);
-            Assert.True(r.Poses[h].Focal < before.Focal);
-            for (int i = h; i <= last; i++)
+            for (int i = r.ExitRow; i <= last; i++)
             {
-                double want = r.Frames[i].Focal, a = (i == h ? before : r.Poses[i - 1]).Focal, b = r.Poses[i].Focal;
+                double want = r.Frames[i].Focal, a = r.Poses[i - 1].Focal, b = r.Poses[i].Focal;
                 Assert.True(Math.Abs(b - want) <= Math.Abs(a - want) && (b - want) * (a - want) >= 0, "row " + i + ": focal " + a + " → " + b + " toward " + want);
             }
 
+            // It has converged by the seam: the stair walk eased it onto chapter 2's arrival frame, so at the handover the
+            // pose is within 0.1 (m + mm) of chapter 2's frame (he walks on into the gallery's after it).
             double Gap(int i)
             {
                 Frame f = r.Frames[i];
                 CameraPose p = r.Poses[i];
                 return Math.Abs(p.Position.X - ox - f.Cx) + Math.Abs(p.Position.Z - f.Volume.Distance) + Math.Abs(p.Focal - f.Focal);
             }
-            Assert.True(Gap(last) < Gap(h) / 3, "gap " + Gap(h) + " → " + Gap(last));
+            Assert.True(Gap(h) < 0.1, "gap at the handover " + Gap(h));
 
-            for (int i = h + 60; i <= last; i++)
-            {
-                double e = BodyExtent(r.Poses[i], C.Aspect, r.Rows[i].X + ox, r.Rows[i].Y + oy);
-                Assert.True(e <= Margin, "row " + i + ": he reaches " + e.ToString("F3") + " of the frame at x " + r.Rows[i].X.ToString("F3"));
-            }
+        }
+
+        /// <summary>
+        /// The stair walk (#56): from the step he leaves DL-17, up the stair (<c>Dl17StairAct</c>), across the handover and
+        /// through chapter 2's first 2 s, D-17 is inside the frame's inner 90% at every step, on 16:9 and 4:3. DL-17's own
+        /// frame caps cx at 339.0 (L5877); chapter 1's <c>dl17.stair</c> zone follows him up to the stair head and eases into
+        /// chapter 2's arrival frame, so the seam leaves the target frame where it was.
+        /// </summary>
+        [Fact]
+        public void C_TheStairWalk_KeepsHimInFrame_AtEveryStep_AcrossTheHandover_On16x9And4x3()
+        {
+            var r = ChapterSeamTests.Run();
+            ChapterSeams.Origin(ChapterDefs.SomeoneHomeId, out double ox, out double oy);
+            int h = r.HandoverRow;
+            Assert.Equal(r.Rows.Count, r.Poses43.Count);
+            foreach (var (name, aspect, poses) in new[] { ("16:9", C.Aspect, r.Poses), ("4:3", 4.0 / 3.0, r.Poses43) })
+                for (int i = r.ExitRow; i < r.Rows.Count; i++)
+                {
+                    bool two = i >= h;
+                    double e = BodyExtent(poses[i], aspect, r.Rows[i].X + (two ? ox : 0), r.Rows[i].Y + (two ? oy : 0));
+                    Assert.True(e <= Margin, name + ", row " + i + (i == h ? " (the handover)" : "") + ": he reaches " + e.ToString("F3")
+                        + " of the frame at x " + r.Rows[i].X.ToString("F3") + " y " + r.Rows[i].Y.ToString("F3") + ", camera " + poses[i].Position);
+                }
+
+            // The seam hands the rig the frame it is already easing to: chapter 1's last target is chapter 2's first, in the world.
+            Frame a = r.Frames[h - 1], b = r.Frames[h];
+            Assert.Equal(b.Cx + ox, a.Cx, 9);
+            Assert.Equal(b.Focal, a.Focal, 9);
+            Assert.Equal(b.Volume.Distance, a.Volume.Distance, 9);
+            Assert.True(r.ClimbSteps > 60, "the stair walk: " + r.ClimbSteps + " steps");
         }
     }
 }

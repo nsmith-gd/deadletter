@@ -39,10 +39,12 @@ namespace DeadLetter.Core.Tests
         internal sealed class SeamRun
         {
             public readonly List<Row> Rows = new List<Row>();
-            /// <summary>The rig's pose (world coordinates) after each row's step, and the frame target the rig eased toward.</summary>
+            /// <summary>The rig's pose (world coordinates) after each row's step, and the frame target the rig eased toward (16:9).</summary>
             public readonly List<CameraPose> Poses = new List<CameraPose>();
             public readonly List<Frame> Frames = new List<Frame>();
             public CameraRig Rig;
+            /// <summary>The same run filmed at 4:3 (a second rig).</summary>
+            public readonly List<CameraPose> Poses43 = new List<CameraPose>();
             /// <summary>The rig's pose right after <see cref="CameraRig.UseTrack"/> at the handover, before the next step.</summary>
             public CameraPose PoseAtUseTrack;
             /// <summary>Index in <see cref="Rows"/> of: the trace's last step (he leaves DL-17); chapter 2's first row (the handover).</summary>
@@ -78,14 +80,17 @@ namespace DeadLetter.Core.Tests
                 var signals = new FramingSignalTable();
                 var presenter = new ChapterPresenter(a);
                 var rig = r.Rig = new CameraRig(CameraConfig.Prototype, ChapterFraming.For(a.Def.Id));
+                var rig43 = new CameraRig(CameraConfig.Prototype, ChapterFraming.For(a.Def.Id));
                 presenter.UpdateSignals(signals);
                 rig.SnapToFrame(presenter.CameraInput(0, signals));
+                rig43.SnapToFrame(presenter.CameraInput(4.0 / 3.0, signals));
                 void Shoot()
                 {
                     presenter.UpdateSignals(signals);
                     CameraRigInput i = presenter.CameraInput(0, signals);
                     r.Frames.Add(rig.FrameFor(i));
                     r.Poses.Add(rig.Step(i, ChapterSim.StepSeconds));
+                    r.Poses43.Add(rig43.Step(presenter.CameraInput(4.0 / 3.0, signals), ChapterSim.StepSeconds));
                 }
                 for (int k = from; k <= to; k++)
                 {
@@ -120,6 +125,7 @@ namespace DeadLetter.Core.Tests
                 ChapterSeams.Origin(b.Def.Id, out double ox, out double oy);                               // GameHost.HandOver
                 presenter = new ChapterPresenter(b);
                 rig.UseTrack(ChapterFraming.For(b.Def.Id), new Vec3(ox, oy, 0));
+                rig43.UseTrack(ChapterFraming.For(b.Def.Id), new Vec3(ox, oy, 0));
                 r.PoseAtUseTrack = rig.Pose;
                 for (int i = 0; i < After; i++) { b.Step(Right); r.Rows.Add(RowOf(b)); Shoot(); }
                 return _run = r;

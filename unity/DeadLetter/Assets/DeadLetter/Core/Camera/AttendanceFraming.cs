@@ -1,3 +1,4 @@
+using System;
 using DeadLetter.Core.Lane.Tables;
 using DeadLetter.Core.Maths;
 
@@ -12,6 +13,8 @@ namespace DeadLetter.Core.Camera
     /// <para>The signals are published by <see cref="DeadLetter.Core.Streaming.ChapterPresenter"/>; the two eased ones
     /// (<c>k13</c>, <c>k15</c>) are the prototype's own camera state in <c>game.att</c>, kept by
     /// <see cref="AttendanceFramingState"/>.</para>
+    /// <para>Past the prototype: the stair walk to ring A (<see cref="Stair"/>, #54/#56). The prototype cut to its end card
+    /// 0.9 s up the stair, so it has no frame there; DL-17's caps cx at 339.0 and would lose him on the way to 347.0.</para>
     /// </summary>
     public static class AttendanceFraming
     {
@@ -26,8 +29,20 @@ namespace DeadLetter.Core.Camera
         /// <summary>Signal: <c>smooth(a.f17.door17)</c>, DL-17's stair door, widening the workshop frame (L5876).</summary>
         public const string Door17 = "att.door17";
 
+        /// <summary>
+        /// Signal: the stair walk to ring A (<c>Dl17StairAct</c>), eased in over its first <see cref="StairEaseSeconds"/>; 1 at
+        /// the stair head until the seam hands him to chapter 2 (the act ends on the step the seam falls due). 0 everywhere
+        /// else, so no step of chapter 1 before the stair (all of the prototype's trace) changes.
+        /// </summary>
+        public const string Stair = "att.stair";
+        public const double StairEaseSeconds = 0.5;
+
         /// <summary><see cref="Gallery"/> from his height (L6483).</summary>
         public static double GallerySignal(double y) => y > 1.5 ? 1 : 0.3;
+
+        /// <summary><see cref="Stair"/>: <c>smooth(t / 0.5)</c> while he climbs (<paramref name="t"/>: the act's time), 1 at the head.</summary>
+        public static double StairSignal(bool climbing, double t, bool atHead) =>
+            climbing ? Smooth.Step(Math.Min(1, t / StairEaseSeconds)) : atHead ? 1 : 0;
 
         public static FramingTrack Build()
         {
@@ -53,12 +68,26 @@ namespace DeadLetter.Core.Camera
             FramingZone servery = FramingZone.Named("dl16a.servery").In(309.6, 1.2).WithCx(314.6, 319.4, 0.4).WithVolume(7.8, 2.5, 1.7, 11.5);
             // DL-17: cx only (see the class note), reaching 2.2 m further as the stair door opens (L5875–L5877).
             FramingZone workshop = FramingZone.Named("dl17.workshop").In(323.4, 1.4).WithCx(328.2, 336.8, 0.4).WithCxMaxSignal(Door17, 2.2);
+            // The stair walk (not in the prototype, see the class note). cx follows him past DL-17's cap with no lead (he is
+            // exited, L7668), and over the flight's height the frame eases into chapter 2's arrival frame as it will stand in
+            // the world once he is handed over: the same cx and lens, and heights raised by the stair's top (chapter 2's origin)
+            // less the rig's height follow at the top (+0.6·(3.24 − 0.2) on the camera, +0.5·… on the look; chapter 2's
+            // datum is 0 there). So the seam changes the target frame by nothing.
+            CameraConfig c = CameraConfig.Prototype;
+            double follow = Dl17Lane.StairTop - c.HeightFollowFrom;
+            FramingZone stair = FramingZone.Named("dl17.stair").Times(Stair).WithCx(339.0, double.PositiveInfinity, 0)
+                .With(FramingZone.Named("dl17.stairhead").InY(0, Dl17Lane.StairTop)
+                    .WithCx(SomeoneHomeFraming.ArrivalCxMin, SomeoneHomeFraming.ArrivalCxMax, SomeoneHomeFraming.ArrivalLead)
+                    .WithVolume(SomeoneHomeFraming.ArrivalDistance,
+                        SomeoneHomeFraming.ArrivalHeight + Dl17Lane.StairTop - c.HeightFollow * follow,
+                        SomeoneHomeFraming.ArrivalLook + Dl17Lane.StairTop - c.LookFollow * follow, SomeoneHomeFraming.ArrivalFit)
+                    .WithFog(SomeoneHomeFraming.ArrivalFog).WithFocal(SomeoneHomeFraming.ArrivalFocal));
             // The duct (L5857): the whole frame is the duct's, cx on him with no lead. frameAtt2 returns it outright; as the
             // last zone at weight 1 it replaces everything before it.
             FramingZone duct = FramingZone.Named("dl14.duct").Times(Duct).WithCx(double.NegativeInfinity, double.PositiveInfinity, 0)
                 .WithVolume(7.0, 2.4, 1.6, 9.0).WithFog(0.03);
 
-            return new FramingTrack(register, corridor, lesson, wide, gallery, window, dorm, round, classroom, store, servery, workshop, duct);
+            return new FramingTrack(register, corridor, lesson, wide, gallery, window, dorm, round, classroom, store, servery, workshop, stair, duct);
         }
     }
 

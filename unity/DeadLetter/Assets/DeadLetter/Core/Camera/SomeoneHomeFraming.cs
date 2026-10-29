@@ -21,6 +21,13 @@ namespace DeadLetter.Core.Camera
     {
         /// <summary>DL-18 §7: the arrival and box room lenses; the gallery is "normal framing" (35 mm).</summary>
         public const double ArrivalFocal = 32, BoxRoomFocal = 40;
+        /// <summary>
+        /// DL-18 §7's arrival frame: cx <c>clamp(x + 0.4·lead, 349.4, 350.0)</c>, volume (8.4, 2.6, 1.8) fit to 10 m. Chapter 1's
+        /// stair walk (<see cref="AttendanceFraming"/>'s <c>dl17.stairhead</c>) eases into the same frame, so the seam hands
+        /// the rig a frame it is already on.
+        /// </summary>
+        public const double ArrivalCxMin = 349.4, ArrivalCxMax = 350.0, ArrivalLead = 0.4;
+        public const double ArrivalDistance = 8.4, ArrivalHeight = 2.6, ArrivalLook = 1.8, ArrivalFit = 10.0, ArrivalFog = 0.03;
         /// <summary>DL-19 §7: the repair and upper terrace lenses.</summary>
         public const double RepairFocal = 38, UpperTerraceFocal = 30;
 
@@ -34,8 +41,8 @@ namespace DeadLetter.Core.Camera
             // DL-18 §7 "Arrival", 347.0 to 349.5: wider and lifted (32 mm), the sealed door (347.4–348.6) left, the gallery
             // ahead and the window high across the shaft in one frame while he walks. cx held near the gallery's middle so the
             // door stays in; fog: chapter 1's last (0.03, DL-14 to DL-17).
-            FramingZone arrival = FramingZone.Named("dl18.arrival").WithCx(349.4, 350.0, 0.4).WithVolume(8.4, 2.6, 1.8, 10.0)
-                .WithFog(0.03).WithFocal(ArrivalFocal);
+            FramingZone arrival = FramingZone.Named("dl18.arrival").WithCx(ArrivalCxMin, ArrivalCxMax, ArrivalLead)
+                .WithVolume(ArrivalDistance, ArrivalHeight, ArrivalLook, ArrivalFit).WithFog(ArrivalFog).WithFocal(ArrivalFocal);
             // §7 "Gallery", 349.5 to 351.4: normal framing (35 mm), the window drifting out of the top. §7 gives no volume:
             // DL-15's classroom (7.0, 1.7, 1.2, fit 9.6) and its lead (0.5), chapter 1's plain room frame.
             FramingZone gallery = FramingZone.Named("dl18.gallery").In(349.5, 1.0).WithCx(350.0, 351.4, 0.5).WithVolume(7.0, 1.7, 1.2, 9.6)
